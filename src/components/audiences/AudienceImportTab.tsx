@@ -8,6 +8,7 @@ import { ShoppingCart, Loader2 } from "lucide-react";
 import { FileUploadZone } from "@/components/audiences/FileUploadZone";
 import { ImportResults } from "@/components/audiences/ImportResults";
 import { SampleCSVDownload } from "@/components/audiences/SampleCSVDownload";
+import { ManualRecipientEntry } from "@/components/audiences/ManualRecipientEntry";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -192,6 +193,10 @@ export function AudienceImportTab() {
                 'Import Audience'
               )}
             </Button>
+
+            <div className="pt-4 border-t border-border">
+              <ManualRecipientEntry />
+            </div>
           </CardContent>
         </Card>
 
