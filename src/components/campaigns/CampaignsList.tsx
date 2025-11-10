@@ -11,8 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreVertical, Mail, Calendar, Users, QrCode } from "lucide-react";
+import { MoreVertical, Mail, Calendar, Users, QrCode, FileCheck } from "lucide-react";
 import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
+import { CampaignProofDialog } from "./CampaignProofDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,7 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
     id: string;
     name: string;
   } | null>(null);
+  const [proofCampaignId, setProofCampaignId] = useState<string | null>(null);
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["campaigns", clientId, searchQuery],
@@ -187,11 +189,25 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-background z-50">
+                    {(campaign.status === "proofed" || campaign.status === "approved") && (
+                      <>
+                        <DropdownMenuItem onClick={() => setProofCampaignId(campaign.id)}>
+                          <FileCheck className="h-4 w-4 mr-2" />
+                          Review Proof
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuItem>View Details</DropdownMenuItem>
-                    <DropdownMenuItem>Edit Campaign</DropdownMenuItem>
+                    <DropdownMenuItem disabled={campaign.status === "approved"}>
+                      Edit Campaign
+                    </DropdownMenuItem>
                     <DropdownMenuItem>Duplicate</DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem 
+                      className="text-destructive"
+                      disabled={campaign.status === "approved"}
+                    >
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -209,6 +225,14 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
         onOpenChange={(open) => !open && setSelectedCampaign(null)}
         campaignId={selectedCampaign.id}
         campaignName={selectedCampaign.name}
+      />
+    )}
+
+    {proofCampaignId && (
+      <CampaignProofDialog
+        open={!!proofCampaignId}
+        onOpenChange={(open) => !open && setProofCampaignId(null)}
+        campaignId={proofCampaignId}
       />
     )}
     </>

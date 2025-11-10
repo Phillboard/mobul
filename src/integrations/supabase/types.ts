@@ -542,6 +542,7 @@ export type Database = {
         | "in_production"
         | "mailed"
         | "completed"
+        | "approved"
       industry_type:
         | "roofing"
         | "rei"
@@ -690,6 +691,7 @@ export const Constants = {
         "in_production",
         "mailed",
         "completed",
+        "approved",
       ],
       industry_type: [
         "roofing",
