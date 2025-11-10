@@ -270,6 +270,60 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          appointment_requested: boolean | null
+          campaign_id: string
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          message: string | null
+          phone: string | null
+          recipient_id: string
+          submitted_at: string | null
+        }
+        Insert: {
+          appointment_requested?: boolean | null
+          campaign_id: string
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          message?: string | null
+          phone?: string | null
+          recipient_id: string
+          submitted_at?: string | null
+        }
+        Update: {
+          appointment_requested?: boolean | null
+          campaign_id?: string
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          message?: string | null
+          phone?: string | null
+          recipient_id?: string
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_members: {
         Row: {
           created_at: string | null

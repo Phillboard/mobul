@@ -1,1 +1,7 @@
 project_id = "arzthloosvnasokxygfo"
+
+[functions.handle-purl]
+verify_jwt = false
+
+[functions.submit-lead-form]
+verify_jwt = false
