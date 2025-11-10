@@ -1,17 +1,14 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { ShoppingCart, Loader2 } from "lucide-react";
+import { ShoppingCart, Users as UsersIcon, Loader2 } from "lucide-react";
 import { FileUploadZone } from "@/components/audiences/FileUploadZone";
 import { ImportResults } from "@/components/audiences/ImportResults";
 import { SampleCSVDownload } from "@/components/audiences/SampleCSVDownload";
-import { AudiencesList } from "@/components/audiences/AudiencesList";
-import { ManualRecipientEntry } from "@/components/audiences/ManualRecipientEntry";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -140,36 +137,26 @@ export default function Audiences() {
           <Card className="border-destructive/20 bg-destructive/5">
             <CardContent className="pt-6">
               <p className="text-sm text-destructive">
-                Please select a client from the sidebar to manage audiences
+                Please select a client from the sidebar to import audiences
               </p>
             </CardContent>
           </Card>
         )}
 
-        <Tabs defaultValue="import" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="import">Import</TabsTrigger>
-            <TabsTrigger value="saved">Saved Audiences</TabsTrigger>
-            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
-          </TabsList>
+        {importResult ? (
+          <ImportResults
+            audienceId={importResult.audience_id}
+            audienceName={importResult.audience_name}
+            totalRows={importResult.total_rows}
+            validRows={importResult.valid_rows}
+            invalidRows={importResult.invalid_rows}
+            errors={importResult.errors}
+            onViewAudience={handleViewAudience}
+          />
+        ) : null}
 
-          <TabsContent value="import" className="space-y-6 mt-6">
-            <div className="flex justify-end">
-              <ManualRecipientEntry />
-            </div>
-
-            {importResult && (
-              <ImportResults
-                audienceId={importResult.audience_id}
-                audienceName={importResult.audience_name}
-                totalRows={importResult.total_rows}
-                validRows={importResult.valid_rows}
-                invalidRows={importResult.invalid_rows}
-                errors={importResult.errors}
-                onViewAudience={handleViewAudience}
-              />
-            )}
-            <Card className="border-primary/20">
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="border-primary/20">
             <CardHeader>
               <CardTitle>Import Audience</CardTitle>
               <CardDescription>
@@ -225,48 +212,62 @@ export default function Audiences() {
                 )}
               </Button>
             </CardContent>
-            </Card>
-          </TabsContent>
+          </Card>
 
-          <TabsContent value="saved" className="mt-6">
-            <AudiencesList />
-          </TabsContent>
-
-          <TabsContent value="marketplace" className="mt-6">
-            <Card className="border-accent/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-accent" />
-                  Lead Marketplace
-                </CardTitle>
-                <CardDescription>
-                  Purchase verified leads filtered by vertical, geography, and demographics
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                      <span className="text-sm font-medium">Roofing</span>
-                      <Button variant="outline" size="sm">Browse</Button>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                      <span className="text-sm font-medium">REI / Flippers</span>
-                      <Button variant="outline" size="sm">Browse</Button>
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                      <span className="text-sm font-medium">Auto Dealerships</span>
-                      <Button variant="outline" size="sm">Browse</Button>
-                    </div>
+          <Card className="border-accent/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-accent" />
+                Lead Marketplace
+              </CardTitle>
+              <CardDescription>
+                Purchase verified leads filtered by vertical, geography, and demographics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <span className="text-sm font-medium">Roofing</span>
+                    <Button variant="outline" size="sm">Browse</Button>
                   </div>
-                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                    Explore Marketplace
-                  </Button>
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <span className="text-sm font-medium">REI / Flippers</span>
+                    <Button variant="outline" size="sm">Browse</Button>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <span className="text-sm font-medium">Auto Dealerships</span>
+                    <Button variant="outline" size="sm">Browse</Button>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                  Explore Marketplace
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UsersIcon className="h-5 w-5" />
+              Saved Audiences
+            </CardTitle>
+            <CardDescription>
+              View and manage your segmented contact lists
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border-2 border-dashed border-border bg-muted/20 p-12 text-center">
+              <UsersIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold">No audiences yet</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Import your first contact list or purchase leads to get started
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );
