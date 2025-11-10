@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreVertical, Mail, Calendar, Users } from "lucide-react";
+import { MoreVertical, Mail, Calendar, Users, QrCode } from "lucide-react";
+import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +28,11 @@ interface CampaignsListProps {
 }
 
 export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
+  const [selectedCampaign, setSelectedCampaign] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["campaigns", clientId, searchQuery],
     queryFn: async () => {
@@ -93,7 +100,8 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
   };
 
   return (
-    <Table>
+    <>
+      <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Campaign Name</TableHead>
@@ -159,26 +167,50 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
               </span>
             </TableCell>
             <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
+              <div className="flex items-center gap-2">
+                {campaign.status === "draft" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setSelectedCampaign({ id: campaign.id, name: campaign.name })
+                    }
+                  >
+                    <QrCode className="h-4 w-4 mr-1" />
+                    Generate QR
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background z-50">
-                  <DropdownMenuItem>View Details</DropdownMenuItem>
-                  <DropdownMenuItem>Edit Campaign</DropdownMenuItem>
-                  <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive">
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-background z-50">
+                    <DropdownMenuItem>View Details</DropdownMenuItem>
+                    <DropdownMenuItem>Edit Campaign</DropdownMenuItem>
+                    <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive">
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </TableCell>
           </TableRow>
         ))}
       </TableBody>
     </Table>
+
+    {selectedCampaign && (
+      <GenerateQRCodesDialog
+        open={!!selectedCampaign}
+        onOpenChange={(open) => !open && setSelectedCampaign(null)}
+        campaignId={selectedCampaign.id}
+        campaignName={selectedCampaign.name}
+      />
+    )}
+    </>
   );
 }
