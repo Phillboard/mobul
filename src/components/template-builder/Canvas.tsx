@@ -12,12 +12,40 @@ interface CanvasProps {
   onChange: (data: any) => void;
   onSelectLayer: (layer: any) => void;
   selectedLayer: any;
+  onDrop?: (elementType: string, position: { x: number; y: number }, elementData?: any) => void;
 }
 
-export function Canvas({ data, onChange, onSelectLayer, selectedLayer }: CanvasProps) {
+export function Canvas({ data, onChange, onSelectLayer, selectedLayer, onDrop }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!onDrop || !containerRef.current || !canvasRef.current) return;
+
+    try {
+      const elementData = JSON.parse(e.dataTransfer.getData("application/json"));
+      
+      // Get the canvas position relative to the container
+      const rect = containerRef.current.getBoundingClientRect();
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      
+      // Calculate position relative to canvas, accounting for zoom
+      const x = (e.clientX - canvasRect.left) / zoom;
+      const y = (e.clientY - canvasRect.top) / zoom;
+
+      onDrop(elementData.type, { x, y }, elementData);
+    } catch (error) {
+      console.error("Failed to parse drop data:", error);
+    }
+  };
 
   useEffect(() => {
     if (!canvasRef.current || !data.canvasSize) return;
@@ -233,7 +261,12 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer }: CanvasP
       </div>
 
       <div className="flex-1 overflow-auto p-12 flex items-center justify-center">
-        <div className="border-2 border-border shadow-2xl bg-white rounded-lg overflow-hidden hover:shadow-3xl transition-shadow duration-300">
+        <div 
+          ref={containerRef}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          className="border-2 border-border shadow-2xl bg-white rounded-lg overflow-hidden hover:shadow-3xl transition-shadow duration-300"
+        >
           <canvas ref={canvasRef} />
         </div>
       </div>

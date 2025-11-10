@@ -5,6 +5,7 @@ interface ElementsPanelProps {
   onAddText: () => void;
   onAddShape: (shape: "rectangle" | "circle") => void;
   onAddQRCode: () => void;
+  onDragStart?: (elementType: string, elementData?: any) => void;
 }
 
 const elements = [
@@ -14,7 +15,7 @@ const elements = [
   { id: "qr", icon: QrCode, label: "QR Code", action: "qr" },
 ];
 
-export function ElementsPanel({ onAddText, onAddShape, onAddQRCode }: ElementsPanelProps) {
+export function ElementsPanel({ onAddText, onAddShape, onAddQRCode, onDragStart }: ElementsPanelProps) {
   const handleElementClick = (action: string) => {
     if (action === "text") {
       onAddText();
@@ -22,6 +23,18 @@ export function ElementsPanel({ onAddText, onAddShape, onAddQRCode }: ElementsPa
       onAddShape(action as "rectangle" | "circle");
     } else if (action === "qr") {
       onAddQRCode();
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, element: typeof elements[0]) => {
+    e.dataTransfer.effectAllowed = "copy";
+    const elementData = {
+      type: element.action,
+      label: element.label,
+    };
+    e.dataTransfer.setData("application/json", JSON.stringify(elementData));
+    if (onDragStart) {
+      onDragStart(element.action);
     }
   };
 
@@ -39,7 +52,9 @@ export function ElementsPanel({ onAddText, onAddShape, onAddQRCode }: ElementsPa
             <Button
               key={element.id}
               variant="outline"
-              className="h-24 flex flex-col gap-2 hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all duration-200 hover:scale-105 hover:shadow-lg group"
+              draggable
+              onDragStart={(e) => handleDragStart(e, element)}
+              className="h-24 flex flex-col gap-2 hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all duration-200 hover:scale-105 hover:shadow-lg group cursor-move"
               onClick={() => handleElementClick(element.action)}
             >
               <Icon className="h-8 w-8 group-hover:scale-110 transition-transform" />

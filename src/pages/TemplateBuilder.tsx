@@ -181,6 +181,77 @@ export default function TemplateBuilder() {
     }
   };
 
+  const handleCanvasDrop = (elementType: string, position: { x: number; y: number }, elementData?: any) => {
+    const { x, y } = position;
+
+    if (elementType === "text") {
+      addLayer({
+        type: "text",
+        text: "New Text",
+        fontSize: 24,
+        fontFamily: "Arial",
+        fill: "#000000",
+        left: x - 50, // Center the element on cursor
+        top: y - 12,
+        fontWeight: "normal",
+      });
+    } else if (elementType === "rectangle") {
+      addLayer({
+        type: "shape",
+        shape: "rectangle",
+        width: 200,
+        height: 100,
+        fill: "#cccccc",
+        stroke: "#000000",
+        strokeWidth: 1,
+        left: x - 100,
+        top: y - 50,
+      });
+    } else if (elementType === "circle") {
+      addLayer({
+        type: "shape",
+        shape: "circle",
+        radius: 50,
+        fill: "#cccccc",
+        stroke: "#000000",
+        strokeWidth: 1,
+        left: x - 50,
+        top: y - 50,
+      });
+    } else if (elementType === "qr") {
+      addLayer({
+        type: "qr_code",
+        data: "{{purl}}",
+        size: 200,
+        left: x - 100,
+        top: y - 100,
+      });
+    } else if (elementType === "field" && elementData?.value) {
+      if (elementData.value === "{{qr_code}}") {
+        addLayer({
+          type: "qr_code",
+          data: "{{purl}}",
+          size: 200,
+          left: x - 100,
+          top: y - 100,
+        });
+      } else {
+        addLayer({
+          type: "text",
+          text: elementData.value,
+          fontSize: 24,
+          fontFamily: "Arial",
+          fill: "#000000",
+          left: x - 50,
+          top: y - 12,
+          fontWeight: "normal",
+        });
+      }
+    }
+
+    toast.success("Element added to canvas");
+  };
+
   const handleImageAdd = (url: string) => {
     addLayer({
       type: "image",
@@ -322,6 +393,7 @@ export default function TemplateBuilder() {
               onAddText={handleAddText}
               onAddShape={handleAddShape}
               onAddQRCode={handleAddQRCode}
+              onDragStart={() => {}}
             />
           )}
 
@@ -353,7 +425,10 @@ export default function TemplateBuilder() {
           )}
 
           {activeTool === "fields" && (
-            <FieldsPanel onAddField={handleAddField} />
+            <FieldsPanel 
+              onAddField={handleAddField}
+              onDragStart={() => {}}
+            />
           )}
           
           <div className="flex-1 bg-muted/20 overflow-auto">
@@ -363,6 +438,7 @@ export default function TemplateBuilder() {
                 onChange={setCanvasData}
                 onSelectLayer={setSelectedLayer}
                 selectedLayer={selectedLayer}
+                onDrop={handleCanvasDrop}
               />
             )}
           </div>

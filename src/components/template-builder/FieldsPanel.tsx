@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 
 interface FieldsPanelProps {
   onAddField: (field: string) => void;
+  onDragStart?: (fieldValue: string) => void;
 }
 
 const fieldGroups = [
@@ -50,7 +51,19 @@ const fieldGroups = [
   },
 ];
 
-export function FieldsPanel({ onAddField }: FieldsPanelProps) {
+export function FieldsPanel({ onAddField, onDragStart }: FieldsPanelProps) {
+  const handleDragStart = (e: React.DragEvent, fieldValue: string) => {
+    e.dataTransfer.effectAllowed = "copy";
+    const fieldData = {
+      type: "field",
+      value: fieldValue,
+    };
+    e.dataTransfer.setData("application/json", JSON.stringify(fieldData));
+    if (onDragStart) {
+      onDragStart(fieldValue);
+    }
+  };
+
   return (
     <div className="w-64 border-r border-border bg-builder-sidebar shadow-sm">
       <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
@@ -72,7 +85,9 @@ export function FieldsPanel({ onAddField }: FieldsPanelProps) {
                   <Button
                     key={field.value}
                     variant="outline"
-                    className="w-full justify-start text-left hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all duration-200 text-sm font-medium"
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, field.value)}
+                    className="w-full justify-start text-left hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all duration-200 text-sm font-medium cursor-move"
                     onClick={() => onAddField(field.value)}
                   >
                     {field.label}
