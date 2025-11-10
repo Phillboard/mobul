@@ -1,6 +1,7 @@
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTenant } from "@/contexts/TenantContext";
 import { 
   LayoutDashboard, 
   Mail, 
@@ -8,8 +9,16 @@ import {
   BarChart3, 
   Code2, 
   Settings,
-  Zap
+  Zap,
+  Building
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface NavItem {
   name: string;
@@ -29,11 +38,17 @@ const navigation: NavItem[] = [
 
 export function Sidebar() {
   const { hasRole } = useAuth();
+  const { clients, currentClient, setCurrentClient, currentOrg } = useTenant();
   
   const visibleNavigation = navigation.filter(item => {
     if (!item.roles) return true;
     return item.roles.some(role => hasRole(role));
   });
+
+  // Filter clients by current org for agency admins
+  const availableClients = currentOrg 
+    ? clients.filter(c => c.org_id === currentOrg.id)
+    : clients;
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar">
       <div className="flex h-full flex-col">
@@ -47,6 +62,39 @@ export function Sidebar() {
             <p className="text-xs text-sidebar-foreground/60">Direct Mail Engine</p>
           </div>
         </div>
+
+        {/* Client Selector - for agency admins with multiple clients */}
+        {(hasRole('agency_admin') || hasRole('org_admin')) && availableClients.length > 0 && (
+          <div className="border-b border-sidebar-border px-3 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Building className="h-4 w-4 text-sidebar-foreground/60" />
+              <span className="text-xs font-medium text-sidebar-foreground/60">Current Client</span>
+            </div>
+            <Select
+              value={currentClient?.id || ''}
+              onValueChange={(value) => {
+                const client = availableClients.find(c => c.id === value);
+                if (client) setCurrentClient(client);
+              }}
+            >
+              <SelectTrigger className="w-full h-9 bg-sidebar-accent/50">
+                <SelectValue placeholder="Select client" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                {availableClients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    <div className="flex items-center gap-2">
+                      <span>{client.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        ({client.industry})
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-4">

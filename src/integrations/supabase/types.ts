@@ -14,6 +14,135 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_users: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_users_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          api_key_hash: string | null
+          brand_colors_json: Json | null
+          created_at: string | null
+          id: string
+          industry: Database["public"]["Enums"]["industry_type"]
+          logo_url: string | null
+          name: string
+          org_id: string
+          timezone: string | null
+        }
+        Insert: {
+          api_key_hash?: string | null
+          brand_colors_json?: Json | null
+          created_at?: string | null
+          id?: string
+          industry: Database["public"]["Enums"]["industry_type"]
+          logo_url?: string | null
+          name: string
+          org_id: string
+          timezone?: string | null
+        }
+        Update: {
+          api_key_hash?: string | null
+          brand_colors_json?: Json | null
+          created_at?: string | null
+          id?: string
+          industry?: Database["public"]["Enums"]["industry_type"]
+          logo_url?: string | null
+          name?: string
+          org_id?: string
+          timezone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          org_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          org_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          org_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          settings_json: Json | null
+          type: Database["public"]["Enums"]["org_type"]
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          settings_json?: Json | null
+          type?: Database["public"]["Enums"]["org_type"]
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          settings_json?: Json | null
+          type?: Database["public"]["Enums"]["org_type"]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -74,9 +203,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_has_client_access: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_has_org_access: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "org_admin" | "agency_admin" | "client_user"
+      industry_type:
+        | "roofing"
+        | "rei"
+        | "auto_service"
+        | "auto_warranty"
+        | "auto_buyback"
+      org_type: "internal" | "agency"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -205,6 +349,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["org_admin", "agency_admin", "client_user"],
+      industry_type: [
+        "roofing",
+        "rei",
+        "auto_service",
+        "auto_warranty",
+        "auto_buyback",
+      ],
+      org_type: ["internal", "agency"],
     },
   },
 } as const

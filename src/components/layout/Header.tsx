@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Bell, HelpCircle, LogOut, User } from "lucide-react";
+import { Bell, HelpCircle, LogOut, User, Building2, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTenant } from "@/contexts/TenantContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,11 +10,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
 export function Header() {
-  const { profile, roles, signOut } = useAuth();
+  const { profile, roles, signOut, hasRole } = useAuth();
+  const { organizations, currentOrg, setCurrentOrg } = useTenant();
 
   const getRoleLabel = () => {
     if (roles.some(r => r.role === 'org_admin')) return 'Org Admin';
@@ -35,8 +44,31 @@ export function Header() {
   return (
     <header className="fixed left-64 right-0 top-0 z-30 h-16 border-b border-border bg-card">
       <div className="flex h-full items-center justify-between px-6">
-        <div className="flex-1">
-          {/* Breadcrumb or page title can go here */}
+        <div className="flex-1 flex items-center gap-4">
+          {/* Organization Switcher - for users with multiple orgs */}
+          {organizations.length > 1 && (
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={currentOrg?.id || ''}
+                onValueChange={(value) => {
+                  const org = organizations.find(o => o.id === value);
+                  if (org) setCurrentOrg(org);
+                }}
+              >
+                <SelectTrigger className="w-[200px] h-9 bg-background">
+                  <SelectValue placeholder="Select organization" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

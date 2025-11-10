@@ -1,5 +1,7 @@
+import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Mail, 
   Users, 
@@ -7,10 +9,26 @@ import {
   TrendingUp, 
   ArrowRight,
   Package,
-  DollarSign
+  DollarSign,
+  Building
 } from "lucide-react";
+import { useTenant } from "@/contexts/TenantContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Dashboard() {
+  const { currentClient, currentOrg } = useTenant();
+  const { hasRole } = useAuth();
+
+  const getIndustryLabel = (industry: string) => {
+    const labels: Record<string, string> = {
+      roofing: 'Roofing',
+      rei: 'Real Estate Investment',
+      auto_service: 'Auto Service',
+      auto_warranty: 'Auto Warranty',
+      auto_buyback: 'Auto Buy-Back'
+    };
+    return labels[industry] || industry;
+  };
   const stats = [
     {
       name: "Active Campaigns",
@@ -70,9 +88,37 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div>
+    <Layout>
+      <div className="space-y-6">
+        {/* Client Context Banner */}
+        {currentClient && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <Building className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">{currentClient.name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="secondary">{getIndustryLabel(currentClient.industry)}</Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {currentClient.timezone}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {hasRole('org_admin') && currentOrg && (
+                  <Badge variant="outline">{currentOrg.name}</Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Welcome Section */}
+        <div>
         <h1 className="text-3xl font-bold text-foreground">Welcome back, Admin</h1>
         <p className="mt-1 text-muted-foreground">
           Here's what's happening with your direct mail campaigns today.
@@ -233,5 +279,6 @@ export default function Dashboard() {
         </CardContent>
       </Card>
     </div>
+  </Layout>
   );
 }
