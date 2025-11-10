@@ -501,6 +501,13 @@ export type Database = {
     }
     Functions: {
       generate_recipient_token: { Args: never; Returns: string }
+      get_audience_geo_distribution: {
+        Args: { audience_id_param: string }
+        Returns: {
+          count: number
+          state: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
