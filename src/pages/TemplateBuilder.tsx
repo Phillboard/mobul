@@ -3,14 +3,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
 import { Canvas } from "@/components/template-builder/Canvas";
 import { ToolSidebar } from "@/components/template-builder/ToolSidebar";
 import { PropertiesPanel } from "@/components/template-builder/PropertiesPanel";
 import { TopToolbar } from "@/components/template-builder/TopToolbar";
 import { PreviewModal } from "@/components/template-builder/PreviewModal";
+import { LayersPanel } from "@/components/template-builder/LayersPanel";
+import { BackgroundPanel } from "@/components/template-builder/BackgroundPanel";
+import { ElementsPanel } from "@/components/template-builder/ElementsPanel";
+import { FieldsPanel } from "@/components/template-builder/FieldsPanel";
+import { UploadPanel } from "@/components/template-builder/UploadPanel";
+import { Type } from "lucide-react";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
 
 export default function TemplateBuilder() {
   const { id } = useParams();
@@ -18,6 +22,7 @@ export default function TemplateBuilder() {
   const queryClient = useQueryClient();
   const [canvasData, setCanvasData] = useState<any>(null);
   const [selectedLayer, setSelectedLayer] = useState<any>(null);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -94,6 +99,166 @@ export default function TemplateBuilder() {
     return () => clearTimeout(timer);
   }, [canvasData]);
 
+  const addLayer = (layer: any) => {
+    if (!canvasData) return;
+    const newLayer = {
+      ...layer,
+      id: `layer-${Date.now()}`,
+      zIndex: canvasData.layers.length,
+      visible: true,
+      locked: false,
+    };
+    setCanvasData({
+      ...canvasData,
+      layers: [...canvasData.layers, newLayer],
+    });
+  };
+
+  const handleAddText = () => {
+    addLayer({
+      type: "text",
+      text: "New Text",
+      fontSize: 24,
+      fontFamily: "Arial",
+      fill: "#000000",
+      left: 100,
+      top: 100,
+      fontWeight: "normal",
+    });
+  };
+
+  const handleAddShape = (shape: "rectangle" | "circle") => {
+    if (shape === "rectangle") {
+      addLayer({
+        type: "shape",
+        shape: "rectangle",
+        width: 200,
+        height: 100,
+        fill: "#cccccc",
+        stroke: "#000000",
+        strokeWidth: 1,
+        left: 100,
+        top: 100,
+      });
+    } else {
+      addLayer({
+        type: "shape",
+        shape: "circle",
+        radius: 50,
+        fill: "#cccccc",
+        stroke: "#000000",
+        strokeWidth: 1,
+        left: 100,
+        top: 100,
+      });
+    }
+  };
+
+  const handleAddQRCode = () => {
+    addLayer({
+      type: "qr_code",
+      data: "{{purl}}",
+      size: 200,
+      left: 100,
+      top: 100,
+    });
+  };
+
+  const handleAddField = (field: string) => {
+    if (field === "{{qr_code}}") {
+      handleAddQRCode();
+    } else {
+      addLayer({
+        type: "text",
+        text: field,
+        fontSize: 24,
+        fontFamily: "Arial",
+        fill: "#000000",
+        left: 100,
+        top: 100,
+        fontWeight: "normal",
+      });
+    }
+  };
+
+  const handleImageAdd = (url: string) => {
+    addLayer({
+      type: "image",
+      src: url,
+      left: 100,
+      top: 100,
+      scaleX: 1,
+      scaleY: 1,
+    });
+  };
+
+  const handleBackgroundChange = (color: string) => {
+    if (!canvasData) return;
+    setCanvasData({
+      ...canvasData,
+      backgroundColor: color,
+    });
+  };
+
+  const handleBackgroundImageChange = (url: string) => {
+    addLayer({
+      type: "image",
+      src: url,
+      left: 0,
+      top: 0,
+      scaleX: 1,
+      scaleY: 1,
+    });
+  };
+
+  const handleToggleVisibility = (layerId: string) => {
+    if (!canvasData) return;
+    setCanvasData({
+      ...canvasData,
+      layers: canvasData.layers.map((l: any) =>
+        l.id === layerId ? { ...l, visible: l.visible !== false ? false : true } : l
+      ),
+    });
+  };
+
+  const handleToggleLock = (layerId: string) => {
+    if (!canvasData) return;
+    setCanvasData({
+      ...canvasData,
+      layers: canvasData.layers.map((l: any) =>
+        l.id === layerId ? { ...l, locked: !l.locked } : l
+      ),
+    });
+  };
+
+  const handleDeleteLayer = (layerId: string) => {
+    if (!canvasData) return;
+    setCanvasData({
+      ...canvasData,
+      layers: canvasData.layers.filter((l: any) => l.id !== layerId),
+    });
+    if (selectedLayer?.id === layerId) {
+      setSelectedLayer(null);
+    }
+  };
+
+  const handleDuplicateLayer = (layerId: string) => {
+    if (!canvasData) return;
+    const layer = canvasData.layers.find((l: any) => l.id === layerId);
+    if (layer) {
+      const newLayer = {
+        ...layer,
+        id: `layer-${Date.now()}`,
+        left: (layer.left || 0) + 20,
+        top: (layer.top || 0) + 20,
+      };
+      setCanvasData({
+        ...canvasData,
+        layers: [...canvasData.layers, newLayer],
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -128,19 +293,68 @@ export default function TemplateBuilder() {
         
         <div className="flex flex-1 overflow-hidden">
           <ToolSidebar
-            onAddLayer={(layer: any) => {
-              if (!canvasData) return;
-              const newLayer = {
-                ...layer,
-                id: `layer-${Date.now()}`,
-                zIndex: canvasData.layers.length,
-              };
-              setCanvasData({
-                ...canvasData,
-                layers: [...canvasData.layers, newLayer],
-              });
+            activeTool={activeTool}
+            onToolSelect={(tool) => {
+              setActiveTool(activeTool === tool ? null : tool);
             }}
           />
+          
+          {activeTool === "text" && (
+            <div className="w-64 border-r border-border bg-background">
+              <div className="p-4 border-b border-border">
+                <h3 className="font-semibold">Text</h3>
+                <p className="text-xs text-muted-foreground">Add text to canvas</p>
+              </div>
+              <div className="p-4">
+                <button
+                  onClick={handleAddText}
+                  className="w-full h-24 flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border hover:border-primary hover:bg-accent transition-colors"
+                >
+                  <Type className="h-8 w-8" />
+                  <span className="text-sm font-medium">Add Text</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeTool === "elements" && (
+            <ElementsPanel
+              onAddText={handleAddText}
+              onAddShape={handleAddShape}
+              onAddQRCode={handleAddQRCode}
+            />
+          )}
+
+          {activeTool === "upload" && (
+            <UploadPanel onImageAdd={handleImageAdd} />
+          )}
+
+          {activeTool === "background" && (
+            <BackgroundPanel
+              backgroundColor={canvasData?.backgroundColor || "#FFFFFF"}
+              onBackgroundChange={handleBackgroundChange}
+              onBackgroundImageChange={handleBackgroundImageChange}
+            />
+          )}
+
+          {activeTool === "layers" && (
+            <LayersPanel
+              layers={canvasData?.layers || []}
+              selectedLayerId={selectedLayer?.id || null}
+              onSelectLayer={setSelectedLayer}
+              onToggleVisibility={handleToggleVisibility}
+              onToggleLock={handleToggleLock}
+              onDeleteLayer={handleDeleteLayer}
+              onDuplicateLayer={handleDuplicateLayer}
+              onReorderLayers={(layers) => {
+                setCanvasData({ ...canvasData, layers });
+              }}
+            />
+          )}
+
+          {activeTool === "fields" && (
+            <FieldsPanel onAddField={handleAddField} />
+          )}
           
           <div className="flex-1 bg-muted/20 overflow-auto">
             {canvasData && (
@@ -153,26 +367,29 @@ export default function TemplateBuilder() {
             )}
           </div>
           
-          <PropertiesPanel
-            layer={selectedLayer}
-            onUpdate={(updates: any) => {
-              if (!canvasData || !selectedLayer) return;
-              setCanvasData({
-                ...canvasData,
-                layers: canvasData.layers.map((l: any) =>
-                  l.id === selectedLayer.id ? { ...l, ...updates } : l
-                ),
-              });
-            }}
-            onDelete={() => {
-              if (!canvasData || !selectedLayer) return;
-              setCanvasData({
-                ...canvasData,
-                layers: canvasData.layers.filter((l: any) => l.id !== selectedLayer.id),
-              });
-              setSelectedLayer(null);
-            }}
-          />
+          {selectedLayer && (
+            <PropertiesPanel
+              layer={selectedLayer}
+              onUpdate={(updates: any) => {
+                if (!canvasData || !selectedLayer) return;
+                setCanvasData({
+                  ...canvasData,
+                  layers: canvasData.layers.map((l: any) =>
+                    l.id === selectedLayer.id ? { ...l, ...updates } : l
+                  ),
+                });
+              }}
+              onDelete={() => {
+                if (!canvasData || !selectedLayer) return;
+                setCanvasData({
+                  ...canvasData,
+                  layers: canvasData.layers.filter((l: any) => l.id !== selectedLayer.id),
+                });
+                setSelectedLayer(null);
+              }}
+              onClose={() => setSelectedLayer(null)}
+            />
+          )}
         </div>
       </div>
 

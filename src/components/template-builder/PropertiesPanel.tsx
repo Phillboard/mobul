@@ -2,36 +2,43 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 
 interface PropertiesPanelProps {
   layer: any;
   onUpdate: (updates: any) => void;
   onDelete: () => void;
+  onClose: () => void;
 }
 
-export function PropertiesPanel({ layer, onUpdate, onDelete }: PropertiesPanelProps) {
-  if (!layer) {
-    return (
-      <div className="w-80 border-l border-border bg-background p-4">
-        <h2 className="text-lg font-semibold mb-4">Properties</h2>
-        <p className="text-sm text-muted-foreground">
-          Select a layer to edit its properties
-        </p>
-      </div>
-    );
-  }
+export function PropertiesPanel({ layer, onUpdate, onDelete, onClose }: PropertiesPanelProps) {
+  if (!layer) return null;
 
   return (
-    <div className="w-80 border-l border-border bg-background p-4 overflow-y-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Properties</h2>
-        <Button variant="ghost" size="icon" onClick={onDelete}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
+    <div className="w-80 border-l border-border bg-background overflow-y-auto animate-slide-in-right">
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <h3 className="font-semibold">Properties</h3>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onDelete}
+            className="text-destructive hover:text-destructive h-8 w-8"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-8 w-8"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
-
-      <div className="space-y-4">
+      
+      <div className="p-4 space-y-4">
         {/* Position */}
         <div className="grid grid-cols-2 gap-2">
           <div>
