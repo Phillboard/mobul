@@ -1,45 +1,216 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, ShoppingCart, Users as UsersIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { ShoppingCart, Users as UsersIcon, Loader2 } from "lucide-react";
+import { FileUploadZone } from "@/components/audiences/FileUploadZone";
+import { ImportResults } from "@/components/audiences/ImportResults";
+import { SampleCSVDownload } from "@/components/audiences/SampleCSVDownload";
+import { useTenant } from "@/contexts/TenantContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface ImportResult {
+  success: boolean;
+  audience_id: string;
+  audience_name: string;
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  errors: Array<{ row: number; field: string; message: string }>;
+}
 
 export default function Audiences() {
+  const { currentClient } = useTenant();
+  const { toast } = useToast();
+  
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [audienceName, setAudienceName] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    // Auto-generate audience name from filename if not set
+    if (!audienceName) {
+      const name = file.name.replace(/\.(csv|xlsx)$/i, '');
+      setAudienceName(name);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile || !audienceName || !currentClient) {
+      toast({
+        title: "Missing information",
+        description: "Please select a file and enter an audience name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(10);
+
+    try {
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('client_id', currentClient.id);
+      formData.append('audience_name', audienceName);
+
+      setUploadProgress(30);
+
+      // Get auth session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      setUploadProgress(50);
+
+      // Call edge function
+      const { data, error } = await supabase.functions.invoke('import-audience', {
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      setUploadProgress(90);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Import failed');
+      }
+
+      setUploadProgress(100);
+      setImportResult(data as ImportResult);
+
+      toast({
+        title: "Import successful!",
+        description: `${data.valid_rows} recipients imported successfully`,
+      });
+
+      // Reset form
+      setSelectedFile(null);
+      setAudienceName("");
+
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import failed",
+        description: error.message || "Failed to import audience",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleViewAudience = () => {
+    // TODO: Navigate to audience detail view
+    toast({
+      title: "Coming soon",
+      description: "Audience detail view will be available soon",
+    });
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Audiences & Leads</h1>
-          <p className="mt-1 text-muted-foreground">
+          <h1 className="text-3xl font-bold">Audiences & Leads</h1>
+          <p className="text-muted-foreground mt-2">
             Import contacts, buy targeted leads, and manage your mailing lists
           </p>
         </div>
 
+        {!currentClient && (
+          <Card className="border-destructive/20 bg-destructive/5">
+            <CardContent className="pt-6">
+              <p className="text-sm text-destructive">
+                Please select a client from the sidebar to import audiences
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {importResult ? (
+          <ImportResults
+            audienceId={importResult.audience_id}
+            audienceName={importResult.audience_name}
+            totalRows={importResult.total_rows}
+            validRows={importResult.valid_rows}
+            invalidRows={importResult.invalid_rows}
+            errors={importResult.errors}
+            onViewAudience={handleViewAudience}
+          />
+        ) : null}
+
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="border-primary/20">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5 text-primary" />
-                Import Audience
-              </CardTitle>
+              <CardTitle>Import Audience</CardTitle>
               <CardDescription>
-                Upload CSV/XLSX with automatic CASS, NCOA validation, and deduplication
+                Upload CSV/XLSX with contact information (max 250k rows, 20MB)
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="rounded-lg border-2 border-dashed border-border bg-muted/20 p-8 text-center">
-                  <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Drag and drop your file here, or click to browse
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Supports up to 250k rows per batch
-                  </p>
-                </div>
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                  Choose File
-                </Button>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="audience-name">Audience Name</Label>
+                <Input
+                  id="audience-name"
+                  placeholder="e.g., Spring 2024 Roofing Prospects"
+                  value={audienceName}
+                  onChange={(e) => setAudienceName(e.target.value)}
+                  disabled={isUploading}
+                />
               </div>
+
+              <FileUploadZone onFileSelect={handleFileSelect} />
+
+              {isUploading && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Importing...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} />
+                </div>
+              )}
+
+              <div className="pt-4 border-t border-border space-y-3">
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p className="font-medium">Required columns:</p>
+                  <p>• address1, city, state, zip</p>
+                  <p className="font-medium mt-2">Optional columns:</p>
+                  <p>• first_name, last_name, address2, company, email, phone</p>
+                </div>
+                <SampleCSVDownload />
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={handleImport}
+                disabled={!selectedFile || !audienceName || isUploading || !currentClient}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  'Import Audience'
+                )}
+              </Button>
             </CardContent>
           </Card>
 
@@ -90,7 +261,7 @@ export default function Audiences() {
           <CardContent>
             <div className="rounded-lg border-2 border-dashed border-border bg-muted/20 p-12 text-center">
               <UsersIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-4 text-lg font-semibold text-foreground">No audiences yet</h3>
+              <h3 className="mt-4 text-lg font-semibold">No audiences yet</h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 Import your first contact list or purchase leads to get started
               </p>
