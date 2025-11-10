@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreVertical, Mail, Calendar, Users, QrCode, FileCheck } from "lucide-react";
+import { MoreVertical, Mail, Calendar, Users, QrCode, FileCheck, Send, Eye } from "lucide-react";
 import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
 import { CampaignProofDialog } from "./CampaignProofDialog";
 import {
@@ -22,6 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface CampaignsListProps {
   clientId: string;
@@ -34,6 +36,33 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
     name: string;
   } | null>(null);
   const [proofCampaignId, setProofCampaignId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const submitToVendorMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const { data, error } = await supabase.functions.invoke('submit-to-vendor', {
+        body: { campaignId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns", clientId] });
+      toast({
+        title: "Submitted to Vendor",
+        description: `Created ${data.batchCount} print batches. Estimated completion: ${new Date(data.estimatedCompletion).toLocaleDateString()}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Submission Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ["campaigns", clientId, searchQuery],
@@ -189,6 +218,10 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="bg-background z-50">
+                    <DropdownMenuItem onClick={() => navigate(`/campaigns/${campaign.id}`)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Details
+                    </DropdownMenuItem>
                     {(campaign.status === "proofed" || campaign.status === "approved") && (
                       <>
                         <DropdownMenuItem onClick={() => setProofCampaignId(campaign.id)}>
@@ -198,7 +231,18 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
                         <DropdownMenuSeparator />
                       </>
                     )}
-                    <DropdownMenuItem>View Details</DropdownMenuItem>
+                    {campaign.status === "approved" && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() => submitToVendorMutation.mutate(campaign.id)}
+                          disabled={submitToVendorMutation.isPending}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          Submit to Print Vendor
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuItem disabled={campaign.status === "approved"}>
                       Edit Campaign
                     </DropdownMenuItem>

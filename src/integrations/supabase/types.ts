@@ -222,6 +222,54 @@ export type Database = {
           },
         ]
       }
+      events: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          event_data_json: Json | null
+          event_type: string
+          id: string
+          occurred_at: string | null
+          recipient_id: string
+          source: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          event_data_json?: Json | null
+          event_type: string
+          id?: string
+          occurred_at?: string | null
+          recipient_id: string
+          source: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          event_data_json?: Json | null
+          event_type?: string
+          id?: string
+          occurred_at?: string | null
+          recipient_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_members: {
         Row: {
           created_at: string | null
@@ -357,6 +405,7 @@ export type Database = {
           city: string
           company: string | null
           created_at: string | null
+          delivery_status: string | null
           email: string | null
           first_name: string | null
           geocode_json: Json | null
@@ -379,6 +428,7 @@ export type Database = {
           city: string
           company?: string | null
           created_at?: string | null
+          delivery_status?: string | null
           email?: string | null
           first_name?: string | null
           geocode_json?: Json | null
@@ -401,6 +451,7 @@ export type Database = {
           city?: string
           company?: string | null
           created_at?: string | null
+          delivery_status?: string | null
           email?: string | null
           first_name?: string | null
           geocode_json?: Json | null
@@ -422,6 +473,53 @@ export type Database = {
             columns: ["audience_id"]
             isOneToOne: false
             referencedRelation: "audiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppressed_addresses: {
+        Row: {
+          address1: string
+          city: string
+          client_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          reason: string
+          state: string
+          suppressed_at: string | null
+          zip: string
+        }
+        Insert: {
+          address1: string
+          city: string
+          client_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          reason: string
+          state: string
+          suppressed_at?: string | null
+          zip: string
+        }
+        Update: {
+          address1?: string
+          city?: string
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string
+          state?: string
+          suppressed_at?: string | null
+          zip?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppressed_addresses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -495,6 +593,36 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          active: boolean | null
+          api_endpoint: string | null
+          api_key_secret_name: string | null
+          capabilities_json: Json | null
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          active?: boolean | null
+          api_endpoint?: string | null
+          api_key_secret_name?: string | null
+          capabilities_json?: Json | null
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          active?: boolean | null
+          api_endpoint?: string | null
+          api_key_secret_name?: string | null
+          capabilities_json?: Json | null
+          created_at?: string | null
+          id?: string
+          name?: string
         }
         Relationships: []
       }
