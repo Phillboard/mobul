@@ -432,6 +432,7 @@ export type Database = {
           created_at: string | null
           id: string
           industry_vertical: Database["public"]["Enums"]["industry_type"] | null
+          is_favorite: boolean | null
           json_layers: Json | null
           name: string
           size: Database["public"]["Enums"]["template_size"]
@@ -445,6 +446,7 @@ export type Database = {
           industry_vertical?:
             | Database["public"]["Enums"]["industry_type"]
             | null
+          is_favorite?: boolean | null
           json_layers?: Json | null
           name: string
           size: Database["public"]["Enums"]["template_size"]
@@ -458,6 +460,7 @@ export type Database = {
           industry_vertical?:
             | Database["public"]["Enums"]["industry_type"]
             | null
+          is_favorite?: boolean | null
           json_layers?: Json | null
           name?: string
           size?: Database["public"]["Enums"]["template_size"]

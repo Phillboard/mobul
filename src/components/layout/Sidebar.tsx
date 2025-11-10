@@ -10,7 +10,8 @@ import {
   Code2, 
   Settings,
   Zap,
-  Building
+  Building,
+  FileStack
 } from "lucide-react";
 import {
   Select,
@@ -31,6 +32,7 @@ const navigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Campaigns", href: "/campaigns", icon: Mail },
   { name: "Audiences", href: "/audiences", icon: Users },
+  { name: "Templates", href: "/templates", icon: FileStack },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "API & Webhooks", href: "/api", icon: Code2, roles: ['org_admin', 'agency_admin'] },
   { name: "Settings", href: "/settings", icon: Settings },
