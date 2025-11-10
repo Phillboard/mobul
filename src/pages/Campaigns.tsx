@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter, Search } from "lucide-react";
+import { Plus, Filter, Search, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export default function Campaigns() {
@@ -59,5 +59,3 @@ export default function Campaigns() {
     </Layout>
   );
 }
-
-import { Mail } from "lucide-react";
