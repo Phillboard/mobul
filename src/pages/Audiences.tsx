@@ -1,7 +1,12 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { AudienceImportTab } from "@/components/audiences/AudienceImportTab";
 
 export default function Audiences() {
+  const [activeTab, setActiveTab] = useState("import");
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -11,11 +16,34 @@ export default function Audiences() {
             Import contacts, buy targeted leads, and manage your mailing lists
           </p>
         </div>
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p>Audiences page loading...</p>
-          </CardContent>
-        </Card>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="import">Import</TabsTrigger>
+            <TabsTrigger value="saved">Saved Audiences</TabsTrigger>
+            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="import" className="mt-6">
+            <AudienceImportTab />
+          </TabsContent>
+
+          <TabsContent value="saved" className="mt-6">
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-muted-foreground">Saved audiences coming soon</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="marketplace" className="mt-6">
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-muted-foreground">Lead marketplace coming soon</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
