@@ -41,30 +41,37 @@ export function LayersPanel({
   };
 
   return (
-    <div className="w-64 border-r border-border bg-background">
-      <div className="p-4 border-b border-border">
-        <h3 className="font-semibold">Layers</h3>
-        <p className="text-xs text-muted-foreground">Manage canvas layers</p>
+    <div className="w-64 border-r border-border bg-builder-sidebar shadow-sm">
+      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
+        <h3 className="font-bold text-base">Layers</h3>
+        <p className="text-xs text-muted-foreground mt-1">Manage canvas layers</p>
       </div>
       
       <ScrollArea className="h-[calc(100vh-200px)]">
-        <div className="p-2 space-y-1">
+        <div className="p-3 space-y-2">
           {layers.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              No layers yet. Add elements to get started.
-            </p>
+            <div className="text-center py-12">
+              <p className="text-sm text-muted-foreground">
+                No layers yet
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Add elements to get started
+              </p>
+            </div>
           ) : (
             layers.map((layer) => (
               <div
                 key={layer.id}
                 className={cn(
-                  "flex items-center gap-2 p-2 rounded-md hover:bg-accent cursor-pointer group",
-                  selectedLayerId === layer.id && "bg-accent"
+                  "flex items-center gap-2 p-3 rounded-lg hover:bg-builder-tool-hover cursor-pointer group transition-all duration-200 border border-transparent",
+                  selectedLayerId === layer.id && "bg-builder-tool-active/10 border-builder-tool-active shadow-sm"
                 )}
                 onClick={() => onSelectLayer(layer)}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{getLayerLabel(layer)}</p>
+                  <p className={cn("text-sm font-semibold truncate", selectedLayerId === layer.id && "text-builder-tool-active")}>
+                    {getLayerLabel(layer)}
+                  </p>
                   <p className="text-xs text-muted-foreground capitalize">{layer.type}</p>
                 </div>
                 
@@ -72,57 +79,57 @@ export function LayersPanel({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-8 w-8 hover:bg-builder-tool-active hover:text-white transition-all"
                     onClick={(e) => {
                       e.stopPropagation();
                       onToggleVisibility(layer.id);
                     }}
                   >
                     {layer.visible !== false ? (
-                      <Eye className="h-3 w-3" />
+                      <Eye className="h-4 w-4" />
                     ) : (
-                      <EyeOff className="h-3 w-3" />
+                      <EyeOff className="h-4 w-4" />
                     )}
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-8 w-8 hover:bg-builder-tool-active hover:text-white transition-all"
                     onClick={(e) => {
                       e.stopPropagation();
                       onToggleLock(layer.id);
                     }}
                   >
                     {layer.locked ? (
-                      <Lock className="h-3 w-3" />
+                      <Lock className="h-4 w-4" />
                     ) : (
-                      <Unlock className="h-3 w-3" />
+                      <Unlock className="h-4 w-4" />
                     )}
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-8 w-8 hover:bg-builder-tool-active hover:text-white transition-all"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDuplicateLayer(layer.id);
                     }}
                   >
-                    <Copy className="h-3 w-3" />
+                    <Copy className="h-4 w-4" />
                   </Button>
                   
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-destructive"
+                    className="h-8 w-8 hover:bg-destructive hover:text-white transition-all"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDeleteLayer(layer.id);
                     }}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>

@@ -44,42 +44,46 @@ export function UploadPanel({ onImageAdd }: UploadPanelProps) {
   };
 
   return (
-    <div className="w-64 border-r border-border bg-background">
-      <div className="p-4 border-b border-border">
-        <h3 className="font-semibold">Upload</h3>
-        <p className="text-xs text-muted-foreground">Add images to canvas</p>
+    <div className="w-64 border-r border-border bg-builder-sidebar shadow-sm">
+      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
+        <h3 className="font-bold text-base">Upload</h3>
+        <p className="text-xs text-muted-foreground mt-1">Add images to canvas</p>
       </div>
 
       <div className="p-4 space-y-4">
         <div>
-          <Label className="text-sm font-medium mb-2 block">Select Image</Label>
+          <Label className="text-sm font-bold mb-2 block">Select Image</Label>
           <Input
             type="file"
             accept="image/*"
             onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-            className="mb-3"
+            className="mb-3 cursor-pointer hover:border-primary transition-colors"
           />
           <Button
             variant="outline"
-            className="w-full h-20 flex flex-col gap-2 hover:bg-accent hover:border-primary"
+            className="w-full h-24 flex flex-col gap-2 hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all duration-200 hover:scale-105 group"
             onClick={handleImageUpload}
             disabled={!imageFile || uploading}
           >
-            <Upload className="h-8 w-8" />
-            <span className="text-sm font-medium">
+            <Upload className="h-8 w-8 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-semibold">
               {uploading ? "Uploading..." : "Add to Canvas"}
             </span>
           </Button>
         </div>
 
         <div className="pt-4 border-t border-border">
-          <p className="text-xs text-muted-foreground">
-            Supported formats: JPG, PNG, SVG
-            <br />
-            Max size: 10MB
-            <br />
-            Recommended: 300 DPI for print
-          </p>
+          <div className="bg-muted/50 rounded-lg p-3 space-y-1">
+            <p className="text-xs text-muted-foreground font-medium">
+              📁 Supported: JPG, PNG, SVG
+            </p>
+            <p className="text-xs text-muted-foreground font-medium">
+              📊 Max size: 10MB
+            </p>
+            <p className="text-xs text-muted-foreground font-medium">
+              🖨️ Recommended: 300 DPI
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -29,17 +29,23 @@ export function TopToolbar({
   canRedo = false,
 }: TopToolbarProps) {
   return (
-    <div className="border-b border-border bg-background px-4 py-3 flex items-center justify-between">
+    <div className="border-b border-border bg-builder-sidebar px-6 py-3 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={onBack} title="Back to templates">
-          <ArrowLeft className="h-4 w-4" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onBack} 
+          title="Back to templates"
+          className="hover:bg-builder-tool-active hover:text-white transition-all"
+        >
+          <ArrowLeft className="h-5 w-5" />
         </Button>
-        <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-8" />
         <div>
-          <h1 className="text-lg font-semibold">{templateName}</h1>
+          <h1 className="text-lg font-bold">{templateName}</h1>
           {lastSaved && (
-            <p className="text-xs text-muted-foreground">
-              {isSaving ? "Saving..." : `Last saved ${formatDistanceToNow(lastSaved, { addSuffix: true })}`}
+            <p className="text-xs text-muted-foreground font-medium">
+              {isSaving ? "💾 Saving..." : `✓ Last saved ${formatDistanceToNow(lastSaved, { addSuffix: true })}`}
             </p>
           )}
         </div>
@@ -54,6 +60,7 @@ export function TopToolbar({
               onClick={onUndo} 
               disabled={!canUndo}
               title="Undo (Ctrl+Z)"
+              className="hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all"
             >
               <Undo className="h-4 w-4" />
             </Button>
@@ -63,6 +70,7 @@ export function TopToolbar({
               onClick={onRedo} 
               disabled={!canRedo}
               title="Redo (Ctrl+Y)"
+              className="hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all"
             >
               <Redo className="h-4 w-4" />
             </Button>
@@ -70,11 +78,19 @@ export function TopToolbar({
           </>
         )}
         
-        <Button variant="outline" onClick={onSave} disabled={isSaving}>
+        <Button 
+          variant="outline" 
+          onClick={onSave} 
+          disabled={isSaving}
+          className="hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all font-semibold"
+        >
           <Save className="mr-2 h-4 w-4" />
           {isSaving ? "Saving..." : "Save"}
         </Button>
-        <Button variant="outline" onClick={onPreview}>
+        <Button 
+          onClick={onPreview}
+          className="bg-builder-tool-active hover:bg-builder-tool-active/90 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+        >
           <Eye className="mr-2 h-4 w-4" />
           Preview
         </Button>

@@ -52,6 +52,12 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 210 20% 90%;
     --sidebar-border: 215 25% 20%;
     --sidebar-ring: 195 85% 50%;
+    
+    /* Builder specific colors */
+    --builder-sidebar: 240 5% 96%;
+    --builder-canvas: 240 5% 98%;
+    --builder-tool-active: 217 91% 60%;
+    --builder-tool-hover: 217 91% 95%;
   }
 
   .dark {
@@ -97,6 +103,12 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 210 20% 90%;
     --sidebar-border: 215 25% 15%;
     --sidebar-ring: 195 85% 50%;
+    
+    /* Builder specific colors - dark mode */
+    --builder-sidebar: 240 5% 12%;
+    --builder-canvas: 240 5% 8%;
+    --builder-tool-active: 217 91% 60%;
+    --builder-tool-hover: 217 91% 20%;
   }
 }
 

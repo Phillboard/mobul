@@ -16,8 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function Templates() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [selectedSize, setSelectedSize] = useState<string>("all");
-  const [selectedIndustry, setSelectedIndustry] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedFormat, setSelectedFormat] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -77,16 +77,20 @@ export default function Templates() {
         </div>
 
         <TemplateFilters
-          selectedSize={selectedSize}
-          selectedIndustry={selectedIndustry}
-          onSizeChange={setSelectedSize}
-          onIndustryChange={setSelectedIndustry}
+          selectedCategory={selectedCategory}
+          selectedFormat={selectedFormat}
+          onCategoryChange={setSelectedCategory}
+          onFormatChange={setSelectedFormat}
+          onClearFilters={() => {
+            setSelectedCategory("all");
+            setSelectedFormat("all");
+          }}
         />
 
         <TemplateGrid
           clientId={currentClient.id}
-          sizeFilter={selectedSize}
-          industryFilter={selectedIndustry}
+          sizeFilter={selectedFormat}
+          industryFilter={selectedCategory}
           searchQuery={searchQuery}
           view={view}
           selectedIds={selectedIds}

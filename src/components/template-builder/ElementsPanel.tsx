@@ -26,10 +26,10 @@ export function ElementsPanel({ onAddText, onAddShape, onAddQRCode }: ElementsPa
   };
 
   return (
-    <div className="w-64 border-r border-border bg-background">
-      <div className="p-4 border-b border-border">
-        <h3 className="font-semibold">Elements</h3>
-        <p className="text-xs text-muted-foreground">Add elements to canvas</p>
+    <div className="w-64 border-r border-border bg-builder-sidebar shadow-sm">
+      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
+        <h3 className="font-bold text-base">Elements</h3>
+        <p className="text-xs text-muted-foreground mt-1">Add elements to canvas</p>
       </div>
 
       <div className="p-4 grid grid-cols-2 gap-3">
@@ -39,11 +39,11 @@ export function ElementsPanel({ onAddText, onAddShape, onAddQRCode }: ElementsPa
             <Button
               key={element.id}
               variant="outline"
-              className="h-24 flex flex-col gap-2 hover:bg-accent hover:border-primary"
+              className="h-24 flex flex-col gap-2 hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all duration-200 hover:scale-105 hover:shadow-lg group"
               onClick={() => handleElementClick(element.action)}
             >
-              <Icon className="h-8 w-8" />
-              <span className="text-sm font-medium">{element.label}</span>
+              <Icon className="h-8 w-8 group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-semibold">{element.label}</span>
             </Button>
           );
         })}

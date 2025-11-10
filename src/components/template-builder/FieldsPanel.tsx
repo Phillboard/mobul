@@ -52,27 +52,27 @@ const fieldGroups = [
 
 export function FieldsPanel({ onAddField }: FieldsPanelProps) {
   return (
-    <div className="w-64 border-r border-border bg-background">
-      <div className="p-4 border-b border-border">
-        <h3 className="font-semibold">Merge Fields</h3>
-        <p className="text-xs text-muted-foreground">Add personalized data fields</p>
+    <div className="w-64 border-r border-border bg-builder-sidebar shadow-sm">
+      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
+        <h3 className="font-bold text-base">Merge Fields</h3>
+        <p className="text-xs text-muted-foreground mt-1">Add personalized data fields</p>
       </div>
 
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
         {fieldGroups.map((group) => {
           const Icon = group.icon;
           return (
             <div key={group.id}>
-              <Label className="text-sm font-medium mb-2 flex items-center gap-2">
-                <Icon className="h-4 w-4" />
+              <Label className="text-sm font-bold mb-3 flex items-center gap-2 text-foreground">
+                <Icon className="h-4 w-4 text-primary" />
                 {group.label}
               </Label>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {group.fields.map((field) => (
                   <Button
                     key={field.value}
                     variant="outline"
-                    className="w-full justify-start text-left hover:bg-accent hover:border-primary"
+                    className="w-full justify-start text-left hover:bg-builder-tool-active hover:text-white hover:border-builder-tool-active transition-all duration-200 text-sm font-medium"
                     onClick={() => onAddField(field.value)}
                   >
                     {field.label}

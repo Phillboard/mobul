@@ -207,18 +207,35 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer }: CanvasP
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-8">
-      <div className="mb-4 flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleZoomOut}>
+    <div className="flex-1 flex flex-col bg-builder-canvas">
+      <div className="flex items-center justify-center gap-4 p-4 bg-builder-sidebar border-b border-border shadow-sm">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleZoomOut}
+          disabled={zoom <= 0.5}
+          className="hover:bg-builder-tool-hover transition-all"
+        >
           <ZoomOut className="h-4 w-4" />
         </Button>
-        <span className="text-sm font-medium">{Math.round(zoom * 100)}%</span>
-        <Button variant="outline" size="sm" onClick={handleZoomIn}>
+        <span className="text-sm font-semibold min-w-[60px] text-center bg-background px-3 py-1 rounded-md border border-border">
+          {Math.round(zoom * 100)}%
+        </span>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleZoomIn}
+          disabled={zoom >= 2}
+          className="hover:bg-builder-tool-hover transition-all"
+        >
           <ZoomIn className="h-4 w-4" />
         </Button>
       </div>
-      <div className="border-2 border-border shadow-lg">
-        <canvas ref={canvasRef} />
+
+      <div className="flex-1 overflow-auto p-12 flex items-center justify-center">
+        <div className="border-2 border-border shadow-2xl bg-white rounded-lg overflow-hidden hover:shadow-3xl transition-shadow duration-300">
+          <canvas ref={canvasRef} />
+        </div>
       </div>
     </div>
   );
