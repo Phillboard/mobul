@@ -20,7 +20,7 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer }: CanvasP
   const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || !data.canvasSize) return;
 
     const canvas = new FabricCanvas(canvasRef.current, {
       width: data.canvasSize.width,
@@ -64,7 +64,7 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer }: CanvasP
 
   // Update layers when data changes
   useEffect(() => {
-    if (!fabricCanvasRef.current) return;
+    if (!fabricCanvasRef.current || !data.canvasSize) return;
     const canvas = fabricCanvasRef.current;
     canvas.clear();
     loadLayers(canvas, data.layers);
