@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const importSchema = z.object({
+  client_id: z.string().uuid('Invalid client ID format'),
+  audience_name: z.string().trim().min(1, 'Audience name is required').max(100, 'Audience name must be less than 100 characters'),
+});
 
 interface ValidationError {
   row: number;
@@ -116,11 +122,28 @@ serve(async (req) => {
     const clientId = formData.get('client_id') as string;
     const audienceName = formData.get('audience_name') as string;
 
-    if (!file || !clientId || !audienceName) {
-      throw new Error('Missing required fields: file, client_id, audience_name');
+    if (!file) {
+      throw new Error('Missing required file');
     }
 
-    console.log(`Processing file: ${file.name}, size: ${file.size} bytes for client: ${clientId}`);
+    // Validate input
+    const validation = importSchema.safeParse({ client_id: clientId, audience_name: audienceName });
+    if (!validation.success) {
+      throw new Error(`Invalid input: ${validation.error.errors[0].message}`);
+    }
+
+    // Verify user has access to this client
+    const { data: hasAccess, error: accessError } = await supabase
+      .rpc('user_can_access_client', { 
+        _user_id: user.id, 
+        _client_id: clientId 
+      });
+
+    if (accessError || !hasAccess) {
+      throw new Error('Unauthorized: No access to this client');
+    }
+
+    console.log(`Processing import: ${file.name} (${file.size} bytes)`);
 
     // Check file size (max 20MB)
     if (file.size > 20 * 1024 * 1024) {
@@ -132,7 +155,6 @@ serve(async (req) => {
     
     // Parse CSV
     const rows = parseCSV(content);
-    console.log(`Parsed ${rows.length} rows from CSV`);
 
     if (rows.length === 0) {
       throw new Error('No data found in file');
@@ -150,8 +172,6 @@ serve(async (req) => {
         validRows.push(row);
       }
     });
-
-    console.log(`Valid rows: ${validRows.length}, Invalid rows: ${validationErrors.length / 2}`);
 
     // Create audience record
     const { data: audience, error: audienceError } = await supabase
@@ -177,8 +197,6 @@ serve(async (req) => {
       console.error('Error creating audience:', audienceError);
       throw new Error(`Failed to create audience: ${audienceError.message}`);
     }
-
-    console.log(`Created audience: ${audience.id}`);
 
     // Insert recipients in batches of 1000
     const batchSize = 1000;
@@ -222,7 +240,6 @@ serve(async (req) => {
         // Continue with other batches
       } else {
         insertedCount += recipients.length;
-        console.log(`Inserted batch ${i / batchSize + 1}, total: ${insertedCount} recipients`);
       }
     }
 
@@ -234,8 +251,6 @@ serve(async (req) => {
         valid_count: insertedCount
       })
       .eq('id', audience.id);
-
-    console.log(`Import completed. Audience ${audience.id} is ready with ${insertedCount} recipients`);
 
     return new Response(
       JSON.stringify({

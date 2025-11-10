@@ -1,10 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const exportSchema = z.object({
+  audience_id: z.string().uuid('Invalid audience ID format'),
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -30,11 +35,34 @@ serve(async (req) => {
 
     const { audience_id } = await req.json();
 
-    if (!audience_id) {
-      throw new Error('Missing audience_id');
+    // Validate input
+    const validation = exportSchema.safeParse({ audience_id });
+    if (!validation.success) {
+      throw new Error(`Invalid input: ${validation.error.errors[0].message}`);
     }
 
-    console.log(`Exporting audience: ${audience_id}`);
+    // Verify user has access to this audience's client
+    const { data: audience, error: audienceError } = await supabase
+      .from('audiences')
+      .select('client_id')
+      .eq('id', audience_id)
+      .single();
+
+    if (audienceError || !audience) {
+      throw new Error('Audience not found');
+    }
+
+    const { data: hasAccess, error: accessError } = await supabase
+      .rpc('user_can_access_client', { 
+        _user_id: user.id, 
+        _client_id: audience.client_id 
+      });
+
+    if (accessError || !hasAccess) {
+      throw new Error('Unauthorized: No access to this audience');
+    }
+
+    console.log('Exporting audience');
 
     // Fetch all recipients for the audience
     const { data: recipients, error: recipientsError } = await supabase
@@ -51,8 +79,6 @@ serve(async (req) => {
     if (!recipients || recipients.length === 0) {
       throw new Error('No recipients found for this audience');
     }
-
-    console.log(`Found ${recipients.length} recipients to export`);
 
     // Generate CSV
     const headers = [
@@ -86,8 +112,6 @@ serve(async (req) => {
       });
       csv += row.join(',') + '\n';
     });
-
-    console.log(`CSV generated successfully with ${recipients.length} rows`);
 
     return new Response(csv, {
       headers: {
