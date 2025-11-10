@@ -24,6 +24,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
 interface TemplateCardProps {
@@ -49,6 +55,7 @@ const industryLabels: Record<string, string> = {
 export function TemplateCard({ template }: TemplateCardProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -128,7 +135,10 @@ export function TemplateCard({ template }: TemplateCardProps) {
   return (
     <>
       <Card className="overflow-hidden group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-border/50 hover:border-primary/30 animate-scale-in">
-        <div className="relative aspect-[3/4] bg-muted overflow-hidden">
+        <div 
+          className="relative aspect-[3/4] bg-muted overflow-hidden cursor-pointer"
+          onClick={() => template.thumbnail_url && setPreviewOpen(true)}
+        >
           {template.thumbnail_url ? (
             <>
               <img
@@ -136,7 +146,11 @@ export function TemplateCard({ template }: TemplateCardProps) {
                 alt={template.name}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <div className="text-primary-foreground bg-primary/90 px-4 py-2 rounded-lg font-medium text-sm backdrop-blur-sm">
+                  Click to preview
+                </div>
+              </div>
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-gradient-to-br from-muted to-muted/50">
@@ -222,6 +236,37 @@ export function TemplateCard({ template }: TemplateCardProps) {
           </Button>
         </CardContent>
       </Card>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-4">
+            <DialogTitle className="text-xl">{template.name}</DialogTitle>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            {template.thumbnail_url ? (
+              <div className="relative bg-muted rounded-lg overflow-hidden">
+                <img
+                  src={template.thumbnail_url}
+                  alt={template.name}
+                  className="w-full h-auto max-h-[70vh] object-contain animate-scale-in"
+                />
+              </div>
+            ) : (
+              <div className="aspect-[3/4] bg-muted rounded-lg flex items-center justify-center">
+                <p className="text-muted-foreground">No preview available</p>
+              </div>
+            )}
+            <div className="flex gap-2 mt-4 flex-wrap">
+              <Badge variant="secondary">{sizeLabels[template.size]}</Badge>
+              {template.industry_vertical && (
+                <Badge variant="outline">
+                  {industryLabels[template.industry_vertical]}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <EditTemplateDialog
         template={template}
