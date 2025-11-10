@@ -1,63 +1,102 @@
-import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useTenant } from "@/contexts/TenantContext";
-import { AudienceImportTab } from "@/components/audiences/AudienceImportTab";
-import { AudiencesListTab } from "@/components/audiences/AudiencesListTab";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload, ShoppingCart, Users as UsersIcon } from "lucide-react";
 
 export default function Audiences() {
-  const { currentClient } = useTenant();
-  const [activeTab, setActiveTab] = useState("import");
-
   return (
     <Layout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Audiences & Leads</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Audiences & Leads</h1>
+          <p className="mt-1 text-muted-foreground">
             Import contacts, buy targeted leads, and manage your mailing lists
           </p>
         </div>
 
-        {!currentClient && (
-          <Card className="border-destructive/20 bg-destructive/5">
-            <CardContent className="pt-6">
-              <p className="text-sm text-destructive">
-                Please select a client from the sidebar to manage audiences
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="import">Import</TabsTrigger>
-            <TabsTrigger value="audiences">Saved Audiences</TabsTrigger>
-            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="import" className="mt-6">
-            <AudienceImportTab clientId={currentClient?.id || null} />
-          </TabsContent>
-
-          <TabsContent value="audiences" className="mt-6">
-            <AudiencesListTab clientId={currentClient?.id || null} />
-          </TabsContent>
-
-          <TabsContent value="marketplace" className="mt-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="rounded-lg border-2 border-dashed border-border bg-muted/20 p-12 text-center">
-                  <h3 className="text-lg font-semibold">Marketplace Coming Soon</h3>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5 text-primary" />
+                Import Audience
+              </CardTitle>
+              <CardDescription>
+                Upload CSV/XLSX with automatic CASS, NCOA validation, and deduplication
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="rounded-lg border-2 border-dashed border-border bg-muted/20 p-8 text-center">
+                  <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Purchase targeted leads filtered by industry and geography
+                    Drag and drop your file here, or click to browse
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Supports up to 250k rows per batch
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                  Choose File
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-accent/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-accent" />
+                Lead Marketplace
+              </CardTitle>
+              <CardDescription>
+                Purchase verified leads filtered by vertical, geography, and demographics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <span className="text-sm font-medium">Roofing</span>
+                    <Button variant="outline" size="sm">Browse</Button>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <span className="text-sm font-medium">REI / Flippers</span>
+                    <Button variant="outline" size="sm">Browse</Button>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <span className="text-sm font-medium">Auto Dealerships</span>
+                    <Button variant="outline" size="sm">Browse</Button>
+                  </div>
+                </div>
+                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                  Explore Marketplace
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UsersIcon className="h-5 w-5" />
+              Saved Audiences
+            </CardTitle>
+            <CardDescription>
+              View and manage your segmented contact lists
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-lg border-2 border-dashed border-border bg-muted/20 p-12 text-center">
+              <UsersIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-semibold text-foreground">No audiences yet</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Import your first contact list or purchase leads to get started
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );
