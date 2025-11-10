@@ -14,6 +14,141 @@ export type Database = {
   }
   public: {
     Tables: {
+      audiences: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          hygiene_json: Json | null
+          id: string
+          invalid_count: number | null
+          name: string
+          source: Database["public"]["Enums"]["audience_source"]
+          status: Database["public"]["Enums"]["audience_status"] | null
+          suppressed_json: Json | null
+          total_count: number | null
+          valid_count: number | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          hygiene_json?: Json | null
+          id?: string
+          invalid_count?: number | null
+          name: string
+          source?: Database["public"]["Enums"]["audience_source"]
+          status?: Database["public"]["Enums"]["audience_status"] | null
+          suppressed_json?: Json | null
+          total_count?: number | null
+          valid_count?: number | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          hygiene_json?: Json | null
+          id?: string
+          invalid_count?: number | null
+          name?: string
+          source?: Database["public"]["Enums"]["audience_source"]
+          status?: Database["public"]["Enums"]["audience_status"] | null
+          suppressed_json?: Json | null
+          total_count?: number | null
+          valid_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audiences_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          audience_id: string | null
+          base_lp_url: string | null
+          client_id: string
+          created_at: string | null
+          created_by_user_id: string | null
+          id: string
+          lp_mode: Database["public"]["Enums"]["lp_mode"] | null
+          mail_date: string | null
+          name: string
+          postage: Database["public"]["Enums"]["postage_class"] | null
+          size: Database["public"]["Enums"]["template_size"]
+          status: Database["public"]["Enums"]["campaign_status"] | null
+          template_id: string | null
+          updated_at: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          vendor: string | null
+        }
+        Insert: {
+          audience_id?: string | null
+          base_lp_url?: string | null
+          client_id: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+          lp_mode?: Database["public"]["Enums"]["lp_mode"] | null
+          mail_date?: string | null
+          name: string
+          postage?: Database["public"]["Enums"]["postage_class"] | null
+          size: Database["public"]["Enums"]["template_size"]
+          status?: Database["public"]["Enums"]["campaign_status"] | null
+          template_id?: string | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          vendor?: string | null
+        }
+        Update: {
+          audience_id?: string | null
+          base_lp_url?: string | null
+          client_id?: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+          lp_mode?: Database["public"]["Enums"]["lp_mode"] | null
+          mail_date?: string | null
+          name?: string
+          postage?: Database["public"]["Enums"]["postage_class"] | null
+          size?: Database["public"]["Enums"]["template_size"]
+          status?: Database["public"]["Enums"]["campaign_status"] | null
+          template_id?: string | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_audience_id_fkey"
+            columns: ["audience_id"]
+            isOneToOne: false
+            referencedRelation: "audiences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_users: {
         Row: {
           client_id: string
@@ -143,6 +278,50 @@ export type Database = {
         }
         Relationships: []
       }
+      print_batches: {
+        Row: {
+          batch_number: number
+          campaign_id: string
+          created_at: string | null
+          id: string
+          pdf_url: string | null
+          recipient_count: number | null
+          status: Database["public"]["Enums"]["batch_status"] | null
+          updated_at: string | null
+          vendor: string
+        }
+        Insert: {
+          batch_number: number
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          pdf_url?: string | null
+          recipient_count?: number | null
+          status?: Database["public"]["Enums"]["batch_status"] | null
+          updated_at?: string | null
+          vendor: string
+        }
+        Update: {
+          batch_number?: number
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          pdf_url?: string | null
+          recipient_count?: number | null
+          status?: Database["public"]["Enums"]["batch_status"] | null
+          updated_at?: string | null
+          vendor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "print_batches_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -170,6 +349,131 @@ export type Database = {
         }
         Relationships: []
       }
+      recipients: {
+        Row: {
+          address1: string
+          address2: string | null
+          audience_id: string
+          city: string
+          company: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          geocode_json: Json | null
+          id: string
+          last_name: string | null
+          phone: string | null
+          state: string
+          token: string
+          validation_details_json: Json | null
+          validation_status:
+            | Database["public"]["Enums"]["validation_status"]
+            | null
+          zip: string
+          zip4: string | null
+        }
+        Insert: {
+          address1: string
+          address2?: string | null
+          audience_id: string
+          city: string
+          company?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          geocode_json?: Json | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          state: string
+          token: string
+          validation_details_json?: Json | null
+          validation_status?:
+            | Database["public"]["Enums"]["validation_status"]
+            | null
+          zip: string
+          zip4?: string | null
+        }
+        Update: {
+          address1?: string
+          address2?: string | null
+          audience_id?: string
+          city?: string
+          company?: string | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          geocode_json?: Json | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+          state?: string
+          token?: string
+          validation_details_json?: Json | null
+          validation_status?:
+            | Database["public"]["Enums"]["validation_status"]
+            | null
+          zip?: string
+          zip4?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipients_audience_id_fkey"
+            columns: ["audience_id"]
+            isOneToOne: false
+            referencedRelation: "audiences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          id: string
+          industry_vertical: Database["public"]["Enums"]["industry_type"] | null
+          json_layers: Json | null
+          name: string
+          size: Database["public"]["Enums"]["template_size"]
+          thumbnail_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          id?: string
+          industry_vertical?:
+            | Database["public"]["Enums"]["industry_type"]
+            | null
+          json_layers?: Json | null
+          name: string
+          size: Database["public"]["Enums"]["template_size"]
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          industry_vertical?:
+            | Database["public"]["Enums"]["industry_type"]
+            | null
+          json_layers?: Json | null
+          name?: string
+          size?: Database["public"]["Enums"]["template_size"]
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -196,11 +500,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_recipient_token: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_can_access_client: {
+        Args: { _client_id: string; _user_id: string }
         Returns: boolean
       }
       user_has_client_access: {
@@ -214,13 +523,26 @@ export type Database = {
     }
     Enums: {
       app_role: "org_admin" | "agency_admin" | "client_user"
+      audience_source: "import" | "purchase" | "manual"
+      audience_status: "processing" | "ready" | "failed"
+      batch_status: "pending" | "printing" | "mailed" | "delivered"
+      campaign_status:
+        | "draft"
+        | "proofed"
+        | "in_production"
+        | "mailed"
+        | "completed"
       industry_type:
         | "roofing"
         | "rei"
         | "auto_service"
         | "auto_warranty"
         | "auto_buyback"
+      lp_mode: "bridge" | "redirect"
       org_type: "internal" | "agency"
+      postage_class: "first_class" | "standard"
+      template_size: "4x6" | "6x9" | "6x11" | "letter" | "trifold"
+      validation_status: "valid" | "invalid" | "suppressed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -349,6 +671,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["org_admin", "agency_admin", "client_user"],
+      audience_source: ["import", "purchase", "manual"],
+      audience_status: ["processing", "ready", "failed"],
+      batch_status: ["pending", "printing", "mailed", "delivered"],
+      campaign_status: [
+        "draft",
+        "proofed",
+        "in_production",
+        "mailed",
+        "completed",
+      ],
       industry_type: [
         "roofing",
         "rei",
@@ -356,7 +688,11 @@ export const Constants = {
         "auto_warranty",
         "auto_buyback",
       ],
+      lp_mode: ["bridge", "redirect"],
       org_type: ["internal", "agency"],
+      postage_class: ["first_class", "standard"],
+      template_size: ["4x6", "6x9", "6x11", "letter", "trifold"],
+      validation_status: ["valid", "invalid", "suppressed"],
     },
   },
 } as const
