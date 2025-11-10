@@ -13,6 +13,7 @@ import PURLLandingPage from "./pages/PURLLandingPage";
 import Audiences from "./pages/Audiences";
 import AudienceDetail from "./pages/AudienceDetail";
 import RecipientDetail from "./pages/RecipientDetail";
+import LeadMarketplace from "./pages/LeadMarketplace";
 import Templates from "./pages/Templates";
 import Analytics from "./pages/Analytics";
 import API from "./pages/API";
@@ -40,7 +41,8 @@ const App = () => (
               <Route path="/audiences/:id" element={<ProtectedRoute><AudienceDetail /></ProtectedRoute>} />
               <Route path="/recipients/:id" element={<ProtectedRoute><RecipientDetail /></ProtectedRoute>} />
               <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
-              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/analytics/:campaignId" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/marketplace" element={<ProtectedRoute><LeadMarketplace /></ProtectedRoute>} />
               <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

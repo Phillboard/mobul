@@ -33,7 +33,7 @@ const navigation: NavItem[] = [
   { name: "Campaigns", href: "/campaigns", icon: Mail },
   { name: "Audiences", href: "/audiences", icon: Users },
   { name: "Templates", href: "/templates", icon: FileStack },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Lead Marketplace", href: "/marketplace", icon: Zap },
   { name: "API & Webhooks", href: "/api", icon: Code2, roles: ['org_admin', 'agency_admin'] },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

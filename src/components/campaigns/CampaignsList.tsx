@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreVertical, Mail, Calendar, Users, QrCode, FileCheck, Send, Eye } from "lucide-react";
+import { MoreVertical, Mail, Calendar, Users, QrCode, FileCheck, Send, Eye, TrendingUp } from "lucide-react";
 import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
 import { CampaignProofDialog } from "./CampaignProofDialog";
 import {
@@ -221,6 +221,10 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
                     <DropdownMenuItem onClick={() => navigate(`/campaigns/${campaign.id}`)}>
                       <Eye className="h-4 w-4 mr-2" />
                       View Details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/analytics/${campaign.id}`)}>
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      View Analytics
                     </DropdownMenuItem>
                     {(campaign.status === "proofed" || campaign.status === "approved") && (
                       <>
