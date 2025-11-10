@@ -35,12 +35,12 @@ export default function Templates() {
           <div>
             <h1 className="text-3xl font-bold">Template Library</h1>
             <p className="text-muted-foreground mt-2">
-              Create and manage your direct mail templates
+              Create and manage your direct mail templates with our visual canvas editor
             </p>
           </div>
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Template
+            Create New Template
           </Button>
         </div>
 

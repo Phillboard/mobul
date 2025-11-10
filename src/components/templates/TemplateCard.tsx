@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Star, Edit, Copy, Trash2 } from "lucide-react";
+import { MoreVertical, Star, Edit, Copy, Trash2, Palette } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ export function TemplateCard({ template }: TemplateCardProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async () => {
@@ -150,7 +152,7 @@ export function TemplateCard({ template }: TemplateCardProps) {
           </Button>
         </div>
         <CardContent className="p-4">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold line-clamp-1">{template.name}</h3>
               <DropdownMenu>
@@ -162,7 +164,7 @@ export function TemplateCard({ template }: TemplateCardProps) {
                 <DropdownMenuContent align="end" className="bg-background z-50">
                   <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
                     <Edit className="mr-2 h-4 w-4" />
-                    Edit
+                    Edit Details
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => duplicateMutation.mutate()}>
                     <Copy className="mr-2 h-4 w-4" />
@@ -187,6 +189,14 @@ export function TemplateCard({ template }: TemplateCardProps) {
                 </Badge>
               )}
             </div>
+            <Button 
+              className="w-full" 
+              size="sm"
+              onClick={() => navigate(`/template-builder/${template.id}`)}
+            >
+              <Palette className="mr-2 h-4 w-4" />
+              Design Template
+            </Button>
           </div>
         </CardContent>
       </Card>
