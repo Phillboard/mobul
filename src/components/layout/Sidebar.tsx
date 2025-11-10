@@ -1,5 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   LayoutDashboard, 
   Mail, 
@@ -10,16 +11,29 @@ import {
   Zap
 } from "lucide-react";
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+  roles?: ('org_admin' | 'agency_admin' | 'client_user')[];
+}
+
+const navigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Campaigns", href: "/campaigns", icon: Mail },
   { name: "Audiences", href: "/audiences", icon: Users },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "API & Webhooks", href: "/api", icon: Code2 },
+  { name: "API & Webhooks", href: "/api", icon: Code2, roles: ['org_admin', 'agency_admin'] },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
+  const { hasRole } = useAuth();
+  
+  const visibleNavigation = navigation.filter(item => {
+    if (!item.roles) return true;
+    return item.roles.some(role => hasRole(role));
+  });
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar">
       <div className="flex h-full flex-col">
@@ -36,7 +50,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {navigation.map((item) => (
+          {visibleNavigation.map((item) => (
             <NavLink
               key={item.name}
               to={item.href}
@@ -52,22 +66,6 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* User info */}
-        <div className="border-t border-sidebar-border p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-primary">
-              OA
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
-                Org Admin
-              </p>
-              <p className="text-xs text-sidebar-foreground/60 truncate">
-                admin@aceengage.com
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </aside>
   );
