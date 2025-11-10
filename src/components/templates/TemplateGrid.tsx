@@ -55,9 +55,15 @@ export function TemplateGrid({ clientId, sizeFilter, industryFilter }: TemplateG
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {templates.map((template) => (
-        <TemplateCard key={template.id} template={template} />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      {templates.map((template, index) => (
+        <div 
+          key={template.id} 
+          className="animate-fade-in"
+          style={{ animationDelay: `${index * 50}ms` }}
+        >
+          <TemplateCard template={template} />
+        </div>
       ))}
     </div>
   );

@@ -127,77 +127,99 @@ export function TemplateCard({ template }: TemplateCardProps) {
 
   return (
     <>
-      <Card className="overflow-hidden group hover:shadow-lg transition-shadow">
-        <div className="relative aspect-[3/4] bg-muted">
+      <Card className="overflow-hidden group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-border/50 hover:border-primary/30 animate-scale-in">
+        <div className="relative aspect-[3/4] bg-muted overflow-hidden">
           {template.thumbnail_url ? (
-            <img
-              src={template.thumbnail_url}
-              alt={template.name}
-              className="w-full h-full object-cover"
-            />
+            <>
+              <img
+                src={template.thumbnail_url}
+                alt={template.name}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-              No preview
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-gradient-to-br from-muted to-muted/50">
+              <div className="text-center space-y-2">
+                <Palette className="h-12 w-12 mx-auto opacity-30" />
+                <p className="text-sm">No preview</p>
+              </div>
             </div>
           )}
-          <Button
-            size="icon"
-            variant={template.is_favorite ? "default" : "secondary"}
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => toggleFavoriteMutation.mutate()}
-          >
-            <Star
-              className={`h-4 w-4 ${template.is_favorite ? "fill-current" : ""}`}
-            />
-          </Button>
-        </div>
-        <CardContent className="p-4">
-          <div className="space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold line-clamp-1">{template.name}</h3>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="ghost">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-background z-50">
-                  <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Details
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => duplicateMutation.mutate()}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Duplicate
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setDeleteDialogOpen(true)}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              <Badge variant="secondary">{sizeLabels[template.size]}</Badge>
-              {template.industry_vertical && (
-                <Badge variant="outline">
-                  {industryLabels[template.industry_vertical]}
-                </Badge>
-              )}
-            </div>
-            <Button 
-              className="w-full" 
-              size="sm"
-              onClick={() => navigate(`/template-builder/${template.id}`)}
+          <div className="absolute top-3 right-3 flex gap-2">
+            <Button
+              size="icon"
+              variant={template.is_favorite ? "default" : "secondary"}
+              className={`transition-all duration-300 ${
+                template.is_favorite 
+                  ? "opacity-100 scale-100" 
+                  : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
+              } shadow-lg hover:scale-110`}
+              onClick={() => toggleFavoriteMutation.mutate()}
             >
-              <Palette className="mr-2 h-4 w-4" />
-              Design Template
+              <Star
+                className={`h-4 w-4 transition-all ${
+                  template.is_favorite ? "fill-current animate-pulse" : ""
+                }`}
+              />
             </Button>
           </div>
+        </div>
+        <CardContent className="p-5 space-y-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-base line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                {template.name}
+              </h3>
+              <div className="flex gap-2 flex-wrap">
+                <Badge variant="secondary" className="text-xs">
+                  {sizeLabels[template.size]}
+                </Badge>
+                {template.industry_vertical && (
+                  <Badge variant="outline" className="text-xs">
+                    {industryLabels[template.industry_vertical]}
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background z-50">
+                <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Details
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => duplicateMutation.mutate()}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <Button 
+            className="w-full transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/20" 
+            size="sm"
+            onClick={() => navigate(`/template-builder/${template.id}`)}
+          >
+            <Palette className="mr-2 h-4 w-4" />
+            Design Template
+          </Button>
         </CardContent>
       </Card>
 
