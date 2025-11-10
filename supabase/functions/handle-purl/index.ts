@@ -11,12 +11,19 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Extract from URL path if present (for direct URL access) or from body (for function invoke)
     const url = new URL(req.url);
     const pathParts = url.pathname.split('/').filter(p => p);
     
-    // Expect path format: /handle-purl/{campaign_id}/{token}
-    const campaignId = pathParts[1];
-    const token = pathParts[2];
+    let campaignId = pathParts[1];
+    let token = pathParts[2];
+
+    // If not in path, try to get from body
+    if (!campaignId || !token) {
+      const body = await req.json();
+      campaignId = body.campaignId;
+      token = body.token;
+    }
 
     if (!campaignId || !token) {
       return new Response(
