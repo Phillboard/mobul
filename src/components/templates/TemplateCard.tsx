@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Star, Edit, Copy, Trash2, Palette } from "lucide-react";
+import { MoreVertical, Star, Edit, Copy, Trash2, Palette, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,6 +34,8 @@ import { Badge } from "@/components/ui/badge";
 
 interface TemplateCardProps {
   template: any;
+  isSelected: boolean;
+  onToggleSelect: (id: string) => void;
 }
 
 const sizeLabels: Record<string, string> = {
@@ -52,7 +54,7 @@ const industryLabels: Record<string, string> = {
   auto_buyback: "Auto Buyback",
 };
 
-export function TemplateCard({ template }: TemplateCardProps) {
+export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateCardProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -134,11 +136,33 @@ export function TemplateCard({ template }: TemplateCardProps) {
 
   return (
     <>
-      <Card className="overflow-hidden group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-border/50 hover:border-primary/30 animate-scale-in">
+      <Card className={`overflow-hidden group hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-2 border-border/50 hover:border-primary/30 animate-scale-in ${
+        isSelected ? "ring-2 ring-primary" : ""
+      }`}>
         <div 
           className="relative aspect-[3/4] bg-muted overflow-hidden cursor-pointer"
-          onClick={() => template.thumbnail_url && setPreviewOpen(true)}
+          onClick={(e) => {
+            if (e.shiftKey || e.ctrlKey || e.metaKey) {
+              onToggleSelect(template.id);
+            } else if (template.thumbnail_url) {
+              setPreviewOpen(true);
+            }
+          }}
         >
+          {/* Selection indicator */}
+          <div
+            className={`absolute top-3 left-3 z-10 w-6 h-6 rounded border-2 flex items-center justify-center transition-all cursor-pointer ${
+              isSelected
+                ? "bg-primary border-primary"
+                : "bg-background/80 border-border opacity-0 group-hover:opacity-100"
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect(template.id);
+            }}
+          >
+            {isSelected && <Check className="h-4 w-4 text-primary-foreground" />}
+          </div>
           {template.thumbnail_url ? (
             <>
               <img
