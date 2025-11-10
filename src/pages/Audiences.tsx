@@ -11,6 +11,7 @@ import { FileUploadZone } from "@/components/audiences/FileUploadZone";
 import { ImportResults } from "@/components/audiences/ImportResults";
 import { SampleCSVDownload } from "@/components/audiences/SampleCSVDownload";
 import { AudiencesList } from "@/components/audiences/AudiencesList";
+import { ManualRecipientEntry } from "@/components/audiences/ManualRecipientEntry";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -153,6 +154,10 @@ export default function Audiences() {
           </TabsList>
 
           <TabsContent value="import" className="space-y-6 mt-6">
+            <div className="flex justify-end">
+              <ManualRecipientEntry />
+            </div>
+
             {importResult && (
               <ImportResults
                 audienceId={importResult.audience_id}
