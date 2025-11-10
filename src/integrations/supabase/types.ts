@@ -183,6 +183,7 @@ export type Database = {
           api_key_hash: string | null
           brand_colors_json: Json | null
           created_at: string | null
+          credits: number | null
           id: string
           industry: Database["public"]["Enums"]["industry_type"]
           logo_url: string | null
@@ -194,6 +195,7 @@ export type Database = {
           api_key_hash?: string | null
           brand_colors_json?: Json | null
           created_at?: string | null
+          credits?: number | null
           id?: string
           industry: Database["public"]["Enums"]["industry_type"]
           logo_url?: string | null
@@ -205,6 +207,7 @@ export type Database = {
           api_key_hash?: string | null
           brand_colors_json?: Json | null
           created_at?: string | null
+          credits?: number | null
           id?: string
           industry?: Database["public"]["Enums"]["industry_type"]
           logo_url?: string | null
@@ -269,6 +272,133 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lead_filter_presets: {
+        Row: {
+          created_at: string | null
+          filters_json: Json | null
+          id: string
+          preset_name: string
+          vertical: string
+        }
+        Insert: {
+          created_at?: string | null
+          filters_json?: Json | null
+          id?: string
+          preset_name: string
+          vertical: string
+        }
+        Update: {
+          created_at?: string | null
+          filters_json?: Json | null
+          id?: string
+          preset_name?: string
+          vertical?: string
+        }
+        Relationships: []
+      }
+      lead_purchases: {
+        Row: {
+          audience_id: string | null
+          client_id: string
+          created_at: string | null
+          expires_at: string | null
+          filter_json: Json | null
+          id: string
+          lead_source_id: string | null
+          license_terms: string | null
+          payment_status: string | null
+          price_cents: number
+          purchased_at: string | null
+          quantity: number
+          stripe_payment_id: string | null
+        }
+        Insert: {
+          audience_id?: string | null
+          client_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          filter_json?: Json | null
+          id?: string
+          lead_source_id?: string | null
+          license_terms?: string | null
+          payment_status?: string | null
+          price_cents: number
+          purchased_at?: string | null
+          quantity: number
+          stripe_payment_id?: string | null
+        }
+        Update: {
+          audience_id?: string | null
+          client_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          filter_json?: Json | null
+          id?: string
+          lead_source_id?: string | null
+          license_terms?: string | null
+          payment_status?: string | null
+          price_cents?: number
+          purchased_at?: string | null
+          quantity?: number
+          stripe_payment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_purchases_audience_id_fkey"
+            columns: ["audience_id"]
+            isOneToOne: false
+            referencedRelation: "audiences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_purchases_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_purchases_lead_source_id_fkey"
+            columns: ["lead_source_id"]
+            isOneToOne: false
+            referencedRelation: "lead_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_sources: {
+        Row: {
+          active: boolean | null
+          adapter_type: string | null
+          api_endpoint: string | null
+          available_filters_json: Json | null
+          created_at: string | null
+          id: string
+          pricing_json: Json | null
+          vendor_name: string
+        }
+        Insert: {
+          active?: boolean | null
+          adapter_type?: string | null
+          api_endpoint?: string | null
+          available_filters_json?: Json | null
+          created_at?: string | null
+          id?: string
+          pricing_json?: Json | null
+          vendor_name: string
+        }
+        Update: {
+          active?: boolean | null
+          adapter_type?: string | null
+          api_endpoint?: string | null
+          available_filters_json?: Json | null
+          created_at?: string | null
+          id?: string
+          pricing_json?: Json | null
+          vendor_name?: string
+        }
+        Relationships: []
       }
       leads: {
         Row: {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,11 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ShoppingCart, Home, Building, Car, TrendingUp } from "lucide-react";
+import { ShoppingCart, Home, Building, Car, TrendingUp, Wallet, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useTenant } from "@/contexts/TenantContext";
 
 type LeadVertical = 'roofing' | 'rei' | 'auto';
 
@@ -18,6 +21,27 @@ export default function LeadMarketplace() {
   const [selectedVertical, setSelectedVertical] = useState<LeadVertical>('roofing');
   const [quantity, setQuantity] = useState(5000);
   const [filters, setFilters] = useState<Record<string, any>>({});
+  const { toast } = useToast();
+  const { currentClient } = useTenant();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Fetch client credits
+  const { data: clientData } = useQuery({
+    queryKey: ['client-credits', currentClient?.id],
+    queryFn: async () => {
+      if (!currentClient?.id) return null;
+      const { data, error } = await supabase
+        .from('clients')
+        .select('credits')
+        .eq('id', currentClient.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentClient?.id,
+  });
 
   // Mock presets until types regenerate
   const presets = [
@@ -26,7 +50,73 @@ export default function LeadMarketplace() {
   ];
 
   const pricePerLead = 0.15;
-  const estimatedCost = (quantity * pricePerLead).toFixed(2);
+  const estimatedCostDollars = quantity * pricePerLead;
+  const estimatedCostCents = Math.round(estimatedCostDollars * 100);
+  
+  const availableCredits = clientData?.credits || 0;
+  const availableCreditsDollars = availableCredits / 100;
+  const hasEnoughCredits = availableCredits >= estimatedCostCents;
+
+  // Purchase leads mutation
+  const purchaseLeadsMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('purchase-leads', {
+        body: {
+          client_id: currentClient?.id,
+          lead_source_id: '00000000-0000-0000-0000-000000000001', // Mock vendor
+          filters,
+          quantity,
+          vertical: selectedVertical,
+        },
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['client-credits'] });
+      queryClient.invalidateQueries({ queryKey: ['audiences'] });
+      
+      toast({
+        title: "Leads purchased successfully!",
+        description: `${data.quantity.toLocaleString()} leads added to "${data.audience_name}"`,
+      });
+      
+      // Navigate to the new audience
+      navigate(`/audiences/${data.audience_id}`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Purchase failed",
+        description: error.message || "Failed to purchase leads",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePurchase = () => {
+    if (!currentClient?.id) {
+      toast({
+        title: "No client selected",
+        description: "Please select a client first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!hasEnoughCredits) {
+      toast({
+        title: "Insufficient credits",
+        description: `You need $${estimatedCostDollars.toFixed(2)} but only have $${availableCreditsDollars.toFixed(2)}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    purchaseLeadsMutation.mutate();
+  };
 
   const renderRoofingFilters = () => (
     <div className="space-y-4">
@@ -205,9 +295,22 @@ export default function LeadMarketplace() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Lead Marketplace</h1>
-          <p className="text-muted-foreground">Purchase targeted lead lists for your campaigns</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Lead Marketplace</h1>
+            <p className="text-muted-foreground">Purchase targeted lead lists for your campaigns</p>
+          </div>
+          <Card className="px-4 py-2">
+            <div className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <p className="text-xs text-muted-foreground">Available Credits</p>
+                <p className="text-lg font-bold text-foreground">
+                  ${availableCreditsDollars.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
 
         <Tabs defaultValue="buy">
@@ -309,7 +412,7 @@ export default function LeadMarketplace() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Quantity: {quantity.toLocaleString()} leads</Label>
-                    <Badge variant="secondary">${estimatedCost}</Badge>
+                    <Badge variant="secondary">${estimatedCostDollars.toFixed(2)}</Badge>
                   </div>
                   <Slider
                     value={[quantity]}
@@ -346,15 +449,33 @@ export default function LeadMarketplace() {
                 </div>
                 <div className="border-t pt-4 flex justify-between items-center">
                   <span className="text-lg font-semibold">Total:</span>
-                  <span className="text-2xl font-bold">${estimatedCost}</span>
+                  <span className="text-2xl font-bold">${estimatedCostDollars.toFixed(2)}</span>
                 </div>
-                <Button className="w-full" size="lg" disabled>
-                  <ShoppingCart className="mr-2 h-5 w-5" />
-                  Proceed to Checkout (Coming Soon)
+                {!hasEnoughCredits && (
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                    <p className="text-sm text-destructive">
+                      Insufficient credits. You need ${estimatedCostDollars.toFixed(2)} but only have ${availableCreditsDollars.toFixed(2)}.
+                    </p>
+                  </div>
+                )}
+                <Button 
+                  className="w-full" 
+                  size="lg" 
+                  onClick={handlePurchase}
+                  disabled={!hasEnoughCredits || purchaseLeadsMutation.isPending || !currentClient}
+                >
+                  {purchaseLeadsMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Purchasing {quantity.toLocaleString()} leads...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      Buy Now - ${estimatedCostDollars.toFixed(2)}
+                    </>
+                  )}
                 </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  Stripe integration will be added in the next phase
-                </p>
               </CardContent>
             </Card>
           </TabsContent>
