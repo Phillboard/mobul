@@ -55,17 +55,23 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const fetchTenantData = async () => {
     try {
       setLoading(true);
+      console.log('TenantContext: Starting to fetch tenant data...');
 
       // Fetch organizations based on role
       let orgsQuery = supabase.from('organizations').select('*');
       
       const { data: orgsData, error: orgsError } = await orgsQuery;
-      if (orgsError) throw orgsError;
+      if (orgsError) {
+        console.error('TenantContext: Error fetching organizations:', orgsError);
+        throw orgsError;
+      }
 
+      console.log('TenantContext: Organizations fetched:', orgsData);
       setOrganizations(orgsData || []);
 
       // Set default org
       if (orgsData && orgsData.length > 0 && !currentOrg) {
+        console.log('TenantContext: Setting default org:', orgsData[0]);
         setCurrentOrg(orgsData[0]);
       }
 
@@ -74,19 +80,25 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         .from('clients')
         .select('*');
       
-      if (clientsError) throw clientsError;
+      if (clientsError) {
+        console.error('TenantContext: Error fetching clients:', clientsError);
+        throw clientsError;
+      }
       
+      console.log('TenantContext: Clients fetched:', clientsData);
       setClients(clientsData || []);
 
       // Set default client for agency admins and client users
       if (clientsData && clientsData.length > 0 && !currentClient) {
         if (hasRole('agency_admin') || hasRole('client_user')) {
+          console.log('TenantContext: Setting default client:', clientsData[0]);
           setCurrentClient(clientsData[0]);
         }
       }
 
+      console.log('TenantContext: Fetch complete');
     } catch (error) {
-      console.error('Error fetching tenant data:', error);
+      console.error('TenantContext: Error fetching tenant data:', error);
     } finally {
       setLoading(false);
     }

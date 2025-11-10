@@ -7,6 +7,8 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
+  console.log('Layout: Rendering layout component');
+  
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
