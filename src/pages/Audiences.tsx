@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { AudienceImportTab } from "@/components/audiences/AudienceImportTab";
+import { AudiencesListTab } from "@/components/audiences/AudiencesListTab";
 
 export default function Audiences() {
   const [activeTab, setActiveTab] = useState("import");
@@ -29,11 +30,7 @@ export default function Audiences() {
           </TabsContent>
 
           <TabsContent value="saved" className="mt-6">
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">Saved audiences coming soon</p>
-              </CardContent>
-            </Card>
+            <AudiencesListTab />
           </TabsContent>
 
           <TabsContent value="marketplace" className="mt-6">
