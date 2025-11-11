@@ -4,6 +4,8 @@ interface Layer {
   text?: string;
   left?: number;
   top?: number;
+  x?: number;
+  y?: number;
   width?: number;
   height?: number;
   fontSize?: number;
@@ -11,6 +13,9 @@ interface Layer {
   fill?: string;
   fontWeight?: string;
   url?: string;
+  align?: string;
+  stroke?: string;
+  strokeWidth?: number;
 }
 
 interface TemplatePreviewRendererProps {
@@ -31,6 +36,11 @@ const sampleData = {
   phone: "(555) 123-4567",
   email: "john.smith@example.com",
   purl: "https://example.com/p/abc123",
+  event_name: "Annual Gala",
+  event_date: "March 15, 2024",
+  event_time: "7:00 PM",
+  venue_name: "Grand Hotel Ballroom",
+  expiry_date: "December 31, 2024",
 };
 
 const replaceMergeFields = (text: string) => {
@@ -46,14 +56,19 @@ const replaceMergeFields = (text: string) => {
     .replace(/\{\{zip\}\}/g, sampleData.zip)
     .replace(/\{\{phone\}\}/g, sampleData.phone)
     .replace(/\{\{email\}\}/g, sampleData.email)
-    .replace(/\{\{purl\}\}/g, sampleData.purl);
+    .replace(/\{\{purl\}\}/g, sampleData.purl)
+    .replace(/\{\{event_name\}\}/g, sampleData.event_name)
+    .replace(/\{\{event_date\}\}/g, sampleData.event_date)
+    .replace(/\{\{event_time\}\}/g, sampleData.event_time)
+    .replace(/\{\{venue_name\}\}/g, sampleData.venue_name)
+    .replace(/\{\{expiry_date\}\}/g, sampleData.expiry_date);
 };
 
 export function TemplatePreviewRenderer({
   layers,
   canvasSize,
 }: TemplatePreviewRendererProps) {
-  const scale = 0.5; // Scale down for preview
+  const scale = 0.4; // Scale down for preview
   const scaledWidth = canvasSize.width * scale;
   const scaledHeight = canvasSize.height * scale;
 
@@ -62,15 +77,15 @@ export function TemplatePreviewRenderer({
       <h3 className="text-sm font-semibold mb-3">Preview with Sample Data</h3>
       <div className="flex justify-center">
         <div
-          className="relative bg-background border shadow-sm"
+          className="relative bg-white border shadow-lg"
           style={{
             width: scaledWidth,
             height: scaledHeight,
           }}
         >
           {layers.map((layer) => {
-            const layerLeft = (layer.left || 0) * scale;
-            const layerTop = (layer.top || 0) * scale;
+            const layerLeft = ((layer.left || layer.x) || 0) * scale;
+            const layerTop = ((layer.top || layer.y) || 0) * scale;
             const layerWidth = (layer.width || 100) * scale;
             const layerHeight = (layer.height || 50) * scale;
 
@@ -89,8 +104,12 @@ export function TemplatePreviewRenderer({
                     fontFamily: layer.fontFamily || "Arial",
                     color: layer.fill || "#000000",
                     fontWeight: layer.fontWeight || "normal",
+                    textAlign: (layer.align as any) || "left",
                     whiteSpace: "pre-wrap",
                     overflow: "hidden",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: layer.align === "center" ? "center" : layer.align === "right" ? "flex-end" : "flex-start",
                   }}
                 >
                   {displayText}
@@ -147,7 +166,7 @@ export function TemplatePreviewRenderer({
               );
             }
 
-            if (layer.type === "rectangle") {
+            if (layer.type === "rectangle" || layer.type === "rect") {
               return (
                 <div
                   key={layer.id}
@@ -157,7 +176,8 @@ export function TemplatePreviewRenderer({
                     top: layerTop,
                     width: layerWidth,
                     height: layerHeight,
-                    backgroundColor: layer.fill || "#cccccc",
+                    backgroundColor: layer.fill !== "transparent" ? layer.fill || "#cccccc" : "transparent",
+                    border: layer.stroke ? `${(layer.strokeWidth || 1) * scale}px solid ${layer.stroke}` : "none",
                   }}
                 />
               );
@@ -167,13 +187,13 @@ export function TemplatePreviewRenderer({
           })}
         </div>
       </div>
-      <div className="mt-3 text-xs text-muted-foreground">
-        <div className="font-medium mb-1">Sample Data Used:</div>
-        <div className="grid grid-cols-2 gap-1">
-          <div>Name: {sampleData.full_name}</div>
-          <div>Company: {sampleData.company}</div>
-          <div>Address: {sampleData.address1}</div>
-          <div>City: {sampleData.city}, {sampleData.state}</div>
+      <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+        <div className="font-medium mb-2">Sample merge fields preview:</div>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <div><span className="font-mono text-[10px]">{"{{full_name}}"}</span> → {sampleData.full_name}</div>
+          <div><span className="font-mono text-[10px]">{"{{company}}"}</span> → {sampleData.company}</div>
+          <div><span className="font-mono text-[10px]">{"{{address1}}"}</span> → {sampleData.address1}</div>
+          <div><span className="font-mono text-[10px]">{"{{phone}}"}</span> → {sampleData.phone}</div>
         </div>
       </div>
     </div>
