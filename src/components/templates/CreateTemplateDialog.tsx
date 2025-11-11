@@ -30,7 +30,11 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { Upload, Sparkles } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { starterTemplates, type StarterTemplate } from "@/lib/starterTemplates";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const templateSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
@@ -60,6 +64,7 @@ export function CreateTemplateDialog({
 }: CreateTemplateDialogProps) {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedStarter, setSelectedStarter] = useState<StarterTemplate | null>(null);
   const queryClient = useQueryClient();
 
   const form = useForm<TemplateFormData>({
@@ -90,6 +95,9 @@ export function CreateTemplateDialog({
         thumbnailUrl = urlData.publicUrl;
       }
 
+      // Use starter template layers if selected, otherwise empty
+      const jsonLayers = selectedStarter?.layers || { version: 1, layers: [] };
+
       // Create template record
       const { error } = await supabase.from("templates").insert({
         name: data.name,
@@ -97,7 +105,7 @@ export function CreateTemplateDialog({
         size: data.size,
         industry_vertical: data.industry_vertical,
         thumbnail_url: thumbnailUrl,
-        json_layers: { version: 1, layers: [] },
+        json_layers: jsonLayers,
         is_favorite: false,
       });
 
@@ -109,6 +117,7 @@ export function CreateTemplateDialog({
       form.reset();
       setThumbnailFile(null);
       setPreviewUrl(null);
+      setSelectedStarter(null);
       onOpenChange(false);
     },
     onError: (error) => {
@@ -135,17 +144,159 @@ export function CreateTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Template</DialogTitle>
           <DialogDescription>
-            Create a new direct mail template. The design editor will be available
-            after creation.
+            Start with a pre-designed template or create your own from scratch
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Tabs defaultValue="starter" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="starter">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Starter Templates
+            </TabsTrigger>
+            <TabsTrigger value="blank">Blank Template</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="starter" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium mb-3">Choose a starter template</h3>
+                <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2">
+                  {starterTemplates.map((template) => (
+                    <Card
+                      key={template.id}
+                      className={`cursor-pointer transition-all hover:shadow-md ${
+                        selectedStarter?.id === template.id
+                          ? "ring-2 ring-primary"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedStarter(template);
+                        form.setValue("size", template.size);
+                        form.setValue("industry_vertical", template.industryVertical);
+                        if (!form.getValues("name")) {
+                          form.setValue("name", template.name);
+                        }
+                      }}
+                    >
+                      <CardContent className="p-4">
+                        <div className="text-4xl mb-2 text-center">
+                          {template.previewImage}
+                        </div>
+                        <h4 className="font-semibold text-sm mb-1">
+                          {template.name}
+                        </h4>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {template.description}
+                        </p>
+                        <div className="flex gap-1 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            {template.size}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {template.industryVertical}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {selectedStarter && (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Template Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Spring Roofing Campaign" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="size"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Size</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select size" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="bg-background z-50">
+                                <SelectItem value="4x6">4×6 Postcard</SelectItem>
+                                <SelectItem value="6x9">6×9 Postcard</SelectItem>
+                                <SelectItem value="6x11">6×11 Postcard</SelectItem>
+                                <SelectItem value="letter">Letter (#10)</SelectItem>
+                                <SelectItem value="trifold">Tri-fold Self-Mailer</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="industry_vertical"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Industry</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select industry" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="bg-background z-50">
+                                <SelectItem value="roofing">Roofing</SelectItem>
+                                <SelectItem value="rei">Real Estate Investment</SelectItem>
+                                <SelectItem value="auto_service">Auto Service</SelectItem>
+                                <SelectItem value="auto_warranty">Auto Warranty</SelectItem>
+                                <SelectItem value="auto_buyback">Auto Buyback</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => onOpenChange(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={createMutation.isPending}>
+                        {createMutation.isPending ? "Creating..." : "Create Template"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="blank">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -236,20 +387,22 @@ export function CreateTemplateDialog({
               </p>
             </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Create Template"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createMutation.isPending}>
+                    {createMutation.isPending ? "Creating..." : "Create Template"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
