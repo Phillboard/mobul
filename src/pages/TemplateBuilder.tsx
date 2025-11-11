@@ -436,7 +436,7 @@ export default function TemplateBuilder() {
             />
           )}
           
-          <div className="flex-1 bg-muted/20 overflow-auto">
+          <div className="flex-1 bg-muted/20 min-w-0 overflow-hidden">
             {canvasData && (
               <Canvas
                 data={canvasData}

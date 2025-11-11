@@ -295,8 +295,8 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-builder-canvas">
-      <div className="flex items-center justify-center gap-4 p-4 bg-builder-sidebar border-b border-border shadow-sm">
+    <div className="h-full w-full flex flex-col bg-builder-canvas">
+      <div className="flex items-center justify-center gap-4 p-3 bg-builder-sidebar border-b border-border shadow-sm shrink-0">
         <Button
           variant="outline"
           size="icon"
@@ -320,7 +320,7 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
         </Button>
       </div>
 
-      <div className="flex-1 overflow-auto p-12 flex items-center justify-center">
+      <div className="flex-1 overflow-auto p-8 flex items-center justify-center min-h-0">
         <div 
           ref={containerRef}
           onDragOver={handleDragOver}
@@ -331,6 +331,7 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
               ? "cursor-crosshair hover:shadow-3xl hover:border-primary" 
               : "hover:shadow-3xl"
           }`}
+          style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
         >
           <canvas ref={canvasRef} />
         </div>
