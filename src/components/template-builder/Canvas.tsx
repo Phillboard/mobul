@@ -11,6 +11,7 @@ interface CanvasProps {
   };
   onChange: (data: any) => void;
   onSelectLayer: (layer: any) => void;
+  onDoubleClickLayer?: (layer: any) => void;
   selectedLayer: any;
   activeTool?: string | null;
   onDrop?: (elementType: string, position: { x: number; y: number }, elementData?: any) => void;
@@ -24,6 +25,7 @@ export function Canvas({
   data, 
   onChange, 
   onSelectLayer, 
+  onDoubleClickLayer,
   selectedLayer, 
   activeTool, 
   onDrop,
@@ -137,23 +139,31 @@ export function Canvas({
       }
     });
 
-    // Handle double-click on text elements
+    // Handle double-click on any element to open properties
     canvas.on("mouse:dblclick", (e: any) => {
       const target = e.target;
-      if (target instanceof FabricText) {
-        const canvasRect = canvasRef.current?.getBoundingClientRect();
-        if (!canvasRect) return;
+      if (target?.layerData) {
+        // Notify parent to open properties panel
+        if (onDoubleClickLayer) {
+          onDoubleClickLayer(target.layerData);
+        }
+        
+        // For text elements, also enable inline editing
+        if (target instanceof FabricText) {
+          const canvasRect = canvasRef.current?.getBoundingClientRect();
+          if (!canvasRect) return;
 
-        setEditingText({
-          object: target,
-          text: target.text || "",
-          position: {
-            left: canvasRect.left + (target.left || 0) * zoom,
-            top: canvasRect.top + (target.top || 0) * zoom,
-            width: (target.width || 100) * zoom,
-            height: (target.height || 50) * zoom,
-          },
-        });
+          setEditingText({
+            object: target,
+            text: target.text || "",
+            position: {
+              left: canvasRect.left + (target.left || 0) * zoom,
+              top: canvasRect.top + (target.top || 0) * zoom,
+              width: (target.width || 100) * zoom,
+              height: (target.height || 50) * zoom,
+            },
+          });
+        }
       }
     });
 

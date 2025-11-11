@@ -23,6 +23,7 @@ export default function TemplateBuilder() {
   const queryClient = useQueryClient();
   const [canvasData, setCanvasData] = useState<any>(null);
   const [selectedLayer, setSelectedLayer] = useState<any>(null);
+  const [showPropertiesPanel, setShowPropertiesPanel] = useState(false);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -459,7 +460,13 @@ export default function TemplateBuilder() {
               <Canvas
                 data={canvasData}
                 onChange={setCanvasData}
-                onSelectLayer={setSelectedLayer}
+                onSelectLayer={(layer) => {
+                  setSelectedLayer(layer);
+                }}
+                onDoubleClickLayer={(layer) => {
+                  setSelectedLayer(layer);
+                  setShowPropertiesPanel(true);
+                }}
                 selectedLayer={selectedLayer}
                 activeTool={activeTool}
                 onDrop={handleCanvasDrop}
@@ -471,7 +478,7 @@ export default function TemplateBuilder() {
             )}
           </div>
           
-          {selectedLayer && (
+          {selectedLayer && showPropertiesPanel && (
             <PropertiesPanel
               layer={selectedLayer}
               onUpdate={(updates: any) => {
@@ -490,8 +497,12 @@ export default function TemplateBuilder() {
                   layers: canvasData.layers.filter((l: any) => l.id !== selectedLayer.id),
                 });
                 setSelectedLayer(null);
+                setShowPropertiesPanel(false);
               }}
-              onClose={() => setSelectedLayer(null)}
+              onClose={() => {
+                setShowPropertiesPanel(false);
+                setSelectedLayer(null);
+              }}
             />
           )}
         </div>
