@@ -65,10 +65,15 @@ export function FieldsPanel({ onAddField, onDragStart }: FieldsPanelProps) {
   };
 
   return (
-    <div className="w-64 border-r border-border bg-builder-sidebar shadow-sm">
-      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
-        <h3 className="font-bold text-base">Merge Fields</h3>
-        <p className="text-xs text-muted-foreground mt-1">Add personalized data fields</p>
+    <div className="w-64 border-r border-border bg-background">
+      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
+        <h3 className="font-semibold flex items-center gap-2">
+          <QrCode className="h-5 w-5 text-primary" />
+          Merge Fields
+        </h3>
+        <p className="text-xs text-muted-foreground mt-2">
+          Drag onto canvas to personalize
+        </p>
       </div>
 
       <div className="p-4 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">

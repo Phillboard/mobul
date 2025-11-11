@@ -12,10 +12,11 @@ interface CanvasProps {
   onChange: (data: any) => void;
   onSelectLayer: (layer: any) => void;
   selectedLayer: any;
+  activeTool?: string | null;
   onDrop?: (elementType: string, position: { x: number; y: number }, elementData?: any) => void;
 }
 
-export function Canvas({ data, onChange, onSelectLayer, selectedLayer, onDrop }: CanvasProps) {
+export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeTool, onDrop }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,6 +45,22 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, onDrop }:
       onDrop(elementData.type, { x, y }, elementData);
     } catch (error) {
       console.error("Failed to parse drop data:", error);
+    }
+  };
+
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    if (!onDrop || !activeTool || !canvasRef.current) return;
+    
+    // Only handle clicks when a tool is active (not in select mode)
+    if (activeTool === "text" || activeTool === "elements" || activeTool === "fields") {
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      const x = (e.clientX - canvasRect.left) / zoom;
+      const y = (e.clientY - canvasRect.top) / zoom;
+
+      // Add element based on active tool
+      if (activeTool === "text") {
+        onDrop("text", { x, y });
+      }
     }
   };
 
@@ -265,7 +282,12 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, onDrop }:
           ref={containerRef}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          className="border-2 border-border shadow-2xl bg-white rounded-lg overflow-hidden hover:shadow-3xl transition-shadow duration-300"
+          onClick={handleCanvasClick}
+          className={`border-2 border-border shadow-2xl bg-white rounded-lg overflow-hidden transition-all duration-300 ${
+            activeTool && activeTool !== "select" 
+              ? "cursor-crosshair hover:shadow-3xl hover:border-primary" 
+              : "hover:shadow-3xl"
+          }`}
         >
           <canvas ref={canvasRef} />
         </div>

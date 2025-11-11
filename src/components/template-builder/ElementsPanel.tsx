@@ -39,10 +39,15 @@ export function ElementsPanel({ onAddText, onAddShape, onAddQRCode, onDragStart 
   };
 
   return (
-    <div className="w-64 border-r border-border bg-builder-sidebar shadow-sm">
-      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
-        <h3 className="font-bold text-base">Elements</h3>
-        <p className="text-xs text-muted-foreground mt-1">Add elements to canvas</p>
+    <div className="w-64 border-r border-border bg-background">
+      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
+        <h3 className="font-semibold flex items-center gap-2">
+          <Square className="h-5 w-5 text-primary" />
+          Elements
+        </h3>
+        <p className="text-xs text-muted-foreground mt-2">
+          Drag onto canvas or click to add
+        </p>
       </div>
 
       <div className="p-4 grid grid-cols-2 gap-3">

@@ -372,16 +372,21 @@ export default function TemplateBuilder() {
           
           {activeTool === "text" && (
             <div className="w-64 border-r border-border bg-background">
-              <div className="p-4 border-b border-border">
-                <h3 className="font-semibold">Text</h3>
-                <p className="text-xs text-muted-foreground">Add text to canvas</p>
+              <div className="p-4 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Type className="h-5 w-5 text-primary" />
+                  Text Tool
+                </h3>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Click anywhere on the canvas to add text, or drag from below
+                </p>
               </div>
               <div className="p-4">
                 <button
                   onClick={handleAddText}
-                  className="w-full h-24 flex flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border hover:border-primary hover:bg-accent transition-colors"
+                  className="w-full h-20 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all hover:scale-105"
                 >
-                  <Type className="h-8 w-8" />
+                  <Type className="h-6 w-6 text-primary" />
                   <span className="text-sm font-medium">Add Text</span>
                 </button>
               </div>
@@ -438,6 +443,7 @@ export default function TemplateBuilder() {
                 onChange={setCanvasData}
                 onSelectLayer={setSelectedLayer}
                 selectedLayer={selectedLayer}
+                activeTool={activeTool}
                 onDrop={handleCanvasDrop}
               />
             )}
