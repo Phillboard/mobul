@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 import { useAuth } from './AuthContext';
 
 interface Organization {
@@ -13,7 +14,7 @@ interface Client {
   id: string;
   org_id: string;
   name: string;
-  industry: 'roofing' | 'rei' | 'auto_service' | 'auto_warranty' | 'auto_buyback';
+  industry: Database['public']['Enums']['industry_type'];
   timezone: string;
   logo_url: string | null;
   brand_colors_json: any;

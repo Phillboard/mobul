@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDistanceToNow } from "date-fns";
 import { QRAnalytics } from "@/components/campaigns/QRAnalytics";
+import { ApprovalsTab } from "@/components/campaigns/ApprovalsTab";
+import { CommentsTab } from "@/components/campaigns/CommentsTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CampaignDetail() {
@@ -196,6 +198,8 @@ export default function CampaignDetail() {
             <TabsTrigger value="tracking">Mail Tracking</TabsTrigger>
             <TabsTrigger value="qr">QR Analytics</TabsTrigger>
             <TabsTrigger value="batches">Print Batches</TabsTrigger>
+            <TabsTrigger value="approvals">Approvals</TabsTrigger>
+            <TabsTrigger value="comments">Comments</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tracking" className="space-y-4">
@@ -301,6 +305,14 @@ export default function CampaignDetail() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="approvals">
+            <ApprovalsTab campaignId={id!} />
+          </TabsContent>
+
+          <TabsContent value="comments">
+            <CommentsTab campaignId={id!} />
           </TabsContent>
         </Tabs>
       </div>
