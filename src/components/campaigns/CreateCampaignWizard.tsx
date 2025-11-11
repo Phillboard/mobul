@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import { CampaignDetailsStep } from "./wizard/CampaignDetailsStep";
 import { PURLSettingsStep } from "./wizard/PURLSettingsStep";
+import { SummaryStep } from "./wizard/SummaryStep";
 import { Progress } from "@/components/ui/progress";
+import { DraftManager } from "./DraftManager";
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreateCampaignWizardProps {
   open: boolean;
@@ -40,6 +44,7 @@ export function CreateCampaignWizard({
   clientId,
 }: CreateCampaignWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<CampaignFormData>>({
     postage: "standard",
     mail_date_mode: "asap",
@@ -48,8 +53,41 @@ export function CreateCampaignWizard({
     utm_medium: "postcard",
   });
 
-  const totalSteps = 2;
+  const totalSteps = 3;
   const progress = (currentStep / totalSteps) * 100;
+
+  // Auto-save draft every 30 seconds
+  useEffect(() => {
+    if (!open || currentStep === totalSteps) return;
+
+    const interval = setInterval(() => {
+      if (Object.keys(formData).length > 5) {
+        saveDraftMutation.mutate();
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [open, formData, currentStep]);
+
+  const saveDraftMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await supabase.functions.invoke("save-campaign-draft", {
+        body: {
+          draftId: currentDraftId,
+          clientId,
+          draftName: formData.name || "Untitled Draft",
+          formData,
+          currentStep,
+        },
+      });
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data?.draft?.id && !currentDraftId) {
+        setCurrentDraftId(data.draft.id);
+      }
+    },
+  });
 
   const handleNext = (data: Partial<CampaignFormData>) => {
     setFormData({ ...formData, ...data });
@@ -60,8 +98,15 @@ export function CreateCampaignWizard({
     setCurrentStep(currentStep - 1);
   };
 
+  const handleLoadDraft = (draft: any) => {
+    setFormData(draft.formData);
+    setCurrentStep(draft.step);
+    setCurrentDraftId(draft.draftId);
+  };
+
   const handleClose = () => {
     setCurrentStep(1);
+    setCurrentDraftId(null);
     setFormData({
       postage: "standard",
       mail_date_mode: "asap",
@@ -76,13 +121,26 @@ export function CreateCampaignWizard({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            Create Campaign - Step {currentStep} of {totalSteps}
-          </DialogTitle>
-          <DialogDescription>
-            {currentStep === 1 && "Set up campaign details and mailing information"}
-            {currentStep === 2 && "Configure personalized URLs and tracking"}
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle>
+                Create Campaign - Step {currentStep} of {totalSteps}
+              </DialogTitle>
+              <DialogDescription>
+                {currentStep === 1 && "Set up campaign details and mailing information"}
+                {currentStep === 2 && "Configure personalized URLs and tracking"}
+                {currentStep === 3 && "Review and confirm campaign details"}
+              </DialogDescription>
+            </div>
+            {currentStep < totalSteps && (
+              <DraftManager
+                clientId={clientId}
+                onLoadDraft={handleLoadDraft}
+                currentFormData={formData}
+                currentStep={currentStep}
+              />
+            )}
+          </div>
         </DialogHeader>
 
         <Progress value={progress} className="mb-4" />
@@ -101,7 +159,15 @@ export function CreateCampaignWizard({
             clientId={clientId}
             formData={formData}
             onBack={handleBack}
-            onComplete={handleClose}
+            onNext={handleNext}
+          />
+        )}
+
+        {currentStep === 3 && (
+          <SummaryStep
+            formData={formData}
+            onBack={handleBack}
+            onConfirm={handleClose}
           />
         )}
       </DialogContent>

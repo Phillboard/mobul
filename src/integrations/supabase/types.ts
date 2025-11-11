@@ -64,6 +64,144 @@ export type Database = {
           },
         ]
       }
+      campaign_approvals: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      campaign_comments: {
+        Row: {
+          campaign_id: string
+          comment_text: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          comment_text: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          comment_text?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      campaign_drafts: {
+        Row: {
+          client_id: string
+          created_at: string
+          current_step: number
+          draft_name: string
+          form_data_json: Json
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          current_step?: number
+          draft_name: string
+          form_data_json?: Json
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          current_step?: number
+          draft_name?: string
+          form_data_json?: Json
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      campaign_prototypes: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          id: string
+          prototype_config_json: Json
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          id?: string
+          prototype_config_json?: Json
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          prototype_config_json?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      campaign_versions: {
+        Row: {
+          campaign_id: string
+          change_description: string | null
+          created_at: string
+          created_by_user_id: string
+          id: string
+          snapshot_json: Json
+          version_number: number
+        }
+        Insert: {
+          campaign_id: string
+          change_description?: string | null
+          created_at?: string
+          created_by_user_id: string
+          id?: string
+          snapshot_json: Json
+          version_number: number
+        }
+        Update: {
+          campaign_id?: string
+          change_description?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          id?: string
+          snapshot_json?: Json
+          version_number?: number
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           audience_id: string | null
@@ -507,6 +645,42 @@ export type Database = {
           name?: string
           settings_json?: Json | null
           type?: Database["public"]["Enums"]["org_type"]
+        }
+        Relationships: []
+      }
+      preview_links: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          created_by_user_id: string
+          expires_at: string
+          id: string
+          max_views: number | null
+          password_hash: string | null
+          token: string
+          views_count: number
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          created_by_user_id: string
+          expires_at: string
+          id?: string
+          max_views?: number | null
+          password_hash?: string | null
+          token: string
+          views_count?: number
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          expires_at?: string
+          id?: string
+          max_views?: number | null
+          password_hash?: string | null
+          token?: string
+          views_count?: number
         }
         Relationships: []
       }

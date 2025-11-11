@@ -44,14 +44,14 @@ interface PURLSettingsStepProps {
   clientId: string;
   formData: Partial<CampaignFormData>;
   onBack: () => void;
-  onComplete: () => void;
+  onNext: (data: Partial<CampaignFormData>) => void;
 }
 
 export function PURLSettingsStep({
   clientId,
   formData,
   onBack,
-  onComplete,
+  onNext,
 }: PURLSettingsStepProps) {
   const queryClient = useQueryClient();
 
@@ -130,7 +130,7 @@ export function PURLSettingsStep({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       toast.success("Campaign created as draft");
-      onComplete();
+      onNext(form.getValues());
     },
     onError: (error) => {
       toast.error("Failed to create campaign");
