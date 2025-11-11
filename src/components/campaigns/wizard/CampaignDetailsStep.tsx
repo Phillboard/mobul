@@ -145,8 +145,11 @@ export function CampaignDetailsStep({
             <FormItem>
               <FormLabel>Template (Optional)</FormLabel>
               <Select
-                onValueChange={field.onChange}
-                value={field.value || undefined}
+                onValueChange={(value) => {
+                  // Convert "none" string to null for UUID compatibility
+                  field.onChange(value === "none" ? null : value);
+                }}
+                value={field.value || "none"}
               >
                 <FormControl>
                   <SelectTrigger>
