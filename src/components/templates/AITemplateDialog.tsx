@@ -35,7 +35,7 @@ export function AITemplateDialog({ open, onOpenChange, clientId }: AITemplateDia
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [size, setSize] = useState<"4x6" | "6x9" | "6x11" | "letter" | "trifold">("4x6");
-  const [industryVertical, setIndustryVertical] = useState<string>("rei");
+  const [industryVertical, setIndustryVertical] = useState<string>("rei_postcard");
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -160,17 +160,17 @@ export function AITemplateDialog({ open, onOpenChange, clientId }: AITemplateDia
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="rei">Real Estate Investment</SelectItem>
-                  <SelectItem value="roofing">Roofing Services</SelectItem>
-                  <SelectItem value="restaurant">Restaurant / Food Service</SelectItem>
+                  <SelectItem value="rei_postcard">Real Estate Investment</SelectItem>
+                  <SelectItem value="roofing_services">Roofing Services</SelectItem>
+                  <SelectItem value="restaurant_promo">Restaurant / Food Service</SelectItem>
                   <SelectItem value="auto_service">Auto Service</SelectItem>
                   <SelectItem value="auto_warranty">Auto Warranty</SelectItem>
                   <SelectItem value="auto_buyback">Auto Buyback</SelectItem>
-                  <SelectItem value="healthcare">Healthcare</SelectItem>
-                  <SelectItem value="legal">Legal Services</SelectItem>
-                  <SelectItem value="financial">Financial Services</SelectItem>
-                  <SelectItem value="fitness">Fitness / Gym</SelectItem>
-                  <SelectItem value="retail">Retail</SelectItem>
+                  <SelectItem value="healthcare_checkup">Healthcare</SelectItem>
+                  <SelectItem value="legal_services">Legal Services</SelectItem>
+                  <SelectItem value="financial_advisor">Financial Services</SelectItem>
+                  <SelectItem value="fitness_gym">Fitness / Gym</SelectItem>
+                  <SelectItem value="retail_promo">Retail</SelectItem>
                 </SelectContent>
               </Select>
             </div>
