@@ -20,6 +20,7 @@ interface CanvasProps {
   showRulers?: boolean;
   snapToGrid?: boolean;
   gridSize?: number;
+  onExportBlob?: (exportFn: () => Promise<Blob | null>) => void;
 }
 
 export function Canvas({ 
@@ -35,6 +36,7 @@ export function Canvas({
   showRulers = false,
   snapToGrid = false,
   gridSize = 20,
+  onExportBlob,
 }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
@@ -103,6 +105,11 @@ export function Canvas({
     });
 
     fabricCanvasRef.current = canvas;
+    
+    // Expose export function to parent
+    if (onExportBlob) {
+      onExportBlob(exportAsBlob);
+    }
 
     // Load layers
     loadLayers(canvas, data.layers);
@@ -371,6 +378,25 @@ export function Canvas({
       handleTextEditComplete();
     } else if (e.key === "Escape") {
       setEditingText(null);
+    }
+  };
+
+  // Export canvas as blob for thumbnail generation
+  const exportAsBlob = async (): Promise<Blob | null> => {
+    if (!fabricCanvasRef.current) return null;
+    
+    try {
+      const dataUrl = fabricCanvasRef.current.toDataURL({
+        format: 'png',
+        quality: 0.8,
+        multiplier: 0.3, // Scale down for thumbnail
+      });
+      
+      const response = await fetch(dataUrl);
+      return await response.blob();
+    } catch (error) {
+      console.error('Failed to export canvas:', error);
+      return null;
     }
   };
 

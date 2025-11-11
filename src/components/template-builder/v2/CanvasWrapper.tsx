@@ -13,6 +13,7 @@ interface CanvasWrapperProps {
   showRulers: boolean;
   snapToGrid: boolean;
   gridSize: number;
+  onExportBlob?: (exportFn: () => Promise<Blob | null>) => void;
 }
 
 export function CanvasWrapper({
@@ -28,6 +29,7 @@ export function CanvasWrapper({
   showRulers,
   snapToGrid,
   gridSize,
+  onExportBlob,
 }: CanvasWrapperProps) {
   return (
     <div className="flex-1 bg-builder-canvas overflow-hidden">
@@ -45,6 +47,7 @@ export function CanvasWrapper({
           showRulers={showRulers}
           snapToGrid={snapToGrid}
           gridSize={gridSize}
+          onExportBlob={onExportBlob}
         />
       )}
     </div>

@@ -34,6 +34,7 @@ export default function TemplateBuilderV2() {
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [gridSize, setGridSize] = useState(20);
   const [zoom, setZoom] = useState(1);
+  const [exportBlobFn, setExportBlobFn] = useState<(() => Promise<Blob | null>) | null>(null);
   
   // Dialog states
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
@@ -87,9 +88,38 @@ export default function TemplateBuilderV2() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
+      // Generate and upload thumbnail
+      let thumbnailUrl = template?.thumbnail_url;
+      
+      if (exportBlobFn) {
+        try {
+          const blob = await exportBlobFn();
+          if (blob) {
+            const fileName = `${id}-${Date.now()}.png`;
+            const { error: uploadError } = await supabase.storage
+              .from("template-thumbnails")
+              .upload(fileName, blob, { upsert: true });
+            
+            if (!uploadError) {
+              const { data: urlData } = supabase.storage
+                .from("template-thumbnails")
+                .getPublicUrl(fileName);
+              thumbnailUrl = urlData.publicUrl;
+            }
+          }
+        } catch (error) {
+          console.error("Failed to generate thumbnail:", error);
+          // Continue with save even if thumbnail generation fails
+        }
+      }
+      
       const { error } = await supabase
         .from("templates")
-        .update({ json_layers: data, updated_at: new Date().toISOString() })
+        .update({ 
+          json_layers: data, 
+          thumbnail_url: thumbnailUrl,
+          updated_at: new Date().toISOString() 
+        })
         .eq("id", id);
       
       if (error) throw error;
@@ -97,7 +127,7 @@ export default function TemplateBuilderV2() {
     onSuccess: () => {
       setLastSaved(new Date());
       queryClient.invalidateQueries({ queryKey: ["template", id] });
-      toast.success("Template saved");
+      toast.success("Template saved with thumbnail");
     },
     onError: (error: any) => {
       toast.error("Failed to save template: " + error.message);
@@ -771,6 +801,7 @@ export default function TemplateBuilderV2() {
           showRulers={showRulers}
           snapToGrid={snapToGrid}
           gridSize={gridSize}
+          onExportBlob={(fn) => setExportBlobFn(() => fn)}
         />
       </div>
 
