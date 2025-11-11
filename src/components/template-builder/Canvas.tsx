@@ -224,6 +224,37 @@ export function Canvas({
         } catch (error) {
           console.error("Failed to load image:", error);
         }
+      } else if (layer.type === "qr_code") {
+        // Create placeholder for QR code
+        const size = layer.size || 200;
+        const qrRect = new Rect({
+          left: layer.left || 100,
+          top: layer.top || 100,
+          width: size,
+          height: size,
+          fill: "#ffffff",
+          stroke: "#000000",
+          strokeWidth: 2,
+          rx: 4,
+          ry: 4,
+        });
+        
+        // Add text label
+        const label = new FabricText("QR Code\n(Generated at print)", {
+          left: (layer.left || 100) + size / 2,
+          top: (layer.top || 100) + size / 2,
+          fontSize: 14,
+          fontFamily: "Arial",
+          fill: "#666666",
+          textAlign: "center",
+          originX: "center",
+          originY: "center",
+        });
+        
+        // Group them together
+        obj = qrRect;
+        canvas.add(qrRect);
+        canvas.add(label);
       }
 
       if (obj) {
@@ -285,6 +316,14 @@ export function Canvas({
           top: obj.top,
           scaleX: obj.scaleX,
           scaleY: obj.scaleY,
+        };
+      } else if (baseData.type === "qr_code") {
+        return {
+          ...baseData,
+          type: "qr_code",
+          left: obj.left,
+          top: obj.top,
+          size: baseData.size || 200,
         };
       }
       return baseData;

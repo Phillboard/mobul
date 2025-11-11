@@ -755,6 +755,60 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_tracking_events: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          device_type: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          location_data: Json | null
+          recipient_id: string
+          scanned_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          device_type?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          location_data?: Json | null
+          recipient_id: string
+          scanned_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          device_type?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          location_data?: Json | null
+          recipient_id?: string
+          scanned_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_tracking_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_tracking_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipients: {
         Row: {
           address1: string

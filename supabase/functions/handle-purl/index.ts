@@ -109,6 +109,20 @@ Deno.serve(async (req) => {
 
     console.log(`Logged ${eventType} event for recipient ${recipient.id}`);
 
+    // Track QR scan specifically in qr_tracking_events table
+    if (isQRScan) {
+      await supabase.from('qr_tracking_events').insert({
+        campaign_id: campaignId,
+        recipient_id: recipient.id,
+        event_type: 'qr_scanned',
+        user_agent: userAgent,
+        ip_address: ip,
+        device_type: isMobile ? 'mobile' : 'desktop',
+        location_data: {},
+      });
+      console.log(`Logged QR scan tracking for recipient ${recipient.id}`);
+    }
+
     // Build UTM parameters
     const utmParams = new URLSearchParams({
       utm_source: campaign.utm_source || 'directmail',

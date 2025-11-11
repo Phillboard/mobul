@@ -10,6 +10,8 @@ import { AlertCircle, ArrowLeft, Package, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDistanceToNow } from "date-fns";
+import { QRAnalytics } from "@/components/campaigns/QRAnalytics";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CampaignDetail() {
   const { id } = useParams();
@@ -189,90 +191,118 @@ export default function CampaignDetail() {
           </Card>
         </div>
 
-        {batches && batches.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Print Batches
-              </CardTitle>
-              <CardDescription>View production batches for this campaign</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Batch #</TableHead>
-                    <TableHead>Recipients</TableHead>
-                    <TableHead>Vendor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {batches.map((batch) => (
-                    <TableRow key={batch.id}>
-                      <TableCell className="font-medium">Batch {batch.batch_number}</TableCell>
-                      <TableCell>{batch.recipient_count?.toLocaleString()}</TableCell>
-                      <TableCell>{batch.vendor}</TableCell>
-                      <TableCell>
-                        <Badge className={getBatchStatusColor(batch.status || 'pending')}>
-                          {batch.status?.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatDistanceToNow(new Date(batch.created_at!), { addSuffix: true })}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
+        <Tabs defaultValue="tracking" className="w-full">
+          <TabsList>
+            <TabsTrigger value="tracking">Mail Tracking</TabsTrigger>
+            <TabsTrigger value="qr">QR Analytics</TabsTrigger>
+            <TabsTrigger value="batches">Print Batches</TabsTrigger>
+          </TabsList>
 
-        {events && events.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Mail Tracking Events</CardTitle>
-              <CardDescription>Recent delivery and tracking updates</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {events.map((event) => (
-                    <TableRow key={event.id}>
-                      <TableCell>
-                        {event.recipient?.first_name} {event.recipient?.last_name}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {event.recipient?.address1}, {event.recipient?.city}, {event.recipient?.state}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {event.event_type.replace('imb_', '').replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={event.event_type === 'mail_returned' ? 'bg-red-500' : 'bg-green-500'}>
-                          {event.event_type === 'mail_returned' ? 'Returned' : 'Success'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatDistanceToNow(new Date(event.occurred_at!), { addSuffix: true })}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
+          <TabsContent value="tracking" className="space-y-4">
+            {events && events.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mail Tracking Events</CardTitle>
+                  <CardDescription>Recent delivery and tracking updates</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Recipient</TableHead>
+                        <TableHead>Address</TableHead>
+                        <TableHead>Event</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {events.map((event) => (
+                        <TableRow key={event.id}>
+                          <TableCell>
+                            {event.recipient?.first_name} {event.recipient?.last_name}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {event.recipient?.address1}, {event.recipient?.city}, {event.recipient?.state}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {event.event_type.replace('imb_', '').replace('_', ' ')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={event.event_type === 'mail_returned' ? 'bg-red-500' : 'bg-green-500'}>
+                              {event.event_type === 'mail_returned' ? 'Returned' : 'Success'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatDistanceToNow(new Date(event.occurred_at!), { addSuffix: true })}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="py-8">
+                  <div className="text-center text-muted-foreground">No tracking events yet</div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="qr">
+            <QRAnalytics campaignId={id!} />
+          </TabsContent>
+
+          <TabsContent value="batches" className="space-y-4">
+            {batches && batches.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Print Batches
+                  </CardTitle>
+                  <CardDescription>View production batches for this campaign</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Batch #</TableHead>
+                        <TableHead>Recipients</TableHead>
+                        <TableHead>Vendor</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {batches.map((batch) => (
+                        <TableRow key={batch.id}>
+                          <TableCell className="font-medium">Batch {batch.batch_number}</TableCell>
+                          <TableCell>{batch.recipient_count?.toLocaleString()}</TableCell>
+                          <TableCell>{batch.vendor}</TableCell>
+                          <TableCell>
+                            <Badge className={getBatchStatusColor(batch.status || 'pending')}>
+                              {batch.status?.replace('_', ' ')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatDistanceToNow(new Date(batch.created_at!), { addSuffix: true })}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="py-8">
+                  <div className="text-center text-muted-foreground">No print batches yet</div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
