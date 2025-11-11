@@ -374,6 +374,15 @@ export function Canvas({
     }
   };
 
+  // Safety check - don't render if canvas size is not defined
+  if (!data || !data.canvasSize) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-builder-canvas">
+        <div className="text-muted-foreground">Loading canvas...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full flex flex-col bg-builder-canvas">
       <div className="flex items-center justify-center gap-4 p-3 bg-builder-sidebar border-b border-border shadow-sm shrink-0">
