@@ -16,6 +16,7 @@ import { QRCodeDialog, type QRCodeConfig } from "@/components/template-builder/v
 import { TextDialog, type TextConfig } from "@/components/template-builder/v2/dialogs/TextDialog";
 import { ShapeDialog, type ShapeConfig } from "@/components/template-builder/v2/dialogs/ShapeDialog";
 import { ImageDialog, type ImageConfig } from "@/components/template-builder/v2/dialogs/ImageDialog";
+import { RegenerateElementDialog } from "@/components/template-builder/v2/dialogs/RegenerateElementDialog";
 import { useCanvasHistory } from "@/hooks/useCanvasHistory";
 import { Type } from "lucide-react";
 import { toast } from "sonner";
@@ -41,6 +42,7 @@ export default function TemplateBuilderV2() {
   const [textDialogOpen, setTextDialogOpen] = useState(false);
   const [shapeDialogOpen, setShapeDialogOpen] = useState(false);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false);
   const [editingLayer, setEditingLayer] = useState<any>(null);
   const [contextMenuLayer, setContextMenuLayer] = useState<any>(null);
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
@@ -825,6 +827,17 @@ export default function TemplateBuilderV2() {
             Edit Properties
           </button>
           <button
+            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center gap-2 text-primary"
+            onClick={() => {
+              setRegenerateDialogOpen(true);
+              closeContextMenu();
+            }}
+          >
+            <Type className="h-4 w-4" />
+            Regenerate with AI
+          </button>
+          <div className="h-px bg-border my-1" />
+          <button
             className="w-full px-4 py-2 text-left hover:bg-muted flex items-center gap-2"
             onClick={() => {
               handleDuplicateLayer(contextMenuLayer.id);
@@ -929,6 +942,26 @@ export default function TemplateBuilderV2() {
           onOpenChange={setPreviewOpen}
           template={template}
           canvasData={history.state}
+        />
+      )}
+
+      {contextMenuLayer && history.state && (
+        <RegenerateElementDialog
+          open={regenerateDialogOpen}
+          onOpenChange={setRegenerateDialogOpen}
+          layer={contextMenuLayer}
+          canvasData={history.state}
+          onRegenerate={(newLayer) => {
+            if (!history.state) return;
+            const updatedLayers = history.state.layers.map((l: any) =>
+              l.id === newLayer.id ? { ...l, ...newLayer } : l
+            );
+            history.set({
+              ...history.state,
+              layers: updatedLayers,
+            });
+            setContextMenuLayer(null);
+          }}
         />
       )}
     </div>
