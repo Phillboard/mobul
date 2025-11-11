@@ -1,9 +1,16 @@
+import reiPostcardPreview from "@/assets/template-previews/rei-postcard.jpg";
+import retailPromoPreview from "@/assets/template-previews/retail-promo.jpg";
+import eventInvitePreview from "@/assets/template-previews/event-invite.jpg";
+import roofingServicesPreview from "@/assets/template-previews/roofing-services.jpg";
+import autoServicePreview from "@/assets/template-previews/auto-service.jpg";
+
 export interface StarterTemplate {
   id: string;
   name: string;
   description: string;
   category: "real_estate" | "retail" | "event" | "roofing" | "auto";
   previewImage: string;
+  thumbnailUrl: string;
   size: "4x6" | "6x9" | "6x11" | "letter" | "trifold";
   industryVertical: "roofing" | "rei" | "auto_service" | "auto_warranty" | "auto_buyback";
   layers: any;
@@ -16,6 +23,7 @@ export const starterTemplates: StarterTemplate[] = [
     description: "Professional postcard for cash home buyers",
     category: "real_estate",
     previewImage: "🏠",
+    thumbnailUrl: reiPostcardPreview,
     size: "6x9",
     industryVertical: "rei",
     layers: {
@@ -120,6 +128,7 @@ export const starterTemplates: StarterTemplate[] = [
     description: "Eye-catching promotional postcard for retail sales",
     category: "retail",
     previewImage: "🛍️",
+    thumbnailUrl: retailPromoPreview,
     size: "6x11",
     industryVertical: "rei",
     layers: {
@@ -243,6 +252,7 @@ export const starterTemplates: StarterTemplate[] = [
     description: "Elegant invitation for special events",
     category: "event",
     previewImage: "🎉",
+    thumbnailUrl: eventInvitePreview,
     size: "4x6",
     industryVertical: "rei",
     layers: {
@@ -366,6 +376,7 @@ export const starterTemplates: StarterTemplate[] = [
     description: "Professional postcard for roofing contractors",
     category: "roofing",
     previewImage: "🏗️",
+    thumbnailUrl: roofingServicesPreview,
     size: "6x9",
     industryVertical: "roofing",
     layers: {
@@ -489,6 +500,7 @@ export const starterTemplates: StarterTemplate[] = [
     description: "Promotional postcard for auto service centers",
     category: "auto",
     previewImage: "🚗",
+    thumbnailUrl: autoServicePreview,
     size: "6x9",
     industryVertical: "auto_service",
     layers: {

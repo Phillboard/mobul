@@ -77,9 +77,9 @@ export function CreateTemplateDialog({
 
   const createMutation = useMutation({
     mutationFn: async (data: TemplateFormData) => {
-      let thumbnailUrl = null;
+      let thumbnailUrl = selectedStarter?.thumbnailUrl || null;
 
-      // Upload thumbnail if provided
+      // Upload thumbnail if provided (for blank templates)
       if (thumbnailFile) {
         const fileExt = thumbnailFile.name.split(".").pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -185,8 +185,12 @@ export function CreateTemplateDialog({
                       }}
                     >
                       <CardContent className="p-4">
-                        <div className="text-4xl mb-2 text-center">
-                          {template.previewImage}
+                        <div className="aspect-[3/2] mb-3 overflow-hidden rounded border bg-muted">
+                          <img
+                            src={template.thumbnailUrl}
+                            alt={template.name}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         <h4 className="font-semibold text-sm mb-1">
                           {template.name}
