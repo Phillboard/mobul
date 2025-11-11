@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { TemplatePreviewRenderer } from "@/components/templates/TemplatePreviewRenderer";
 
 interface PreviewModalProps {
   open: boolean;
@@ -79,72 +80,61 @@ export function PreviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Preview with Recipient Data</DialogTitle>
+          <DialogTitle>Template Preview</DialogTitle>
         </DialogHeader>
 
-        {recipients.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No recipients found. Add recipients to an audience to preview personalization.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrevious}
-                disabled={currentIndex === 0}
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-              <span className="text-sm">
-                Recipient {currentIndex + 1} of {recipients.length}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNext}
-                disabled={currentIndex === recipients.length - 1}
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
+        <div className="space-y-4">
+          {/* Visual Canvas Preview */}
+          {canvasData && canvasData.canvasSize && canvasData.layers && (
+            <TemplatePreviewRenderer
+              layers={canvasData.layers}
+              canvasSize={canvasData.canvasSize}
+            />
+          )}
 
-            <div className="border rounded-lg p-4 bg-muted/20">
-              <h3 className="font-semibold mb-2">Recipient Data:</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Name: {currentRecipient?.first_name} {currentRecipient?.last_name}</div>
-                <div>Company: {currentRecipient?.company || "N/A"}</div>
-                <div>Address: {currentRecipient?.address1}</div>
-                <div>City: {currentRecipient?.city}, {currentRecipient?.state} {currentRecipient?.zip}</div>
+          {/* Recipient Data Section - Only show if recipients exist */}
+          {recipients.length > 0 && (
+            <div className="space-y-4 pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold">Preview with Recipient Data</h3>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrevious}
+                    disabled={currentIndex === 0}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  <span className="text-sm">
+                    {currentIndex + 1} of {recipients.length}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNext}
+                    disabled={currentIndex === recipients.length - 1}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border rounded-lg p-4 bg-muted/20">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div><strong>Name:</strong> {currentRecipient?.first_name} {currentRecipient?.last_name}</div>
+                  <div><strong>Company:</strong> {currentRecipient?.company || "N/A"}</div>
+                  <div><strong>Address:</strong> {currentRecipient?.address1}</div>
+                  <div><strong>City:</strong> {currentRecipient?.city}, {currentRecipient?.state} {currentRecipient?.zip}</div>
+                </div>
               </div>
             </div>
-
-            <div className="border rounded-lg p-4 space-y-4">
-              <h3 className="font-semibold">Preview:</h3>
-              {canvasData?.layers?.map((layer: any) => (
-                <div key={layer.id} className="text-sm">
-                  {layer.type === "text" && (
-                    <div>
-                      <strong>Text Layer:</strong>{" "}
-                      {replaceMergeFields(layer.text, currentRecipient)}
-                    </div>
-                  )}
-                  {layer.type === "qr_code" && (
-                    <div>
-                      <strong>QR Code:</strong> Points to{" "}
-                      {replaceMergeFields("{{purl}}", currentRecipient)}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
