@@ -21,6 +21,11 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
+  const [editingText, setEditingText] = useState<{
+    object: any;
+    text: string;
+    position: { left: number; top: number; width: number; height: number };
+  } | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -100,6 +105,26 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
     // Handle object modifications
     canvas.on("object:modified", () => {
       syncCanvasToData(canvas);
+    });
+
+    // Handle double-click on text elements
+    canvas.on("mouse:dblclick", (e: any) => {
+      const target = e.target;
+      if (target instanceof FabricText) {
+        const canvasRect = canvasRef.current?.getBoundingClientRect();
+        if (!canvasRect) return;
+
+        setEditingText({
+          object: target,
+          text: target.text || "",
+          position: {
+            left: canvasRect.left + (target.left || 0) * zoom,
+            top: canvasRect.top + (target.top || 0) * zoom,
+            width: (target.width || 100) * zoom,
+            height: (target.height || 50) * zoom,
+          },
+        });
+      }
     });
 
     return () => {
@@ -251,6 +276,24 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
     }
   };
 
+  const handleTextEditComplete = () => {
+    if (!editingText || !fabricCanvasRef.current) return;
+
+    editingText.object.set("text", editingText.text);
+    fabricCanvasRef.current.renderAll();
+    syncCanvasToData(fabricCanvasRef.current);
+    setEditingText(null);
+  };
+
+  const handleTextEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleTextEditComplete();
+    } else if (e.key === "Escape") {
+      setEditingText(null);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-builder-canvas">
       <div className="flex items-center justify-center gap-4 p-4 bg-builder-sidebar border-b border-border shadow-sm">
@@ -292,6 +335,30 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
           <canvas ref={canvasRef} />
         </div>
       </div>
+
+      {/* Inline text editor */}
+      {editingText && (
+        <input
+          type="text"
+          value={editingText.text}
+          onChange={(e) =>
+            setEditingText({ ...editingText, text: e.target.value })
+          }
+          onBlur={handleTextEditComplete}
+          onKeyDown={handleTextEditKeyDown}
+          autoFocus
+          className="fixed z-50 bg-background text-foreground border-2 border-primary rounded px-2 py-1 outline-none shadow-lg"
+          style={{
+            left: `${editingText.position.left}px`,
+            top: `${editingText.position.top}px`,
+            minWidth: `${editingText.position.width}px`,
+            fontSize: `${(editingText.object.fontSize || 24) * zoom}px`,
+            fontFamily: editingText.object.fontFamily || "Arial",
+            fontWeight: editingText.object.fontWeight || "normal",
+            fontStyle: editingText.object.fontStyle || "normal",
+          }}
+        />
+      )}
     </div>
   );
 }
