@@ -15,7 +15,7 @@ import AudienceDetail from "./pages/AudienceDetail";
 import RecipientDetail from "./pages/RecipientDetail";
 import LeadMarketplace from "./pages/LeadMarketplace";
 import Templates from "./pages/Templates";
-import TemplateBuilder from "./pages/TemplateBuilder";
+import TemplateBuilderV2 from "./pages/TemplateBuilderV2";
 import Analytics from "./pages/Analytics";
 import API from "./pages/API";
 import Settings from "./pages/Settings";
@@ -42,7 +42,7 @@ const App = () => (
               <Route path="/audiences/:id" element={<ProtectedRoute><AudienceDetail /></ProtectedRoute>} />
               <Route path="/recipients/:id" element={<ProtectedRoute><RecipientDetail /></ProtectedRoute>} />
               <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
-              <Route path="/template-builder/:id" element={<ProtectedRoute><TemplateBuilder /></ProtectedRoute>} />
+              <Route path="/template-builder/:id" element={<ProtectedRoute><TemplateBuilderV2 /></ProtectedRoute>} />
               <Route path="/analytics/:campaignId" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/marketplace" element={<ProtectedRoute><LeadMarketplace /></ProtectedRoute>} />
               <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
