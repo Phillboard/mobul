@@ -35,6 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { starterTemplates, type StarterTemplate } from "@/lib/starterTemplates";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TemplatePreviewRenderer } from "./TemplatePreviewRenderer";
 
 const templateSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
@@ -208,88 +209,99 @@ export function CreateTemplateDialog({
               </div>
 
               {selectedStarter && (
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Template Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Spring Roofing Campaign" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                <div className="space-y-4">
+                  {selectedStarter.layers?.layers && (
+                    <TemplatePreviewRenderer
+                      layers={selectedStarter.layers.layers}
+                      canvasSize={
+                        selectedStarter.layers.canvasSize || { width: 600, height: 400 }
+                      }
                     />
+                  )}
 
-                    <div className="grid grid-cols-2 gap-4">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                       <FormField
                         control={form.control}
-                        name="size"
+                        name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Size</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select size" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className="bg-background z-50">
-                                <SelectItem value="4x6">4×6 Postcard</SelectItem>
-                                <SelectItem value="6x9">6×9 Postcard</SelectItem>
-                                <SelectItem value="6x11">6×11 Postcard</SelectItem>
-                                <SelectItem value="letter">Letter (#10)</SelectItem>
-                                <SelectItem value="trifold">Tri-fold Self-Mailer</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormLabel>Template Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., Spring Roofing Campaign" {...field} />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      <FormField
-                        control={form.control}
-                        name="industry_vertical"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Industry</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select industry" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className="bg-background z-50">
-                                <SelectItem value="roofing">Roofing</SelectItem>
-                                <SelectItem value="rei">Real Estate Investment</SelectItem>
-                                <SelectItem value="auto_service">Auto Service</SelectItem>
-                                <SelectItem value="auto_warranty">Auto Warranty</SelectItem>
-                                <SelectItem value="auto_buyback">Auto Buyback</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="size"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Size</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select size" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent className="bg-background z-50">
+                                  <SelectItem value="4x6">4×6 Postcard</SelectItem>
+                                  <SelectItem value="6x9">6×9 Postcard</SelectItem>
+                                  <SelectItem value="6x11">6×11 Postcard</SelectItem>
+                                  <SelectItem value="letter">Letter (#10)</SelectItem>
+                                  <SelectItem value="trifold">Tri-fold Self-Mailer</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                    <DialogFooter>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => onOpenChange(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={createMutation.isPending}>
-                        {createMutation.isPending ? "Creating..." : "Create Template"}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
+                        <FormField
+                          control={form.control}
+                          name="industry_vertical"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Industry</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select industry" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent className="bg-background z-50">
+                                  <SelectItem value="roofing">Roofing</SelectItem>
+                                  <SelectItem value="rei">Real Estate Investment</SelectItem>
+                                  <SelectItem value="auto_service">Auto Service</SelectItem>
+                                  <SelectItem value="auto_warranty">Auto Warranty</SelectItem>
+                                  <SelectItem value="auto_buyback">Auto Buyback</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => onOpenChange(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={createMutation.isPending}>
+                          {createMutation.isPending ? "Creating..." : "Create Template"}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </div>
               )}
             </div>
           </TabsContent>
