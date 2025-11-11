@@ -41,6 +41,8 @@ export default function TemplateBuilderV2() {
   const [shapeDialogOpen, setShapeDialogOpen] = useState(false);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [editingLayer, setEditingLayer] = useState<any>(null);
+  const [contextMenuLayer, setContextMenuLayer] = useState<any>(null);
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
 
   const { data: template, isLoading } = useQuery({
     queryKey: ["template", id],
@@ -488,6 +490,65 @@ export default function TemplateBuilderV2() {
     history.set({ ...history.state, layers: newLayers });
   };
 
+  // Alignment handlers
+  const handleAlign = (direction: string) => {
+    if (!history.state || !selectedLayer) return;
+    
+    const canvasWidth = history.state.canvasSize.width;
+    const canvasHeight = history.state.canvasSize.height;
+    
+    const layer = history.state.layers.find((l: any) => l.id === selectedLayer.id);
+    if (!layer) return;
+
+    const updates: any = {};
+    
+    // Get layer dimensions
+    const layerWidth = layer.width || layer.radius * 2 || 100;
+    const layerHeight = layer.height || layer.radius * 2 || 50;
+
+    switch (direction) {
+      case "left":
+        updates.left = 0;
+        break;
+      case "center":
+        updates.left = (canvasWidth - layerWidth) / 2;
+        break;
+      case "right":
+        updates.left = canvasWidth - layerWidth;
+        break;
+      case "top":
+        updates.top = 0;
+        break;
+      case "middle":
+        updates.top = (canvasHeight - layerHeight) / 2;
+        break;
+      case "bottom":
+        updates.top = canvasHeight - layerHeight;
+        break;
+    }
+
+    history.set({
+      ...history.state,
+      layers: history.state.layers.map((l: any) =>
+        l.id === selectedLayer.id ? { ...l, ...updates } : l
+      ),
+    });
+    
+    toast.success(`Aligned ${direction}`);
+  };
+
+  // Context menu handler
+  const handleContextMenu = (layer: any, e: MouseEvent) => {
+    e.preventDefault();
+    setContextMenuLayer(layer);
+    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const closeContextMenu = () => {
+    setContextMenuLayer(null);
+    setContextMenuPosition(null);
+  };
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -581,6 +642,7 @@ export default function TemplateBuilderV2() {
         isSaving={isSaving}
         lastSaved={lastSaved}
         hasSelection={!!selectedLayer}
+        onAlign={handleAlign}
       />
       
       <div className="flex flex-1 overflow-hidden">
@@ -701,6 +763,7 @@ export default function TemplateBuilderV2() {
           onChange={(data) => history.set(data)}
           onSelectLayer={setSelectedLayer}
           onDoubleClickLayer={handleEditLayer}
+          onContextMenu={handleContextMenu}
           selectedLayer={selectedLayer}
           activeTool={activeTool}
           onDrop={handleCanvasDrop}
@@ -710,6 +773,83 @@ export default function TemplateBuilderV2() {
           gridSize={gridSize}
         />
       </div>
+
+      {/* Context Menu */}
+      {contextMenuLayer && contextMenuPosition && (
+        <div
+          className="fixed z-50 bg-background border border-border rounded-md shadow-lg py-1 min-w-[200px]"
+          style={{
+            left: `${contextMenuPosition.x}px`,
+            top: `${contextMenuPosition.y}px`,
+          }}
+          onClick={closeContextMenu}
+        >
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center gap-2"
+            onClick={() => {
+              handleEditLayer(contextMenuLayer);
+              closeContextMenu();
+            }}
+          >
+            Edit Properties
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center gap-2"
+            onClick={() => {
+              handleDuplicateLayer(contextMenuLayer.id);
+              closeContextMenu();
+            }}
+          >
+            Duplicate
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center gap-2 text-destructive"
+            onClick={() => {
+              handleDeleteLayer(contextMenuLayer.id);
+              closeContextMenu();
+            }}
+          >
+            Delete
+          </button>
+          <div className="h-px bg-border my-1" />
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center gap-2"
+            onClick={() => {
+              handleBringToFront(contextMenuLayer.id);
+              closeContextMenu();
+            }}
+          >
+            Bring to Front
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center gap-2"
+            onClick={() => {
+              handleSendToBack(contextMenuLayer.id);
+              closeContextMenu();
+            }}
+          >
+            Send to Back
+          </button>
+          <div className="h-px bg-border my-1" />
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-muted flex items-center gap-2"
+            onClick={() => {
+              handleToggleLock(contextMenuLayer.id);
+              closeContextMenu();
+            }}
+          >
+            {contextMenuLayer.locked ? "Unlock" : "Lock"}
+          </button>
+        </div>
+      )}
+
+      {/* Click outside to close context menu */}
+      {contextMenuLayer && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={closeContextMenu}
+        />
+      )}
 
       {/* Dialogs */}
       <QRCodeDialog
