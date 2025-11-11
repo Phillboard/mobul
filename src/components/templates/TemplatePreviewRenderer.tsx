@@ -13,9 +13,11 @@ interface Layer {
   fill?: string;
   fontWeight?: string;
   url?: string;
+  src?: string;
   align?: string;
   stroke?: string;
   strokeWidth?: number;
+  shape?: string;
 }
 
 interface TemplatePreviewRendererProps {
@@ -125,7 +127,7 @@ export function TemplatePreviewRenderer({
               );
             }
 
-            if (layer.type === "image" && layer.url) {
+            if (layer.type === "image" && (layer.url || layer.src)) {
               return (
                 <div
                   key={layer.id}
@@ -138,7 +140,7 @@ export function TemplatePreviewRenderer({
                   }}
                 >
                   <img
-                    src={layer.url}
+                    src={layer.url || layer.src}
                     alt="Template image"
                     className="w-full h-full object-cover"
                   />
@@ -174,7 +176,7 @@ export function TemplatePreviewRenderer({
               );
             }
 
-            if (layer.type === "rectangle" || layer.type === "rect") {
+            if (layer.type === "rectangle" || layer.type === "rect" || (layer.type === "shape" && layer.shape === "rectangle")) {
               return (
                 <div
                   key={layer.id}
@@ -184,8 +186,8 @@ export function TemplatePreviewRenderer({
                     top: layerTop,
                     width: layerWidth,
                     height: layerHeight,
-                    backgroundColor: layer.fill !== "transparent" ? layer.fill || "#cccccc" : "transparent",
-                    border: layer.stroke ? `${(layer.strokeWidth || 1) * scale}px solid ${layer.stroke}` : "none",
+                    backgroundColor: layer.fill && layer.fill !== "transparent" ? layer.fill : "transparent",
+                    border: layer.stroke && layer.stroke !== "" ? `${(layer.strokeWidth || 1) * scale}px solid ${layer.stroke}` : "none",
                   }}
                 />
               );
