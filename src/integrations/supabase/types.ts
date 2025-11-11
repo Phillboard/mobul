@@ -1157,6 +1157,22 @@ export type Database = {
         | "auto_service"
         | "auto_warranty"
         | "auto_buyback"
+        | "retail_promo"
+        | "restaurant_promo"
+        | "healthcare_checkup"
+        | "legal_services"
+        | "financial_advisor"
+        | "fitness_gym"
+        | "roofing_services"
+        | "rei_postcard"
+        | "landscaping"
+        | "moving_company"
+        | "realtor_listing"
+        | "dental"
+        | "veterinary"
+        | "insurance"
+        | "home_services"
+        | "event_invite"
       lp_mode: "bridge" | "redirect"
       org_type: "internal" | "agency"
       postage_class: "first_class" | "standard"
@@ -1307,6 +1323,22 @@ export const Constants = {
         "auto_service",
         "auto_warranty",
         "auto_buyback",
+        "retail_promo",
+        "restaurant_promo",
+        "healthcare_checkup",
+        "legal_services",
+        "financial_advisor",
+        "fitness_gym",
+        "roofing_services",
+        "rei_postcard",
+        "landscaping",
+        "moving_company",
+        "realtor_listing",
+        "dental",
+        "veterinary",
+        "insurance",
+        "home_services",
+        "event_invite",
       ],
       lp_mode: ["bridge", "redirect"],
       org_type: ["internal", "agency"],

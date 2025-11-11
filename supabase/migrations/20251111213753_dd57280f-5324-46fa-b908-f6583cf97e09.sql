@@ -1,0 +1,17 @@
+-- Add missing industry types to the industry_type enum
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'retail_promo';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'restaurant_promo';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'healthcare_checkup';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'legal_services';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'financial_advisor';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'fitness_gym';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'roofing_services';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'rei_postcard';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'landscaping';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'moving_company';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'realtor_listing';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'dental';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'veterinary';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'insurance';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'home_services';
+ALTER TYPE public.industry_type ADD VALUE IF NOT EXISTS 'event_invite';
