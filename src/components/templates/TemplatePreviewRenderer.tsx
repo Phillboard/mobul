@@ -41,6 +41,10 @@ const sampleData = {
   event_time: "7:00 PM",
   venue_name: "Grand Hotel Ballroom",
   expiry_date: "December 31, 2024",
+  business_name: "Your Business Name",
+  website: "www.yourbusiness.com",
+  restaurant_name: "Fine Dining Restaurant",
+  address: "123 Main St, San Francisco, CA 94102",
 };
 
 const replaceMergeFields = (text: string) => {
@@ -61,7 +65,11 @@ const replaceMergeFields = (text: string) => {
     .replace(/\{\{event_date\}\}/g, sampleData.event_date)
     .replace(/\{\{event_time\}\}/g, sampleData.event_time)
     .replace(/\{\{venue_name\}\}/g, sampleData.venue_name)
-    .replace(/\{\{expiry_date\}\}/g, sampleData.expiry_date);
+    .replace(/\{\{expiry_date\}\}/g, sampleData.expiry_date)
+    .replace(/\{\{business_name\}\}/g, sampleData.business_name)
+    .replace(/\{\{website\}\}/g, sampleData.website)
+    .replace(/\{\{restaurant_name\}\}/g, sampleData.restaurant_name)
+    .replace(/\{\{address\}\}/g, sampleData.address);
 };
 
 export function TemplatePreviewRenderer({
