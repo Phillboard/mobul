@@ -13,6 +13,7 @@ import { BackgroundPanel } from "@/components/template-builder/BackgroundPanel";
 import { ElementsPanel } from "@/components/template-builder/ElementsPanel";
 import { FieldsPanel } from "@/components/template-builder/FieldsPanel";
 import { UploadPanel } from "@/components/template-builder/UploadPanel";
+import { GridSettings } from "@/components/template-builder/GridSettings";
 import { Type } from "lucide-react";
 import { toast } from "sonner";
 
@@ -26,6 +27,10 @@ export default function TemplateBuilder() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showGrid, setShowGrid] = useState(false);
+  const [showRulers, setShowRulers] = useState(true);
+  const [snapToGrid, setSnapToGrid] = useState(false);
+  const [gridSize, setGridSize] = useState(20);
 
   const { data: template, isLoading } = useQuery({
     queryKey: ["template", id],
@@ -435,6 +440,19 @@ export default function TemplateBuilder() {
               onDragStart={() => {}}
             />
           )}
+
+          {activeTool === "grid" && (
+            <GridSettings
+              showGrid={showGrid}
+              onShowGridChange={setShowGrid}
+              showRulers={showRulers}
+              onShowRulersChange={setShowRulers}
+              snapToGrid={snapToGrid}
+              onSnapToGridChange={setSnapToGrid}
+              gridSize={gridSize}
+              onGridSizeChange={setGridSize}
+            />
+          )}
           
           <div className="flex-1 bg-muted/20 min-w-0 overflow-hidden">
             {canvasData && (
@@ -445,6 +463,10 @@ export default function TemplateBuilder() {
                 selectedLayer={selectedLayer}
                 activeTool={activeTool}
                 onDrop={handleCanvasDrop}
+                showGrid={showGrid}
+                showRulers={showRulers}
+                snapToGrid={snapToGrid}
+                gridSize={gridSize}
               />
             )}
           </div>

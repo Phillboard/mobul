@@ -14,9 +14,24 @@ interface CanvasProps {
   selectedLayer: any;
   activeTool?: string | null;
   onDrop?: (elementType: string, position: { x: number; y: number }, elementData?: any) => void;
+  showGrid?: boolean;
+  showRulers?: boolean;
+  snapToGrid?: boolean;
+  gridSize?: number;
 }
 
-export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeTool, onDrop }: CanvasProps) {
+export function Canvas({ 
+  data, 
+  onChange, 
+  onSelectLayer, 
+  selectedLayer, 
+  activeTool, 
+  onDrop,
+  showGrid = false,
+  showRulers = false,
+  snapToGrid = false,
+  gridSize = 20,
+}: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -69,6 +84,11 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
     }
   };
 
+  const snapToGridValue = (value: number) => {
+    if (!snapToGrid) return value;
+    return Math.round(value / gridSize) * gridSize;
+  };
+
   useEffect(() => {
     if (!canvasRef.current || !data.canvasSize) return;
 
@@ -107,6 +127,16 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
       syncCanvasToData(canvas);
     });
 
+    // Handle object moving with snap to grid
+    canvas.on("object:moving", (e: any) => {
+      if (snapToGrid && e.target) {
+        e.target.set({
+          left: snapToGridValue(e.target.left || 0),
+          top: snapToGridValue(e.target.top || 0),
+        });
+      }
+    });
+
     // Handle double-click on text elements
     canvas.on("mouse:dblclick", (e: any) => {
       const target = e.target;
@@ -139,6 +169,12 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
     canvas.clear();
     loadLayers(canvas, data.layers);
   }, [data.layers]);
+
+  // Update grid when settings change
+  useEffect(() => {
+    if (!fabricCanvasRef.current) return;
+    fabricCanvasRef.current.renderAll();
+  }, [showGrid, gridSize]);
 
   const loadLayers = async (canvas: FabricCanvas, layers: any[]) => {
     for (const layer of layers) {
@@ -321,19 +357,83 @@ export function Canvas({ data, onChange, onSelectLayer, selectedLayer, activeToo
       </div>
 
       <div className="flex-1 overflow-auto p-8 flex items-center justify-center min-h-0">
-        <div 
-          ref={containerRef}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onClick={handleCanvasClick}
-          className={`border-2 border-border shadow-2xl bg-white rounded-lg overflow-hidden transition-all duration-300 ${
-            activeTool && activeTool !== "select" 
-              ? "cursor-crosshair hover:shadow-3xl hover:border-primary" 
-              : "hover:shadow-3xl"
-          }`}
-          style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
-        >
-          <canvas ref={canvasRef} />
+        <div className="relative">
+          {/* Horizontal Ruler */}
+          {showRulers && (
+            <div 
+              className="absolute -top-6 left-0 h-6 bg-muted border-b border-border text-xs flex items-end"
+              style={{ width: `${data.canvasSize.width * zoom}px` }}
+            >
+              {Array.from({ length: Math.floor(data.canvasSize.width / 100) + 1 }).map((_, i) => (
+                <div key={i} className="relative" style={{ width: `${100 * zoom}px` }}>
+                  <span className="absolute bottom-0 left-0 px-1 text-muted-foreground">
+                    {i * 100}
+                  </span>
+                  <div className="absolute bottom-0 left-0 w-px h-2 bg-border" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Vertical Ruler */}
+          {showRulers && (
+            <div 
+              className="absolute -left-6 top-0 w-6 bg-muted border-r border-border text-xs"
+              style={{ height: `${data.canvasSize.height * zoom}px` }}
+            >
+              {Array.from({ length: Math.floor(data.canvasSize.height / 100) + 1 }).map((_, i) => (
+                <div key={i} className="relative" style={{ height: `${100 * zoom}px` }}>
+                  <span className="absolute top-0 left-0 px-1 text-muted-foreground writing-mode-vertical">
+                    {i * 100}
+                  </span>
+                  <div className="absolute top-0 left-0 h-px w-2 bg-border" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div 
+            ref={containerRef}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={handleCanvasClick}
+            className={`border-2 border-border shadow-2xl bg-white rounded-lg overflow-hidden transition-all duration-300 relative ${
+              activeTool && activeTool !== "select" 
+                ? "cursor-crosshair hover:shadow-3xl hover:border-primary" 
+                : "hover:shadow-3xl"
+            }`}
+            style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
+          >
+            <canvas ref={canvasRef} />
+            
+            {/* Grid Overlay */}
+            {showGrid && (
+              <svg
+                className="absolute inset-0 pointer-events-none"
+                width={data.canvasSize.width}
+                height={data.canvasSize.height}
+                style={{ opacity: 0.3 }}
+              >
+                <defs>
+                  <pattern
+                    id="grid"
+                    width={gridSize}
+                    height={gridSize}
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <path
+                      d={`M ${gridSize} 0 L 0 0 0 ${gridSize}`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="0.5"
+                      className="text-muted-foreground"
+                    />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+              </svg>
+            )}
+          </div>
         </div>
       </div>
 

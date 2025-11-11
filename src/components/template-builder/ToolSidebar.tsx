@@ -1,4 +1,4 @@
-import { Type, Image, Layers, Palette, FileText, Package } from "lucide-react";
+import { Type, Image, Layers, Palette, FileText, Package, Grid3x3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -20,6 +20,7 @@ const tools = [
   { id: "background", icon: Palette, label: "Background" },
   { id: "layers", icon: Layers, label: "Layers" },
   { id: "fields", icon: FileText, label: "Fields" },
+  { id: "grid", icon: Grid3x3, label: "Grid" },
 ];
 
 export function ToolSidebar({ activeTool, onToolSelect }: ToolSidebarProps) {
@@ -60,6 +61,7 @@ export function ToolSidebar({ activeTool, onToolSelect }: ToolSidebarProps) {
                   {tool.id === "background" && "Set canvas background"}
                   {tool.id === "layers" && "Manage all layers"}
                   {tool.id === "fields" && "Add merge fields"}
+                  {tool.id === "grid" && "Configure grid & guides"}
                 </p>
               </TooltipContent>
             </Tooltip>
