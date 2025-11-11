@@ -29,26 +29,57 @@ serve(async (req) => {
     
     const canvasSize = sizeMap[size] || sizeMap["4x6"];
 
-    const systemPrompt = `You are an expert direct mail postcard designer. Generate professional postcard designs with proper layout, colors, and typography.
+    const systemPrompt = `You are an expert direct mail postcard designer with 20+ years of experience. Create visually stunning, high-converting postcard designs.
 
-Design Guidelines:
-- Use bold, attention-grabbing headlines
-- Include clear call-to-action elements
-- Use appropriate colors for the industry
-- Position elements with proper spacing and hierarchy
-- All text should be readable (min 14px font size)
-- Use merge fields like {{first_name}}, {{company}}, {{phone}}, {{address1}}, etc. for personalization
+CRITICAL DESIGN RULES:
+1. ALWAYS create a full background first (rect covering entire canvas)
+2. Layer elements properly: background → decorative shapes → text (front to back)
+3. NEVER overlap text elements - maintain minimum 40px spacing between text blocks
+4. Use visual hierarchy: Large headline (72-120px) → Subheadline (36-48px) → Body (24-32px) → Fine print (18-20px)
+5. White space is essential - don't crowd the design
+6. Align elements to an invisible grid for professional appearance
+7. Use 2-3 colors max (plus white/black) for cohesive design
 
-Canvas size: ${canvasSize.width}x${canvasSize.height}px
-Industry: ${industryVertical}
+LAYOUT STRUCTURE (for ${canvasSize.width}x${canvasSize.height}px):
+- Main Headline: Top 1/3, centered or left-aligned with 60-100px margins
+- Hero/Offer: Middle section with strong visual contrast
+- Call-to-action: Bottom 1/3, highly visible with contrasting color
+- Leave 80-120px margins on all sides for safe printing area
 
-Common color palettes by industry:
-- Real Estate: Blues (#1e3a8a, #3b82f6), Golds (#f59e0b)
-- Healthcare: Blues (#0ea5e9), Greens (#10b981), Whites
-- Retail: Reds (#dc2626), Yellows (#fbbf24), Bold colors
-- Roofing/Services: Oranges (#ea580c), Navy (#1e3a8a), Professional tones
-- Legal: Navy (#1e3a8a), Grays (#374151), Professional
-- Financial: Blues (#1e40af), Greens (#059669), Trust colors`;
+TYPOGRAPHY HIERARCHY:
+- Headlines: Bold, 72-120px, eye-catching colors
+- Subheadlines: Bold, 36-48px, complementary colors  
+- Body text: Regular or Bold, 24-32px, high contrast for readability
+- Contact info: Regular, 20-24px, clearly visible
+
+COLOR PALETTES BY INDUSTRY (${industryVertical}):
+- Real Estate: Navy #1e3a8a + Gold #f59e0b + White, or Sky Blue #0ea5e9 + Dark Gray #1f2937
+- Healthcare: Teal #0d9488 + Light Blue #7dd3fc + White, or Green #10b981 + Navy #1e3a8a
+- Retail: Bold Red #dc2626 + Black + White, or Orange #ea580c + Yellow #fbbf24 + Dark background
+- Restaurant/Food: Warm Red #991b1b + Cream #fef3c7, or Orange #c2410c + Brown #78350f + Light background
+- Roofing/Services: Orange #ea580c + Navy #1e3a8a + White, or Red #dc2626 + Dark Gray #374151
+- Legal/Financial: Navy #1e40af + Gray #6b7280 + White, or Forest Green #065f46 + Gold #d97706
+- Fitness/Gym: Electric Red #dc2626 + Black, or Bold Orange #ea580c + Charcoal #1f2937
+- Default: Primary #3b82f6 + Accent #8b5cf6 + White/Light Gray background
+
+PERSONALIZATION MERGE FIELDS (use strategically):
+- {{first_name}} - in headline or greeting
+- {{company}} - if B2B context
+- {{address1}}, {{city}}, {{state}} - for local relevance
+- {{phone}} - for contact info
+- Use these naturally, not forced
+
+REQUIRED ELEMENTS (create 5-8 total layers):
+1. Background rectangle (full canvas, use industry-appropriate color)
+2. Optional: 1-2 decorative shapes for visual interest (positioned behind text)
+3. Main headline (large, bold, positioned strategically)
+4. Supporting text or offer details (medium size, complementary position)
+5. Call-to-action text (prominent, action-oriented)
+6. Optional: QR code (bottom-right, 200-250px square)
+7. Contact information (small, bottom area)
+
+Canvas: ${canvasSize.width}x${canvasSize.height}px
+Industry: ${industryVertical}`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -60,7 +91,19 @@ Common color palettes by industry:
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Create a postcard design for: ${description}` }
+          { 
+            role: 'user', 
+            content: `Create a professional, high-converting postcard design for: ${description}
+
+Key requirements:
+- Start with a full-canvas background rectangle
+- Create clear visual hierarchy with properly sized text
+- Ensure NO overlapping text elements
+- Use industry-appropriate colors
+- Include strategic white space
+- Follow the layout structure guidelines
+- Make it visually appealing and balanced` 
+          }
         ],
         tools: [{
           type: 'function',
@@ -107,9 +150,10 @@ Common color palettes by industry:
                       strokeWidth: { type: 'number', description: 'Border width (optional)' },
                       visible: { type: 'boolean', description: 'Layer visibility' },
                       locked: { type: 'boolean', description: 'Layer locked state' },
-                      name: { type: 'string', description: 'Layer name for organization' }
+                      name: { type: 'string', description: 'Layer name for organization' },
+                      zIndex: { type: 'number', description: 'Layer stacking order - background=0, shapes=1-2, text=3-10 (higher numbers appear on top)' }
                     },
-                    required: ['id', 'type', 'x', 'y', 'width', 'height', 'fill', 'visible', 'locked', 'name']
+                    required: ['id', 'type', 'x', 'y', 'width', 'height', 'fill', 'visible', 'locked', 'name', 'zIndex']
                   },
                   description: 'Array of design layers'
                 }

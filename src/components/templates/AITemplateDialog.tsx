@@ -127,12 +127,12 @@ export function AITemplateDialog({ open, onOpenChange, clientId }: AITemplateDia
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g., A real estate postcard with 'We Buy Houses' as the headline, includes my phone number, and has a call-to-action button. Use professional colors."
+              placeholder="Example: A promotional postcard for 50% off coffee drinks. Large bold headline '50% OFF Your Favorite Coffee', warm brown and cream colors, coffee cup imagery, 'Visit Today' button at bottom, include merge fields for personalization."
               rows={4}
               required
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Be specific about headlines, colors, and key elements you want included
+              Be specific: mention headlines, text content, colors, call-to-action, and any merge fields you want
             </p>
           </div>
 
@@ -162,12 +162,14 @@ export function AITemplateDialog({ open, onOpenChange, clientId }: AITemplateDia
                 <SelectContent>
                   <SelectItem value="rei">Real Estate Investment</SelectItem>
                   <SelectItem value="roofing">Roofing Services</SelectItem>
+                  <SelectItem value="restaurant">Restaurant / Food Service</SelectItem>
                   <SelectItem value="auto_service">Auto Service</SelectItem>
                   <SelectItem value="auto_warranty">Auto Warranty</SelectItem>
                   <SelectItem value="auto_buyback">Auto Buyback</SelectItem>
                   <SelectItem value="healthcare">Healthcare</SelectItem>
                   <SelectItem value="legal">Legal Services</SelectItem>
                   <SelectItem value="financial">Financial Services</SelectItem>
+                  <SelectItem value="fitness">Fitness / Gym</SelectItem>
                   <SelectItem value="retail">Retail</SelectItem>
                 </SelectContent>
               </Select>
