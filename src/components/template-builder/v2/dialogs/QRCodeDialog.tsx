@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,6 +80,9 @@ export function QRCodeDialog({ open, onOpenChange, onSave, initialData }: QRCode
             <QrCode className="h-5 w-5 text-primary" />
             QR Code Configuration
           </DialogTitle>
+          <DialogDescription>
+            Configure your QR code with personalized URLs and UTM tracking parameters
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

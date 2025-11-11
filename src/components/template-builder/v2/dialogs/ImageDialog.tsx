@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -63,6 +63,9 @@ export function ImageDialog({ open, onOpenChange, onSave, initialData }: ImageDi
             <ImageIcon className="h-5 w-5 text-primary" />
             Image Properties
           </DialogTitle>
+          <DialogDescription>
+            Upload images and adjust fit mode, opacity, and filter settings
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

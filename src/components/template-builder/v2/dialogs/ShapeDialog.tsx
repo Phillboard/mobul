@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,6 +63,9 @@ export function ShapeDialog({ open, onOpenChange, onSave, initialData }: ShapeDi
             )}
             Shape Properties
           </DialogTitle>
+          <DialogDescription>
+            Configure shape type, dimensions, colors, and stroke properties
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
