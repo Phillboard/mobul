@@ -12,6 +12,7 @@ interface CanvasProps {
   onChange: (data: any) => void;
   onSelectLayer: (layer: any) => void;
   onDoubleClickLayer?: (layer: any) => void;
+  onContextMenu?: (layer: any, e: MouseEvent) => void;
   selectedLayer: any;
   activeTool?: string | null;
   onDrop?: (elementType: string, position: { x: number; y: number }, elementData?: any) => void;
@@ -26,6 +27,7 @@ export function Canvas({
   onChange, 
   onSelectLayer, 
   onDoubleClickLayer,
+  onContextMenu,
   selectedLayer, 
   activeTool, 
   onDrop,
@@ -142,28 +144,21 @@ export function Canvas({
     // Handle double-click on any element to open properties
     canvas.on("mouse:dblclick", (e: any) => {
       const target = e.target;
-      if (target?.layerData) {
-        // Notify parent to open properties panel
-        if (onDoubleClickLayer) {
-          onDoubleClickLayer(target.layerData);
-        }
-        
-        // For text elements, also enable inline editing
-        if (target instanceof FabricText) {
-          const canvasRect = canvasRef.current?.getBoundingClientRect();
-          if (!canvasRect) return;
+      if (target?.layerData && onDoubleClickLayer) {
+        onDoubleClickLayer(target.layerData);
+      }
+    });
 
-          setEditingText({
-            object: target,
-            text: target.text || "",
-            position: {
-              left: canvasRect.left + (target.left || 0) * zoom,
-              top: canvasRect.top + (target.top || 0) * zoom,
-              width: (target.width || 100) * zoom,
-              height: (target.height || 50) * zoom,
-            },
-          });
-        }
+    // Handle right-click context menu
+    const handleContextMenu = (e: any) => {
+      e.e.preventDefault();
+      if (e.target?.layerData && onContextMenu) {
+        onContextMenu(e.target.layerData, e.e);
+      }
+    };
+    canvas.on("mouse:down", (e: any) => {
+      if (e.button === 3) { // Right click
+        handleContextMenu(e);
       }
     });
 

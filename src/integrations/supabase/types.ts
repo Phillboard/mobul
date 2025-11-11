@@ -755,6 +755,74 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_code_configs: {
+        Row: {
+          background_color: string | null
+          base_url: string
+          created_at: string | null
+          custom_utm_1: string | null
+          custom_utm_2: string | null
+          custom_utm_3: string | null
+          foreground_color: string | null
+          id: string
+          layer_id: string
+          size: number | null
+          template_id: string
+          updated_at: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          background_color?: string | null
+          base_url: string
+          created_at?: string | null
+          custom_utm_1?: string | null
+          custom_utm_2?: string | null
+          custom_utm_3?: string | null
+          foreground_color?: string | null
+          id?: string
+          layer_id: string
+          size?: number | null
+          template_id: string
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          background_color?: string | null
+          base_url?: string
+          created_at?: string | null
+          custom_utm_1?: string | null
+          custom_utm_2?: string | null
+          custom_utm_3?: string | null
+          foreground_color?: string | null
+          id?: string
+          layer_id?: string
+          size?: number | null
+          template_id?: string
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_code_configs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qr_tracking_events: {
         Row: {
           campaign_id: string

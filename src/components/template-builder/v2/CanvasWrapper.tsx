@@ -4,6 +4,8 @@ interface CanvasWrapperProps {
   data: any;
   onChange: (data: any) => void;
   onSelectLayer: (layer: any) => void;
+  onDoubleClickLayer?: (layer: any) => void;
+  onContextMenu?: (layer: any, e: MouseEvent) => void;
   selectedLayer: any;
   activeTool: string | null;
   onDrop: (elementType: string, position: { x: number; y: number }, elementData?: any) => void;
@@ -17,6 +19,8 @@ export function CanvasWrapper({
   data,
   onChange,
   onSelectLayer,
+  onDoubleClickLayer,
+  onContextMenu,
   selectedLayer,
   activeTool,
   onDrop,
@@ -32,6 +36,8 @@ export function CanvasWrapper({
           data={data}
           onChange={onChange}
           onSelectLayer={onSelectLayer}
+          onDoubleClickLayer={onDoubleClickLayer}
+          onContextMenu={onContextMenu}
           selectedLayer={selectedLayer}
           activeTool={activeTool}
           onDrop={onDrop}

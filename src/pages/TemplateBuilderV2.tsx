@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,10 @@ import { ElementsPanel } from "@/components/template-builder/ElementsPanel";
 import { FieldsPanel } from "@/components/template-builder/FieldsPanel";
 import { UploadPanel } from "@/components/template-builder/UploadPanel";
 import { GridSettings } from "@/components/template-builder/GridSettings";
+import { QRCodeDialog, type QRCodeConfig } from "@/components/template-builder/v2/dialogs/QRCodeDialog";
+import { TextDialog, type TextConfig } from "@/components/template-builder/v2/dialogs/TextDialog";
+import { ShapeDialog, type ShapeConfig } from "@/components/template-builder/v2/dialogs/ShapeDialog";
+import { ImageDialog, type ImageConfig } from "@/components/template-builder/v2/dialogs/ImageDialog";
 import { useCanvasHistory } from "@/hooks/useCanvasHistory";
 import { Type } from "lucide-react";
 import { toast } from "sonner";
@@ -30,6 +34,13 @@ export default function TemplateBuilderV2() {
   const [snapToGrid, setSnapToGrid] = useState(false);
   const [gridSize, setGridSize] = useState(20);
   const [zoom, setZoom] = useState(1);
+  
+  // Dialog states
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [textDialogOpen, setTextDialogOpen] = useState(false);
+  const [shapeDialogOpen, setShapeDialogOpen] = useState(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [editingLayer, setEditingLayer] = useState<any>(null);
 
   const { data: template, isLoading } = useQuery({
     queryKey: ["template", id],
@@ -348,6 +359,195 @@ export default function TemplateBuilderV2() {
     setZoom((prev) => Math.max(prev - 0.25, 0.5));
   };
 
+  // Dialog handlers
+  const handleEditLayer = (layer: any) => {
+    setEditingLayer(layer);
+    if (layer.type === "text") {
+      setTextDialogOpen(true);
+    } else if (layer.type === "shape") {
+      setShapeDialogOpen(true);
+    } else if (layer.type === "image") {
+      setImageDialogOpen(true);
+    } else if (layer.type === "qr_code") {
+      setQrDialogOpen(true);
+    }
+  };
+
+  const handleQRCodeSave = (config: QRCodeConfig) => {
+    if (!history.state) return;
+    
+    if (editingLayer) {
+      history.set({
+        ...history.state,
+        layers: history.state.layers.map((l: any) =>
+          l.id === editingLayer.id
+            ? { ...l, ...config, type: "qr_code", data: config.baseUrl }
+            : l
+        ),
+      });
+    } else {
+      addLayer({
+        type: "qr_code",
+        data: config.baseUrl,
+        ...config,
+        left: 100,
+        top: 100,
+      });
+    }
+    setEditingLayer(null);
+  };
+
+  const handleTextSave = (config: TextConfig) => {
+    if (!history.state) return;
+    
+    if (editingLayer) {
+      history.set({
+        ...history.state,
+        layers: history.state.layers.map((l: any) =>
+          l.id === editingLayer.id ? { ...l, ...config, type: "text" } : l
+        ),
+      });
+    } else {
+      addLayer({
+        type: "text",
+        ...config,
+        left: 100,
+        top: 100,
+      });
+    }
+    setEditingLayer(null);
+  };
+
+  const handleShapeSave = (config: ShapeConfig) => {
+    if (!history.state) return;
+    
+    if (editingLayer) {
+      history.set({
+        ...history.state,
+        layers: history.state.layers.map((l: any) =>
+          l.id === editingLayer.id ? { ...l, ...config, type: "shape" } : l
+        ),
+      });
+    } else {
+      addLayer({
+        type: "shape",
+        ...config,
+        left: 100,
+        top: 100,
+      });
+    }
+    setEditingLayer(null);
+  };
+
+  const handleImageSave = (config: ImageConfig) => {
+    if (!history.state) return;
+    
+    if (editingLayer) {
+      history.set({
+        ...history.state,
+        layers: history.state.layers.map((l: any) =>
+          l.id === editingLayer.id ? { ...l, ...config, type: "image" } : l
+        ),
+      });
+    } else {
+      addLayer({
+        type: "image",
+        ...config,
+        left: 100,
+        top: 100,
+        scaleX: 1,
+        scaleY: 1,
+      });
+    }
+    setEditingLayer(null);
+  };
+
+  const handleBringToFront = (layerId: string) => {
+    if (!history.state) return;
+    const layers = history.state.layers;
+    const index = layers.findIndex((l: any) => l.id === layerId);
+    if (index === -1 || index === layers.length - 1) return;
+    
+    const newLayers = [...layers];
+    const [layer] = newLayers.splice(index, 1);
+    newLayers.push(layer);
+    
+    history.set({ ...history.state, layers: newLayers });
+  };
+
+  const handleSendToBack = (layerId: string) => {
+    if (!history.state) return;
+    const layers = history.state.layers;
+    const index = layers.findIndex((l: any) => l.id === layerId);
+    if (index === -1 || index === 0) return;
+    
+    const newLayers = [...layers];
+    const [layer] = newLayers.splice(index, 1);
+    newLayers.unshift(layer);
+    
+    history.set({ ...history.state, layers: newLayers });
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Z - Undo
+      if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        if (history.canUndo) {
+          history.undo();
+          toast.info("Undo");
+        }
+      }
+      // Ctrl+Y or Ctrl+Shift+Z - Redo
+      else if ((e.ctrlKey && e.key === "y") || (e.ctrlKey && e.shiftKey && e.key === "z")) {
+        e.preventDefault();
+        if (history.canRedo) {
+          history.redo();
+          toast.info("Redo");
+        }
+      }
+      // Delete - Remove selected element
+      else if (e.key === "Delete" && selectedLayer) {
+        e.preventDefault();
+        handleDeleteLayer(selectedLayer.id);
+      }
+      // Ctrl+D - Duplicate
+      else if (e.ctrlKey && e.key === "d" && selectedLayer) {
+        e.preventDefault();
+        handleDuplicateLayer(selectedLayer.id);
+      }
+      // Ctrl+S - Save
+      else if (e.ctrlKey && e.key === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+      // Arrow keys - Move element
+      else if (selectedLayer && !selectedLayer.locked && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const layer = history.state.layers.find((l: any) => l.id === selectedLayer.id);
+        if (!layer) return;
+
+        const updates: any = {};
+        if (e.key === "ArrowUp") updates.top = (layer.top || 0) - step;
+        if (e.key === "ArrowDown") updates.top = (layer.top || 0) + step;
+        if (e.key === "ArrowLeft") updates.left = (layer.left || 0) - step;
+        if (e.key === "ArrowRight") updates.left = (layer.left || 0) + step;
+
+        history.set({
+          ...history.state,
+          layers: history.state.layers.map((l: any) =>
+            l.id === selectedLayer.id ? { ...l, ...updates } : l
+          ),
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [history, selectedLayer]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -400,12 +600,15 @@ export default function TemplateBuilderV2() {
                 Text Tool
               </h3>
               <p className="text-xs text-muted-foreground mt-2">
-                Click anywhere on the canvas to add text
+                Click to add text or open properties dialog
               </p>
             </div>
             <div className="p-4">
               <button
-                onClick={handleAddText}
+                onClick={() => {
+                  setEditingLayer(null);
+                  setTextDialogOpen(true);
+                }}
                 className="w-full h-20 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all hover:scale-105"
               >
                 <Type className="h-6 w-6 text-primary" />
@@ -433,12 +636,15 @@ export default function TemplateBuilderV2() {
             <div className="p-4 border-b border-border bg-gradient-to-r from-primary/10 to-primary/5">
               <h3 className="font-semibold">QR Codes</h3>
               <p className="text-xs text-muted-foreground mt-2">
-                Add personalized QR codes
+                Add personalized QR codes with UTM tracking
               </p>
             </div>
             <div className="p-4">
               <button
-                onClick={handleAddQRCode}
+                onClick={() => {
+                  setEditingLayer(null);
+                  setQrDialogOpen(true);
+                }}
                 className="w-full h-20 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all hover:scale-105"
               >
                 <span className="text-sm font-medium">Add QR Code</span>
@@ -494,6 +700,7 @@ export default function TemplateBuilderV2() {
           data={history.state}
           onChange={(data) => history.set(data)}
           onSelectLayer={setSelectedLayer}
+          onDoubleClickLayer={handleEditLayer}
           selectedLayer={selectedLayer}
           activeTool={activeTool}
           onDrop={handleCanvasDrop}
@@ -503,6 +710,47 @@ export default function TemplateBuilderV2() {
           gridSize={gridSize}
         />
       </div>
+
+      {/* Dialogs */}
+      <QRCodeDialog
+        open={qrDialogOpen}
+        onOpenChange={(open) => {
+          setQrDialogOpen(open);
+          if (!open) setEditingLayer(null);
+        }}
+        onSave={handleQRCodeSave}
+        initialData={editingLayer?.type === "qr_code" ? editingLayer : undefined}
+      />
+
+      <TextDialog
+        open={textDialogOpen}
+        onOpenChange={(open) => {
+          setTextDialogOpen(open);
+          if (!open) setEditingLayer(null);
+        }}
+        onSave={handleTextSave}
+        initialData={editingLayer?.type === "text" ? editingLayer : undefined}
+      />
+
+      <ShapeDialog
+        open={shapeDialogOpen}
+        onOpenChange={(open) => {
+          setShapeDialogOpen(open);
+          if (!open) setEditingLayer(null);
+        }}
+        onSave={handleShapeSave}
+        initialData={editingLayer?.type === "shape" ? editingLayer : undefined}
+      />
+
+      <ImageDialog
+        open={imageDialogOpen}
+        onOpenChange={(open) => {
+          setImageDialogOpen(open);
+          if (!open) setEditingLayer(null);
+        }}
+        onSave={handleImageSave}
+        initialData={editingLayer?.type === "image" ? editingLayer : undefined}
+      />
 
       {previewOpen && history.state && (
         <PreviewModal
