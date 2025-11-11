@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.submit-lead-form]
 verify_jwt = false
+
+[functions.generate-template-design]
+verify_jwt = true

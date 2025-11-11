@@ -36,6 +36,7 @@ import { starterTemplates, type StarterTemplate } from "@/lib/starterTemplates";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TemplatePreviewRenderer } from "./TemplatePreviewRenderer";
+import { AITemplateDialog } from "./AITemplateDialog";
 
 const templateSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
@@ -66,6 +67,7 @@ export function CreateTemplateDialog({
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedStarter, setSelectedStarter] = useState<StarterTemplate | null>(null);
+  const [showAIDialog, setShowAIDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const form = useForm<TemplateFormData>({
@@ -154,13 +156,30 @@ export function CreateTemplateDialog({
         </DialogHeader>
 
         <Tabs defaultValue="starter" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="starter">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="ai">
               <Sparkles className="mr-2 h-4 w-4" />
+              AI Designer
+            </TabsTrigger>
+            <TabsTrigger value="starter">
               Starter Templates
             </TabsTrigger>
             <TabsTrigger value="blank">Blank Template</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="ai" className="space-y-4">
+            <div className="text-center py-8">
+              <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">AI-Powered Template Design</h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                Describe your perfect postcard and let AI create a professional design for you in seconds.
+              </p>
+              <Button onClick={() => setShowAIDialog(true)}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Start AI Design
+              </Button>
+            </div>
+          </TabsContent>
 
           <TabsContent value="starter" className="space-y-4">
             <div className="space-y-4">
@@ -420,6 +439,12 @@ export function CreateTemplateDialog({
           </TabsContent>
         </Tabs>
       </DialogContent>
+      
+      <AITemplateDialog
+        open={showAIDialog}
+        onOpenChange={setShowAIDialog}
+        clientId={clientId}
+      />
     </Dialog>
   );
 }
