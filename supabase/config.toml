@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.regenerate-template-element]
 verify_jwt = true
+
+[functions.dr-phillip-chat]
+verify_jwt = false
