@@ -2,43 +2,132 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, X, Send, Calculator, Plus, HelpCircle, Headphones } from "lucide-react";
+import { MessageCircle, X, Send, Calculator, Plus, HelpCircle, Headphones, History, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
 };
 
+type ChatSession = {
+  id: string;
+  title: string;
+  messages: Message[];
+  created_at: string;
+  updated_at: string;
+};
+
 export function DrPhillipChat() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load chat history from sessionStorage
+  // Load chat sessions from database
   useEffect(() => {
-    const saved = sessionStorage.getItem("dr-phillip-chat");
-    if (saved) {
-      try {
-        setMessages(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to load chat history:", e);
-      }
+    if (isOpen) {
+      loadChatSessions();
     }
-  }, []);
+  }, [isOpen]);
 
-  // Save chat history to sessionStorage
-  useEffect(() => {
-    if (messages.length > 0) {
-      sessionStorage.setItem("dr-phillip-chat", JSON.stringify(messages.slice(-20)));
+  const loadChatSessions = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("dr_phillip_chats")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      if (data) {
+        setChatSessions(data.map(chat => ({
+          id: chat.id,
+          title: chat.title,
+          messages: chat.messages as Message[],
+          created_at: chat.created_at,
+          updated_at: chat.updated_at,
+        })));
+
+        // If no current chat, load the most recent one
+        if (!currentChatId && data.length > 0) {
+          setCurrentChatId(data[0].id);
+          setMessages(data[0].messages as Message[]);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load chat sessions:", error);
     }
-  }, [messages]);
+  };
+
+  const saveCurrentChat = async () => {
+    if (messages.length === 0) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Generate title from first user message
+      const firstUserMessage = messages.find(m => m.role === "user");
+      const title = firstUserMessage 
+        ? firstUserMessage.content.slice(0, 50) + (firstUserMessage.content.length > 50 ? "..." : "")
+        : "New Chat";
+
+      if (currentChatId) {
+        // Update existing chat
+        const { error } = await supabase
+          .from("dr_phillip_chats")
+          .update({ 
+            messages: messages,
+            title: title,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", currentChatId);
+
+        if (error) throw error;
+      } else {
+        // Create new chat
+        const { data, error } = await supabase
+          .from("dr_phillip_chats")
+          .insert({
+            user_id: user.id,
+            title: title,
+            messages: messages,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setCurrentChatId(data.id);
+        }
+      }
+
+      await loadChatSessions();
+    } catch (error) {
+      console.error("Failed to save chat:", error);
+    }
+  };
+
+  // Save chat after messages update
+  useEffect(() => {
+    if (messages.length > 0 && !isTyping) {
+      saveCurrentChat();
+    }
+  }, [messages, isTyping]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -154,56 +243,149 @@ export function DrPhillipChat() {
     // In production, this would open a support ticket or redirect to live chat
   };
 
+  const handleNewChat = () => {
+    setMessages([]);
+    setCurrentChatId(null);
+    setShowHistory(false);
+  };
+
+  const handleLoadChat = (session: ChatSession) => {
+    setMessages(session.messages);
+    setCurrentChatId(session.id);
+    setShowHistory(false);
+  };
+
+  const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { error } = await supabase
+        .from("dr_phillip_chats")
+        .delete()
+        .eq("id", chatId);
+
+      if (error) throw error;
+
+      if (currentChatId === chatId) {
+        handleNewChat();
+      }
+
+      await loadChatSessions();
+      toast.success("Chat deleted");
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+      toast.error("Failed to delete chat");
+    }
+  };
+
   if (!isOpen) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-105 flex items-center justify-center group relative animate-in fade-in slide-in-from-bottom-4 duration-500"
-        aria-label="Open Dr. Phillip chat"
-      >
-        <span className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-75" style={{ animationDuration: "2s" }} />
-        <MessageCircle className="h-7 w-7 relative z-10" strokeWidth={2.5} />
-        <span className="absolute top-1 right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-white z-20" />
-        <span className="absolute -top-12 right-0 bg-background border px-4 py-2 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md">
-          💬 Chat with Dr. Phillip
-        </span>
-      </button>
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-105 flex items-center justify-center group relative animate-in fade-in slide-in-from-bottom-4 duration-500"
+          aria-label="Open Dr. Phillip chat"
+        >
+          <span className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-75" style={{ animationDuration: "2s" }} />
+          <MessageCircle className="h-7 w-7 relative z-10" strokeWidth={2.5} />
+          <span className="absolute top-1 right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-white z-20" />
+          <span className="absolute -top-12 right-0 bg-background border px-4 py-2 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md">
+            💬 Chat with Dr. Phillip
+          </span>
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-full max-w-md h-[600px] max-h-[80vh] flex flex-col bg-background border rounded-lg shadow-2xl animate-in slide-in-from-bottom-4">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Avatar className="h-11 w-11 border-2 border-white/30 shadow-md">
-              <AvatarFallback className="bg-blue-400 text-white font-bold text-lg">
-                🎯
-              </AvatarFallback>
-            </Avatar>
-            <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-400 rounded-full border-2 border-white" />
+    <div className="fixed bottom-6 right-6 z-50 flex gap-2 items-end">
+      {/* Chat History Sidebar */}
+      {showHistory && (
+        <div className="w-64 h-[600px] max-h-[80vh] bg-background border rounded-lg shadow-xl flex flex-col animate-in slide-in-from-right-4">
+          <div className="p-4 border-b">
+            <h3 className="font-semibold mb-2">Chat History</h3>
+            <Button onClick={handleNewChat} className="w-full" size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              New Chat
+            </Button>
           </div>
-          <div>
-            <h3 className="font-semibold flex items-center gap-2">
-              Dr. Phillip
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">AI</span>
-            </h3>
-            <p className="text-xs opacity-90 flex items-center gap-1">
-              <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              Online • Usually replies instantly
-            </p>
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-1">
+              {chatSessions.map((session) => (
+                <div
+                  key={session.id}
+                  onClick={() => handleLoadChat(session)}
+                  className={cn(
+                    "p-3 rounded-lg cursor-pointer hover:bg-muted/50 group relative",
+                    currentChatId === session.id && "bg-muted"
+                  )}
+                >
+                  <p className="text-sm font-medium truncate pr-6">{session.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(session.updated_at).toLocaleDateString()}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100"
+                    onClick={(e) => handleDeleteChat(session.id, e)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+              {chatSessions.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No chat history yet
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
+
+      {/* Main Chat Window */}
+      <div className="w-full max-w-md h-[600px] max-h-[80vh] flex flex-col bg-background border rounded-lg shadow-2xl animate-in slide-in-from-bottom-4">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Avatar className="h-11 w-11 border-2 border-white/30 shadow-md">
+                <AvatarFallback className="bg-blue-400 text-white font-bold text-lg">
+                  🎯
+                </AvatarFallback>
+              </Avatar>
+              <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-400 rounded-full border-2 border-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold flex items-center gap-2">
+                Dr. Phillip
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">AI</span>
+              </h3>
+              <p className="text-xs opacity-90 flex items-center gap-1">
+                <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                Online • Usually replies instantly
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowHistory(!showHistory)}
+              className="text-white hover:bg-white/10"
+            >
+              <History className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(false)}
+              className="text-white hover:bg-white/10"
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsOpen(false)}
-          className="text-white hover:bg-white/10"
-        >
-          <X className="h-5 w-5" />
-        </Button>
-      </div>
 
       {/* Quick Actions */}
       {messages.length === 0 && (
@@ -348,6 +530,7 @@ export function DrPhillipChat() {
         <p className="text-xs text-muted-foreground mt-2 text-center">
           Powered by AI • Press Enter to send
         </p>
+        </div>
       </div>
     </div>
   );
