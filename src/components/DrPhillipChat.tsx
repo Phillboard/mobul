@@ -21,6 +21,17 @@ type ChatSession = {
   updated_at: string;
 };
 
+// Temporary type until database types regenerate
+type DrPhillipChatRow = {
+  id: string;
+  user_id: string;
+  client_id: string | null;
+  title: string;
+  messages: any;
+  created_at: string;
+  updated_at: string;
+};
+
 export function DrPhillipChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -46,7 +57,7 @@ export function DrPhillipChat() {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from("dr_phillip_chats")
+        .from("dr_phillip_chats" as any)
         .select("*")
         .order("updated_at", { ascending: false })
         .limit(20);
@@ -54,7 +65,8 @@ export function DrPhillipChat() {
       if (error) throw error;
 
       if (data) {
-        setChatSessions(data.map(chat => ({
+        const chats = data as unknown as DrPhillipChatRow[];
+        setChatSessions(chats.map(chat => ({
           id: chat.id,
           title: chat.title,
           messages: chat.messages as Message[],
@@ -63,9 +75,9 @@ export function DrPhillipChat() {
         })));
 
         // If no current chat, load the most recent one
-        if (!currentChatId && data.length > 0) {
-          setCurrentChatId(data[0].id);
-          setMessages(data[0].messages as Message[]);
+        if (!currentChatId && chats.length > 0) {
+          setCurrentChatId(chats[0].id);
+          setMessages(chats[0].messages as Message[]);
         }
       }
     } catch (error) {
@@ -89,7 +101,7 @@ export function DrPhillipChat() {
       if (currentChatId) {
         // Update existing chat
         const { error } = await supabase
-          .from("dr_phillip_chats")
+          .from("dr_phillip_chats" as any)
           .update({ 
             messages: messages,
             title: title,
@@ -101,18 +113,18 @@ export function DrPhillipChat() {
       } else {
         // Create new chat
         const { data, error } = await supabase
-          .from("dr_phillip_chats")
+          .from("dr_phillip_chats" as any)
           .insert({
             user_id: user.id,
             title: title,
             messages: messages,
-          })
+          } as any)
           .select()
           .single();
 
         if (error) throw error;
         if (data) {
-          setCurrentChatId(data.id);
+          setCurrentChatId((data as unknown as DrPhillipChatRow).id);
         }
       }
 
@@ -259,7 +271,7 @@ export function DrPhillipChat() {
     e.stopPropagation();
     try {
       const { error } = await supabase
-        .from("dr_phillip_chats")
+        .from("dr_phillip_chats" as any)
         .delete()
         .eq("id", chatId);
 

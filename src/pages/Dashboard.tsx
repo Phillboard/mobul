@@ -1,199 +1,288 @@
-import { Layout } from "@/components/layout/Layout";
+import { useState } from "react";
+import { useTenant } from "@/contexts/TenantContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Mail, 
-  Users, 
-  BarChart3, 
-  TrendingUp, 
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  TrendingUp,
+  TrendingDown,
+  Send,
+  Users,
+  CheckCircle,
+  MousePointerClick,
+  Plus,
+  Upload,
+  BarChart3,
+  ShoppingCart,
+  Mail,
+  QrCode,
+  ExternalLink,
+  Target,
+  Clock,
   ArrowRight,
-  Package,
-  DollarSign,
-  Building
 } from "lucide-react";
-import { useTenant } from "@/contexts/TenantContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { formatDistanceToNow } from "date-fns";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { useNavigate } from "react-router-dom";
 
-export default function Dashboard() {
-  const { currentClient, currentOrg } = useTenant();
-  const { hasRole } = useAuth();
+const Dashboard = () => {
+  const { currentClient } = useTenant();
+  const navigate = useNavigate();
+  const [dateRange, setDateRange] = useState(30);
+  const { stats, performance, recentCampaigns, activity, isLoading } = useDashboardData(dateRange);
 
-  const getIndustryLabel = (industry: string) => {
-    const labels: Record<string, string> = {
-      roofing: 'Roofing',
-      rei: 'Real Estate Investment',
-      auto_service: 'Auto Service',
-      auto_warranty: 'Auto Warranty',
-      auto_buyback: 'Auto Buy-Back'
-    };
-    return labels[industry] || industry;
-  };
-  const stats = [
+  const kpiCards = [
     {
-      name: "Active Campaigns",
-      value: "12",
-      change: "+3 this week",
-      icon: Mail,
+      title: "Active Campaigns",
+      value: stats?.activeCampaigns || 0,
+      change: stats?.campaignTrend || 0,
+      icon: Send,
       color: "text-primary",
+      bgGradient: "from-primary/10 via-primary/5 to-transparent",
     },
     {
-      name: "Total Recipients",
-      value: "45.2K",
-      change: "+12% from last month",
+      title: "Total Recipients",
+      value: stats?.totalRecipients.toLocaleString() || "0",
+      change: stats?.recipientTrend || 0,
       icon: Users,
-      color: "text-accent",
+      color: "text-purple-600",
+      bgGradient: "from-purple-600/10 via-purple-600/5 to-transparent",
     },
     {
-      name: "Delivery Rate",
-      value: "96.8%",
-      change: "+2.1% improvement",
-      icon: Package,
-      color: "text-success",
+      title: "Delivery Rate",
+      value: `${stats?.deliveryRate.toFixed(1) || 0}%`,
+      change: stats?.deliveryTrend || 0,
+      icon: CheckCircle,
+      color: "text-green-600",
+      bgGradient: "from-green-600/10 via-green-600/5 to-transparent",
     },
     {
-      name: "Response Rate",
-      value: "8.4%",
-      change: "+1.2% from avg",
-      icon: TrendingUp,
-      color: "text-warning",
+      title: "Response Rate",
+      value: `${stats?.responseRate.toFixed(1) || 0}%`,
+      change: stats?.responseTrend || 0,
+      icon: MousePointerClick,
+      color: "text-amber-600",
+      bgGradient: "from-amber-600/10 via-amber-600/5 to-transparent",
     },
   ];
 
-  const recentCampaigns = [
+  const quickActions = [
     {
-      name: "Spring Roofing Promo",
-      vertical: "Roofing",
-      status: "In-Transit",
-      mailed: 5420,
-      delivered: 4890,
-      scans: 412,
+      label: "Create Campaign",
+      icon: Plus,
+      onClick: () => navigate("/campaigns"),
+      variant: "default" as const,
     },
     {
-      name: "REI Cash Offer Q2",
-      vertical: "REI/Flippers",
-      status: "Delivered",
-      mailed: 8200,
-      delivered: 7934,
-      scans: 687,
+      label: "Import Audience",
+      icon: Upload,
+      onClick: () => navigate("/audiences"),
+      variant: "outline" as const,
     },
     {
-      name: "Service Reminder Auto",
-      vertical: "Auto Dealership",
-      status: "In Production",
-      mailed: 3100,
-      delivered: 0,
-      scans: 0,
+      label: "View Analytics",
+      icon: BarChart3,
+      onClick: () => navigate("/analytics"),
+      variant: "outline" as const,
+    },
+    {
+      label: "Purchase Leads",
+      icon: ShoppingCart,
+      onClick: () => navigate("/lead-marketplace"),
+      variant: "outline" as const,
     },
   ];
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
+      draft: { variant: "secondary", label: "Draft" },
+      in_production: { variant: "default", label: "In Production" },
+      mailed: { variant: "outline", label: "Mailed" },
+      completed: { variant: "outline", label: "Completed" },
+      cancelled: { variant: "destructive", label: "Cancelled" },
+    };
+
+    const config = statusConfig[status] || { variant: "secondary" as const, label: status };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "imb_injected":
+        return <Mail className="h-4 w-4 text-primary" />;
+      case "imb_delivered":
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case "qr_scan":
+        return <QrCode className="h-4 w-4 text-purple-600" />;
+      case "purl_visit":
+        return <ExternalLink className="h-4 w-4 text-amber-600" />;
+      case "lead_captured":
+        return <Target className="h-4 w-4 text-red-600" />;
+      default:
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-3">
+                <Skeleton className="h-4 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Layout>
-      <div className="space-y-6">
-        {/* Client Context Banner */}
-        {currentClient && (
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <Building className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">{currentClient.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary">{getIndustryLabel(currentClient.industry)}</Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {currentClient.timezone}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {hasRole('org_admin') && currentOrg && (
-                  <Badge variant="outline">{currentOrg.name}</Badge>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Welcome Section */}
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-        <h1 className="text-3xl font-bold text-foreground">Welcome back, Admin</h1>
-        <p className="mt-1 text-muted-foreground">
-          Here's what's happening with your direct mail campaigns today.
-        </p>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            {currentClient ? `${currentClient.name} Overview` : "Welcome back"}
+          </p>
+        </div>
+        <Tabs value={dateRange.toString()} onValueChange={(v) => setDateRange(Number(v))}>
+          <TabsList>
+            <TabsTrigger value="7">7 Days</TabsTrigger>
+            <TabsTrigger value="30">30 Days</TabsTrigger>
+            <TabsTrigger value="90">90 Days</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.name}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.change}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {kpiCards.map((kpi, index) => {
+          const Icon = kpi.icon;
+          const isPositive = kpi.change >= 0;
+          const TrendIcon = isPositive ? TrendingUp : TrendingDown;
+
+          return (
+            <Card key={index} className="relative overflow-hidden hover-scale">
+              <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none`} />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+                <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                <Icon className={`h-4 w-4 ${kpi.color}`} />
+              </CardHeader>
+              <CardContent className="relative">
+                <div className="text-2xl font-bold">{kpi.value}</div>
+                {kpi.change !== 0 && (
+                  <p className={`text-xs flex items-center gap-1 mt-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    <TrendIcon className="h-3 w-3" />
+                    {Math.abs(kpi.change).toFixed(1)}% from last period
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Campaign Performance Chart */}
+        <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-primary" />
-              Create Campaign
-            </CardTitle>
-            <CardDescription>
-              Design and launch a new direct mail campaign
-            </CardDescription>
+            <CardTitle>Campaign Performance</CardTitle>
+            <CardDescription>Track mail delivery and engagement over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-              Start Campaign
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={performance}>
+                <defs>
+                  <linearGradient id="colorDelivered" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorScans" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="date" className="text-xs" />
+                <YAxis className="text-xs" />
+                <Tooltip />
+                <Legend />
+                <Area
+                  type="monotone"
+                  dataKey="delivered"
+                  stroke="hsl(var(--primary))"
+                  fillOpacity={1}
+                  fill="url(#colorDelivered)"
+                  name="Delivered"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="qrScans"
+                  stroke="#8b5cf6"
+                  fillOpacity={1}
+                  fill="url(#colorScans)"
+                  name="QR Scans"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="leads"
+                  stroke="#10b981"
+                  fillOpacity={1}
+                  fill="url(#colorLeads)"
+                  name="Leads"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="border-accent/20 bg-gradient-to-br from-accent/5 to-transparent">
+        {/* Quick Actions */}
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-accent" />
-              Import Audience
-            </CardTitle>
-            <CardDescription>
-              Upload contacts or buy targeted leads
-            </CardDescription>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Get started with common tasks</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground">
-              Manage Audiences
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border-success/20 bg-gradient-to-br from-success/5 to-transparent">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-success" />
-              View Analytics
-            </CardTitle>
-            <CardDescription>
-              Track performance and attribution
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="w-full border-success text-success hover:bg-success hover:text-success-foreground">
-              View Reports
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+          <CardContent className="space-y-2">
+            {quickActions.map((action, index) => {
+              const Icon = action.icon;
+              return (
+                <Button
+                  key={index}
+                  variant={action.variant}
+                  className="w-full justify-start gap-2"
+                  onClick={action.onClick}
+                >
+                  <Icon className="h-4 w-4" />
+                  {action.label}
+                </Button>
+              );
+            })}
           </CardContent>
         </Card>
       </div>
@@ -201,84 +290,113 @@ export default function Dashboard() {
       {/* Recent Campaigns */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Campaigns</CardTitle>
-          <CardDescription>
-            Track the status and performance of your latest campaigns
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Recent Campaigns</CardTitle>
+              <CardDescription>Your latest campaign activity</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/campaigns")}>
+              View All
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentCampaigns.map((campaign) => (
-              <div
-                key={campaign.name}
-                className="flex items-center justify-between rounded-lg border border-border p-4 transition-colors hover:bg-muted/50"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-foreground">{campaign.name}</h3>
-                    <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
-                      {campaign.vertical}
-                    </span>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        campaign.status === "Delivered"
-                          ? "bg-success/10 text-success"
-                          : campaign.status === "In-Transit"
-                          ? "bg-warning/10 text-warning"
-                          : "bg-primary/10 text-primary"
-                      }`}
-                    >
-                      {campaign.status}
-                    </span>
+            {recentCampaigns?.map((campaign) => {
+              const deliveryProgress = campaign.audience_count > 0 
+                ? (campaign.delivered_count / campaign.audience_count) * 100 
+                : 0;
+
+              return (
+                <div
+                  key={campaign.id}
+                  className="flex flex-col gap-3 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <h4 className="font-semibold">{campaign.name}</h4>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users className="h-3 w-3" />
+                        {campaign.audience_count.toLocaleString()} recipients
+                        {campaign.mail_date && (
+                          <>
+                            <span>•</span>
+                            <span>Mail: {new Date(campaign.mail_date).toLocaleDateString()}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {getStatusBadge(campaign.status)}
                   </div>
-                  <div className="mt-2 flex gap-6 text-sm text-muted-foreground">
-                    <span>Mailed: {campaign.mailed.toLocaleString()}</span>
-                    <span>Delivered: {campaign.delivered.toLocaleString()}</span>
-                    <span>Scans: {campaign.scans}</span>
-                    {campaign.scans > 0 && (
-                      <span className="text-success">
-                        CTR: {((campaign.scans / campaign.mailed) * 100).toFixed(2)}%
-                      </span>
-                    )}
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Delivery Progress</span>
+                      <span className="font-medium">{deliveryProgress.toFixed(0)}%</span>
+                    </div>
+                    <Progress value={deliveryProgress} className="h-2" />
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="flex items-center gap-1">
+                      <QrCode className="h-3 w-3 text-purple-600" />
+                      <span className="font-medium">{campaign.qr_scans}</span>
+                      <span className="text-muted-foreground">scans</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Target className="h-3 w-3 text-green-600" />
+                      <span className="font-medium">{campaign.leads}</span>
+                      <span className="text-muted-foreground">leads</span>
+                    </div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm">
-                  View Details
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+              );
+            })}
+
+            {(!recentCampaigns || recentCampaigns.length === 0) && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Send className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No campaigns yet. Create your first campaign to get started!</p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* API Integration Notice */}
-      <Card className="border-primary bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5">
+      {/* Activity Feed */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-primary" />
-            API-First Platform
-          </CardTitle>
-          <CardDescription>
-            Every feature available through our robust REST API and webhooks. Integrate seamlessly with your existing systems.
-          </CardDescription>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>Latest events across your campaigns</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">Ready to automate?</p>
-              <p className="text-xs text-muted-foreground">
-                Full OpenAPI spec, SDKs for Node.js & Python, and real-time webhooks
-              </p>
-            </div>
-            <Button variant="outline">
-              View API Docs
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+          <div className="space-y-4">
+            {activity?.map((item) => (
+              <div key={item.id} className="flex items-start gap-3">
+                <div className="mt-1">{getActivityIcon(item.type)}</div>
+                <div className="flex-1 space-y-1">
+                  <p className="text-sm font-medium">{item.description}</p>
+                  <p className="text-xs text-muted-foreground">{item.campaign_name}</p>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
+                </span>
+              </div>
+            ))}
+
+            {(!activity || activity.length === 0) && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>No recent activity to display</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
     </div>
-  </Layout>
   );
-}
+};
+
+export default Dashboard;
