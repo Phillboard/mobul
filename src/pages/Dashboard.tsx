@@ -95,9 +95,9 @@ const Dashboard = () => {
       variant: "outline" as const,
     },
     {
-      label: "View Analytics",
+      label: "View Campaigns",
       icon: BarChart3,
-      onClick: () => navigate("/analytics"),
+      onClick: () => navigate("/campaigns"),
       variant: "outline" as const,
     },
     {

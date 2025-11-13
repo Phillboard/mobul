@@ -14,3 +14,9 @@ verify_jwt = true
 
 [functions.dr-phillip-chat]
 verify_jwt = false
+
+[functions.generate-api-key]
+verify_jwt = true
+
+[functions.trigger-webhook]
+verify_jwt = false
