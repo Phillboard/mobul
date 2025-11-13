@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, X, Send, Minimize2, Calculator, Plus, HelpCircle } from "lucide-react";
+import { MessageCircle, X, Send, Calculator, Plus, HelpCircle, Headphones } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Message = {
   role: "user" | "assistant";
@@ -146,16 +147,25 @@ export function DrPhillipChat() {
     }
   };
 
+  const handleLiveOperator = () => {
+    toast.info("Connecting to live operator...", {
+      description: "A team member will respond via email within 1 business hour.",
+    });
+    // In production, this would open a support ticket or redirect to live chat
+  };
+
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center group"
+        className="fixed bottom-6 right-6 z-50 h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-105 flex items-center justify-center group relative animate-in fade-in slide-in-from-bottom-4 duration-500"
         aria-label="Open Dr. Phillip chat"
       >
-        <MessageSquare className="h-6 w-6" />
-        <span className="absolute -top-10 right-0 bg-background border px-3 py-1 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md">
-          Dr. Phillip
+        <span className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-75" style={{ animationDuration: "2s" }} />
+        <MessageCircle className="h-7 w-7 relative z-10" strokeWidth={2.5} />
+        <span className="absolute top-1 right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-white z-20" />
+        <span className="absolute -top-12 right-0 bg-background border px-4 py-2 rounded-lg text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md">
+          💬 Chat with Dr. Phillip
         </span>
       </button>
     );
@@ -164,23 +174,32 @@ export function DrPhillipChat() {
   return (
     <div className="fixed bottom-6 right-6 z-50 w-full max-w-md h-[600px] max-h-[80vh] flex flex-col bg-background border rounded-lg shadow-2xl animate-in slide-in-from-bottom-4">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-t-lg">
+      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 border-2 border-primary-foreground/20">
-            <AvatarFallback className="bg-primary-foreground/10 text-primary-foreground font-bold">
-              DP
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="h-11 w-11 border-2 border-white/30 shadow-md">
+              <AvatarFallback className="bg-blue-400 text-white font-bold text-lg">
+                🎯
+              </AvatarFallback>
+            </Avatar>
+            <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-400 rounded-full border-2 border-white" />
+          </div>
           <div>
-            <h3 className="font-semibold">Dr. Phillip</h3>
-            <p className="text-xs opacity-90">Ace Engage Master</p>
+            <h3 className="font-semibold flex items-center gap-2">
+              Dr. Phillip
+              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">AI</span>
+            </h3>
+            <p className="text-xs opacity-90 flex items-center gap-1">
+              <span className="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              Online • Usually replies instantly
+            </p>
           </div>
         </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsOpen(false)}
-          className="text-primary-foreground hover:bg-primary-foreground/10"
+          className="text-white hover:bg-white/10"
         >
           <X className="h-5 w-5" />
         </Button>
@@ -188,16 +207,26 @@ export function DrPhillipChat() {
 
       {/* Quick Actions */}
       {messages.length === 0 && (
-        <div className="p-4 space-y-2 border-b">
-          <p className="text-sm text-muted-foreground mb-3">
-            Hi! I'm Dr. Phillip. How can I help you today?
-          </p>
+        <div className="p-4 space-y-3 border-b bg-muted/30">
+          <div className="flex items-start gap-3">
+            <Avatar className="h-9 w-9 border shadow-sm">
+              <AvatarFallback className="bg-blue-400 text-white font-bold">
+                🎯
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <p className="text-sm font-medium mb-1">Hey there! 👋</p>
+              <p className="text-sm text-muted-foreground">
+                I'm Dr. Phillip, your direct mail expert. I can help you create campaigns, calculate budgets, and answer any questions!
+              </p>
+            </div>
+          </div>
           <div className="grid grid-cols-1 gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleQuickAction("How do I create a new campaign?")}
-              className="justify-start"
+              className="justify-start hover:bg-blue-50 hover:border-blue-200"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Campaign
@@ -206,7 +235,7 @@ export function DrPhillipChat() {
               variant="outline"
               size="sm"
               onClick={() => handleQuickAction("Help me calculate my campaign budget")}
-              className="justify-start"
+              className="justify-start hover:bg-blue-50 hover:border-blue-200"
             >
               <Calculator className="h-4 w-4 mr-2" />
               Budget Calculator
@@ -215,12 +244,21 @@ export function DrPhillipChat() {
               variant="outline"
               size="sm"
               onClick={() => handleQuickAction("What can this platform do?")}
-              className="justify-start"
+              className="justify-start hover:bg-blue-50 hover:border-blue-200"
             >
               <HelpCircle className="h-4 w-4 mr-2" />
               Platform Help
             </Button>
           </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleLiveOperator}
+            className="w-full justify-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200"
+          >
+            <Headphones className="h-4 w-4" />
+            Talk to Live Operator
+          </Button>
         </div>
       )}
 
@@ -231,69 +269,85 @@ export function DrPhillipChat() {
             <div
               key={index}
               className={cn(
-                "flex gap-3",
+                "flex gap-3 items-end",
                 message.role === "user" ? "justify-end" : "justify-start"
               )}
             >
               {message.role === "assistant" && (
-                <Avatar className="h-8 w-8 border">
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                    DP
+                <Avatar className="h-8 w-8 border shadow-sm mb-1">
+                  <AvatarFallback className="bg-blue-400 text-white font-bold text-sm">
+                    🎯
                   </AvatarFallback>
                 </Avatar>
               )}
               <div
                 className={cn(
-                  "rounded-lg px-4 py-2 max-w-[80%] text-sm",
+                  "rounded-2xl px-4 py-2.5 max-w-[80%] text-sm shadow-sm",
                   message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    ? "bg-blue-500 text-white rounded-br-sm"
+                    : "bg-muted rounded-bl-sm"
                 )}
               >
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
               </div>
             </div>
           ))}
           {isTyping && (
-            <div className="flex gap-3 justify-start">
-              <Avatar className="h-8 w-8 border">
-                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                  DP
+            <div className="flex gap-3 items-end justify-start">
+              <Avatar className="h-8 w-8 border shadow-sm mb-1">
+                <AvatarFallback className="bg-blue-400 text-white font-bold text-sm">
+                  🎯
                 </AvatarFallback>
               </Avatar>
-              <div className="rounded-lg px-4 py-2 bg-muted">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+              <div className="rounded-2xl rounded-bl-sm px-4 py-3 bg-muted shadow-sm">
+                <div className="flex gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                 </div>
               </div>
+            </div>
+          )}
+          {messages.length > 0 && (
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLiveOperator}
+                className="w-full justify-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+              >
+                <Headphones className="h-4 w-4" />
+                Need more help? Talk to a live operator
+              </Button>
             </div>
           )}
         </div>
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-4 border-t">
+      <div className="p-4 border-t bg-background">
         <div className="flex gap-2">
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask me anything..."
-            className="min-h-[60px] max-h-[120px] resize-none"
+            placeholder="Type your message..."
+            className="min-h-[60px] max-h-[120px] resize-none border-2 focus-visible:ring-blue-500"
             disabled={isLoading}
           />
           <Button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
             size="icon"
-            className="h-[60px] w-[60px]"
+            className="h-[60px] w-[60px] bg-blue-500 hover:bg-blue-600"
           >
             <Send className="h-5 w-5" />
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          Powered by AI • Press Enter to send
+        </p>
       </div>
     </div>
   );
