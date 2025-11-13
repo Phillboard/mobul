@@ -79,15 +79,15 @@ export function Sidebar() {
                 if (client) setCurrentClient(client);
               }}
             >
-              <SelectTrigger className="w-full h-9 bg-sidebar-accent/50">
+              <SelectTrigger className="w-full h-9 bg-sidebar-accent/50 text-sidebar-foreground">
                 <SelectValue placeholder="Select client" />
               </SelectTrigger>
               <SelectContent className="bg-popover z-50">
                 {availableClients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
                     <div className="flex items-center gap-2">
-                      <span>{client.name}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="font-medium">{client.name}</span>
+                      <span className="text-xs text-muted-foreground/70">
                         ({client.industry})
                       </span>
                     </div>

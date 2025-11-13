@@ -295,7 +295,7 @@ const Dashboard = () => {
               <CardTitle>Recent Campaigns</CardTitle>
               <CardDescription>Your latest campaign activity</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/campaigns")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/campaigns")} className="text-foreground hover:bg-accent">
               View All
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
