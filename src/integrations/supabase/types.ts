@@ -114,6 +114,156 @@ export type Database = {
           },
         ]
       }
+      call_conditions_met: {
+        Row: {
+          call_session_id: string
+          campaign_id: string
+          condition_number: number
+          created_at: string
+          delivery_status: string | null
+          gift_card_id: string | null
+          id: string
+          met_at: string
+          met_by_agent_id: string | null
+          notes: string | null
+          recipient_id: string
+        }
+        Insert: {
+          call_session_id: string
+          campaign_id: string
+          condition_number: number
+          created_at?: string
+          delivery_status?: string | null
+          gift_card_id?: string | null
+          id?: string
+          met_at?: string
+          met_by_agent_id?: string | null
+          notes?: string | null
+          recipient_id: string
+        }
+        Update: {
+          call_session_id?: string
+          campaign_id?: string
+          condition_number?: number
+          created_at?: string
+          delivery_status?: string | null
+          gift_card_id?: string | null
+          id?: string
+          met_at?: string
+          met_by_agent_id?: string | null
+          notes?: string | null
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_conditions_met_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_conditions_met_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_conditions_met_gift_card_id_fkey"
+            columns: ["gift_card_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_conditions_met_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_sessions: {
+        Row: {
+          agent_user_id: string | null
+          call_answered_at: string | null
+          call_duration_seconds: number | null
+          call_ended_at: string | null
+          call_started_at: string
+          call_status: string
+          caller_phone: string
+          campaign_id: string
+          created_at: string
+          id: string
+          match_status: string
+          notes: string | null
+          recipient_id: string | null
+          recording_url: string | null
+          tracked_number_id: string
+          twilio_call_sid: string | null
+        }
+        Insert: {
+          agent_user_id?: string | null
+          call_answered_at?: string | null
+          call_duration_seconds?: number | null
+          call_ended_at?: string | null
+          call_started_at?: string
+          call_status?: string
+          caller_phone: string
+          campaign_id: string
+          created_at?: string
+          id?: string
+          match_status?: string
+          notes?: string | null
+          recipient_id?: string | null
+          recording_url?: string | null
+          tracked_number_id: string
+          twilio_call_sid?: string | null
+        }
+        Update: {
+          agent_user_id?: string | null
+          call_answered_at?: string | null
+          call_duration_seconds?: number | null
+          call_ended_at?: string | null
+          call_started_at?: string
+          call_status?: string
+          caller_phone?: string
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          match_status?: string
+          notes?: string | null
+          recipient_id?: string | null
+          recording_url?: string | null
+          tracked_number_id?: string
+          twilio_call_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_sessions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_sessions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_sessions_tracked_number_id_fkey"
+            columns: ["tracked_number_id"]
+            isOneToOne: false
+            referencedRelation: "tracked_phone_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_approvals: {
         Row: {
           campaign_id: string
@@ -164,6 +314,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      campaign_conditions: {
+        Row: {
+          campaign_id: string
+          condition_name: string
+          condition_number: number
+          created_at: string
+          crm_event_name: string | null
+          id: string
+          is_active: boolean
+          time_delay_hours: number | null
+          trigger_type: string
+        }
+        Insert: {
+          campaign_id: string
+          condition_name: string
+          condition_number: number
+          created_at?: string
+          crm_event_name?: string | null
+          id?: string
+          is_active?: boolean
+          time_delay_hours?: number | null
+          trigger_type?: string
+        }
+        Update: {
+          campaign_id?: string
+          condition_name?: string
+          condition_number?: number
+          created_at?: string
+          crm_event_name?: string | null
+          id?: string
+          is_active?: boolean
+          time_delay_hours?: number | null
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_conditions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       campaign_drafts: {
         Row: {
@@ -1367,6 +1561,54 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "templates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracked_phone_numbers: {
+        Row: {
+          assigned_at: string | null
+          campaign_id: string | null
+          client_id: string
+          created_at: string
+          id: string
+          phone_number: string
+          status: string
+          twilio_sid: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          campaign_id?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          phone_number: string
+          status?: string
+          twilio_sid?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          campaign_id?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          phone_number?: string
+          status?: string
+          twilio_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracked_phone_numbers_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracked_phone_numbers_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
