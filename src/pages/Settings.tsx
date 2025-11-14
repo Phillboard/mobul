@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Palette, Building2 } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
+import { CRMIntegrationTab } from "@/components/settings/CRMIntegrationTab";
 
 export default function Settings() {
   const { currentClient } = useTenant();
@@ -33,6 +34,7 @@ export default function Settings() {
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
             {currentClient && <TabsTrigger value="branding">Client Branding</TabsTrigger>}
+            {currentClient && <TabsTrigger value="crm">CRM Integrations</TabsTrigger>}
             <TabsTrigger value="api">API Settings</TabsTrigger>
           </TabsList>
 
@@ -128,6 +130,12 @@ export default function Settings() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+          )}
+
+          {currentClient && (
+            <TabsContent value="crm" className="space-y-4">
+              <CRMIntegrationTab />
             </TabsContent>
           )}
 
