@@ -13,6 +13,9 @@ import { formatDistanceToNow } from "date-fns";
 import { QRAnalytics } from "@/components/campaigns/QRAnalytics";
 import { ApprovalsTab } from "@/components/campaigns/ApprovalsTab";
 import { CommentsTab } from "@/components/campaigns/CommentsTab";
+import { CallAnalyticsTab } from "@/components/campaigns/CallAnalyticsTab";
+import { RewardsTab } from "@/components/campaigns/RewardsTab";
+import { CallLogTable } from "@/components/campaigns/CallLogTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CampaignDetail() {
@@ -194,8 +197,11 @@ export default function CampaignDetail() {
         </div>
 
         <Tabs defaultValue="tracking" className="w-full">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="tracking">Mail Tracking</TabsTrigger>
+            <TabsTrigger value="calls">Call Analytics</TabsTrigger>
+            <TabsTrigger value="rewards">Rewards</TabsTrigger>
+            <TabsTrigger value="call-log">Call Log</TabsTrigger>
             <TabsTrigger value="qr">QR Analytics</TabsTrigger>
             <TabsTrigger value="batches">Print Batches</TabsTrigger>
             <TabsTrigger value="approvals">Approvals</TabsTrigger>
@@ -305,6 +311,18 @@ export default function CampaignDetail() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="calls">
+            <CallAnalyticsTab campaignId={id!} />
+          </TabsContent>
+
+          <TabsContent value="rewards">
+            <RewardsTab campaignId={id!} />
+          </TabsContent>
+
+          <TabsContent value="call-log">
+            <CallLogTable campaignId={id!} />
           </TabsContent>
 
           <TabsContent value="approvals">
