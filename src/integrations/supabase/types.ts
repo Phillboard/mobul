@@ -652,6 +652,146 @@ export type Database = {
           },
         ]
       }
+      crm_events: {
+        Row: {
+          call_session_id: string | null
+          campaign_id: string | null
+          condition_triggered: number | null
+          created_at: string | null
+          crm_integration_id: string
+          error_message: string | null
+          event_type: string
+          id: string
+          matched: boolean | null
+          processed: boolean | null
+          processed_at: string | null
+          raw_payload: Json
+          recipient_id: string | null
+        }
+        Insert: {
+          call_session_id?: string | null
+          campaign_id?: string | null
+          condition_triggered?: number | null
+          created_at?: string | null
+          crm_integration_id: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          matched?: boolean | null
+          processed?: boolean | null
+          processed_at?: string | null
+          raw_payload: Json
+          recipient_id?: string | null
+        }
+        Update: {
+          call_session_id?: string | null
+          campaign_id?: string | null
+          condition_triggered?: number | null
+          created_at?: string | null
+          crm_integration_id?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          matched?: boolean | null
+          processed?: boolean | null
+          processed_at?: string | null
+          raw_payload?: Json
+          recipient_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_events_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_events_crm_integration_id_fkey"
+            columns: ["crm_integration_id"]
+            isOneToOne: false
+            referencedRelation: "crm_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_events_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_integrations: {
+        Row: {
+          api_credentials_encrypted: Json | null
+          campaign_id: string | null
+          client_id: string
+          created_at: string | null
+          crm_provider: string
+          event_mappings: Json
+          field_mappings: Json
+          id: string
+          is_active: boolean | null
+          last_event_at: string | null
+          updated_at: string | null
+          webhook_secret: string
+          webhook_url: string
+        }
+        Insert: {
+          api_credentials_encrypted?: Json | null
+          campaign_id?: string | null
+          client_id: string
+          created_at?: string | null
+          crm_provider: string
+          event_mappings?: Json
+          field_mappings?: Json
+          id?: string
+          is_active?: boolean | null
+          last_event_at?: string | null
+          updated_at?: string | null
+          webhook_secret: string
+          webhook_url: string
+        }
+        Update: {
+          api_credentials_encrypted?: Json | null
+          campaign_id?: string | null
+          client_id?: string
+          created_at?: string | null
+          crm_provider?: string
+          event_mappings?: Json
+          field_mappings?: Json
+          id?: string
+          is_active?: boolean | null
+          last_event_at?: string | null
+          updated_at?: string | null
+          webhook_secret?: string
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_integrations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_integrations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dr_phillip_chats: {
         Row: {
           client_id: string | null
