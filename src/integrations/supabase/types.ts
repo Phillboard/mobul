@@ -222,6 +222,51 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_reward_configs: {
+        Row: {
+          campaign_id: string
+          condition_number: number
+          created_at: string | null
+          gift_card_pool_id: string | null
+          id: string
+          reward_description: string | null
+          sms_template: string | null
+        }
+        Insert: {
+          campaign_id: string
+          condition_number: number
+          created_at?: string | null
+          gift_card_pool_id?: string | null
+          id?: string
+          reward_description?: string | null
+          sms_template?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          condition_number?: number
+          created_at?: string | null
+          gift_card_pool_id?: string | null
+          id?: string
+          reward_description?: string | null
+          sms_template?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_reward_configs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_reward_configs_gift_card_pool_id_fkey"
+            columns: ["gift_card_pool_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_versions: {
         Row: {
           campaign_id: string
@@ -495,6 +540,192 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_card_deliveries: {
+        Row: {
+          call_session_id: string | null
+          campaign_id: string
+          condition_number: number
+          created_at: string | null
+          delivered_at: string | null
+          delivery_address: string
+          delivery_method: string
+          delivery_status: string | null
+          error_message: string | null
+          gift_card_id: string
+          id: string
+          recipient_id: string
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          call_session_id?: string | null
+          campaign_id: string
+          condition_number: number
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_address: string
+          delivery_method: string
+          delivery_status?: string | null
+          error_message?: string | null
+          gift_card_id: string
+          id?: string
+          recipient_id: string
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          call_session_id?: string | null
+          campaign_id?: string
+          condition_number?: number
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_address?: string
+          delivery_method?: string
+          delivery_status?: string | null
+          error_message?: string | null
+          gift_card_id?: string
+          id?: string
+          recipient_id?: string
+          twilio_message_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_deliveries_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_card_deliveries_gift_card_id_fkey"
+            columns: ["gift_card_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_card_deliveries_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_card_pools: {
+        Row: {
+          available_cards: number | null
+          card_value: number
+          claimed_cards: number | null
+          client_id: string
+          created_at: string | null
+          delivered_cards: number | null
+          failed_cards: number | null
+          id: string
+          pool_name: string
+          provider: string | null
+          total_cards: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          available_cards?: number | null
+          card_value: number
+          claimed_cards?: number | null
+          client_id: string
+          created_at?: string | null
+          delivered_cards?: number | null
+          failed_cards?: number | null
+          id?: string
+          pool_name: string
+          provider?: string | null
+          total_cards?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          available_cards?: number | null
+          card_value?: number
+          claimed_cards?: number | null
+          client_id?: string
+          created_at?: string | null
+          delivered_cards?: number | null
+          failed_cards?: number | null
+          id?: string
+          pool_name?: string
+          provider?: string | null
+          total_cards?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_pools_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_cards: {
+        Row: {
+          card_code: string
+          card_number: string | null
+          claimed_at: string | null
+          claimed_by_call_session_id: string | null
+          claimed_by_recipient_id: string | null
+          created_at: string | null
+          delivered_at: string | null
+          delivery_address: string | null
+          delivery_method: string | null
+          expiration_date: string | null
+          id: string
+          pool_id: string
+          status: string | null
+        }
+        Insert: {
+          card_code: string
+          card_number?: string | null
+          claimed_at?: string | null
+          claimed_by_call_session_id?: string | null
+          claimed_by_recipient_id?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_address?: string | null
+          delivery_method?: string | null
+          expiration_date?: string | null
+          id?: string
+          pool_id: string
+          status?: string | null
+        }
+        Update: {
+          card_code?: string
+          card_number?: string | null
+          claimed_at?: string | null
+          claimed_by_call_session_id?: string | null
+          claimed_by_recipient_id?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_address?: string | null
+          delivery_method?: string | null
+          expiration_date?: string | null
+          id?: string
+          pool_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_cards_claimed_by_recipient_id_fkey"
+            columns: ["claimed_by_recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_cards_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_pools"
             referencedColumns: ["id"]
           },
         ]
@@ -1290,6 +1521,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_available_card: {
+        Args: {
+          p_call_session_id?: string
+          p_pool_id: string
+          p_recipient_id: string
+        }
+        Returns: {
+          card_code: string
+          card_id: string
+          card_number: string
+          card_value: number
+          provider: string
+        }[]
+      }
       generate_recipient_token: { Args: never; Returns: string }
       get_audience_geo_distribution: {
         Args: { audience_id_param: string }

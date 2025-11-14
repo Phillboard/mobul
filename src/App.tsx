@@ -20,6 +20,7 @@ import TemplateBuilderV2 from "./pages/TemplateBuilderV2";
 import Analytics from "./pages/Analytics";
 import API from "./pages/API";
 import APIDocumentation from "./pages/APIDocumentation";
+import GiftCards from "./pages/GiftCards";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -49,7 +50,8 @@ const App = () => (
               <Route path="/template-builder/:id" element={<ProtectedRoute><TemplateBuilderV2 /></ProtectedRoute>} />
               <Route path="/analytics/:campaignId" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/marketplace" element={<ProtectedRoute><LeadMarketplace /></ProtectedRoute>} />
-              <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
+          <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
+          <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
               <Route path="/api/docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/generate-favicon" element={<ProtectedRoute><GenerateFavicon /></ProtectedRoute>} />

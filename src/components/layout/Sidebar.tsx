@@ -11,7 +11,8 @@ import {
   Settings,
   Zap,
   Building,
-  FileStack
+  FileStack,
+  Gift
 } from "lucide-react";
 import {
   Select,
@@ -34,6 +35,7 @@ const navigation: NavItem[] = [
   { name: "Audiences", href: "/audiences", icon: Users },
   { name: "Templates", href: "/templates", icon: FileStack },
   { name: "Lead Marketplace", href: "/marketplace", icon: Zap },
+  { name: "Gift Cards", href: "/gift-cards", icon: Gift, roles: ['org_admin', 'agency_admin'] },
   { name: "API & Webhooks", href: "/api", icon: Code2, roles: ['org_admin', 'agency_admin'] },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
