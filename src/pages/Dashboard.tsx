@@ -35,9 +35,12 @@ import {
   Target,
   Clock,
   ArrowRight,
+  Phone,
+  Gift,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useCallStats, useRewardSummary, useConditionCompletionRate } from "@/hooks/useCallAnalytics";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
@@ -45,6 +48,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState(30);
   const { stats, performance, recentCampaigns, activity, isLoading } = useDashboardData(dateRange);
+  
+  // Import the new hooks
+  const { data: callStats } = useCallStats(currentClient?.id || null, dateRange);
+  const { data: rewardSummary } = useRewardSummary(currentClient?.id || null, dateRange);
+  const { data: conditionRate } = useConditionCompletionRate(currentClient?.id || null, dateRange);
 
   const kpiCards = [
     {
@@ -54,6 +62,38 @@ const Dashboard = () => {
       icon: Send,
       color: "text-primary",
       bgGradient: "from-primary/10 via-primary/5 to-transparent",
+    },
+    {
+      title: "Active Calls Today",
+      value: callStats?.todayCalls || 0,
+      change: 0,
+      icon: Phone,
+      color: "text-blue-600",
+      bgGradient: "from-blue-600/10 via-blue-600/5 to-transparent",
+    },
+    {
+      title: "Gift Cards Delivered",
+      value: rewardSummary?.totalDelivered || 0,
+      change: 0,
+      icon: Gift,
+      color: "text-purple-600",
+      bgGradient: "from-purple-600/10 via-purple-600/5 to-transparent",
+    },
+    {
+      title: "Avg Call Duration",
+      value: callStats?.avgDuration ? `${Math.floor(callStats.avgDuration / 60)}m ${callStats.avgDuration % 60}s` : "0m 0s",
+      change: 0,
+      icon: Clock,
+      color: "text-green-600",
+      bgGradient: "from-green-600/10 via-green-600/5 to-transparent",
+    },
+    {
+      title: "Condition Completion Rate",
+      value: `${conditionRate?.completionRate.toFixed(1) || 0}%`,
+      change: 0,
+      icon: Target,
+      color: "text-amber-600",
+      bgGradient: "from-amber-600/10 via-amber-600/5 to-transparent",
     },
     {
       title: "Total Recipients",
@@ -177,14 +217,42 @@ const Dashboard = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {kpiCards.map((kpi, index) => {
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
+        {kpiCards.slice(0, 4).map((kpi, index) => {
           const Icon = kpi.icon;
           const isPositive = kpi.change >= 0;
           const TrendIcon = isPositive ? TrendingUp : TrendingDown;
 
           return (
             <Card key={index} className="relative overflow-hidden hover-scale">
+              <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none`} />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+                <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                <Icon className={`h-4 w-4 ${kpi.color}`} />
+              </CardHeader>
+              <CardContent className="relative">
+                <div className="text-2xl font-bold">{kpi.value}</div>
+                {kpi.change !== 0 && (
+                  <p className={`text-xs flex items-center gap-1 mt-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    <TrendIcon className="h-3 w-3" />
+                    {Math.abs(kpi.change).toFixed(1)}% from last period
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Second Row of KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
+        {kpiCards.slice(4).map((kpi, index) => {
+          const Icon = kpi.icon;
+          const isPositive = kpi.change >= 0;
+          const TrendIcon = isPositive ? TrendingUp : TrendingDown;
+
+          return (
+            <Card key={index + 4} className="relative overflow-hidden hover-scale">
               <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none`} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
                 <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>

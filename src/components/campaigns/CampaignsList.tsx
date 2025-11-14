@@ -86,10 +86,39 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
         query = query.ilike("name", `%${searchQuery}%`);
       }
 
-      const { data, error } = await query;
-
+      const { data: campaignsData, error } = await query;
       if (error) throw error;
-      return data;
+
+      // Fetch call sessions and conditions for each campaign
+      const enrichedCampaigns = await Promise.all(
+        (campaignsData || []).map(async (campaign) => {
+          // Get call sessions count
+          const { count: callsCount } = await supabase
+            .from('call_sessions')
+            .select('*', { count: 'exact', head: true })
+            .eq('campaign_id', campaign.id);
+
+          // Get conditions met (rewards) count
+          const { count: rewardsCount } = await supabase
+            .from('call_conditions_met')
+            .select('*', { count: 'exact', head: true })
+            .eq('campaign_id', campaign.id);
+
+          // Calculate conversion rate
+          const conversionRate = callsCount && callsCount > 0 
+            ? ((rewardsCount || 0) / callsCount) * 100 
+            : 0;
+
+          return {
+            ...campaign,
+            callsCount: callsCount || 0,
+            rewardsCount: rewardsCount || 0,
+            conversionRate,
+          };
+        })
+      );
+
+      return enrichedCampaigns;
     },
   });
 
@@ -138,6 +167,9 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
           <TableHead>Campaign Name</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Audience</TableHead>
+          <TableHead>Calls</TableHead>
+          <TableHead>Rewards</TableHead>
+          <TableHead>Conversion</TableHead>
           <TableHead>Size</TableHead>
           <TableHead>Mail Date</TableHead>
           <TableHead>Postage</TableHead>
@@ -176,6 +208,17 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
               ) : (
                 <span className="text-muted-foreground text-sm">No audience</span>
               )}
+            </TableCell>
+            <TableCell>
+              <div className="text-sm font-medium">{campaign.callsCount}</div>
+            </TableCell>
+            <TableCell>
+              <div className="text-sm font-medium">{campaign.rewardsCount}</div>
+            </TableCell>
+            <TableCell>
+              <div className="text-sm font-medium">
+                {campaign.conversionRate.toFixed(1)}%
+              </div>
             </TableCell>
             <TableCell>
               <div className="text-sm">{campaign.size?.toUpperCase()}</div>
