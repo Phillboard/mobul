@@ -196,10 +196,13 @@ export type Database = {
           caller_phone: string
           campaign_id: string
           created_at: string
+          forward_to_number: string | null
           id: string
           match_status: string
           notes: string | null
           recipient_id: string | null
+          recording_duration: number | null
+          recording_sid: string | null
           recording_url: string | null
           tracked_number_id: string
           twilio_call_sid: string | null
@@ -214,10 +217,13 @@ export type Database = {
           caller_phone: string
           campaign_id: string
           created_at?: string
+          forward_to_number?: string | null
           id?: string
           match_status?: string
           notes?: string | null
           recipient_id?: string | null
+          recording_duration?: number | null
+          recording_sid?: string | null
           recording_url?: string | null
           tracked_number_id: string
           twilio_call_sid?: string | null
@@ -232,10 +238,13 @@ export type Database = {
           caller_phone?: string
           campaign_id?: string
           created_at?: string
+          forward_to_number?: string | null
           id?: string
           match_status?: string
           notes?: string | null
           recipient_id?: string | null
+          recording_duration?: number | null
+          recording_sid?: string | null
           recording_url?: string | null
           tracked_number_id?: string
           twilio_call_sid?: string | null
@@ -892,6 +901,11 @@ export type Database = {
           gift_card_id: string
           id: string
           recipient_id: string
+          retry_count: number | null
+          sms_error_message: string | null
+          sms_message: string | null
+          sms_sent_at: string | null
+          sms_status: string | null
           twilio_message_sid: string | null
         }
         Insert: {
@@ -907,6 +921,11 @@ export type Database = {
           gift_card_id: string
           id?: string
           recipient_id: string
+          retry_count?: number | null
+          sms_error_message?: string | null
+          sms_message?: string | null
+          sms_sent_at?: string | null
+          sms_status?: string | null
           twilio_message_sid?: string | null
         }
         Update: {
@@ -922,6 +941,11 @@ export type Database = {
           gift_card_id?: string
           id?: string
           recipient_id?: string
+          retry_count?: number | null
+          sms_error_message?: string | null
+          sms_message?: string | null
+          sms_sent_at?: string | null
+          sms_status?: string | null
           twilio_message_sid?: string | null
         }
         Relationships: [
@@ -1714,8 +1738,13 @@ export type Database = {
           campaign_id: string | null
           client_id: string
           created_at: string
+          forward_to_number: string | null
+          friendly_name: string | null
           id: string
+          monthly_cost: number | null
           phone_number: string
+          purchased_at: string | null
+          recording_enabled: boolean | null
           status: string
           twilio_sid: string | null
         }
@@ -1724,8 +1753,13 @@ export type Database = {
           campaign_id?: string | null
           client_id: string
           created_at?: string
+          forward_to_number?: string | null
+          friendly_name?: string | null
           id?: string
+          monthly_cost?: number | null
           phone_number: string
+          purchased_at?: string | null
+          recording_enabled?: boolean | null
           status?: string
           twilio_sid?: string | null
         }
@@ -1734,8 +1768,13 @@ export type Database = {
           campaign_id?: string | null
           client_id?: string
           created_at?: string
+          forward_to_number?: string | null
+          friendly_name?: string | null
           id?: string
+          monthly_cost?: number | null
           phone_number?: string
+          purchased_at?: string | null
+          recording_enabled?: boolean | null
           status?: string
           twilio_sid?: string | null
         }
