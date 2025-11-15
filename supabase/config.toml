@@ -36,6 +36,15 @@ verify_jwt = false
 [functions.retry-failed-sms]
 verify_jwt = false
 
+[functions.assign-tracked-numbers]
+verify_jwt = false
+
+[functions.provision-twilio-number]
+verify_jwt = false
+
+[functions.release-twilio-number]
+verify_jwt = false
+
 [functions.provision-twilio-number]
 verify_jwt = false
 

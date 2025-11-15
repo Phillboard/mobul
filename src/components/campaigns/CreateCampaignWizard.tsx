@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { CampaignDetailsStep } from "./wizard/CampaignDetailsStep";
 import { PURLSettingsStep } from "./wizard/PURLSettingsStep";
+import { CallTrackingStep } from "./wizard/CallTrackingStep";
 import { SummaryStep } from "./wizard/SummaryStep";
 import { Progress } from "@/components/ui/progress";
 import { DraftManager } from "./DraftManager";
