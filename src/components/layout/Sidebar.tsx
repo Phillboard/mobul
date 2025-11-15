@@ -12,7 +12,8 @@ import {
   Zap,
   Building,
   FileStack,
-  Gift
+  Gift,
+  UserCog
 } from "lucide-react";
 import {
   Select,
@@ -27,26 +28,35 @@ interface NavItem {
   href: string;
   icon: any;
   roles?: ('org_admin' | 'agency_admin' | 'client_user')[];
+  permissions?: string[];
 }
 
 const navigation: NavItem[] = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Campaigns", href: "/campaigns", icon: Mail },
-  { name: "Audiences", href: "/audiences", icon: Users },
-  { name: "Templates", href: "/templates", icon: FileStack },
-  { name: "Lead Marketplace", href: "/marketplace", icon: Zap },
-  { name: "Gift Cards", href: "/gift-cards", icon: Gift, roles: ['org_admin', 'agency_admin'] },
-  { name: "API & Webhooks", href: "/api", icon: Code2, roles: ['org_admin', 'agency_admin'] },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, permissions: ['dashboard.view'] },
+  { name: "Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'] },
+  { name: "Audiences", href: "/audiences", icon: Users, permissions: ['audiences.view'] },
+  { name: "Templates", href: "/templates", icon: FileStack, permissions: ['templates.view'] },
+  { name: "Lead Marketplace", href: "/marketplace", icon: Zap, permissions: ['lead_marketplace.view'] },
+  { name: "Gift Cards", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.view'] },
+  { name: "API & Webhooks", href: "/api", icon: Code2, permissions: ['api.view'] },
+  { name: "User Management", href: "/users", icon: UserCog, permissions: ['users.manage'] },
+  { name: "Settings", href: "/settings", icon: Settings, permissions: ['settings.view'] },
 ];
 
 export function Sidebar() {
-  const { hasRole } = useAuth();
+  const { hasRole, hasAnyPermission } = useAuth();
   const { clients, currentClient, setCurrentClient, currentOrg } = useTenant();
   
   const visibleNavigation = navigation.filter(item => {
-    if (!item.roles) return true;
-    return item.roles.some(role => hasRole(role));
+    // Check role-based access (legacy support)
+    if (item.roles && !item.roles.some(role => hasRole(role))) {
+      return false;
+    }
+    // Check permission-based access
+    if (item.permissions && !hasAnyPermission(item.permissions)) {
+      return false;
+    }
+    return true;
   });
 
   // Filter clients by current org for agency admins

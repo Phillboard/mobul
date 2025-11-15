@@ -26,6 +26,7 @@ import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import GenerateFavicon from "./pages/GenerateFavicon";
+import UserManagement from "./pages/UserManagement";
 
 const queryClient = new QueryClient();
 
@@ -54,7 +55,8 @@ const App = () => (
           <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
           <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
               <Route path="/api/docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
+              <Route path="/users" element={<ProtectedRoute requiredPermission="users.manage"><UserManagement /></ProtectedRoute>} />
               <Route path="/generate-favicon" element={<ProtectedRoute><GenerateFavicon /></ProtectedRoute>} />
               <Route path="/agent/call/:sessionId" element={<ProtectedRoute><AgentCallDashboard /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

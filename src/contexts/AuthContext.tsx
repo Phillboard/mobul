@@ -21,8 +21,11 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   roles: UserRole[];
+  permissions: string[];
   loading: boolean;
   hasRole: (role: 'org_admin' | 'agency_admin' | 'client_user') => boolean;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -35,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<UserRole[]>([]);
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setProfile(null);
           setRoles([]);
+          setPermissions([]);
         }
       }
     );
@@ -90,6 +95,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (rolesError) throw rolesError;
       setRoles(rolesData || []);
+
+      // Fetch permissions
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .rpc('get_user_permissions', { _user_id: userId });
+
+      if (permissionsError) throw permissionsError;
+      setPermissions(permissionsData?.map((p: any) => p.permission_name) || []);
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {
@@ -99,6 +111,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasRole = (role: 'org_admin' | 'agency_admin' | 'client_user') => {
     return roles.some(r => r.role === role);
+  };
+
+  const hasPermission = (permission: string): boolean => {
+    return permissions.includes(permission);
+  };
+
+  const hasAnyPermission = (perms: string[]): boolean => {
+    return perms.some(perm => permissions.includes(perm));
   };
 
   const signIn = async (email: string, password: string) => {
@@ -131,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRoles([]);
+    setPermissions([]);
   };
 
   return (
@@ -140,8 +161,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         roles,
+        permissions,
         loading,
         hasRole,
+        hasPermission,
+        hasAnyPermission,
         signIn,
         signUp,
         signOut,

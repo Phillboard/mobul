@@ -5,10 +5,19 @@ import { useAuth } from "@/contexts/AuthContext";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: 'org_admin' | 'agency_admin' | 'client_user';
+  requiredPermission?: string;
+  requiredPermissions?: string[];
+  requireAllPermissions?: boolean;
 }
 
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, loading, hasRole } = useAuth();
+export function ProtectedRoute({ 
+  children, 
+  requiredRole, 
+  requiredPermission,
+  requiredPermissions,
+  requireAllPermissions = false 
+}: ProtectedRouteProps) {
+  const { user, loading, hasRole, hasPermission, hasAnyPermission } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,7 +41,20 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return null;
   }
 
+  // Check role requirement
   if (requiredRole && !hasRole(requiredRole)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground">You don't have the required role to view this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check single permission requirement
+  if (requiredPermission && !hasPermission(requiredPermission)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -41,6 +63,24 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
         </div>
       </div>
     );
+  }
+
+  // Check multiple permissions requirement
+  if (requiredPermissions) {
+    const hasAccess = requireAllPermissions
+      ? requiredPermissions.every(p => hasPermission(p))
+      : hasAnyPermission(requiredPermissions);
+
+    if (!hasAccess) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground">You don't have the required permissions to view this page.</p>
+          </div>
+        </div>
+      );
+    }
   }
 
   return <>{children}</>;
