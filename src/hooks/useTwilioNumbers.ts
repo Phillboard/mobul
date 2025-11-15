@@ -57,6 +57,38 @@ export function useUpdateTrackedNumber() {
   });
 }
 
+export function useProvisionNumber() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      areaCode,
+      campaignId,
+      friendlyName,
+      forwardToNumber,
+    }: { 
+      areaCode?: string;
+      campaignId?: string;
+      friendlyName?: string;
+      forwardToNumber?: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke('provision-twilio-number', {
+        body: { areaCode, campaignId, friendlyName, forwardToNumber },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tracked-numbers'] });
+      toast.success('Phone number provisioned successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to provision phone number: ${error.message}`);
+    },
+  });
+}
+
 export function useAssignNumber() {
   const queryClient = useQueryClient();
 

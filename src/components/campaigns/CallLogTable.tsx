@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, ExternalLink, Download } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { CallRecordingPlayer } from "./CallRecordingPlayer";
 
 interface CallLogTableProps {
   campaignId: string;
@@ -153,58 +154,71 @@ export function CallLogTable({ campaignId }: CallLogTableProps) {
                 </TableRow>
               ) : (
                 filteredSessions?.map((session: any) => (
-                  <TableRow key={session.id}>
-                    <TableCell className="text-muted-foreground">
-                      {formatDistanceToNow(new Date(session.call_started_at), { addSuffix: true })}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {session.caller_phone}
-                    </TableCell>
-                    <TableCell>
-                      {session.match_status === 'matched' ? (
-                        <div className="flex items-center gap-2">
-                          <Badge className="bg-green-600">✓ Matched</Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {session.recipient?.first_name} {session.recipient?.last_name}
+                  <>
+                    <TableRow key={session.id}>
+                      <TableCell className="text-muted-foreground">
+                        {formatDistanceToNow(new Date(session.call_started_at), { addSuffix: true })}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {session.caller_phone}
+                      </TableCell>
+                      <TableCell>
+                        {session.match_status === 'matched' ? (
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-green-600">✓ Matched</Badge>
+                            <span className="text-sm text-muted-foreground">
+                              {session.recipient?.first_name} {session.recipient?.last_name}
+                            </span>
+                          </div>
+                        ) : (
+                          <Badge variant="secondary">✗ Unmatched</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {session.call_duration_seconds ? (
+                          <span className="font-mono text-sm">
+                            {Math.floor(session.call_duration_seconds / 60)}m {session.call_duration_seconds % 60}s
                           </span>
-                        </div>
-                      ) : (
-                        <Badge variant="secondary">✗ Unmatched</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {session.call_duration_seconds ? (
-                        <span className="font-mono text-sm">
-                          {Math.floor(session.call_duration_seconds / 60)}m {session.call_duration_seconds % 60}s
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={session.call_status === 'completed' ? 'default' : 'secondary'}>
-                        {session.call_status.replace(/_/g, ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {session.conditions?.[0]?.count > 0 ? (
-                        <Badge className="bg-purple-600">
-                          {session.conditions[0].count} condition(s)
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={session.call_status === 'completed' ? 'default' : 'secondary'}>
+                          {session.call_status.replace(/_/g, ' ')}
                         </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/agent/call/${session.id}`)}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell>
+                        {session.conditions?.[0]?.count > 0 ? (
+                          <Badge className="bg-purple-600">
+                            {session.conditions[0].count} condition(s)
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/agent/call/${session.id}`)}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    {session.recording_url && (
+                      <TableRow key={`${session.id}-recording`}>
+                        <TableCell colSpan={7} className="p-4 bg-muted/50">
+                          <CallRecordingPlayer
+                            recordingUrl={session.recording_url}
+                            callSid={session.twilio_call_sid || undefined}
+                            duration={session.recording_duration || undefined}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 ))
               )}
             </TableBody>

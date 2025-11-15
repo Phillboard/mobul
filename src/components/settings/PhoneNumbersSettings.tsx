@@ -5,15 +5,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Phone, Settings, Check, X } from "lucide-react";
+import { Phone, Settings, Check, X, Plus } from "lucide-react";
 import { useTrackedNumbers, useUpdateTrackedNumber } from "@/hooks/useTwilioNumbers";
 import { useTenant } from "@/contexts/TenantContext";
+import { ProvisionNumberDialog } from "./ProvisionNumberDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function PhoneNumbersSettings() {
   const { currentClient } = useTenant();
-  const { data: numbers, isLoading } = useTrackedNumbers(currentClient?.id || null);
+  const { data: numbers, isLoading, refetch } = useTrackedNumbers(currentClient?.id || null);
   const updateNumber = useUpdateTrackedNumber();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [provisionDialogOpen, setProvisionDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     forward_to_number: '',
     recording_enabled: true,
@@ -38,6 +42,25 @@ export function PhoneNumbersSettings() {
     setEditingId(null);
   };
 
+  const handleRelease = async (phoneNumberId: string) => {
+    if (!confirm('Are you sure you want to release this phone number? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.functions.invoke('release-twilio-number', {
+        body: { phoneNumberId },
+      });
+
+      if (error) throw error;
+      
+      toast.success('Phone number released successfully');
+      refetch();
+    } catch (error: any) {
+      toast.error(`Failed to release number: ${error.message}`);
+    }
+  };
+
   if (isLoading) {
     return <div>Loading phone numbers...</div>;
   }
@@ -51,6 +74,10 @@ export function PhoneNumbersSettings() {
             Manage tracked phone numbers for call tracking
           </p>
         </div>
+        <Button onClick={() => setProvisionDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Provision Number
+        </Button>
       </div>
 
       <div className="grid gap-4">
@@ -81,9 +108,21 @@ export function PhoneNumbersSettings() {
                       </Button>
                     </>
                   ) : (
-                    <Button size="sm" variant="ghost" onClick={() => handleEdit(number)}>
-                      <Settings className="h-4 w-4" />
-                    </Button>
+                    <>
+                      <Button size="sm" variant="ghost" onClick={() => handleEdit(number)}>
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                      {number.status !== 'released' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRelease(number.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          Release
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -164,6 +203,12 @@ export function PhoneNumbersSettings() {
           </Card>
         )}
       </div>
+
+      <ProvisionNumberDialog
+        open={provisionDialogOpen}
+        onOpenChange={setProvisionDialogOpen}
+        onSuccess={refetch}
+      />
     </div>
   );
 }
