@@ -22,6 +22,8 @@ Deno.serve(async (req) => {
     const callStatus = formData.get('CallStatus') as string;
     const callDuration = formData.get('CallDuration') as string;
     const recordingUrl = formData.get('RecordingUrl') as string | null;
+    const recordingSid = formData.get('RecordingSid') as string | null;
+    const recordingDuration = formData.get('RecordingDuration') as string | null;
 
     console.log('Call status update:', { callSid, callStatus, callDuration });
 
@@ -37,6 +39,12 @@ Deno.serve(async (req) => {
       }
       if (recordingUrl) {
         updateData.recording_url = recordingUrl;
+      }
+      if (recordingSid) {
+        updateData.recording_sid = recordingSid;
+      }
+      if (recordingDuration) {
+        updateData.recording_duration = parseInt(recordingDuration, 10);
       }
     } else if (callStatus === 'in-progress' && !updateData.call_answered_at) {
       updateData.call_answered_at = new Date().toISOString();

@@ -128,83 +128,63 @@ Deno.serve(async (req) => {
       throw new Error('Recipient phone number not found');
     }
 
-    // Send SMS with gift card via Twilio
-    const twilioSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const twilioToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const twilioPhone = Deno.env.get('TWILIO_PHONE_NUMBER');
+    // Create delivery record with pending status
+    const { data: delivery, error: deliveryError } = await serviceClient
+      .from('gift_card_deliveries')
+      .insert({
+        gift_card_id: claimedCard.card_id,
+        campaign_id: callSession.campaign_id,
+        recipient_id: callSession.recipient_id,
+        call_session_id: callSessionId,
+        condition_number: conditionNumber,
+        delivery_method: 'sms',
+        delivery_address: recipient.phone || callSession.caller_phone,
+        delivery_status: 'pending',
+        sms_status: 'pending',
+      })
+      .select()
+      .single();
 
-    let deliveryStatus = 'pending';
-    let twilioMessageSid = null;
-
-    if (twilioSid && twilioToken && twilioPhone) {
-      // Format SMS message
-      let smsMessage = rewardConfig.sms_template || 
-        `Hi ${recipient.first_name || 'there'}! Your $${claimedCard.card_value} ${claimedCard.provider} gift card: ${claimedCard.card_code}`;
-      
-      smsMessage = smsMessage
-        .replace('{first_name}', recipient.first_name || '')
-        .replace('{last_name}', recipient.last_name || '')
-        .replace('{value}', claimedCard.card_value.toString())
-        .replace('{code}', claimedCard.card_code);
-
-      console.log('Sending SMS to:', recipient.phone);
-
-      const twilioResponse = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Basic ' + btoa(`${twilioSid}:${twilioToken}`),
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            To: recipient.phone,
-            From: twilioPhone,
-            Body: smsMessage,
-          }).toString(),
-        }
-      );
-
-      if (twilioResponse.ok) {
-        const twilioData = await twilioResponse.json();
-        twilioMessageSid = twilioData.sid;
-        deliveryStatus = 'sent';
-        console.log('SMS sent successfully:', twilioMessageSid);
-      } else {
-        const error = await twilioResponse.text();
-        console.error('SMS send failed:', error);
-        deliveryStatus = 'failed';
-      }
-    } else {
-      console.warn('Twilio not configured, skipping SMS delivery');
-      deliveryStatus = 'no_twilio';
+    if (deliveryError || !delivery) {
+      console.error('Failed to create delivery record:', deliveryError);
+      throw deliveryError;
     }
 
-    // Update gift card status
+    console.log('Delivery record created:', delivery.id);
+
+    // Build SMS message from template
+    const smsTemplate = rewardConfig.sms_template || 
+      `Congratulations ${recipient.first_name || ''}! You've earned a $${claimedCard.card_value} gift card. Code: ${claimedCard.card_code}`;
+
+    // Send SMS asynchronously via edge function (don't wait)
+    fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-gift-card-sms`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+      body: JSON.stringify({
+        deliveryId: delivery.id,
+        giftCardCode: claimedCard.card_code,
+        giftCardValue: claimedCard.card_value,
+        recipientPhone: recipient.phone || callSession.caller_phone,
+        recipientName: recipient.first_name,
+        customMessage: smsTemplate,
+      }),
+    }).catch(err => console.error('Failed to queue SMS:', err));
+
+    console.log('SMS delivery queued for:', recipient.phone);
+
+    // Update gift card status to delivered
     await serviceClient
       .from('gift_cards')
       .update({
-        status: deliveryStatus === 'sent' ? 'delivered' : 'claimed',
-        delivered_at: deliveryStatus === 'sent' ? new Date().toISOString() : null,
+        status: 'delivered',
+        delivered_at: new Date().toISOString(),
         delivery_method: 'sms',
         delivery_address: recipient.phone,
       })
       .eq('id', claimedCard.card_id);
-
-    // Create gift card delivery record
-    await serviceClient
-      .from('gift_card_deliveries')
-      .insert({
-        gift_card_id: claimedCard.card_id,
-        recipient_id: callSession.recipient_id,
-        campaign_id: callSession.campaign_id,
-        call_session_id: callSessionId,
-        condition_number: conditionNumber,
-        delivery_method: 'sms',
-        delivery_address: recipient.phone,
-        delivery_status: deliveryStatus,
-        twilio_message_sid: twilioMessageSid,
-      });
 
     // Record condition as met
     await serviceClient
@@ -216,7 +196,7 @@ Deno.serve(async (req) => {
         condition_number: conditionNumber,
         met_by_agent_id: user.id,
         gift_card_id: claimedCard.card_id,
-        delivery_status: deliveryStatus,
+        delivery_status: 'pending',
         notes,
       });
 
@@ -228,7 +208,7 @@ Deno.serve(async (req) => {
         giftCard: {
           value: claimedCard.card_value,
           provider: claimedCard.provider,
-          deliveryStatus,
+          deliveryStatus: 'pending',
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

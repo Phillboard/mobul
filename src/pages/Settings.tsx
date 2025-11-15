@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Palette, Building2 } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
 import { CRMIntegrationTab } from "@/components/settings/CRMIntegrationTab";
+import { PhoneNumbersSettings } from "@/components/settings/PhoneNumbersSettings";
+import { SMSDeliveryLog } from "@/components/settings/SMSDeliveryLog";
 
 export default function Settings() {
   const { currentClient } = useTenant();
@@ -33,6 +35,8 @@ export default function Settings() {
         <Tabs defaultValue="general" className="w-full">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="phone">Phone Numbers</TabsTrigger>
+            <TabsTrigger value="sms">SMS Delivery</TabsTrigger>
             {currentClient && <TabsTrigger value="branding">Client Branding</TabsTrigger>}
             {currentClient && <TabsTrigger value="crm">CRM Integrations</TabsTrigger>}
             <TabsTrigger value="api">API Settings</TabsTrigger>
@@ -52,6 +56,14 @@ export default function Settings() {
                 </p>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="phone" className="space-y-4">
+            <PhoneNumbersSettings />
+          </TabsContent>
+
+          <TabsContent value="sms" className="space-y-4">
+            <SMSDeliveryLog />
           </TabsContent>
 
           {currentClient && (

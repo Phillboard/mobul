@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
     console.log('Incoming call:', { callSid, from, to, callStatus });
 
-    // Find the tracked number
+    // Find the tracked number with recording settings
     const { data: trackedNumber, error: numberError } = await supabaseClient
       .from('tracked_phone_numbers')
       .select('*, campaigns(*)')
@@ -78,11 +78,16 @@ Deno.serve(async (req) => {
       console.log('Call session created:', callSession.id);
     }
 
-    // Generate TwiML to forward call to call center
-    // In a production setup, this would route to your call center number
+    // Get call forwarding number and recording preference
+    const forwardNumber = trackedNumber.forward_to_number || Deno.env.get('CALL_CENTER_NUMBER');
+    const recordingEnabled = trackedNumber.recording_enabled !== false;
+
+    // Generate TwiML to forward call with recording
     const twiml = generateTwiML(
       `Connecting your call. Session ID: ${callSession?.id || 'unknown'}`,
-      Deno.env.get('CALL_CENTER_NUMBER')
+      forwardNumber,
+      recordingEnabled,
+      `${Deno.env.get('SUPABASE_URL')}/functions/v1/update-call-status`
     );
 
     return new Response(twiml, {
@@ -97,12 +102,18 @@ Deno.serve(async (req) => {
   }
 });
 
-function generateTwiML(message: string, dialNumber?: string): string {
+function generateTwiML(
+  message: string, 
+  dialNumber?: string, 
+  record?: boolean,
+  statusCallback?: string
+): string {
   if (dialNumber) {
+    const recordAttr = record ? ' record="record-from-answer" recordingStatusCallback="' + statusCallback + '"' : '';
     return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say>${message}</Say>
-  <Dial>${dialNumber}</Dial>
+  <Dial${recordAttr} action="${statusCallback}">${dialNumber}</Dial>
 </Response>`;
   }
   

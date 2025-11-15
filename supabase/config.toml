@@ -23,3 +23,15 @@ verify_jwt = false
 
 [functions.crm-webhook-receiver]
 verify_jwt = false
+
+[functions.handle-incoming-call]
+verify_jwt = false
+
+[functions.update-call-status]
+verify_jwt = false
+
+[functions.send-gift-card-sms]
+verify_jwt = false
+
+[functions.retry-failed-sms]
+verify_jwt = false
