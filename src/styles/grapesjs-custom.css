@@ -1,0 +1,275 @@
+/* GrapeJS Editor Styling */
+#gjs {
+  border: none !important;
+  height: 100%;
+}
+
+.gjs-cv-canvas {
+  background: hsl(var(--muted));
+  top: 0 !important;
+}
+
+.gjs-frame {
+  border: none !important;
+}
+
+/* Block Manager */
+.gjs-block {
+  border-radius: 4px;
+  padding: 12px;
+  margin: 8px 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.gjs-block:hover {
+  background: hsl(var(--accent) / 0.1);
+  border-color: hsl(var(--accent));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.gjs-block-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  line-height: 1.4;
+}
+
+.gjs-block svg {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 8px;
+  fill: hsl(var(--muted-foreground));
+}
+
+/* Panels */
+.gjs-pn-panels {
+  background: transparent;
+  border: none;
+}
+
+.gjs-pn-panel {
+  background: hsl(var(--card));
+}
+
+.gjs-pn-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.gjs-pn-btn {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gjs-pn-btn:hover {
+  background: hsl(var(--accent) / 0.1);
+  border-color: hsl(var(--accent));
+}
+
+.gjs-pn-btn.gjs-pn-active {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+}
+
+/* Style Manager */
+.gjs-sm-sectors {
+  background: transparent;
+}
+
+.gjs-sm-sector {
+  border-bottom: 1px solid hsl(var(--border));
+  background: transparent;
+}
+
+.gjs-sm-sector-title {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.gjs-sm-properties {
+  padding: 8px;
+}
+
+.gjs-sm-property {
+  margin-bottom: 12px;
+}
+
+.gjs-sm-label {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gjs-field,
+.gjs-field input,
+.gjs-field select {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  border-radius: 4px;
+  padding: 8px;
+  width: 100%;
+  font-size: 13px;
+}
+
+.gjs-field:focus,
+.gjs-field input:focus,
+.gjs-field select:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+/* Layer Manager */
+.gjs-layers {
+  background: transparent;
+}
+
+.gjs-layer {
+  padding: 8px 12px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: transparent;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.gjs-layer:hover {
+  background: hsl(var(--muted));
+}
+
+.gjs-layer.gjs-selected {
+  background: hsl(var(--primary) / 0.1);
+  border-left: 3px solid hsl(var(--primary));
+}
+
+.gjs-layer-name {
+  color: hsl(var(--foreground));
+  font-size: 13px;
+}
+
+.gjs-layer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gjs-layer-icon {
+  fill: hsl(var(--muted-foreground));
+}
+
+/* Device Manager */
+.gjs-device-label {
+  display: none;
+}
+
+/* Toolbar */
+.gjs-toolbar {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.gjs-toolbar-item {
+  border: none;
+  color: hsl(var(--foreground));
+  background: transparent;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gjs-toolbar-item:hover {
+  background: hsl(var(--muted));
+}
+
+/* Canvas toolbar */
+.gjs-cv-canvas__frames {
+  background: hsl(var(--builder-canvas));
+}
+
+/* Remove default GrapeJS branding colors */
+.gjs-one-bg {
+  background-color: hsl(var(--card));
+}
+
+.gjs-two-color {
+  color: hsl(var(--foreground));
+}
+
+.gjs-three-bg {
+  background-color: hsl(var(--muted));
+}
+
+.gjs-four-color {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Scrollbars */
+.gjs-sm-sectors::-webkit-scrollbar,
+.gjs-layers::-webkit-scrollbar {
+  width: 8px;
+}
+
+.gjs-sm-sectors::-webkit-scrollbar-track,
+.gjs-layers::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.gjs-sm-sectors::-webkit-scrollbar-thumb,
+.gjs-layers::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+.gjs-sm-sectors::-webkit-scrollbar-thumb:hover,
+.gjs-layers::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Resizer */
+.gjs-resizer-c {
+  border: 2px solid hsl(var(--primary));
+}
+
+.gjs-resizer-h {
+  background: hsl(var(--primary));
+}
+
+/* Component outline on hover */
+.gjs-hovered {
+  outline: 2px solid hsl(var(--accent)) !important;
+  outline-offset: -2px;
+}
+
+/* Selected component */
+.gjs-selected {
+  outline: 2px solid hsl(var(--primary)) !important;
+  outline-offset: -2px;
+}
