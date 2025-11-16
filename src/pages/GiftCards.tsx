@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, ShoppingCart } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PoolCard } from "@/components/gift-cards/PoolCard";
 import { GiftCardUploadTab } from "@/components/gift-cards/GiftCardUploadTab";
 import { GiftCardInventory } from "@/components/gift-cards/GiftCardInventory";
 import { DeliveryHistory } from "@/components/gift-cards/DeliveryHistory";
 import { CreatePoolDialog } from "@/components/gift-cards/CreatePoolDialog";
-import { PurchaseGiftCardsDialog } from "@/components/gift-cards/PurchaseGiftCardsDialog";
 import { useGiftCardPools } from "@/hooks/useGiftCardPools";
 import { useTenant } from "@/contexts/TenantContext";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +17,6 @@ export default function GiftCards() {
   const { currentClient } = useTenant();
   const { pools, isLoading, createPool } = useGiftCardPools(currentClient?.id);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
   const [uploadPoolId, setUploadPoolId] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState("pools");
   const { toast } = useToast();
@@ -75,16 +73,10 @@ export default function GiftCards() {
               Manage your gift card inventory and deliveries
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsPurchaseDialogOpen(true)}>
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Purchase Bulk
-            </Button>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Pool
-            </Button>
-          </div>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Pool
+          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -144,11 +136,6 @@ export default function GiftCards() {
           clientId={currentClient.id}
         />
 
-        <PurchaseGiftCardsDialog
-          open={isPurchaseDialogOpen}
-          onOpenChange={setIsPurchaseDialogOpen}
-          clientId={currentClient.id}
-        />
       </div>
     </Layout>
   );
