@@ -69,6 +69,7 @@ const App = () => (
               <Route path="/settings" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/users" element={<ProtectedRoute requiredPermission="users.manage"><UserManagement /></ProtectedRoute>} />
               <Route path="/generate-favicon" element={<ProtectedRoute><GenerateFavicon /></ProtectedRoute>} />
+              <Route path="/users" element={<ProtectedRoute requiredPermission="users.view"><UserManagement /></ProtectedRoute>} />
               <Route path="/agent/call/:sessionId" element={<ProtectedRoute><AgentCallDashboard /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
