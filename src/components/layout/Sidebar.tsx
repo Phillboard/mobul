@@ -42,7 +42,7 @@ const navigation: NavItem[] = [
   { name: "Gift Cards", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.view'] },
   { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'] },
   { name: "API & Webhooks", href: "/api", icon: Code2, permissions: ['api.view'] },
-  { name: "User Management", href: "/users", icon: UserCog, permissions: ['users.manage'] },
+  { name: "User Management", href: "/users", icon: UserCog, permissions: ['users.view'] },
   { name: "Settings", href: "/settings", icon: Settings, permissions: ['settings.view'] },
 ];
 
