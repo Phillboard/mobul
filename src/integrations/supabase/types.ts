@@ -1251,6 +1251,7 @@ export type Database = {
           created_at: string | null
           created_by_user_id: string | null
           css_content: string | null
+          editor_type: string | null
           html_content: string | null
           id: string
           meta_description: string | null
@@ -1270,6 +1271,7 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           css_content?: string | null
+          editor_type?: string | null
           html_content?: string | null
           id?: string
           meta_description?: string | null
@@ -1289,6 +1291,7 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           css_content?: string | null
+          editor_type?: string | null
           html_content?: string | null
           id?: string
           meta_description?: string | null

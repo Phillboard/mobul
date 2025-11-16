@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Globe, MoreVertical, Edit, Trash2, Eye, Copy, Sparkles } from "lucide-react";
+import { Plus, Globe, MoreVertical, Edit, Trash2, Eye, Copy, Sparkles, Palette } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
 import { useLandingPages } from "@/hooks/useLandingPages";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -54,6 +54,14 @@ export default function LandingPages() {
     publishPage.mutate({ id, published: !currentStatus });
   };
 
+  const handleEdit = (page: any) => {
+    if (page.editor_type === 'visual') {
+      navigate(`/landing-pages/${page.id}/visual-editor`);
+    } else {
+      navigate(`/landing-pages/${page.id}/edit`);
+    }
+  };
+
   if (!currentClient) {
     return (
       <Layout>
@@ -78,10 +86,34 @@ export default function LandingPages() {
             </p>
           </div>
           {canCreate && (
-          <Button onClick={() => setAiDialogOpen(true)}>
-            <Sparkles className="h-4 w-4 mr-2" />
-            Create Landing Page
-          </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Landing Page
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setAiDialogOpen(true)}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  <div>
+                    <div className="font-medium">Generate with AI</div>
+                    <div className="text-xs text-muted-foreground">
+                      AI creates branded page instantly
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/landing-pages/new/visual-editor")}>
+                  <Palette className="h-4 w-4 mr-2" />
+                  <div>
+                    <div className="font-medium">Visual Editor</div>
+                    <div className="text-xs text-muted-foreground">
+                      Design with drag-and-drop builder
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
@@ -104,10 +136,34 @@ export default function LandingPages() {
                 No landing pages yet. Create your first one to get started.
               </p>
               {canCreate && (
-                <Button onClick={() => setAiDialogOpen(true)}>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate with AI
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Landing Page
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => setAiDialogOpen(true)}>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      <div>
+                        <div className="font-medium">Generate with AI</div>
+                        <div className="text-xs text-muted-foreground">
+                          AI creates branded page instantly
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/landing-pages/new/visual-editor")}>
+                      <Palette className="h-4 w-4 mr-2" />
+                      <div>
+                        <div className="font-medium">Visual Editor</div>
+                        <div className="text-xs text-muted-foreground">
+                          Design with drag-and-drop builder
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </CardContent>
           </Card>
@@ -131,7 +187,7 @@ export default function LandingPages() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {canEdit && (
-                          <DropdownMenuItem onClick={() => navigate(`/landing-pages/${page.id}/edit`)}>
+                          <DropdownMenuItem onClick={() => handleEdit(page)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
@@ -168,16 +224,23 @@ export default function LandingPages() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant={page.published ? "default" : "secondary"}>
                       {page.published ? "Published" : "Draft"}
                     </Badge>
-                    {page.ai_generated && (
-                      <Badge variant="outline">
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        AI Generated
-                      </Badge>
-                    )}
+                    <Badge variant={page.editor_type === 'ai' ? 'outline' : 'outline'} className="gap-1">
+                      {page.editor_type === 'ai' ? (
+                        <>
+                          <Sparkles className="h-3 w-3" />
+                          AI Generated
+                        </>
+                      ) : (
+                        <>
+                          <Palette className="h-3 w-3" />
+                          Visual Editor
+                        </>
+                      )}
+                    </Badge>
                   </div>
                   <div className="mt-4 text-sm text-muted-foreground">
                     Version {page.version_number}
