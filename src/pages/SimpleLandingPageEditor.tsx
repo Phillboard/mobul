@@ -20,7 +20,10 @@ export default function SimpleLandingPageEditor() {
   const [pageName, setPageName] = useState("");
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
   const [content, setContent] = useState<any>({
-    hero: { heading: "", subheading: "" },
+    hero: { heading: "", subheading: "", backgroundImage: "", backgroundColor: "" },
+    benefits: [],
+    steps: [],
+    trustSection: null,
     sections: [],
   });
 
@@ -42,7 +45,10 @@ export default function SimpleLandingPageEditor() {
 
       setPageName(data.name);
       setContent(data.content_json || {
-        hero: { heading: "Claim Your Gift Card", subheading: "Enter your code below" },
+        hero: { heading: "Claim Your Gift Card", subheading: "Enter your code below", backgroundImage: "", backgroundColor: "" },
+        benefits: [],
+        steps: [],
+        trustSection: null,
         sections: [
           { type: "text", content: "Thank you for your participation!" },
         ],
@@ -166,38 +172,129 @@ export default function SimpleLandingPageEditor() {
 
         {/* Preview Area with Inline Editing */}
         <div className="flex-1 overflow-auto bg-muted/20 p-8">
-          <div className="max-w-4xl mx-auto bg-background rounded-lg shadow-lg p-8 space-y-8">
+          <div className="max-w-4xl mx-auto bg-background rounded-lg shadow-lg overflow-hidden">
             {/* Hero Section */}
-            <div className="text-center space-y-4">
-              <EditableText
-                value={content.hero?.heading || ""}
-                onSave={(value) => updateContent(["hero", "heading"], value)}
-                className="text-4xl font-bold"
-                as="h1"
-              />
-              <EditableText
-                value={content.hero?.subheading || ""}
-                onSave={(value) => updateContent(["hero", "subheading"], value)}
-                className="text-xl text-muted-foreground"
-                as="p"
-              />
-            </div>
-
-            {/* Body Sections */}
-            {content.sections?.map((section: any, index: number) => (
-              <div key={index} className="space-y-2">
+            <div 
+              className="relative p-12 text-center"
+              style={{
+                background: content.hero?.backgroundColor || "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white"
+              }}
+            >
+              {content.hero?.backgroundImage && (
+                <div className="absolute inset-0 opacity-20">
+                  <div className="text-xs text-white/50 p-2">Background: {content.hero.backgroundImage}</div>
+                </div>
+              )}
+              <div className="relative z-10 space-y-4">
                 <EditableText
-                  value={section.content}
-                  onSave={(value) => updateContent(["sections", String(index), "content"], value)}
-                  className="text-lg"
+                  value={content.hero?.heading || ""}
+                  onSave={(value) => updateContent(["hero", "heading"], value)}
+                  className="text-5xl font-bold drop-shadow-lg"
+                  as="h1"
+                />
+                <EditableText
+                  value={content.hero?.subheading || ""}
+                  onSave={(value) => updateContent(["hero", "subheading"], value)}
+                  className="text-xl opacity-90"
                   as="p"
-                  multiline
                 />
               </div>
-            ))}
+            </div>
+
+            {/* Benefits Section */}
+            {content.benefits?.length > 0 && (
+              <div className="p-12 bg-muted/30">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {content.benefits.map((benefit: any, index: number) => (
+                    <div key={index} className="bg-background p-6 rounded-lg shadow-sm border">
+                      <div className="text-4xl mb-3">{benefit.icon === "gift" ? "🎁" : benefit.icon === "check" ? "✓" : "⭐"}</div>
+                      <EditableText
+                        value={benefit.title}
+                        onSave={(value) => updateContent(["benefits", String(index), "title"], value)}
+                        className="text-lg font-semibold mb-2"
+                        as="h3"
+                      />
+                      <EditableText
+                        value={benefit.description}
+                        onSave={(value) => updateContent(["benefits", String(index), "description"], value)}
+                        className="text-sm text-muted-foreground"
+                        as="p"
+                        multiline
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Steps Section */}
+            {content.steps?.length > 0 && (
+              <div className="p-12">
+                <h2 className="text-3xl font-bold text-center mb-10">How It Works</h2>
+                <div className="space-y-6">
+                  {content.steps.map((step: any, index: number) => (
+                    <div key={index} className="flex gap-6 items-start">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold">
+                        {step.number}
+                      </div>
+                      <div className="flex-1">
+                        <EditableText
+                          value={step.title}
+                          onSave={(value) => updateContent(["steps", String(index), "title"], value)}
+                          className="text-xl font-semibold mb-2"
+                          as="h3"
+                        />
+                        <EditableText
+                          value={step.description}
+                          onSave={(value) => updateContent(["steps", String(index), "description"], value)}
+                          className="text-muted-foreground"
+                          as="p"
+                          multiline
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Trust Section */}
+            {content.trustSection && (
+              <div className="p-8 bg-primary/5 border-y text-center">
+                <EditableText
+                  value={content.trustSection.title}
+                  onSave={(value) => updateContent(["trustSection", "title"], value)}
+                  className="text-2xl font-bold mb-2"
+                  as="h3"
+                />
+                <EditableText
+                  value={content.trustSection.content}
+                  onSave={(value) => updateContent(["trustSection", "content"], value)}
+                  className="text-muted-foreground"
+                  as="p"
+                />
+              </div>
+            )}
+
+            {/* Body Sections */}
+            {content.sections?.length > 0 && (
+              <div className="p-12 space-y-6">
+                {content.sections.map((section: any, index: number) => (
+                  <EditableText
+                    key={index}
+                    value={section.content}
+                    onSave={(value) => updateContent(["sections", String(index), "content"], value)}
+                    className="text-lg leading-relaxed"
+                    as="p"
+                    multiline
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Code Entry Form */}
-            <div className="border-t pt-8">
+            <div className="border-t p-12 bg-muted/10">
               <CodeEntryForm campaignId={id || ""} />
             </div>
           </div>

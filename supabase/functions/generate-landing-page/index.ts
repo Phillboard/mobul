@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
     }
 
-    const { prompt, businessType, tone, includeCodeEntry, clientId } = await req.json();
+    const { prompt, businessType, tone, includeCodeEntry, clientId, fullPage } = await req.json();
 
     if (!prompt || !clientId) {
       return Response.json(
@@ -41,18 +41,57 @@ Deno.serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are an expert landing page designer for gift card redemption pages. Generate a simple, conversion-optimized landing page.
+    const systemPrompt = `You are an expert landing page designer for gift card redemption pages. Generate a ${fullPage ? 'stunning, visually rich' : 'simple'} landing page optimized for conversions.
 
-The page should include:
-- Hero section with compelling headline and subheading
-- 2-3 short text sections explaining the process or benefits
-- The page ALWAYS includes a gift card code entry form (don't include in JSON, it's automatic)
+${fullPage ? `
+DESIGN REQUIREMENTS FOR BEAUTIFUL PAGES:
+- Use rich, evocative descriptions for visual elements
+- Include imagery suggestions (hero images, background patterns, icons)
+- Specify color schemes with gradients and accents
+- Add visual hierarchy with varied text sizes and weights
+- Include decorative elements (shapes, dividers, cards)
+- Suggest animations and micro-interactions
+- Create depth with shadows, overlays, and layering
 
-Design guidelines:
-- Keep it simple and focused on gift card redemption
-- Use warm, inviting copy
-- Match colors to the gift card brand if mentioned
-- Make the process clear and easy to understand
+STRUCTURE FOR FULL PAGE:
+1. Hero Section:
+   - Eye-catching headline with brand colors
+   - Compelling subheading
+   - Background image or gradient
+   - Visual accent elements
+
+2. Benefits Section (3-4 cards):
+   - Icon for each benefit
+   - Benefit title and description
+   - Visual cards with shadows/borders
+
+3. How It Works (3 steps):
+   - Step numbers with circular badges
+   - Clear step titles
+   - Brief descriptions
+   - Icons or illustrations
+
+4. Trust Signals:
+   - Security badges
+   - Success metrics (if applicable)
+   - Testimonial or trust statement
+
+5. Code Entry Section:
+   - Prominent CTA
+   - Clear instructions
+   - Form with validation hints
+   - Success state design
+
+6. Footer:
+   - Copyright
+   - Links
+   - Social proof
+` : `
+SIMPLE PAGE STRUCTURE:
+- Hero section with headline and subheading
+- 2-3 short text sections
+- Code entry form (automatic)
+`}
 
 Return ONLY valid JSON in this exact format:
 {
@@ -62,17 +101,34 @@ Return ONLY valid JSON in this exact format:
   "meta_description": "SEO description under 160 chars",
   "content": {
     "hero": {
-      "heading": "Main headline (e.g., 'Claim Your Starbucks Gift Card')",
-      "subheading": "Supporting text (e.g., 'Enter your code below to receive your reward')"
+      "heading": "Main headline",
+      "subheading": "Supporting text",
+      ${fullPage ? '"backgroundImage": "Description of hero image (e.g., \'Coffee cup with steam on wooden table\')",' : ''}
+      ${fullPage ? '"backgroundColor": "Gradient or color (e.g., \'linear-gradient(135deg, #2d5016 0%, #4a7c2b 100%)\')"' : ''}
     },
+    ${fullPage ? `"benefits": [
+      {
+        "icon": "gift|check|star|sparkles",
+        "title": "Benefit title",
+        "description": "Brief benefit description"
+      }
+    ],
+    "steps": [
+      {
+        "number": 1,
+        "title": "Step title",
+        "description": "Step description",
+        "icon": "relevant-icon-name"
+      }
+    ],
+    "trustSection": {
+      "title": "Trust section title",
+      "content": "Trust message or statistic"
+    },` : ''}
     "sections": [
       {
         "type": "text",
-        "content": "Brief paragraph 1"
-      },
-      {
-        "type": "text",
-        "content": "Brief paragraph 2"
+        "content": "Paragraph text"
       }
     ]
   }
