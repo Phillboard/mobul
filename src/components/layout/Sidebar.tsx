@@ -15,7 +15,8 @@ import {
   FileStack,
   Gift,
   UserCog,
-  Globe
+  Globe,
+  ShoppingCart
 } from "lucide-react";
 import {
   Select,
@@ -39,6 +40,7 @@ const navigation: NavItem[] = [
   { name: "Audiences", href: "/audiences", icon: Users, permissions: ['audiences.view'] },
   { name: "Templates", href: "/templates", icon: FileStack, permissions: ['templates.view'] },
   { name: "Lead Marketplace", href: "/marketplace", icon: Zap, permissions: ['lead_marketplace.view'] },
+  { name: "Purchase Gift Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase'] },
   { name: "Gift Cards", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.view'] },
   { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'] },
   { name: "API & Webhooks", href: "/api", icon: Code2, permissions: ['api.view'] },

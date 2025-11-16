@@ -22,6 +22,7 @@ import Analytics from "./pages/Analytics";
 import API from "./pages/API";
 import APIDocumentation from "./pages/APIDocumentation";
 import GiftCards from "./pages/GiftCards";
+import PurchaseGiftCards from "./pages/PurchaseGiftCards";
 import AgentCallDashboard from "./pages/AgentCallDashboard";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/analytics/:campaignId" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/marketplace" element={<ProtectedRoute><LeadMarketplace /></ProtectedRoute>} />
               <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
+              <Route path="/purchase-gift-cards" element={<ProtectedRoute requiredPermission="gift_cards.purchase"><PurchaseGiftCards /></ProtectedRoute>} />
               <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
               <Route path="/api/docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
               <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
