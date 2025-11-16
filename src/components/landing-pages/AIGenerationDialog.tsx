@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Sparkles, Code, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,49 +19,98 @@ interface AIGenerationDialogProps {
 }
 
 export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerationDialogProps) {
-  const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<"landing" | "embed">("landing");
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const { currentClient } = useTenant();
+  
+  // Form fields
+  const [companyName, setCompanyName] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#1e40af");
+  const [accentColor, setAccentColor] = useState("#fbbf24");
+  const [giftCardBrand, setGiftCardBrand] = useState("");
+  const [giftCardValue, setGiftCardValue] = useState("25");
+  const [userAction, setUserAction] = useState("");
+  const [additionalPrompt, setAdditionalPrompt] = useState("");
 
-  const landingExamples = [
-    "Luxury Starbucks gift card page with elegant green gradient, coffee imagery, and premium feel",
-    "Bold Marco's Pizza page with vibrant red design, pizza photos, and appetizing visuals",
-    "Modern Amazon gift card page with dynamic orange accents, product imagery, and sleek layout",
+  const industries = [
+    "Auto Warranty", "Insurance", "Solar Energy", "Home Services", "Financial Services",
+    "Healthcare", "Real Estate", "Legal Services", "Home Security", "HVAC"
   ];
 
-  const embedExamples = [
-    "Simple form for Starbucks gift cards",
-    "Minimal Marco's Pizza redemption widget",
-    "Clean Amazon gift card entry form",
+  const giftCardBrands = [
+    "Starbucks", "Amazon", "Visa", "Target", "Walmart", "Best Buy", "Apple", "Netflix"
+  ];
+
+  const userActions = [
+    "Called in", "Signed up", "Scheduled consultation", "Completed survey", 
+    "Attended webinar", "Requested quote", "Booked appointment"
   ];
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) {
-      toast.error("Please enter a description");
+    if (!companyName.trim()) {
+      toast.error("Please enter company name");
       return;
     }
-
+    if (!industry) {
+      toast.error("Please select industry");
+      return;
+    }
+    if (!giftCardBrand) {
+      toast.error("Please select gift card brand");
+      return;
+    }
+    if (!userAction) {
+      toast.error("Please select user action");
+      return;
+    }
     if (!currentClient) {
       toast.error("No client selected");
       return;
     }
 
     if (activeTab === "embed") {
-      // For embed, just show the code generator
       setShowEmbedCode(true);
       return;
     }
 
     setIsGenerating(true);
     try {
+      // Build comprehensive prompt with all context
+      const contextPrompt = `Create a client-branded landing page for ${companyName}, a ${industry} company. 
+      
+CLIENT DETAILS:
+- Company: ${companyName}
+- Industry: ${industry}
+- Primary Brand Color: ${primaryColor}
+- Accent Color: ${accentColor}
+
+REWARD DETAILS:
+- Gift Card: $${giftCardValue} ${giftCardBrand}
+- User completed action: ${userAction}
+
+${additionalPrompt ? `ADDITIONAL REQUIREMENTS:\n${additionalPrompt}` : ''}
+
+Generate a professional, conversion-optimized thank-you page that:
+1. Thanks the customer for ${userAction.toLowerCase()}
+2. Reinforces ${companyName}'s brand and expertise in ${industry}
+3. Delivers the $${giftCardValue} ${giftCardBrand} gift card as a reward
+4. Builds trust with industry-specific credibility signals`;
+
       const { data, error } = await supabase.functions.invoke("generate-landing-page", {
         body: {
-          prompt: prompt.trim(),
+          prompt: contextPrompt,
           clientId: currentClient.id,
+          companyName,
+          industry,
+          primaryColor,
+          accentColor,
+          giftCardBrand,
+          giftCardValue: parseInt(giftCardValue),
+          userAction,
           includeCodeEntry: true,
-          fullPage: true, // Request a full beautiful page
+          fullPage: true,
         },
       });
 
@@ -67,7 +119,13 @@ export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerati
       toast.success("Landing page generated!");
       onSuccess(data.id);
       onOpenChange(false);
-      setPrompt("");
+      
+      // Reset form
+      setCompanyName("");
+      setIndustry("");
+      setGiftCardBrand("");
+      setUserAction("");
+      setAdditionalPrompt("");
     } catch (error: any) {
       console.error("Error generating landing page:", error);
       toast.error(error.message || "Failed to generate landing page");
@@ -102,39 +160,136 @@ export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerati
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="landing" className="space-y-4 mt-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Describe your landing page
-                </label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Be specific about brand, colors, style, and imagery for the best results
-                </p>
-                <Textarea
-                  placeholder="e.g., Luxury Starbucks gift card page with elegant green gradient, coffee imagery, and premium feel"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={4}
-                  className="resize-none"
-                />
-              </div>
+            <TabsContent value="landing" className="space-y-6 mt-4">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold mb-3">Client Company Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <Label htmlFor="companyName">Company Name *</Label>
+                      <Input
+                        id="companyName"
+                        placeholder="Elite Auto Warranty"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="industry">Industry *</Label>
+                      <Select value={industry} onValueChange={setIndustry}>
+                        <SelectTrigger id="industry">
+                          <SelectValue placeholder="Select industry" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {industries.map((ind) => (
+                            <SelectItem key={ind} value={ind}>
+                              {ind}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="userAction">User Action *</Label>
+                      <Select value={userAction} onValueChange={setUserAction}>
+                        <SelectTrigger id="userAction">
+                          <SelectValue placeholder="What did they do?" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {userActions.map((action) => (
+                            <SelectItem key={action} value={action}>
+                              {action}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="primaryColor">Primary Brand Color</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="primaryColor"
+                          type="color"
+                          value={primaryColor}
+                          onChange={(e) => setPrimaryColor(e.target.value)}
+                          className="w-16 h-10 p-1"
+                        />
+                        <Input
+                          type="text"
+                          value={primaryColor}
+                          onChange={(e) => setPrimaryColor(e.target.value)}
+                          placeholder="#1e40af"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="accentColor">Accent Color</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="accentColor"
+                          type="color"
+                          value={accentColor}
+                          onChange={(e) => setAccentColor(e.target.value)}
+                          className="w-16 h-10 p-1"
+                        />
+                        <Input
+                          type="text"
+                          value={accentColor}
+                          onChange={(e) => setAccentColor(e.target.value)}
+                          placeholder="#fbbf24"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-              <div>
-                <p className="text-sm font-medium mb-2">Example prompts:</p>
-                <div className="space-y-2">
-                  {landingExamples.map((example, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setPrompt(example)}
-                      className="text-left text-xs text-muted-foreground hover:text-foreground w-full p-2 rounded hover:bg-muted transition-colors"
-                    >
-                      "{example}"
-                    </button>
-                  ))}
+                <div>
+                  <h3 className="text-sm font-semibold mb-3">Gift Card Reward</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="giftCardBrand">Brand *</Label>
+                      <Select value={giftCardBrand} onValueChange={setGiftCardBrand}>
+                        <SelectTrigger id="giftCardBrand">
+                          <SelectValue placeholder="Select brand" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {giftCardBrands.map((brand) => (
+                            <SelectItem key={brand} value={brand}>
+                              {brand}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="giftCardValue">Value ($) *</Label>
+                      <Input
+                        id="giftCardValue"
+                        type="number"
+                        min="5"
+                        step="5"
+                        value={giftCardValue}
+                        onChange={(e) => setGiftCardValue(e.target.value)}
+                        placeholder="25"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="additionalPrompt">Additional Instructions (Optional)</Label>
+                  <Textarea
+                    id="additionalPrompt"
+                    placeholder="e.g., Professional tone, emphasize 24/7 support, include customer testimonial..."
+                    value={additionalPrompt}
+                    onChange={(e) => setAdditionalPrompt(e.target.value)}
+                    rows={3}
+                    className="resize-none"
+                  />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button
                   variant="outline"
                   onClick={() => onOpenChange(false)}
@@ -142,7 +297,10 @@ export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerati
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleGenerate} disabled={isGenerating || !prompt.trim()}>
+                <Button 
+                  onClick={handleGenerate} 
+                  disabled={isGenerating || !companyName || !industry || !giftCardBrand || !userAction}
+                >
                   {isGenerating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

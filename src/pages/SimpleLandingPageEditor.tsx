@@ -23,8 +23,10 @@ export default function SimpleLandingPageEditor() {
     hero: { heading: "", subheading: "", backgroundImage: "", backgroundColor: "" },
     benefits: [],
     steps: [],
+    about: null,
     trustSection: null,
     sections: [],
+    _metadata: null,
   });
 
   useEffect(() => {
@@ -48,10 +50,12 @@ export default function SimpleLandingPageEditor() {
         hero: { heading: "Claim Your Gift Card", subheading: "Enter your code below", backgroundImage: "", backgroundColor: "" },
         benefits: [],
         steps: [],
+        about: null,
         trustSection: null,
         sections: [
           { type: "text", content: "Thank you for your participation!" },
         ],
+        _metadata: null,
       });
     } catch (error: any) {
       console.error("Error loading page:", error);
@@ -170,17 +174,90 @@ export default function SimpleLandingPageEditor() {
           </div>
         </div>
 
-        {/* Preview Area with Inline Editing */}
-        <div className="flex-1 overflow-auto bg-muted/20 p-8">
-          <div className="max-w-4xl mx-auto bg-background rounded-lg shadow-lg overflow-hidden">
+        {/* Landing Page Preview */}
+        <div className="flex-1 overflow-auto bg-muted p-8">
+          <div className="max-w-4xl mx-auto bg-background rounded-lg shadow-lg">
+            {/* Client Branding Header */}
+            {content._metadata?.company_name && (
+              <div className="bg-card border-b px-8 py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold" style={{ color: content._metadata.primary_color }}>
+                      {content._metadata.company_name}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">{content._metadata.industry}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">Your Reward:</p>
+                    <p className="text-lg font-bold" style={{ color: content._metadata.accent_color }}>
+                      ${content._metadata.gift_card_value} {content._metadata.gift_card_brand}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Hero Section */}
             <div 
               className="relative p-12 text-center"
               style={{
-                background: content.hero?.backgroundColor || "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "white"
+                background: content.hero?.backgroundColor || content._metadata?.primary_color 
+                  ? `linear-gradient(135deg, ${content._metadata?.primary_color || 'hsl(var(--primary))'} 0%, ${content._metadata?.accent_color || 'hsl(var(--primary) / 0.8)'} 100%)`
+                  : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 100%)',
               }}
             >
+              {content.hero?.backgroundImage && (
+                <div className="absolute inset-0 opacity-20 flex items-center justify-center">
+                  <p className="text-xs text-white/60 italic px-4">
+                    Image: {content.hero.backgroundImage}
+                  </p>
+                </div>
+              )}
+              <div className="relative z-10">
+                <EditableText
+                  value={content.hero?.heading || ""}
+                  onSave={(value) => updateContent(["hero", "heading"], value)}
+                  className="text-4xl font-bold text-white mb-4"
+                  as="h1"
+                />
+                <EditableText
+                  value={content.hero?.subheading || ""}
+                  onSave={(value) => updateContent(["hero", "subheading"], value)}
+                  className="text-xl text-white/90"
+                  as="p"
+                />
+              </div>
+            </div>
+
+            {/* Benefits, About, Steps, Trust sections remain similar with metadata styling */}
+            {content.benefits?.length > 0 && (
+              <div className="p-8 bg-muted/50">
+                <h2 className="text-2xl font-bold text-center mb-8">
+                  {content._metadata?.company_name ? `Why Choose ${content._metadata.company_name}` : "Benefits"}
+                </h2>
+                <div className="grid md:grid-cols-3 gap-6">
+                  {content.benefits.map((benefit: any, idx: number) => (
+                    <div key={idx} className="bg-card p-6 rounded-lg shadow-sm border-2" style={{ borderColor: content._metadata?.accent_color || 'hsl(var(--border))' }}>
+                      <div className="text-3xl mb-3">{benefit.icon === "shield" ? "🛡️" : benefit.icon === "check" ? "✓" : "⭐"}</div>
+                      <EditableText value={benefit.title} onSave={(v) => updateContent(["benefits", String(idx), "title"], v)} className="font-semibold text-lg mb-2" as="h3" />
+                      <EditableText value={benefit.description} onSave={(v) => updateContent(["benefits", String(idx), "description"], v)} className="text-muted-foreground" as="p" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Footer with client branding */}
+            <div className="p-6 text-center text-sm border-t" style={{ backgroundColor: content._metadata?.primary_color ? content._metadata.primary_color + '10' : 'hsl(var(--muted))' }}>
+              <p className="font-semibold mb-2" style={{ color: content._metadata?.primary_color || 'inherit' }}>
+                {content._metadata?.company_name ? `Powered by ${content._metadata.company_name}` : "Powered by Our Company"}
+              </p>
+              <p className="text-muted-foreground">© {new Date().getFullYear()} {content._metadata?.company_name || "Company"}. All rights reserved.</p>
+              <div className="mt-2 space-x-4">
+                <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
+                <a href="#" className="hover:text-foreground transition-colors">Terms</a>
+              </div>
+            </div>
               {content.hero?.backgroundImage && (
                 <div className="absolute inset-0 opacity-20">
                   <div className="text-xs text-white/50 p-2">Background: {content.hero.backgroundImage}</div>
