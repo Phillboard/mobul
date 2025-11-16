@@ -2068,6 +2068,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      platform_admin_exists: { Args: never; Returns: boolean }
       user_can_access_client: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
@@ -2082,7 +2083,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "org_admin" | "agency_admin" | "client_user"
+      app_role: "org_admin" | "agency_admin" | "client_user" | "platform_admin"
       audience_source: "import" | "purchase" | "manual"
       audience_status: "processing" | "ready" | "failed"
       batch_status: "pending" | "printing" | "mailed" | "delivered"
@@ -2247,7 +2248,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["org_admin", "agency_admin", "client_user"],
+      app_role: ["org_admin", "agency_admin", "client_user", "platform_admin"],
       audience_source: ["import", "purchase", "manual"],
       audience_status: ["processing", "ready", "failed"],
       batch_status: ["pending", "printing", "mailed", "delivered"],
