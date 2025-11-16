@@ -194,7 +194,7 @@ export default function GrapesJSLandingPageEditor() {
             });
           }}
           options={{
-            licenseKey: '',
+            licenseKey: 'e51103aea79d4996862a09ca57bc474f1ec98090f4a546cca71856f08de9244f',
             theme: 'light',
             project: {
               type: 'web',
