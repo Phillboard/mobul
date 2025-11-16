@@ -27,6 +27,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import GenerateFavicon from "./pages/GenerateFavicon";
 import UserManagement from "./pages/UserManagement";
+import AcceptInvite from "./pages/AcceptInvite";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             <DrPhillipChat />
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/c/:campaignId/:token" element={<PURLLandingPage />} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
