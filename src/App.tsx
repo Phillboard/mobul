@@ -29,6 +29,9 @@ import NotFound from "./pages/NotFound";
 import GenerateFavicon from "./pages/GenerateFavicon";
 import UserManagement from "./pages/UserManagement";
 import AcceptInvite from "./pages/AcceptInvite";
+import LandingPages from "./pages/LandingPages";
+import LandingPageBuilder from "./pages/LandingPageBuilder";
+import GiftCardReveal from "./pages/GiftCardReveal";
 
 const queryClient = new QueryClient();
 
@@ -56,9 +59,13 @@ const App = () => (
               <Route path="/template-builder/:id" element={<ProtectedRoute><TemplateBuilderV2 /></ProtectedRoute>} />
               <Route path="/analytics/:campaignId" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/marketplace" element={<ProtectedRoute><LeadMarketplace /></ProtectedRoute>} />
-          <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
-          <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
+              <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
+              <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
               <Route path="/api/docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
+              <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
+              <Route path="/landing-pages/new" element={<ProtectedRoute><LandingPageBuilder /></ProtectedRoute>} />
+              <Route path="/landing-pages/:id/edit" element={<ProtectedRoute><LandingPageBuilder /></ProtectedRoute>} />
+              <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
               <Route path="/settings" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/users" element={<ProtectedRoute requiredPermission="users.manage"><UserManagement /></ProtectedRoute>} />
               <Route path="/generate-favicon" element={<ProtectedRoute><GenerateFavicon /></ProtectedRoute>} />
