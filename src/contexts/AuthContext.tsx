@@ -100,8 +100,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: permissionsData, error: permissionsError } = await supabase
         .rpc('get_user_permissions', { _user_id: userId });
 
-      if (permissionsError) throw permissionsError;
-      setPermissions(permissionsData?.map((p: any) => p.permission_name) || []);
+      if (permissionsError) {
+        console.error('Error fetching permissions:', permissionsError);
+        throw permissionsError;
+      }
+      
+      const userPermissions = permissionsData?.map((p: any) => p.permission_name) || [];
+      console.log('Loaded permissions for user:', userPermissions);
+      console.log('Loaded roles for user:', rolesData);
+      setPermissions(userPermissions);
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {
