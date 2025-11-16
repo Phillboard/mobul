@@ -204,6 +204,12 @@ export default function LandingPages() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <AIGenerationDialog
+          open={aiDialogOpen}
+          onOpenChange={setAiDialogOpen}
+          onSuccess={(pageId) => navigate(`/landing-pages/${pageId}/edit`)}
+        />
       </div>
     </Layout>
   );
