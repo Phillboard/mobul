@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Bell, HelpCircle, LogOut, User, Building2, ChevronDown } from "lucide-react";
+import { Bell, HelpCircle, LogOut, User, Building2, ChevronDown, Shield, Briefcase } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
 import {
@@ -22,9 +22,10 @@ import { Badge } from "@/components/ui/badge";
 
 export function Header() {
   const { profile, roles, signOut, hasRole } = useAuth();
-  const { organizations, currentOrg, setCurrentOrg } = useTenant();
+  const { organizations, currentOrg, setCurrentOrg, isAdminMode, currentClient } = useTenant();
 
   const getRoleLabel = () => {
+    if (roles.some(r => r.role === 'platform_admin')) return 'Platform Admin';
     if (roles.some(r => r.role === 'org_admin')) return 'Org Admin';
     if (roles.some(r => r.role === 'agency_admin')) return 'Agency Admin';
     if (roles.some(r => r.role === 'client_user')) return 'Client User';
@@ -45,8 +46,24 @@ export function Header() {
     <header className="fixed left-64 right-0 top-0 z-30 h-16 border-b border-border bg-card">
       <div className="flex h-full items-center justify-between px-6">
         <div className="flex-1 flex items-center gap-4">
-          {/* Organization Switcher - for users with multiple orgs */}
-          {organizations.length > 1 && (
+          {/* Admin Mode Badge */}
+          {hasRole('platform_admin') && isAdminMode && (
+            <Badge variant="secondary" className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-600 border-amber-500/20">
+              <Shield className="h-3 w-3 mr-1" />
+              Platform Admin
+            </Badge>
+          )}
+
+          {/* Current Client Badge */}
+          {!isAdminMode && currentClient && (
+            <Badge variant="outline" className="gap-1.5">
+              <Briefcase className="h-3 w-3" />
+              {currentClient.name}
+            </Badge>
+          )}
+
+          {/* Organization Switcher - for users with multiple orgs (not platform admins in admin mode) */}
+          {!isAdminMode && organizations.length > 1 && (
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4 text-muted-foreground" />
               <Select

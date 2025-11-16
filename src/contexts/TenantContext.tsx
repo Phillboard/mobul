@@ -28,6 +28,10 @@ interface TenantContextType {
   setCurrentOrg: (org: Organization | null) => void;
   setCurrentClient: (client: Client | null) => void;
   loading: boolean;
+  isAdminMode: boolean;
+  setAdminMode: (mode: boolean) => void;
+  impersonatedUserId: string | null;
+  setImpersonatedUserId: (userId: string | null) => void;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -39,6 +43,11 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [currentClient, setCurrentClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdminMode, setIsAdminMode] = useState(() => {
+    const stored = localStorage.getItem('adminMode');
+    return stored === 'true';
+  });
+  const [impersonatedUserId, setImpersonatedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -104,6 +113,15 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleSetAdminMode = (mode: boolean) => {
+    setIsAdminMode(mode);
+    localStorage.setItem('adminMode', mode.toString());
+    if (mode) {
+      // When entering admin mode, clear client selection
+      setCurrentClient(null);
+    }
+  };
+
   return (
     <TenantContext.Provider
       value={{
@@ -114,6 +132,10 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         setCurrentOrg: handleSetCurrentOrg,
         setCurrentClient,
         loading,
+        isAdminMode,
+        setAdminMode: handleSetAdminMode,
+        impersonatedUserId,
+        setImpersonatedUserId,
       }}
     >
       {children}
