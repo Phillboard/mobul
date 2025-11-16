@@ -45,8 +45,8 @@ verify_jwt = false
 [functions.release-twilio-number]
 verify_jwt = false
 
-[functions.provision-twilio-number]
+[functions.validate-gift-card-code]
 verify_jwt = false
 
-[functions.release-twilio-number]
+[functions.redeem-gift-card-embed]
 verify_jwt = false
