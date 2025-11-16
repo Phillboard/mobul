@@ -32,7 +32,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Unauthorized" }, { status: 401, headers: corsHeaders });
     }
 
-    const { prompt, businessType, tone, includeCodeEntry, clientId, fullPage } = await req.json();
+    const { 
+      prompt, 
+      clientId, 
+      companyName, 
+      industry, 
+      primaryColor, 
+      accentColor, 
+      giftCardBrand, 
+      giftCardValue,
+      userAction,
+      includeCodeEntry, 
+      fullPage 
+    } = await req.json();
 
     if (!prompt || !clientId) {
       return Response.json(
@@ -41,98 +53,170 @@ Deno.serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are an expert landing page designer for gift card redemption pages. Generate a ${fullPage ? 'stunning, visually rich' : 'simple'} landing page optimized for conversions.
+    const systemPrompt = `You are an expert landing page designer creating CLIENT-BRANDED thank-you pages for businesses that reward customers with gift cards.
+
+CRITICAL CONTEXT - READ CAREFULLY:
+These pages are NOT generic gift card redemption pages. They are BRANDED MARKETING PAGES for the client company.
+
+BUSINESS MODEL:
+- ${companyName} (a ${industry} company) paid for this campaign
+- Customer completed action: ${userAction}
+- Reward: $${giftCardValue} ${giftCardBrand} gift card
+- Page PURPOSE: Thank customer, reinforce ${companyName}'s brand, deliver reward, build trust
+
+PAGE IDENTITY:
+✅ This IS a ${companyName} page (use their branding, colors, messaging)
+✅ Focus on ${companyName}'s value proposition and expertise in ${industry}
+❌ This is NOT a ${giftCardBrand} page (gift card is just the reward)
+❌ Don't use ${giftCardBrand} colors as primary branding
+
 
 ${fullPage ? `
-DESIGN REQUIREMENTS FOR BEAUTIFUL PAGES:
-- Use rich, evocative descriptions for visual elements
-- Include imagery suggestions (hero images, background patterns, icons)
-- Specify color schemes with gradients and accents
-- Add visual hierarchy with varied text sizes and weights
-- Include decorative elements (shapes, dividers, cards)
-- Suggest animations and micro-interactions
-- Create depth with shadows, overlays, and layering
+DESIGN REQUIREMENTS:
+- Use ${primaryColor} as primary brand color (hero, CTAs, accents)
+- Use ${accentColor} for secondary highlights and visual interest
+- Professional, conversion-optimized design with visual hierarchy
+- Industry-appropriate imagery for ${industry}
+- Celebratory but professional tone
+- Trust-building elements specific to ${industry}
 
-STRUCTURE FOR FULL PAGE:
-1. Hero Section:
-   - Eye-catching headline with brand colors
-   - Compelling subheading
-   - Background image or gradient
-   - Visual accent elements
+STRUCTURE (Generate ALL sections):
 
-2. Benefits Section (3-4 cards):
-   - Icon for each benefit
-   - Benefit title and description
-   - Visual cards with shadows/borders
+1. HERO SECTION:
+   Headline formula: "Thank You for [${userAction}]! Here's Your $${giftCardValue} ${giftCardBrand} Gift Card"
+   - Subheading: Reinforce ${companyName}'s value proposition (why they're the best in ${industry})
+   - Background: Use gradient with ${primaryColor} (e.g., "linear-gradient(135deg, ${primaryColor} 0%, [lighter shade] 100%)")
+   - Include industry-relevant hero imagery description
+   - Celebratory but professional visual
 
-3. How It Works (3 steps):
-   - Step numbers with circular badges
-   - Clear step titles
-   - Brief descriptions
-   - Icons or illustrations
+2. COMPANY BENEFITS (3-4 cards):
+   Focus on ${companyName}'s strengths in ${industry}:
+   Examples for ${industry}:
+   ${industry === "Auto Warranty" ? "- 24/7 Roadside Assistance\n   - Nationwide Coverage\n   - Easy Claims Process\n   - Certified Mechanics" : ""}
+   ${industry === "Insurance" ? "- Comprehensive Coverage\n   - Fast Claims\n   - Trusted Advisors\n   - Competitive Rates" : ""}
+   ${industry === "Solar Energy" ? "- Massive Savings\n   - Eco-Friendly\n   - Expert Installation\n   - 25-Year Warranty" : ""}
+   - Each with relevant icon (shield, check, star, etc.)
+   - Professional benefit cards with icons
 
-4. Trust Signals:
-   - Security badges
-   - Success metrics (if applicable)
-   - Testimonial or trust statement
+3. HOW IT WORKS (3 steps):
+   Step 1: "You ${userAction}"
+   Step 2: "We Deliver Your Reward"
+   Step 3: "Enjoy Your $${giftCardValue} ${giftCardBrand} Gift Card"
+   - Numbered circular badges
+   - Clear, simple descriptions
 
-5. Code Entry Section:
-   - Prominent CTA
+4. ABOUT ${companyName}:
+   - 2-3 paragraphs establishing expertise in ${industry}
+   - Why customers trust ${companyName}
+   - Company mission/values
+   - Reinforce why customer made the right choice
+
+5. TRUST SIGNALS:
+   Industry-specific for ${industry}:
+   ${industry === "Auto Warranty" ? "- BBB Accredited, A+ Rating\n   - 50,000+ Happy Customers\n   - Licensed & Bonded" : ""}
+   ${industry === "Insurance" ? "- Licensed in All 50 States\n   - $2M+ Claims Paid\n   - 4.8★ Customer Rating" : ""}
+   - Include relevant certifications, stats, testimonial
+
+6. GIFT CARD REDEMPTION:
+   - "Claim Your $${giftCardValue} ${giftCardBrand} Reward"
    - Clear instructions
-   - Form with validation hints
-   - Success state design
+   - Visual ${giftCardBrand} card representation
+   - Code entry form (will be added automatically)
 
-6. Footer:
-   - Copyright
-   - Links
-   - Social proof
+7. FOOTER:
+   - ${companyName} contact information
+   - "Powered by ${companyName}"
+   - Privacy Policy & Terms links
+   - Copyright ${new Date().getFullYear()} ${companyName}
 ` : `
 SIMPLE PAGE STRUCTURE:
-- Hero section with headline and subheading
-- 2-3 short text sections
-- Code entry form (automatic)
+- Hero with ${companyName} branding
+- Thank you message for ${userAction}
+- 2-3 text sections about ${companyName}
+- Gift card redemption
 `}
 
 Return ONLY valid JSON in this exact format:
 {
-  "name": "Page name (e.g., 'Starbucks Gift Card Redemption')",
-  "slug": "url-friendly-slug",
-  "meta_title": "SEO title under 60 chars",
-  "meta_description": "SEO description under 160 chars",
+  "name": "${companyName} - Thank You Page",
+  "slug": "company-name-thank-you",
+  "meta_title": "${companyName} - Your $${giftCardValue} ${giftCardBrand} Gift Card",
+  "meta_description": "Thank you for ${userAction.toLowerCase()}! Claim your $${giftCardValue} ${giftCardBrand} reward from ${companyName}.",
+  "client_branding": {
+    "company_name": "${companyName}",
+    "primary_color": "${primaryColor}",
+    "accent_color": "${accentColor}",
+    "industry": "${industry}"
+  },
+  "gift_card": {
+    "brand": "${giftCardBrand}",
+    "value": ${giftCardValue}
+  },
+  "user_context": {
+    "action": "${userAction}"
+  },
   "content": {
     "hero": {
-      "heading": "Main headline",
-      "subheading": "Supporting text",
-      ${fullPage ? '"backgroundImage": "Description of hero image (e.g., \'Coffee cup with steam on wooden table\')",' : ''}
-      ${fullPage ? '"backgroundColor": "Gradient or color (e.g., \'linear-gradient(135deg, #2d5016 0%, #4a7c2b 100%)\')"' : ''}
+      "heading": "Thank You for ${userAction}! Here's Your $${giftCardValue} ${giftCardBrand} Gift Card",
+      "subheading": "Brief value prop for ${companyName} in ${industry}",
+      ${fullPage ? '"backgroundImage": "Description of industry-appropriate hero image",' : ''}
+      ${fullPage ? `"backgroundColor": "Use gradient with ${primaryColor} (e.g., 'linear-gradient(135deg, ${primaryColor} 0%, [lighter] 100%)')"` : ''}
     },
     ${fullPage ? `"benefits": [
       {
-        "icon": "gift|check|star|sparkles",
-        "title": "Benefit title",
-        "description": "Brief benefit description"
+        "icon": "shield|check|star|zap",
+        "title": "${companyName} benefit for ${industry}",
+        "description": "Why this matters to customer"
       }
     ],
+    "about": {
+      "heading": "About ${companyName}",
+      "paragraphs": [
+        "Paragraph about ${companyName}'s expertise in ${industry}",
+        "Why customers trust ${companyName}",
+        "Company mission and commitment"
+      ]
+    },
     "steps": [
       {
         "number": 1,
-        "title": "Step title",
-        "description": "Step description",
-        "icon": "relevant-icon-name"
+        "title": "You ${userAction}",
+        "description": "Customer took action",
+        "icon": "phone|check|calendar"
+      },
+      {
+        "number": 2,
+        "title": "We Process Your Reward",
+        "description": "Instant delivery",
+        "icon": "gift"
+      },
+      {
+        "number": 3,
+        "title": "Enjoy Your $${giftCardValue} ${giftCardBrand}",
+        "description": "Redeem anywhere",
+        "icon": "sparkles"
       }
     ],
     "trustSection": {
-      "title": "Trust section title",
-      "content": "Trust message or statistic"
+      "heading": "Why Choose ${companyName}?",
+      "badges": ["Industry certification", "Customer stat", "Trust badge"],
+      "testimonial": "Optional customer quote about ${companyName}"
     },` : ''}
     "sections": [
       {
         "type": "text",
-        "content": "Paragraph text"
+        "heading": "About ${companyName}",
+        "content": "2-3 paragraphs about ${companyName} expertise in ${industry}"
       }
     ]
   }
-}`;
+}
+
+CRITICAL REMINDERS:
+- Page name should be "${companyName} - Thank You" NOT "${giftCardBrand} Gift Card"
+- Use ${primaryColor} and ${accentColor} for branding colors
+- Focus content on ${companyName}'s value in ${industry}
+- Gift card is the reward, not the main focus`;
 
     // Call Lovable AI Gateway
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -182,14 +266,28 @@ Return ONLY valid JSON in this exact format:
 
     const slug = pageContent.slug || generateSlug(pageContent.name || prompt);
 
+    // Enrich content with client branding metadata
+    const enrichedContent = {
+      ...pageContent.content,
+      _metadata: {
+        company_name: companyName,
+        industry,
+        primary_color: primaryColor,
+        accent_color: accentColor,
+        gift_card_brand: giftCardBrand,
+        gift_card_value: giftCardValue,
+        user_action: userAction,
+      }
+    };
+
     // Insert landing page into database
     const { data: landingPage, error: insertError } = await supabase
       .from("landing_pages")
       .insert({
         client_id: clientId,
-        name: pageContent.name || `AI Generated - ${new Date().toLocaleDateString()}`,
+        name: pageContent.name || `${companyName} - Thank You Page`,
         slug,
-        content_json: pageContent.content,
+        content_json: enrichedContent,
         meta_title: pageContent.meta_title,
         meta_description: pageContent.meta_description,
         ai_generated: true,
