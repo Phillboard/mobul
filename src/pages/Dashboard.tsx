@@ -49,11 +49,6 @@ const Dashboard = () => {
   const { currentClient, isAdminMode } = useTenant();
   const { hasRole } = useAuth();
   const navigate = useNavigate();
-
-  // Show platform dashboard if platform admin in admin mode
-  if (hasRole('platform_admin') && isAdminMode) {
-    return <PlatformDashboard />;
-  }
   const [dateRange, setDateRange] = useState(30);
   const { stats, performance, recentCampaigns, activity, isLoading } = useDashboardData(dateRange);
   
@@ -61,6 +56,11 @@ const Dashboard = () => {
   const { data: callStats } = useCallStats(currentClient?.id || null, dateRange);
   const { data: rewardSummary } = useRewardSummary(currentClient?.id || null, dateRange);
   const { data: conditionRate } = useConditionCompletionRate(currentClient?.id || null, dateRange);
+
+  // Show platform dashboard if platform admin in admin mode
+  if (hasRole('platform_admin') && isAdminMode) {
+    return <PlatformDashboard />;
+  }
 
   const kpiCards = [
     {
