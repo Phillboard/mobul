@@ -13,7 +13,7 @@ interface Profile {
 interface UserRole {
   id: string;
   user_id: string;
-  role: 'org_admin' | 'agency_admin' | 'client_user';
+  role: 'org_admin' | 'agency_admin' | 'client_user' | 'platform_admin';
 }
 
 interface AuthContextType {
@@ -23,7 +23,7 @@ interface AuthContextType {
   roles: UserRole[];
   permissions: string[];
   loading: boolean;
-  hasRole: (role: 'org_admin' | 'agency_admin' | 'client_user') => boolean;
+  hasRole: (role: 'org_admin' | 'agency_admin' | 'client_user' | 'platform_admin') => boolean;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const hasRole = (role: 'org_admin' | 'agency_admin' | 'client_user') => {
+  const hasRole = (role: 'org_admin' | 'agency_admin' | 'client_user' | 'platform_admin') => {
     return roles.some(r => r.role === role);
   };
 

@@ -7,6 +7,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { CRMIntegrationTab } from "@/components/settings/CRMIntegrationTab";
 import { PhoneNumbersSettings } from "@/components/settings/PhoneNumbersSettings";
 import { SMSDeliveryLog } from "@/components/settings/SMSDeliveryLog";
+import { ClaimPlatformAdmin } from "@/components/settings/ClaimPlatformAdmin";
 
 export default function Settings() {
   const { currentClient } = useTenant();
@@ -31,6 +32,8 @@ export default function Settings() {
             Configure your platform settings and preferences
           </p>
         </div>
+
+        <ClaimPlatformAdmin />
 
         <Tabs defaultValue="general" className="w-full">
           <TabsList>
