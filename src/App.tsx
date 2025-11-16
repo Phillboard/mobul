@@ -33,6 +33,7 @@ import AcceptInvite from "./pages/AcceptInvite";
 import LandingPages from "./pages/LandingPages";
 import SimpleLandingPageEditor from "./pages/SimpleLandingPageEditor";
 import GiftCardReveal from "./pages/GiftCardReveal";
+import EmbedGiftCard from "./pages/EmbedGiftCard";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,8 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/c/:campaignId/:token" element={<PURLLandingPage />} />
+              <Route path="/embed/gift-card" element={<EmbedGiftCard />} />
+              <Route path="/embed/gift-card/:campaignId" element={<EmbedGiftCard />} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
               <Route path="/campaigns/:id" element={<ProtectedRoute><CampaignDetail /></ProtectedRoute>} />

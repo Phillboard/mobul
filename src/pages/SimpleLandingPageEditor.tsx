@@ -3,11 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save, Globe, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, Globe, Loader2, Sparkles, Code } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EditableText } from "@/components/landing-pages/EditableText";
 import { CodeEntryForm } from "@/components/landing-pages/CodeEntryForm";
+import { EmbedCodeGenerator } from "@/components/landing-pages/EmbedCodeGenerator";
 import { useTenant } from "@/contexts/TenantContext";
 
 export default function SimpleLandingPageEditor() {
@@ -17,6 +18,7 @@ export default function SimpleLandingPageEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [pageName, setPageName] = useState("");
+  const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
   const [content, setContent] = useState<any>({
     hero: { heading: "", subheading: "" },
     sections: [],
@@ -130,6 +132,14 @@ export default function SimpleLandingPageEditor() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setEmbedDialogOpen(true)}
+            >
+              <Code className="h-4 w-4 mr-2" />
+              Get Embed Code
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => {/* Regenerate with AI */}}
             >
               <Sparkles className="h-4 w-4 mr-2" />
@@ -193,6 +203,12 @@ export default function SimpleLandingPageEditor() {
           </div>
         </div>
       </div>
+
+      <EmbedCodeGenerator
+        open={embedDialogOpen}
+        onOpenChange={setEmbedDialogOpen}
+        campaignId={id || ""}
+      />
     </Layout>
   );
 }
