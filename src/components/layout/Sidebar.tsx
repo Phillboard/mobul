@@ -14,7 +14,8 @@ import {
   Building,
   FileStack,
   Gift,
-  UserCog
+  UserCog,
+  Globe
 } from "lucide-react";
 import {
   Select,
@@ -39,6 +40,7 @@ const navigation: NavItem[] = [
   { name: "Templates", href: "/templates", icon: FileStack, permissions: ['templates.view'] },
   { name: "Lead Marketplace", href: "/marketplace", icon: Zap, permissions: ['lead_marketplace.view'] },
   { name: "Gift Cards", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.view'] },
+  { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'] },
   { name: "API & Webhooks", href: "/api", icon: Code2, permissions: ['api.view'] },
   { name: "User Management", href: "/users", icon: UserCog, permissions: ['users.manage'] },
   { name: "Settings", href: "/settings", icon: Settings, permissions: ['settings.view'] },

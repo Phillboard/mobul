@@ -541,6 +541,7 @@ export type Database = {
           created_at: string | null
           created_by_user_id: string | null
           id: string
+          landing_page_id: string | null
           lp_mode: Database["public"]["Enums"]["lp_mode"] | null
           mail_date: string | null
           name: string
@@ -561,6 +562,7 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           id?: string
+          landing_page_id?: string | null
           lp_mode?: Database["public"]["Enums"]["lp_mode"] | null
           mail_date?: string | null
           name: string
@@ -581,6 +583,7 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           id?: string
+          landing_page_id?: string | null
           lp_mode?: Database["public"]["Enums"]["lp_mode"] | null
           mail_date?: string | null
           name?: string
@@ -607,6 +610,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_landing_page_id_fkey"
+            columns: ["landing_page_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
             referencedColumns: ["id"]
           },
           {
@@ -1058,6 +1068,76 @@ export type Database = {
           },
         ]
       }
+      gift_card_redemptions: {
+        Row: {
+          approved_by_user_id: string | null
+          campaign_id: string
+          code_entered: string
+          created_at: string | null
+          gift_card_delivery_id: string | null
+          id: string
+          recipient_id: string
+          redemption_ip: string | null
+          redemption_status: string
+          redemption_user_agent: string | null
+          rejection_reason: string | null
+          updated_at: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          approved_by_user_id?: string | null
+          campaign_id: string
+          code_entered: string
+          created_at?: string | null
+          gift_card_delivery_id?: string | null
+          id?: string
+          recipient_id: string
+          redemption_ip?: string | null
+          redemption_status?: string
+          redemption_user_agent?: string | null
+          rejection_reason?: string | null
+          updated_at?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          approved_by_user_id?: string | null
+          campaign_id?: string
+          code_entered?: string
+          created_at?: string | null
+          gift_card_delivery_id?: string | null
+          id?: string
+          recipient_id?: string
+          redemption_ip?: string | null
+          redemption_status?: string
+          redemption_user_agent?: string | null
+          rejection_reason?: string | null
+          updated_at?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_redemptions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_card_redemptions_gift_card_delivery_id_fkey"
+            columns: ["gift_card_delivery_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_card_redemptions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_cards: {
         Row: {
           card_code: string
@@ -1117,6 +1197,115 @@ export type Database = {
             columns: ["pool_id"]
             isOneToOne: false
             referencedRelation: "gift_card_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      landing_page_versions: {
+        Row: {
+          change_description: string | null
+          content_json: Json
+          created_at: string | null
+          created_by_user_id: string | null
+          html_content: string | null
+          id: string
+          landing_page_id: string
+          version_number: number
+        }
+        Insert: {
+          change_description?: string | null
+          content_json: Json
+          created_at?: string | null
+          created_by_user_id?: string | null
+          html_content?: string | null
+          id?: string
+          landing_page_id: string
+          version_number: number
+        }
+        Update: {
+          change_description?: string | null
+          content_json?: Json
+          created_at?: string | null
+          created_by_user_id?: string | null
+          html_content?: string | null
+          id?: string
+          landing_page_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_page_versions_landing_page_id_fkey"
+            columns: ["landing_page_id"]
+            isOneToOne: false
+            referencedRelation: "landing_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      landing_pages: {
+        Row: {
+          ai_generated: boolean | null
+          ai_prompt: string | null
+          client_id: string
+          content_json: Json
+          created_at: string | null
+          created_by_user_id: string | null
+          css_content: string | null
+          html_content: string | null
+          id: string
+          meta_description: string | null
+          meta_title: string | null
+          name: string
+          og_image_url: string | null
+          published: boolean | null
+          slug: string
+          updated_at: string | null
+          version_number: number | null
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          ai_prompt?: string | null
+          client_id: string
+          content_json?: Json
+          created_at?: string | null
+          created_by_user_id?: string | null
+          css_content?: string | null
+          html_content?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          name: string
+          og_image_url?: string | null
+          published?: boolean | null
+          slug: string
+          updated_at?: string | null
+          version_number?: number | null
+        }
+        Update: {
+          ai_generated?: boolean | null
+          ai_prompt?: string | null
+          client_id?: string
+          content_json?: Json
+          created_at?: string | null
+          created_by_user_id?: string | null
+          css_content?: string | null
+          html_content?: string | null
+          id?: string
+          meta_description?: string | null
+          meta_title?: string | null
+          name?: string
+          og_image_url?: string | null
+          published?: boolean | null
+          slug?: string
+          updated_at?: string | null
+          version_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_pages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
