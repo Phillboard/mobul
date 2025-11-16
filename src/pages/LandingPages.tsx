@@ -25,6 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { AIGenerationDialog } from "@/components/landing-pages/AIGenerationDialog";
+import { toast } from "sonner";
 
 export default function LandingPages() {
   const navigate = useNavigate();
@@ -34,6 +36,7 @@ export default function LandingPages() {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pageToDelete, setPageToDelete] = useState<string | null>(null);
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
 
   const filteredPages = pages?.filter((page) =>
     page.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -75,10 +78,10 @@ export default function LandingPages() {
             </p>
           </div>
           {canCreate && (
-            <Button onClick={() => navigate("/landing-pages/new")}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Landing Page
-            </Button>
+          <Button onClick={() => setAiDialogOpen(true)}>
+            <Sparkles className="h-4 w-4 mr-2" />
+            Create Landing Page
+          </Button>
           )}
         </div>
 
@@ -101,16 +104,10 @@ export default function LandingPages() {
                 No landing pages yet. Create your first one to get started.
               </p>
               {canCreate && (
-                <div className="flex gap-2">
-                  <Button onClick={() => navigate("/landing-pages/new")}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create from Scratch
-                  </Button>
-                  <Button variant="outline" onClick={() => navigate("/landing-pages/new?ai=true")}>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Generate with AI
-                  </Button>
-                </div>
+                <Button onClick={() => setAiDialogOpen(true)}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate with AI
+                </Button>
               )}
             </CardContent>
           </Card>

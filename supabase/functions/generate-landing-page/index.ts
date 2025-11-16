@@ -41,62 +41,56 @@ Deno.serve(async (req) => {
       );
     }
 
-    // System prompt for AI
-    const systemPrompt = `You are a professional landing page designer specializing in conversion-optimized pages for ${businessType || "businesses"}.
+    const systemPrompt = `You are an expert landing page designer for gift card redemption pages. Generate a simple, conversion-optimized landing page.
 
-Create a landing page structure using these block types:
-- hero: Main heading, subheading, and hero image
-- text: Body paragraphs with descriptive content
-- image: Image placeholders with descriptions
-- codeEntry: Form for entering redemption codes
-- giftCardDisplay: Where the redeemed gift card will appear
-- cta: Call-to-action buttons
-- testimonial: Customer testimonials (optional)
+The page should include:
+- Hero section with compelling headline and subheading
+- 2-3 short text sections explaining the process or benefits
+- The page ALWAYS includes a gift card code entry form (don't include in JSON, it's automatic)
 
-Design Guidelines:
-- Tone: ${tone || "friendly and professional"}
-- Focus on conversion and trust
-- Clear value proposition
-- Simple, clean design
-- Mobile-friendly layout
+Design guidelines:
+- Keep it simple and focused on gift card redemption
+- Use warm, inviting copy
+- Match colors to the gift card brand if mentioned
+- Make the process clear and easy to understand
 
-Return a JSON object with this structure:
+Return ONLY valid JSON in this exact format:
 {
-  "name": "Landing page title",
+  "name": "Page name (e.g., 'Starbucks Gift Card Redemption')",
   "slug": "url-friendly-slug",
-  "meta_title": "SEO title",
-  "meta_description": "SEO description",
-  "blocks": [
-    {
-      "type": "hero",
-      "content": {
-        "heading": "Main heading",
-        "subheading": "Supporting text",
-        "imageUrl": "placeholder"
+  "meta_title": "SEO title under 60 chars",
+  "meta_description": "SEO description under 160 chars",
+  "content": {
+    "hero": {
+      "heading": "Main headline (e.g., 'Claim Your Starbucks Gift Card')",
+      "subheading": "Supporting text (e.g., 'Enter your code below to receive your reward')"
+    },
+    "sections": [
+      {
+        "type": "text",
+        "content": "Brief paragraph 1"
       },
-      "styles": {
-        "backgroundColor": "#f9fafb",
-        "padding": "80px 20px",
-        "textAlign": "center"
+      {
+        "type": "text",
+        "content": "Brief paragraph 2"
       }
-    }
-  ]
+    ]
+  }
 }`;
 
-    // Call Lovable AI (no API key needed!)
-    const aiResponse = await fetch("https://api.lovable.app/v1/ai/chat", {
+    // Call Lovable AI Gateway
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
       },
       body: JSON.stringify({
-        model: "openai/gpt-5-mini",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: prompt },
         ],
-        response_format: { type: "json_object" },
       }),
     });
 
@@ -109,7 +103,18 @@ Return a JSON object with this structure:
     }
 
     const aiResult = await aiResponse.json();
-    const pageContent = JSON.parse(aiResult.choices[0].message.content);
+    const content = aiResult.choices[0].message.content;
+    
+    // Extract JSON from markdown code blocks if present
+    let pageContent;
+    try {
+      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```\n([\s\S]*?)\n```/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : content;
+      pageContent = JSON.parse(jsonStr);
+    } catch (e) {
+      console.error("Failed to parse AI response:", content);
+      throw new Error("Invalid AI response format");
+    }
 
     // Create slug
     const generateSlug = (text: string) => {
@@ -128,10 +133,7 @@ Return a JSON object with this structure:
         client_id: clientId,
         name: pageContent.name || `AI Generated - ${new Date().toLocaleDateString()}`,
         slug,
-        content_json: {
-          version: "1.0",
-          blocks: pageContent.blocks || [],
-        },
+        content_json: pageContent.content,
         meta_title: pageContent.meta_title,
         meta_description: pageContent.meta_description,
         ai_generated: true,
