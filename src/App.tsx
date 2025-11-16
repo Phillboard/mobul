@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
+import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DrPhillipChat } from "@/components/DrPhillipChat";
 import Index from "./pages/Index";
@@ -37,6 +38,7 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <TenantProvider>
+            <ImpersonationBanner />
             <Toaster />
             <Sonner />
             <DrPhillipChat />

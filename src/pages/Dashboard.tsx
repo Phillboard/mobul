@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useTenant } from "@/contexts/TenantContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { PlatformDashboard } from "./PlatformDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,8 +46,14 @@ import { useCallStats, useRewardSummary, useConditionCompletionRate } from "@/ho
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
-  const { currentClient } = useTenant();
+  const { currentClient, isAdminMode } = useTenant();
+  const { hasRole } = useAuth();
   const navigate = useNavigate();
+
+  // Show platform dashboard if platform admin in admin mode
+  if (hasRole('platform_admin') && isAdminMode) {
+    return <PlatformDashboard />;
+  }
   const [dateRange, setDateRange] = useState(30);
   const { stats, performance, recentCampaigns, activity, isLoading } = useDashboardData(dateRange);
   
