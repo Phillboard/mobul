@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Shield, UserCog, X } from "lucide-react";
 import { PermissionTemplateSelector } from "@/components/settings/PermissionTemplateSelector";
 import { PermissionCategoryManager } from "@/components/settings/PermissionCategoryManager";
+import { InviteUserDialog } from "@/components/settings/InviteUserDialog";
+import { PendingInvitations } from "@/components/settings/PendingInvitations";
 
 interface Permission {
   id: string;
@@ -147,7 +149,10 @@ export default function UserManagement() {
               Manage user roles and granular permissions - GHL style
             </p>
           </div>
+          <InviteUserDialog />
         </div>
+
+        <PendingInvitations />
 
         <Card>
           <CardHeader>

@@ -1878,6 +1878,69 @@ export type Database = {
           },
         ]
       }
+      user_invitations: {
+        Row: {
+          accepted_at: string | null
+          client_id: string | null
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          metadata: Json | null
+          org_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: string | null
+          token: string
+          updated_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          metadata?: Json | null
+          org_id?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status?: string | null
+          token?: string
+          updated_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          metadata?: Json | null
+          org_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string | null
+          token?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_invitations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_invitations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_permissions: {
         Row: {
           created_at: string | null
@@ -2071,6 +2134,7 @@ export type Database = {
           provider: string
         }[]
       }
+      expire_old_invitations: { Args: never; Returns: undefined }
       generate_recipient_token: { Args: never; Returns: string }
       get_audience_geo_distribution: {
         Args: { audience_id_param: string }
