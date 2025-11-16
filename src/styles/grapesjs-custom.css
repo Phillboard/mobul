@@ -1,185 +1,238 @@
-/* GrapeJS Editor Styling */
+/* GrapeJS Editor Styling - Override all defaults */
 #gjs {
   border: none !important;
   height: 100%;
+  background: transparent !important;
 }
 
 .gjs-cv-canvas {
-  background: hsl(var(--muted));
+  background: hsl(var(--background)) !important;
   top: 0 !important;
 }
 
 .gjs-frame {
   border: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Force override GrapeJS default dark theme */
+.gjs-one-bg,
+.gjs-two-bg,
+.gjs-three-bg,
+.gjs-four-bg {
+  background-color: transparent !important;
+}
+
+.gjs-blocks-c {
+  background: transparent !important;
 }
 
 /* Block Manager */
-.gjs-block {
-  border-radius: 4px;
-  padding: 12px;
-  margin: 8px 0;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  min-height: 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+.gjs-block-category {
+  background: transparent !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
 }
 
-.gjs-block:hover {
-  background: hsl(var(--accent) / 0.1);
-  border-color: hsl(var(--accent));
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.gjs-block-category .gjs-title {
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600 !important;
+  padding: 12px !important;
+  border-radius: 4px !important;
+  margin-bottom: 8px !important;
+}
+
+.gjs-blocks-c .gjs-block {
+  border-radius: 6px !important;
+  padding: 16px 12px !important;
+  margin: 8px 4px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  min-height: 80px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.gjs-blocks-c .gjs-block:hover {
+  background: hsl(var(--primary) / 0.05) !important;
+  border-color: hsl(var(--primary)) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
 .gjs-block-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: hsl(var(--foreground));
-  line-height: 1.4;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: hsl(var(--foreground)) !important;
+  line-height: 1.4 !important;
+  margin-top: 8px !important;
 }
 
-.gjs-block svg {
-  width: 32px;
-  height: 32px;
-  margin-bottom: 8px;
-  fill: hsl(var(--muted-foreground));
+.gjs-block svg,
+.gjs-block__media {
+  width: 36px !important;
+  height: 36px !important;
+  fill: hsl(var(--primary)) !important;
+  opacity: 0.8 !important;
 }
 
 /* Panels */
 .gjs-pn-panels {
-  background: transparent;
-  border: none;
+  background: transparent !important;
+  border: none !important;
 }
 
 .gjs-pn-panel {
-  background: hsl(var(--card));
+  background: transparent !important;
 }
 
 .gjs-pn-buttons {
-  display: flex;
-  gap: 4px;
+  display: flex !important;
+  gap: 4px !important;
+  background: transparent !important;
 }
 
 .gjs-pn-btn {
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  color: hsl(var(--foreground));
-  border-radius: 4px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all 0.2s;
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: 4px !important;
+  padding: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
 }
 
 .gjs-pn-btn:hover {
-  background: hsl(var(--accent) / 0.1);
-  border-color: hsl(var(--accent));
+  background: hsl(var(--accent) / 0.1) !important;
+  border-color: hsl(var(--accent)) !important;
 }
 
 .gjs-pn-btn.gjs-pn-active {
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border-color: hsl(var(--primary));
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+
+.gjs-pn-btn svg {
+  fill: currentColor !important;
 }
 
 /* Style Manager */
 .gjs-sm-sectors {
-  background: transparent;
+  background: transparent !important;
 }
 
 .gjs-sm-sector {
-  border-bottom: 1px solid hsl(var(--border));
-  background: transparent;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  background: transparent !important;
 }
 
-.gjs-sm-sector-title {
-  background: hsl(var(--muted));
-  color: hsl(var(--foreground));
-  font-weight: 600;
-  padding: 12px;
-  cursor: pointer;
-  border-radius: 4px;
-  margin-bottom: 8px;
+.gjs-sm-sector .gjs-sm-sector-title {
+  background: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600 !important;
+  padding: 10px 12px !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  margin: 4px 0 8px 0 !important;
+  border: none !important;
 }
 
 .gjs-sm-properties {
-  padding: 8px;
+  padding: 8px 12px !important;
+  background: transparent !important;
 }
 
 .gjs-sm-property {
-  margin-bottom: 12px;
+  margin-bottom: 12px !important;
+  background: transparent !important;
 }
 
 .gjs-sm-label {
-  color: hsl(var(--muted-foreground));
-  font-size: 12px;
-  font-weight: 500;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: hsl(var(--muted-foreground)) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  margin-bottom: 6px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 
 .gjs-field,
 .gjs-field input,
-.gjs-field select {
-  background: hsl(var(--background));
-  border: 1px solid hsl(var(--border));
-  color: hsl(var(--foreground));
-  border-radius: 4px;
-  padding: 8px;
-  width: 100%;
-  font-size: 13px;
+.gjs-field select,
+.gjs-field-integer input,
+.gjs-field-select select,
+.gjs-field-color input {
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: 4px !important;
+  padding: 6px 8px !important;
+  width: 100% !important;
+  font-size: 13px !important;
 }
 
 .gjs-field:focus,
 .gjs-field input:focus,
 .gjs-field select:focus {
-  outline: none;
-  border-color: hsl(var(--ring));
-  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+  outline: none !important;
+  border-color: hsl(var(--ring)) !important;
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2) !important;
+}
+
+.gjs-field-units select,
+.gjs-input-holder select {
+  background: hsl(var(--muted)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 /* Layer Manager */
 .gjs-layers {
-  background: transparent;
+  background: transparent !important;
 }
 
 .gjs-layer {
-  padding: 8px 12px;
-  border-bottom: 1px solid hsl(var(--border));
-  background: transparent;
-  color: hsl(var(--foreground));
-  cursor: pointer;
-  transition: background 0.2s;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
 }
 
 .gjs-layer:hover {
-  background: hsl(var(--muted));
+  background: hsl(var(--muted)) !important;
 }
 
 .gjs-layer.gjs-selected {
-  background: hsl(var(--primary) / 0.1);
-  border-left: 3px solid hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1) !important;
+  border-left: 3px solid hsl(var(--primary)) !important;
 }
 
 .gjs-layer-name {
-  color: hsl(var(--foreground));
-  font-size: 13px;
+  color: hsl(var(--foreground)) !important;
+  font-size: 13px !important;
 }
 
 .gjs-layer-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
 .gjs-layer-icon {
-  fill: hsl(var(--muted-foreground));
+  fill: hsl(var(--muted-foreground)) !important;
+}
+
+.gjs-layer-caret {
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 /* Device Manager */
@@ -213,21 +266,28 @@
   background: hsl(var(--builder-canvas));
 }
 
-/* Remove default GrapeJS branding colors */
-.gjs-one-bg {
-  background-color: hsl(var(--card));
+/* Override ALL default GrapeJS color classes */
+.gjs-one-bg,
+.gjs-two-bg,
+.gjs-three-bg,
+.gjs-four-bg {
+  background-color: transparent !important;
 }
 
-.gjs-two-color {
-  color: hsl(var(--foreground));
-}
-
-.gjs-three-bg {
-  background-color: hsl(var(--muted));
-}
-
+.gjs-one-color,
+.gjs-two-color,
+.gjs-three-color,
 .gjs-four-color {
-  color: hsl(var(--muted-foreground));
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Specific overrides for common elements */
+.gjs-sm-sector,
+.gjs-clm-tags,
+.gjs-sm-composite,
+.gjs-trt-traits {
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 /* Scrollbars */

@@ -98,6 +98,14 @@ export default function GrapesJSLandingPageEditor() {
           'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
         ]
       },
+      // Disable default color theme
+      colorPicker: {
+        appendTo: 'parent',
+        offset: { top: 26, left: -166 },
+      },
+      assetManager: {
+        embedAsBase64: false,
+      },
       blockManager: {
         appendTo: '.blocks-container',
       },
@@ -105,6 +113,7 @@ export default function GrapesJSLandingPageEditor() {
         appendTo: '.styles-container',
         sectors: [{
           name: 'General',
+          open: true,
           properties: ['float', 'display', 'position', 'top', 'right', 'left', 'bottom']
         }, {
           name: 'Dimension',
