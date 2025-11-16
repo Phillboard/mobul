@@ -2,21 +2,49 @@ import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ShoppingCart } from "lucide-react";
 import { PoolCard } from "@/components/gift-cards/PoolCard";
 import { GiftCardUploadTab } from "@/components/gift-cards/GiftCardUploadTab";
 import { GiftCardInventory } from "@/components/gift-cards/GiftCardInventory";
 import { DeliveryHistory } from "@/components/gift-cards/DeliveryHistory";
 import { CreatePoolDialog } from "@/components/gift-cards/CreatePoolDialog";
+import { PurchaseGiftCardsDialog } from "@/components/gift-cards/PurchaseGiftCardsDialog";
 import { useGiftCardPools } from "@/hooks/useGiftCardPools";
 import { useTenant } from "@/contexts/TenantContext";
+import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export default function GiftCards() {
   const { currentClient } = useTenant();
   const { pools, isLoading, createPool } = useGiftCardPools(currentClient?.id);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
   const [uploadPoolId, setUploadPoolId] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState("pools");
+  const { toast } = useToast();
+
+  // Handle purchase success/cancel from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const purchaseStatus = params.get('purchase');
+    
+    if (purchaseStatus === 'success') {
+      toast({
+        title: "Purchase successful!",
+        description: "Your gift card pool has been created. You can now upload gift cards to it.",
+      });
+      // Clean up URL
+      window.history.replaceState({}, '', '/gift-cards');
+    } else if (purchaseStatus === 'cancelled') {
+      toast({
+        title: "Purchase cancelled",
+        description: "Your purchase was cancelled. No charges were made.",
+        variant: "destructive",
+      });
+      // Clean up URL
+      window.history.replaceState({}, '', '/gift-cards');
+    }
+  }, [toast]);
 
   const handleUploadClick = (poolId: string) => {
     setUploadPoolId(poolId);
@@ -47,10 +75,16 @@ export default function GiftCards() {
               Manage your gift card inventory and deliveries
             </p>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Pool
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsPurchaseDialogOpen(true)}>
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Purchase Bulk
+            </Button>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Pool
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -107,6 +141,12 @@ export default function GiftCards() {
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
           onCreatePool={handleCreatePool}
+          clientId={currentClient.id}
+        />
+
+        <PurchaseGiftCardsDialog
+          open={isPurchaseDialogOpen}
+          onOpenChange={setIsPurchaseDialogOpen}
           clientId={currentClient.id}
         />
       </div>
