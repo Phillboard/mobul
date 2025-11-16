@@ -1,10 +1,25 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import StudioEditor from "@grapesjs/studio-sdk/react";
+import { 
+  tableComponent, 
+  fsLightboxComponent, 
+  lightGalleryComponent, 
+  swiperComponent, 
+  iconifyComponent, 
+  accordionComponent, 
+  flexComponent, 
+  rteProseMirror, 
+  canvasFullSize, 
+  canvasEmptyState, 
+  canvasGridMode, 
+  layoutSidebarButtons, 
+  youtubeAssetProvider 
+} from '@grapesjs/studio-sdk-plugins';
 import "@grapesjs/studio-sdk/style";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/TenantContext";
@@ -15,21 +30,20 @@ export default function GrapesJSLandingPageEditor() {
   const { currentClient } = useTenant();
   const [pageName, setPageName] = useState("");
   const [slug, setSlug] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [initialPages, setInitialPages] = useState<any[]>([]);
-  const editorRef = useRef<any>(null);
+  const [projectData, setProjectData] = useState<any>(null);
   
   useEffect(() => {
     if (id !== "new") {
       loadPage();
     } else {
       setIsLoading(false);
-      // Default empty page
-      setInitialPages([{
-        name: "Home",
-        component: '<div style="padding: 60px 20px; text-align: center;"><h1>Start Building Your Landing Page</h1><p>Drag and drop blocks from the left to get started</p></div>'
-      }]);
+      setProjectData({
+        pages: [{
+          name: "Home",
+          component: '<div style="padding: 60px 20px; text-align: center;"><h1>Start Building Your Landing Page</h1><p>Drag and drop blocks from the left to get started</p></div>'
+        }]
+      });
     }
   }, [id]);
   
@@ -46,16 +60,17 @@ export default function GrapesJSLandingPageEditor() {
       setPageName(data.name);
       setSlug(data.slug);
       
-      // Load existing content
       if (data.content_json && typeof data.content_json === 'object' && !Array.isArray(data.content_json)) {
         const contentData = data.content_json as { html?: string; pages?: any[] };
         if (contentData.pages) {
-          setInitialPages(contentData.pages);
+          setProjectData({ pages: contentData.pages });
         } else if (contentData.html) {
-          setInitialPages([{
-            name: "Home",
-            component: contentData.html
-          }]);
+          setProjectData({
+            pages: [{
+              name: "Home",
+              component: contentData.html
+            }]
+          });
         }
       }
       
@@ -81,57 +96,6 @@ export default function GrapesJSLandingPageEditor() {
     }
   };
   
-  const handleSave = async () => {
-    if (!pageName.trim() || !currentClient || !editorRef.current) {
-      toast.error("Please enter a page name");
-      return;
-    }
-    
-    setIsSaving(true);
-    try {
-      const editor = editorRef.current;
-      
-      // Get all pages and their content
-      const pages = editor.Pages.getAll().map((page: any) => ({
-        name: page.getName(),
-        component: page.getMainComponent().toHTML()
-      }));
-      
-      const pageData = {
-        name: pageName,
-        slug: slug || generateSlug(pageName),
-        client_id: currentClient.id,
-        editor_type: 'visual',
-        content_json: {
-          pages,
-          html: pages[0]?.component || ''
-        }
-      };
-      
-      if (id && id !== "new") {
-        const { error } = await supabase
-          .from("landing_pages")
-          .update(pageData)
-          .eq("id", id);
-        if (error) throw error;
-        toast.success("Landing page updated!");
-      } else {
-        const { data, error } = await supabase
-          .from("landing_pages")
-          .insert([pageData])
-          .select()
-          .single();
-        if (error) throw error;
-        toast.success("Landing page created!");
-        navigate(`/landing-pages/${data.id}/visual-editor`);
-      }
-    } catch (error: any) {
-      console.error("Save error:", error);
-      toast.error("Failed to save landing page");
-    } finally {
-      setIsSaving(false);
-    }
-  };
   
   if (isLoading) {
     return (
@@ -157,18 +121,12 @@ export default function GrapesJSLandingPageEditor() {
             placeholder="Page name"
           />
         </div>
-        <Button size="sm" onClick={handleSave} disabled={isSaving}>
-          <Save className="h-4 w-4 mr-2" />
-          {isSaving ? "Saving..." : "Save"}
-        </Button>
       </div>
       
       {/* Studio Editor */}
       <div className="flex-1 overflow-hidden">
         <StudioEditor
           onEditor={(editor) => {
-            editorRef.current = editor;
-            
             // Add custom gift card blocks
             editor.Blocks.add('gift-card-hero', {
               label: '🎉 Gift Card Hero',
@@ -236,13 +194,73 @@ export default function GrapesJSLandingPageEditor() {
             });
           }}
           options={{
-            licenseKey: '', // Studio SDK requires a license key - get one at https://grapesjs.com/studio-sdk
+            licenseKey: '',
+            theme: 'light',
             project: {
               type: 'web',
-              default: {
-                pages: initialPages
-              }
-            }
+              default: projectData
+            },
+            storage: {
+              type: 'self',
+              onSave: async ({ project }) => {
+                if (!pageName.trim() || !currentClient) {
+                  toast.error("Please enter a page name");
+                  return;
+                }
+
+                try {
+                  const pageData = {
+                    name: pageName,
+                    slug: slug || generateSlug(pageName),
+                    client_id: currentClient.id,
+                    editor_type: 'visual',
+                    content_json: project
+                  };
+
+                  if (id && id !== "new") {
+                    const { error } = await supabase
+                      .from("landing_pages")
+                      .update(pageData)
+                      .eq("id", id);
+                    if (error) throw error;
+                    toast.success("Landing page saved!");
+                  } else {
+                    const { data, error } = await supabase
+                      .from("landing_pages")
+                      .insert([pageData])
+                      .select()
+                      .single();
+                    if (error) throw error;
+                    toast.success("Landing page created!");
+                    navigate(`/landing-pages/${data.id}/visual-editor`, { replace: true });
+                  }
+                } catch (error: any) {
+                  console.error("Save error:", error);
+                  toast.error("Failed to save landing page");
+                  throw error;
+                }
+              },
+              onLoad: async () => {
+                return { project: projectData };
+              },
+              autosaveChanges: 100,
+              autosaveIntervalMs: 10000
+            },
+            plugins: [
+              tableComponent.init({}),
+              fsLightboxComponent.init({}),
+              lightGalleryComponent.init({}),
+              swiperComponent.init({}),
+              iconifyComponent.init({}),
+              accordionComponent.init({}),
+              flexComponent.init({}),
+              rteProseMirror.init({}),
+              canvasFullSize.init({}),
+              canvasEmptyState.init({}),
+              canvasGridMode.init({}),
+              layoutSidebarButtons.init({}),
+              youtubeAssetProvider.init({})
+            ]
           }}
         />
       </div>
