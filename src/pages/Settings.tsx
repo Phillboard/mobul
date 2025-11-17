@@ -15,6 +15,10 @@ import { useSettingsTabs } from "@/hooks/useSettingsTabs";
 import { roleDisplayNames, roleColors } from "@/lib/roleUtils";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { GeneralSettings } from "@/components/settings/GeneralSettings";
+import { APISettings } from "@/components/settings/APISettings";
+import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { BillingSettings } from "@/components/settings/BillingSettings";
 
 export default function Settings() {
   const { currentClient } = useTenant();
@@ -95,19 +99,7 @@ export default function Settings() {
             </TabsContent>
 
           <TabsContent value="general" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Platform Configuration</CardTitle>
-                <CardDescription>
-                  General platform settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  General settings coming soon.
-                </p>
-              </CardContent>
-            </Card>
+            <GeneralSettings />
           </TabsContent>
 
           <TabsContent value="phone" className="space-y-4">
@@ -210,19 +202,7 @@ export default function Settings() {
           )}
 
           <TabsContent value="api" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>API Configuration</CardTitle>
-                <CardDescription>
-                  Manage API keys and webhooks
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  API settings coming soon.
-                </p>
-              </CardContent>
-            </Card>
+            <APISettings />
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4">
@@ -242,25 +222,11 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="security" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Security Settings</CardTitle>
-                <CardDescription>
-                  Coming soon
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <SecuritySettings />
           </TabsContent>
 
           <TabsContent value="billing" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Billing</CardTitle>
-                <CardDescription>
-                  Coming soon
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <BillingSettings />
           </TabsContent>
         </Tabs>
         )}
