@@ -41,6 +41,7 @@ import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
 import Contacts from "./pages/Contacts";
 import ContactDetail from "./pages/ContactDetail";
 import Companies from "./pages/Companies";
+import CompanyDetail from "./pages/CompanyDetail";
 import Deals from "./pages/Deals";
 import DealDetail from "./pages/DealDetail";
 import Activities from "./pages/Activities";
@@ -80,6 +81,7 @@ const App = () => (
               <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
               <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetail /></ProtectedRoute>} />
               <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
+              <Route path="/companies/:id" element={<ProtectedRoute><CompanyDetail /></ProtectedRoute>} />
               <Route path="/deals" element={<ProtectedRoute><Deals /></ProtectedRoute>} />
               <Route path="/deals/:id" element={<ProtectedRoute><DealDetail /></ProtectedRoute>} />
               <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
