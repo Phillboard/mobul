@@ -51,12 +51,15 @@ export function AdminContextSwitcher() {
   };
 
   const handleClientSelect = (clientId: string) => {
+    console.log('Client selected:', clientId);
     const client = clients.find(c => c.id === clientId);
+    console.log('Client found:', client);
     if (client) {
       setCurrentClient(client);
       setAdminMode(false);
       const org = organizations.find(o => o.id === client.org_id);
       if (org) setCurrentOrg(org);
+      console.log('Client set:', client.name);
     }
   };
 
