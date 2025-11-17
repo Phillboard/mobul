@@ -55,8 +55,6 @@ export function ProtectedRoute({
 
   // Check single permission requirement
   if (requiredPermission && !hasPermission(requiredPermission)) {
-    console.log('Access denied - Missing permission:', requiredPermission);
-    console.log('User permissions:', permissions);
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">

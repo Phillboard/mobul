@@ -75,9 +75,13 @@ export function InviteUserDialog() {
     },
     onSuccess: (data) => {
       toast.success("Invitation sent successfully!", {
-        description: `Check your console for the invite link`,
+        description: `Invitation link copied to clipboard`,
       });
-      console.log("Invite URL:", data.inviteUrl);
+      
+      // Copy invite URL to clipboard
+      if (data.inviteUrl && navigator.clipboard) {
+        navigator.clipboard.writeText(data.inviteUrl);
+      }
       
       queryClient.invalidateQueries({ queryKey: ["pending-invitations"] });
       
