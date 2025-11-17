@@ -16,6 +16,8 @@ import {
   Building2,
   Contact,
   TrendingUp,
+  Activity,
+  CheckSquare,
 } from "lucide-react";
 
 interface NavItem {
@@ -33,6 +35,8 @@ const navigation: NavItem[] = [
   { name: "Contacts", href: "/contacts", icon: Contact, permissions: ['audiences.view'] },
   { name: "Companies", href: "/companies", icon: Building2, permissions: ['audiences.view'] },
   { name: "Deals", href: "/deals", icon: TrendingUp, permissions: ['audiences.view'] },
+  { name: "Activities", href: "/activities", icon: Activity, permissions: ['audiences.view'] },
+  { name: "Tasks", href: "/tasks", icon: CheckSquare, permissions: ['audiences.view'] },
   { name: "Templates", href: "/templates", icon: FileStack, permissions: ['templates.view'] },
   { name: "Lead Marketplace", href: "/marketplace", icon: Zap, permissions: ['lead_marketplace.view'] },
   { name: "Purchase Gift Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase'] },
