@@ -108,9 +108,9 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
         "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: extractionMessages,
-        max_tokens: 1000
+        max_tokens: 2000
       }),
     });
 
@@ -123,7 +123,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
     }
 
     const extractionData = await extractionResponse.json();
-    console.log("Extraction response:", JSON.stringify(extractionData, null, 2));
+    console.log("Extraction response successful");
 
     if (!extractionData.choices?.[0]?.message?.content) {
       console.error("Invalid extraction response structure:", extractionData);
@@ -151,91 +151,149 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
       }
     }
 
-    const { companyName, industry, primaryColor, accentColor } = extractedBranding;
+    const { companyName, industry, primaryColor, accentColor, tagline } = extractedBranding;
     console.log("Extracted branding:", { companyName, industry, primaryColor, accentColor });
 
-    // Generate landing page content
-    const pagePrompt = `Create a beautiful landing page for ${companyName} (${industry}).
+    // Generate complete branded HTML landing page
+    console.log("Generating complete HTML landing page...");
+    
+    const htmlPrompt = `Create a complete, beautiful, responsive HTML landing page for ${companyName}.
 
-Context:
-- They are offering a $${giftCardValue} ${giftCardBrand} gift card
-- Customer action: ${userAction}
-- Brand colors: Primary ${primaryColor}, Accent ${accentColor}
+CONTEXT:
+- Company: ${companyName}
+- Industry: ${industry}
+- Primary Color: ${primaryColor}
+- Accent Color: ${accentColor}
+- Tagline: ${tagline || 'Professional service you can trust'}
+- Customer Action: ${userAction}
+- Gift Card: $${giftCardValue} ${giftCardBrand}
 
-Return ONLY a JSON object with this structure (no markdown, no code blocks):
+REQUIRED PAGE STRUCTURE:
+
+1. HERO SECTION (full-width, branded):
+   - Large "Thank You for ${userAction}!" headline
+   - Subheadline about the gift card reward
+   - Use gradient background with brand colors
+   - Professional, modern design
+   - Generous padding and spacing
+
+2. GIFT CARD REDEMPTION SECTION (prominent, centered):
+   - Clear "$${giftCardValue} ${giftCardBrand} Gift Card" display
+   - Branded card visual with gradient using ${primaryColor} and ${accentColor}
+   - Form with ID "giftCardRedemptionForm" containing:
+     <input type="text" id="codeInput" placeholder="Enter your unique code" class="..." required />
+     <button type="submit" id="submitButton" class="...">Claim Your Gift Card</button>
+   - Instructions for redemption
+   - Beautiful styling with shadows and rounded corners
+
+3. COMPANY MARKETING SECTION:
+   - "Why Choose ${companyName}?" headline
+   - 3-4 benefit cards with icons (use emoji or simple SVG icons)
+   - Industry-specific value propositions for ${industry}
+   - Clean grid layout with hover effects
+
+4. CALL-TO-ACTION FOOTER:
+   - Contact information section
+   - Strong CTA to engage further
+   - Brand-consistent design with ${primaryColor}
+
+CRITICAL DESIGN REQUIREMENTS:
+- Use Tailwind CSS classes EXCLUSIVELY - no custom CSS
+- Modern, clean, professional aesthetic
+- Fully responsive (mobile-first approach)
+- Beautiful typography hierarchy (use different font sizes, weights)
+- Generous white space and padding
+- Subtle gradients: bg-gradient-to-br from-[${primaryColor}] to-[${accentColor}]
+- Smooth shadows: shadow-lg, shadow-xl
+- Rounded corners: rounded-xl, rounded-2xl
+- Professional color palette based on brand colors
+- Smooth transitions and hover effects
+- Form inputs should be large and easy to use (text-lg, py-3, px-4)
+- Buttons should be prominent and inviting
+
+Return ONLY a JSON object with this structure:
 {
-  "headline": "Catchy headline",
-  "subheadline": "Supporting text",
-  "heroText": "Main hero section text",
-  "ctaText": "Call to action button text",
-  "sections": [
-    {
-      "title": "Section title",
-      "content": "Section content"
-    }
-  ]
-}`;
+  "html": "<complete HTML string with DOCTYPE, all Tailwind classes, and all sections>",
+  "metadata": {
+    "title": "Thank You - ${companyName}",
+    "description": "Claim your reward and learn more about ${companyName}"
+  }
+}
 
-    console.log("Generating landing page content...");
-    const pageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+The HTML must be production-ready, beautiful, fully styled with Tailwind classes, and render perfectly standalone.`;
+
+    const htmlResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "user", content: pagePrompt }],
-        max_tokens: 2000
+        model: "google/gemini-2.5-pro",
+        messages: [{ role: "user", content: htmlPrompt }],
+        max_tokens: 8000
       }),
     });
 
-    if (!pageResponse.ok) {
-      const errorText = await pageResponse.text();
-      console.error("Page generation API error:", pageResponse.status, errorText);
+    if (!htmlResponse.ok) {
+      const errorText = await htmlResponse.text();
+      console.error("HTML generation API error:", htmlResponse.status, errorText);
       return Response.json({ 
-        error: `AI page generation failed: ${pageResponse.status} - ${errorText}` 
+        error: `HTML generation failed: ${htmlResponse.status} - ${errorText}` 
       }, { status: 500, headers: corsHeaders });
     }
 
-    const pageData = await pageResponse.json();
-    console.log("Page response:", JSON.stringify(pageData, null, 2));
+    const htmlData = await htmlResponse.json();
+    console.log("HTML generation successful");
 
-    if (!pageData.choices?.[0]?.message?.content) {
-      console.error("Invalid page response structure:", pageData);
+    if (!htmlData.choices?.[0]?.message?.content) {
+      console.error("Invalid HTML response structure:", htmlData);
       return Response.json({ 
-        error: "AI returned invalid page structure" 
+        error: "AI returned invalid HTML response" 
       }, { status: 500, headers: corsHeaders });
     }
 
     let generatedContent;
-    const pageContent = pageData.choices[0].message.content;
+    const htmlContent = htmlData.choices[0].message.content;
     
     try {
-      generatedContent = JSON.parse(pageContent);
-    } catch {
-      const jsonMatch = pageContent.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-      if (jsonMatch) {
-        generatedContent = JSON.parse(jsonMatch[1]);
-      } else {
-        console.error("Could not parse page content from:", pageContent);
-        return Response.json({ 
-          error: "AI returned unparseable page content" 
-        }, { status: 500, headers: corsHeaders });
+      // Try to parse as JSON first
+      try {
+        generatedContent = JSON.parse(htmlContent);
+      } catch {
+        // Try to extract from markdown code blocks
+        const jsonMatch = htmlContent.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+        if (jsonMatch) {
+          generatedContent = JSON.parse(jsonMatch[1]);
+        } else {
+          // If not JSON, wrap the HTML content
+          generatedContent = {
+            html: htmlContent,
+            metadata: {
+              title: `Thank You - ${companyName}`,
+              description: `Claim your reward from ${companyName}`
+            }
+          };
+        }
       }
+    } catch (parseError) {
+      console.error("Failed to parse HTML content:", parseError);
+      return Response.json({ 
+        error: "Failed to parse HTML content" 
+      }, { status: 500, headers: corsHeaders });
     }
 
-    // Create landing page in database
-    const slug = `${companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-thank-you`;
+    // Create landing page in database with HTML content
+    const slug = `${companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
     
     const { data: lpData, error: lpError } = await supabase
       .from("landing_pages")
       .insert({
         client_id: clientId,
-        name: `${companyName} - Gift Card Thank You`,
+        name: `${companyName} - Gift Card Landing Page`,
         slug,
         content_json: {
-          ...generatedContent,
+          html: generatedContent.html,
           branding: extractedBranding,
           giftCard: {
             brand: giftCardBrand,
@@ -243,10 +301,13 @@ Return ONLY a JSON object with this structure (no markdown, no code blocks):
             userAction
           }
         },
-        meta_title: `Thank You - ${companyName}`,
-        published: false,
+        html_content: generatedContent.html,
+        meta_title: generatedContent.metadata?.title || `Thank You - ${companyName}`,
+        meta_description: generatedContent.metadata?.description,
+        editor_type: 'ai-html',
         ai_generated: true,
-        editor_type: "ai",
+        ai_prompt: sourceDescription || sourceUrl || 'Generated from uploaded image',
+        published: true,
         created_by_user_id: user.id,
       })
       .select()
@@ -262,7 +323,9 @@ Return ONLY a JSON object with this structure (no markdown, no code blocks):
     console.log("Landing page created successfully:", lpData.id);
     return Response.json({ 
       success: true, 
-      id: lpData.id, 
+      id: lpData.id,
+      slug,
+      previewUrl: `/p/${slug}`,
       extractedBranding 
     }, { headers: corsHeaders });
 
