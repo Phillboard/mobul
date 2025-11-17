@@ -24,7 +24,7 @@ import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 
 export function Header() {
   const { profile, roles, signOut, hasRole } = useAuth();
-  const { organizations, currentOrg, setCurrentOrg, isAdminMode, currentClient } = useTenant();
+  const { organizations, clients, currentOrg, setCurrentOrg, isAdminMode, currentClient, setCurrentClient, setAdminMode } = useTenant();
 
   const getRoleLabel = () => {
     if (roles.some(r => r.role === 'admin')) return 'Admin';
@@ -51,46 +51,93 @@ export function Header() {
       <ImpersonationBanner />
       <header className="fixed left-64 right-0 top-0 z-30 h-16 border-b border-border bg-card">
       <div className="flex h-full items-center justify-between px-6">
-        <div className="flex-1 flex items-center gap-4">
-          {/* Admin Mode Badge */}
-          {hasRole('admin') && isAdminMode && (
-            <Badge variant="secondary" className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-600 border-amber-500/20">
-              <Shield className="h-3 w-3 mr-1" />
-              Admin
-            </Badge>
+        <div className="flex-1 flex items-center gap-3">
+          {/* Admin Mode Toggle */}
+          {hasRole('admin') && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={isAdminMode ? "secondary" : "ghost"} size="sm" className="gap-2">
+                  <Shield className="h-4 w-4" />
+                  {isAdminMode ? "Admin View" : "Platform"}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-popover z-50">
+                <DropdownMenuItem onClick={() => setAdminMode(true)}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Admin View
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setAdminMode(false)}>
+                  <Briefcase className="mr-2 h-4 w-4" />
+                  Client View
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
-          {/* Current Client Badge */}
-          {!isAdminMode && currentClient && (
-            <Badge variant="outline" className="gap-1.5">
-              <Briefcase className="h-3 w-3" />
-              {currentClient.name}
-            </Badge>
+          {/* Organization Selector */}
+          {organizations.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Building2 className="h-4 w-4" />
+                  {currentOrg?.name || "Select Agency"}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 bg-popover z-50 max-h-96 overflow-y-auto">
+                {organizations.map((org) => (
+                  <DropdownMenuItem 
+                    key={org.id} 
+                    onClick={() => setCurrentOrg(org)}
+                    className={currentOrg?.id === org.id ? "bg-accent font-medium" : ""}
+                  >
+                    <Building2 className="mr-2 h-4 w-4" />
+                    {org.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
-          {/* Organization Switcher - for users with multiple orgs (not platform admins in admin mode) */}
-          {!isAdminMode && organizations.length > 1 && (
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              <Select
-                value={currentOrg?.id || ''}
-                onValueChange={(value) => {
-                  const org = organizations.find(o => o.id === value);
-                  if (org) setCurrentOrg(org);
-                }}
-              >
-                <SelectTrigger className="w-[200px] h-9 bg-background">
-                  <SelectValue placeholder="Select organization" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Client Selector */}
+          {clients.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  {currentClient?.name || "Select Client"}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 bg-popover z-50 max-h-96 overflow-y-auto">
+                {organizations.map((org) => {
+                  const orgClients = clients.filter(c => c.org_id === org.id);
+                  if (orgClients.length === 0) return null;
+                  return (
+                    <div key={org.id}>
+                      <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center gap-2">
+                        <Building2 className="h-3 w-3" />
+                        {org.name}
+                      </DropdownMenuLabel>
+                      {orgClients.map((client) => (
+                        <DropdownMenuItem 
+                          key={client.id} 
+                          onClick={() => {
+                            setCurrentClient(client);
+                            if (hasRole('admin')) setAdminMode(false);
+                          }}
+                          className={currentClient?.id === client.id ? "bg-accent font-medium" : "pl-6"}
+                        >
+                          <Briefcase className="mr-2 h-3.5 w-3.5 opacity-60" />
+                          {client.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
