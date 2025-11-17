@@ -1533,6 +1533,33 @@ export type Database = {
           },
         ]
       }
+      login_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          success: boolean | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       org_members: {
         Row: {
           created_at: string | null
@@ -1726,6 +1753,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          notification_preferences: Json | null
           phone: string | null
           timezone: string | null
         }
@@ -1734,6 +1762,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          notification_preferences?: Json | null
           phone?: string | null
           timezone?: string | null
         }
@@ -1742,6 +1771,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          notification_preferences?: Json | null
           phone?: string | null
           timezone?: string | null
         }
