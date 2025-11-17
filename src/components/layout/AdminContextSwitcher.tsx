@@ -27,8 +27,10 @@ export function AdminContextSwitcher() {
     setCurrentOrg 
   } = useTenant();
   
-  // Track which agencies are expanded
-  const [expandedOrgIds, setExpandedOrgIds] = useState<Set<string>>(new Set());
+  // Track which agencies are expanded - auto-expand all by default
+  const [expandedOrgIds, setExpandedOrgIds] = useState<Set<string>>(
+    new Set(organizations.map(org => org.id))
+  );
 
   // Only show for admins
   if (!hasRole('admin')) return null;
@@ -66,6 +68,7 @@ export function AdminContextSwitcher() {
       realtor_listing: "bg-purple-500/10 text-purple-600 border-purple-500/20",
       financial_advisor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
       auto_service: "bg-red-500/10 text-red-600 border-red-500/20",
+      auto_warranty: "bg-slate-500/10 text-slate-600 border-slate-500/20",
       healthcare_checkup: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
       restaurant_promo: "bg-amber-500/10 text-amber-600 border-amber-500/20",
       home_services: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20",
