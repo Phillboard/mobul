@@ -20,6 +20,7 @@ interface AIGenerationDialogProps {
 
 export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerationDialogProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState("");
   const [activeTab, setActiveTab] = useState<"landing" | "embed">("landing");
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const { currentClient } = useTenant();
@@ -76,7 +77,27 @@ export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerati
     }
 
     setIsGenerating(true);
+    setGenerationProgress("Analyzing your requirements...");
+    
+    let progressInterval: NodeJS.Timeout | null = null;
+    
     try {
+      // Simulate progress updates
+      const progressMessages = [
+        "Analyzing your requirements...",
+        "Designing layout and structure...",
+        "Creating visual elements...",
+        "Generating compelling content...",
+        "Adding industry-specific features...",
+        "Finalizing your landing page..."
+      ];
+      
+      let progressIndex = 0;
+      progressInterval = setInterval(() => {
+        progressIndex = (progressIndex + 1) % progressMessages.length;
+        setGenerationProgress(progressMessages[progressIndex]);
+      }, 3000);
+
       // Build comprehensive prompt with all context
       const contextPrompt = `Create a client-branded landing page for ${companyName}, a ${industry} company. 
       
@@ -116,6 +137,8 @@ Generate a professional, conversion-optimized thank-you page that:
 
       if (error) throw error;
 
+      if (progressInterval) clearInterval(progressInterval);
+      setGenerationProgress("");
       toast.success("Landing page generated!");
       onSuccess(data.id);
       onOpenChange(false);
@@ -130,7 +153,9 @@ Generate a professional, conversion-optimized thank-you page that:
       console.error("Error generating landing page:", error);
       toast.error(error.message || "Failed to generate landing page");
     } finally {
+      if (progressInterval) clearInterval(progressInterval);
       setIsGenerating(false);
+      setGenerationProgress("");
     }
   };
 
@@ -304,7 +329,7 @@ Generate a professional, conversion-optimized thank-you page that:
                   {isGenerating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
+                      {generationProgress || "Generating..."}
                     </>
                   ) : (
                     <>
