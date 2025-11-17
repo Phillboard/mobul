@@ -2422,8 +2422,6 @@ export type Database = {
       get_user_permissions: {
         Args: { _user_id: string }
         Returns: {
-          granted_by: string
-          module: string
           permission_name: string
         }[]
       }
