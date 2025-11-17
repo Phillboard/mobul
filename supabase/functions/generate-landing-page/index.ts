@@ -253,12 +253,12 @@ CRITICAL REMINDERS:
         Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
       },
       body: JSON.stringify({
-        model: "openai/gpt-5",
+        model: "claude-sonnet-4-5",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: prompt }
         ],
-        max_completion_tokens: 8000
+        max_tokens: 8000
       }),
     });
 
