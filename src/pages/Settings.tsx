@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Palette, Building2 } from "lucide-react";
+import { Palette, Building2, Edit } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { CRMIntegrationTab } from "@/components/settings/CRMIntegrationTab";
@@ -19,12 +19,17 @@ import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { APISettings } from "@/components/settings/APISettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { BillingSettings } from "@/components/settings/BillingSettings";
+import { ClientBrandingEditor } from "@/components/settings/ClientBrandingEditor";
+import { ClientBrandingPreview } from "@/components/settings/ClientBrandingPreview";
+import { PermissionGate } from "@/components/PermissionGate";
+import { useState } from "react";
 
 export default function Settings() {
   const { currentClient } = useTenant();
   const { roles } = useAuth();
   const visibleTabs = useSettingsTabs();
   const navigate = useNavigate();
+  const [isEditingBranding, setIsEditingBranding] = useState(false);
 
   // Get primary role for badge display
   const primaryRole = roles[0]?.role;
@@ -112,80 +117,66 @@ export default function Settings() {
 
           {currentClient && (
             <TabsContent value="branding" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Palette className="h-5 w-5" />
-                    Client Branding Preview
-                  </CardTitle>
-                  <CardDescription>
-                    View and manage {currentClient.name}'s brand identity
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
-                      <Building2 className="h-4 w-4" />
-                      Client Information
-                    </h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Client Name:</span>
-                        <span className="font-medium">{currentClient.name}</span>
+              <PermissionGate
+                permission="clients.edit"
+                fallback={
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Client Branding</CardTitle>
+                      <CardDescription>
+                        {currentClient?.name}'s brand identity
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ClientBrandingPreview client={currentClient} />
+                      <p className="text-sm text-muted-foreground mt-6 pt-6 border-t">
+                        Contact your administrator to request branding changes.
+                      </p>
+                    </CardContent>
+                  </Card>
+                }
+              >
+                {isEditingBranding ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Edit Client Branding</CardTitle>
+                      <CardDescription>
+                        Customize {currentClient?.name}'s brand identity
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ClientBrandingEditor
+                        client={currentClient}
+                        onSaved={() => {
+                          setIsEditingBranding(false);
+                          window.location.reload();
+                        }}
+                        onCancel={() => setIsEditingBranding(false)}
+                      />
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>Client Branding</CardTitle>
+                          <CardDescription>
+                            {currentClient?.name}'s brand identity
+                          </CardDescription>
+                        </div>
+                        <Button onClick={() => setIsEditingBranding(true)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Branding
+                        </Button>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Industry:</span>
-                        <Badge variant="secondary">{getIndustryLabel(currentClient.industry)}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Timezone:</span>
-                        <span className="font-medium">{currentClient.timezone}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {currentClient.logo_url && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-3">Logo</h3>
-                      <div className="border rounded-lg p-4 bg-muted/20">
-                        <img 
-                          src={currentClient.logo_url} 
-                          alt={`${currentClient.name} logo`}
-                          className="max-h-20 object-contain"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <h3 className="text-sm font-medium mb-3">Brand Colors</h3>
-                    <div className="grid grid-cols-4 gap-4">
-                      {currentClient.brand_colors_json && Object.keys(currentClient.brand_colors_json).length > 0 ? (
-                        Object.entries(currentClient.brand_colors_json).map(([name, color]: [string, any]) => (
-                          <div key={name} className="space-y-2">
-                            <div 
-                              className="h-16 rounded-lg border"
-                              style={{ backgroundColor: color }}
-                            />
-                            <p className="text-xs font-medium capitalize">{name}</p>
-                            <p className="text-xs text-muted-foreground">{color}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground col-span-4">
-                          No brand colors configured yet
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">
-                      Contact your organization administrator to update branding settings.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardHeader>
+                    <CardContent>
+                      <ClientBrandingPreview client={currentClient} />
+                    </CardContent>
+                  </Card>
+                )}
+              </PermissionGate>
             </TabsContent>
           )}
 

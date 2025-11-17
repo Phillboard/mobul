@@ -702,36 +702,45 @@ export type Database = {
           brand_colors_json: Json | null
           created_at: string | null
           credits: number | null
+          font_preferences: Json | null
           id: string
           industry: Database["public"]["Enums"]["industry_type"]
           logo_url: string | null
           name: string
           org_id: string
+          tagline: string | null
           timezone: string | null
+          website_url: string | null
         }
         Insert: {
           api_key_hash?: string | null
           brand_colors_json?: Json | null
           created_at?: string | null
           credits?: number | null
+          font_preferences?: Json | null
           id?: string
           industry: Database["public"]["Enums"]["industry_type"]
           logo_url?: string | null
           name: string
           org_id: string
+          tagline?: string | null
           timezone?: string | null
+          website_url?: string | null
         }
         Update: {
           api_key_hash?: string | null
           brand_colors_json?: Json | null
           created_at?: string | null
           credits?: number | null
+          font_preferences?: Json | null
           id?: string
           industry?: Database["public"]["Enums"]["industry_type"]
           logo_url?: string | null
           name?: string
           org_id?: string
+          tagline?: string | null
           timezone?: string | null
+          website_url?: string | null
         }
         Relationships: [
           {
