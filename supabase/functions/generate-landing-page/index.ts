@@ -5,6 +5,43 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Validation function for generated HTML
+function validateGeneratedHTML(html: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  // Check for required form elements
+  if (!html.includes('id="giftCardRedemptionForm"')) {
+    errors.push('Missing required form with id="giftCardRedemptionForm"');
+  }
+  if (!html.includes('id="codeInput"')) {
+    errors.push('Missing required input with id="codeInput"');
+  }
+  if (!html.includes('id="submitButton"')) {
+    errors.push('Missing required button with id="submitButton"');
+  }
+  
+  // Check for essential HTML structure
+  if (!html.includes('<!DOCTYPE html>')) {
+    errors.push('Missing DOCTYPE declaration');
+  }
+  if (!html.includes('<html')) {
+    errors.push('Missing html tag');
+  }
+  if (!html.includes('tailwindcss')) {
+    errors.push('Missing Tailwind CSS CDN');
+  }
+  
+  // Check for basic content sections
+  if (!html.includes('Thank You') && !html.includes('thank you')) {
+    errors.push('Missing "Thank You" message');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -125,9 +162,10 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
         "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "openai/gpt-5",
+        response_format: { type: "json_object" },
         messages: extractionMessages,
-        max_tokens: 2000
+        max_completion_tokens: 2000
       }),
     });
 
@@ -174,70 +212,232 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
     // Generate complete branded HTML landing page
     console.log("Generating complete HTML landing page...");
     
-    const htmlPrompt = `Create a complete, beautiful, responsive HTML landing page for ${companyName}.
+    const htmlPrompt = `You are an expert web designer creating a premium, award-winning landing page. This should look like a professional marketing agency designed it, with modern 2024-2025 design trends.
 
-CONTEXT:
+BRANDING CONTEXT:
 - Company: ${companyName}
 - Industry: ${industry}
-- Primary Color: ${primaryColor}
+- Primary Brand Color: ${primaryColor}
 - Accent Color: ${accentColor}
+- Background: ${extractedBranding.backgroundColor || '#f8f9fa'}
+- Text Color: ${extractedBranding.textColor || '#1a1a1a'}
+- Design Style: ${extractedBranding.designStyle || 'modern'}
+- Emotional Tone: ${extractedBranding.emotionalTone || 'professional'}
 - Tagline: ${tagline || 'Professional service you can trust'}
 - Customer Action: ${userAction}
-- Gift Card: $${giftCardValue} ${giftCardBrand}
+- Gift Card Reward: $${giftCardValue} ${giftCardBrand}
 
-REQUIRED PAGE STRUCTURE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONCRETE DESIGN EXAMPLES - FOLLOW THESE PATTERNS EXACTLY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. HERO SECTION (full-width, branded):
-   - Large "Thank You for ${userAction}!" headline
-   - Subheadline about the gift card reward
-   - Use gradient background with brand colors
-   - Professional, modern design
-   - Generous padding and spacing
+1. HERO SECTION (Full-screen branded experience):
+<section class="min-h-screen bg-gradient-to-br from-[${primaryColor}] via-[${primaryColor}]/90 to-[${accentColor}] flex items-center justify-center px-4 py-20 relative overflow-hidden">
+  <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+  <div class="max-w-5xl mx-auto text-center relative z-10">
+    <div class="inline-block bg-white/20 backdrop-blur-sm rounded-full px-8 py-3 mb-8 animate-fade-in">
+      <p class="text-white font-semibold text-lg">${companyName}</p>
+    </div>
+    <h1 class="text-6xl md:text-8xl lg:text-9xl font-black mb-8 text-white drop-shadow-2xl leading-none animate-slide-up">
+      Thank You for<br/>${userAction}!
+    </h1>
+    <p class="text-2xl md:text-4xl text-white/95 font-bold mb-12 drop-shadow-lg animate-slide-up animation-delay-200">
+      Your $${giftCardValue} ${giftCardBrand} Gift Card is Ready to Claim
+    </p>
+    <div class="animate-bounce mt-16">
+      <svg class="w-14 h-14 mx-auto text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+      </svg>
+    </div>
+  </div>
+</section>
 
-2. GIFT CARD REDEMPTION SECTION (prominent, centered):
-   - Clear "$${giftCardValue} ${giftCardBrand} Gift Card" display
-   - Branded card visual with gradient using ${primaryColor} and ${accentColor}
-   - Form with ID "giftCardRedemptionForm" containing:
-     <input type="text" id="codeInput" placeholder="Enter your unique code" class="..." required />
-     <button type="submit" id="submitButton" class="...">Claim Your Gift Card</button>
-   - Instructions for redemption
-   - Beautiful styling with shadows and rounded corners
+2. GIFT CARD REDEMPTION (3D-style card with gorgeous gradients):
+<section class="py-24 px-4 bg-gradient-to-b from-gray-50 to-white relative -mt-20 z-20">
+  <div class="max-w-2xl mx-auto">
+    <div class="relative">
+      <div class="absolute inset-0 bg-gradient-to-r from-[${primaryColor}]/20 to-[${accentColor}]/20 blur-3xl"></div>
+      <div class="relative bg-gradient-to-br from-amber-400 via-orange-500 to-red-600 rounded-3xl shadow-2xl p-12 transform hover:scale-105 transition-all duration-500 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-tr from-white/30 via-transparent to-transparent"></div>
+        <div class="absolute -top-10 -right-10 w-48 h-48 bg-white/20 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+        
+        <div class="relative z-10 text-center mb-10">
+          <p class="text-white/90 text-2xl font-bold mb-4 tracking-wide uppercase">${giftCardBrand} Gift Card</p>
+          <p class="text-white text-9xl font-black drop-shadow-2xl mb-2">$${giftCardValue}</p>
+          <p class="text-white/80 text-lg font-semibold">Exclusive Reward for You</p>
+        </div>
+        
+        <form id="giftCardRedemptionForm" class="relative z-10 space-y-6">
+          <div>
+            <label for="codeInput" class="block text-white text-lg font-bold mb-3 text-center">Enter Your Unique Redemption Code</label>
+            <input 
+              type="text" 
+              id="codeInput"
+              placeholder="XXXX-XXXX-XXXX"
+              class="w-full px-8 py-6 text-3xl font-black text-center rounded-2xl border-4 border-white/40 focus:border-white focus:ring-8 focus:ring-white/50 transition-all duration-300 text-gray-900 placeholder-gray-400 shadow-inner bg-white/95"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <button 
+            type="submit"
+            id="submitButton"
+            class="w-full bg-white text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 font-black text-2xl py-6 rounded-2xl shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 relative overflow-hidden group"
+            style="background: white;"
+          >
+            <span class="relative z-10 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">🎉 Claim Your Gift Card Now</span>
+            <div class="absolute inset-0 bg-gradient-to-r from-orange-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          </button>
+        </form>
+        
+        <p class="text-white/75 text-sm text-center mt-6">
+          Your code was sent to you via SMS. Check your messages!
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
-3. COMPANY MARKETING SECTION:
-   - "Why Choose ${companyName}?" headline
-   - 3-4 benefit cards with icons (use emoji or simple SVG icons)
-   - Industry-specific value propositions for ${industry}
-   - Clean grid layout with hover effects
+3. BENEFITS SECTION (Industry-specific with icons):
+<section class="py-32 px-4 bg-white">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-20">
+      <h2 class="text-5xl md:text-7xl font-black mb-6 bg-gradient-to-r from-[${primaryColor}] to-[${accentColor}] bg-clip-text text-transparent">
+        Why Choose ${companyName}?
+      </h2>
+      <p class="text-2xl text-gray-600 font-semibold max-w-3xl mx-auto">
+        ${tagline}
+      </p>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-10">
+      <div class="group bg-gradient-to-br from-gray-50 to-white rounded-3xl p-10 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 border border-gray-100">
+        <div class="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 bg-gradient-to-br from-[${primaryColor}] to-[${accentColor}] shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+          </svg>
+        </div>
+        <h3 class="text-3xl font-black mb-4 text-gray-900">Benefit One</h3>
+        <p class="text-gray-600 text-lg leading-relaxed">Industry-specific value proposition that resonates with ${industry} customers.</p>
+      </div>
+      
+      <div class="group bg-gradient-to-br from-gray-50 to-white rounded-3xl p-10 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 border border-gray-100">
+        <div class="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 bg-gradient-to-br from-[${primaryColor}] to-[${accentColor}] shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <h3 class="text-3xl font-black mb-4 text-gray-900">Benefit Two</h3>
+        <p class="text-gray-600 text-lg leading-relaxed">Another compelling reason why customers choose ${companyName}.</p>
+      </div>
+      
+      <div class="group bg-gradient-to-br from-gray-50 to-white rounded-3xl p-10 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 border border-gray-100">
+        <div class="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 bg-gradient-to-br from-[${primaryColor}] to-[${accentColor}] shadow-lg group-hover:scale-110 transition-transform duration-300">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-3xl font-black mb-4 text-gray-900">Benefit Three</h3>
+        <p class="text-gray-600 text-lg leading-relaxed">Final key benefit that drives customer decisions.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-4. CALL-TO-ACTION FOOTER:
-   - Contact information section
-   - Strong CTA to engage further
-   - Brand-consistent design with ${primaryColor}
+4. CTA FOOTER (Bold, branded, actionable):
+<footer class="py-24 px-4 bg-gradient-to-br from-[${primaryColor}] to-[${accentColor}] relative overflow-hidden">
+  <div class="absolute inset-0 bg-black/10"></div>
+  <div class="max-w-4xl mx-auto text-center relative z-10">
+    <h3 class="text-5xl md:text-6xl font-black mb-8 text-white drop-shadow-lg">
+      Ready to Experience Excellence?
+    </h3>
+    <p class="text-2xl mb-12 text-white/90 font-semibold">
+      Contact ${companyName} today
+    </p>
+    <div class="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
+      <a 
+        href="tel:+1234567890" 
+        class="inline-flex items-center gap-3 bg-white text-gray-900 font-black text-xl px-10 py-5 rounded-2xl shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+        </svg>
+        Call Now
+      </a>
+      <a 
+        href="mailto:info@company.com" 
+        class="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm text-white border-2 border-white font-black text-xl px-10 py-5 rounded-2xl shadow-2xl hover:bg-white hover:text-gray-900 transition-all duration-300"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+        </svg>
+        Email Us
+      </a>
+    </div>
+    <p class="text-white/75 text-lg">
+      © 2025 ${companyName}. ${tagline}
+    </p>
+  </div>
+</footer>
 
-CRITICAL DESIGN REQUIREMENTS:
-- Use Tailwind CSS classes EXCLUSIVELY - no custom CSS
-- Modern, clean, professional aesthetic
-- Fully responsive (mobile-first approach)
-- Beautiful typography hierarchy (use different font sizes, weights)
-- Generous white space and padding
-- Subtle gradients: bg-gradient-to-br from-[${primaryColor}] to-[${accentColor}]
-- Smooth shadows: shadow-lg, shadow-xl
-- Rounded corners: rounded-xl, rounded-2xl
-- Professional color palette based on brand colors
-- Smooth transitions and hover effects
-- Form inputs should be large and easy to use (text-lg, py-3, px-4)
-- Buttons should be prominent and inviting
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANDATORY SPECIFICATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Return ONLY a JSON object with this structure:
+REQUIRED HTML STRUCTURE:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thank You - ${companyName}</title>
+  <meta name="description" content="Claim your $${giftCardValue} ${giftCardBrand} gift card from ${companyName}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fade-in 1s ease-out; }
+    .animate-slide-up { animation: slide-up 0.8s ease-out; }
+    .animation-delay-200 { animation-delay: 0.2s; }
+  </style>
+</head>
+<body class="antialiased">
+  [ALL SECTIONS HERE]
+</body>
+</html>
+
+DESIGN QUALITY REQUIREMENTS:
+✓ Typography: text-base (16px), text-lg (18px), text-xl (20px), text-2xl (24px), text-3xl (30px), text-4xl (36px), text-5xl (48px), text-6xl (60px), text-7xl (72px), text-8xl (96px), text-9xl (128px)
+✓ Spacing: p-4, p-6, p-8, p-10, p-12, py-20, py-24, py-32 (generous spacing)
+✓ Shadows: shadow-lg, shadow-xl, shadow-2xl, shadow-3xl (depth and elevation)
+✓ Corners: rounded-lg, rounded-xl, rounded-2xl, rounded-3xl (modern smooth corners)
+✓ Gradients: Use bg-gradient-to-br, bg-gradient-to-r with brand colors
+✓ Hover Effects: hover:scale-105, hover:shadow-2xl, transition-all duration-300
+✓ Colors: Use brand colors [${primaryColor}] and [${accentColor}] extensively
+✓ Mobile-First: All text and spacing should scale down on mobile (sm:, md:, lg:)
+
+CRITICAL FORM REQUIREMENTS:
+- Form MUST have id="giftCardRedemptionForm"
+- Input MUST have id="codeInput" 
+- Button MUST have id="submitButton"
+- All three are REQUIRED for functionality
+
+OUTPUT FORMAT:
+Return ONLY a JSON object:
 {
-  "html": "<complete HTML string with DOCTYPE, all Tailwind classes, and all sections>",
+  "html": "complete HTML as string",
   "metadata": {
     "title": "Thank You - ${companyName}",
-    "description": "Claim your reward and learn more about ${companyName}"
+    "description": "Claim your reward from ${companyName}"
   }
 }
 
-The HTML must be production-ready, beautiful, fully styled with Tailwind classes, and render perfectly standalone.`;
+QUALITY STANDARD:
+Make this look like a $10,000 professional marketing agency designed it. Use modern 2024-2025 design trends. This should win a design award. Every pixel should be intentional and beautiful.`;
 
     const htmlResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -246,9 +446,10 @@ The HTML must be production-ready, beautiful, fully styled with Tailwind classes
         "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "openai/gpt-5",
+        response_format: { type: "json_object" },
         messages: [{ role: "user", content: htmlPrompt }],
-        max_tokens: 8000
+        max_completion_tokens: 12000
       }),
     });
 
@@ -299,6 +500,17 @@ The HTML must be production-ready, beautiful, fully styled with Tailwind classes
         error: "Failed to parse HTML content" 
       }, { status: 500, headers: corsHeaders });
     }
+
+    // Validate generated HTML
+    const validation = validateGeneratedHTML(generatedContent.html);
+    if (!validation.valid) {
+      console.error("HTML validation failed:", validation.errors);
+      return Response.json({ 
+        error: `Generated HTML validation failed: ${validation.errors.join(', ')}` 
+      }, { status: 500, headers: corsHeaders });
+    }
+    
+    console.log("HTML validation passed");
 
     // Create landing page in database with HTML content
     const slug = `${companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
