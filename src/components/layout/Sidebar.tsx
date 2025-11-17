@@ -50,7 +50,7 @@ const navigation: NavItem[] = [
 
 export function Sidebar() {
   const { hasRole, hasAnyPermission } = useAuth();
-  const { clients, currentClient, setCurrentClient, currentOrg } = useTenant();
+  const { clients, currentClient, setCurrentClient, currentOrg, organizations } = useTenant();
   
   const visibleNavigation = navigation.filter(item => {
     // Check role-based access
@@ -84,6 +84,41 @@ export function Sidebar() {
 
         {/* Admin Context Switcher */}
         {hasRole('admin') && <AdminContextSwitcher />}
+
+        {/* Client List in Sidebar for Admins */}
+        {hasRole('admin') && (
+          <div className="border-b border-sidebar-border px-3 py-3 space-y-1">
+            <div className="text-xs font-semibold text-sidebar-foreground/60 uppercase mb-2 px-2">
+              Agencies & Clients
+              <span className="ml-2 text-xs bg-sidebar-accent px-1.5 py-0.5 rounded">{clients.length}</span>
+            </div>
+            {organizations.map((org) => {
+              const orgClients = clients.filter(c => c.org_id === org.id);
+              return (
+                <div key={org.id} className="space-y-0.5">
+                  <div className="text-xs font-medium text-sidebar-foreground/80 px-2 py-1">
+                    {org.name}
+                  </div>
+                  {orgClients.map((client) => (
+                    <button
+                      key={client.id}
+                      onClick={() => setCurrentClient(client)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors",
+                        currentClient?.id === client.id
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                      )}
+                    >
+                      <Building className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate flex-1 text-left">{client.name}</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Client Selector - for agency owners (but not admins who use AdminContextSwitcher) */}
         {!hasRole('admin') && hasRole('agency_owner') && availableClients.length > 0 && (
