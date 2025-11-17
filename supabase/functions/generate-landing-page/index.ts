@@ -153,56 +153,97 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
       return Response.json({ error: "Invalid source type" }, { status: 400, headers: corsHeaders });
     }
 
-    // Extract branding using AI
-    console.log("Calling AI for branding extraction...");
-    const extractionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-5",
-        response_format: { type: "json_object" },
-        messages: extractionMessages,
-        max_completion_tokens: 2000
-      }),
-    });
-
-    if (!extractionResponse.ok) {
-      const errorText = await extractionResponse.text();
-      console.error("Extraction API error:", extractionResponse.status, errorText);
-      return Response.json({ 
-        error: `AI extraction failed: ${extractionResponse.status} - ${errorText}` 
-      }, { status: 500, headers: corsHeaders });
-    }
-
-    const extractionData = await extractionResponse.json();
-    console.log("Extraction response successful");
-
-    if (!extractionData.choices?.[0]?.message?.content) {
-      console.error("Invalid extraction response structure:", extractionData);
-      return Response.json({ 
-        error: "AI returned invalid response structure" 
-      }, { status: 500, headers: corsHeaders });
-    }
-
+    // Extract branding using AI with retry logic
     let extractedBranding;
-    const content = extractionData.choices[0].message.content;
-    
-    try {
-      // Try to parse JSON directly first
-      extractedBranding = JSON.parse(content);
-    } catch {
-      // If that fails, try to extract JSON from markdown code blocks
-      const jsonMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-      if (jsonMatch) {
-        extractedBranding = JSON.parse(jsonMatch[1]);
-      } else {
-        console.error("Could not parse branding from:", content);
-        return Response.json({ 
-          error: "AI returned unparseable response" 
-        }, { status: 500, headers: corsHeaders });
+    let extractionAttempts = 0;
+    const maxAttempts = 3;
+
+    while (extractionAttempts < maxAttempts) {
+      extractionAttempts++;
+      console.log(`Branding extraction attempt ${extractionAttempts}/${maxAttempts}...`);
+      
+      try {
+        const extractionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
+          },
+          body: JSON.stringify({
+            model: "openai/gpt-5",
+            response_format: { type: "json_object" },
+            messages: extractionMessages,
+            max_completion_tokens: 6000
+          }),
+        });
+
+        if (!extractionResponse.ok) {
+          const errorText = await extractionResponse.text();
+          console.error(`Attempt ${extractionAttempts} - Extraction API error:`, extractionResponse.status, errorText);
+          if (extractionAttempts === maxAttempts) {
+            return Response.json({ 
+              error: `GPT-5 extraction failed after ${maxAttempts} attempts: ${extractionResponse.status}`,
+              details: "The AI model encountered an error. Please try again."
+            }, { status: 500, headers: corsHeaders });
+          }
+          continue;
+        }
+
+        const extractionData = await extractionResponse.json();
+        console.log(`Attempt ${extractionAttempts} - Extraction response received`);
+
+        // Log token usage
+        if (extractionData.usage) {
+          console.log("Branding extraction token usage:", {
+            total: extractionData.usage.completion_tokens,
+            prompt: extractionData.usage.prompt_tokens,
+            reasoning: extractionData.usage.completion_tokens_details?.reasoning_tokens || 0,
+            output: extractionData.usage.completion_tokens - (extractionData.usage.completion_tokens_details?.reasoning_tokens || 0)
+          });
+        }
+
+        if (!extractionData.choices?.[0]?.message?.content) {
+          console.error(`Attempt ${extractionAttempts} - Invalid response structure:`, extractionData);
+          if (extractionAttempts === maxAttempts) {
+            return Response.json({ 
+              error: "GPT-5 returned invalid response structure after all attempts",
+              details: "The AI model needs more processing capacity. Please try again."
+            }, { status: 500, headers: corsHeaders });
+          }
+          continue;
+        }
+
+        const content = extractionData.choices[0].message.content;
+        
+        try {
+          extractedBranding = JSON.parse(content);
+          console.log(`✓ Branding extracted successfully on attempt ${extractionAttempts}`);
+          break;
+        } catch {
+          const jsonMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+          if (jsonMatch) {
+            extractedBranding = JSON.parse(jsonMatch[1]);
+            console.log(`✓ Branding extracted from markdown on attempt ${extractionAttempts}`);
+            break;
+          } else {
+            console.error(`Attempt ${extractionAttempts} - Could not parse branding from:`, content);
+            if (extractionAttempts === maxAttempts) {
+              return Response.json({ 
+                error: "GPT-5 returned unparseable response after all attempts",
+                details: "The AI model's response could not be parsed. Please try again."
+              }, { status: 500, headers: corsHeaders });
+            }
+            continue;
+          }
+        }
+      } catch (error) {
+        console.error(`Attempt ${extractionAttempts} - Unexpected error:`, error);
+        if (extractionAttempts === maxAttempts) {
+          return Response.json({ 
+            error: `Extraction failed: ${error instanceof Error ? error.message : String(error)}`,
+            details: "An unexpected error occurred. Please try again."
+          }, { status: 500, headers: corsHeaders });
+        }
       }
     }
 
@@ -454,78 +495,125 @@ Return ONLY a JSON object:
 QUALITY STANDARD:
 Make this look like a $10,000 professional marketing agency designed it. Use modern 2024-2025 design trends. This should win a design award. Every pixel should be intentional and beautiful.`;
 
-    const htmlResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-5",
-        response_format: { type: "json_object" },
-        messages: [{ role: "user", content: htmlPrompt }],
-        max_completion_tokens: 12000
-      }),
-    });
-
-    if (!htmlResponse.ok) {
-      const errorText = await htmlResponse.text();
-      console.error("HTML generation API error:", htmlResponse.status, errorText);
-      return Response.json({ 
-        error: `HTML generation failed: ${htmlResponse.status} - ${errorText}` 
-      }, { status: 500, headers: corsHeaders });
-    }
-
-    const htmlData = await htmlResponse.json();
-    console.log("HTML generation successful");
-
-    if (!htmlData.choices?.[0]?.message?.content) {
-      console.error("Invalid HTML response structure:", htmlData);
-      return Response.json({ 
-        error: "AI returned invalid HTML response" 
-      }, { status: 500, headers: corsHeaders });
-    }
-
+    // Generate HTML with retry logic
     let generatedContent;
-    const htmlContent = htmlData.choices[0].message.content;
-    
-    try {
-      // Try to parse as JSON first
+    let htmlAttempts = 0;
+    const maxHtmlAttempts = 3;
+
+    while (htmlAttempts < maxHtmlAttempts) {
+      htmlAttempts++;
+      console.log(`HTML generation attempt ${htmlAttempts}/${maxHtmlAttempts}...`);
+      
       try {
-        generatedContent = JSON.parse(htmlContent);
-      } catch {
-        // Try to extract from markdown code blocks
-        const jsonMatch = htmlContent.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-        if (jsonMatch) {
-          generatedContent = JSON.parse(jsonMatch[1]);
-        } else {
-          // If not JSON, wrap the HTML content
-          generatedContent = {
-            html: htmlContent,
-            metadata: {
-              title: `Thank You - ${companyName}`,
-              description: `Claim your reward from ${companyName}`
+        const htmlResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
+          },
+          body: JSON.stringify({
+            model: "openai/gpt-5",
+            response_format: { type: "json_object" },
+            messages: [{ role: "user", content: htmlPrompt }],
+            max_completion_tokens: 25000
+          }),
+        });
+
+        if (!htmlResponse.ok) {
+          const errorText = await htmlResponse.text();
+          console.error(`Attempt ${htmlAttempts} - HTML generation API error:`, htmlResponse.status, errorText);
+          if (htmlAttempts === maxHtmlAttempts) {
+            return Response.json({ 
+              error: `GPT-5 HTML generation failed after ${maxHtmlAttempts} attempts: ${htmlResponse.status}`,
+              details: "The AI model encountered an error. Please try again."
+            }, { status: 500, headers: corsHeaders });
+          }
+          continue;
+        }
+
+        const htmlData = await htmlResponse.json();
+        console.log(`Attempt ${htmlAttempts} - HTML generation response received`);
+
+        // Log token usage
+        if (htmlData.usage) {
+          console.log("HTML generation token usage:", {
+            total: htmlData.usage.completion_tokens,
+            prompt: htmlData.usage.prompt_tokens,
+            reasoning: htmlData.usage.completion_tokens_details?.reasoning_tokens || 0,
+            output: htmlData.usage.completion_tokens - (htmlData.usage.completion_tokens_details?.reasoning_tokens || 0)
+          });
+        }
+
+        if (!htmlData.choices?.[0]?.message?.content) {
+          console.error(`Attempt ${htmlAttempts} - Invalid HTML response structure:`, htmlData);
+          if (htmlAttempts === maxHtmlAttempts) {
+            return Response.json({ 
+              error: "GPT-5 returned invalid HTML response after all attempts",
+              details: "The AI model needs more processing capacity. Please try again."
+            }, { status: 500, headers: corsHeaders });
+          }
+          continue;
+        }
+
+        const htmlContent = htmlData.choices[0].message.content;
+        
+        try {
+          // Try to parse as JSON first
+          try {
+            generatedContent = JSON.parse(htmlContent);
+          } catch {
+            // Try to extract from markdown code blocks
+            const jsonMatch = htmlContent.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+            if (jsonMatch) {
+              generatedContent = JSON.parse(jsonMatch[1]);
+            } else {
+              // If not JSON, wrap the HTML content
+              generatedContent = {
+                html: htmlContent,
+                metadata: {
+                  title: `Thank You - ${companyName}`,
+                  description: `Claim your reward from ${companyName}`
+                }
+              };
             }
-          };
+          }
+
+          // Validate generated HTML
+          const validation = validateGeneratedHTML(generatedContent.html);
+          if (!validation.valid) {
+            console.error(`Attempt ${htmlAttempts} - HTML validation failed:`, validation.errors);
+            if (htmlAttempts === maxHtmlAttempts) {
+              return Response.json({ 
+                error: `Generated HTML validation failed after all attempts: ${validation.errors.join(', ')}`,
+                details: "The generated HTML is missing required elements. Please try again."
+              }, { status: 500, headers: corsHeaders });
+            }
+            continue;
+          }
+          
+          console.log(`✓ HTML generated and validated successfully on attempt ${htmlAttempts}`);
+          break;
+
+        } catch (parseError) {
+          console.error(`Attempt ${htmlAttempts} - Failed to parse HTML content:`, parseError);
+          if (htmlAttempts === maxHtmlAttempts) {
+            return Response.json({ 
+              error: "Failed to parse HTML content after all attempts",
+              details: "The AI model's HTML could not be parsed. Please try again."
+            }, { status: 500, headers: corsHeaders });
+          }
+          continue;
+        }
+      } catch (error) {
+        console.error(`Attempt ${htmlAttempts} - Unexpected error:`, error);
+        if (htmlAttempts === maxHtmlAttempts) {
+          return Response.json({ 
+            error: `HTML generation failed: ${error instanceof Error ? error.message : String(error)}`,
+            details: "An unexpected error occurred. Please try again."
+          }, { status: 500, headers: corsHeaders });
         }
       }
-    } catch (parseError) {
-      console.error("Failed to parse HTML content:", parseError);
-      return Response.json({ 
-        error: "Failed to parse HTML content" 
-      }, { status: 500, headers: corsHeaders });
     }
-
-    // Validate generated HTML
-    const validation = validateGeneratedHTML(generatedContent.html);
-    if (!validation.valid) {
-      console.error("HTML validation failed:", validation.errors);
-      return Response.json({ 
-        error: `Generated HTML validation failed: ${validation.errors.join(', ')}` 
-      }, { status: 500, headers: corsHeaders });
-    }
-    
-    console.log("HTML validation passed");
 
     // Create landing page in database with HTML content
     const slug = `${companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
