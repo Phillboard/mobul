@@ -32,12 +32,12 @@ export function ClaimPlatformAdmin() {
 
     setClaiming(true);
     try {
-      // Insert platform_admin role for current user
+      // Insert admin role for current user
       const { error } = await supabase
         .from('user_roles')
         .insert({
           user_id: user.id,
-          role: 'platform_admin'
+          role: 'admin'
         });
 
       if (error) throw error;

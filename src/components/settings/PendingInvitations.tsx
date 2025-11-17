@@ -136,7 +136,7 @@ export function PendingInvitations() {
                   <TableCell className="font-medium">{invite.email}</TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {invite.role.replace("_", " ")}
+                      {(invite.metadata as any)?.role?.replace("_", " ") || "User"}
                     </Badge>
                   </TableCell>
                   <TableCell>

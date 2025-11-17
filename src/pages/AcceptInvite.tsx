@@ -145,7 +145,7 @@ export default function AcceptInvite() {
             <CardTitle className="text-2xl">Accept Invitation</CardTitle>
           </div>
           <CardDescription>
-            You've been invited to join as <strong>{invitation.role.replace("_", " ")}</strong>
+            You've been invited to join as <strong>{((invitation.metadata as any)?.role || "user").replace("_", " ")}</strong>
           </CardDescription>
         </CardHeader>
         <CardContent>
