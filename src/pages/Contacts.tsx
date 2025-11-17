@@ -20,12 +20,12 @@ import {
 export default function Contacts() {
   const { currentClient } = useTenant();
   const [search, setSearch] = useState("");
-  const [lifecycleFilter, setLifecycleFilter] = useState<string>("");
+  const [lifecycleFilter, setLifecycleFilter] = useState<string>("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const { data: contacts, isLoading } = useContacts(currentClient?.id || null, {
     search,
-    lifecycle_stage: lifecycleFilter || undefined,
+    lifecycle_stage: lifecycleFilter === "all" ? undefined : lifecycleFilter,
   });
 
   const lifecycleStages = [
@@ -137,7 +137,7 @@ export default function Contacts() {
                   <SelectValue placeholder="All Stages" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Stages</SelectItem>
+                  <SelectItem value="all">All Stages</SelectItem>
                   {lifecycleStages.map(stage => (
                     <SelectItem key={stage.value} value={stage.value}>
                       {stage.label}
