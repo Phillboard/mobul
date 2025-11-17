@@ -8,6 +8,7 @@ import { CRMIntegrationTab } from "@/components/settings/CRMIntegrationTab";
 import { PhoneNumbersSettings } from "@/components/settings/PhoneNumbersSettings";
 import { SMSDeliveryLog } from "@/components/settings/SMSDeliveryLog";
 import { ClaimPlatformAdmin } from "@/components/settings/ClaimPlatformAdmin";
+import { ZapierIntegrationTab } from "@/components/settings/ZapierIntegrationTab";
 
 export default function Settings() {
   const { currentClient } = useTenant();
@@ -42,6 +43,7 @@ export default function Settings() {
             <TabsTrigger value="sms">SMS Delivery</TabsTrigger>
             {currentClient && <TabsTrigger value="branding">Client Branding</TabsTrigger>}
             {currentClient && <TabsTrigger value="crm">CRM Integrations</TabsTrigger>}
+            {currentClient && <TabsTrigger value="zapier">Zapier</TabsTrigger>}
             <TabsTrigger value="api">API Settings</TabsTrigger>
           </TabsList>
 
@@ -151,6 +153,12 @@ export default function Settings() {
           {currentClient && (
             <TabsContent value="crm" className="space-y-4">
               <CRMIntegrationTab />
+            </TabsContent>
+          )}
+
+          {currentClient && (
+            <TabsContent value="zapier" className="space-y-4">
+              <ZapierIntegrationTab />
             </TabsContent>
           )}
 

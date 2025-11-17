@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.redeem-gift-card-embed]
 verify_jwt = false
+
+[functions.dispatch-zapier-event]
+verify_jwt = false
