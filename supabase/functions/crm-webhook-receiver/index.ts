@@ -302,6 +302,8 @@ serve(async (req) => {
         {
           body: {
             callSessionId,
+            campaignId: integration.campaign_id,
+            recipientId,
             conditionNumber: conditionTriggered,
             notes: `Auto-triggered by CRM event: ${parsedEvent.event_type}`,
           },
@@ -326,6 +328,24 @@ serve(async (req) => {
             processed_at: new Date().toISOString(),
           })
           .eq('id', crmEvent?.id);
+      }
+    } else if (matched && recipientId && integration.campaign_id) {
+      // Evaluate general conditions even if no specific condition was mapped
+      try {
+        await supabaseClient.functions.invoke('evaluate-conditions', {
+          body: {
+            recipientId,
+            campaignId: integration.campaign_id,
+            eventType: 'crm_event',
+            metadata: {
+              crm_event_type: parsedEvent.event_type,
+              crm_event_id: crmEvent?.id,
+            }
+          }
+        });
+        console.log('Triggered condition evaluation for CRM event');
+      } catch (evalError) {
+        console.error('Failed to evaluate conditions:', evalError);
       }
     }
 

@@ -109,6 +109,27 @@ Deno.serve(async (req) => {
 
     console.log(`Logged ${eventType} event for recipient ${recipient.id}`);
 
+    // Evaluate campaign conditions based on this event
+    const conditionEventType = isQRScan ? 'qr_scanned' : 'purl_visited';
+    try {
+      await supabase.functions.invoke('evaluate-conditions', {
+        body: {
+          recipientId: recipient.id,
+          campaignId: campaignId,
+          eventType: conditionEventType,
+          metadata: {
+            user_agent: userAgent,
+            ip: ip,
+            is_mobile: isMobile,
+          }
+        }
+      });
+      console.log(`Triggered condition evaluation for ${conditionEventType}`);
+    } catch (evalError) {
+      console.error('Failed to evaluate conditions:', evalError);
+      // Don't fail the request if condition evaluation fails
+    }
+
     // Track QR scan specifically in qr_tracking_events table
     if (isQRScan) {
       await supabase.from('qr_tracking_events').insert({

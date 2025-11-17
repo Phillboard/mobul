@@ -96,6 +96,25 @@ Deno.serve(async (req) => {
       console.error('Event logging error:', eventError);
     }
 
+    // Evaluate campaign conditions for form submission
+    try {
+      await supabase.functions.invoke('evaluate-conditions', {
+        body: {
+          recipientId,
+          campaignId,
+          eventType: 'form_submitted',
+          metadata: {
+            lead_id: lead.id,
+            appointment_requested: appointmentRequested || false,
+          }
+        }
+      });
+      console.log('Triggered condition evaluation for form submission');
+    } catch (evalError) {
+      console.error('Failed to evaluate conditions:', evalError);
+      // Don't fail the request if condition evaluation fails
+    }
+
     console.log(`Lead form submitted successfully: lead_id=${lead.id}`);
 
     return new Response(
