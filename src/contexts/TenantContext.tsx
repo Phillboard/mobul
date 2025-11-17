@@ -74,9 +74,19 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
       setOrganizations(orgsData || []);
 
-      // Set default org
-      if (orgsData && orgsData.length > 0 && !currentOrg) {
+      // Restore or set default org
+      const savedOrgId = localStorage.getItem('currentOrgId');
+      if (savedOrgId && orgsData) {
+        const savedOrg = orgsData.find(o => o.id === savedOrgId);
+        if (savedOrg) {
+          setCurrentOrg(savedOrg);
+        } else if (orgsData.length > 0) {
+          setCurrentOrg(orgsData[0]);
+          localStorage.setItem('currentOrgId', orgsData[0].id);
+        }
+      } else if (orgsData && orgsData.length > 0 && !currentOrg) {
         setCurrentOrg(orgsData[0]);
+        localStorage.setItem('currentOrgId', orgsData[0].id);
       }
 
       // Fetch clients based on role
@@ -88,10 +98,17 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       
       setClients(clientsData || []);
 
-      // Set default client for agency owners and company owners
-      if (clientsData && clientsData.length > 0 && !currentClient) {
+      // Restore or set default client
+      const savedClientId = localStorage.getItem('currentClientId');
+      if (savedClientId && clientsData) {
+        const savedClient = clientsData.find(c => c.id === savedClientId);
+        if (savedClient) {
+          setCurrentClient(savedClient);
+        }
+      } else if (clientsData && clientsData.length > 0 && !currentClient) {
         if (hasRole('agency_owner') || hasRole('company_owner')) {
           setCurrentClient(clientsData[0]);
+          localStorage.setItem('currentClientId', clientsData[0].id);
         }
       }
 
@@ -104,25 +121,39 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   const handleSetCurrentOrg = (org: Organization | null) => {
     setCurrentOrg(org);
+    if (org) {
+      localStorage.setItem('currentOrgId', org.id);
+    } else {
+      localStorage.removeItem('currentOrgId');
+    }
     // Reset client when org changes
     if (org && clients.length > 0) {
       const orgClients = clients.filter(c => c.org_id === org.id);
-      setCurrentClient(orgClients[0] || null);
+      const firstClient = orgClients[0] || null;
+      setCurrentClient(firstClient);
+      if (firstClient) {
+        localStorage.setItem('currentClientId', firstClient.id);
+      } else {
+        localStorage.removeItem('currentClientId');
+      }
     } else {
       setCurrentClient(null);
+      localStorage.removeItem('currentClientId');
     }
   };
 
   const handleSetCurrentClient = (client: Client | null) => {
     setCurrentClient(client);
-    if (!client) {
-      // When clearing client, enter admin mode
-      setIsAdminMode(true);
-      localStorage.setItem('adminMode', 'true');
-    } else {
+    if (client) {
+      localStorage.setItem('currentClientId', client.id);
       // When selecting a client, exit admin mode
       setIsAdminMode(false);
       localStorage.setItem('adminMode', 'false');
+    } else {
+      localStorage.removeItem('currentClientId');
+      // When clearing client, enter admin mode
+      setIsAdminMode(true);
+      localStorage.setItem('adminMode', 'true');
     }
   };
 

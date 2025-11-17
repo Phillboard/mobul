@@ -104,16 +104,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .rpc('get_user_permissions', { _user_id: userId });
 
       if (permissionsError) {
-        console.error('Error fetching permissions:', permissionsError);
         throw permissionsError;
       }
       
       const userPermissions = permissionsData?.map((p: any) => p.permission_name) || [];
-      console.log('Loaded permissions for user:', userPermissions);
-      console.log('Loaded roles for user:', rolesData);
       setPermissions(userPermissions);
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      // Silent fail - user will see limited functionality
     } finally {
       setLoading(false);
     }
