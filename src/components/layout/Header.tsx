@@ -132,6 +132,7 @@ export function Header() {
           </DropdownMenu>
         </div>
       </div>
-    </header>
+      </header>
+    </>
   );
 }
