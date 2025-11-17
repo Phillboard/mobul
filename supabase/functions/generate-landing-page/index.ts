@@ -263,6 +263,23 @@ THE FORM MUST HAVE THESE EXACT IDs OR THE PAGE WILL NOT WORK:
 DO NOT CHANGE THESE IDS. DO NOT OMIT THESE IDS. COPY THEM EXACTLY.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+🎯 DESIGN MISSION: CREATE A PREMIUM, VISUALLY STUNNING LANDING PAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This MUST look like a $10,000 custom-designed landing page, NOT a generic template.
+Think Apple, Tesla, luxury brands - premium, modern, sophisticated, visually striking.
+
+REQUIRED VISUAL ELEMENTS (YOU MUST INCLUDE ALL):
+✓ Bold, attention-grabbing gradients using brand colors
+✓ Smooth animations on scroll and hover
+✓ Large, impactful typography (text-6xl to text-9xl)
+✓ Deep shadows and 3D depth effects
+✓ Glassmorphism or neumorphism design elements
+✓ Subtle background patterns or textures
+✓ Strategic use of white space
+✓ Premium color combinations and contrasts
+✓ Interactive hover states on all elements
+
 You are creating a premium landing page for:
 
 BRANDING CONTEXT:
@@ -279,77 +296,147 @@ BRANDING CONTEXT:
 - Gift Card Reward: $${giftCardValue} ${giftCardBrand}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CONCRETE DESIGN EXAMPLES - FOLLOW THESE PATTERNS EXACTLY
+MANDATORY DESIGN PATTERN - USE EXACTLY THIS STRUCTURE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. HERO SECTION (Full-screen branded experience):
-<section class="min-h-screen bg-gradient-to-br from-[${primaryColor}] via-[${primaryColor}]/90 to-[${accentColor}] flex items-center justify-center px-4 py-20 relative overflow-hidden">
-  <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
-  <div class="max-w-5xl mx-auto text-center relative z-10">
-    <div class="inline-block bg-white/20 backdrop-blur-sm rounded-full px-8 py-3 mb-8 animate-fade-in">
-      <p class="text-white font-semibold text-lg">${companyName}</p>
+YOU MUST FOLLOW THIS EXACT STRUCTURE. DO NOT SIMPLIFY OR SKIP ELEMENTS.
+
+1. HERO SECTION - Full-screen, bold, immersive experience:
+
+<section class="relative min-h-screen overflow-hidden flex items-center justify-center">
+  <!-- Dynamic gradient background with multiple layers -->
+  <div class="absolute inset-0 bg-gradient-to-br from-[${primaryColor}] via-[${accentColor}] to-[${primaryColor}]/80"></div>
+  
+  <!-- Animated mesh gradient overlay -->
+  <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent"></div>
+  
+  <!-- Subtle pattern overlay -->
+  <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\\"100\\" height=\\"100\\" xmlns=\\"http://www.w3.org/2000/svg\\"%3E%3Cpath d=\\"M50 0L100 50L50 100L0 50Z\\" fill=\\"none\\" stroke=\\"white\\" stroke-width=\\"2\\"/%3E%3C/svg%3E'); background-size: 100px 100px;"></div>
+  
+  <!-- Large animated blobs for depth -->
+  <div class="absolute top-20 left-20 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+  <div class="absolute bottom-20 right-20 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+  
+  <!-- Content -->
+  <div class="relative z-10 max-w-6xl mx-auto px-6 py-24 text-center">
+    <!-- Company badge with glassmorphism -->
+    <div class="inline-flex items-center gap-3 backdrop-blur-xl bg-white/20 border border-white/30 rounded-full px-8 py-4 mb-12 shadow-2xl">
+      <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+      <span class="text-white font-bold text-xl tracking-wide">${companyName}</span>
     </div>
-    <h1 class="text-6xl md:text-8xl lg:text-9xl font-black mb-8 text-white drop-shadow-2xl leading-none animate-slide-up">
-      Thank You for<br/>${userAction}!
+    
+    <!-- Massive hero headline -->
+    <h1 class="text-7xl md:text-9xl font-black text-white mb-8 leading-[0.9] tracking-tight drop-shadow-2xl">
+      <span class="block animate-fade-in-up">Congratulations!</span>
+      <span class="block text-white/90 mt-4 animate-fade-in-up" style="animation-delay: 0.2s;">You've Earned</span>
+      <span class="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-100 to-white mt-4 animate-fade-in-up" style="animation-delay: 0.4s;">Your Reward</span>
     </h1>
-    <p class="text-2xl md:text-4xl text-white/95 font-bold mb-12 drop-shadow-lg animate-slide-up animation-delay-200">
-      Your $${giftCardValue} ${giftCardBrand} Gift Card is Ready to Claim
+    
+    <!-- Compelling subheadline -->
+    <p class="text-3xl md:text-5xl font-bold text-white/95 mb-16 max-w-4xl mx-auto leading-tight drop-shadow-lg animate-fade-in-up" style="animation-delay: 0.6s;">
+      Claim your <span class="text-yellow-200">$${giftCardValue}</span> ${giftCardBrand} gift card for ${userAction.toLowerCase()}
     </p>
-    <div class="animate-bounce mt-16">
-      <svg class="w-14 h-14 mx-auto text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-      </svg>
+    
+    <!-- Scroll indicator -->
+    <div class="animate-bounce mt-20" style="animation-delay: 1s;">
+      <div class="w-8 h-14 border-4 border-white/40 rounded-full mx-auto relative">
+        <div class="w-2 h-3 bg-white rounded-full absolute left-1/2 top-3 -translate-x-1/2 animate-pulse"></div>
+      </div>
+      <p class="text-white/70 text-sm font-semibold mt-4 tracking-widest uppercase">Scroll to Claim</p>
     </div>
   </div>
 </section>
 
-2. GIFT CARD REDEMPTION (3D-style card with gorgeous gradients):
-<section class="py-24 px-4 bg-gradient-to-b from-gray-50 to-white relative -mt-20 z-20">
-  <div class="max-w-2xl mx-auto">
-    <div class="relative">
-      <div class="absolute inset-0 bg-gradient-to-r from-[${primaryColor}]/20 to-[${accentColor}]/20 blur-3xl"></div>
-      <div class="relative bg-gradient-to-br from-amber-400 via-orange-500 to-red-600 rounded-3xl shadow-2xl p-12 transform hover:scale-105 transition-all duration-500 overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-tr from-white/30 via-transparent to-transparent"></div>
-        <div class="absolute -top-10 -right-10 w-48 h-48 bg-white/20 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-10 -left-10 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+2. REDEMPTION SECTION - Premium card design with depth and interactivity:
+
+<section class="relative py-32 px-6 bg-gradient-to-b from-gray-50 via-white to-gray-50">
+  <!-- Background decorative elements -->
+  <div class="absolute inset-0 overflow-hidden">
+    <div class="absolute -top-40 -left-40 w-80 h-80 bg-[${primaryColor}]/10 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/2 -right-40 w-80 h-80 bg-[${accentColor}]/10 rounded-full blur-3xl"></div>
+  </div>
+  
+  <div class="relative z-10 max-w-3xl mx-auto">
+    <!-- Section heading -->
+    <div class="text-center mb-16">
+      <h2 class="text-5xl md:text-6xl font-black text-gray-900 mb-6">Your Exclusive Reward</h2>
+      <p class="text-2xl text-gray-600 font-semibold">Just one step away from your gift card</p>
+    </div>
+    
+    <!-- Premium gift card with 3D effect -->
+    <div class="relative group">
+      <!-- Glow effect -->
+      <div class="absolute -inset-4 bg-gradient-to-r from-[${primaryColor}]/30 via-[${accentColor}]/30 to-[${primaryColor}]/30 rounded-3xl blur-2xl opacity-75 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      <!-- Main card -->
+      <div class="relative bg-gradient-to-br from-[${primaryColor}] via-[${accentColor}] to-[${primaryColor}]/90 rounded-3xl shadow-2xl overflow-hidden transform group-hover:scale-[1.02] transition-all duration-500">
+        <!-- Shine effect -->
+        <div class="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 transform -skew-x-12 group-hover:skew-x-12 transition-transform duration-700"></div>
         
-        <div class="relative z-10 text-center mb-10">
-          <p class="text-white/90 text-2xl font-bold mb-4 tracking-wide uppercase">${giftCardBrand} Gift Card</p>
-          <p class="text-white text-9xl font-black drop-shadow-2xl mb-2">$${giftCardValue}</p>
-          <p class="text-white/80 text-lg font-semibold">Exclusive Reward for You</p>
-        </div>
-         
-        <form id="giftCardRedemptionForm" class="relative z-10 space-y-6">
-          ⬆️ CRITICAL: id="giftCardRedemptionForm" IS REQUIRED ⬆️
-          
-          <div>
-            <label for="codeInput" class="block text-white text-lg font-bold mb-3 text-center">Enter Your Unique Redemption Code</label>
-            <input 
-              type="text" 
-              id="codeInput"
-              ⬆️ CRITICAL: id="codeInput" IS REQUIRED ⬆️
-              placeholder="XXXX-XXXX-XXXX"
-              class="w-full px-8 py-6 text-3xl font-black text-center rounded-2xl border-4 border-white/40 focus:border-white focus:ring-8 focus:ring-white/50 transition-all duration-300 text-gray-900 placeholder-gray-400 shadow-inner bg-white/95"
-              required
-              autocomplete="off"
-            />
+        <!-- Light spots -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+        
+        <div class="relative z-10 p-12 md:p-16">
+          <!-- Gift card value display -->
+          <div class="text-center mb-12 space-y-4">
+            <div class="inline-flex items-center gap-4 backdrop-blur-sm bg-white/20 rounded-2xl px-8 py-4 border border-white/30">
+              <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-white/90 text-2xl font-bold tracking-wide">${giftCardBrand} Gift Card</span>
+            </div>
+            
+            <div class="space-y-2">
+              <p class="text-9xl md:text-[10rem] font-black text-white drop-shadow-2xl leading-none tracking-tighter">$${giftCardValue}</p>
+              <p class="text-2xl text-white/80 font-bold">Redeemable Now</p>
+            </div>
           </div>
-          <button 
-            type="submit"
-            id="submitButton"
-            ⬆️ CRITICAL: id="submitButton" IS REQUIRED ⬆️
-            class="w-full bg-white text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 font-black text-2xl py-6 rounded-2xl shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 relative overflow-hidden group"
-            style="background: white;"
-          >
-            <span class="relative z-10 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">🎉 Claim Your Gift Card Now</span>
-            <div class="absolute inset-0 bg-gradient-to-r from-orange-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </button>
-        </form>
-        
-        <p class="text-white/75 text-sm text-center mt-6">
-          Your code was sent to you via SMS. Check your messages!
-        </p>
+          
+          <!-- Redemption form -->
+          <form id="giftCardRedemptionForm" class="space-y-8">
+            <div class="space-y-4">
+              <label for="codeInput" class="block text-center">
+                <span class="text-white text-2xl font-bold tracking-wide">Enter Your Unique Code</span>
+                <span class="block text-white/70 text-base font-medium mt-2">Found on your postcard</span>
+              </label>
+              
+              <input 
+                type="text" 
+                id="codeInput"
+                placeholder="XXXX-XXXX-XXXX"
+                class="w-full px-8 py-6 text-center text-4xl font-black tracking-widest rounded-2xl bg-white shadow-2xl border-4 border-white/50 focus:border-white focus:ring-8 focus:ring-white/30 focus:outline-none transition-all duration-300 text-gray-900 placeholder-gray-300 uppercase"
+                required
+                autocomplete="off"
+                maxlength="20"
+              />
+            </div>
+            
+            <button 
+              type="submit"
+              id="submitButton"
+              class="group relative w-full overflow-hidden rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-3xl hover:scale-105"
+            >
+              <div class="absolute inset-0 bg-white"></div>
+              <div class="absolute inset-0 bg-gradient-to-r from-white via-gray-50 to-white opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <span class="relative block px-12 py-6 text-3xl font-black bg-gradient-to-r from-[${primaryColor}] to-[${accentColor}] bg-clip-text text-transparent">
+                Claim My Gift Card →
+              </span>
+            </button>
+          </form>
+        </div>
       </div>
+    </div>
+    
+    <!-- Trust indicators -->
+    <div class="mt-16 text-center space-y-4">
+      <div class="flex items-center justify-center gap-3 text-gray-600">
+        <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span class="text-lg font-semibold">Secure & Instant</span>
+      </div>
+      <p class="text-gray-500 max-w-md mx-auto">Your code is encrypted and your gift card will be available immediately after validation</p>
     </div>
   </div>
 </section>
@@ -452,28 +539,124 @@ REQUIRED HTML STRUCTURE:
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fade-in { animation: fade-in 1s ease-out; }
-    .animate-slide-up { animation: slide-up 0.8s ease-out; }
-    .animation-delay-200 { animation-delay: 0.2s; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Premium animations */
+    @keyframes fade-in { 
+      from { opacity: 0; } 
+      to { opacity: 1; } 
+    }
+    @keyframes fade-in-up { 
+      from { 
+        opacity: 0; 
+        transform: translateY(40px); 
+      } 
+      to { 
+        opacity: 1; 
+        transform: translateY(0); 
+      } 
+    }
+    @keyframes slide-up { 
+      from { 
+        opacity: 0; 
+        transform: translateY(30px); 
+      } 
+      to { 
+        opacity: 1; 
+        transform: translateY(0); 
+      } 
+    }
+    @keyframes scale-in {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+    
+    .animate-fade-in { animation: fade-in 1.2s ease-out forwards; }
+    .animate-fade-in-up { animation: fade-in-up 1s ease-out forwards; opacity: 0; }
+    .animate-slide-up { animation: slide-up 0.8s ease-out forwards; opacity: 0; }
+    .animate-scale-in { animation: scale-in 0.6s ease-out forwards; opacity: 0; }
+    
+    /* Smooth scrolling */
+    html { scroll-behavior: smooth; }
+    
+    /* Custom focus states for accessibility */
+    *:focus-visible {
+      outline: 3px solid rgba(59, 130, 246, 0.5);
+      outline-offset: 2px;
+    }
   </style>
+
 </head>
 <body class="antialiased">
   [ALL SECTIONS HERE]
 </body>
 </html>
 
-DESIGN QUALITY REQUIREMENTS:
-✓ Typography: text-base (16px), text-lg (18px), text-xl (20px), text-2xl (24px), text-3xl (30px), text-4xl (36px), text-5xl (48px), text-6xl (60px), text-7xl (72px), text-8xl (96px), text-9xl (128px)
-✓ Spacing: p-4, p-6, p-8, p-10, p-12, py-20, py-24, py-32 (generous spacing)
-✓ Shadows: shadow-lg, shadow-xl, shadow-2xl, shadow-3xl (depth and elevation)
-✓ Corners: rounded-lg, rounded-xl, rounded-2xl, rounded-3xl (modern smooth corners)
-✓ Gradients: Use bg-gradient-to-br, bg-gradient-to-r with brand colors
-✓ Hover Effects: hover:scale-105, hover:shadow-2xl, transition-all duration-300
-✓ Colors: Use brand colors [${primaryColor}] and [${accentColor}] extensively
-✓ Mobile-First: All text and spacing should scale down on mobile (sm:, md:, lg:)
+DESIGN QUALITY REQUIREMENTS (MANDATORY):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. VISUAL HIERARCHY & TYPOGRAPHY:
+   ✓ Headlines: text-7xl to text-9xl, font-black, dramatic leading
+   ✓ Subheadlines: text-3xl to text-5xl, font-bold
+   ✓ Body: text-lg to text-2xl, never smaller than text-base
+   ✓ Use tracking-tight for headlines, tracking-wide for labels
+
+2. COLOR & GRADIENTS:
+   ✓ Use brand colors [${primaryColor}] and [${accentColor}] as primary focus
+   ✓ Multi-layer gradients: bg-gradient-to-br, bg-gradient-to-tr
+   ✓ Transparency layers: /90, /80, /70 for depth
+   ✓ White overlays: white/10, white/20 for glassmorphism
+
+3. SPACING & LAYOUT:
+   ✓ Generous padding: p-12, p-16, py-24, py-32
+   ✓ Max-width constraints: max-w-7xl, max-w-6xl for readability
+   ✓ Gap between elements: gap-8, gap-12, gap-16
+
+4. DEPTH & SHADOWS:
+   ✓ Cards: shadow-2xl with hover:shadow-3xl
+   ✓ Elements: drop-shadow-2xl for text
+   ✓ Layered shadows for premium 3D effect
+   ✓ Blur effects: blur-2xl, blur-3xl for ambient glow
+
+5. INTERACTIVITY & ANIMATIONS:
+   ✓ Hover states: hover:scale-105, hover:scale-110
+   ✓ Transitions: transition-all duration-300 or duration-500
+   ✓ Entrance animations: animate-fade-in-up with delays
+   ✓ Smooth transforms on all interactive elements
+
+6. MODERN DESIGN ELEMENTS:
+   ✓ Glassmorphism: backdrop-blur-xl with bg-white/20
+   ✓ Neumorphism for cards and buttons
+   ✓ Gradient text: bg-clip-text text-transparent
+   ✓ Rounded corners: rounded-2xl, rounded-3xl everywhere
+   ✓ Border highlights: border-2 border-white/30
+
+7. RESPONSIVE DESIGN:
+   ✓ Mobile-first: Use sm:, md:, lg: prefixes extensively
+   ✓ Stack on mobile: flex-col sm:flex-row
+   ✓ Scale typography: text-5xl md:text-7xl lg:text-9xl
+   ✓ Adjust padding: p-6 md:p-12 lg:p-16
+
+8. ACCESSIBILITY:
+   ✓ High contrast text on backgrounds
+   ✓ Focus states with rings: focus:ring-8
+   ✓ Semantic HTML structure
+   ✓ Alt text for decorative SVGs
 
 ⚠️⚠️⚠️ FINAL REMINDER - THESE IDs ARE MANDATORY ⚠️⚠️⚠️
 Your HTML MUST include:
@@ -483,17 +666,43 @@ Your HTML MUST include:
 Copy these EXACTLY from the example above!
 
 OUTPUT FORMAT:
-Return ONLY a JSON object:
+Return ONLY a JSON object with properly escaped HTML:
 {
-  "html": "complete HTML as string",
+  "html": "complete HTML as escaped string",
   "metadata": {
     "title": "Thank You - ${companyName}",
     "description": "Claim your reward from ${companyName}"
   }
 }
 
-QUALITY STANDARD:
-Make this look like a $10,000 professional marketing agency designed it. Use modern 2024-2025 design trends. This should win a design award. Every pixel should be intentional and beautiful.`;
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUALITY STANDARD - READ THIS CAREFULLY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This landing page MUST look like:
+• A $10,000+ custom design from a top marketing agency
+• Award-winning modern web design (Awwwards.com quality)
+• 2024-2025 design trends: bold typography, dramatic gradients, smooth animations
+• Apple/Tesla/luxury brand aesthetic: premium, sophisticated, clean
+• Every element intentionally placed with purpose and beauty
+
+DO NOT CREATE:
+✗ Generic templates with bland colors
+✗ Simple flat designs without depth
+✗ Small text or cramped layouts
+✗ Static pages without hover effects
+✗ Plain white backgrounds without texture
+
+DO CREATE:
+✓ BOLD, attention-grabbing hero sections
+✓ DRAMATIC gradients using brand colors
+✓ LARGE typography (text-7xl to text-9xl)
+✓ SMOOTH animations and transitions
+✓ DEEP shadows and 3D depth effects
+✓ PREMIUM glassmorphism and modern effects
+
+Think LUXURY. Think PREMIUM. Think WOW FACTOR.`;
+
 
     // Generate HTML with retry logic
     let generatedContent;
