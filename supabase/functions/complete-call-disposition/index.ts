@@ -77,6 +77,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Dispatch Zapier event
+    try {
+      if (callSession.campaigns?.client_id) {
+        await supabase.functions.invoke('dispatch-zapier-event', {
+          body: {
+            event_type: 'call.completed',
+            client_id: callSession.campaigns.client_id,
+            data: {
+              call_session_id: callSessionId,
+              campaign_id: callSession.campaign_id,
+              recipient_id: callSession.recipient_id,
+              disposition: disposition,
+              notes: notes || null,
+              completed_at: new Date().toISOString(),
+            }
+          }
+        });
+        console.log('Zapier event dispatched for call completion');
+      }
+    } catch (zapierError) {
+      console.error('Failed to dispatch Zapier event:', zapierError);
+    }
+
     return new Response(
       JSON.stringify({ success: true, message: 'Call disposition recorded successfully' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

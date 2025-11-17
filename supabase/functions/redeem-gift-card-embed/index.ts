@@ -79,6 +79,34 @@ Deno.serve(async (req) => {
       console.error("Error marking gift card as claimed:", updateError);
     }
 
+    // Dispatch Zapier event
+    try {
+      const { data: pool } = await supabase
+        .from('gift_card_pools')
+        .select('client_id')
+        .eq('id', giftCard.pool_id)
+        .single();
+
+      if (pool) {
+        await supabase.functions.invoke('dispatch-zapier-event', {
+          body: {
+            event_type: 'gift_card.redeemed',
+            client_id: pool.client_id,
+            data: {
+              gift_card_id: giftCard.id,
+              card_code: giftCard.card_code,
+              value: giftCard.pool?.card_value || 0,
+              provider: giftCard.pool?.provider || 'Gift Card',
+              redeemed_at: new Date().toISOString(),
+            }
+          }
+        });
+        console.log('Zapier event dispatched for gift card redemption');
+      }
+    } catch (zapierError) {
+      console.error('Failed to dispatch Zapier event:', zapierError);
+    }
+
     return Response.json(
       {
         valid: true,
