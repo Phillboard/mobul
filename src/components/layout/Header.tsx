@@ -70,11 +70,11 @@ export function Header() {
   return (
     <>
       <ImpersonationBanner />
-      <header className="sticky top-0 z-30 h-16 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="flex h-full items-center justify-between px-3 md:px-6 gap-2 md:gap-4">
-        <div className="flex-1 flex items-center gap-2 md:gap-3 min-w-0">
+      <header className="sticky top-0 z-30 h-14 md:h-16 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <div className="flex h-full items-center justify-between px-2 md:px-6 gap-1 md:gap-4">
+        <div className="flex-1 flex items-center gap-1 md:gap-3 min-w-0">
           {/* Sidebar Toggle */}
-          <SidebarTrigger className="-ml-1" />
+          <SidebarTrigger className="-ml-1 h-10 w-10 md:h-9 md:w-9" />
           
           {/* Admin Mode Toggle */}
           {hasRole('admin') && (
@@ -83,11 +83,11 @@ export function Header() {
                 <Button 
                   variant={isAdminMode ? "default" : "outline"} 
                   size="sm" 
-                  className={`gap-2 ${isAdminMode ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20' : ''}`}
+                  className={`gap-1 md:gap-2 h-10 px-2 md:px-3 ${isAdminMode ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20' : ''}`}
                 >
                   <Shield className={`h-4 w-4 ${isAdminMode ? 'text-amber-500' : ''}`} />
-                  {isAdminMode ? "Admin View" : "Client View"}
-                  <ChevronDown className="h-3 w-3" />
+                  <span className="hidden sm:inline">{isAdminMode ? "Admin View" : "Client View"}</span>
+                  <ChevronDown className="h-3 w-3 hidden sm:inline" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-popover z-50">
@@ -112,17 +112,17 @@ export function Header() {
           )}
 
           {/* Organization Selector */}
-          {organizations.length > 0 && (
+          {!isAdminMode && organizations.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className={`gap-2 ${currentOrg ? 'border-primary/50' : ''}`}
+                  className={`gap-1 md:gap-2 h-10 md:h-9 px-2 md:px-3 ${currentOrg ? 'border-primary/50' : ''}`}
                 >
-                  <Building2 className={`h-4 w-4 ${currentOrg ? 'text-primary' : ''}`} />
-                  <span className="font-medium">{currentOrg?.name || "Select Agency"}</span>
-                  <ChevronDown className="h-3 w-3" />
+                  <Building2 className={`h-4 w-4 shrink-0 ${currentOrg ? 'text-primary' : ''}`} />
+                  <span className="hidden lg:inline font-medium truncate">{currentOrg?.name || "Select Agency"}</span>
+                  <ChevronDown className="h-3 w-3 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64 bg-popover z-50 max-h-96 overflow-y-auto">
@@ -154,22 +154,22 @@ export function Header() {
           )}
 
           {/* Client Selector */}
-          {clients.length > 0 && (
+          {!isAdminMode && clients.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className={`gap-2 ${currentClient ? 'border-primary/50' : ''}`}
+                  className={`gap-1 md:gap-2 min-w-0 max-w-[120px] sm:max-w-[200px] md:max-w-xs justify-start h-10 md:h-9 px-2 md:px-3 ${currentClient ? 'border-primary/50' : ''}`}
                 >
-                  <Briefcase className={`h-4 w-4 ${currentClient ? 'text-primary' : ''}`} />
-                  <span className="font-medium">{currentClient?.name || "Select Client"}</span>
+                  <Briefcase className={`h-4 w-4 shrink-0 ${currentClient ? 'text-primary' : ''}`} />
+                  <span className="truncate text-xs sm:text-sm font-medium">{currentClient?.name || "Select Client"}</span>
                   {currentClient && (
-                    <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                    <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs hidden md:inline-flex">
                       {currentClient.industry.replace(/_/g, ' ')}
                     </Badge>
                   )}
-                  <ChevronDown className="h-3 w-3" />
+                  <ChevronDown className="h-3 w-3 shrink-0 ml-auto" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-80 bg-popover z-50 max-h-96 overflow-y-auto">
@@ -221,30 +221,30 @@ export function Header() {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           {/* Admin Impersonation Tool */}
           {hasRole('admin') && (
             <ImpersonateUserDialog 
               trigger={
-                <Button variant="ghost" size="icon" className="hidden md:flex" title="Impersonate User">
+                <Button variant="ghost" size="icon" className="hidden md:flex h-9 w-9" title="Impersonate User">
                   <Users className="h-5 w-5" />
                 </Button>
               }
             />
           )}
 
-          <Button variant="ghost" size="icon" className="hidden md:flex">
+          <Button variant="ghost" size="icon" className="hidden lg:flex h-9 w-9">
             <HelpCircle className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="h-9 w-9">
             <Bell className="h-5 w-5" />
           </Button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
+              <Button variant="ghost" className="relative h-9 w-9 md:h-10 md:w-10 rounded-full p-0">
+                <Avatar className="h-9 w-9 md:h-10 md:w-10">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                     {getInitials()}
                   </AvatarFallback>
                 </Avatar>

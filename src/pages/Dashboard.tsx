@@ -211,18 +211,18 @@ const Dashboard = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-2 md:gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">
             {currentClient ? `${currentClient.name} Overview` : "Welcome back"}
           </p>
         </div>
         <Tabs value={dateRange.toString()} onValueChange={(v) => setDateRange(Number(v))}>
-          <TabsList>
-            <TabsTrigger value="7">7 Days</TabsTrigger>
-            <TabsTrigger value="30">30 Days</TabsTrigger>
-            <TabsTrigger value="90">90 Days</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 sm:w-auto">
+            <TabsTrigger value="7" className="text-xs sm:text-sm">7 Days</TabsTrigger>
+            <TabsTrigger value="30" className="text-xs sm:text-sm">30 Days</TabsTrigger>
+            <TabsTrigger value="90" className="text-xs sm:text-sm">90 Days</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -237,18 +237,19 @@ const Dashboard = () => {
           return (
             <Card key={index} variant="glass" hover="lift" className="relative overflow-hidden group">
               <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none opacity-50 group-hover:opacity-70 transition-opacity`} />
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                <CardTitle className="text-sm font-medium text-foreground">{kpi.title}</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative p-4 md:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium text-foreground">{kpi.title}</CardTitle>
                 <div className={`p-2 rounded-lg ${kpi.color.replace('text-', 'bg-')}/10 group-hover:scale-110 transition-transform`}>
                   <Icon className={`h-4 w-4 ${kpi.color}`} />
                 </div>
               </CardHeader>
-              <CardContent className="relative">
-                <div className="text-2xl font-bold text-foreground">{kpi.value}</div>
+              <CardContent className="relative p-4 md:p-6 pt-0 md:pt-0">
+                <div className="text-xl sm:text-2xl font-bold text-foreground">{kpi.value}</div>
                 {kpi.change !== 0 && (
                   <p className={`text-xs flex items-center gap-1 mt-1 ${isPositive ? 'text-success' : 'text-destructive'}`}>
                     <TrendIcon className="h-3 w-3" />
-                    {Math.abs(kpi.change).toFixed(1)}% from last period
+                    <span className="hidden sm:inline">{Math.abs(kpi.change).toFixed(1)}% from last period</span>
+                    <span className="sm:hidden">{Math.abs(kpi.change).toFixed(1)}%</span>
                   </p>
                 )}
               </CardContent>
@@ -267,18 +268,19 @@ const Dashboard = () => {
           return (
             <Card key={index + 4} variant="glass" hover="lift" className="relative overflow-hidden group">
               <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none opacity-50 group-hover:opacity-70 transition-opacity`} />
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                <CardTitle className="text-sm font-medium text-foreground">{kpi.title}</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative p-4 md:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium text-foreground">{kpi.title}</CardTitle>
                 <div className={`p-2 rounded-lg ${kpi.color.replace('text-', 'bg-')}/10 group-hover:scale-110 transition-transform`}>
                   <Icon className={`h-4 w-4 ${kpi.color}`} />
                 </div>
               </CardHeader>
-              <CardContent className="relative">
-                <div className="text-2xl font-bold text-foreground">{kpi.value}</div>
+              <CardContent className="relative p-4 md:p-6 pt-0 md:pt-0">
+                <div className="text-xl sm:text-2xl font-bold text-foreground">{kpi.value}</div>
                 {kpi.change !== 0 && (
                   <p className={`text-xs flex items-center gap-1 mt-1 ${isPositive ? 'text-success' : 'text-destructive'}`}>
                     <TrendIcon className="h-3 w-3" />
-                    {Math.abs(kpi.change).toFixed(1)}% from last period
+                    <span className="hidden sm:inline">{Math.abs(kpi.change).toFixed(1)}% from last period</span>
+                    <span className="sm:hidden">{Math.abs(kpi.change).toFixed(1)}%</span>
                   </p>
                 )}
               </CardContent>

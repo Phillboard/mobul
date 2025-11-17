@@ -57,17 +57,18 @@ export default function Templates() {
 
   return (
     <Layout>
-      <div className="space-y-6 pb-24">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Template Library</h1>
-            <p className="text-muted-foreground mt-2">
+      <div className="space-y-4 md:space-y-6 pb-24">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold">Template Library</h1>
+            <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
               Create and manage your direct mail templates with our visual canvas editor
             </p>
           </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => setCreateDialogOpen(true)} className="shrink-0 h-10 md:h-9">
             <Plus className="mr-2 h-4 w-4" />
-            Create New Template
+            <span className="hidden sm:inline">Create New Template</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </div>
 
