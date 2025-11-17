@@ -108,7 +108,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
         "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5",
+        model: "google/gemini-2.5-flash",
         messages: extractionMessages,
         max_tokens: 1000
       }),
@@ -184,7 +184,7 @@ Return ONLY a JSON object with this structure (no markdown, no code blocks):
         "Authorization": `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5",
+        model: "google/gemini-2.5-flash",
         messages: [{ role: "user", content: pagePrompt }],
         max_tokens: 2000
       }),
