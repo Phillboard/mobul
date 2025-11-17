@@ -113,12 +113,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleSetAdminMode = (mode: boolean) => {
-    setIsAdminMode(mode);
-    localStorage.setItem('adminMode', mode.toString());
-    if (mode) {
-      // When entering admin mode, clear client selection
-      setCurrentClient(null);
+  const handleSetCurrentClient = (client: Client | null) => {
+    setCurrentClient(client);
+    if (!client) {
+      // When clearing client, enter admin mode
+      setIsAdminMode(true);
+      localStorage.setItem('adminMode', 'true');
+    } else {
+      // When selecting a client, exit admin mode
+      setIsAdminMode(false);
+      localStorage.setItem('adminMode', 'false');
     }
   };
 
@@ -130,10 +134,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         currentOrg,
         currentClient,
         setCurrentOrg: handleSetCurrentOrg,
-        setCurrentClient,
+        setCurrentClient: handleSetCurrentClient,
         loading,
         isAdminMode,
-        setAdminMode: handleSetAdminMode,
+        setAdminMode: (mode) => {
+          setIsAdminMode(mode);
+          localStorage.setItem('adminMode', mode.toString());
+          if (mode) {
+            setCurrentClient(null);
+          }
+        },
         impersonatedUserId,
         setImpersonatedUserId,
       }}
