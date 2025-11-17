@@ -2349,11 +2349,13 @@ export type Database = {
           events: string[]
           failure_count: number | null
           id: string
+          integration_type: string | null
           last_triggered_at: string | null
           name: string
           secret: string
           updated_at: string | null
           url: string
+          zapier_metadata: Json | null
         }
         Insert: {
           active?: boolean | null
@@ -2362,11 +2364,13 @@ export type Database = {
           events: string[]
           failure_count?: number | null
           id?: string
+          integration_type?: string | null
           last_triggered_at?: string | null
           name: string
           secret: string
           updated_at?: string | null
           url: string
+          zapier_metadata?: Json | null
         }
         Update: {
           active?: boolean | null
@@ -2375,11 +2379,13 @@ export type Database = {
           events?: string[]
           failure_count?: number | null
           id?: string
+          integration_type?: string | null
           last_triggered_at?: string | null
           name?: string
           secret?: string
           updated_at?: string | null
           url?: string
+          zapier_metadata?: Json | null
         }
         Relationships: [
           {
@@ -2387,6 +2393,100 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zapier_connections: {
+        Row: {
+          client_id: string
+          connection_name: string
+          created_at: string | null
+          description: string | null
+          failure_count: number | null
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          success_count: number | null
+          trigger_events: string[]
+          updated_at: string | null
+          zap_webhook_url: string
+        }
+        Insert: {
+          client_id: string
+          connection_name: string
+          created_at?: string | null
+          description?: string | null
+          failure_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          success_count?: number | null
+          trigger_events?: string[]
+          updated_at?: string | null
+          zap_webhook_url: string
+        }
+        Update: {
+          client_id?: string
+          connection_name?: string
+          created_at?: string | null
+          description?: string | null
+          failure_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          success_count?: number | null
+          trigger_events?: string[]
+          updated_at?: string | null
+          zap_webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zapier_connections_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zapier_trigger_logs: {
+        Row: {
+          error: string | null
+          event_type: string
+          id: string
+          payload: Json
+          response_body: string | null
+          response_status: number | null
+          triggered_at: string | null
+          zapier_connection_id: string
+        }
+        Insert: {
+          error?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          response_body?: string | null
+          response_status?: number | null
+          triggered_at?: string | null
+          zapier_connection_id: string
+        }
+        Update: {
+          error?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          response_body?: string | null
+          response_status?: number | null
+          triggered_at?: string | null
+          zapier_connection_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zapier_trigger_logs_zapier_connection_id_fkey"
+            columns: ["zapier_connection_id"]
+            isOneToOne: false
+            referencedRelation: "zapier_connections"
             referencedColumns: ["id"]
           },
         ]
