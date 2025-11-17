@@ -37,6 +37,7 @@ import EmbedGiftCard from "./pages/EmbedGiftCard";
 import AgencyManagement from "./pages/AgencyManagement";
 import CallCenterDashboard from "./pages/CallCenterDashboard";
 import ZapierTemplates from "./pages/ZapierTemplates";
+import AIGeneratedLandingPage from "./pages/AIGeneratedLandingPage";
 
 import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
 import Contacts from "./pages/Contacts";
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/c/:campaignId/:token" element={<PURLLandingPage />} />
+              <Route path="/p/:slug" element={<AIGeneratedLandingPage />} />
               <Route path="/embed/gift-card" element={<EmbedGiftCard />} />
               <Route path="/embed/gift-card/:campaignId" element={<EmbedGiftCard />} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
