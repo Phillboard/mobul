@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ImpersonateUserDialog } from "@/components/admin/ImpersonateUserDialog";
 import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function Header() {
   const { profile, roles, signOut, hasRole } = useAuth();
@@ -69,9 +70,12 @@ export function Header() {
   return (
     <>
       <ImpersonationBanner />
-      <header className="fixed left-64 right-0 top-0 z-30 h-16 border-b border-border bg-card">
-      <div className="flex h-full items-center justify-between px-6">
-        <div className="flex-1 flex items-center gap-3">
+      <header className="sticky top-0 z-30 h-16 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <div className="flex h-full items-center justify-between px-3 md:px-6 gap-2 md:gap-4">
+        <div className="flex-1 flex items-center gap-2 md:gap-3 min-w-0">
+          {/* Sidebar Toggle */}
+          <SidebarTrigger className="-ml-1" />
+          
           {/* Admin Mode Toggle */}
           {hasRole('admin') && (
             <DropdownMenu>
@@ -222,14 +226,14 @@ export function Header() {
           {hasRole('admin') && (
             <ImpersonateUserDialog 
               trigger={
-                <Button variant="ghost" size="icon" title="Impersonate User">
+                <Button variant="ghost" size="icon" className="hidden md:flex" title="Impersonate User">
                   <Users className="h-5 w-5" />
                 </Button>
               }
             />
           )}
 
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="hidden md:flex">
             <HelpCircle className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon">
