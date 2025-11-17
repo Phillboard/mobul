@@ -43,6 +43,8 @@ import ContactDetail from "./pages/ContactDetail";
 import Companies from "./pages/Companies";
 import Deals from "./pages/Deals";
 import DealDetail from "./pages/DealDetail";
+import Activities from "./pages/Activities";
+import Tasks from "./pages/Tasks";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +82,8 @@ const App = () => (
               <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
               <Route path="/deals" element={<ProtectedRoute><Deals /></ProtectedRoute>} />
               <Route path="/deals/:id" element={<ProtectedRoute><DealDetail /></ProtectedRoute>} />
+              <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
+              <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
               <Route path="/api/docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
               <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
               <Route path="/landing-pages/:id/edit" element={<ProtectedRoute><SimpleLandingPageEditor /></ProtectedRoute>} />
