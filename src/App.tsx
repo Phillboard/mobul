@@ -38,6 +38,9 @@ import AgencyManagement from "./pages/AgencyManagement";
 import CallCenterDashboard from "./pages/CallCenterDashboard";
 
 import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
+import Contacts from "./pages/Contacts";
+import ContactDetail from "./pages/ContactDetail";
+import Companies from "./pages/Companies";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +73,9 @@ const App = () => (
               <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
               <Route path="/purchase-gift-cards" element={<ProtectedRoute requiredPermission="gift_cards.purchase"><PurchaseGiftCards /></ProtectedRoute>} />
               <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
+              <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+              <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetail /></ProtectedRoute>} />
+              <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
               <Route path="/api/docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
               <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
               <Route path="/landing-pages/:id/edit" element={<ProtectedRoute><SimpleLandingPageEditor /></ProtectedRoute>} />
