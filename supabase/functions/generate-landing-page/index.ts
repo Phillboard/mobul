@@ -52,7 +52,20 @@ Deno.serve(async (req) => {
       body: JSON.stringify({ model: "claude-sonnet-4-5", messages: extractionMessages, max_tokens: 1000 }),
     });
 
+    if (!extractionResponse.ok) {
+      const errorText = await extractionResponse.text();
+      console.error("Extraction API error:", extractionResponse.status, errorText);
+      throw new Error(`AI extraction failed: ${errorText}`);
+    }
+
     const extractionData = await extractionResponse.json();
+    console.log("Extraction response:", JSON.stringify(extractionData));
+    
+    if (!extractionData.choices || !extractionData.choices[0]) {
+      console.error("Invalid extraction response:", extractionData);
+      throw new Error("Invalid AI response structure");
+    }
+    
     const content = extractionData.choices[0].message.content;
     const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || content.match(/```\n([\s\S]*?)\n```/);
     const extractedBranding = JSON.parse(jsonMatch ? jsonMatch[1] : content);
@@ -70,7 +83,20 @@ Deno.serve(async (req) => {
       }),
     });
 
+    if (!pageResponse.ok) {
+      const errorText = await pageResponse.text();
+      console.error("Page generation API error:", pageResponse.status, errorText);
+      throw new Error(`AI page generation failed: ${errorText}`);
+    }
+
     const pageData = await pageResponse.json();
+    console.log("Page generation response:", JSON.stringify(pageData));
+    
+    if (!pageData.choices || !pageData.choices[0]) {
+      console.error("Invalid page response:", pageData);
+      throw new Error("Invalid AI response structure");
+    }
+    
     const pageContent = pageData.choices[0].message.content;
     const pageJsonMatch = pageContent.match(/```json\n([\s\S]*?)\n```/) || pageContent.match(/```\n([\s\S]*?)\n```/);
     const generatedContent = JSON.parse(pageJsonMatch ? pageJsonMatch[1] : pageContent);
