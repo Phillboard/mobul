@@ -41,6 +41,8 @@ import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
 import Contacts from "./pages/Contacts";
 import ContactDetail from "./pages/ContactDetail";
 import Companies from "./pages/Companies";
+import Deals from "./pages/Deals";
+import DealDetail from "./pages/DealDetail";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +78,8 @@ const App = () => (
               <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
               <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetail /></ProtectedRoute>} />
               <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
+              <Route path="/deals" element={<ProtectedRoute><Deals /></ProtectedRoute>} />
+              <Route path="/deals/:id" element={<ProtectedRoute><DealDetail /></ProtectedRoute>} />
               <Route path="/api/docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
               <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
               <Route path="/landing-pages/:id/edit" element={<ProtectedRoute><SimpleLandingPageEditor /></ProtectedRoute>} />
