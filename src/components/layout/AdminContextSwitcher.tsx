@@ -11,7 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Shield, Building2, Briefcase, Check } from "lucide-react";
+import { ChevronDown, Shield, Building2, Briefcase, Check, ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
 
 export function AdminContextSwitcher() {
   const { hasRole } = useAuth();
@@ -24,9 +26,22 @@ export function AdminContextSwitcher() {
     setCurrentClient,
     setCurrentOrg 
   } = useTenant();
+  
+  // Track which agencies are expanded
+  const [expandedOrgIds, setExpandedOrgIds] = useState<Set<string>>(new Set());
 
   // Only show for admins
   if (!hasRole('admin')) return null;
+
+  const toggleOrgExpanded = (orgId: string) => {
+    const newExpanded = new Set(expandedOrgIds);
+    if (newExpanded.has(orgId)) {
+      newExpanded.delete(orgId);
+    } else {
+      newExpanded.add(orgId);
+    }
+    setExpandedOrgIds(newExpanded);
+  };
 
   const handleAdminView = () => {
     setAdminMode(true);
@@ -109,31 +124,43 @@ export function AdminContextSwitcher() {
           <DropdownMenuSeparator />
 
           <DropdownMenuLabel className="text-xs text-muted-foreground uppercase flex items-center justify-between">
-            <span>Clients</span>
+            <span>Agencies & Clients</span>
             <Badge variant="secondary" className="text-xs">{clients.length}</Badge>
           </DropdownMenuLabel>
 
           <ScrollArea className="h-[300px]">
             {organizations.map((org) => {
               const orgClients = clients.filter(c => c.org_id === org.id);
-              if (orgClients.length === 0) return null;
+              const isExpanded = expandedOrgIds.has(org.id);
 
               return (
-                <div key={org.id} className="py-1">
-                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <Building2 className="h-3 w-3" />
-                    {org.name}
-                  </div>
-                  {orgClients.map((client) => (
+                <div key={org.id} className="py-0.5">
+                  {/* Agency Header - Clickable to expand/collapse */}
+                  <button
+                    onClick={() => toggleOrgExpanded(org.id)}
+                    className="w-full px-2 py-1.5 text-xs font-semibold text-foreground flex items-center gap-1.5 hover:bg-muted/50 transition-colors rounded-sm"
+                  >
+                    <ChevronRight 
+                      className={`h-3.5 w-3.5 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    />
+                    <Building2 className="h-3.5 w-3.5" />
+                    <span className="flex-1 text-left">{org.name}</span>
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      {orgClients.length}
+                    </Badge>
+                  </button>
+
+                  {/* Clients under this agency */}
+                  {isExpanded && orgClients.map((client) => (
                     <DropdownMenuItem
                       key={client.id}
                       onClick={() => handleClientSelect(client.id)}
-                      className="cursor-pointer pl-6"
+                      className="cursor-pointer pl-8 py-1.5"
                     >
                       <div className="flex items-center justify-between w-full gap-2">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <Briefcase className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                          <span className="truncate">{client.name}</span>
+                          <span className="truncate text-sm">{client.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <Badge 
