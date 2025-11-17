@@ -120,6 +120,26 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Smooth scrolling with momentum on iOS */
+  html {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Safe area insets for mobile notches/home indicators */
+  @supports (padding: max(0px)) {
+    .safe-area-inset-bottom {
+      padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+  }
+  
+  /* Prevent pull-to-refresh on mobile */
+  @media (hover: none) and (pointer: coarse) {
+    body {
+      overscroll-behavior-y: contain;
+    }
+  }
 }
 
 @keyframes slide-in-right {
@@ -228,4 +248,32 @@ All colors MUST be HSL.
   );
   background-size: 200% 100%;
   animation: shimmer 2s linear infinite;
+}
+
+/* Mobile optimizations */
+@layer utilities {
+  /* Touch optimization */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Disable hover effects on touch devices */
+  @media (hover: none) {
+    .hover\:scale-105:hover {
+      transform: none;
+    }
+    .hover\:shadow-glow-md:hover {
+      box-shadow: none;
+    }
+  }
+  
+  /* Better text rendering on mobile */
+  @media (max-width: 768px) {
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+  }
 }

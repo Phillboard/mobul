@@ -30,7 +30,7 @@ export default function Campaigns() {
 
   return (
     <Layout>
-      <div className="space-y-4 md:space-y-6">
+      <div className="space-y-4 md:space-y-6 pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Campaigns</h1>
@@ -39,12 +39,11 @@ export default function Campaigns() {
             </p>
           </div>
           <Button 
-            className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 h-10 md:h-9"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 h-12 md:h-10 shadow-lg hidden sm:flex"
             onClick={() => setWizardOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">New Campaign</span>
-            <span className="sm:hidden">New</span>
+            New Campaign
           </Button>
         </div>
 
@@ -62,21 +61,30 @@ export default function Campaigns() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input 
                     placeholder="Search campaigns..." 
-                    className="pl-9 w-full h-10"
+                    className="pl-9 w-full"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 hidden sm:flex">
+                <Button variant="outline" size="icon" className="h-12 w-12 md:h-10 md:w-10 shrink-0 hidden sm:flex">
                   <Filter className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6">
             <CampaignsList clientId={currentClient.id} searchQuery={searchQuery} />
           </CardContent>
         </Card>
+        
+        {/* Floating Action Button for Mobile */}
+        <Button 
+          onClick={() => setWizardOpen(true)}
+          size="icon"
+          className="fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-2xl sm:hidden z-40 hover:scale-110 active:scale-95"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </div>
 
       <CreateCampaignWizard

@@ -57,7 +57,7 @@ export default function Templates() {
 
   return (
     <Layout>
-      <div className="space-y-4 md:space-y-6 pb-24">
+      <div className="space-y-4 md:space-y-6 pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold">Template Library</h1>
@@ -65,15 +65,19 @@ export default function Templates() {
               Create and manage your direct mail templates with our visual canvas editor
             </p>
           </div>
-          <Button onClick={() => setCreateDialogOpen(true)} className="shrink-0 h-10 md:h-9">
+          <Button 
+            onClick={() => setCreateDialogOpen(true)} 
+            className="shrink-0 h-12 md:h-10 hidden sm:flex shadow-lg"
+          >
             <Plus className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Create New Template</span>
-            <span className="sm:hidden">New</span>
+            Create New Template
           </Button>
         </div>
 
-        <div className="flex items-center gap-4">
-          <TemplateSearch value={searchQuery} onChange={setSearchQuery} />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+          <div className="flex-1">
+            <TemplateSearch value={searchQuery} onChange={setSearchQuery} />
+          </div>
           <ViewToggle view={view} onViewChange={setView} />
         </div>
 
@@ -103,6 +107,15 @@ export default function Templates() {
           templates={templates || []}
           onClearSelection={() => setSelectedIds([])}
         />
+
+        {/* Floating Action Button for Mobile */}
+        <Button 
+          onClick={() => setCreateDialogOpen(true)}
+          size="icon"
+          className="fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-2xl sm:hidden z-40 hover:scale-110 active:scale-95"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
 
         <CreateTemplateDialog
           open={createDialogOpen}
