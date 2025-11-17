@@ -15,6 +15,7 @@ import { PermissionTemplateSelector } from "@/components/settings/PermissionTemp
 import { PermissionCategoryManager } from "@/components/settings/PermissionCategoryManager";
 import { InviteUserDialog } from "@/components/settings/InviteUserDialog";
 import { PendingInvitations } from "@/components/settings/PendingInvitations";
+import { roleDisplayNames, roleDescriptions, roleColors, getRoleLevel, type AppRole } from "@/lib/roleUtils";
 
 interface Permission {
   id: string;
@@ -183,11 +184,15 @@ export default function UserManagement() {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
-                        {user.roles.map((role) => (
-                          <Badge key={role} variant="secondary">
-                            {role.replace('_', ' ')}
-                          </Badge>
-                        ))}
+                        {user.roles.map((role) => {
+                          const displayName = roleDisplayNames[role as AppRole] || role;
+                          const color = roleColors[role as AppRole] || 'bg-gray-500';
+                          return (
+                            <Badge key={role} className={`${color} text-white`}>
+                              {displayName}
+                            </Badge>
+                          );
+                        })}
                       </div>
                     </TableCell>
                     <TableCell>

@@ -24,8 +24,8 @@ export function ClaimPlatformAdmin() {
     }
   });
 
-  // Check if current user is org_admin
-  const isOrgAdmin = hasRole('org_admin');
+  // Check if current user is agency_owner or above
+  const canClaimAdmin = hasRole('agency_owner');
 
   const handleClaimPlatformAdmin = async () => {
     if (!user) return;
@@ -68,8 +68,8 @@ export function ClaimPlatformAdmin() {
   // Don't show if platform admin already exists
   if (platformAdminExists) return null;
 
-  // Don't show if user is not org_admin
-  if (!isOrgAdmin) return null;
+  // Don't show if user cannot claim admin
+  if (!canClaimAdmin) return null;
 
   return (
     <Card className="border-primary/20">

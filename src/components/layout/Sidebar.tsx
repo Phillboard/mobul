@@ -53,8 +53,8 @@ export function Sidebar() {
   const { clients, currentClient, setCurrentClient, currentOrg } = useTenant();
   
   const visibleNavigation = navigation.filter(item => {
-    // Check role-based access (legacy support)
-    if (item.roles && !item.roles.some(role => hasRole(role))) {
+    // Check role-based access
+    if (item.roles && !item.roles.some(role => hasRole(role as any))) {
       return false;
     }
     // Check permission-based access
@@ -82,11 +82,11 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* Platform Admin Context Switcher */}
-        {hasRole('platform_admin') && <AdminContextSwitcher />}
+        {/* Admin Context Switcher */}
+        {hasRole('admin') && <AdminContextSwitcher />}
 
-        {/* Client Selector - for agency/org admins (but not platform admins who use AdminContextSwitcher) */}
-        {!hasRole('platform_admin') && (hasRole('agency_admin') || hasRole('org_admin')) && availableClients.length > 0 && (
+        {/* Client Selector - for agency owners (but not admins who use AdminContextSwitcher) */}
+        {!hasRole('admin') && hasRole('agency_owner') && availableClients.length > 0 && (
           <div className="border-b border-sidebar-border px-3 py-3">
             <div className="flex items-center gap-2 mb-2">
               <Building className="h-4 w-4 text-sidebar-foreground/60" />

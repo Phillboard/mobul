@@ -37,7 +37,7 @@ export default function GiftCardReveal() {
       if (error) throw error;
 
       // Mark as viewed if not admin
-      if (data.redemption_status !== "viewed" && !hasRole("platform_admin")) {
+      if (data.redemption_status !== "viewed" && !hasRole("admin")) {
         await supabase
           .from("gift_card_redemptions")
           .update({
@@ -113,7 +113,7 @@ export default function GiftCardReveal() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950 dark:to-emerald-950 flex items-center justify-center p-4">
-      {hasRole("platform_admin") && (
+      {hasRole("admin") && (
         <div className="fixed top-0 left-0 right-0 bg-amber-500 text-white p-2 text-center z-50 text-sm font-medium">
           ⚡ Admin Preview Mode
         </div>

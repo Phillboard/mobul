@@ -57,8 +57,8 @@ const Dashboard = () => {
   const { data: rewardSummary } = useRewardSummary(currentClient?.id || null, dateRange);
   const { data: conditionRate } = useConditionCompletionRate(currentClient?.id || null, dateRange);
 
-  // Show platform dashboard if platform admin in admin mode
-  if (hasRole('platform_admin') && isAdminMode) {
+  // Show platform dashboard if admin in admin mode
+  if (hasRole('admin') && isAdminMode) {
     return <PlatformDashboard />;
   }
 

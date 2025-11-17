@@ -25,8 +25,8 @@ export function AdminContextSwitcher() {
     setCurrentOrg 
   } = useTenant();
 
-  // Only show for platform admins
-  if (!hasRole('platform_admin')) return null;
+  // Only show for admins
+  if (!hasRole('admin')) return null;
 
   const handleAdminView = () => {
     setAdminMode(true);
