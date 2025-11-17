@@ -60,7 +60,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
 
     fetchTenantData();
-  }, [user]);
+  }, [user, hasRole]); // Add hasRole to deps to refetch when roles load
 
   const fetchTenantData = async () => {
     try {
