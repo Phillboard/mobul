@@ -1,4 +1,4 @@
-import { LucideIcon, User, Settings, Phone, MessageSquare, Palette, Database, Zap, Code, Users, Shield, CreditCard } from "lucide-react";
+import { LucideIcon, User, Settings, Phone, MessageSquare, Palette, Database, Zap, Code, Users, Shield, CreditCard, Building2 } from "lucide-react";
 import { AppRole } from "./roleUtils";
 
 export interface TabConfig {
@@ -10,39 +10,29 @@ export interface TabConfig {
   requiresClient?: boolean;
   requiresOrg?: boolean;
   description?: string;
+  group: 'personal' | 'client' | 'integrations' | 'admin';
 }
 
 export const settingsTabs: TabConfig[] = [
+  // Personal Settings
   {
     id: 'account',
     label: 'Account',
     icon: User,
     roles: 'all',
-    description: 'Personal profile and preferences'
+    description: 'Personal profile and preferences',
+    group: 'personal'
   },
+  
+  // Client Settings
   {
     id: 'general',
     label: 'General',
     icon: Settings,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer'],
     permissions: ['settings.view'],
-    description: 'Platform-wide and organization settings'
-  },
-  {
-    id: 'phone',
-    label: 'Phone Numbers',
-    icon: Phone,
-    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
-    permissions: ['settings.phone_numbers'],
-    description: 'Manage Twilio phone numbers and call routing'
-  },
-  {
-    id: 'sms',
-    label: 'SMS Delivery',
-    icon: MessageSquare,
-    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
-    permissions: ['settings.view'],
-    description: 'View SMS delivery logs and status'
+    description: 'Organization and client settings',
+    group: 'client'
   },
   {
     id: 'branding',
@@ -51,16 +41,38 @@ export const settingsTabs: TabConfig[] = [
     roles: ['admin', 'agency_owner', 'company_owner'],
     permissions: ['clients.edit'],
     requiresClient: true,
-    description: 'Customize client branding and theme'
+    description: 'Customize brand colors, fonts, and logo',
+    group: 'client'
   },
   {
+    id: 'phone',
+    label: 'Phone Numbers',
+    icon: Phone,
+    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
+    permissions: ['settings.phone_numbers'],
+    description: 'Manage call tracking numbers',
+    group: 'client'
+  },
+  {
+    id: 'sms',
+    label: 'SMS Logs',
+    icon: MessageSquare,
+    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
+    permissions: ['settings.view'],
+    description: 'View SMS delivery history',
+    group: 'client'
+  },
+  
+  // Integrations
+  {
     id: 'crm',
-    label: 'CRM',
+    label: 'CRM Integration',
     icon: Database,
     roles: ['admin', 'agency_owner', 'company_owner'],
     permissions: ['settings.integrations'],
     requiresClient: true,
-    description: 'Connect CRM systems'
+    description: 'Connect your CRM system',
+    group: 'integrations'
   },
   {
     id: 'zapier',
@@ -69,23 +81,28 @@ export const settingsTabs: TabConfig[] = [
     roles: ['admin', 'agency_owner', 'company_owner', 'developer'],
     permissions: ['settings.integrations'],
     requiresClient: true,
-    description: 'Zapier integrations and webhooks'
+    description: 'Automation and webhooks',
+    group: 'integrations'
   },
   {
     id: 'api',
-    label: 'API',
+    label: 'API Keys',
     icon: Code,
     roles: ['admin', 'developer'],
     permissions: ['settings.api'],
-    description: 'API keys and documentation'
+    description: 'Developer API access',
+    group: 'integrations'
   },
+  
+  // Administration
   {
     id: 'users',
     label: 'Users',
     icon: Users,
     roles: ['admin', 'agency_owner', 'company_owner'],
     permissions: ['users.manage'],
-    description: 'Invite and manage users'
+    description: 'Invite and manage team members',
+    group: 'admin'
   },
   {
     id: 'security',
@@ -93,7 +110,8 @@ export const settingsTabs: TabConfig[] = [
     icon: Shield,
     roles: ['admin', 'tech_support'],
     permissions: ['platform.security.manage'],
-    description: 'Security audit logs and settings'
+    description: 'Audit logs and security settings',
+    group: 'admin'
   },
   {
     id: 'billing',
@@ -101,6 +119,14 @@ export const settingsTabs: TabConfig[] = [
     icon: CreditCard,
     roles: ['admin', 'agency_owner', 'company_owner'],
     permissions: ['settings.billing'],
-    description: 'View invoices and usage'
+    description: 'Invoices and usage tracking',
+    group: 'admin'
   }
 ];
+
+export const settingsGroups = [
+  { id: 'personal', label: 'Personal', description: 'Your account settings' },
+  { id: 'client', label: 'Client Settings', description: 'Organization and branding' },
+  { id: 'integrations', label: 'Integrations', description: 'Connect external services' },
+  { id: 'admin', label: 'Administration', description: 'Users, security, and billing' }
+] as const;
