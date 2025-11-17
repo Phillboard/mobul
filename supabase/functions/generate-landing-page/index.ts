@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are an expert landing page designer creating CLIENT-BRANDED thank-you pages for businesses that reward customers with gift cards.
+    const systemPrompt = `You are an expert landing page designer creating visually stunning, CLIENT-BRANDED thank-you pages for businesses that reward customers with gift cards.
 
 CRITICAL CONTEXT - READ CAREFULLY:
 These pages are NOT generic gift card redemption pages. They are BRANDED MARKETING PAGES for the client company.
@@ -69,6 +69,14 @@ PAGE IDENTITY:
 ✅ Focus on ${companyName}'s value proposition and expertise in ${industry}
 ❌ This is NOT a ${giftCardBrand} page (gift card is just the reward)
 ❌ Don't use ${giftCardBrand} colors as primary branding
+
+VISUAL REQUIREMENTS - CRITICAL:
+✅ ALWAYS include high-quality, industry-relevant images using Unsplash URLs
+✅ Use actual image URLs in this format: https://images.unsplash.com/photo-[id]?w=800&q=80
+✅ Include hero images, feature images, and section backgrounds
+✅ Add gradients, shadows, and visual depth
+✅ Create dynamic, modern layouts with visual hierarchy
+✅ Use icons from popular icon sets (Lucide, Heroicons, etc.)
 
 
 ${fullPage ? `
@@ -86,8 +94,9 @@ STRUCTURE (Generate ALL sections):
    Headline formula: "Thank You for [${userAction}]! Here's Your $${giftCardValue} ${giftCardBrand} Gift Card"
    - Subheading: Reinforce ${companyName}'s value proposition (why they're the best in ${industry})
    - Background: Use gradient with ${primaryColor} (e.g., "linear-gradient(135deg, ${primaryColor} 0%, [lighter shade] 100%)")
-   - Include industry-relevant hero imagery description
-   - Celebratory but professional visual
+   - MUST include a high-quality hero image using Unsplash URL relevant to ${industry}
+   - Example: https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&q=80 (for office/business)
+   - Celebratory but professional visual with modern design
 
 2. COMPANY BENEFITS (3-4 cards):
    Focus on ${companyName}'s strengths in ${industry}:
@@ -95,8 +104,10 @@ STRUCTURE (Generate ALL sections):
    ${industry === "Auto Warranty" ? "- 24/7 Roadside Assistance\n   - Nationwide Coverage\n   - Easy Claims Process\n   - Certified Mechanics" : ""}
    ${industry === "Insurance" ? "- Comprehensive Coverage\n   - Fast Claims\n   - Trusted Advisors\n   - Competitive Rates" : ""}
    ${industry === "Solar Energy" ? "- Massive Savings\n   - Eco-Friendly\n   - Expert Installation\n   - 25-Year Warranty" : ""}
-   - Each with relevant icon (shield, check, star, etc.)
-   - Professional benefit cards with icons
+   - Each card with relevant icon (shield, check, star, etc.)
+   - Include small supporting images from Unsplash where appropriate
+   - Modern card design with shadows and hover effects
+   - Professional benefit cards with visual depth
 
 3. HOW IT WORKS (3 steps):
    Step 1: "You ${userAction}"
@@ -218,7 +229,7 @@ CRITICAL REMINDERS:
 - Focus content on ${companyName}'s value in ${industry}
 - Gift card is the reward, not the main focus`;
 
-    // Call Lovable AI Gateway
+    // Call Lovable AI Gateway with Claude 4.5 for better quality
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -226,11 +237,12 @@ CRITICAL REMINDERS:
         Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "claude-sonnet-4-5",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: prompt }
         ],
+        max_tokens: 8000
       }),
     });
 
