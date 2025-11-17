@@ -43,10 +43,10 @@ export function ContactsTable({ contacts, isLoading }: ContactsTableProps) {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card variant="glass">
         <div className="p-6 space-y-4">
           {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <div key={i} className="shimmer-effect h-12 w-full rounded-md bg-muted/50" />
           ))}
         </div>
       </Card>
@@ -55,7 +55,7 @@ export function ContactsTable({ contacts, isLoading }: ContactsTableProps) {
 
   if (contacts.length === 0) {
     return (
-      <Card>
+      <Card variant="glass">
         <div className="p-12 text-center">
           <p className="text-muted-foreground">No contacts found</p>
           <p className="text-sm text-muted-foreground mt-2">
@@ -67,27 +67,28 @@ export function ContactsTable({ contacts, isLoading }: ContactsTableProps) {
   }
 
   return (
-    <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Company</TableHead>
-            <TableHead>Lifecycle Stage</TableHead>
-            <TableHead>Lead Score</TableHead>
-            <TableHead>Source</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {contacts.map((contact) => (
-            <TableRow
-              key={contact.id}
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => navigate(`/contacts/${contact.id}`)}
-            >
+    <Card variant="glass" className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader className="bg-muted/30 backdrop-blur-sm">
+            <TableRow className="hover:bg-transparent border-border/50">
+              <TableHead className="font-semibold">Name</TableHead>
+              <TableHead className="font-semibold">Email</TableHead>
+              <TableHead className="font-semibold">Phone</TableHead>
+              <TableHead className="font-semibold">Company</TableHead>
+              <TableHead className="font-semibold">Lifecycle Stage</TableHead>
+              <TableHead className="font-semibold">Lead Score</TableHead>
+              <TableHead className="font-semibold">Source</TableHead>
+              <TableHead className="text-right font-semibold">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {contacts.map((contact) => (
+              <TableRow
+                key={contact.id}
+                className="cursor-pointer hover:bg-primary/5 hover:shadow-glow-sm transition-all duration-200 group border-border/50"
+                onClick={() => navigate(`/contacts/${contact.id}`)}
+              >
               <TableCell className="font-medium">
                 {contact.first_name} {contact.last_name}
                 {contact.do_not_contact && (
@@ -194,6 +195,7 @@ export function ContactsTable({ contacts, isLoading }: ContactsTableProps) {
           ))}
         </TableBody>
       </Table>
+      </div>
     </Card>
   );
 }
