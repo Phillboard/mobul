@@ -53,88 +53,104 @@ Deno.serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are an expert landing page designer creating visually stunning, CLIENT-BRANDED thank-you pages for businesses that reward customers with gift cards.
+    const systemPrompt = `You are an expert landing page designer creating VISUALLY STUNNING, modern, CLIENT-BRANDED thank-you pages.
 
-CRITICAL CONTEXT - READ CAREFULLY:
-These pages are NOT generic gift card redemption pages. They are BRANDED MARKETING PAGES for the client company.
+🎨 CRITICAL DESIGN RULES - NON-NEGOTIABLE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. EVERY section MUST include visual elements (images, gradients, or both)
+2. ALWAYS use real Unsplash image URLs - format: https://images.unsplash.com/photo-[ID]?w=1200&q=80
+3. Use modern design: gradients, shadows (shadow-xl, shadow-2xl), rounded corners (rounded-xl, rounded-2xl)
+4. Create visual hierarchy with size, color, and spacing
+5. Make it look like a professional marketing page from 2024
 
-BUSINESS MODEL:
-- ${companyName} (a ${industry} company) paid for this campaign
-- Customer completed action: ${userAction}
+BUSINESS CONTEXT:
+- ${companyName} (${industry} company) paid for this campaign
+- Customer completed: ${userAction}
 - Reward: $${giftCardValue} ${giftCardBrand} gift card
-- Page PURPOSE: Thank customer, reinforce ${companyName}'s brand, deliver reward, build trust
+- Page PURPOSE: Thank customer + reinforce brand + deliver reward
 
-PAGE IDENTITY:
-✅ This IS a ${companyName} page (use their branding, colors, messaging)
-✅ Focus on ${companyName}'s value proposition and expertise in ${industry}
-❌ This is NOT a ${giftCardBrand} page (gift card is just the reward)
-❌ Don't use ${giftCardBrand} colors as primary branding
+BRAND IDENTITY:
+✅ This IS ${companyName}'s page (use ${primaryColor} and ${accentColor})
+✅ Focus on ${companyName}'s expertise in ${industry}
+❌ NOT a ${giftCardBrand} page (gift card is just the reward)
 
-VISUAL REQUIREMENTS - CRITICAL:
-✅ ALWAYS include high-quality, industry-relevant images using Unsplash URLs
-✅ Use actual image URLs in this format: https://images.unsplash.com/photo-[id]?w=800&q=80
-✅ Include hero images, feature images, and section backgrounds
-✅ Add gradients, shadows, and visual depth
-✅ Create dynamic, modern layouts with visual hierarchy
-✅ Use icons from popular icon sets (Lucide, Heroicons, etc.)
+🖼️ IMAGE REQUIREMENTS (MANDATORY):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Industry-specific Unsplash images for ${industry}:
+${industry === "Insurance" ? `
+- Hero: https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1600&q=80 (business handshake)
+- Section: https://images.unsplash.com/photo-1554224311-beee460c201f?w=800&q=80 (family protection)
+- Icon: https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&q=80 (trust/security)` : ""}
+${industry === "Auto Warranty" ? `
+- Hero: https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1600&q=80 (luxury car)
+- Section: https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&q=80 (mechanic working)
+- Icon: https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&q=80 (car maintenance)` : ""}
+${industry === "Solar Energy" ? `
+- Hero: https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1600&q=80 (solar panels)
+- Section: https://images.unsplash.com/photo-1497440001374-f26997328c1b?w=800&q=80 (modern home)
+- Icon: https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=400&q=80 (energy/environment)` : ""}
+${industry === "Home Services" ? `
+- Hero: https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1600&q=80 (modern home)
+- Section: https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?w=800&q=80 (home improvement)
+- Icon: https://images.unsplash.com/photo-1556911220-bff31c812dba?w=400&q=80 (tools/service)` : ""}
+${!["Insurance", "Auto Warranty", "Solar Energy", "Home Services"].includes(industry) ? `
+- Hero: https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&q=80 (professional business)
+- Section: https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80 (team collaboration)
+- Icon: https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&q=80 (success/growth)` : ""}
+
+ALWAYS include at least 3-5 images throughout the page!
 
 
 ${fullPage ? `
-DESIGN REQUIREMENTS:
-- Use ${primaryColor} as primary brand color (hero, CTAs, accents)
-- Use ${accentColor} for secondary highlights and visual interest
-- Professional, conversion-optimized design with visual hierarchy
-- Industry-appropriate imagery for ${industry}
-- Celebratory but professional tone
-- Trust-building elements specific to ${industry}
+📐 PAGE STRUCTURE - MODERN DESIGN PATTERNS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STRUCTURE (Generate ALL sections):
+1. 🎯 HERO SECTION (FULL-WIDTH, VISUALLY STUNNING):
+   - Background: Gradient overlay on hero image
+   - Style: "background: linear-gradient(135deg, rgba(${primaryColor}, 0.9), rgba(${accentColor}, 0.8)), url([HERO_IMAGE])"
+   - Headline: "Thank You for ${userAction}! Here's Your $${giftCardValue} ${giftCardBrand} Gift Card"
+   - Design: Large text (text-4xl md:text-6xl), bold, white text on gradient
+   - CTA Button: Prominent ${accentColor}, shadow-xl, rounded-xl
+   - MUST USE: One of the hero images listed above
 
-1. HERO SECTION:
-   Headline formula: "Thank You for [${userAction}]! Here's Your $${giftCardValue} ${giftCardBrand} Gift Card"
-   - Subheading: Reinforce ${companyName}'s value proposition (why they're the best in ${industry})
-   - Background: Use gradient with ${primaryColor} (e.g., "linear-gradient(135deg, ${primaryColor} 0%, [lighter shade] 100%)")
-   - MUST include a high-quality hero image using Unsplash URL relevant to ${industry}
-   - Example: https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&q=80 (for office/business)
-   - Celebratory but professional visual with modern design
+2. 💎 BENEFITS GRID (3-4 CARDS):
+   - Modern card style: bg-white, shadow-2xl, rounded-2xl, p-8
+   - Each card includes:
+     * Gradient background or small image at top
+     * Large icon (from Lucide/Heroicons)
+     * Bold title
+     * Description
+   - Grid layout: grid grid-cols-1 md:grid-cols-3 gap-8
+   - Hover effect: hover:shadow-3xl, hover:scale-105 transition
 
-2. COMPANY BENEFITS (3-4 cards):
-   Focus on ${companyName}'s strengths in ${industry}:
-   Examples for ${industry}:
-   ${industry === "Auto Warranty" ? "- 24/7 Roadside Assistance\n   - Nationwide Coverage\n   - Easy Claims Process\n   - Certified Mechanics" : ""}
-   ${industry === "Insurance" ? "- Comprehensive Coverage\n   - Fast Claims\n   - Trusted Advisors\n   - Competitive Rates" : ""}
-   ${industry === "Solar Energy" ? "- Massive Savings\n   - Eco-Friendly\n   - Expert Installation\n   - 25-Year Warranty" : ""}
-   - Each card with relevant icon (shield, check, star, etc.)
-   - Include small supporting images from Unsplash where appropriate
-   - Modern card design with shadows and hover effects
-   - Professional benefit cards with visual depth
+3. 📊 HOW IT WORKS (VISUAL TIMELINE):
+   - 3 steps with circular numbered badges
+   - Style: Large circle with gradient background
+   - Icons for each step
+   - Connected with gradient line
 
-3. HOW IT WORKS (3 steps):
-   Step 1: "You ${userAction}"
-   Step 2: "We Deliver Your Reward"
-   Step 3: "Enjoy Your $${giftCardValue} ${giftCardBrand} Gift Card"
-   - Numbered circular badges
-   - Clear, simple descriptions
+4. 🖼️ ABOUT SECTION (IMAGE + TEXT):
+   - Side-by-side layout (60% text, 40% image)
+   - Include industry-relevant Unsplash image
+   - Rounded corners on image (rounded-2xl)
+   - Shadow on image (shadow-xl)
 
-4. ABOUT ${companyName}:
-   - 2-3 paragraphs establishing expertise in ${industry}
-   - Why customers trust ${companyName}
-   - Company mission/values
-   - Reinforce why customer made the right choice
+5. ✨ TRUST SIGNALS (BADGES/STATS):
+   - Modern stat cards with large numbers
+   - Icons + stats + description
+   - Gradient backgrounds
+   - Example: "50,000+ Happy Customers"
 
-5. TRUST SIGNALS:
-   Industry-specific for ${industry}:
-   ${industry === "Auto Warranty" ? "- BBB Accredited, A+ Rating\n   - 50,000+ Happy Customers\n   - Licensed & Bonded" : ""}
-   ${industry === "Insurance" ? "- Licensed in All 50 States\n   - $2M+ Claims Paid\n   - 4.8★ Customer Rating" : ""}
-   - Include relevant certifications, stats, testimonial
+6. 🎁 GIFT CARD SECTION (HIGHLIGHTED):
+   - Prominent CTA section
+   - Visual gift card representation
+   - ${giftCardBrand} logo or card image
+   - Gradient background with ${accentColor}
 
-6. GIFT CARD REDEMPTION:
-   - "Claim Your $${giftCardValue} ${giftCardBrand} Reward"
-   - Clear instructions
-   - Visual ${giftCardBrand} card representation
-   - Code entry form (will be added automatically)
-
-7. FOOTER:
+7. 📱 FOOTER:
+   - Clean, modern footer
+   - ${companyName} branding
+   - Contact info, social links
    - ${companyName} contact information
    - "Powered by ${companyName}"
    - Privacy Policy & Terms links
