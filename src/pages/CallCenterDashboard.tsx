@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Phone, Gift, CheckCircle } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { CompleteCallDialog } from "@/components/agent/CompleteCallDialog";
 
 export default function CallCenterDashboard() {
   const { toast } = useToast();
@@ -18,6 +19,8 @@ export default function CallCenterDashboard() {
   const { user } = useAuth();
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [sessionToComplete, setSessionToComplete] = useState<string | null>(null);
 
   // Fetch active call sessions
   const { data: activeCalls } = useQuery({
@@ -132,24 +135,35 @@ export default function CallCenterDashboard() {
             <CardContent>
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {activeCalls?.map((call) => (
-                  <Button
-                    key={call.id}
-                    variant={selectedCallId === call.id ? "default" : "outline"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedCallId(call.id)}
-                  >
-                    <div className="flex flex-col items-start flex-1">
-                      <div className="font-semibold">
-                        {call.recipients?.first_name} {call.recipients?.last_name}
+                  <div key={call.id} className="flex items-center gap-2">
+                    <Button
+                      variant={selectedCallId === call.id ? "default" : "outline"}
+                      className="flex-1 justify-start"
+                      onClick={() => setSelectedCallId(call.id)}
+                    >
+                      <div className="flex flex-col items-start flex-1">
+                        <div className="font-semibold">
+                          {call.recipients?.first_name} {call.recipients?.last_name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {call.recipients?.phone} • {call.campaigns?.name}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {call.recipients?.phone} • {call.campaigns?.name}
-                      </div>
-                    </div>
-                    <Badge variant={call.match_status === 'matched' ? 'default' : 'secondary'}>
-                      {call.match_status}
-                    </Badge>
-                  </Button>
+                      <Badge variant={call.match_status === 'matched' ? 'default' : 'secondary'}>
+                        {call.match_status}
+                      </Badge>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSessionToComplete(call.id);
+                        setCompleteDialogOpen(true);
+                      }}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
                 ))}
                 {(!activeCalls || activeCalls.length === 0) && (
                   <div className="text-center py-8 text-muted-foreground">
@@ -215,6 +229,18 @@ export default function CallCenterDashboard() {
           </Card>
         </div>
       </div>
+
+      {sessionToComplete && (
+        <CompleteCallDialog
+          open={completeDialogOpen}
+          onOpenChange={setCompleteDialogOpen}
+          callSessionId={sessionToComplete}
+          onComplete={() => {
+            setSessionToComplete(null);
+            queryClient.invalidateQueries({ queryKey: ['call-center-active-calls'] });
+          }}
+        />
+      )}
     </Layout>
   );
 }
