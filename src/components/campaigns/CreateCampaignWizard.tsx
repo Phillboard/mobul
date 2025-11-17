@@ -9,6 +9,7 @@ import {
 import { CampaignDetailsStep } from "./wizard/CampaignDetailsStep";
 import { PURLSettingsStep } from "./wizard/PURLSettingsStep";
 import { CallTrackingStep } from "./wizard/CallTrackingStep";
+import { ConditionsStep } from "./wizard/ConditionsStep";
 import { SummaryStep } from "./wizard/SummaryStep";
 import { Progress } from "@/components/ui/progress";
 import { DraftManager } from "./DraftManager";
@@ -37,6 +38,20 @@ export interface CampaignFormData {
   utm_source: string;
   utm_medium: string;
   utm_campaign: string;
+
+  // Step 3
+  conditions: Array<{
+    id?: string;
+    condition_number: number;
+    condition_type: string;
+    trigger_action: string;
+    sequence_order: number;
+    is_required: boolean;
+    gift_card_pool_id?: string;
+    sms_template?: string;
+    webhook_url?: string;
+    config_json?: Record<string, any>;
+  }>;
 }
 
 export function CreateCampaignWizard({
@@ -52,9 +67,10 @@ export function CreateCampaignWizard({
     lp_mode: "bridge",
     utm_source: "directmail",
     utm_medium: "postcard",
+    conditions: [],
   });
 
-  const totalSteps = 3;
+  const totalSteps = 4;
   const progress = (currentStep / totalSteps) * 100;
 
   // Auto-save draft every 30 seconds
@@ -114,6 +130,7 @@ export function CreateCampaignWizard({
       lp_mode: "bridge",
       utm_source: "directmail",
       utm_medium: "postcard",
+      conditions: [],
     });
     onOpenChange(false);
   };
@@ -165,6 +182,16 @@ export function CreateCampaignWizard({
         )}
 
         {currentStep === 3 && (
+          <ConditionsStep
+            clientId={clientId}
+            conditions={formData.conditions || []}
+            onConditionsChange={(conditions) => setFormData({ ...formData, conditions })}
+            onNext={() => setCurrentStep(4)}
+            onBack={handleBack}
+          />
+        )}
+
+        {currentStep === 4 && (
           <SummaryStep
             formData={formData}
             onBack={handleBack}

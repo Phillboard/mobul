@@ -16,6 +16,7 @@ import { CommentsTab } from "@/components/campaigns/CommentsTab";
 import { CallAnalyticsTab } from "@/components/campaigns/CallAnalyticsTab";
 import { RewardsTab } from "@/components/campaigns/RewardsTab";
 import { CallLogTable } from "@/components/campaigns/CallLogTable";
+import { ConditionsDisplay } from "@/components/campaigns/ConditionsDisplay";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CampaignDetail() {
@@ -197,8 +198,9 @@ export default function CampaignDetail() {
         </div>
 
         <Tabs defaultValue="tracking" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="tracking">Mail Tracking</TabsTrigger>
+            <TabsTrigger value="conditions">Conditions</TabsTrigger>
             <TabsTrigger value="calls">Call Analytics</TabsTrigger>
             <TabsTrigger value="rewards">Rewards</TabsTrigger>
             <TabsTrigger value="call-log">Call Log</TabsTrigger>
@@ -259,6 +261,10 @@ export default function CampaignDetail() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="conditions">
+            <ConditionsDisplay campaignId={id!} />
           </TabsContent>
 
           <TabsContent value="qr">

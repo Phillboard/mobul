@@ -99,6 +99,31 @@ export function SummaryStep({
         <div>
           <h4 className="font-medium flex items-center gap-2 mb-2">
             <LinkIcon className="h-4 w-4" />
+            Campaign Conditions
+          </h4>
+          <div className="space-y-2 text-sm">
+            {formData.conditions && formData.conditions.length > 0 ? (
+              formData.conditions.map((condition: any, index: number) => (
+                <div key={index} className="flex justify-between">
+                  <span className="text-muted-foreground">Condition {index + 1}:</span>
+                  <span className="text-right">
+                    {condition.condition_type.replace(/_/g, ' ')} → {condition.trigger_action.replace(/_/g, ' ')}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-muted-foreground py-2">
+                No conditions configured
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        <div>
+          <h4 className="font-medium flex items-center gap-2 mb-2">
+            <LinkIcon className="h-4 w-4" />
             Personalized URLs
           </h4>
           <div className="space-y-2 text-sm">
