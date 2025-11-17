@@ -22,6 +22,8 @@ import { MoreHorizontal, Mail, Phone, Edit, Trash2, ExternalLink } from "lucide-
 import { Contact } from "@/hooks/useContacts";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ContactCard } from "./ContactCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ContactsTableProps {
   contacts: Contact[];
@@ -40,13 +42,14 @@ const lifecycleColors: Record<string, string> = {
 
 export function ContactsTable({ contacts, isLoading }: ContactsTableProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   if (isLoading) {
     return (
       <Card variant="glass">
-        <div className="p-6 space-y-4">
+        <div className="p-4 md:p-6 space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="shimmer-effect h-12 w-full rounded-md bg-muted/50" />
+            <div key={i} className="shimmer-effect h-20 md:h-12 w-full rounded-md bg-muted/50" />
           ))}
         </div>
       </Card>
@@ -56,7 +59,7 @@ export function ContactsTable({ contacts, isLoading }: ContactsTableProps) {
   if (contacts.length === 0) {
     return (
       <Card variant="glass">
-        <div className="p-12 text-center">
+        <div className="p-8 md:p-12 text-center">
           <p className="text-muted-foreground">No contacts found</p>
           <p className="text-sm text-muted-foreground mt-2">
             Create your first contact or import from CSV
@@ -68,7 +71,23 @@ export function ContactsTable({ contacts, isLoading }: ContactsTableProps) {
 
   return (
     <Card variant="glass" className="overflow-hidden">
-      <div className="overflow-x-auto">
+      {isMobile ? (
+        <div className="p-4 space-y-3">
+          {contacts.map((contact) => (
+            <ContactCard
+              key={contact.id}
+              contact={contact}
+              onViewDetails={() => navigate(`/contacts/${contact.id}`)}
+              onEdit={() => {}}
+              onSendEmail={() => {}}
+              onCall={() => {}}
+              onDelete={() => {}}
+              lifecycleColors={lifecycleColors}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader className="bg-muted/30 backdrop-blur-sm">
             <TableRow className="hover:bg-transparent border-border/50">
@@ -196,6 +215,7 @@ export function ContactsTable({ contacts, isLoading }: ContactsTableProps) {
         </TableBody>
       </Table>
       </div>
+      )}
     </Card>
   );
 }

@@ -30,43 +30,44 @@ export default function Campaigns() {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Campaigns</h1>
-            <p className="mt-1 text-muted-foreground">
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Campaigns</h1>
+            <p className="mt-1 text-muted-foreground text-sm md:text-base">
               Create, manage, and track your direct mail campaigns
             </p>
           </div>
           <Button 
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 h-10 md:h-9"
             onClick={() => setWizardOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
-            New Campaign
+            <span className="hidden sm:inline">New Campaign</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </div>
 
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+          <CardHeader className="p-4 md:p-6">
+            <div className="flex flex-col gap-4">
               <div>
-                <CardTitle>Your Campaigns</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-lg md:text-xl">Your Campaigns</CardTitle>
+                <CardDescription className="text-sm">
                   Manage and track your direct mail campaigns
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
-                <div className="relative">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input 
                     placeholder="Search campaigns..." 
-                    className="pl-9 w-64"
+                    className="pl-9 w-full h-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 hidden sm:flex">
                   <Filter className="h-4 w-4" />
                 </Button>
               </div>

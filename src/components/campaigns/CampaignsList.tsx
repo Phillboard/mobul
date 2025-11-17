@@ -14,6 +14,7 @@ import {
 import { MoreVertical, Mail, Calendar, Users, QrCode, FileCheck, Send, Eye, TrendingUp } from "lucide-react";
 import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
 import { CampaignProofDialog } from "./CampaignProofDialog";
+import { CampaignCard } from "./CampaignCard";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +25,7 @@ import {
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CampaignsListProps {
   clientId: string;
@@ -39,6 +41,7 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const submitToVendorMutation = useMutation({
     mutationFn: async (campaignId: string) => {
@@ -161,21 +164,40 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
 
   return (
     <>
-      <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Campaign Name</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Audience</TableHead>
-          <TableHead>Calls</TableHead>
-          <TableHead>Rewards</TableHead>
-          <TableHead>Conversion</TableHead>
-          <TableHead>Size</TableHead>
-          <TableHead>Mail Date</TableHead>
-          <TableHead>Postage</TableHead>
-          <TableHead className="w-[50px]"></TableHead>
-        </TableRow>
-      </TableHeader>
+      {isMobile ? (
+        <div className="space-y-3">
+          {campaigns.map((campaign) => (
+            <CampaignCard
+              key={campaign.id}
+              campaign={campaign}
+              onViewDetails={() => navigate(`/campaigns/${campaign.id}`)}
+              onViewAnalytics={() => navigate(`/analytics/${campaign.id}`)}
+              onReviewProof={() => setProofCampaignId(campaign.id)}
+              onSubmitToVendor={() => submitToVendorMutation.mutate(campaign.id)}
+              onEdit={() => {}}
+              onDuplicate={() => {}}
+              onDelete={() => {}}
+              getStatusColor={getStatusColor}
+              getStatusLabel={getStatusLabel}
+            />
+          ))}
+        </div>
+      ) : (
+        <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Campaign Name</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Audience</TableHead>
+            <TableHead>Calls</TableHead>
+            <TableHead>Rewards</TableHead>
+            <TableHead>Conversion</TableHead>
+            <TableHead>Size</TableHead>
+            <TableHead>Mail Date</TableHead>
+            <TableHead>Postage</TableHead>
+            <TableHead className="w-[50px]"></TableHead>
+          </TableRow>
+        </TableHeader>
       <TableBody>
         {campaigns.map((campaign) => (
           <TableRow key={campaign.id}>
@@ -309,6 +331,7 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
         ))}
       </TableBody>
     </Table>
+      )}
 
     {selectedCampaign && (
       <GenerateQRCodesDialog
