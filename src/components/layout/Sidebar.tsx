@@ -13,6 +13,8 @@ import {
   UserCog,
   Globe,
   ShoppingCart,
+  Building2,
+  Contact,
 } from "lucide-react";
 
 interface NavItem {
@@ -27,6 +29,8 @@ const navigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, permissions: ['dashboard.view'] },
   { name: "Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'] },
   { name: "Audiences", href: "/audiences", icon: Users, permissions: ['audiences.view'] },
+  { name: "Contacts", href: "/contacts", icon: Contact, permissions: ['audiences.view'] },
+  { name: "Companies", href: "/companies", icon: Building2, permissions: ['audiences.view'] },
   { name: "Templates", href: "/templates", icon: FileStack, permissions: ['templates.view'] },
   { name: "Lead Marketplace", href: "/marketplace", icon: Zap, permissions: ['lead_marketplace.view'] },
   { name: "Purchase Gift Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase'] },
