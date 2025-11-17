@@ -8,6 +8,7 @@ interface Profile {
   full_name: string | null;
   phone: string | null;
   timezone: string;
+  notification_preferences?: any;
 }
 
 interface UserRole {
