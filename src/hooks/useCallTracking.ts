@@ -51,7 +51,7 @@ export function useCallSession(sessionId: string | null) {
         .select(`
           *,
           recipients(*),
-          campaigns(*, campaign_reward_configs(*, gift_card_pools(*))),
+          campaigns(*, campaign_conditions(*), call_conditions_met(*)),
           tracked_phone_numbers(*)
         `)
         .eq('id', sessionId)
@@ -103,15 +103,19 @@ export function useCompleteCondition() {
   return useMutation({
     mutationFn: async ({
       callSessionId,
+      campaignId,
+      recipientId,
       conditionNumber,
       notes,
     }: {
       callSessionId: string;
-      conditionNumber: 1 | 2 | 3;
+      campaignId: string;
+      recipientId: string;
+      conditionNumber: number;
       notes?: string;
     }) => {
       const { data, error } = await supabase.functions.invoke('complete-condition', {
-        body: { callSessionId, conditionNumber, notes }
+        body: { callSessionId, campaignId, recipientId, conditionNumber, notes }
       });
 
       if (error) throw error;

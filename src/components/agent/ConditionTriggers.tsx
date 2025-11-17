@@ -24,7 +24,10 @@ export function ConditionTriggers({ callSession }: ConditionTriggersProps) {
   const [selectedCondition, setSelectedCondition] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
 
-  const rewardConfigs = callSession.campaigns?.campaign_reward_configs || [];
+  const conditions = callSession.campaigns?.campaign_conditions?.filter(
+    (c: any) => c.trigger_action === 'send_gift_card' && c.condition_type === 'call_completed'
+  ) || [];
+  
   const metConditions = new Set(
     (callSession.campaigns?.call_conditions_met || [])
       .filter((c: any) => c.call_session_id === callSession.id)
@@ -40,7 +43,9 @@ export function ConditionTriggers({ callSession }: ConditionTriggersProps) {
     if (selectedCondition) {
       completeCondition.mutate({
         callSessionId: callSession.id,
-        conditionNumber: selectedCondition as 1 | 2 | 3,
+        campaignId: callSession.campaign_id,
+        recipientId: callSession.recipient_id,
+        conditionNumber: selectedCondition,
         notes: notes.trim() || undefined,
       });
       setSelectedCondition(null);
@@ -48,16 +53,12 @@ export function ConditionTriggers({ callSession }: ConditionTriggersProps) {
     }
   };
 
-  const getConditionConfig = (conditionNumber: number) => {
-    return rewardConfigs.find((rc: any) => rc.condition_number === conditionNumber);
-  };
-
-  if (rewardConfigs.length === 0) {
+  if (conditions.length === 0) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Reward Conditions</CardTitle>
-          <CardDescription>No reward conditions configured for this campaign</CardDescription>
+          <CardDescription>No call-based reward conditions configured for this campaign</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -76,22 +77,22 @@ export function ConditionTriggers({ callSession }: ConditionTriggersProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {[1, 2, 3].map((conditionNumber) => {
-            const config = getConditionConfig(conditionNumber);
-            const isMet = metConditions.has(conditionNumber);
-            
-            if (!config) return null;
-
-            const pool = config.gift_card_pools;
+          {conditions.map((condition: any) => {
+            const isMet = metConditions.has(condition.condition_number);
+            const configJson = condition.config_json || {};
+            const giftCardPoolId = condition.gift_card_pool_id;
 
             return (
               <div
-                key={conditionNumber}
+                key={condition.condition_number}
                 className="flex items-center justify-between p-4 border border-border rounded-lg"
               >
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
-                    <Badge variant="outline">Condition {conditionNumber}</Badge>
+                    <Badge variant="outline">Condition {condition.condition_number}</Badge>
+                    {condition.is_required && (
+                      <Badge variant="secondary">Required</Badge>
+                    )}
                     {isMet && (
                       <Badge variant="default" className="bg-green-500">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -100,16 +101,21 @@ export function ConditionTriggers({ callSession }: ConditionTriggersProps) {
                     )}
                   </div>
                   <p className="text-sm font-medium text-foreground mb-1">
-                    {config.reward_description || `Condition ${conditionNumber}`}
+                    {configJson.description || `Call completed - Condition ${condition.condition_number}`}
                   </p>
-                  {pool && (
+                  {giftCardPoolId && configJson.pool_name && (
                     <p className="text-sm text-muted-foreground">
-                      Reward: ${pool.card_value} {pool.provider} Gift Card
+                      Reward: ${configJson.card_value || 0} {configJson.provider || 'Gift Card'}
+                    </p>
+                  )}
+                  {condition.sms_template && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      SMS will be sent upon completion
                     </p>
                   )}
                 </div>
                 <Button
-                  onClick={() => handleTrigger(conditionNumber)}
+                  onClick={() => handleTrigger(condition.condition_number)}
                   disabled={isMet || completeCondition.isPending}
                   variant={isMet ? "outline" : "default"}
                 >
@@ -127,7 +133,10 @@ export function ConditionTriggers({ callSession }: ConditionTriggersProps) {
           <DialogHeader>
             <DialogTitle>Complete Condition {selectedCondition}</DialogTitle>
             <DialogDescription>
-              {selectedCondition && getConditionConfig(selectedCondition)?.reward_description}
+              {selectedCondition && 
+                conditions.find((c: any) => c.condition_number === selectedCondition)?.config_json?.description || 
+                'Complete this condition to trigger the reward'
+              }
             </DialogDescription>
           </DialogHeader>
           

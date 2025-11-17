@@ -7,7 +7,9 @@ const corsHeaders = {
 
 interface CompleteConditionRequest {
   callSessionId: string;
-  conditionNumber: 1 | 2 | 3;
+  campaignId: string;
+  recipientId: string;
+  conditionNumber: number;
   notes?: string;
 }
 
@@ -33,24 +35,9 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { callSessionId, conditionNumber, notes }: CompleteConditionRequest = await req.json();
+    const { callSessionId, campaignId, recipientId, conditionNumber, notes }: CompleteConditionRequest = await req.json();
 
     console.log(`Completing condition ${conditionNumber} for call session:`, callSessionId);
-
-    // Get call session details
-    const { data: callSession, error: sessionError } = await supabaseClient
-      .from('call_sessions')
-      .select('*, campaigns(*, campaign_reward_configs(*, gift_card_pools(*)))')
-      .eq('id', callSessionId)
-      .single();
-
-    if (sessionError || !callSession) {
-      throw new Error('Call session not found');
-    }
-
-    if (!callSession.recipient_id) {
-      throw new Error('Cannot complete condition for unmatched caller');
-    }
 
     // Check if condition already completed
     const { data: existingCondition } = await supabaseClient
@@ -67,157 +54,139 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Find the reward configuration for this condition
-    const rewardConfig = callSession.campaigns.campaign_reward_configs?.find(
-      (config: any) => config.condition_number === conditionNumber
-    );
+    // Get the condition configuration
+    const { data: condition, error: conditionError } = await supabaseClient
+      .from('campaign_conditions')
+      .select('*')
+      .eq('campaign_id', campaignId)
+      .eq('condition_number', conditionNumber)
+      .single();
 
-    if (!rewardConfig || !rewardConfig.gift_card_pool_id) {
-      console.log('No reward configured for this condition');
-      
-      // Still record the condition as met, just no gift card
-      const { error: insertError } = await supabaseClient
-        .from('call_conditions_met')
-        .insert({
-          call_session_id: callSessionId,
-          campaign_id: callSession.campaign_id,
-          recipient_id: callSession.recipient_id,
-          condition_number: conditionNumber,
-          met_by_agent_id: user.id,
-          notes,
+    if (conditionError || !condition) {
+      throw new Error('Condition not found');
+    }
+
+    let giftCardData = null;
+
+    // If condition has a gift card pool, claim a card
+    if (condition.gift_card_pool_id) {
+      const serviceClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      const { data: claimedCards, error: claimError } = await serviceClient
+        .rpc('claim_available_card', {
+          p_pool_id: condition.gift_card_pool_id,
+          p_recipient_id: recipientId,
+          p_call_session_id: callSessionId,
         });
 
-      if (insertError) throw insertError;
+      if (claimError || !claimedCards || claimedCards.length === 0) {
+        console.error('Failed to claim gift card:', claimError);
+        throw new Error('No gift cards available in pool');
+      }
 
-      return new Response(
-        JSON.stringify({ success: true, message: 'Condition recorded (no reward configured)' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      const claimedCard = claimedCards[0];
+      giftCardData = {
+        id: claimedCard.card_id,
+        code: claimedCard.card_code,
+        value: claimedCard.card_value,
+        provider: claimedCard.provider,
+        deliveryStatus: 'pending'
+      };
+
+      // Create gift card delivery record
+      const { data: recipient } = await supabaseClient
+        .from('recipients')
+        .select('phone')
+        .eq('id', recipientId)
+        .single();
+
+      if (recipient?.phone) {
+        const { error: deliveryError } = await serviceClient
+          .from('gift_card_deliveries')
+          .insert({
+            gift_card_id: claimedCard.card_id,
+            recipient_id: recipientId,
+            campaign_id: campaignId,
+            call_session_id: callSessionId,
+            condition_number: conditionNumber,
+            delivery_method: 'sms',
+            delivery_address: recipient.phone,
+            sms_message: condition.sms_template || `Congratulations! You've earned a $${claimedCard.card_value} ${claimedCard.provider} gift card. Code: ${claimedCard.card_code}`,
+            delivery_status: 'pending',
+          });
+
+        if (deliveryError) {
+          console.error('Failed to create delivery record:', deliveryError);
+        } else {
+          // Invoke SMS sending function
+          const { error: smsError } = await serviceClient.functions.invoke('send-gift-card-sms', {
+            body: {
+              recipientPhone: recipient.phone,
+              giftCardCode: claimedCard.card_code,
+              giftCardValue: claimedCard.card_value,
+              provider: claimedCard.provider,
+              customMessage: condition.sms_template,
+            }
+          });
+
+          if (smsError) {
+            console.error('Failed to send SMS:', smsError);
+          } else {
+            giftCardData.deliveryStatus = 'sent';
+          }
+        }
+      }
     }
 
-    // Use service role client for card claiming
-    const serviceClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Claim a gift card using the database function
-    const { data: claimedCards, error: claimError } = await serviceClient
-      .rpc('claim_available_card', {
-        p_pool_id: rewardConfig.gift_card_pool_id,
-        p_recipient_id: callSession.recipient_id,
-        p_call_session_id: callSessionId,
-      });
-
-    if (claimError || !claimedCards || claimedCards.length === 0) {
-      console.error('Failed to claim gift card:', claimError);
-      throw new Error('No gift cards available in pool');
-    }
-
-    const claimedCard = claimedCards[0];
-    console.log('Gift card claimed:', claimedCard.card_id);
-
-    // Get recipient details for SMS
-    const { data: recipient } = await serviceClient
-      .from('recipients')
-      .select('first_name, last_name, phone')
-      .eq('id', callSession.recipient_id)
-      .single();
-
-    if (!recipient?.phone) {
-      throw new Error('Recipient phone number not found');
-    }
-
-    // Create delivery record with pending status
-    const { data: delivery, error: deliveryError } = await serviceClient
-      .from('gift_card_deliveries')
-      .insert({
-        gift_card_id: claimedCard.card_id,
-        campaign_id: callSession.campaign_id,
-        recipient_id: callSession.recipient_id,
-        call_session_id: callSessionId,
-        condition_number: conditionNumber,
-        delivery_method: 'sms',
-        delivery_address: recipient.phone || callSession.caller_phone,
-        delivery_status: 'pending',
-        sms_status: 'pending',
-      })
-      .select()
-      .single();
-
-    if (deliveryError || !delivery) {
-      console.error('Failed to create delivery record:', deliveryError);
-      throw deliveryError;
-    }
-
-    console.log('Delivery record created:', delivery.id);
-
-    // Build SMS message from template
-    const smsTemplate = rewardConfig.sms_template || 
-      `Congratulations ${recipient.first_name || ''}! You've earned a $${claimedCard.card_value} gift card. Code: ${claimedCard.card_code}`;
-
-    // Send SMS asynchronously via edge function (don't wait)
-    fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-gift-card-sms`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-      },
-      body: JSON.stringify({
-        deliveryId: delivery.id,
-        giftCardCode: claimedCard.card_code,
-        giftCardValue: claimedCard.card_value,
-        recipientPhone: recipient.phone || callSession.caller_phone,
-        recipientName: recipient.first_name,
-        customMessage: smsTemplate,
-      }),
-    }).catch(err => console.error('Failed to queue SMS:', err));
-
-    console.log('SMS delivery queued for:', recipient.phone);
-
-    // Update gift card status to delivered
-    await serviceClient
-      .from('gift_cards')
-      .update({
-        status: 'delivered',
-        delivered_at: new Date().toISOString(),
-        delivery_method: 'sms',
-        delivery_address: recipient.phone,
-      })
-      .eq('id', claimedCard.card_id);
-
-    // Record condition as met
-    await serviceClient
+    // Record the condition as met
+    const { error: insertError } = await supabaseClient
       .from('call_conditions_met')
       .insert({
         call_session_id: callSessionId,
-        campaign_id: callSession.campaign_id,
-        recipient_id: callSession.recipient_id,
+        campaign_id: campaignId,
+        recipient_id: recipientId,
         condition_number: conditionNumber,
         met_by_agent_id: user.id,
-        gift_card_id: claimedCard.card_id,
-        delivery_status: 'pending',
         notes,
+        gift_card_id: giftCardData?.id || null,
+        delivery_status: giftCardData?.deliveryStatus || null,
       });
 
-    console.log('Condition completed successfully');
+    if (insertError) throw insertError;
+
+    // Log event
+    await supabaseClient
+      .from('events')
+      .insert({
+        campaign_id: campaignId,
+        recipient_id: recipientId,
+        event_type: 'condition_completed',
+        source: 'agent_manual',
+        event_data_json: {
+          condition_number: conditionNumber,
+          call_session_id: callSessionId,
+          agent_id: user.id,
+          notes,
+        },
+      });
+
+    console.log(`Condition ${conditionNumber} completed successfully`);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        giftCard: {
-          value: claimedCard.card_value,
-          provider: claimedCard.provider,
-          deliveryStatus: 'pending',
-        }
+      JSON.stringify({
+        success: true,
+        giftCard: giftCardData,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
+
+  } catch (error: any) {
     console.error('Error completing condition:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: error.message || 'An error occurred' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
