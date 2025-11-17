@@ -47,6 +47,45 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_client_assignments: {
+        Row: {
+          agency_org_id: string
+          client_id: string
+          created_at: string | null
+          created_by_user_id: string | null
+          id: string
+        }
+        Insert: {
+          agency_org_id: string
+          client_id: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+        }
+        Update: {
+          agency_org_id?: string
+          client_id?: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_client_assignments_agency_org_id_fkey"
+            columns: ["agency_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_client_assignments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           client_id: string
@@ -1499,21 +1538,18 @@ export type Database = {
           created_at: string | null
           id: string
           org_id: string
-          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           org_id: string
-          role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
           org_id?: string
-          role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: [
@@ -1913,24 +1949,42 @@ export type Database = {
           },
         ]
       }
+      role_hierarchy: {
+        Row: {
+          can_manage_roles: Database["public"]["Enums"]["app_role"][]
+          description: string | null
+          level: number
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          can_manage_roles: Database["public"]["Enums"]["app_role"][]
+          description?: string | null
+          level: number
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          can_manage_roles?: Database["public"]["Enums"]["app_role"][]
+          description?: string | null
+          level?: number
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       role_permissions: {
         Row: {
           created_at: string | null
           id: string
           permission_id: string | null
-          role: Database["public"]["Enums"]["app_role"]
         }
         Insert: {
           created_at?: string | null
           id?: string
           permission_id?: string | null
-          role: Database["public"]["Enums"]["app_role"]
         }
         Update: {
           created_at?: string | null
           id?: string
           permission_id?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: [
           {
@@ -2114,7 +2168,6 @@ export type Database = {
           invited_by: string | null
           metadata: Json | null
           org_id: string | null
-          role: Database["public"]["Enums"]["app_role"]
           status: string | null
           token: string
           updated_at: string | null
@@ -2129,7 +2182,6 @@ export type Database = {
           invited_by?: string | null
           metadata?: Json | null
           org_id?: string | null
-          role: Database["public"]["Enums"]["app_role"]
           status?: string | null
           token?: string
           updated_at?: string | null
@@ -2144,7 +2196,6 @@ export type Database = {
           invited_by?: string | null
           metadata?: Json | null
           org_id?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
           status?: string | null
           token?: string
           updated_at?: string | null
@@ -2376,6 +2427,7 @@ export type Database = {
           permission_name: string
         }[]
       }
+      get_user_role_level: { Args: { _user_id: string }; Returns: number }
       has_permission: {
         Args: { _permission_name: string; _user_id: string }
         Returns: boolean
@@ -2392,6 +2444,13 @@ export type Database = {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
       }
+      user_can_manage_role: {
+        Args: {
+          _target_role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       user_has_client_access: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
@@ -2402,7 +2461,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "org_admin" | "agency_admin" | "client_user" | "platform_admin"
+      app_role:
+        | "admin"
+        | "tech_support"
+        | "agency_owner"
+        | "company_owner"
+        | "developer"
+        | "call_center"
       audience_source: "import" | "purchase" | "manual"
       audience_status: "processing" | "ready" | "failed"
       batch_status: "pending" | "printing" | "mailed" | "delivered"
@@ -2567,7 +2632,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["org_admin", "agency_admin", "client_user", "platform_admin"],
+      app_role: [
+        "admin",
+        "tech_support",
+        "agency_owner",
+        "company_owner",
+        "developer",
+        "call_center",
+      ],
       audience_source: ["import", "purchase", "manual"],
       audience_status: ["processing", "ready", "failed"],
       batch_status: ["pending", "printing", "mailed", "delivered"],
