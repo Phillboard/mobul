@@ -25,10 +25,12 @@ export function Header() {
   const { organizations, currentOrg, setCurrentOrg, isAdminMode, currentClient } = useTenant();
 
   const getRoleLabel = () => {
-    if (roles.some(r => r.role === 'platform_admin')) return 'Platform Admin';
-    if (roles.some(r => r.role === 'org_admin')) return 'Org Admin';
-    if (roles.some(r => r.role === 'agency_admin')) return 'Agency Admin';
-    if (roles.some(r => r.role === 'client_user')) return 'Client User';
+    if (roles.some(r => r.role === 'admin')) return 'Admin';
+    if (roles.some(r => r.role === 'tech_support')) return 'Tech Support';
+    if (roles.some(r => r.role === 'agency_owner')) return 'Agency Owner';
+    if (roles.some(r => r.role === 'company_owner')) return 'Company Owner';
+    if (roles.some(r => r.role === 'developer')) return 'Developer';
+    if (roles.some(r => r.role === 'call_center')) return 'Call Center';
     return 'User';
   };
 
@@ -47,10 +49,10 @@ export function Header() {
       <div className="flex h-full items-center justify-between px-6">
         <div className="flex-1 flex items-center gap-4">
           {/* Admin Mode Badge */}
-          {hasRole('platform_admin') && isAdminMode && (
+          {hasRole('admin') && isAdminMode && (
             <Badge variant="secondary" className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-600 border-amber-500/20">
               <Shield className="h-3 w-3 mr-1" />
-              Platform Admin
+              Admin
             </Badge>
           )}
 

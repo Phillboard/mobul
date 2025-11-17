@@ -13,7 +13,7 @@ interface Profile {
 interface UserRole {
   id: string;
   user_id: string;
-  role: 'org_admin' | 'agency_admin' | 'client_user' | 'platform_admin';
+  role: 'admin' | 'tech_support' | 'agency_owner' | 'company_owner' | 'developer' | 'call_center';
 }
 
 interface AuthContextType {
@@ -23,9 +23,11 @@ interface AuthContextType {
   roles: UserRole[];
   permissions: string[];
   loading: boolean;
-  hasRole: (role: 'org_admin' | 'agency_admin' | 'client_user' | 'platform_admin') => boolean;
+  hasRole: (role: 'admin' | 'tech_support' | 'agency_owner' | 'company_owner' | 'developer' | 'call_center') => boolean;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
+  getRoleLevel: () => number;
+  canManageUser: (targetUserId: string) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -94,7 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('user_id', userId);
 
       if (rolesError) throw rolesError;
-      setRoles(rolesData || []);
+      // The database has new role names but TypeScript hasn't caught up yet
+      setRoles(rolesData as any || []);
 
       // Fetch permissions
       const { data: permissionsData, error: permissionsError } = await supabase
@@ -116,8 +119,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const hasRole = (role: 'org_admin' | 'agency_admin' | 'client_user' | 'platform_admin') => {
+  const hasRole = (role: 'admin' | 'tech_support' | 'agency_owner' | 'company_owner' | 'developer' | 'call_center') => {
     return roles.some(r => r.role === role);
+  };
+
+  const getRoleLevel = () => {
+    const levels = {
+      admin: 1,
+      tech_support: 2,
+      agency_owner: 3,
+      company_owner: 4,
+      developer: 5,
+      call_center: 6
+    };
+    const userLevel = Math.min(...roles.map(r => levels[r.role] || 999));
+    return userLevel;
+  };
+
+  const canManageUser = async (targetUserId: string) => {
+    if (!user) return false;
+    const userLevel = getRoleLevel();
+    
+    const { data: targetRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', targetUserId);
+    
+    if (!targetRoles || targetRoles.length === 0) return false;
+    
+    const levels = {
+      admin: 1,
+      tech_support: 2,
+      agency_owner: 3,
+      company_owner: 4,
+      developer: 5,
+      call_center: 6
+    };
+    const targetLevel = Math.min(...targetRoles.map((r: any) => levels[r.role] || 999));
+    
+    return userLevel < targetLevel;
   };
 
   const hasPermission = (permission: string): boolean => {
@@ -170,9 +210,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roles,
         permissions,
         loading,
-        hasRole,
-        hasPermission,
-        hasAnyPermission,
+    hasRole,
+    hasPermission,
+    hasAnyPermission,
+    getRoleLevel,
+    canManageUser,
         signIn,
         signUp,
         signOut,

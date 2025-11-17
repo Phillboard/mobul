@@ -34,6 +34,8 @@ import LandingPages from "./pages/LandingPages";
 import SimpleLandingPageEditor from "./pages/SimpleLandingPageEditor";
 import GiftCardReveal from "./pages/GiftCardReveal";
 import EmbedGiftCard from "./pages/EmbedGiftCard";
+import AgencyManagement from "./pages/AgencyManagement";
+import CallCenterDashboard from "./pages/CallCenterDashboard";
 
 import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
 
@@ -73,6 +75,9 @@ const App = () => (
               <Route path="/landing-pages/:id/edit" element={<ProtectedRoute><SimpleLandingPageEditor /></ProtectedRoute>} />
               <Route path="/landing-pages/:id/visual-editor" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
               <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
+              <Route path="/agent-dashboard" element={<ProtectedRoute><AgentCallDashboard /></ProtectedRoute>} />
+              <Route path="/call-center" element={<ProtectedRoute requiredRole="call_center"><CallCenterDashboard /></ProtectedRoute>} />
+              <Route path="/agency-management" element={<ProtectedRoute requiredRole="agency_owner"><AgencyManagement /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/generate-favicon" element={<ProtectedRoute><GenerateFavicon /></ProtectedRoute>} />
               <Route path="/users" element={<ProtectedRoute requiredPermission="users.view"><UserManagement /></ProtectedRoute>} />

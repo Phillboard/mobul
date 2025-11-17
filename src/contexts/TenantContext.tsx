@@ -88,9 +88,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       
       setClients(clientsData || []);
 
-      // Set default client for agency admins and client users
+      // Set default client for agency owners and company owners
       if (clientsData && clientsData.length > 0 && !currentClient) {
-        if (hasRole('agency_admin') || hasRole('client_user')) {
+        if (hasRole('agency_owner') || hasRole('company_owner')) {
           setCurrentClient(clientsData[0]);
         }
       }

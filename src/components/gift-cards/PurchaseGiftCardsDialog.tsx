@@ -12,6 +12,7 @@ interface PurchaseGiftCardsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
+  isAgencyOwner?: boolean;
 }
 
 const CARD_VALUE_OPTIONS = [10, 25, 50, 100, 250, 500];
@@ -21,6 +22,7 @@ export function PurchaseGiftCardsDialog({
   open,
   onOpenChange,
   clientId,
+  isAgencyOwner = false,
 }: PurchaseGiftCardsDialogProps) {
   const [quantity, setQuantity] = useState<number>(50);
   const [cardValue, setCardValue] = useState<number>(25);
