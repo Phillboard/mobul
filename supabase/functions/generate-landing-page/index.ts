@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       if (!sourceUrl) {
         return Response.json({ error: "URL is required for url source type" }, { status: 400, headers: corsHeaders });
       }
-      extractionPrompt = `Analyze this company website URL and extract branding information: ${sourceUrl}
+      extractionPrompt = `Analyze this company website URL and extract detailed branding information: ${sourceUrl}
 
 Return ONLY a JSON object with this exact structure (no markdown, no code blocks):
 {
@@ -51,7 +51,13 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
   "industry": "industry type",
   "primaryColor": "#hexcolor",
   "accentColor": "#hexcolor",
-  "tagline": "optional tagline"
+  "backgroundColor": "#hexcolor (light neutral background)",
+  "textColor": "#hexcolor (dark readable text)",
+  "tagline": "compelling tagline",
+  "designStyle": "modern/minimalist/bold/professional/luxury",
+  "emotionalTone": "friendly/professional/exciting/trustworthy",
+  "fontStyle": "sans-serif/serif recommendation",
+  "logoUrl": "if visible on site"
 }`;
       extractionMessages.push({ role: "user", content: extractionPrompt });
     } else if (sourceType === "image") {
@@ -63,7 +69,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
         content: [
           {
             type: "text",
-            text: `Analyze this marketing flyer/image and extract branding information.
+            text: `Analyze this marketing flyer/image and extract detailed branding information.
 
 Return ONLY a JSON object with this exact structure (no markdown, no code blocks):
 {
@@ -71,7 +77,13 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
   "industry": "industry type",
   "primaryColor": "#hexcolor",
   "accentColor": "#hexcolor",
-  "tagline": "optional tagline"
+  "backgroundColor": "#hexcolor (light neutral background)",
+  "textColor": "#hexcolor (dark readable text)",
+  "tagline": "compelling tagline",
+  "designStyle": "modern/minimalist/bold/professional/luxury",
+  "emotionalTone": "friendly/professional/exciting/trustworthy",
+  "fontStyle": "sans-serif/serif recommendation",
+  "logoUrl": "if visible in image"
 }`
           },
           {
@@ -84,7 +96,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
       if (!sourceDescription) {
         return Response.json({ error: "Description is required for description source type" }, { status: 400, headers: corsHeaders });
       }
-      extractionPrompt = `Based on this business description, infer the company branding: "${sourceDescription}"
+      extractionPrompt = `Based on this business description, infer detailed company branding: "${sourceDescription}"
 
 Return ONLY a JSON object with this exact structure (no markdown, no code blocks):
 {
@@ -92,7 +104,12 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
   "industry": "inferred industry type",
   "primaryColor": "#hexcolor (appropriate for the industry)",
   "accentColor": "#hexcolor (complementary color)",
-  "tagline": "suggested tagline"
+  "backgroundColor": "#f8f9fa or appropriate light color",
+  "textColor": "#1a1a1a or appropriate dark color",
+  "tagline": "compelling suggested tagline",
+  "designStyle": "modern/minimalist/bold/professional/luxury (based on industry)",
+  "emotionalTone": "friendly/professional/exciting/trustworthy (based on industry)",
+  "fontStyle": "sans-serif/serif recommendation"
 }`;
       extractionMessages.push({ role: "user", content: extractionPrompt });
     } else {
