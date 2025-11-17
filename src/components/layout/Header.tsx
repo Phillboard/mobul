@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Bell, HelpCircle, LogOut, User, Building2, ChevronDown, Shield, Briefcase } from "lucide-react";
+import { Bell, HelpCircle, LogOut, User, Building2, ChevronDown, Shield, Briefcase, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
 import {
@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ImpersonateUserDialog } from "@/components/admin/ImpersonateUserDialog";
+import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 
 export function Header() {
   const { profile, roles, signOut, hasRole } = useAuth();
@@ -45,7 +47,9 @@ export function Header() {
   };
 
   return (
-    <header className="fixed left-64 right-0 top-0 z-30 h-16 border-b border-border bg-card">
+    <>
+      <ImpersonationBanner />
+      <header className="fixed left-64 right-0 top-0 z-30 h-16 border-b border-border bg-card">
       <div className="flex h-full items-center justify-between px-6">
         <div className="flex-1 flex items-center gap-4">
           {/* Admin Mode Badge */}
@@ -91,6 +95,17 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Admin Impersonation Tool */}
+          {hasRole('admin') && (
+            <ImpersonateUserDialog 
+              trigger={
+                <Button variant="ghost" size="icon" title="Impersonate User">
+                  <Users className="h-5 w-5" />
+                </Button>
+              }
+            />
+          )}
+
           <Button variant="ghost" size="icon">
             <HelpCircle className="h-5 w-5" />
           </Button>
