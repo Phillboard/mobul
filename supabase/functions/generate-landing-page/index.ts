@@ -212,7 +212,17 @@ Return ONLY a JSON object with this exact structure (no markdown, no code blocks
     // Generate complete branded HTML landing page
     console.log("Generating complete HTML landing page...");
     
-    const htmlPrompt = `You are an expert web designer creating a premium, award-winning landing page. This should look like a professional marketing agency designed it, with modern 2024-2025 design trends.
+    const htmlPrompt = `⚠️ CRITICAL REQUIREMENTS - YOU MUST INCLUDE THESE EXACT IDs ⚠️
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+THE FORM MUST HAVE THESE EXACT IDs OR THE PAGE WILL NOT WORK:
+1. <form id="giftCardRedemptionForm"> ← REQUIRED
+2. <input id="codeInput"> ← REQUIRED  
+3. <button id="submitButton"> ← REQUIRED
+
+DO NOT CHANGE THESE IDS. DO NOT OMIT THESE IDS. COPY THEM EXACTLY.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+You are creating a premium landing page for:
 
 BRANDING CONTEXT:
 - Company: ${companyName}
@@ -267,13 +277,16 @@ CONCRETE DESIGN EXAMPLES - FOLLOW THESE PATTERNS EXACTLY
           <p class="text-white text-9xl font-black drop-shadow-2xl mb-2">$${giftCardValue}</p>
           <p class="text-white/80 text-lg font-semibold">Exclusive Reward for You</p>
         </div>
-        
+         
         <form id="giftCardRedemptionForm" class="relative z-10 space-y-6">
+          ⬆️ CRITICAL: id="giftCardRedemptionForm" IS REQUIRED ⬆️
+          
           <div>
             <label for="codeInput" class="block text-white text-lg font-bold mb-3 text-center">Enter Your Unique Redemption Code</label>
             <input 
               type="text" 
               id="codeInput"
+              ⬆️ CRITICAL: id="codeInput" IS REQUIRED ⬆️
               placeholder="XXXX-XXXX-XXXX"
               class="w-full px-8 py-6 text-3xl font-black text-center rounded-2xl border-4 border-white/40 focus:border-white focus:ring-8 focus:ring-white/50 transition-all duration-300 text-gray-900 placeholder-gray-400 shadow-inner bg-white/95"
               required
@@ -283,6 +296,7 @@ CONCRETE DESIGN EXAMPLES - FOLLOW THESE PATTERNS EXACTLY
           <button 
             type="submit"
             id="submitButton"
+            ⬆️ CRITICAL: id="submitButton" IS REQUIRED ⬆️
             class="w-full bg-white text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 font-black text-2xl py-6 rounded-2xl shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 relative overflow-hidden group"
             style="background: white;"
           >
@@ -420,11 +434,12 @@ DESIGN QUALITY REQUIREMENTS:
 ✓ Colors: Use brand colors [${primaryColor}] and [${accentColor}] extensively
 ✓ Mobile-First: All text and spacing should scale down on mobile (sm:, md:, lg:)
 
-CRITICAL FORM REQUIREMENTS:
-- Form MUST have id="giftCardRedemptionForm"
-- Input MUST have id="codeInput" 
-- Button MUST have id="submitButton"
-- All three are REQUIRED for functionality
+⚠️⚠️⚠️ FINAL REMINDER - THESE IDs ARE MANDATORY ⚠️⚠️⚠️
+Your HTML MUST include:
+- <form id="giftCardRedemptionForm">
+- <input id="codeInput">
+- <button id="submitButton">
+Copy these EXACTLY from the example above!
 
 OUTPUT FORMAT:
 Return ONLY a JSON object:
