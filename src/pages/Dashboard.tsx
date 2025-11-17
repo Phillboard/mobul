@@ -44,6 +44,8 @@ import { formatDistanceToNow } from "date-fns";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useCallStats, useRewardSummary, useConditionCompletionRate } from "@/hooks/useCallAnalytics";
 import { useNavigate } from "react-router-dom";
+import { ConditionsSummaryCard } from "@/components/dashboard/ConditionsSummaryCard";
+import { GiftCardSummaryCard } from "@/components/dashboard/GiftCardSummaryCard";
 
 const Dashboard = () => {
   const { currentClient, isAdminMode } = useTenant();
@@ -279,6 +281,20 @@ const Dashboard = () => {
           );
         })}
       </div>
+
+      {/* Conditions Summary */}
+      {currentClient && (
+        <div className="space-y-6">
+          <ConditionsSummaryCard clientId={currentClient.id} />
+        </div>
+      )}
+
+      {/* Gift Card Summary */}
+      {currentClient && (
+        <div className="space-y-6">
+          <GiftCardSummaryCard clientId={currentClient.id} />
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Campaign Performance Chart */}

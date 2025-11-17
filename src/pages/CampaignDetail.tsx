@@ -17,6 +17,8 @@ import { CallAnalyticsTab } from "@/components/campaigns/CallAnalyticsTab";
 import { RewardsTab } from "@/components/campaigns/RewardsTab";
 import { CallLogTable } from "@/components/campaigns/CallLogTable";
 import { ConditionsDisplay } from "@/components/campaigns/ConditionsDisplay";
+import { GiftCardInventoryPanel } from "@/components/campaigns/GiftCardInventoryPanel";
+import { DeliveryTimelinePanel } from "@/components/campaigns/DeliveryTimelinePanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function CampaignDetail() {
@@ -323,8 +325,12 @@ export default function CampaignDetail() {
             <CallAnalyticsTab campaignId={id!} />
           </TabsContent>
 
-          <TabsContent value="rewards">
-            <RewardsTab campaignId={id!} />
+          <TabsContent value="rewards" className="space-y-6">
+            <div className="space-y-6">
+              <GiftCardInventoryPanel campaignId={id!} />
+              <RewardsTab campaignId={id!} />
+              <DeliveryTimelinePanel campaignId={id!} />
+            </div>
           </TabsContent>
 
           <TabsContent value="call-log">
