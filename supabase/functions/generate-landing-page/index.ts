@@ -229,7 +229,7 @@ CRITICAL REMINDERS:
 - Focus content on ${companyName}'s value in ${industry}
 - Gift card is the reward, not the main focus`;
 
-    // Call Lovable AI Gateway with Claude 4.5 for better quality
+    // Call Lovable AI Gateway with GPT-5 for better quality
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -237,7 +237,7 @@ CRITICAL REMINDERS:
         Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5",
+        model: "openai/gpt-5",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: prompt }
