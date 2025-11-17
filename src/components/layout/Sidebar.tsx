@@ -2,6 +2,8 @@ import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
 import { 
   LayoutDashboard, 
   Mail, 
@@ -19,7 +21,8 @@ import {
   Building2,
   Briefcase,
   Shield,
-  Check
+  Check,
+  ChevronDown
 } from "lucide-react";
 import {
   Select,
@@ -54,6 +57,7 @@ const navigation: NavItem[] = [
 export function Sidebar() {
   const { hasRole, hasAnyPermission } = useAuth();
   const { clients, currentClient, setCurrentClient, currentOrg, organizations, isAdminMode, setAdminMode } = useTenant();
+  const [isClientsOpen, setIsClientsOpen] = useState(true);
   
   const visibleNavigation = navigation.filter(item => {
     // Check role-based access
@@ -85,72 +89,80 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* Admin Context Switcher - Removed, using direct client list instead */}
-
         {/* Client List in Sidebar for Admins */}
         {hasRole('admin') && (
-          <div className="border-b border-sidebar-border px-3 py-3 space-y-2">
-            <div className="flex items-center justify-between px-2 mb-3">
-              <div className="text-xs font-semibold text-sidebar-foreground/60 uppercase">
+          <div className="border-b border-sidebar-border">
+            {/* Platform Context */}
+            <div className="px-3 py-3 space-y-1">
+              <div className="text-[10px] font-semibold text-sidebar-foreground/50 uppercase tracking-wider px-2 mb-2">
                 Platform Context
               </div>
-            </div>
-            
-            <button
-              onClick={() => setAdminMode(true)}
-              className={cn(
-                "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                isAdminMode
-                  ? "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-600 border border-amber-500/20"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50"
-              )}
-            >
-              <Shield className="h-4 w-4 flex-shrink-0" />
-              <span className="flex-1 text-left">Admin View</span>
-              {isAdminMode && <Check className="h-4 w-4" />}
-            </button>
-
-            <div className="pt-2">
-              <div className="flex items-center justify-between px-2 mb-2">
-                <span className="text-xs font-semibold text-sidebar-foreground/60 uppercase">
-                  Agencies & Clients
-                </span>
-                <span className="text-xs bg-sidebar-accent px-1.5 py-0.5 rounded font-medium">
-                  {clients.length}
-                </span>
-              </div>
               
-              {organizations.map((org) => {
-                const orgClients = clients.filter(c => c.org_id === org.id);
-                return (
-                  <div key={org.id} className="space-y-0.5 mb-2">
-                    <div className="text-xs font-medium text-sidebar-foreground/80 px-2 py-1.5">
-                      <Building2 className="h-3 w-3 inline mr-1.5" />
-                      {org.name}
-                    </div>
-                    {orgClients.map((client) => (
-                      <button
-                        key={client.id}
-                        onClick={() => {
-                          setCurrentClient(client);
-                          setAdminMode(false);
-                        }}
-                        className={cn(
-                          "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
-                          currentClient?.id === client.id
-                            ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                        )}
-                      >
-                        <Briefcase className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span className="truncate flex-1 text-left">{client.name}</span>
-                        {currentClient?.id === client.id && <Check className="h-3.5 w-3.5" />}
-                      </button>
-                    ))}
-                  </div>
-                );
-              })}
+              <button
+                onClick={() => setAdminMode(true)}
+                className={cn(
+                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all",
+                  isAdminMode
+                    ? "bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-600 shadow-sm"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                )}
+              >
+                <Shield className="h-4 w-4 flex-shrink-0" />
+                <span className="flex-1 text-left">Admin View</span>
+                {isAdminMode && <Check className="h-3.5 w-3.5" />}
+              </button>
             </div>
+
+            {/* Collapsible Agencies & Clients */}
+            <Collapsible open={isClientsOpen} onOpenChange={setIsClientsOpen} className="px-3 pb-3">
+              <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-sidebar-accent/30 rounded-md transition-colors group">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
+                    Agencies & Clients
+                  </span>
+                  <span className="text-[10px] bg-sidebar-accent px-1.5 py-0.5 rounded font-medium text-sidebar-foreground/70">
+                    {clients.length}
+                  </span>
+                </div>
+                <ChevronDown className={cn(
+                  "h-3.5 w-3.5 text-sidebar-foreground/40 transition-transform",
+                  isClientsOpen && "rotate-180"
+                )} />
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="mt-2 space-y-3">
+                {organizations.map((org) => {
+                  const orgClients = clients.filter(c => c.org_id === org.id);
+                  return (
+                    <div key={org.id} className="space-y-1">
+                      <div className="text-[10px] font-semibold text-sidebar-foreground/60 uppercase tracking-wider px-2 py-1 flex items-center gap-1.5">
+                        <Building2 className="h-3 w-3" />
+                        {org.name}
+                      </div>
+                      {orgClients.map((client) => (
+                        <button
+                          key={client.id}
+                          onClick={() => {
+                            setCurrentClient(client);
+                            setAdminMode(false);
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-2.5 pl-4 pr-3 py-2 rounded-lg text-sm transition-all",
+                            currentClient?.id === client.id
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium shadow-sm"
+                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                          )}
+                        >
+                          <Briefcase className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
+                          <span className="truncate flex-1 text-left text-[13px]">{client.name}</span>
+                          {currentClient?.id === client.id && <Check className="h-3.5 w-3.5 opacity-70" />}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         )}
 
