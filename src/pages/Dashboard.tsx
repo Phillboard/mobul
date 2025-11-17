@@ -46,6 +46,7 @@ import { useCallStats, useRewardSummary, useConditionCompletionRate } from "@/ho
 import { useNavigate } from "react-router-dom";
 import { ConditionsSummaryCard } from "@/components/dashboard/ConditionsSummaryCard";
 import { GiftCardSummaryCard } from "@/components/dashboard/GiftCardSummaryCard";
+import { AIInsightsPanel } from "@/components/dashboard/AIInsightsPanel";
 
 const Dashboard = () => {
   const { currentClient, isAdminMode } = useTenant();
@@ -227,23 +228,25 @@ const Dashboard = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {kpiCards.slice(0, 4).map((kpi, index) => {
           const Icon = kpi.icon;
           const isPositive = kpi.change >= 0;
           const TrendIcon = isPositive ? TrendingUp : TrendingDown;
 
           return (
-            <Card key={index} className="relative overflow-hidden hover-scale">
-              <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none`} />
+            <Card key={index} variant="glass" hover="lift" className="relative overflow-hidden group">
+              <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none opacity-50 group-hover:opacity-70 transition-opacity`} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                <Icon className={`h-4 w-4 ${kpi.color}`} />
+                <CardTitle className="text-sm font-medium text-foreground">{kpi.title}</CardTitle>
+                <div className={`p-2 rounded-lg ${kpi.color.replace('text-', 'bg-')}/10 group-hover:scale-110 transition-transform`}>
+                  <Icon className={`h-4 w-4 ${kpi.color}`} />
+                </div>
               </CardHeader>
               <CardContent className="relative">
-                <div className="text-2xl font-bold">{kpi.value}</div>
+                <div className="text-2xl font-bold text-foreground">{kpi.value}</div>
                 {kpi.change !== 0 && (
-                  <p className={`text-xs flex items-center gap-1 mt-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-xs flex items-center gap-1 mt-1 ${isPositive ? 'text-success' : 'text-destructive'}`}>
                     <TrendIcon className="h-3 w-3" />
                     {Math.abs(kpi.change).toFixed(1)}% from last period
                   </p>
@@ -255,23 +258,25 @@ const Dashboard = () => {
       </div>
 
       {/* Second Row of KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {kpiCards.slice(4).map((kpi, index) => {
           const Icon = kpi.icon;
           const isPositive = kpi.change >= 0;
           const TrendIcon = isPositive ? TrendingUp : TrendingDown;
 
           return (
-            <Card key={index + 4} className="relative overflow-hidden hover-scale">
-              <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none`} />
+            <Card key={index + 4} variant="glass" hover="lift" className="relative overflow-hidden group">
+              <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none opacity-50 group-hover:opacity-70 transition-opacity`} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                <Icon className={`h-4 w-4 ${kpi.color}`} />
+                <CardTitle className="text-sm font-medium text-foreground">{kpi.title}</CardTitle>
+                <div className={`p-2 rounded-lg ${kpi.color.replace('text-', 'bg-')}/10 group-hover:scale-110 transition-transform`}>
+                  <Icon className={`h-4 w-4 ${kpi.color}`} />
+                </div>
               </CardHeader>
               <CardContent className="relative">
-                <div className="text-2xl font-bold">{kpi.value}</div>
+                <div className="text-2xl font-bold text-foreground">{kpi.value}</div>
                 {kpi.change !== 0 && (
-                  <p className={`text-xs flex items-center gap-1 mt-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-xs flex items-center gap-1 mt-1 ${isPositive ? 'text-success' : 'text-destructive'}`}>
                     <TrendIcon className="h-3 w-3" />
                     {Math.abs(kpi.change).toFixed(1)}% from last period
                   </p>
@@ -296,9 +301,12 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* AI Insights Panel */}
+      <AIInsightsPanel />
+
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Campaign Performance Chart */}
-        <Card className="lg:col-span-2">
+        <Card variant="glass" className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Campaign Performance</CardTitle>
             <CardDescription>Track mail delivery and engagement over time</CardDescription>
@@ -355,7 +363,7 @@ const Dashboard = () => {
         </Card>
 
         {/* Quick Actions */}
-        <Card>
+        <Card variant="glass">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>Get started with common tasks</CardDescription>
@@ -367,7 +375,7 @@ const Dashboard = () => {
                 <Button
                   key={index}
                   variant={action.variant}
-                  className="w-full justify-start gap-2"
+                  className="w-full justify-start gap-2 hover:shadow-glow-sm transition-all"
                   onClick={action.onClick}
                 >
                   <Icon className="h-4 w-4" />
@@ -380,14 +388,14 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Campaigns */}
-      <Card>
+      <Card variant="glass">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Recent Campaigns</CardTitle>
               <CardDescription>Your latest campaign activity</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/campaigns")} className="text-foreground hover:bg-accent">
+            <Button variant="outline" size="sm" onClick={() => navigate("/campaigns")} className="hover:shadow-glow-sm transition-all">
               View All
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -458,7 +466,7 @@ const Dashboard = () => {
       </Card>
 
       {/* Activity Feed */}
-      <Card>
+      <Card variant="glass">
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
           <CardDescription>Latest events across your campaigns</CardDescription>
