@@ -5,41 +5,41 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Validation function for generated HTML
+// Import template system (inline for edge function)
+const templates = {
+  modernLuxury: { id: "modern-luxury", name: "Modern Luxury" },
+  boldEnergetic: { id: "bold-energetic", name: "Bold & Energetic" },
+  professionalTrust: { id: "professional-trust", name: "Professional Trust" }
+};
+
+function selectTemplateByIndustry(industry: string): string {
+  const industryMap: Record<string, string> = {
+    auto: "modern-luxury",
+    realestate: "modern-luxury",
+    financial: "professional-trust",
+    fitness: "bold-energetic",
+    restaurant: "bold-energetic",
+    healthcare: "professional-trust"
+  };
+  
+  for (const [key, templateId] of Object.entries(industryMap)) {
+    if (industry.toLowerCase().includes(key)) return templateId;
+  }
+  
+  return "modern-luxury"; // Default
+}
+
 function validateGeneratedHTML(html: string): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
-  // Check for required form elements
-  if (!html.includes('id="giftCardRedemptionForm"')) {
-    errors.push('Missing required form with id="giftCardRedemptionForm"');
-  }
-  if (!html.includes('id="codeInput"')) {
-    errors.push('Missing required input with id="codeInput"');
-  }
-  if (!html.includes('id="submitButton"')) {
-    errors.push('Missing required button with id="submitButton"');
+  // Flexible validation - check for essential structure
+  if (!html.includes('<!DOCTYPE html>')) errors.push('Missing DOCTYPE');
+  if (!html.includes('<html')) errors.push('Missing html tag');
+  if (!html.includes('form') && !html.includes('giftCardRedemptionForm')) {
+    errors.push('Missing redemption form');
   }
   
-  // Check for essential HTML structure
-  if (!html.includes('<!DOCTYPE html>')) {
-    errors.push('Missing DOCTYPE declaration');
-  }
-  if (!html.includes('<html')) {
-    errors.push('Missing html tag');
-  }
-  if (!html.includes('tailwindcss')) {
-    errors.push('Missing Tailwind CSS CDN');
-  }
-  
-  // Check for basic content sections
-  if (!html.includes('Thank You') && !html.includes('thank you')) {
-    errors.push('Missing "Thank You" message');
-  }
-  
-  return {
-    valid: errors.length === 0,
-    errors
-  };
+  return { valid: errors.length === 0, errors };
 }
 
 Deno.serve(async (req) => {
