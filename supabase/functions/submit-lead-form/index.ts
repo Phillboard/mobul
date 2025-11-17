@@ -117,6 +117,37 @@ Deno.serve(async (req) => {
 
     console.log(`Lead form submitted successfully: lead_id=${lead.id}`);
 
+    // Dispatch Zapier event
+    try {
+      const { data: campaign } = await supabase
+        .from('campaigns')
+        .select('client_id')
+        .eq('id', campaignId)
+        .single();
+
+      if (campaign) {
+        await supabase.functions.invoke('dispatch-zapier-event', {
+          body: {
+            event_type: 'lead.submitted',
+            client_id: campaign.client_id,
+            data: {
+              lead_id: lead.id,
+              campaign_id: campaignId,
+              recipient_id: recipientId,
+              full_name: fullName,
+              email: email,
+              phone: phone || null,
+              appointment_requested: appointmentRequested || false,
+              submitted_at: new Date().toISOString(),
+            }
+          }
+        });
+        console.log('Zapier event dispatched for lead submission');
+      }
+    } catch (zapierError) {
+      console.error('Failed to dispatch Zapier event:', zapierError);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

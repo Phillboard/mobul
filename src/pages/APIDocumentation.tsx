@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ZapierEventsTab } from "@/components/api/ZapierEventsTab";
 
 export default function APIDocumentation() {
   return (
@@ -19,6 +20,7 @@ export default function APIDocumentation() {
             <TabsTrigger value="authentication">Authentication</TabsTrigger>
             <TabsTrigger value="endpoints">Endpoints</TabsTrigger>
             <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+            <TabsTrigger value="zapier">Zapier Events</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -174,6 +176,10 @@ if (signature === expectedSignature) {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="zapier" className="space-y-4">
+            <ZapierEventsTab />
           </TabsContent>
         </Tabs>
       </div>

@@ -36,6 +36,7 @@ import GiftCardReveal from "./pages/GiftCardReveal";
 import EmbedGiftCard from "./pages/EmbedGiftCard";
 import AgencyManagement from "./pages/AgencyManagement";
 import CallCenterDashboard from "./pages/CallCenterDashboard";
+import ZapierTemplates from "./pages/ZapierTemplates";
 
 import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
 import Contacts from "./pages/Contacts";
