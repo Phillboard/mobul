@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTenant } from "@/contexts/TenantContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { VariationSelector } from "./VariationSelector";
 
 interface AIGenerationDialogProps {
   open: boolean;
@@ -31,6 +32,11 @@ export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerati
   const [generationProgress, setGenerationProgress] = useState("");
   const [sourceType, setSourceType] = useState<"url" | "image" | "description">("description");
   const { currentClient } = useTenant();
+  
+  // Variations state
+  const [variations, setVariations] = useState<any[]>([]);
+  const [showVariations, setShowVariations] = useState(false);
+  const [generatedPageId, setGeneratedPageId] = useState<string | null>(null);
   
   // Input fields
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -165,15 +171,18 @@ export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerati
         clearInterval(progressInterval);
       }
 
-      toast.success("Landing page created successfully!");
-      onSuccess(data.id);
-      onOpenChange(false);
-      
-      // Reset form
-      setWebsiteUrl("");
-      setUploadedFile(null);
-      setDescription("");
-      setExtractedBranding(null);
+      // Show variations if available
+      if (data.variations && data.variations.length > 1) {
+        setVariations(data.variations);
+        setGeneratedPageId(data.id);
+        setShowVariations(true);
+        setIsGenerating(false);
+      } else {
+        toast.success("Landing page created successfully!");
+        onSuccess(data.id);
+        onOpenChange(false);
+        resetForm();
+      }
     } catch (error: any) {
       console.error("Generation error:", error);
       toast.error(error.message || "Failed to generate landing page");
@@ -186,8 +195,57 @@ export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerati
     }
   };
 
+  const resetForm = () => {
+    setWebsiteUrl("");
+    setUploadedFile(null);
+    setDescription("");
+    setExtractedBranding(null);
+    setVariations([]);
+    setShowVariations(false);
+    setGeneratedPageId(null);
+  };
+
+  const handleVariationSelect = async (variationId: string) => {
+    if (!generatedPageId) return;
+    
+    try {
+      const selectedVariation = variations.find(v => v.id === variationId);
+      if (!selectedVariation) return;
+
+      // Get current content_json
+      const { data: currentPage } = await supabase
+        .from('landing_pages')
+        .select('content_json')
+        .eq('id', generatedPageId)
+        .single();
+
+      // Update the landing page with selected variation
+      const { error } = await supabase
+        .from('landing_pages')
+        .update({ 
+          html_content: selectedVariation.html,
+          content_json: {
+            ...(currentPage?.content_json as any || {}),
+            selectedVariation: variations.findIndex(v => v.id === variationId)
+          }
+        })
+        .eq('id', generatedPageId);
+
+      if (error) throw error;
+
+      toast.success("Design selected successfully!");
+      onSuccess(generatedPageId);
+      onOpenChange(false);
+      resetForm();
+    } catch (error: any) {
+      console.error("Error selecting variation:", error);
+      toast.error("Failed to select design");
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -426,5 +484,13 @@ export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerati
         </div>
       </DialogContent>
     </Dialog>
+
+    <VariationSelector
+      open={showVariations}
+      onOpenChange={setShowVariations}
+      variations={variations}
+      onSelect={handleVariationSelect}
+    />
+  </>
   );
 }
