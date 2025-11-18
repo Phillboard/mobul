@@ -190,7 +190,7 @@ CRITICAL REQUIREMENTS:
     }).select().single();
 
     if (insertError) return Response.json({ error: "Save failed" }, { status: 500, headers: corsHeaders });
-    return Response.json({ success: true, landingPageId: landingPage.id, slug: landingPage.slug, previewUrl: `/landing/${landingPage.slug}`, branding: extractedBranding }, { headers: corsHeaders });
+    return Response.json({ success: true, id: landingPage.id, slug: landingPage.slug, previewUrl: `/p/${landingPage.slug}`, extractedBranding, branding: extractedBranding }, { headers: corsHeaders });
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
