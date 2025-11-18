@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { AccountSettings } from "@/components/settings/AccountSettings";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
@@ -12,27 +13,28 @@ import { InviteUserDialog } from "@/components/settings/InviteUserDialog";
 import { PendingInvitations } from "@/components/settings/PendingInvitations";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { BillingSettings } from "@/components/settings/BillingSettings";
-import { settingsTabs, settingsGroups } from "@/lib/settingsConfig";
-import { useSettingsTabs } from "@/hooks/useSettingsTabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useTenant } from "@/contexts/TenantContext";
 import { ClaimPlatformAdmin } from "@/components/settings/ClaimPlatformAdmin";
 import { ClientBrandingPreview } from "@/components/settings/ClientBrandingPreview";
 import { PermissionGate } from "@/components/PermissionGate";
-import { Edit, Menu } from "lucide-react";
+import { Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
 
 export default function Settings() {
   const { currentClient } = useTenant();
-  const [activeTab, setActiveTab] = useState("account");
+  const { tab } = useParams();
+  const navigate = useNavigate();
   const [isEditingBranding, setIsEditingBranding] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const visibleTabs = useSettingsTabs();
-  const isMobile = useIsMobile();
+  
+  const activeTab = tab || "account";
+  
+  // Redirect to /settings/account if on base /settings
+  useEffect(() => {
+    if (!tab) {
+      navigate("/settings/account", { replace: true });
+    }
+  }, [tab, navigate]);
 
   const renderTabContent = (tabId: string) => {
     switch (tabId) {
@@ -136,98 +138,16 @@ export default function Settings() {
     }
   };
 
-  const SettingsSidebar = ({ mobile = false }: { mobile?: boolean }) => (
-    <div className="space-y-6 py-4">
-      {settingsGroups.map((group) => {
-        const groupTabs = visibleTabs.filter(tab => 
-          settingsTabs.find(t => t.id === tab.id)?.group === group.id
-        );
-
-        if (groupTabs.length === 0) return null;
-
-        return (
-          <div key={group.id}>
-            <div className="px-3 mb-2">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {group.label}
-              </h3>
-            </div>
-            <div className="space-y-1">
-              {groupTabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                      if (mobile) setMobileOpen(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors",
-                      activeTab === tab.id
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
 
   return (
     <Layout>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-            <p className="text-muted-foreground">
-              Manage your account, organization, and integrations
-            </p>
-          </div>
-          {isMobile && (
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-0">
-                <div className="py-6 px-4">
-                  <h2 className="text-lg font-semibold mb-4">Settings Menu</h2>
-                  <SettingsSidebar mobile />
-                </div>
-              </SheetContent>
-            </Sheet>
-          )}
-        </div>
-
-        <ClaimPlatformAdmin />
-
-        <div className="flex gap-6">
-          {!isMobile && (
-            <aside className="w-64 shrink-0">
-              <div className="sticky top-4 border rounded-lg bg-card">
-                <SettingsSidebar />
-              </div>
-            </aside>
-          )}
-
-          <main className="flex-1 min-w-0">
-            <Card>
-              <CardContent className="pt-6">
-                {renderTabContent(activeTab)}
-              </CardContent>
-            </Card>
-          </main>
-        </div>
+      <div className="max-w-5xl mx-auto py-6 px-4 space-y-6">
+        <Card>
+          {renderTabContent(activeTab)}
+        </Card>
       </div>
+
+      <ClaimPlatformAdmin />
     </Layout>
   );
 }
