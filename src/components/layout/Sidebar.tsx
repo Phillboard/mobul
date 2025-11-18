@@ -98,7 +98,7 @@ const navigationGroups: NavGroup[] = [
     permissions: ['settings.view', 'users.view', 'api.view'],
     items: [
       { name: "API & Integrations", href: "/api", icon: Code2, permissions: ['api.view'] },
-      { name: "Automation", href: "/zapier", icon: Workflow, permissions: ['settings.integrations'] },
+      { name: "Automation", href: "/zapier-templates", icon: Workflow, permissions: ['settings.integrations'] },
       { name: "User Management", href: "/users", icon: UserCog, permissions: ['users.view'] },
       { name: "Settings", href: "/settings/account", icon: SettingsIcon, permissions: ['settings.view'] },
     ]
