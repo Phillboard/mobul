@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Save, Code, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Code, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EditableText } from "@/components/landing-pages/EditableText";
@@ -16,6 +16,9 @@ export default function SimpleLandingPageEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [pageName, setPageName] = useState("");
+  const [pageSlug, setPageSlug] = useState("");
+  const [pagePublished, setPagePublished] = useState(false);
+  const [hasHtmlContent, setHasHtmlContent] = useState(false);
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
   const [content, setContent] = useState<any>({
     hero: { heading: "", subheading: "" },
@@ -38,6 +41,9 @@ export default function SimpleLandingPageEditor() {
       if (error) throw error;
 
       setPageName(data.name);
+      setPageSlug(data.slug);
+      setPagePublished(data.published || false);
+      setHasHtmlContent(!!data.html_content);
       setContent(data.content_json || {
         hero: { heading: "Claim Your Gift Card", subheading: "Enter your code below" },
         benefits: [],
@@ -116,6 +122,21 @@ export default function SimpleLandingPageEditor() {
             />
           </div>
           <div className="flex items-center gap-2">
+            {hasHtmlContent && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  if (!pagePublished) {
+                    toast.info("This page is not published yet. Publish it to make it publicly accessible.");
+                  }
+                  window.open(`/p/${pageSlug}`, "_blank");
+                }}
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View Live Page
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => setEmbedDialogOpen(true)}>
               <Code className="h-4 w-4 mr-2" />
               Embed Code
