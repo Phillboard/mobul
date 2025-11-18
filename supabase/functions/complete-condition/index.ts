@@ -68,26 +68,31 @@ Deno.serve(async (req) => {
 
     let giftCardData = null;
 
-    // If condition has a gift card pool, claim a card
+    // If condition has a gift card pool, claim a card (with API fallback)
     if (condition.gift_card_pool_id) {
       const serviceClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      const { data: claimedCards, error: claimError } = await serviceClient
-        .rpc('claim_available_card', {
-          p_pool_id: condition.gift_card_pool_id,
-          p_recipient_id: recipientId,
-          p_call_session_id: callSessionId,
-        });
+      // Use new claim-and-provision function that handles fallback
+      const { data: claimResult, error: claimError } = await serviceClient.functions.invoke(
+        'claim-and-provision-card',
+        {
+          body: {
+            poolId: condition.gift_card_pool_id,
+            recipientId: recipientId,
+            callSessionId: callSessionId,
+          }
+        }
+      );
 
-      if (claimError || !claimedCards || claimedCards.length === 0) {
+      if (claimError || !claimResult?.success) {
         console.error('Failed to claim gift card:', claimError);
-        throw new Error('No gift cards available in pool');
+        throw new Error('No gift cards available');
       }
 
-      const claimedCard = claimedCards[0];
+      const claimedCard = claimResult.card;
       giftCardData = {
         id: claimedCard.card_id,
         code: claimedCard.card_code,

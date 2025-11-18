@@ -59,3 +59,9 @@ verify_jwt = false
 
 [functions.generate-landing-page]
 verify_jwt = true
+
+[functions.provision-gift-card-from-api]
+verify_jwt = false
+
+[functions.claim-and-provision-card]
+verify_jwt = false

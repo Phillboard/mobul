@@ -978,6 +978,95 @@ export type Database = {
           },
         ]
       }
+      gift_card_api_providers: {
+        Row: {
+          api_endpoint: string
+          auth_type: string
+          config_schema: Json
+          created_at: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          provider_name: string
+          supported_brands: Json | null
+        }
+        Insert: {
+          api_endpoint: string
+          auth_type: string
+          config_schema: Json
+          created_at?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          provider_name: string
+          supported_brands?: Json | null
+        }
+        Update: {
+          api_endpoint?: string
+          auth_type?: string
+          config_schema?: Json
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          provider_name?: string
+          supported_brands?: Json | null
+        }
+        Relationships: []
+      }
+      gift_card_api_purchases: {
+        Row: {
+          api_provider: string
+          api_response: Json | null
+          api_transaction_id: string | null
+          card_value: number
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          pool_id: string | null
+          quantity: number
+          status: string | null
+          total_cost_cents: number
+        }
+        Insert: {
+          api_provider: string
+          api_response?: Json | null
+          api_transaction_id?: string | null
+          card_value: number
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          pool_id?: string | null
+          quantity: number
+          status?: string | null
+          total_cost_cents: number
+        }
+        Update: {
+          api_provider?: string
+          api_response?: Json | null
+          api_transaction_id?: string | null
+          card_value?: number
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          pool_id?: string | null
+          quantity?: number
+          status?: string | null
+          total_cost_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_api_purchases_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_card_deliveries: {
         Row: {
           call_session_id: string | null
@@ -1065,7 +1154,10 @@ export type Database = {
       }
       gift_card_pools: {
         Row: {
+          api_config: Json | null
+          api_provider: string | null
           available_cards: number | null
+          available_for_purchase: boolean | null
           card_value: number
           claimed_cards: number | null
           client_id: string
@@ -1075,11 +1167,15 @@ export type Database = {
           id: string
           pool_name: string
           provider: string | null
+          purchase_method: string | null
           total_cards: number | null
           updated_at: string | null
         }
         Insert: {
+          api_config?: Json | null
+          api_provider?: string | null
           available_cards?: number | null
+          available_for_purchase?: boolean | null
           card_value: number
           claimed_cards?: number | null
           client_id: string
@@ -1089,11 +1185,15 @@ export type Database = {
           id?: string
           pool_name: string
           provider?: string | null
+          purchase_method?: string | null
           total_cards?: number | null
           updated_at?: string | null
         }
         Update: {
+          api_config?: Json | null
+          api_provider?: string | null
           available_cards?: number | null
+          available_for_purchase?: boolean | null
           card_value?: number
           claimed_cards?: number | null
           client_id?: string
@@ -1103,6 +1203,7 @@ export type Database = {
           id?: string
           pool_name?: string
           provider?: string | null
+          purchase_method?: string | null
           total_cards?: number | null
           updated_at?: string | null
         }
@@ -2586,6 +2687,7 @@ export type Database = {
           card_number: string
           card_value: number
           provider: string
+          provisioned_via_api: boolean
         }[]
       }
       expire_old_invitations: { Args: never; Returns: undefined }

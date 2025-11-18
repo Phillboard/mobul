@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
 <design>Apple/Tesla aesthetic, text-7xl+ headlines, gradients from-[${primaryColor}] to-[${accentColor}], py-24+ spacing, shadow-2xl depth, hover animations, mobile responsive</design>
 <sections>1.Hero(full viewport, animated gradient, huge company name), 2.Redemption(centered, 3D gift card, large input, trust badges), 3.Benefits(3 cards), 4.Footer</sections>`;
 
-    let generatedContent: string;
+    let generatedContent: string = '';
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -161,6 +161,10 @@ Deno.serve(async (req) => {
         await exponentialBackoff(attempt);
       }
     }
+    
+    if (!generatedContent) {
+      return Response.json({ error: "Failed to generate valid HTML content" }, { status: 500, headers: corsHeaders });
+    }
 
     // SAVE
     const slug = `${extractedBranding.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
@@ -174,6 +178,7 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, landingPageId: landingPage.id, slug: landingPage.slug, previewUrl: `/landing/${landingPage.slug}`, branding: extractedBranding }, { headers: corsHeaders });
 
   } catch (error) {
-    return Response.json({ error: "Unexpected error", details: error.message }, { status: 500, headers: corsHeaders });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return Response.json({ error: "Unexpected error", details: errorMessage }, { status: 500, headers: corsHeaders });
   }
 });

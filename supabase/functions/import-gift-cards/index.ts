@@ -27,6 +27,17 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    // Check if user is admin
+    const { data: roles } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+    
+    const isAdmin = roles?.some((r: any) => r.role === 'admin');
+    if (!isAdmin) {
+      throw new Error('Admin access required');
+    }
+
     const { pool_id, csv_content } = await req.json();
 
     if (!pool_id || !csv_content) {
