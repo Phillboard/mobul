@@ -1,13 +1,13 @@
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { 
   LayoutDashboard, 
   Mail, 
   Users, 
   Code2, 
-  Settings,
+  Settings as SettingsIcon,
   Zap,
   FileStack,
   Gift,
@@ -22,6 +22,7 @@ import {
   Workflow,
   Package,
   ChevronDown,
+  ArrowLeft,
 } from "lucide-react";
 import {
   Sidebar as SidebarComponent,
@@ -43,6 +44,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useSettingsTabs } from "@/hooks/useSettingsTabs";
+import { settingsTabs, settingsGroups } from "@/lib/settingsConfig";
+import { Button } from "@/components/ui/button";
 
 interface NavItem {
   name: string;
@@ -96,27 +100,27 @@ const navigationGroups: NavGroup[] = [
       { name: "API & Integrations", href: "/api", icon: Code2, permissions: ['api.view'] },
       { name: "Automation", href: "/zapier", icon: Workflow, permissions: ['settings.integrations'] },
       { name: "User Management", href: "/users", icon: UserCog, permissions: ['users.view'] },
-      { name: "Settings", href: "/settings", icon: Settings, permissions: ['settings.view'] },
+      { name: "Settings", href: "/settings/account", icon: SettingsIcon, permissions: ['settings.view'] },
     ]
   },
 ];
 
 export function Sidebar() {
   const { hasAnyPermission } = useAuth();
-  const { state } = useSidebar();
   const location = useLocation();
-  const currentPath = location.pathname;
-  
-  // State to manage which collapsible groups are open
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    CRM: false,
-    Administration: false,
-  });
+  const navigate = useNavigate();
+  const pathname = location.pathname;
+  const { state } = useSidebar();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const visibleTabs = useSettingsTabs();
 
   const isActive = (path: string) => {
-    if (path === '/') return currentPath === path;
-    return currentPath.startsWith(path);
+    if (path === '/') return pathname === '/';
+    return pathname.startsWith(path);
   };
+
+  // Check if we're on a settings page
+  const isOnSettingsPage = pathname.startsWith('/settings');
 
   // Filter groups and items by permissions
   const visibleGroups = navigationGroups
@@ -139,6 +143,84 @@ export function Sidebar() {
     setOpenGroups(prev => ({ ...prev, [groupLabel]: !prev[groupLabel] }));
   };
 
+  // Render settings-specific sidebar
+  if (isOnSettingsPage) {
+    return (
+      <SidebarComponent collapsible="icon" className="border-r border-sidebar-border">
+        <SidebarHeader className="border-b border-sidebar-border">
+          <div className="flex h-16 items-center gap-2 px-3">
+            {state === "expanded" ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate('/')}
+                  className="h-8 w-8 shrink-0"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-lg font-bold text-sidebar-foreground truncate">Settings</h1>
+                  <p className="text-xs text-sidebar-foreground/60 truncate">Account & Preferences</p>
+                </div>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/')}
+                className="h-8 w-8"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
+        </SidebarHeader>
+
+        <SidebarContent>
+          {settingsGroups.map((group) => {
+            const groupTabs = visibleTabs.filter(tab => 
+              settingsTabs.find(t => t.id === tab.id)?.group === group.id
+            );
+
+            if (groupTabs.length === 0) return null;
+
+            return (
+              <SidebarGroup key={group.id}>
+                <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : ""}>
+                  {group.label}
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {groupTabs.map((tab) => {
+                      const Icon = tab.icon;
+                      const active = pathname === `/settings/${tab.id}`;
+                      
+                      return (
+                        <SidebarMenuItem key={tab.id}>
+                          <SidebarMenuButton asChild tooltip={tab.label} isActive={active}>
+                            <NavLink
+                              to={`/settings/${tab.id}`}
+                              className="flex items-center gap-3 w-full"
+                            >
+                              <Icon className="h-5 w-5 flex-shrink-0" />
+                              {state === "expanded" && <span>{tab.label}</span>}
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            );
+          })}
+        </SidebarContent>
+      </SidebarComponent>
+    );
+  }
+
+  // Render regular sidebar
   return (
     <SidebarComponent collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
