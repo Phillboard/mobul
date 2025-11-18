@@ -5,23 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const templates = {
-  modernLuxury: { id: "modern-luxury", name: "Modern Luxury" },
-  boldEnergetic: { id: "bold-energetic", name: "Bold & Energetic" },
-  professionalTrust: { id: "professional-trust", name: "Professional Trust" }
-};
-
-function selectTemplateByIndustry(industry: string): string {
-  const industryMap: Record<string, string> = {
-    auto: "modern-luxury", realestate: "modern-luxury", financial: "professional-trust",
-    fitness: "bold-energetic", restaurant: "bold-energetic", healthcare: "professional-trust"
-  };
-  for (const [key, templateId] of Object.entries(industryMap)) {
-    if (industry.toLowerCase().includes(key)) return templateId;
-  }
-  return "modern-luxury";
-}
-
 function validateGeneratedHTML(html: string): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   if (!html.includes('<!DOCTYPE html>')) errors.push('Missing DOCTYPE');
@@ -38,26 +21,29 @@ async function exponentialBackoff(attemptNumber: number, maxDelay: number = 1000
   await new Promise(resolve => setTimeout(resolve, delay));
 }
 
-async function fetchImageAsBase64(url: string): Promise<{ base64: string; mimeType: string }> {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  const arrayBuffer = await blob.arrayBuffer();
-  const uint8Array = new Uint8Array(arrayBuffer);
-  let binary = '';
-  const chunkSize = 0x8000;
-  for (let i = 0; i < uint8Array.length; i += chunkSize) {
-    const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
-    binary += String.fromCharCode.apply(null, Array.from(chunk));
+async function callLovableAI(messages: any[], isVision: boolean = false): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+
+  const model = isVision ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+  
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ model, messages, temperature: 1.0 }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Lovable AI error: ${response.status} - ${errorText}`);
   }
-  return { base64: btoa(binary), mimeType: blob.type || 'image/jpeg' };
+
+  const data = await response.json();
+  return data.choices[0].message.content;
 }
-
-const BRANDING_SYSTEM = `You are an expert brand strategist. Extract comprehensive branding guidelines.
-CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no explanations.`;
-
-const HTML_SYSTEM = `You are a world-class web designer creating $10,000+ premium landing pages.
-Design philosophy: Apple/Tesla aesthetic, bold typography, dramatic gradients, smooth animations.
-CRITICAL: Return ONLY complete HTML. No markdown, no code blocks, no explanations.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -79,58 +65,54 @@ Deno.serve(async (req) => {
     }
 
     // PHASE 1: BRANDING EXTRACTION
-    const extractionMessages: any[] = [];
+    console.log("🔍 Starting branding extraction...");
+    let brandingPrompt = "";
+    let isVision = false;
+
     if (sourceType === "url") {
       if (!sourceUrl) return Response.json({ error: "URL required" }, { status: 400, headers: corsHeaders });
-      extractionMessages.push({ role: "user", content: `<task>Extract branding from: ${sourceUrl}</task>
-<schema>{"companyName":"str","industry":"str","primaryColor":"#hex","accentColor":"#hex","backgroundColor":"#hex","textColor":"#hex","tagline":"str","designStyle":"modern|minimalist|bold|professional|luxury","emotionalTone":"str","fontStyle":"sans-serif|serif","logoUrl":"str|null"}</schema>` });
+      brandingPrompt = `You are an expert brand strategist. Extract comprehensive branding from this URL: ${sourceUrl}
+
+Return ONLY valid JSON with this exact structure (no markdown, no explanations):
+{"companyName":"string","industry":"string","primaryColor":"#hex","accentColor":"#hex","backgroundColor":"#hex","textColor":"#hex","tagline":"string","designStyle":"modern|minimalist|bold|professional|luxury","emotionalTone":"string","fontStyle":"sans-serif|serif","logoUrl":"string or null"}`;
     } else if (sourceType === "image") {
       if (!sourceImage) return Response.json({ error: "Image required" }, { status: 400, headers: corsHeaders });
-      const imageUrl = typeof sourceImage === 'string' ? sourceImage : sourceImage.url;
-      const { base64, mimeType } = await fetchImageAsBase64(imageUrl);
-      extractionMessages.push({
-        role: "user", content: [
-          { type: "image", source: { type: "base64", media_type: mimeType, data: base64 } },
-          { type: "text", text: `<task>Extract branding from image</task>
-<schema>{"companyName":"str","industry":"str","primaryColor":"#hex","accentColor":"#hex","backgroundColor":"#hex","textColor":"#hex","tagline":"str","designStyle":"str","emotionalTone":"str","fontStyle":"str","logoUrl":null}</schema>` }
-        ]
-      });
+      isVision = true;
+      brandingPrompt = `You are an expert brand strategist. Analyze this image and extract comprehensive branding.
+
+Return ONLY valid JSON with this exact structure (no markdown, no explanations):
+{"companyName":"string","industry":"string","primaryColor":"#hex","accentColor":"#hex","backgroundColor":"#hex","textColor":"#hex","tagline":"string","designStyle":"modern|minimalist|bold|professional|luxury","emotionalTone":"string","fontStyle":"sans-serif|serif","logoUrl":null}
+
+Image: ${typeof sourceImage === 'string' ? sourceImage : sourceImage.url}`;
     } else {
-      extractionMessages.push({ role: "user", content: `<task>Create branding for: ${sourceDescription}</task>
-<schema>{"companyName":"str","industry":"str","primaryColor":"#hex","accentColor":"#hex","backgroundColor":"#hex","textColor":"#hex","tagline":"str","designStyle":"str","emotionalTone":"str","fontStyle":"str","logoUrl":null}</schema>` });
+      brandingPrompt = `You are an expert brand strategist. Create comprehensive branding for: ${sourceDescription}
+
+Return ONLY valid JSON with this exact structure (no markdown, no explanations):
+{"companyName":"string","industry":"string","primaryColor":"#hex","accentColor":"#hex","backgroundColor":"#hex","textColor":"#hex","tagline":"string","designStyle":"modern|minimalist|bold|professional|luxury","emotionalTone":"string","fontStyle":"sans-serif|serif","logoUrl":null}`;
     }
 
     let extractedBranding: any;
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         console.log(`🔍 Branding extraction attempt ${attempt}/3`);
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": Deno.env.get("ANTHROPIC_API_KEY")!, "anthropic-version": "2023-06-01" },
-          body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 4000, system: BRANDING_SYSTEM, messages: extractionMessages, temperature: 1.0 })
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          console.error(`❌ API error on attempt ${attempt}:`, res.status, err);
-          if (err.error?.type === 'rate_limit_error' && attempt < 3) { await exponentialBackoff(attempt); continue; }
-          if (err.error?.type === 'overloaded_error' && attempt < 3) { await exponentialBackoff(attempt, 15000); continue; }
-          const errorMsg = `Anthropic API error: ${res.status} - ${err.error?.message || 'Unknown error'}`;
-          if (attempt === 3) return Response.json({ error: errorMsg, details: err }, { status: 500, headers: corsHeaders });
-          await exponentialBackoff(attempt);
-          continue;
-        }
-        const data = await res.json();
-        const content = data.content[0].text;
+        const content = await callLovableAI([{ role: "user", content: brandingPrompt }], isVision);
         console.log(`📝 Received branding content (${content.length} chars)`);
-        try { extractedBranding = JSON.parse(content); break; }
-        catch { 
-          console.log(`🔧 Attempting to extract JSON from markdown...`);
+        
+        try { 
+          extractedBranding = JSON.parse(content); 
+          break; 
+        } catch { 
+          console.log(`🔧 Attempting to extract JSON from response...`);
           const match = content.match(/\{[\s\S]*\}/); 
-          if (match) { extractedBranding = JSON.parse(match[0]); break; } 
+          if (match) { 
+            extractedBranding = JSON.parse(match[0]); 
+            break; 
+          } 
         }
+        
         if (attempt === 3) {
           console.error(`❌ Failed to parse branding JSON after 3 attempts`);
-          return Response.json({ error: "Could not parse branding from AI response", details: content.substring(0, 500) }, { status: 500, headers: corsHeaders });
+          return Response.json({ error: "Could not parse branding from AI", details: content.substring(0, 500) }, { status: 500, headers: corsHeaders });
         }
       } catch (error) {
         console.error(`❌ Exception on attempt ${attempt}:`, error);
@@ -143,47 +125,48 @@ Deno.serve(async (req) => {
     }
 
     // PHASE 2: HTML GENERATION
+    console.log("🎨 Starting HTML generation...");
     const { primaryColor, accentColor } = extractedBranding;
-    const htmlPrompt = `<task>Create premium gift card landing page</task>
-<branding>${JSON.stringify(extractedBranding)}</branding>
-<gift_card>${giftCardBrand} - $${giftCardValue}</gift_card>
-<mandatory_ids>form: giftCardRedemptionForm, input: codeInput, button: submitButton</mandatory_ids>
-<design>Apple/Tesla aesthetic, text-7xl+ headlines, gradients from-[${primaryColor}] to-[${accentColor}], py-24+ spacing, shadow-2xl depth, hover animations, mobile responsive</design>
-<sections>1.Hero(full viewport, animated gradient, huge company name), 2.Redemption(centered, 3D gift card, large input, trust badges), 3.Benefits(3 cards), 4.Footer</sections>`;
+    const htmlPrompt = `You are a world-class web designer creating premium gift card landing pages.
+
+Create a complete HTML page with this branding:
+${JSON.stringify(extractedBranding, null, 2)}
+
+Gift Card: ${giftCardBrand} - $${giftCardValue}
+
+CRITICAL REQUIREMENTS:
+- Return ONLY complete HTML (no markdown, no code blocks, no explanations)
+- Must include DOCTYPE and complete html structure
+- MANDATORY IDs: form="giftCardRedemptionForm", input="codeInput", button="submitButton"
+- Design: Apple/Tesla aesthetic, bold typography, gradients from ${primaryColor} to ${accentColor}
+- Sections: 1. Hero (full viewport, animated gradient, huge company name), 2. Redemption form (centered, 3D gift card visual, large input, trust badges), 3. Benefits (3 cards), 4. Footer
+- Mobile responsive with Tailwind CSS
+- Smooth animations and hover effects`;
 
     let generatedContent: string = '';
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         console.log(`🎨 HTML generation attempt ${attempt}/3`);
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-api-key": Deno.env.get("ANTHROPIC_API_KEY")!, "anthropic-version": "2023-06-01" },
-          body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 20000, system: HTML_SYSTEM, messages: [{ role: "user", content: htmlPrompt }], temperature: 1.0 })
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          console.error(`❌ HTML API error on attempt ${attempt}:`, res.status, err);
-          if (err.error?.type === 'rate_limit_error' && attempt < 3) { await exponentialBackoff(attempt); continue; }
-          if (err.error?.type === 'overloaded_error' && attempt < 3) { await exponentialBackoff(attempt, 15000); continue; }
-          const errorMsg = `Anthropic API error: ${res.status} - ${err.error?.message || 'Unknown error'}`;
-          if (attempt === 3) return Response.json({ error: errorMsg, details: err }, { status: 500, headers: corsHeaders });
-          await exponentialBackoff(attempt);
-          continue;
-        }
-        const data = await res.json();
-        let html = data.content[0].text;
+        let html = await callLovableAI([{ role: "user", content: htmlPrompt }], false);
         console.log(`📝 Received HTML content (${html.length} chars)`);
+        
         const mdMatch = html.match(/```(?:html)?\s*\n?([\s\S]*?)\n?```/);
         if (mdMatch) html = mdMatch[1];
-        if (!html.includes('<!DOCTYPE html>') && html.includes('<html')) html = '<!DOCTYPE html>\n' + html.substring(html.indexOf('<html'));
+        if (!html.includes('<!DOCTYPE html>') && html.includes('<html')) {
+          html = '<!DOCTYPE html>\n' + html.substring(html.indexOf('<html'));
+        }
+        
         const validation = validateGeneratedHTML(html);
         if (!validation.valid) {
           console.log(`⚠️ Validation issues:`, validation.errors);
           if (attempt === 3) {
             return Response.json({ error: "Generated HTML validation failed", details: validation.errors }, { status: 500, headers: corsHeaders });
           }
+        } else {
+          generatedContent = html;
+          console.log(`✅ HTML generation successful`);
+          break;
         }
-        if (validation.valid) { generatedContent = html; console.log(`✅ HTML generation successful`); break; }
       } catch (error) {
         console.error(`❌ Exception on attempt ${attempt}:`, error);
         if (attempt === 3) {
