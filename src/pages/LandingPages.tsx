@@ -192,9 +192,9 @@ export default function LandingPages() {
                             Edit
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => window.open(`/lp/${page.slug}`, "_blank")}>
+                        <DropdownMenuItem onClick={() => window.open(`/p/${page.slug}`, "_blank")}>
                           <Eye className="h-4 w-4 mr-2" />
-                          Preview
+                          View Live Page
                         </DropdownMenuItem>
                         {canCreate && (
                           <DropdownMenuItem onClick={() => navigate(`/landing-pages/new?clone=${page.id}`)}>
@@ -224,7 +224,7 @@ export default function LandingPages() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap mb-3">
                     <Badge variant={page.published ? "default" : "secondary"}>
                       {page.published ? "Published" : "Draft"}
                     </Badge>
@@ -242,7 +242,18 @@ export default function LandingPages() {
                       )}
                     </Badge>
                   </div>
-                  <div className="mt-4 text-sm text-muted-foreground">
+                  {page.html_content && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full mb-3"
+                      onClick={() => window.open(`/p/${page.slug}`, "_blank")}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Live Page
+                    </Button>
+                  )}
+                  <div className="text-sm text-muted-foreground">
                     Version {page.version_number}
                   </div>
                 </CardContent>
