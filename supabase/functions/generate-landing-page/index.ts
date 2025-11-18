@@ -103,6 +103,7 @@ Deno.serve(async (req) => {
     let extractedBranding: any;
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
+        console.log(`🔍 Branding extraction attempt ${attempt}/3`);
         const res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-api-key": Deno.env.get("ANTHROPIC_API_KEY")!, "anthropic-version": "2023-06-01" },
@@ -110,17 +111,33 @@ Deno.serve(async (req) => {
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
+          console.error(`❌ API error on attempt ${attempt}:`, res.status, err);
           if (err.error?.type === 'rate_limit_error' && attempt < 3) { await exponentialBackoff(attempt); continue; }
           if (err.error?.type === 'overloaded_error' && attempt < 3) { await exponentialBackoff(attempt, 15000); continue; }
-          throw new Error(`API error: ${res.status}`);
+          const errorMsg = `Anthropic API error: ${res.status} - ${err.error?.message || 'Unknown error'}`;
+          if (attempt === 3) return Response.json({ error: errorMsg, details: err }, { status: 500, headers: corsHeaders });
+          await exponentialBackoff(attempt);
+          continue;
         }
         const data = await res.json();
         const content = data.content[0].text;
+        console.log(`📝 Received branding content (${content.length} chars)`);
         try { extractedBranding = JSON.parse(content); break; }
-        catch { const match = content.match(/\{[\s\S]*\}/); if (match) { extractedBranding = JSON.parse(match[0]); break; } }
-        if (attempt === 3) throw new Error("Could not parse branding");
+        catch { 
+          console.log(`🔧 Attempting to extract JSON from markdown...`);
+          const match = content.match(/\{[\s\S]*\}/); 
+          if (match) { extractedBranding = JSON.parse(match[0]); break; } 
+        }
+        if (attempt === 3) {
+          console.error(`❌ Failed to parse branding JSON after 3 attempts`);
+          return Response.json({ error: "Could not parse branding from AI response", details: content.substring(0, 500) }, { status: 500, headers: corsHeaders });
+        }
       } catch (error) {
-        if (attempt === 3) return Response.json({ error: "Branding extraction failed" }, { status: 500, headers: corsHeaders });
+        console.error(`❌ Exception on attempt ${attempt}:`, error);
+        if (attempt === 3) {
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          return Response.json({ error: "Branding extraction failed", details: errorMsg }, { status: 500, headers: corsHeaders });
+        }
         await exponentialBackoff(attempt);
       }
     }
@@ -137,6 +154,7 @@ Deno.serve(async (req) => {
     let generatedContent: string = '';
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
+        console.log(`🎨 HTML generation attempt ${attempt}/3`);
         const res = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-api-key": Deno.env.get("ANTHROPIC_API_KEY")!, "anthropic-version": "2023-06-01" },
@@ -144,20 +162,34 @@ Deno.serve(async (req) => {
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
+          console.error(`❌ HTML API error on attempt ${attempt}:`, res.status, err);
           if (err.error?.type === 'rate_limit_error' && attempt < 3) { await exponentialBackoff(attempt); continue; }
           if (err.error?.type === 'overloaded_error' && attempt < 3) { await exponentialBackoff(attempt, 15000); continue; }
-          throw new Error(`API error: ${res.status}`);
+          const errorMsg = `Anthropic API error: ${res.status} - ${err.error?.message || 'Unknown error'}`;
+          if (attempt === 3) return Response.json({ error: errorMsg, details: err }, { status: 500, headers: corsHeaders });
+          await exponentialBackoff(attempt);
+          continue;
         }
         const data = await res.json();
         let html = data.content[0].text;
+        console.log(`📝 Received HTML content (${html.length} chars)`);
         const mdMatch = html.match(/```(?:html)?\s*\n?([\s\S]*?)\n?```/);
         if (mdMatch) html = mdMatch[1];
         if (!html.includes('<!DOCTYPE html>') && html.includes('<html')) html = '<!DOCTYPE html>\n' + html.substring(html.indexOf('<html'));
         const validation = validateGeneratedHTML(html);
-        if (!validation.valid && attempt === 3) throw new Error("Validation failed: " + validation.errors.join(', '));
-        if (validation.valid) { generatedContent = html; break; }
+        if (!validation.valid) {
+          console.log(`⚠️ Validation issues:`, validation.errors);
+          if (attempt === 3) {
+            return Response.json({ error: "Generated HTML validation failed", details: validation.errors }, { status: 500, headers: corsHeaders });
+          }
+        }
+        if (validation.valid) { generatedContent = html; console.log(`✅ HTML generation successful`); break; }
       } catch (error) {
-        if (attempt === 3) return Response.json({ error: "HTML generation failed" }, { status: 500, headers: corsHeaders });
+        console.error(`❌ Exception on attempt ${attempt}:`, error);
+        if (attempt === 3) {
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          return Response.json({ error: "HTML generation failed", details: errorMsg }, { status: 500, headers: corsHeaders });
+        }
         await exponentialBackoff(attempt);
       }
     }
