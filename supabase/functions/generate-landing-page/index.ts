@@ -55,9 +55,62 @@ serve(async (req) => {
   }
 
   try {
-    const { sourceType, sourceUrl, sourceFile, sourceDescription, clientId, giftCardBrand, giftCardValue, userAction } = await req.json();
+    const body = await req.json();
+    const { sourceType, sourceUrl, sourceFile, sourceDescription, clientId, giftCardBrand, giftCardValue, userAction } = body;
     
-    console.log('Claude 4.5 Generation:', { sourceType, clientId });
+    console.log('Claude 4.5 Generation request:', { sourceType, clientId, hasFile: !!sourceFile, hasUrl: !!sourceUrl, hasDescription: !!sourceDescription });
+    
+    // Validate required fields
+    if (!sourceType) {
+      return new Response(
+        JSON.stringify({ error: 'sourceType is required (url, image, or description)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!clientId) {
+      return new Response(
+        JSON.stringify({ error: 'clientId is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!giftCardBrand) {
+      return new Response(
+        JSON.stringify({ error: 'giftCardBrand is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!giftCardValue) {
+      return new Response(
+        JSON.stringify({ error: 'giftCardValue is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (!userAction) {
+      return new Response(
+        JSON.stringify({ error: 'userAction is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Validate source-specific requirements
+    if (sourceType === 'url' && !sourceUrl) {
+      return new Response(
+        JSON.stringify({ error: 'sourceUrl is required when sourceType is "url"' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (sourceType === 'image' && !sourceFile) {
+      return new Response(
+        JSON.stringify({ error: 'sourceFile is required when sourceType is "image"' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (sourceType === 'description' && !sourceDescription) {
+      return new Response(
+        JSON.stringify({ error: 'sourceDescription is required when sourceType is "description"' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
