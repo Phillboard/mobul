@@ -178,10 +178,15 @@ export function AIGenerationDialog({ open, onOpenChange, onSuccess }: AIGenerati
         setShowVariations(true);
         setIsGenerating(false);
       } else {
-        toast.success("Landing page created successfully!");
+        toast.success("Landing page generated! Opening visual editor...");
         onSuccess(data.id);
         onOpenChange(false);
         resetForm();
+        
+        // Navigate to GrapesJS visual editor
+        setTimeout(() => {
+          window.location.href = `/landing-pages/${data.id}/visual-editor`;
+        }, 500);
       }
     } catch (error: any) {
       console.error("Generation error:", error);

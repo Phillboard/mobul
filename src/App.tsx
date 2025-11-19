@@ -93,6 +93,7 @@ const App = () => (
               <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
               <Route path="/landing-pages/:id/edit" element={<ProtectedRoute><SimpleLandingPageEditor /></ProtectedRoute>} />
               <Route path="/landing-pages/:id/visual-editor" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
+              <Route path="/landing-pages/:id/edit-grapesjs" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
               <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
               <Route path="/agent-dashboard" element={<ProtectedRoute><AgentCallDashboard /></ProtectedRoute>} />
               <Route path="/call-center" element={<ProtectedRoute requiredRole="call_center"><CallCenterDashboard /></ProtectedRoute>} />
