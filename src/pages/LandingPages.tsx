@@ -283,6 +283,7 @@ export default function LandingPages() {
           open={aiDialogOpen}
           onOpenChange={setAiDialogOpen}
           onSuccess={(pageId) => navigate(`/landing-pages/${pageId}/edit`)}
+          clientId={currentClient?.id || ''}
         />
       </div>
     </Layout>
