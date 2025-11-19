@@ -156,43 +156,141 @@ USER ACTION: ${userAction}
 
 IMPORTANT: Your response should START with "<div" or "<section" - nothing before it!
 
-DESIGN STRUCTURE:
-- Hero section: Gradient background using ${primaryColor} and ${accentColor}, company name, compelling headline
-- How it works section: 3 simple steps with icons
-- Redemption form: Prominent, centered, easy to use
-- Benefits section: Trust indicators, why redeem
-- Footer: Company info, legal
+🎨 MODERN DESIGN REQUIREMENTS:
 
-STYLING REQUIREMENTS (inline only):
-- Responsive using max-width and percentages
-- Modern gradients: linear-gradient(135deg, ${primaryColor}, ${accentColor})
-- Font families: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
-- Padding/margins for proper spacing
-- Border-radius for modern look (8px-16px)
-- Box shadows for depth
-- Hover effects using :hover pseudo-class where applicable
-- High contrast for readability
+1. HERO SECTION (must be visually stunning):
+   - Full-width gradient background: linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)
+   - Large, bold typography (h1: 56px-72px, tagline: 24px-28px)
+   - Generous padding (100px-120px vertical, 40px horizontal)
+   - White text with subtle text shadows for depth
+   - Consider adding a semi-transparent overlay pattern
+   - Company logo/name prominently displayed
+
+2. HOW IT WORKS SECTION (visual step-by-step):
+   - 3-4 steps in a horizontal grid
+   - Large emoji icons (64px) or icon placeholders (🎁 💳 ✨ 🎉)
+   - Step numbers in large, colored circles
+   - Short, clear descriptions
+   - Use of accent colors for visual interest
+   - Background: light gradient or subtle pattern
+
+3. REDEMPTION FORM (centerpiece):
+   - Maximum width 600px, centered
+   - Elevated card design with prominent shadow (0 10px 40px rgba(0,0,0,0.12))
+   - 50-60px padding inside card
+   - Large input field (56px height) with clear borders
+   - Prominent CTA button (full-width, 56px height, bold text)
+   - Button gradient matching brand colors
+   - Icon above form (🎁 or 💳 at 80px size)
+   - Clear microcopy explaining the process
+
+4. BENEFITS/TRUST SECTION:
+   - 3-4 benefit cards in grid layout
+   - Icons for each benefit (✓ 🔒 ⚡ 💯)
+   - Short headlines with supporting text
+   - Subtle background colors or borders
+   - Use brand accent colors strategically
+
+5. FOOTER:
+   - Subtle background (#f8f9fa or light brand tint)
+   - Company info, support links
+   - Legal/privacy text (small, 14px)
+   - Proper spacing and organization
+
+STYLING EXCELLENCE (inline styles only):
+- Font system: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif
+- Typography scale: 14px, 16px, 20px, 24px, 32px, 48px, 64px
+- Line heights: 1.5 for body, 1.2 for headlines
+- Color contrast: Ensure WCAG AA minimum (4.5:1 for text)
+- Spacing scale: 8px, 16px, 24px, 32px, 48px, 64px, 80px, 120px
+- Border radius: 8px (small), 16px (medium), 24px (large)
+- Shadows: 
+  - Small: 0 2px 8px rgba(0,0,0,0.08)
+  - Medium: 0 4px 16px rgba(0,0,0,0.12)
+  - Large: 0 10px 40px rgba(0,0,0,0.15)
+- Buttons: 16px padding vertical, 32px horizontal, bold text, rounded corners
+- Inputs: 16px padding, clear borders (2px solid #e5e7eb), rounded (8px)
+- Container max-widths: 1200px (full), 800px (content), 600px (forms)
+- Responsive: Use max-width percentages (90%, 95%) and center with margin: 0 auto
+
+VISUAL HIERARCHY:
+- Use size, weight, and color to create clear hierarchy
+- Generous whitespace between sections (80px-120px)
+- Consistent alignment (center for hero, left for content)
+- Color pops: Use accent color strategically (15-20% of design)
+- Clear visual flow from top to bottom
 
 EXAMPLE STRUCTURE:
-<div style="font-family: -apple-system, sans-serif; margin: 0; padding: 0;">
-  <header style="background: linear-gradient(135deg, ${primaryColor}, ${accentColor}); padding: 80px 20px; text-align: center; color: white;">
-    <h1 style="margin: 0 0 20px; font-size: 48px; font-weight: bold;">[Company Name]</h1>
-    <p style="font-size: 24px; margin: 0;">[Compelling headline about gift card]</p>
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; line-height: 1.6; color: #1f2937;">
+  <!-- HERO -->
+  <header style="background: linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%); padding: 120px 40px; text-align: center; color: white; position: relative;">
+    <div style="max-width: 800px; margin: 0 auto;">
+      <div style="font-size: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 24px; opacity: 0.95;">[Company Name]</div>
+      <h1 style="margin: 0 0 24px; font-size: 64px; font-weight: 800; line-height: 1.1; text-shadow: 0 2px 20px rgba(0,0,0,0.1);">[Exciting Headline]</h1>
+      <p style="font-size: 24px; margin: 0; opacity: 0.95; font-weight: 300;">[Compelling subheadline about the gift card]</p>
+    </div>
   </header>
   
-  <section style="padding: 60px 20px; max-width: 1200px; margin: 0 auto;">
-    <!-- Content sections -->
+  <!-- HOW IT WORKS -->
+  <section style="padding: 100px 40px; max-width: 1200px; margin: 0 auto; text-align: center;">
+    <h2 style="font-size: 48px; font-weight: 700; margin: 0 0 64px; color: #111827;">How It Works</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 48px;">
+      <div style="padding: 32px;">
+        <div style="font-size: 64px; margin-bottom: 24px;">🎁</div>
+        <div style="width: 48px; height: 48px; background: ${accentColor}; color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; margin-bottom: 16px;">1</div>
+        <h3 style="font-size: 24px; font-weight: 600; margin: 16px 0; color: #111827;">Step Title</h3>
+        <p style="color: #6b7280; font-size: 16px; line-height: 1.6;">Step description</p>
+      </div>
+      <!-- Repeat for 2-3 more steps -->
+    </div>
   </section>
   
-  <section style="padding: 60px 20px; background: #f9fafb;">
-    <div style="max-width: 600px; margin: 0 auto;">
-      <form id="redemption-form" style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Enter Your Code</label>
-        <input id="gift-card-code" type="text" placeholder="XXXX-XXXX-XXXX" style="width: 100%; padding: 16px; font-size: 18px; border: 2px solid #d1d5db; border-radius: 8px; margin-bottom: 16px;" />
-        <button id="submit-button" type="submit" style="width: 100%; padding: 18px; background: ${accentColor}; color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: 600; cursor: pointer;">Claim Your Gift Card</button>
+  <!-- REDEMPTION FORM -->
+  <section style="padding: 100px 40px; background: linear-gradient(180deg, #f9fafb 0%, #ffffff 100%);">
+    <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+      <div style="font-size: 80px; margin-bottom: 32px;">💳</div>
+      <h2 style="font-size: 40px; font-weight: 700; margin: 0 0 16px; color: #111827;">Claim Your Reward</h2>
+      <p style="font-size: 18px; color: #6b7280; margin: 0 0 40px;">Enter your unique code to redeem your ${giftCardFormatted}</p>
+      
+      <form id="redemption-form" style="background: white; padding: 48px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.12); text-align: left;">
+        <label style="display: block; margin-bottom: 12px; font-weight: 600; font-size: 16px; color: #374151;">Gift Card Code</label>
+        <input id="gift-card-code" type="text" placeholder="XXXX-XXXX-XXXX" style="width: 100%; padding: 16px; font-size: 18px; border: 2px solid #d1d5db; border-radius: 8px; margin-bottom: 20px; box-sizing: border-box;" />
+        <button id="submit-button" type="submit" style="width: 100%; padding: 18px; background: linear-gradient(135deg, ${primaryColor}, ${accentColor}); color: white; border: none; border-radius: 12px; font-size: 20px; font-weight: 700; cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">Claim Your Gift Card</button>
+        <p style="margin-top: 16px; font-size: 14px; color: #9ca3af; text-align: center;">Your information is secure and encrypted</p>
       </form>
     </div>
   </section>
+  
+  <!-- BENEFITS -->
+  <section style="padding: 100px 40px; max-width: 1200px; margin: 0 auto;">
+    <h2 style="font-size: 40px; font-weight: 700; text-align: center; margin: 0 0 64px; color: #111827;">Why Choose Us</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 40px;">
+      <div style="text-align: center; padding: 32px; background: #f9fafb; border-radius: 16px;">
+        <div style="font-size: 56px; margin-bottom: 20px;">✓</div>
+        <h3 style="font-size: 22px; font-weight: 600; margin: 0 0 12px; color: #111827;">Instant Delivery</h3>
+        <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin: 0;">Get your reward immediately after verification</p>
+      </div>
+      <div style="text-align: center; padding: 32px; background: #f9fafb; border-radius: 16px;">
+        <div style="font-size: 56px; margin-bottom: 20px;">🔒</div>
+        <h3 style="font-size: 22px; font-weight: 600; margin: 0 0 12px; color: #111827;">Secure Process</h3>
+        <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin: 0;">Your data is protected with enterprise-grade security</p>
+      </div>
+      <div style="text-align: center; padding: 32px; background: #f9fafb; border-radius: 16px;">
+        <div style="font-size: 56px; margin-bottom: 20px;">💯</div>
+        <h3 style="font-size: 22px; font-weight: 600; margin: 0 0 12px; color: #111827;">100% Guaranteed</h3>
+        <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin: 0;">Every code is verified and honored</p>
+      </div>
+    </div>
+  </section>
+  
+  <!-- FOOTER -->
+  <footer style="background: #f3f4f6; padding: 60px 40px 40px; margin-top: 60px; text-align: center; color: #6b7280;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+      <div style="font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 16px;">[Company Name]</div>
+      <p style="font-size: 14px; margin: 0 0 24px;">Questions? Contact support@company.com</p>
+      <p style="font-size: 12px; color: #9ca3af; margin: 0;">© 2024 [Company Name]. All rights reserved. | Privacy Policy | Terms of Service</p>
+    </div>
+  </footer>
 </div>
 
 Return ONLY the component HTML (no DOCTYPE, no explanations, no markdown blocks).`;
