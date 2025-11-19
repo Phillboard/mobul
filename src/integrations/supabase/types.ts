@@ -86,6 +86,60 @@ export type Database = {
           },
         ]
       }
+      ai_design_sessions: {
+        Row: {
+          design_id: string
+          design_type: string
+          ended_at: string | null
+          id: string
+          iterations_count: number | null
+          session_outcome: string | null
+          started_at: string | null
+          switched_to_manual: boolean | null
+          switched_to_manual_at: string | null
+          total_ai_cost_usd: number | null
+          total_ai_messages: number | null
+          total_ai_tokens: number | null
+          total_duration_seconds: number | null
+          user_id: string
+          user_satisfaction_score: number | null
+        }
+        Insert: {
+          design_id: string
+          design_type: string
+          ended_at?: string | null
+          id?: string
+          iterations_count?: number | null
+          session_outcome?: string | null
+          started_at?: string | null
+          switched_to_manual?: boolean | null
+          switched_to_manual_at?: string | null
+          total_ai_cost_usd?: number | null
+          total_ai_messages?: number | null
+          total_ai_tokens?: number | null
+          total_duration_seconds?: number | null
+          user_id: string
+          user_satisfaction_score?: number | null
+        }
+        Update: {
+          design_id?: string
+          design_type?: string
+          ended_at?: string | null
+          id?: string
+          iterations_count?: number | null
+          session_outcome?: string | null
+          started_at?: string | null
+          switched_to_manual?: boolean | null
+          switched_to_manual_at?: string | null
+          total_ai_cost_usd?: number | null
+          total_ai_messages?: number | null
+          total_ai_tokens?: number | null
+          total_duration_seconds?: number | null
+          user_id?: string
+          user_satisfaction_score?: number | null
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           client_id: string
@@ -179,6 +233,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "audiences_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_kits: {
+        Row: {
+          client_id: string
+          colors: Json
+          created_at: string | null
+          design_style: string | null
+          fonts: Json
+          icon_url: string | null
+          id: string
+          is_default: boolean | null
+          logo_urls: Json | null
+          name: string
+          tagline: string | null
+          updated_at: string | null
+          value_propositions: Json | null
+        }
+        Insert: {
+          client_id: string
+          colors?: Json
+          created_at?: string | null
+          design_style?: string | null
+          fonts?: Json
+          icon_url?: string | null
+          id?: string
+          is_default?: boolean | null
+          logo_urls?: Json | null
+          name: string
+          tagline?: string | null
+          updated_at?: string | null
+          value_propositions?: Json | null
+        }
+        Update: {
+          client_id?: string
+          colors?: Json
+          created_at?: string | null
+          design_style?: string | null
+          fonts?: Json
+          icon_url?: string | null
+          id?: string
+          is_default?: boolean | null
+          logo_urls?: Json | null
+          name?: string
+          tagline?: string | null
+          updated_at?: string | null
+          value_propositions?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_kits_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -892,6 +1002,54 @@ export type Database = {
           },
         ]
       }
+      design_versions: {
+        Row: {
+          ai_prompt: string | null
+          change_description: string | null
+          change_type: string
+          created_at: string | null
+          created_by_user_id: string | null
+          design_id: string
+          design_type: string
+          grapesjs_snapshot: Json
+          id: string
+          performance_score: Json | null
+          thumbnail_url: string | null
+          version_name: string | null
+          version_number: number
+        }
+        Insert: {
+          ai_prompt?: string | null
+          change_description?: string | null
+          change_type: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          design_id: string
+          design_type: string
+          grapesjs_snapshot: Json
+          id?: string
+          performance_score?: Json | null
+          thumbnail_url?: string | null
+          version_name?: string | null
+          version_number: number
+        }
+        Update: {
+          ai_prompt?: string | null
+          change_description?: string | null
+          change_type?: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          design_id?: string
+          design_type?: string
+          grapesjs_snapshot?: Json
+          id?: string
+          performance_score?: Json | null
+          thumbnail_url?: string | null
+          version_name?: string | null
+          version_number?: number
+        }
+        Relationships: []
+      }
       dr_phillip_chats: {
         Row: {
           client_id: string | null
@@ -1393,6 +1551,7 @@ export type Database = {
       }
       landing_pages: {
         Row: {
+          ai_chat_history: Json | null
           ai_generated: boolean | null
           ai_prompt: string | null
           client_id: string
@@ -1400,9 +1559,16 @@ export type Database = {
           created_at: string | null
           created_by_user_id: string | null
           css_content: string | null
+          design_iterations: number | null
+          design_metadata: Json | null
+          editor_state: string | null
           editor_type: string | null
+          first_manual_edit_at: string | null
+          grapesjs_project: Json | null
           html_content: string | null
           id: string
+          last_ai_edit_at: string | null
+          manual_edits_count: number | null
           meta_description: string | null
           meta_title: string | null
           name: string
@@ -1413,6 +1579,7 @@ export type Database = {
           version_number: number | null
         }
         Insert: {
+          ai_chat_history?: Json | null
           ai_generated?: boolean | null
           ai_prompt?: string | null
           client_id: string
@@ -1420,9 +1587,16 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           css_content?: string | null
+          design_iterations?: number | null
+          design_metadata?: Json | null
+          editor_state?: string | null
           editor_type?: string | null
+          first_manual_edit_at?: string | null
+          grapesjs_project?: Json | null
           html_content?: string | null
           id?: string
+          last_ai_edit_at?: string | null
+          manual_edits_count?: number | null
           meta_description?: string | null
           meta_title?: string | null
           name: string
@@ -1433,6 +1607,7 @@ export type Database = {
           version_number?: number | null
         }
         Update: {
+          ai_chat_history?: Json | null
           ai_generated?: boolean | null
           ai_prompt?: string | null
           client_id?: string
@@ -1440,9 +1615,16 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           css_content?: string | null
+          design_iterations?: number | null
+          design_metadata?: Json | null
+          editor_state?: string | null
           editor_type?: string | null
+          first_manual_edit_at?: string | null
+          grapesjs_project?: Json | null
           html_content?: string | null
           id?: string
+          last_ai_edit_at?: string | null
+          manual_edits_count?: number | null
           meta_description?: string | null
           meta_title?: string | null
           name?: string
@@ -2224,41 +2406,74 @@ export type Database = {
       }
       templates: {
         Row: {
+          ai_chat_history: Json | null
+          back_grapesjs_project: Json | null
           client_id: string
           created_at: string | null
+          design_iterations: number | null
+          design_metadata: Json | null
+          editor_state: string | null
+          first_manual_edit_at: string | null
+          grapesjs_project: Json | null
+          has_back_design: boolean | null
           id: string
           industry_vertical: Database["public"]["Enums"]["industry_type"] | null
           is_favorite: boolean | null
           json_layers: Json | null
+          last_ai_edit_at: string | null
+          manual_edits_count: number | null
           name: string
+          print_specifications: Json | null
           size: Database["public"]["Enums"]["template_size"]
           thumbnail_url: string | null
           updated_at: string | null
         }
         Insert: {
+          ai_chat_history?: Json | null
+          back_grapesjs_project?: Json | null
           client_id: string
           created_at?: string | null
+          design_iterations?: number | null
+          design_metadata?: Json | null
+          editor_state?: string | null
+          first_manual_edit_at?: string | null
+          grapesjs_project?: Json | null
+          has_back_design?: boolean | null
           id?: string
           industry_vertical?:
             | Database["public"]["Enums"]["industry_type"]
             | null
           is_favorite?: boolean | null
           json_layers?: Json | null
+          last_ai_edit_at?: string | null
+          manual_edits_count?: number | null
           name: string
+          print_specifications?: Json | null
           size: Database["public"]["Enums"]["template_size"]
           thumbnail_url?: string | null
           updated_at?: string | null
         }
         Update: {
+          ai_chat_history?: Json | null
+          back_grapesjs_project?: Json | null
           client_id?: string
           created_at?: string | null
+          design_iterations?: number | null
+          design_metadata?: Json | null
+          editor_state?: string | null
+          first_manual_edit_at?: string | null
+          grapesjs_project?: Json | null
+          has_back_design?: boolean | null
           id?: string
           industry_vertical?:
             | Database["public"]["Enums"]["industry_type"]
             | null
           is_favorite?: boolean | null
           json_layers?: Json | null
+          last_ai_edit_at?: string | null
+          manual_edits_count?: number | null
           name?: string
+          print_specifications?: Json | null
           size?: Database["public"]["Enums"]["template_size"]
           thumbnail_url?: string | null
           updated_at?: string | null
