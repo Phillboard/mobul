@@ -137,7 +137,7 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanations):
     const { primaryColor, accentColor } = extractedBranding;
     const giftCardFormatted = `${giftCardBrand} $${giftCardValue}`;
     
-    const htmlPrompt = `You are a world-class web designer creating a beautiful gift card redemption component.
+    const htmlPrompt = `You are a world-class web designer creating a beautiful gift card redemption page for GrapesJS editor.
 
 BRANDING:
 ${JSON.stringify(extractedBranding, null, 2)}
@@ -147,14 +147,17 @@ USER ACTION: ${userAction}
 
 🚨 CRITICAL GRAPESJS REQUIREMENTS - DO NOT VIOLATE THESE:
 1. ❌ NEVER include: <!DOCTYPE>, <html>, <head>, <body>, <style>, or <script> tags
-2. ✅ START IMMEDIATELY with a <div> or <section> element
-3. ✅ ALL styles MUST be inline using style="" attributes
-4. ✅ Include these EXACT element IDs:
+2. ✅ START IMMEDIATELY with a <div> or <section> element (no text before tags)
+3. ✅ ALL styles MUST be inline using style="" attributes (no external CSS)
+4. ✅ Use simple, semantic HTML structure (div, section, header, form, button, input, p, h1-h6)
+5. ✅ Include these EXACT element IDs:
    - id="redemption-form" on the <form> element
    - id="gift-card-code" on the <input> element
    - id="submit-button" on the submit <button>
+6. ✅ Keep nesting reasonable (avoid deeply nested structures)
+7. ✅ Use clear, editable text content (avoid complex text formatting)
 
-IMPORTANT: Your response should START with "<div" or "<section" - nothing before it!
+IMPORTANT: Your response MUST start with "<div" or "<section" - absolutely nothing before the opening tag!
 
 🎨 MODERN DESIGN REQUIREMENTS:
 
