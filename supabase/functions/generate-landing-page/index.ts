@@ -5,13 +5,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function validateGeneratedHTML(html: string): { valid: boolean; errors: string[] } {
+function validateGrapesJSComponent(html: string): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
-  if (!html.includes('<!DOCTYPE html>')) errors.push('Missing DOCTYPE');
-  if (!html.includes('<html')) errors.push('Missing html tag');
-  if (!html.includes('giftCardRedemptionForm')) errors.push('Missing form ID');
-  if (!html.includes('codeInput')) errors.push('Missing input ID');
-  if (!html.includes('submitButton')) errors.push('Missing button ID');
+  const lowerHTML = html.toLowerCase();
+  
+  // GrapesJS should NOT have these
+  if (lowerHTML.includes('<!doctype')) errors.push('Contains DOCTYPE (not allowed for GrapesJS)');
+  if (lowerHTML.includes('<html')) errors.push('Contains <html> tag (not allowed for GrapesJS)');
+  if (lowerHTML.includes('<head')) errors.push('Contains <head> tag (not allowed for GrapesJS)');
+  if (lowerHTML.includes('<body')) errors.push('Contains <body> tag (not allowed for GrapesJS)');
+  
+  // Must have required IDs
+  if (!html.includes('id="redemption-form"')) errors.push('Missing id="redemption-form"');
+  if (!html.includes('id="gift-card-code"')) errors.push('Missing id="gift-card-code"');
+  if (!html.includes('id="submit-button"')) errors.push('Missing id="submit-button"');
+  
   return { valid: errors.length === 0, errors };
 }
 
@@ -124,73 +132,140 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanations):
       }
     }
 
-    // PHASE 2: HTML GENERATION
-    console.log("🎨 Starting HTML generation...");
+    // PHASE 2: GRAPESJS COMPONENT GENERATION
+    console.log("🎨 Starting GrapesJS component generation...");
     const { primaryColor, accentColor } = extractedBranding;
-    const htmlPrompt = `You are a world-class web designer creating premium gift card landing pages.
+    const giftCardFormatted = `${giftCardBrand} $${giftCardValue}`;
+    
+    const htmlPrompt = `You are a world-class web designer creating a beautiful gift card redemption component.
 
-Create a complete HTML page with this branding:
+BRANDING:
 ${JSON.stringify(extractedBranding, null, 2)}
 
-Gift Card: ${giftCardBrand} - $${giftCardValue}
+GIFT CARD: ${giftCardFormatted}
+USER ACTION: ${userAction}
 
-CRITICAL REQUIREMENTS:
-- Return ONLY complete HTML (no markdown, no code blocks, no explanations)
-- Must include DOCTYPE and complete html structure
-- MANDATORY IDs: form="giftCardRedemptionForm", input="codeInput", button="submitButton"
-- Design: Apple/Tesla aesthetic, bold typography, gradients from ${primaryColor} to ${accentColor}
-- Sections: 1. Hero (full viewport, animated gradient, huge company name), 2. Redemption form (centered, 3D gift card visual, large input, trust badges), 3. Benefits (3 cards), 4. Footer
-- Mobile responsive with Tailwind CSS
-- Smooth animations and hover effects`;
+CRITICAL GRAPESJS REQUIREMENTS:
+1. DO NOT include <!DOCTYPE>, <html>, <head>, or <body> tags
+2. Start directly with semantic HTML elements (div, header, section, etc.)
+3. ALL styles MUST be inline using style="" attributes (no <style> tags or external CSS)
+4. Use these EXACT element IDs:
+   - id="redemption-form" on the <form> element
+   - id="gift-card-code" on the <input> element
+   - id="submit-button" on the submit <button>
+
+DESIGN STRUCTURE:
+- Hero section: Gradient background using ${primaryColor} and ${accentColor}, company name, compelling headline
+- How it works section: 3 simple steps with icons
+- Redemption form: Prominent, centered, easy to use
+- Benefits section: Trust indicators, why redeem
+- Footer: Company info, legal
+
+STYLING REQUIREMENTS (inline only):
+- Responsive using max-width and percentages
+- Modern gradients: linear-gradient(135deg, ${primaryColor}, ${accentColor})
+- Font families: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif
+- Padding/margins for proper spacing
+- Border-radius for modern look (8px-16px)
+- Box shadows for depth
+- Hover effects using :hover pseudo-class where applicable
+- High contrast for readability
+
+EXAMPLE STRUCTURE:
+<div style="font-family: -apple-system, sans-serif; margin: 0; padding: 0;">
+  <header style="background: linear-gradient(135deg, ${primaryColor}, ${accentColor}); padding: 80px 20px; text-align: center; color: white;">
+    <h1 style="margin: 0 0 20px; font-size: 48px; font-weight: bold;">[Company Name]</h1>
+    <p style="font-size: 24px; margin: 0;">[Compelling headline about gift card]</p>
+  </header>
+  
+  <section style="padding: 60px 20px; max-width: 1200px; margin: 0 auto;">
+    <!-- Content sections -->
+  </section>
+  
+  <section style="padding: 60px 20px; background: #f9fafb;">
+    <div style="max-width: 600px; margin: 0 auto;">
+      <form id="redemption-form" style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Enter Your Code</label>
+        <input id="gift-card-code" type="text" placeholder="XXXX-XXXX-XXXX" style="width: 100%; padding: 16px; font-size: 18px; border: 2px solid #d1d5db; border-radius: 8px; margin-bottom: 16px;" />
+        <button id="submit-button" type="submit" style="width: 100%; padding: 18px; background: ${accentColor}; color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: 600; cursor: pointer;">Claim Your Gift Card</button>
+      </form>
+    </div>
+  </section>
+</div>
+
+Return ONLY the component HTML (no DOCTYPE, no explanations, no markdown blocks).`;
 
     let generatedContent: string = '';
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
-        console.log(`🎨 HTML generation attempt ${attempt}/3`);
+        console.log(`🎨 Component generation attempt ${attempt}/3`);
         let html = await callLovableAI([{ role: "user", content: htmlPrompt }], false);
-        console.log(`📝 Received HTML content (${html.length} chars)`);
+        console.log(`📝 Received component HTML (${html.length} chars)`);
         
+        // Strip markdown if present
         const mdMatch = html.match(/```(?:html)?\s*\n?([\s\S]*?)\n?```/);
-        if (mdMatch) html = mdMatch[1];
-        if (!html.includes('<!DOCTYPE html>') && html.includes('<html')) {
-          html = '<!DOCTYPE html>\n' + html.substring(html.indexOf('<html'));
-        }
+        if (mdMatch) html = mdMatch[1].trim();
         
-        const validation = validateGeneratedHTML(html);
+        const validation = validateGrapesJSComponent(html);
         if (!validation.valid) {
           console.log(`⚠️ Validation issues:`, validation.errors);
           if (attempt === 3) {
-            return Response.json({ error: "Generated HTML validation failed", details: validation.errors }, { status: 500, headers: corsHeaders });
+            return Response.json({ error: "Component validation failed", details: validation.errors }, { status: 500, headers: corsHeaders });
           }
         } else {
           generatedContent = html;
-          console.log(`✅ HTML generation successful`);
+          console.log(`✅ GrapesJS component generation successful`);
           break;
         }
       } catch (error) {
         console.error(`❌ Exception on attempt ${attempt}:`, error);
         if (attempt === 3) {
           const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-          return Response.json({ error: "HTML generation failed", details: errorMsg }, { status: 500, headers: corsHeaders });
+          return Response.json({ error: "Component generation failed", details: errorMsg }, { status: 500, headers: corsHeaders });
         }
         await exponentialBackoff(attempt);
       }
     }
     
     if (!generatedContent) {
-      return Response.json({ error: "Failed to generate valid HTML content" }, { status: 500, headers: corsHeaders });
+      return Response.json({ error: "Failed to generate valid component" }, { status: 500, headers: corsHeaders });
     }
 
-    // SAVE
+    // SAVE IN GRAPESJS FORMAT
     const slug = `${extractedBranding.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
     const { data: landingPage, error: insertError } = await supabase.from("landing_pages").insert({
-      client_id: clientId, name: `${extractedBranding.companyName} - Gift Card`, slug, html_content: generatedContent,
-      content_json: { branding: extractedBranding, giftCard: { brand: giftCardBrand, value: giftCardValue }, userAction },
-      ai_generated: true, published: false, editor_type: 'ai', created_by_user_id: user.id
+      client_id: clientId,
+      name: `${extractedBranding.companyName} - Gift Card Redemption`,
+      slug,
+      html_content: null, // GrapesJS doesn't use html_content
+      content_json: {
+        pages: [{
+          name: "Home",
+          component: generatedContent
+        }],
+        branding: extractedBranding,
+        giftCard: { brand: giftCardBrand, value: giftCardValue },
+        userAction
+      },
+      ai_generated: true,
+      published: false,
+      editor_type: 'grapesjs',
+      created_by_user_id: user.id
     }).select().single();
 
-    if (insertError) return Response.json({ error: "Save failed" }, { status: 500, headers: corsHeaders });
-    return Response.json({ success: true, id: landingPage.id, slug: landingPage.slug, previewUrl: `/p/${landingPage.slug}`, extractedBranding, branding: extractedBranding }, { headers: corsHeaders });
+    if (insertError) {
+      console.error("Save error:", insertError);
+      return Response.json({ error: "Failed to save landing page", details: insertError.message }, { status: 500, headers: corsHeaders });
+    }
+    
+    console.log(`✅ Landing page saved: ${landingPage.id}`);
+    return Response.json({ 
+      success: true, 
+      id: landingPage.id, 
+      slug: landingPage.slug, 
+      previewUrl: `/p/${landingPage.slug}`, 
+      extractedBranding 
+    }, { headers: corsHeaders });
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
