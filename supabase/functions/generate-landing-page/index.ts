@@ -145,14 +145,16 @@ ${JSON.stringify(extractedBranding, null, 2)}
 GIFT CARD: ${giftCardFormatted}
 USER ACTION: ${userAction}
 
-CRITICAL GRAPESJS REQUIREMENTS:
-1. DO NOT include <!DOCTYPE>, <html>, <head>, or <body> tags
-2. Start directly with semantic HTML elements (div, header, section, etc.)
-3. ALL styles MUST be inline using style="" attributes (no <style> tags or external CSS)
-4. Use these EXACT element IDs:
+🚨 CRITICAL GRAPESJS REQUIREMENTS - DO NOT VIOLATE THESE:
+1. ❌ NEVER include: <!DOCTYPE>, <html>, <head>, <body>, <style>, or <script> tags
+2. ✅ START IMMEDIATELY with a <div> or <section> element
+3. ✅ ALL styles MUST be inline using style="" attributes
+4. ✅ Include these EXACT element IDs:
    - id="redemption-form" on the <form> element
    - id="gift-card-code" on the <input> element
    - id="submit-button" on the submit <button>
+
+IMPORTANT: Your response should START with "<div" or "<section" - nothing before it!
 
 DESIGN STRUCTURE:
 - Hero section: Gradient background using ${primaryColor} and ${accentColor}, company name, compelling headline
@@ -205,6 +207,14 @@ Return ONLY the component HTML (no DOCTYPE, no explanations, no markdown blocks)
         // Strip markdown if present
         const mdMatch = html.match(/```(?:html)?\s*\n?([\s\S]*?)\n?```/);
         if (mdMatch) html = mdMatch[1].trim();
+        
+        // Auto-fix: Strip DOCTYPE, html, head, body tags if present
+        html = html.replace(/<!DOCTYPE[^>]*>/gi, '');
+        html = html.replace(/<\/?html[^>]*>/gi, '');
+        html = html.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+        html = html.replace(/<\/?body[^>]*>/gi, '');
+        html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+        html = html.trim();
         
         const validation = validateGrapesJSComponent(html);
         if (!validation.valid) {
