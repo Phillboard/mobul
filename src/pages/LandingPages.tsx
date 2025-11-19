@@ -103,6 +103,15 @@ export default function LandingPages() {
                     </div>
                   </div>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/landing-pages/new/ai-editor")}>
+                  <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
+                  <div>
+                    <div className="font-medium">AI Chat Editor</div>
+                    <div className="text-xs text-muted-foreground">
+                      Design with conversational AI
+                    </div>
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/landing-pages/new/visual-editor")}>
                   <Palette className="h-4 w-4 mr-2" />
                   <div>
@@ -187,10 +196,16 @@ export default function LandingPages() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         {canEdit && (
-                          <DropdownMenuItem onClick={() => handleEdit(page)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
+                          <>
+                            <DropdownMenuItem onClick={() => handleEdit(page)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/landing-pages/${page.id}/ai-editor`)}>
+                              <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
+                              Edit with AI Chat
+                            </DropdownMenuItem>
+                          </>
                         )}
                         <DropdownMenuItem onClick={() => window.open(`/p/${page.slug}`, "_blank")}>
                           <Eye className="h-4 w-4 mr-2" />

@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Star, Edit, Copy, Trash2, Palette, Check } from "lucide-react";
+import { MoreVertical, Star, Edit, Copy, Trash2, Palette, Check, Sparkles } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -231,6 +231,10 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-background z-50">
+                <DropdownMenuItem onClick={() => navigate(`/templates/${template.id}/ai-editor`)}>
+                  <Sparkles className="mr-2 h-4 w-4 text-purple-500" />
+                  Edit with AI Chat
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Details

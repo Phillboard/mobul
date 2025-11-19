@@ -22,9 +22,9 @@ interface Message {
 }
 
 interface AIDesignEditorProps {
-  designType: 'landing_page' | 'mailer';
-  designId: string;
-  onSwitchToManual: () => void;
+  designType: 'landing_page' | 'mailer' | 'template';
+  designId?: string;
+  onSwitchToManual?: () => void;
 }
 
 export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDesignEditorProps) {
@@ -41,12 +41,16 @@ export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDes
   const iframeRef = useRef<HTMLIFrameElement>(null);
   
   useEffect(() => {
-    loadDesign();
-    loadChatHistory();
-    loadVersionHistory();
+    if (designId) {
+      loadDesign();
+      loadChatHistory();
+      loadVersionHistory();
+    }
   }, [designId]);
   
   const loadDesign = async () => {
+    if (!designId) return;
+    
     const table = designType === 'landing_page' ? 'landing_pages' : 'templates';
     const { data, error } = await supabase
       .from(table as any)
