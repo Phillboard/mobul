@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.claim-and-provision-card]
 verify_jwt = false
+
+[functions.ai-design-chat]
+verify_jwt = true
