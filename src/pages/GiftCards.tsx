@@ -3,16 +3,16 @@ import { Layout } from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { PoolCard } from "@/components/gift-cards/PoolCard";
 import { GiftCardUploadTab } from "@/components/gift-cards/GiftCardUploadTab";
 import { GiftCardInventory } from "@/components/gift-cards/GiftCardInventory";
 import { DeliveryHistory } from "@/components/gift-cards/DeliveryHistory";
-import { CreatePoolDialog } from "@/components/gift-cards/CreatePoolDialog";
+import { CreatePoolDialogV2 } from "@/components/gift-cards/CreatePoolDialogV2";
 import { GiftCardTesting } from "@/components/gift-cards/GiftCardTesting";
 import { GiftCardAnalytics } from "@/components/gift-cards/GiftCardAnalytics";
-import { GiftCardManager } from "@/components/gift-cards/GiftCardManager";
 import { SellGiftCardsDialog } from "@/components/gift-cards/SellGiftCardsDialog";
+import { BrandPoolsView } from "@/components/gift-cards/BrandPoolsView";
 import { useGiftCardPools } from "@/hooks/useGiftCardPools";
+import { useGiftCardBrands } from "@/hooks/useGiftCardBrands";
 import { useTenant } from "@/contexts/TenantContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +21,7 @@ import { useEffect } from "react";
 export default function GiftCards() {
   const { currentClient } = useTenant();
   const { pools, isLoading, createPool } = useGiftCardPools(currentClient?.id);
+  const { data: brands = [] } = useGiftCardBrands();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [uploadPoolId, setUploadPoolId] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState("pools");
@@ -28,7 +29,6 @@ export default function GiftCards() {
   const { toast } = useToast();
   const { hasRole } = useAuth();
 
-  // Handle purchase success/cancel from URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const purchaseStatus = params.get('purchase');
@@ -38,7 +38,6 @@ export default function GiftCards() {
         title: "Purchase successful!",
         description: "Your gift card pool has been created. You can now upload gift cards to it.",
       });
-      // Clean up URL
       window.history.replaceState({}, '', '/gift-cards');
     } else if (purchaseStatus === 'cancelled') {
       toast({
@@ -46,14 +45,13 @@ export default function GiftCards() {
         description: "Your purchase was cancelled. No charges were made.",
         variant: "destructive",
       });
-      // Clean up URL
       window.history.replaceState({}, '', '/gift-cards');
     }
   }, [toast]);
 
   const handleUploadClick = (poolId: string) => {
     setUploadPoolId(poolId);
-    setActiveTab("upload");
+    setActiveTab("inventory");
   };
 
   const handleCreatePool = (pool: any) => {
@@ -75,9 +73,9 @@ export default function GiftCards() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Gift Cards</h1>
+            <h1 className="text-3xl font-bold">Gift Card Manager</h1>
             <p className="text-muted-foreground mt-1">
-              Manage your gift card inventory and deliveries
+              Manage your gift card inventory organized by brand
             </p>
           </div>
           <div className="flex gap-2">
@@ -96,71 +94,47 @@ export default function GiftCards() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="pools">Pools</TabsTrigger>
-            <TabsTrigger value="upload">Upload</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
-            <TabsTrigger value="manager">Manager</TabsTrigger>
-            <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            {hasRole('admin') && <TabsTrigger value="testing">Testing</TabsTrigger>}
+            <TabsTrigger value="activity">Activity & History</TabsTrigger>
+            {hasRole('admin') && <TabsTrigger value="analytics">Analytics & Testing</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="pools" className="space-y-4">
             {isLoading ? (
               <div className="text-center text-muted-foreground">Loading pools...</div>
-            ) : pools?.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">
-                  No gift card pools yet. Create your first pool to get started.
-                </p>
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create First Pool
-                </Button>
-              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pools?.map((pool) => (
-                  <PoolCard
-                    key={pool.id}
-                    pool={pool}
-                    onUploadClick={handleUploadClick}
-                  />
-                ))}
-              </div>
+              <BrandPoolsView
+                pools={pools || []}
+                brands={brands}
+                onCreatePool={() => setIsCreateDialogOpen(true)}
+                onUploadCards={handleUploadClick}
+              />
             )}
           </TabsContent>
 
-          <TabsContent value="upload">
-            <GiftCardUploadTab 
-              clientId={currentClient.id} 
-              preselectedPoolId={uploadPoolId}
-            />
-          </TabsContent>
-
           <TabsContent value="inventory">
-            <GiftCardInventory clientId={currentClient.id} />
+            <div className="space-y-4">
+              <GiftCardUploadTab 
+                clientId={currentClient.id} 
+                preselectedPoolId={uploadPoolId}
+              />
+              <GiftCardInventory clientId={currentClient.id} />
+            </div>
           </TabsContent>
 
-          <TabsContent value="manager">
-            <GiftCardManager clientId={currentClient.id} />
-          </TabsContent>
-
-          <TabsContent value="deliveries">
+          <TabsContent value="activity">
             <DeliveryHistory />
           </TabsContent>
 
-          <TabsContent value="analytics">
-            <GiftCardAnalytics clientId={currentClient.id} />
-          </TabsContent>
-
           {hasRole('admin') && (
-            <TabsContent value="testing">
+            <TabsContent value="analytics" className="space-y-6">
+              <GiftCardAnalytics clientId={currentClient.id} />
               <GiftCardTesting />
             </TabsContent>
           )}
         </Tabs>
 
-        <CreatePoolDialog
+        <CreatePoolDialogV2
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
           onCreatePool={handleCreatePool}

@@ -1433,8 +1433,11 @@ export type Database = {
         Row: {
           api_config: Json | null
           api_provider: string | null
+          auto_balance_check: boolean | null
           available_cards: number | null
           available_for_purchase: boolean | null
+          balance_check_frequency_hours: number | null
+          brand_id: string | null
           card_value: number
           claimed_cards: number | null
           client_id: string
@@ -1442,6 +1445,7 @@ export type Database = {
           delivered_cards: number | null
           failed_cards: number | null
           id: string
+          last_auto_balance_check: string | null
           low_stock_threshold: number | null
           pool_name: string
           provider: string | null
@@ -1452,8 +1456,11 @@ export type Database = {
         Insert: {
           api_config?: Json | null
           api_provider?: string | null
+          auto_balance_check?: boolean | null
           available_cards?: number | null
           available_for_purchase?: boolean | null
+          balance_check_frequency_hours?: number | null
+          brand_id?: string | null
           card_value: number
           claimed_cards?: number | null
           client_id: string
@@ -1461,6 +1468,7 @@ export type Database = {
           delivered_cards?: number | null
           failed_cards?: number | null
           id?: string
+          last_auto_balance_check?: string | null
           low_stock_threshold?: number | null
           pool_name: string
           provider?: string | null
@@ -1471,8 +1479,11 @@ export type Database = {
         Update: {
           api_config?: Json | null
           api_provider?: string | null
+          auto_balance_check?: boolean | null
           available_cards?: number | null
           available_for_purchase?: boolean | null
+          balance_check_frequency_hours?: number | null
+          brand_id?: string | null
           card_value?: number
           claimed_cards?: number | null
           client_id?: string
@@ -1480,6 +1491,7 @@ export type Database = {
           delivered_cards?: number | null
           failed_cards?: number | null
           id?: string
+          last_auto_balance_check?: string | null
           low_stock_threshold?: number | null
           pool_name?: string
           provider?: string | null
@@ -1488,6 +1500,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "gift_card_pools_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_brands"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "gift_card_pools_client_id_fkey"
             columns: ["client_id"]
@@ -1635,8 +1654,10 @@ export type Database = {
           expiration_date: string | null
           id: string
           last_balance_check: string | null
+          notes: string | null
           pool_id: string
           status: string | null
+          tags: Json | null
         }
         Insert: {
           balance_check_status?: string | null
@@ -1654,8 +1675,10 @@ export type Database = {
           expiration_date?: string | null
           id?: string
           last_balance_check?: string | null
+          notes?: string | null
           pool_id: string
           status?: string | null
+          tags?: Json | null
         }
         Update: {
           balance_check_status?: string | null
@@ -1673,8 +1696,10 @@ export type Database = {
           expiration_date?: string | null
           id?: string
           last_balance_check?: string | null
+          notes?: string | null
           pool_id?: string
           status?: string | null
+          tags?: Json | null
         }
         Relationships: [
           {
