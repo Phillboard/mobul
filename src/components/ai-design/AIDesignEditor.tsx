@@ -30,10 +30,38 @@ interface AIDesignEditorProps {
 export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDesignEditorProps) {
   const navigate = useNavigate();
   
+  const defaultStarterHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Landing Page</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .hero { text-align: center; padding: 100px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .hero h1 { font-size: 3rem; margin-bottom: 20px; }
+    .hero p { font-size: 1.25rem; margin-bottom: 30px; }
+    .cta-button { display: inline-block; background: white; color: #667eea; padding: 15px 40px; border-radius: 50px; text-decoration: none; font-weight: bold; transition: transform 0.3s; }
+    .cta-button:hover { transform: scale(1.05); }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div class="container">
+      <h1>Welcome to Your New Landing Page</h1>
+      <p>Tell me what you'd like to create and I'll help you build it!</p>
+      <a href="#" class="cta-button">Get Started</a>
+    </div>
+  </section>
+</body>
+</html>`;
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [currentHtml, setCurrentHtml] = useState('');
+  const [currentHtml, setCurrentHtml] = useState(designId ? '' : defaultStarterHtml);
   const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
   const [versions, setVersions] = useState<any[]>([]);
   
@@ -45,6 +73,16 @@ export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDes
       loadDesign();
       loadChatHistory();
       loadVersionHistory();
+    } else {
+      // For new designs, render the starter HTML immediately
+      if (iframeRef.current) {
+        const doc = iframeRef.current.contentDocument;
+        if (doc) {
+          doc.open();
+          doc.write(currentHtml);
+          doc.close();
+        }
+      }
     }
   }, [designId]);
   
@@ -148,15 +186,6 @@ export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDes
       setMessages(prev => [...prev, assistantMessage]);
       setCurrentHtml(data.updatedHtml);
       
-      if (iframeRef.current) {
-        const doc = iframeRef.current.contentDocument;
-        if (doc) {
-          doc.open();
-          doc.write(data.updatedHtml);
-          doc.close();
-        }
-      }
-      
       await saveToDatabase(data.updatedHtml, [...messages, userMessage, assistantMessage]);
       
     } catch (error: any) {
@@ -235,6 +264,17 @@ export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+  
+  useEffect(() => {
+    if (iframeRef.current && currentHtml) {
+      const doc = iframeRef.current.contentDocument;
+      if (doc) {
+        doc.open();
+        doc.write(currentHtml);
+        doc.close();
+      }
+    }
+  }, [currentHtml]);
   
   return (
     <div className="h-screen flex flex-col bg-background">
