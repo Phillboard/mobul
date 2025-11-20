@@ -88,7 +88,7 @@ const navigationGroups: NavGroup[] = [
   {
     label: "Rewards",
     items: [
-      { name: "Gift Card Manager", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.view'] },
+      { name: "Gift Card Manager", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.purchase'] },
       { name: "Lead Marketplace", href: "/marketplace", icon: ShoppingCart, permissions: ['lead_marketplace.view'] },
     ]
   },
