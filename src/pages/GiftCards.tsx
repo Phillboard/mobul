@@ -10,6 +10,8 @@ import { DeliveryHistory } from "@/components/gift-cards/DeliveryHistory";
 import { CreatePoolDialog } from "@/components/gift-cards/CreatePoolDialog";
 import { GiftCardTesting } from "@/components/gift-cards/GiftCardTesting";
 import { GiftCardAnalytics } from "@/components/gift-cards/GiftCardAnalytics";
+import { GiftCardManager } from "@/components/gift-cards/GiftCardManager";
+import { SellGiftCardsDialog } from "@/components/gift-cards/SellGiftCardsDialog";
 import { useGiftCardPools } from "@/hooks/useGiftCardPools";
 import { useTenant } from "@/contexts/TenantContext";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +24,7 @@ export default function GiftCards() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [uploadPoolId, setUploadPoolId] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState("pools");
+  const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
   const { toast } = useToast();
   const { hasRole } = useAuth();
 
@@ -77,10 +80,17 @@ export default function GiftCards() {
               Manage your gift card inventory and deliveries
             </p>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Pool
-          </Button>
+          <div className="flex gap-2">
+            {hasRole('admin') && (
+              <Button variant="outline" onClick={() => setIsSellDialogOpen(true)}>
+                Sell Cards
+              </Button>
+            )}
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Pool
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -88,6 +98,7 @@ export default function GiftCards() {
             <TabsTrigger value="pools">Pools</TabsTrigger>
             <TabsTrigger value="upload">Upload</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
+            <TabsTrigger value="manager">Manager</TabsTrigger>
             <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             {hasRole('admin') && <TabsTrigger value="testing">Testing</TabsTrigger>}
@@ -130,6 +141,10 @@ export default function GiftCards() {
             <GiftCardInventory clientId={currentClient.id} />
           </TabsContent>
 
+          <TabsContent value="manager">
+            <GiftCardManager clientId={currentClient.id} />
+          </TabsContent>
+
           <TabsContent value="deliveries">
             <DeliveryHistory />
           </TabsContent>
@@ -150,6 +165,11 @@ export default function GiftCards() {
           onOpenChange={setIsCreateDialogOpen}
           onCreatePool={handleCreatePool}
           clientId={currentClient.id}
+        />
+
+        <SellGiftCardsDialog
+          open={isSellDialogOpen}
+          onOpenChange={setIsSellDialogOpen}
         />
 
       </div>

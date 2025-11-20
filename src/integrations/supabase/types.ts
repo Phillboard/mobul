@@ -1258,6 +1258,92 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_card_balance_history: {
+        Row: {
+          change_amount: number | null
+          check_method: string | null
+          checked_at: string | null
+          error_message: string | null
+          gift_card_id: string
+          id: string
+          new_balance: number | null
+          previous_balance: number | null
+          status: string | null
+        }
+        Insert: {
+          change_amount?: number | null
+          check_method?: string | null
+          checked_at?: string | null
+          error_message?: string | null
+          gift_card_id: string
+          id?: string
+          new_balance?: number | null
+          previous_balance?: number | null
+          status?: string | null
+        }
+        Update: {
+          change_amount?: number | null
+          check_method?: string | null
+          checked_at?: string | null
+          error_message?: string | null
+          gift_card_id?: string
+          id?: string
+          new_balance?: number | null
+          previous_balance?: number | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_balance_history_gift_card_id_fkey"
+            columns: ["gift_card_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_card_brands: {
+        Row: {
+          balance_check_enabled: boolean | null
+          balance_check_url: string | null
+          brand_code: string
+          brand_name: string
+          category: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          provider: string
+          typical_denominations: Json | null
+        }
+        Insert: {
+          balance_check_enabled?: boolean | null
+          balance_check_url?: string | null
+          brand_code: string
+          brand_name: string
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          provider?: string
+          typical_denominations?: Json | null
+        }
+        Update: {
+          balance_check_enabled?: boolean | null
+          balance_check_url?: string | null
+          brand_code?: string
+          brand_name?: string
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          provider?: string
+          typical_denominations?: Json | null
+        }
+        Relationships: []
+      }
       gift_card_deliveries: {
         Row: {
           call_session_id: string | null
@@ -1481,53 +1567,123 @@ export type Database = {
           },
         ]
       }
+      gift_card_sales: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          pool_id: string
+          price_per_card: number
+          quantity: number
+          sold_by_user_id: string | null
+          total_amount: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          pool_id: string
+          price_per_card: number
+          quantity: number
+          sold_by_user_id?: string | null
+          total_amount: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          pool_id?: string
+          price_per_card?: number
+          quantity?: number
+          sold_by_user_id?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_card_sales_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_card_sales_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_cards: {
         Row: {
+          balance_check_status: string | null
+          brand_id: string | null
           card_code: string
           card_number: string | null
           claimed_at: string | null
           claimed_by_call_session_id: string | null
           claimed_by_recipient_id: string | null
           created_at: string | null
+          current_balance: number | null
           delivered_at: string | null
           delivery_address: string | null
           delivery_method: string | null
           expiration_date: string | null
           id: string
+          last_balance_check: string | null
           pool_id: string
           status: string | null
         }
         Insert: {
+          balance_check_status?: string | null
+          brand_id?: string | null
           card_code: string
           card_number?: string | null
           claimed_at?: string | null
           claimed_by_call_session_id?: string | null
           claimed_by_recipient_id?: string | null
           created_at?: string | null
+          current_balance?: number | null
           delivered_at?: string | null
           delivery_address?: string | null
           delivery_method?: string | null
           expiration_date?: string | null
           id?: string
+          last_balance_check?: string | null
           pool_id: string
           status?: string | null
         }
         Update: {
+          balance_check_status?: string | null
+          brand_id?: string | null
           card_code?: string
           card_number?: string | null
           claimed_at?: string | null
           claimed_by_call_session_id?: string | null
           claimed_by_recipient_id?: string | null
           created_at?: string | null
+          current_balance?: number | null
           delivered_at?: string | null
           delivery_address?: string | null
           delivery_method?: string | null
           expiration_date?: string | null
           id?: string
+          last_balance_check?: string | null
           pool_id?: string
           status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "gift_cards_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_brands"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "gift_cards_claimed_by_recipient_id_fkey"
             columns: ["claimed_by_recipient_id"]
