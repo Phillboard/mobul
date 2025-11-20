@@ -1225,6 +1225,39 @@ export type Database = {
           },
         ]
       }
+      gift_card_audit_log: {
+        Row: {
+          action: string
+          changes: Json | null
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          changes?: Json | null
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          changes?: Json | null
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       gift_card_deliveries: {
         Row: {
           call_session_id: string | null
@@ -1323,6 +1356,7 @@ export type Database = {
           delivered_cards: number | null
           failed_cards: number | null
           id: string
+          low_stock_threshold: number | null
           pool_name: string
           provider: string | null
           purchase_method: string | null
@@ -1341,6 +1375,7 @@ export type Database = {
           delivered_cards?: number | null
           failed_cards?: number | null
           id?: string
+          low_stock_threshold?: number | null
           pool_name: string
           provider?: string | null
           purchase_method?: string | null
@@ -1359,6 +1394,7 @@ export type Database = {
           delivered_cards?: number | null
           failed_cards?: number | null
           id?: string
+          low_stock_threshold?: number | null
           pool_name?: string
           provider?: string | null
           purchase_method?: string | null

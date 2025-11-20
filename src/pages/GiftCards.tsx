@@ -8,9 +8,12 @@ import { GiftCardUploadTab } from "@/components/gift-cards/GiftCardUploadTab";
 import { GiftCardInventory } from "@/components/gift-cards/GiftCardInventory";
 import { DeliveryHistory } from "@/components/gift-cards/DeliveryHistory";
 import { CreatePoolDialog } from "@/components/gift-cards/CreatePoolDialog";
+import { GiftCardTesting } from "@/components/gift-cards/GiftCardTesting";
+import { GiftCardAnalytics } from "@/components/gift-cards/GiftCardAnalytics";
 import { useGiftCardPools } from "@/hooks/useGiftCardPools";
 import { useTenant } from "@/contexts/TenantContext";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 
 export default function GiftCards() {
@@ -20,6 +23,7 @@ export default function GiftCards() {
   const [uploadPoolId, setUploadPoolId] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState("pools");
   const { toast } = useToast();
+  const { hasRole } = useAuth();
 
   // Handle purchase success/cancel from URL params
   useEffect(() => {
@@ -85,6 +89,8 @@ export default function GiftCards() {
             <TabsTrigger value="upload">Upload</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            {hasRole('admin') && <TabsTrigger value="testing">Testing</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="pools" className="space-y-4">
@@ -127,6 +133,16 @@ export default function GiftCards() {
           <TabsContent value="deliveries">
             <DeliveryHistory />
           </TabsContent>
+
+          <TabsContent value="analytics">
+            <GiftCardAnalytics clientId={currentClient.id} />
+          </TabsContent>
+
+          {hasRole('admin') && (
+            <TabsContent value="testing">
+              <GiftCardTesting />
+            </TabsContent>
+          )}
         </Tabs>
 
         <CreatePoolDialog
