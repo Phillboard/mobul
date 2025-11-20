@@ -10,10 +10,10 @@ export default function Audiences() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div>
           <h1 className="text-3xl font-bold">Audiences & Leads</h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-1">
             Import contacts, buy targeted leads, and manage your mailing lists
           </p>
         </div>
@@ -25,15 +25,15 @@ export default function Audiences() {
             <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="import" className="mt-6">
+          <TabsContent value="import" className="mt-4">
             <AudienceImportTab />
           </TabsContent>
 
-          <TabsContent value="saved" className="mt-6">
+          <TabsContent value="saved" className="mt-4">
             <AudiencesListTab />
           </TabsContent>
 
-          <TabsContent value="marketplace" className="mt-6">
+          <TabsContent value="marketplace" className="mt-4">
             <Card>
               <CardContent className="py-12 text-center">
                 <p className="text-muted-foreground">Lead marketplace coming soon</p>
