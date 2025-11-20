@@ -6,33 +6,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function callClaude(messages: any[]) {
-  const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not configured');
+async function callLovableAI(messages: any[]) {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 4096,
-      temperature: 0.8,
+      model: 'google/gemini-2.5-flash',
       messages,
+      temperature: 0.8,
+      max_tokens: 4096,
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('Claude API error:', error);
-    throw new Error(`Claude API error: ${response.status}`);
+    console.error('Lovable AI error:', error);
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+    if (response.status === 402) {
+      throw new Error('Payment required. Please add credits to your workspace.');
+    }
+    throw new Error(`AI API error: ${response.status}`);
   }
 
   const data = await response.json();
-  return data.content[0].text;
+  return data.choices[0].message.content;
 }
 
 function cleanForGrapesJS(html: string): string {
@@ -58,7 +63,7 @@ serve(async (req) => {
     const body = await req.json();
     const { sourceType, sourceUrl, sourceFile, sourceDescription, clientId, giftCardBrand, giftCardValue, userAction } = body;
     
-    console.log('Claude 4.5 Generation request:', { sourceType, clientId, hasFile: !!sourceFile, hasUrl: !!sourceUrl, hasDescription: !!sourceDescription });
+    console.log('AI Generation request:', { sourceType, clientId, hasFile: !!sourceFile, hasUrl: !!sourceUrl, hasDescription: !!sourceDescription });
     
     // Validate required fields
     if (!sourceType) {
@@ -137,7 +142,7 @@ serve(async (req) => {
       brandingMessages = [{
         role: 'user',
         content: [
-          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: sourceFile.split(',')[1] } },
+          { type: 'image_url', image_url: { url: sourceFile } },
           { type: 'text', text: brandingPrompt }
         ]
       }];
@@ -147,7 +152,7 @@ serve(async (req) => {
       brandingMessages = [{ role: 'user', content: `${brandingPrompt}\n\nDescription: ${sourceDescription}` }];
     }
 
-    const brandingText = await callClaude(brandingMessages);
+    const brandingText = await callLovableAI(brandingMessages);
     const branding = JSON.parse(brandingText.replace(/```json\s*/g, '').replace(/```\s*/g, ''));
     console.log('Branding extracted:', branding);
 
@@ -179,9 +184,9 @@ SECTIONS:
 Make it BEAUTIFUL!`;
 
     const [html1, html2, html3] = await Promise.all([
-      callClaude([{ role: 'user', content: createPrompt('Modern Minimalist (Apple-inspired)', 'Clean lines, whitespace, subtle gradients, soft shadows') }]),
-      callClaude([{ role: 'user', content: createPrompt('Bold & Energetic (Startup vibe)', 'Vibrant colors, large typography, high contrast, exciting energy') }]),
-      callClaude([{ role: 'user', content: createPrompt('Professional Luxury (High-end)', 'Elegant typography, sophisticated colors, premium aesthetic, gold accents') }])
+      callLovableAI([{ role: 'user', content: createPrompt('Modern Minimalist (Apple-inspired)', 'Clean lines, whitespace, subtle gradients, soft shadows') }]),
+      callLovableAI([{ role: 'user', content: createPrompt('Bold & Energetic (Startup vibe)', 'Vibrant colors, large typography, high contrast, exciting energy') }]),
+      callLovableAI([{ role: 'user', content: createPrompt('Professional Luxury (High-end)', 'Elegant typography, sophisticated colors, premium aesthetic, gold accents') }])
     ]);
 
     const variations = [
