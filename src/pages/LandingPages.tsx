@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AIGenerationDialog } from "@/components/landing-pages/AIGenerationDialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function LandingPages() {
   const navigate = useNavigate();
@@ -59,6 +60,32 @@ export default function LandingPages() {
       navigate(`/landing-pages/${page.id}/visual-editor`);
     } else {
       navigate(`/landing-pages/${page.id}/edit`);
+    }
+  };
+
+  const handleCreateWithAI = async () => {
+    if (!currentClient) return;
+    
+    const { data: newPage, error } = await supabase
+      .from('landing_pages')
+      .insert({
+        client_id: currentClient.id,
+        name: 'New AI Landing Page',
+        slug: `ai-page-${Date.now()}`,
+        published: false,
+        content_json: {},
+        html_content: '',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error('Failed to create landing page');
+      return;
+    }
+
+    if (newPage) {
+      navigate(`/landing-pages/${newPage.id}/ai-editor`);
     }
   };
 
@@ -103,7 +130,7 @@ export default function LandingPages() {
                     </div>
                   </div>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/landing-pages/new/ai-editor")}>
+                <DropdownMenuItem onClick={handleCreateWithAI}>
                   <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
                   <div>
                     <div className="font-medium">AI Chat Editor</div>

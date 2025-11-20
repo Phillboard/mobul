@@ -31,7 +31,7 @@ export default function AILandingPageEditor() {
       <div className="flex-1 overflow-hidden">
         <AIDesignEditor
           designType="landing_page"
-          designId={id === "new" ? undefined : id}
+          designId={id}
           onSwitchToManual={() => navigate(`/landing-pages/${id}/visual-editor`)}
         />
       </div>

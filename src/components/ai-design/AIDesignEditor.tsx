@@ -205,6 +205,11 @@ export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDes
   };
   
   const saveToDatabase = async (html: string, chatHistory: Message[]) => {
+    if (!designId) {
+      console.warn('No designId, skipping database save');
+      return;
+    }
+
     const table = designType === 'landing_page' ? 'landing_pages' : 'templates';
     
     await supabase
