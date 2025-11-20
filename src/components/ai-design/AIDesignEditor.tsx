@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ArrowLeft, Send, Sparkles, Save, ExternalLink, History, Undo } from 'lucide-react';
+import { ArrowLeft, Send, Sparkles, Save, ExternalLink, History, Undo, Monitor, Tablet, Smartphone, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Message {
   id: string;
@@ -27,8 +29,11 @@ interface AIDesignEditorProps {
   onSwitchToManual?: () => void;
 }
 
+type PreviewMode = 'desktop' | 'tablet' | 'mobile';
+
 export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDesignEditorProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const defaultStarterHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -62,11 +67,34 @@ export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDes
   const [inputValue, setInputValue] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentHtml, setCurrentHtml] = useState(designId ? '' : defaultStarterHtml);
-  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
+  const [activeTab, setActiveTab] = useState<'preview' | 'history'>('preview');
   const [versions, setVersions] = useState<any[]>([]);
+  
+  // Resizable panel state with localStorage persistence
+  const [leftPanelSize, setLeftPanelSize] = useState<number>(() => {
+    const saved = localStorage.getItem(`aiDesignEditor_leftPanelSize_${designType}`);
+    return saved ? parseFloat(saved) : 40;
+  });
+  
+  const [rightPanelSize, setRightPanelSize] = useState<number>(() => {
+    const saved = localStorage.getItem(`aiDesignEditor_rightPanelSize_${designType}`);
+    return saved ? parseFloat(saved) : 60;
+  });
+  
+  // Preview controls
+  const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop');
+  const [zoom, setZoom] = useState(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showMobileView, setShowMobileView] = useState<'chat' | 'preview'>('preview');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  
+  // Save panel sizes to localStorage
+  useEffect(() => {
+    localStorage.setItem(`aiDesignEditor_leftPanelSize_${designType}`, leftPanelSize.toString());
+    localStorage.setItem(`aiDesignEditor_rightPanelSize_${designType}`, rightPanelSize.toString());
+  }, [leftPanelSize, rightPanelSize, designType]);
   
   useEffect(() => {
     if (designId) {
@@ -249,21 +277,33 @@ export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDes
   };
   
   const restoreVersion = async (version: any) => {
-    if (confirm(`Restore version from ${new Date(version.created_at).toLocaleString()}?`)) {
-      const html = version.grapesjs_snapshot.pages[0].component;
-      setCurrentHtml(html);
-      
-      const systemMessage: Message = {
-        id: crypto.randomUUID(),
-        role: 'system',
-        content: `Restored to version: ${version.version_name}`,
-        timestamp: new Date().toISOString(),
-      };
-      
-      setMessages(prev => [...prev, systemMessage]);
-      await saveToDatabase(html, [...messages, systemMessage]);
-      toast.success('Version restored!');
+    const confirmRestore = window.confirm(
+      `Restore version ${version.version_number} from ${new Date(version.created_at).toLocaleString()}?`
+    );
+    
+    if (!confirmRestore) return;
+    
+    const html = version.grapesjs_snapshot?.pages?.[0]?.component || version.html_content || '';
+    setCurrentHtml(html);
+    
+    toast.success('Version restored');
+  };
+  
+  const getPreviewWidth = () => {
+    switch (previewMode) {
+      case 'mobile': return '375px';
+      case 'tablet': return '768px';
+      case 'desktop': return '100%';
     }
+  };
+  
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
+  const handleResetZoom = () => setZoom(100);
+  
+  const handlePanelResize = (sizes: number[]) => {
+    setLeftPanelSize(sizes[0]);
+    setRightPanelSize(sizes[1]);
   };
   
   useEffect(() => {
@@ -281,196 +321,461 @@ export function AIDesignEditor({ designType, designId, onSwitchToManual }: AIDes
     }
   }, [currentHtml]);
   
-  return (
-    <div className="h-screen flex flex-col bg-background">
-      <div className="border-b bg-card p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span className="font-semibold">AI Design Editor</span>
+  // Mobile layout toggle
+  if (isMobile) {
+    return (
+      <div className="h-screen flex flex-col bg-background">
+        {/* Mobile Toggle Tabs */}
+        <div className="border-b bg-card p-2">
+          <div className="flex gap-2">
+            <Button
+              variant={showMobileView === 'chat' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowMobileView('chat')}
+              className="flex-1"
+            >
+              Chat
+            </Button>
+            <Button
+              variant={showMobileView === 'preview' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowMobileView('preview')}
+              className="flex-1"
+            >
+              Preview
+            </Button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Save
-          </Button>
-          <Button variant="outline" size="sm" onClick={onSwitchToManual}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Switch to Manual Editor
-          </Button>
-        </div>
-      </div>
-      
-      <div className="flex-1 flex overflow-hidden">
-        <div className="w-1/2 border-r flex flex-col">
-          <ScrollArea className="flex-1 p-4">
-            <AnimatePresence>
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}
-                >
-                  <div className={`inline-block max-w-[80%] p-3 rounded-lg ${
-                    message.role === 'user' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : message.role === 'assistant'
-                      ? 'bg-muted'
-                      : 'bg-accent text-accent-foreground'
-                  }`}>
-                    <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-                    
-                    {message.metadata?.changesMade && (
-                      <div className="mt-2 pt-2 border-t border-primary/30">
-                        <div className="text-xs opacity-75">Changes made:</div>
-                        <ul className="text-xs mt-1 space-y-1">
-                          {message.metadata.changesMade.map((change, i) => (
-                            <li key={i}>• {change}</li>
-                          ))}
-                        </ul>
+
+        {/* Mobile Content */}
+        <div className="flex-1 overflow-hidden">
+          {showMobileView === 'chat' ? (
+            <div className="h-full flex flex-col">
+              <ScrollArea className="flex-1 p-4">
+                <AnimatePresence>
+                  {messages.map((message) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}
+                    >
+                      <div
+                        className={`inline-block max-w-[85%] rounded-lg px-4 py-3 ${
+                          message.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        {message.metadata?.changesMade && (
+                          <div className="mt-2 text-xs opacity-75">
+                            Changes: {message.metadata.changesMade.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                <div ref={messagesEndRef} />
+              </ScrollArea>
+
+              <div className="border-t p-4 bg-card">
+                <div className="flex gap-2 mb-2 flex-wrap">
+                  <Button size="sm" variant="outline" onClick={() => handleQuickAction('Make it more modern')}>
+                    Modern
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleQuickAction('Add animations')}>
+                    Animations
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleQuickAction('Improve colors')}>
+                    Colors
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Textarea
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Describe what you want to change..."
+                    className="min-h-[80px] resize-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={isGenerating || !inputValue.trim()}
+                    size="icon"
+                    className="h-[80px] w-[80px]"
+                  >
+                    <Send className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full flex flex-col bg-muted">
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
+                <TabsList className="mx-4 mt-4">
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                  <TabsTrigger value="history">History</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="preview" className="flex-1 m-0 p-4">
+                  <div className="h-full bg-white rounded-lg overflow-auto">
+                    <iframe
+                      ref={iframeRef}
+                      className="w-full h-full border-0"
+                      title="Preview"
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="history" className="flex-1 m-0">
+                  <ScrollArea className="h-full p-4">
+                    {versions.length === 0 ? (
+                      <div className="text-center text-muted-foreground py-8">
+                        <History className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                        <p>No version history yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {versions.map((version) => (
+                          <div key={version.id} className="p-4 border rounded-lg bg-card">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <h4 className="font-medium text-sm">Version {version.version_number}</h4>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(version.created_at).toLocaleString()}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => restoreVersion(version)}
+                              >
+                                <Undo className="h-3 w-3 mr-1" />
+                                Restore
+                              </Button>
+                            </div>
+                            {version.change_description && (
+                              <p className="text-xs text-muted-foreground mt-2">
+                                {version.change_description}
+                              </p>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-            
-            {isGenerating && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex items-center gap-2 text-muted-foreground"
-              >
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-                <span className="text-sm">AI is thinking...</span>
-              </motion.div>
-            )}
-            
-            <div ref={messagesEndRef} />
-          </ScrollArea>
-          
-          <div className="p-3 border-t bg-muted/30">
-            <div className="text-xs text-muted-foreground mb-2">Quick actions:</div>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={() => handleQuickAction('Make the call-to-action button more prominent and compelling')}>
-                Improve CTA
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => handleQuickAction('Add a testimonials section with 3 customer reviews')}>
-                Add Testimonials
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => handleQuickAction('Optimize the design for mobile devices')}>
-                Mobile Optimize
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => handleQuickAction('Improve the visual hierarchy and add more whitespace')}>
-                Enhance Visuals
-              </Button>
+                  </ScrollArea>
+                </TabsContent>
+              </Tabs>
             </div>
-          </div>
-          
-          <div className="p-4 border-t">
-            <div className="flex gap-2">
-              <Textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-                placeholder="Describe what you want to change... (Shift+Enter for new line)"
-                className="resize-none"
-                rows={3}
-              />
-              <Button 
-                onClick={sendMessage} 
-                disabled={!inputValue.trim() || isGenerating}
-                className="self-end"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="w-1/2 flex flex-col">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
-            <TabsList className="m-4 mb-0">
-              <TabsTrigger value="chat">Live Preview</TabsTrigger>
-              <TabsTrigger value="history">
-                <History className="h-4 w-4 mr-2" />
-                Version History ({versions.length})
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="chat" className="flex-1 p-4">
-              <div className="h-full border rounded-lg overflow-hidden bg-background">
-                <iframe
-                  ref={iframeRef}
-                  srcDoc={currentHtml}
-                  className="w-full h-full"
-                  title="Live Preview"
-                />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="history" className="flex-1 overflow-hidden">
-              <ScrollArea className="h-full p-4">
-                <div className="space-y-4">
-                  {versions.map((version) => (
-                    <div
-                      key={version.id}
-                      className="border rounded-lg p-4 hover:bg-muted/50 cursor-pointer transition"
-                      onClick={() => restoreVersion(version)}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <div className="font-medium">{version.version_name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {new Date(version.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                        <div className={`px-2 py-1 rounded text-xs ${
-                          version.change_type === 'ai_generation' ? 'bg-primary/10 text-primary' :
-                          version.change_type === 'ai_refinement' ? 'bg-accent/10 text-accent' :
-                          'bg-muted text-muted-foreground'
-                        }`}>
-                          {version.change_type.replace('_', ' ')}
-                        </div>
-                      </div>
-                      
-                      {version.ai_prompt && (
-                        <div className="text-sm text-muted-foreground mb-2">
-                          "{version.ai_prompt}"
-                        </div>
-                      )}
-                      
-                      <Button size="sm" variant="outline" className="w-full mt-2">
-                        <Undo className="h-3 w-3 mr-2" />
-                        Restore This Version
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
+          )}
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="h-screen flex flex-col bg-background">
+      {/* Main Content Split - Desktop with Resizable Panels */}
+      <ResizablePanelGroup
+        direction="horizontal"
+        className="flex-1"
+        onLayout={handlePanelResize}
+      >
+        {/* Left Panel - Chat Interface */}
+        <ResizablePanel
+          defaultSize={leftPanelSize}
+          minSize={25}
+          maxSize={75}
+        >
+          <div className="h-full border-r bg-card flex flex-col">
+            {/* Chat Messages */}
+            <ScrollArea className="flex-1 p-6">
+              <AnimatePresence>
+                {messages.map((message) => (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}
+                  >
+                    <div
+                      className={`inline-block max-w-[80%] p-3 rounded-lg ${
+                        message.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : message.role === 'assistant'
+                          ? 'bg-muted'
+                          : 'bg-accent text-accent-foreground'
+                      }`}
+                    >
+                      <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+
+                      {message.metadata?.changesMade && (
+                        <div className="mt-2 pt-2 border-t border-primary/30">
+                          <div className="text-xs opacity-75">Changes made:</div>
+                          <ul className="text-xs mt-1 space-y-1">
+                            {message.metadata.changesMade.map((change, i) => (
+                              <li key={i}>• {change}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {isGenerating && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center gap-2 text-muted-foreground"
+                >
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                  <span className="text-sm">AI is thinking...</span>
+                </motion.div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </ScrollArea>
+
+            {/* Input Area */}
+            <div className="border-t p-6 bg-card">
+              <div className="flex gap-2 mb-4 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleQuickAction('Make it more modern and visually striking')}
+                >
+                  <Sparkles className="h-3 w-3 mr-2" />
+                  Modern Look
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleQuickAction('Add smooth animations and transitions')}
+                >
+                  Add Animations
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleQuickAction('Improve the color scheme and contrast')}
+                >
+                  Better Colors
+                </Button>
+              </div>
+
+              <div className="flex gap-3">
+                <Textarea
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Describe what you want to change..."
+                  className="min-h-[100px] resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={sendMessage}
+                  disabled={isGenerating || !inputValue.trim()}
+                  size="icon"
+                  className="h-[100px] w-[100px] shrink-0"
+                >
+                  {isGenerating ? (
+                    <div className="animate-spin h-6 w-6 border-2 border-current border-t-transparent rounded-full" />
+                  ) : (
+                    <Send className="h-6 w-6" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </ResizablePanel>
+
+        {/* Resizable Handle */}
+        <ResizableHandle withHandle />
+
+        {/* Right Panel - Preview & History */}
+        <ResizablePanel
+          defaultSize={rightPanelSize}
+          minSize={25}
+          maxSize={75}
+        >
+          <div className="h-full flex flex-col bg-muted">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
+              <div className="flex items-center justify-between px-6 pt-6 pb-2">
+                <TabsList>
+                  <TabsTrigger value="preview">Live Preview</TabsTrigger>
+                  <TabsTrigger value="history">Version History</TabsTrigger>
+                </TabsList>
+
+                {/* Preview Controls */}
+                {activeTab === 'preview' && (
+                  <div className="flex items-center gap-2">
+                    {/* Device Mode Selector */}
+                    <div className="flex items-center gap-1 border rounded-md p-1">
+                      <Button
+                        size="sm"
+                        variant={previewMode === 'desktop' ? 'default' : 'ghost'}
+                        onClick={() => setPreviewMode('desktop')}
+                        className="h-7 w-7 p-0"
+                      >
+                        <Monitor className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={previewMode === 'tablet' ? 'default' : 'ghost'}
+                        onClick={() => setPreviewMode('tablet')}
+                        className="h-7 w-7 p-0"
+                      >
+                        <Tablet className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={previewMode === 'mobile' ? 'default' : 'ghost'}
+                        onClick={() => setPreviewMode('mobile')}
+                        className="h-7 w-7 p-0"
+                      >
+                        <Smartphone className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Zoom Controls */}
+                    <div className="flex items-center gap-1 border rounded-md p-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleZoomOut}
+                        disabled={zoom <= 50}
+                        className="h-7 w-7 p-0"
+                      >
+                        <ZoomOut className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleResetZoom}
+                        className="h-7 px-2 text-xs"
+                      >
+                        {zoom}%
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleZoomIn}
+                        disabled={zoom >= 200}
+                        className="h-7 w-7 p-0"
+                      >
+                        <ZoomIn className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Fullscreen */}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setIsFullscreen(!isFullscreen)}
+                      className="h-7 w-7 p-0"
+                    >
+                      <Maximize2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <TabsContent value="preview" className="flex-1 m-0 mt-2 mx-6 mb-6">
+                <div className="h-full flex items-center justify-center bg-muted/30 rounded-lg overflow-auto p-4">
+                  <div
+                    style={{
+                      width: getPreviewWidth(),
+                      height: '100%',
+                      transform: `scale(${zoom / 100})`,
+                      transformOrigin: 'top center',
+                      transition: 'all 0.3s ease',
+                    }}
+                    className="bg-white rounded-lg shadow-lg overflow-auto"
+                  >
+                    <iframe
+                      ref={iframeRef}
+                      className="w-full h-full border-0"
+                      title="Design Preview"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="history" className="flex-1 m-0 mt-2 mx-6 mb-6 overflow-auto">
+                <ScrollArea className="h-full">
+                  {versions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
+                      <History className="h-16 w-16 mb-4 opacity-50" />
+                      <p className="text-lg">No version history yet</p>
+                      <p className="text-sm">Versions will appear here as you make changes</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 pb-4">
+                      {versions.map((version) => (
+                        <div
+                          key={version.id}
+                          className="p-4 border rounded-lg bg-card hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold text-sm">Version {version.version_number}</h4>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {new Date(version.created_at).toLocaleString()}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => restoreVersion(version)}
+                            >
+                              <Undo className="h-3 w-3 mr-2" />
+                              Restore
+                            </Button>
+                          </div>
+
+                          {version.change_description && (
+                            <p className="text-sm text-muted-foreground mt-2 p-3 bg-muted rounded">
+                              {version.change_description}
+                            </p>
+                          )}
+
+                          {version.ai_prompt && (
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              <span className="font-medium">Prompt:</span> {version.ai_prompt}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }
