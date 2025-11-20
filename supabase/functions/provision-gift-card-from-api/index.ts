@@ -112,6 +112,75 @@ class RybbonProvider implements GiftCardProvider {
   }
 }
 
+// Tillo provider
+class TilloProvider implements GiftCardProvider {
+  private async generateSignature(secretKey: string, timestamp: number, body: string): Promise<string> {
+    const crypto = globalThis.crypto;
+    const encoder = new TextEncoder();
+    const message = `${timestamp}${body}`;
+    const key = encoder.encode(secretKey);
+    const data = encoder.encode(message);
+    
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      key,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
+    const hashArray = Array.from(new Uint8Array(signature));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  async provisionCard(amount: number, config: any) {
+    const { apiKey, secretKey, brandCode, currency = 'USD' } = config;
+    
+    const timestamp = Date.now();
+    const body = JSON.stringify({
+      brand: brandCode,
+      face_value: {
+        amount: amount,
+        currency: currency
+      },
+      reference: `pool-${Date.now()}`
+    });
+    
+    const signature = await this.generateSignature(secretKey, timestamp, body);
+    
+    const response = await fetch('https://api.tillo.tech/v2/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'API-Key': apiKey,
+        'Signature': signature,
+        'Timestamp': timestamp.toString()
+      },
+      body: body
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Tillo API error: ${response.status} - ${JSON.stringify(errorData)}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.code !== '000') {
+      throw new Error(`Tillo API error: ${data.message || 'Unknown error'}`);
+    }
+    
+    return {
+      cardCode: data.data.url || data.data.code,
+      cardNumber: data.data.barcode?.string,
+      transactionId: data.data.reference,
+      expirationDate: data.data.expiration_date
+    };
+  }
+}
+
 // Provider factory
 function getProvider(providerName: string): GiftCardProvider {
   switch (providerName) {
@@ -121,6 +190,8 @@ function getProvider(providerName: string): GiftCardProvider {
       return new GiftbitProvider();
     case 'rybbon':
       return new RybbonProvider();
+    case 'tillo':
+      return new TilloProvider();
     default:
       throw new Error(`Unknown provider: ${providerName}`);
   }

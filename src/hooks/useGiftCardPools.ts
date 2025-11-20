@@ -30,10 +30,19 @@ export function useGiftCardPools(clientId?: string) {
   });
 
   const createPool = useMutation({
-    mutationFn: async (pool: GiftCardPoolInsert) => {
+    mutationFn: async (pool: GiftCardPoolInsert & { 
+      purchase_method?: string;
+      api_provider?: string;
+      api_config?: any;
+    }) => {
       const { data, error } = await supabase
         .from("gift_card_pools")
-        .insert(pool)
+        .insert({
+          ...pool,
+          purchase_method: pool.purchase_method || 'csv_only',
+          api_provider: pool.api_provider || null,
+          api_config: pool.api_config || null
+        })
         .select()
         .single();
 
