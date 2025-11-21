@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Gift, Plus, Upload, TrendingUp, AlertCircle } from "lucide-react";
+import { Gift, Plus, Upload, Eye, AlertCircle } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
+import { PoolDetailDialog } from "./PoolDetailDialog";
 
 type GiftCardPool = Tables<"gift_card_pools">;
 type GiftCardBrand = Tables<"gift_card_brands">;
@@ -17,6 +19,8 @@ interface BrandPoolsViewProps {
 }
 
 export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards }: BrandPoolsViewProps) {
+  const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
+  
   // Group pools by brand
   const poolsByBrand = pools.reduce((acc, pool) => {
     const brandId = pool.brand_id || 'unknown';
@@ -180,8 +184,12 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards }: B
                           <Upload className="h-3 w-3 mr-2" />
                           Add Cards
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <TrendingUp className="h-3 w-3 mr-2" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setSelectedPoolId(pool.id)}
+                        >
+                          <Eye className="h-3 w-3 mr-2" />
                           View Details
                         </Button>
                       </div>
@@ -193,6 +201,12 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards }: B
           </Card>
         );
       })}
+
+      <PoolDetailDialog
+        poolId={selectedPoolId}
+        open={!!selectedPoolId}
+        onOpenChange={(open) => !open && setSelectedPoolId(null)}
+      />
     </div>
   );
 }

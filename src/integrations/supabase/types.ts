@@ -14,6 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_card_sales: {
+        Row: {
+          buyer_client_id: string | null
+          buyer_pool_id: string | null
+          cost_per_card: number | null
+          created_at: string | null
+          id: string
+          master_pool_id: string | null
+          notes: string | null
+          price_per_card: number
+          profit: number | null
+          quantity: number
+          sale_date: string | null
+          sold_by_user_id: string | null
+          total_amount: number
+        }
+        Insert: {
+          buyer_client_id?: string | null
+          buyer_pool_id?: string | null
+          cost_per_card?: number | null
+          created_at?: string | null
+          id?: string
+          master_pool_id?: string | null
+          notes?: string | null
+          price_per_card: number
+          profit?: number | null
+          quantity: number
+          sale_date?: string | null
+          sold_by_user_id?: string | null
+          total_amount: number
+        }
+        Update: {
+          buyer_client_id?: string | null
+          buyer_pool_id?: string | null
+          cost_per_card?: number | null
+          created_at?: string | null
+          id?: string
+          master_pool_id?: string | null
+          notes?: string | null
+          price_per_card?: number
+          profit?: number | null
+          quantity?: number
+          sale_date?: string | null
+          sold_by_user_id?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_card_sales_buyer_client_id_fkey"
+            columns: ["buyer_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_card_sales_buyer_pool_id_fkey"
+            columns: ["buyer_pool_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_pools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_card_sales_master_pool_id_fkey"
+            columns: ["master_pool_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_gift_card_inventory: {
+        Row: {
+          brand_id: string | null
+          cost_per_card: number
+          created_at: string | null
+          created_by_user_id: string | null
+          id: string
+          notes: string | null
+          purchase_date: string | null
+          quantity: number
+          supplier_name: string | null
+          supplier_reference: string | null
+          total_cost: number
+        }
+        Insert: {
+          brand_id?: string | null
+          cost_per_card: number
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+          notes?: string | null
+          purchase_date?: string | null
+          quantity: number
+          supplier_name?: string | null
+          supplier_reference?: string | null
+          total_cost: number
+        }
+        Update: {
+          brand_id?: string | null
+          cost_per_card?: number
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+          notes?: string | null
+          purchase_date?: string | null
+          quantity?: number
+          supplier_name?: string | null
+          supplier_reference?: string | null
+          total_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_gift_card_inventory_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_impersonations: {
         Row: {
           admin_user_id: string
@@ -1440,16 +1560,20 @@ export type Database = {
           brand_id: string | null
           card_value: number
           claimed_cards: number | null
-          client_id: string
+          client_id: string | null
           created_at: string | null
           delivered_cards: number | null
           failed_cards: number | null
           id: string
+          is_master_pool: boolean | null
           last_auto_balance_check: string | null
           low_stock_threshold: number | null
+          markup_percentage: number | null
+          min_purchase_quantity: number | null
           pool_name: string
           provider: string | null
           purchase_method: string | null
+          sale_price_per_card: number | null
           total_cards: number | null
           updated_at: string | null
         }
@@ -1463,16 +1587,20 @@ export type Database = {
           brand_id?: string | null
           card_value: number
           claimed_cards?: number | null
-          client_id: string
+          client_id?: string | null
           created_at?: string | null
           delivered_cards?: number | null
           failed_cards?: number | null
           id?: string
+          is_master_pool?: boolean | null
           last_auto_balance_check?: string | null
           low_stock_threshold?: number | null
+          markup_percentage?: number | null
+          min_purchase_quantity?: number | null
           pool_name: string
           provider?: string | null
           purchase_method?: string | null
+          sale_price_per_card?: number | null
           total_cards?: number | null
           updated_at?: string | null
         }
@@ -1486,16 +1614,20 @@ export type Database = {
           brand_id?: string | null
           card_value?: number
           claimed_cards?: number | null
-          client_id?: string
+          client_id?: string | null
           created_at?: string | null
           delivered_cards?: number | null
           failed_cards?: number | null
           id?: string
+          is_master_pool?: boolean | null
           last_auto_balance_check?: string | null
           low_stock_threshold?: number | null
+          markup_percentage?: number | null
+          min_purchase_quantity?: number | null
           pool_name?: string
           provider?: string | null
           purchase_method?: string | null
+          sale_price_per_card?: number | null
           total_cards?: number | null
           updated_at?: string | null
         }
