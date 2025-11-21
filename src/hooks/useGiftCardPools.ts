@@ -10,15 +10,22 @@ export function useGiftCardPools(clientId?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Handle master pools when clientId is undefined or 'master'
+  const isMasterPoolsQuery = clientId === undefined || clientId === 'master';
+
   const { data: pools, isLoading } = useQuery({
-    queryKey: ["gift-card-pools", clientId],
+    queryKey: isMasterPoolsQuery ? ["gift-card-pools", "master"] : ["gift-card-pools", clientId],
     queryFn: async () => {
       let query = supabase
         .from("gift_card_pools")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (clientId) {
+      if (isMasterPoolsQuery) {
+        // Fetch master pools (client_id IS NULL)
+        query = query.is("client_id", null).eq("is_master_pool", true);
+      } else if (clientId) {
+        // Fetch client-specific pools
         query = query.eq("client_id", clientId);
       }
 
@@ -26,7 +33,7 @@ export function useGiftCardPools(clientId?: string) {
       if (error) throw error;
       return data as GiftCardPool[];
     },
-    enabled: !!clientId,
+    enabled: true, // Always enabled, query key differentiates
   });
 
   const createPool = useMutation({

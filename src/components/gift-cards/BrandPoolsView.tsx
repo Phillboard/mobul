@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Gift, Plus, Upload, Eye, AlertCircle } from "lucide-react";
+import { Gift, Plus, Upload, Eye, AlertCircle, DollarSign } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -16,9 +16,10 @@ interface BrandPoolsViewProps {
   brands: GiftCardBrand[];
   onCreatePool: () => void;
   onUploadCards: (poolId: string) => void;
+  onEditPricing?: (pool: GiftCardPool) => void;
 }
 
-export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards }: BrandPoolsViewProps) {
+export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards, onEditPricing }: BrandPoolsViewProps) {
   const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
   
   // Group pools by brand
@@ -184,6 +185,16 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards }: B
                           <Upload className="h-3 w-3 mr-2" />
                           Add Cards
                         </Button>
+                        {onEditPricing && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => onEditPricing(pool)}
+                          >
+                            <DollarSign className="h-3 w-3 mr-2" />
+                            Pricing
+                          </Button>
+                        )}
                         <Button 
                           variant="ghost" 
                           size="sm"

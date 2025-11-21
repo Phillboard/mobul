@@ -34,12 +34,13 @@ export function SellGiftCardsDialog({ open, onOpenChange }: SellGiftCardsDialogP
     },
   });
 
-  const { data: pools } = useQuery({
-    queryKey: ["pools-for-sale"],
+  const { data: masterPools } = useQuery({
+    queryKey: ["master-pools-for-sale"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("gift_card_pools")
-        .select("id, pool_name, card_value, available_cards, provider")
+        .select("id, pool_name, card_value, available_cards, provider, gift_card_brands(brand_name)")
+        .eq("is_master_pool", true)
         .gt("available_cards", 0)
         .order("pool_name");
       if (error) throw error;
@@ -48,8 +49,11 @@ export function SellGiftCardsDialog({ open, onOpenChange }: SellGiftCardsDialogP
   });
 
   const selectedClientData = clients?.find(c => c.id === selectedClient);
-  const selectedPoolData = pools?.find(p => p.id === selectedPool);
+  const selectedPoolData = masterPools?.find(p => p.id === selectedPool);
   const totalAmount = parseInt(quantity || "0") * parseFloat(pricePerCard || "0");
+  const costPerCard = selectedPoolData?.card_value || 0;
+  const totalCost = parseInt(quantity || "0") * Number(costPerCard);
+  const profit = totalAmount - totalCost;
 
   const handleSell = async () => {
     if (!selectedClient || !selectedPool || !quantity || !pricePerCard) {
@@ -63,12 +67,16 @@ export function SellGiftCardsDialog({ open, onOpenChange }: SellGiftCardsDialogP
 
     setSelling(true);
     try {
-      const { data, error } = await supabase.functions.invoke("sell-gift-cards", {
+      const { data: user } = await supabase.auth.getUser();
+      
+      const { data, error } = await supabase.functions.invoke("transfer-admin-cards", {
         body: {
-          clientId: selectedClient,
-          poolId: selectedPool,
+          masterPoolId: selectedPool,
+          buyerClientId: selectedClient,
           quantity: parseInt(quantity),
           pricePerCard: parseFloat(pricePerCard),
+          soldByUserId: user.user?.id,
+          notes: `Sold ${parseInt(quantity)} cards at $${parseFloat(pricePerCard)} each`,
         },
       });
 
@@ -76,7 +84,7 @@ export function SellGiftCardsDialog({ open, onOpenChange }: SellGiftCardsDialogP
 
       toast({
         title: "Sale Successful!",
-        description: data.message,
+        description: `Transferred ${quantity} cards to client. Profit: $${profit.toFixed(2)}`,
       });
 
       onOpenChange(false);
@@ -140,10 +148,10 @@ export function SellGiftCardsDialog({ open, onOpenChange }: SellGiftCardsDialogP
                 <SelectValue placeholder="Choose a pool" />
               </SelectTrigger>
               <SelectContent>
-                {pools?.map((pool) => (
+                {masterPools?.map((pool) => (
                   <SelectItem key={pool.id} value={pool.id}>
                     <div className="flex items-center justify-between w-full">
-                      <span>{pool.pool_name}</span>
+                      <span>{pool.gift_card_brands?.brand_name} - {pool.pool_name}</span>
                       <span className="text-xs text-muted-foreground ml-4">
                         ${pool.card_value} • {pool.available_cards} available
                       </span>
@@ -190,22 +198,32 @@ export function SellGiftCardsDialog({ open, onOpenChange }: SellGiftCardsDialogP
           {selectedClient && selectedPool && quantity && pricePerCard && (
             <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Subtotal:</span>
-                <span>${totalAmount.toFixed(2)}</span>
+                <span>Card Cost (basis):</span>
+                <span className="text-muted-foreground">${totalCost.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Current Wallet:</span>
-                <span>${selectedClientData?.credits?.toFixed(2) || 0}</span>
+                <span>Selling Price:</span>
+                <span>${totalAmount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between font-bold border-t pt-2">
-                <span>Remaining Balance:</span>
-                <span className={
-                  (selectedClientData?.credits || 0) >= totalAmount 
-                    ? "text-green-600" 
-                    : "text-red-600"
-                }>
-                  ${((selectedClientData?.credits || 0) - totalAmount).toFixed(2)}
-                </span>
+              <div className="flex justify-between text-sm font-semibold text-green-600">
+                <span>Profit:</span>
+                <span>${profit.toFixed(2)}</span>
+              </div>
+              <div className="border-t pt-2 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span>Client Current Wallet:</span>
+                  <span>${selectedClientData?.credits?.toFixed(2) || 0}</span>
+                </div>
+                <div className="flex justify-between font-bold">
+                  <span>After Purchase:</span>
+                  <span className={
+                    (selectedClientData?.credits || 0) >= totalAmount 
+                      ? "text-green-600" 
+                      : "text-red-600"
+                  }>
+                    ${((selectedClientData?.credits || 0) - totalAmount).toFixed(2)}
+                  </span>
+                </div>
               </div>
               {(selectedClientData?.credits || 0) < totalAmount && (
                 <p className="text-sm text-destructive">
