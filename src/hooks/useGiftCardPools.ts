@@ -50,7 +50,11 @@ export function useGiftCardPools(clientId?: string) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gift-card-pools"] });
+      // Invalidate all gift-card-pools queries including master pools
+      queryClient.invalidateQueries({ 
+        queryKey: ["gift-card-pools"],
+        refetchType: 'all'
+      });
       toast({
         title: "Success",
         description: "Gift card pool created successfully",
