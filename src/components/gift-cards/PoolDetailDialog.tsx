@@ -1,16 +1,53 @@
+/**
+ * PoolDetailDialog Component
+ * 
+ * Purpose: Comprehensive view of a gift card pool with detailed statistics,
+ *          card listing, balance history, and settings management.
+ * Used by: BrandPoolsView, AdminGiftCardMarketplace, GiftCards page
+ * 
+ * Key Features:
+ * - Pool statistics overview with utilization metrics
+ * - Searchable cards table with reveal/mask functionality
+ * - Balance checking (manual trigger for all cards)
+ * - CSV export with permission-based masking
+ * - Balance check history
+ * - Pool settings editor (admin only)
+ * - Brand logo and pool name display
+ * 
+ * Props:
+ * @param {string | null} poolId - UUID of pool to display (null closes dialog)
+ * @param {boolean} open - Dialog open state
+ * @param {(open: boolean) => void} onOpenChange - Callback to control dialog state
+ * 
+ * State Management:
+ * - Queries: pool data, cards, balance history
+ * - Mutations: balance checks, CSV export
+ * 
+ * Related Components: 
+ * - PoolStats (statistics cards)
+ * - PoolCardsTable (card listing)
+ * - PoolBalanceHistory (balance check history)
+ * - PoolSettings (configuration editor)
+ * 
+ * Edge Functions:
+ * - check-gift-card-balance: Verifies card balances
+ * - export-pool-cards: Generates CSV export
+ */
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Download, Eye, EyeOff, Search } from "lucide-react";
+import { RefreshCw, Download } from "lucide-react";
 import { useState } from "react";
-import { formatCurrency } from "@/lib/utils";
-import { format } from "date-fns";
+import { formatCurrency } from "@/lib/currencyUtils";
+import { calculatePoolStats } from "@/lib/giftCardUtils";
+import { useToast } from "@/hooks/use-toast";
+import { PoolStats } from "./PoolStats";
+import { PoolCardsTable } from "./PoolCardsTable";
+import { PoolBalanceHistory } from "./PoolBalanceHistory";
+import { PoolSettings } from "./PoolSettings";
 
 interface PoolDetailDialogProps {
   poolId: string | null;
@@ -19,9 +56,30 @@ interface PoolDetailDialogProps {
 }
 
 export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialogProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [revealedCards, setRevealedCards] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
+  const [isCheckingBalances, setIsCheckingBalances] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
+  // Fetch current user to check admin status
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+      
+      return { ...user, role: userRole?.role };
+    },
+  });
+
+  const isAdmin = currentUser?.role === 'admin';
+
+  // Fetch pool details with brand info
   const { data: pool, isLoading: poolLoading } = useQuery({
     queryKey: ["gift-card-pool", poolId],
     queryFn: async () => {
@@ -37,6 +95,7 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
     enabled: !!poolId,
   });
 
+  // Fetch all cards in pool
   const { data: cards, isLoading: cardsLoading } = useQuery({
     queryKey: ["gift-cards", poolId],
     queryFn: async () => {
@@ -52,6 +111,7 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
     enabled: !!poolId,
   });
 
+  // Fetch balance check history for pool cards
   const { data: balanceHistory } = useQuery({
     queryKey: ["balance-history", poolId],
     queryFn: async () => {
@@ -71,41 +131,92 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
     enabled: !!poolId && !!cards,
   });
 
-  const toggleReveal = (cardId: string) => {
-    const newRevealed = new Set(revealedCards);
-    if (newRevealed.has(cardId)) {
-      newRevealed.delete(cardId);
-    } else {
-      newRevealed.add(cardId);
+  /**
+   * Triggers balance check for all cards in the pool
+   * Calls check-gift-card-balance edge function
+   */
+  const handleCheckBalances = async () => {
+    if (!poolId || !cards || cards.length === 0) return;
+
+    setIsCheckingBalances(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-gift-card-balance', {
+        body: { poolId },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Balance Check Complete",
+        description: `Checked ${data.results?.length || 0} cards. Refresh to see updated balances.`,
+      });
+
+      // Refetch data to show updated balances
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error: any) {
+      console.error('Balance check error:', error);
+      toast({
+        title: "Balance Check Failed",
+        description: error.message || "Failed to check card balances",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingBalances(false);
     }
-    setRevealedCards(newRevealed);
   };
 
-  const maskCard = (code: string) => {
-    if (code.length <= 4) return code;
-    return "•".repeat(code.length - 4) + code.slice(-4);
-  };
+  /**
+   * Exports pool cards to CSV
+   * Calls export-pool-cards edge function
+   * Permission-based masking: admins get option for full codes
+   */
+  const handleExportCSV = async () => {
+    if (!poolId) return;
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      available: "default",
-      claimed: "secondary",
-      delivered: "outline",
-      failed: "destructive",
-    };
-    return <Badge variant={variants[status] || "default"}>{status}</Badge>;
-  };
+    setIsExporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('export-pool-cards', {
+        body: {
+          poolId,
+          includeSensitiveData: isAdmin, // Only admins can export full codes
+        },
+      });
 
-  const filteredCards = cards?.filter(card => 
-    card.card_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    card.status?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      if (error) throw error;
+
+      // Create blob and download
+      const blob = new Blob([data as string], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pool_${poolId}_cards_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Export Successful",
+        description: "CSV file has been downloaded",
+      });
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export cards",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (!pool) return null;
 
-  const totalValue = (pool.total_cards || 0) * Number(pool.card_value);
-  const availableValue = (pool.available_cards || 0) * Number(pool.card_value);
-  const utilizationPercent = pool.total_cards ? ((pool.claimed_cards || 0) / pool.total_cards) * 100 : 0;
+  // Calculate pool statistics
+  const stats = calculatePoolStats(pool);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -128,59 +239,28 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
           </div>
         </DialogHeader>
 
-        {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mt-10">
-          <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-4 pt-6">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Cards</CardTitle>
-            </CardHeader>
-            <CardContent className="pb-6">
-              <div className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">{pool.total_cards || 0}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-green-200 dark:border-green-900 bg-gradient-to-br from-green-50 to-background dark:from-green-950/20 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-4 pt-6">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Available</CardTitle>
-            </CardHeader>
-            <CardContent className="pb-6">
-              <div className="text-4xl font-bold text-green-600 dark:text-green-400">{pool.available_cards || 0}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-background dark:from-blue-950/20 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-4 pt-6">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Claimed</CardTitle>
-            </CardHeader>
-            <CardContent className="pb-6">
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">{pool.claimed_cards || 0}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-4 pt-6">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Value</CardTitle>
-            </CardHeader>
-            <CardContent className="pb-6">
-              <div className="text-4xl font-bold text-primary">{formatCurrency(totalValue)}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-4 pt-6">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Utilization</CardTitle>
-            </CardHeader>
-            <CardContent className="pb-6">
-              <div className="text-4xl font-bold text-primary">{utilizationPercent.toFixed(0)}%</div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Pool Statistics */}
+        <PoolStats stats={stats} />
 
-        {/* Actions Bar */}
+        {/* Action Buttons */}
         <div className="flex gap-4 mt-8">
-          <Button variant="outline" className="shadow-sm hover:shadow h-11 px-6">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Check All Balances
+          <Button 
+            variant="outline" 
+            className="shadow-sm hover:shadow h-11 px-6"
+            onClick={handleCheckBalances}
+            disabled={isCheckingBalances || !cards || cards.length === 0}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isCheckingBalances ? 'animate-spin' : ''}`} />
+            {isCheckingBalances ? 'Checking...' : 'Check All Balances'}
           </Button>
-          <Button variant="outline" className="shadow-sm hover:shadow h-11 px-6">
+          <Button 
+            variant="outline" 
+            className="shadow-sm hover:shadow h-11 px-6"
+            onClick={handleExportCSV}
+            disabled={isExporting || !cards || cards.length === 0}
+          >
             <Download className="h-4 w-4 mr-2" />
-            Export CSV
+            {isExporting ? 'Exporting...' : 'Export CSV'}
           </Button>
         </div>
 
@@ -193,181 +273,22 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
           </TabsList>
 
           <TabsContent value="cards" className="mt-8 space-y-6">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search by card code or status..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 text-base border-2 focus-visible:ring-2"
-              />
-            </div>
-
-            <div className="border-2 rounded-xl overflow-hidden shadow-sm bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b-2 bg-muted/30 hover:bg-muted/30 h-14">
-                    <TableHead className="font-semibold text-base px-6">Card Code</TableHead>
-                    <TableHead className="font-semibold text-base px-6">Status</TableHead>
-                    <TableHead className="font-semibold text-base px-6">Balance</TableHead>
-                    <TableHead className="font-semibold text-base px-6">Last Check</TableHead>
-                    <TableHead className="font-semibold text-base px-6">Created</TableHead>
-                    <TableHead className="text-right font-semibold text-base px-6">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {cardsLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-base">
-                        Loading cards...
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredCards?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-base">
-                        No cards found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredCards?.map((card) => (
-                      <TableRow key={card.id} className="hover:bg-muted/50 transition-colors h-16">
-                        <TableCell className="font-mono font-medium px-6 text-base">
-                          {revealedCards.has(card.id) ? card.card_code : maskCard(card.card_code)}
-                        </TableCell>
-                        <TableCell className="px-6">{getStatusBadge(card.status || 'available')}</TableCell>
-                        <TableCell className="font-semibold px-6 text-base">
-                          {card.current_balance 
-                            ? formatCurrency(card.current_balance)
-                            : formatCurrency(pool.card_value)
-                          }
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground px-6">
-                          {card.last_balance_check 
-                            ? format(new Date(card.last_balance_check), "MMM d, yyyy")
-                            : "Never"
-                          }
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground px-6">
-                          {format(new Date(card.created_at!), "MMM d, yyyy")}
-                        </TableCell>
-                        <TableCell className="text-right px-6">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleReveal(card.id)}
-                            className="hover:bg-muted h-10 w-10"
-                          >
-                            {revealedCards.has(card.id) ? (
-                              <EyeOff className="h-5 w-5" />
-                            ) : (
-                              <Eye className="h-5 w-5" />
-                            )}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+            <PoolCardsTable 
+              cards={cards || []}
+              cardValue={Number(pool.card_value)}
+              isLoading={cardsLoading}
+            />
           </TabsContent>
 
           <TabsContent value="history" className="mt-8">
-            <div className="border-2 rounded-xl overflow-hidden shadow-sm bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b-2 bg-muted/30 hover:bg-muted/30 h-14">
-                    <TableHead className="font-semibold text-base px-6">Card</TableHead>
-                    <TableHead className="font-semibold text-base px-6">Check Date</TableHead>
-                    <TableHead className="font-semibold text-base px-6">Previous Balance</TableHead>
-                    <TableHead className="font-semibold text-base px-6">New Balance</TableHead>
-                    <TableHead className="font-semibold text-base px-6">Change</TableHead>
-                    <TableHead className="font-semibold text-base px-6">Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {balanceHistory?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-base">
-                        No balance checks yet
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    balanceHistory?.map((entry) => (
-                      <TableRow key={entry.id} className="hover:bg-muted/50 transition-colors h-16">
-                        <TableCell className="font-mono text-sm font-medium px-6">
-                          {entry.gift_cards?.card_code ? maskCard(entry.gift_cards.card_code) : 'N/A'}
-                        </TableCell>
-                        <TableCell className="text-sm px-6">
-                          {entry.checked_at && format(new Date(entry.checked_at), "MMM d, yyyy HH:mm")}
-                        </TableCell>
-                        <TableCell className="font-medium text-base px-6">
-                          {entry.previous_balance ? formatCurrency(entry.previous_balance) : 'N/A'}
-                        </TableCell>
-                        <TableCell className="font-medium text-base px-6">
-                          {entry.new_balance ? formatCurrency(entry.new_balance) : 'N/A'}
-                        </TableCell>
-                        <TableCell className="px-6">
-                          {entry.change_amount && (
-                            <span className={entry.change_amount < 0 ? "text-red-600 dark:text-red-400 font-semibold text-base" : "text-green-600 dark:text-green-400 font-semibold text-base"}>
-                              {entry.change_amount > 0 ? '+' : ''}{formatCurrency(entry.change_amount)}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-6">
-                          <Badge variant={entry.status === 'success' ? 'default' : 'destructive'}>
-                            {entry.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+            <PoolBalanceHistory history={balanceHistory || []} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-8">
-            <Card className="border-2 shadow-sm">
-              <CardHeader className="border-b bg-muted/20 py-6">
-                <CardTitle className="text-xl">Pool Configuration</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 pt-8 pb-8">
-                <div className="flex items-center justify-between p-6 rounded-lg bg-muted/30 border-2">
-                  <div className="space-y-1">
-                    <label className="text-base font-semibold">Auto Balance Check</label>
-                    <p className="text-sm text-muted-foreground">
-                      Automatic balance verification
-                    </p>
-                  </div>
-                  <Badge variant={pool.auto_balance_check ? 'default' : 'secondary'} className="text-sm px-4 py-2">
-                    {pool.auto_balance_check ? 'Enabled' : 'Disabled'}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between p-6 rounded-lg bg-muted/30 border-2">
-                  <div className="space-y-1">
-                    <label className="text-base font-semibold">Check Frequency</label>
-                    <p className="text-sm text-muted-foreground">
-                      How often balances are verified
-                    </p>
-                  </div>
-                  <span className="text-base font-semibold">
-                    Every {pool.balance_check_frequency_hours || 168} hours
-                  </span>
-                </div>
-                <div className="flex items-center justify-between p-6 rounded-lg bg-muted/30 border-2">
-                  <div className="space-y-1">
-                    <label className="text-base font-semibold">Low Stock Threshold</label>
-                    <p className="text-sm text-muted-foreground">
-                      Alert when inventory drops below
-                    </p>
-                  </div>
-                  <span className="text-base font-semibold">
-                    {pool.low_stock_threshold || 10} cards
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            <PoolSettings 
+              pool={pool}
+              isAdmin={isAdmin}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
