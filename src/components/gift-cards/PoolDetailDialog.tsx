@@ -129,92 +129,90 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
         </DialogHeader>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Cards</CardTitle>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mt-8">
+          <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Cards</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pool.total_cards || 0}</div>
+              <div className="text-3xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">{pool.total_cards || 0}</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Available</CardTitle>
+          <Card className="border-2 border-green-200 dark:border-green-900 bg-gradient-to-br from-green-50 to-background dark:from-green-950/20 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Available</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{pool.available_cards || 0}</div>
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400">{pool.available_cards || 0}</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Claimed</CardTitle>
+          <Card className="border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-background dark:from-blue-950/20 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Claimed</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{pool.claimed_cards || 0}</div>
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{pool.claimed_cards || 0}</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Value</CardTitle>
+          <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Value</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalValue)}</div>
+              <div className="text-3xl font-bold text-primary">{formatCurrency(totalValue)}</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Utilization</CardTitle>
+          <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Utilization</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{utilizationPercent.toFixed(0)}%</div>
+              <div className="text-3xl font-bold text-primary">{utilizationPercent.toFixed(0)}%</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Actions Bar */}
-        <div className="flex gap-2 mt-4">
-          <Button variant="outline" size="sm">
+        <div className="flex gap-3 mt-6">
+          <Button variant="outline" size="sm" className="shadow-sm hover:shadow">
             <RefreshCw className="h-4 w-4 mr-2" />
             Check All Balances
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="shadow-sm hover:shadow">
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="cards" className="mt-6">
-          <TabsList>
-            <TabsTrigger value="cards">Cards ({cards?.length || 0})</TabsTrigger>
-            <TabsTrigger value="history">Balance History</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+        <Tabs defaultValue="cards" className="mt-8">
+          <TabsList className="bg-muted/50">
+            <TabsTrigger value="cards" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Cards ({cards?.length || 0})</TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Balance History</TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">Settings</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="cards" className="mt-4">
-            <div className="mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by card code or status..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+          <TabsContent value="cards" className="mt-6 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by card code or status..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 border-2 focus-visible:ring-2"
+              />
             </div>
 
-            <div className="border rounded-lg">
+            <div className="border-2 rounded-xl overflow-hidden shadow-sm bg-card">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Card Code</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Balance</TableHead>
-                    <TableHead>Last Check</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                  <TableRow className="border-b-2 bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="font-semibold">Card Code</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Balance</TableHead>
+                    <TableHead className="font-semibold">Last Check</TableHead>
+                    <TableHead className="font-semibold">Created</TableHead>
+                    <TableHead className="text-right font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -232,12 +230,12 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
                     </TableRow>
                   ) : (
                     filteredCards?.map((card) => (
-                      <TableRow key={card.id}>
-                        <TableCell className="font-mono">
+                      <TableRow key={card.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-mono font-medium">
                           {revealedCards.has(card.id) ? card.card_code : maskCard(card.card_code)}
                         </TableCell>
                         <TableCell>{getStatusBadge(card.status || 'available')}</TableCell>
-                        <TableCell>
+                        <TableCell className="font-semibold">
                           {card.current_balance 
                             ? formatCurrency(card.current_balance)
                             : formatCurrency(pool.card_value)
@@ -257,6 +255,7 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
                             variant="ghost"
                             size="sm"
                             onClick={() => toggleReveal(card.id)}
+                            className="hover:bg-muted"
                           >
                             {revealedCards.has(card.id) ? (
                               <EyeOff className="h-4 w-4" />
@@ -273,17 +272,17 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
             </div>
           </TabsContent>
 
-          <TabsContent value="history" className="mt-4">
-            <div className="border rounded-lg">
+          <TabsContent value="history" className="mt-6">
+            <div className="border-2 rounded-xl overflow-hidden shadow-sm bg-card">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Card</TableHead>
-                    <TableHead>Check Date</TableHead>
-                    <TableHead>Previous Balance</TableHead>
-                    <TableHead>New Balance</TableHead>
-                    <TableHead>Change</TableHead>
-                    <TableHead>Status</TableHead>
+                  <TableRow className="border-b-2 bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="font-semibold">Card</TableHead>
+                    <TableHead className="font-semibold">Check Date</TableHead>
+                    <TableHead className="font-semibold">Previous Balance</TableHead>
+                    <TableHead className="font-semibold">New Balance</TableHead>
+                    <TableHead className="font-semibold">Change</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -295,22 +294,22 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
                     </TableRow>
                   ) : (
                     balanceHistory?.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell className="font-mono text-sm">
+                      <TableRow key={entry.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-mono text-sm font-medium">
                           {entry.gift_cards?.card_code ? maskCard(entry.gift_cards.card_code) : 'N/A'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-sm">
                           {entry.checked_at && format(new Date(entry.checked_at), "MMM d, yyyy HH:mm")}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="font-medium">
                           {entry.previous_balance ? formatCurrency(entry.previous_balance) : 'N/A'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="font-medium">
                           {entry.new_balance ? formatCurrency(entry.new_balance) : 'N/A'}
                         </TableCell>
                         <TableCell>
                           {entry.change_amount && (
-                            <span className={entry.change_amount < 0 ? "text-red-600" : "text-green-600"}>
+                            <span className={entry.change_amount < 0 ? "text-red-600 dark:text-red-400 font-semibold" : "text-green-600 dark:text-green-400 font-semibold"}>
                               {entry.change_amount > 0 ? '+' : ''}{formatCurrency(entry.change_amount)}
                             </span>
                           )}
@@ -328,29 +327,44 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
             </div>
           </TabsContent>
 
-          <TabsContent value="settings" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pool Configuration</CardTitle>
+          <TabsContent value="settings" className="mt-6">
+            <Card className="border-2 shadow-sm">
+              <CardHeader className="border-b bg-muted/20">
+                <CardTitle className="text-lg">Pool Configuration</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Auto Balance Check</label>
-                  <p className="text-sm text-muted-foreground">
+              <CardContent className="space-y-6 pt-6">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border">
+                  <div>
+                    <label className="text-sm font-semibold">Auto Balance Check</label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Automatic balance verification
+                    </p>
+                  </div>
+                  <Badge variant={pool.auto_balance_check ? 'default' : 'secondary'} className="text-sm">
                     {pool.auto_balance_check ? 'Enabled' : 'Disabled'}
-                  </p>
+                  </Badge>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Check Frequency</label>
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border">
+                  <div>
+                    <label className="text-sm font-semibold">Check Frequency</label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      How often balances are verified
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold">
                     Every {pool.balance_check_frequency_hours || 168} hours
-                  </p>
+                  </span>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Low Stock Threshold</label>
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border">
+                  <div>
+                    <label className="text-sm font-semibold">Low Stock Threshold</label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Alert when inventory drops below
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold">
                     {pool.low_stock_threshold || 10} cards
-                  </p>
+                  </span>
                 </div>
               </CardContent>
             </Card>
