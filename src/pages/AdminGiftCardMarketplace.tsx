@@ -11,14 +11,19 @@ import { BrandPoolsView } from "@/components/gift-cards/BrandPoolsView";
 import { CreatePoolDialogV2 } from "@/components/gift-cards/CreatePoolDialogV2";
 import { SellGiftCardsDialog } from "@/components/gift-cards/SellGiftCardsDialog";
 import { useGiftCardBrands } from "@/hooks/useGiftCardBrands";
+import { RecordPurchaseDialog } from "@/components/gift-cards/RecordPurchaseDialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
+import { AdminUploadDialog } from "@/components/gift-cards/AdminUploadDialog";
+import { EditPoolPricingDialog } from "@/components/gift-cards/EditPoolPricingDialog";
 
 export default function AdminGiftCardMarketplace() {
   const [createPoolOpen, setCreatePoolOpen] = useState(false);
   const [sellCardsOpen, setSellCardsOpen] = useState(false);
-  const [selectedPoolForUpload, setSelectedPoolForUpload] = useState<string | null>(null);
+  const [uploadPoolId, setUploadPoolId] = useState<string | null>(null);
+  const [recordPurchaseOpen, setRecordPurchaseOpen] = useState(false);
+  const [pricingPool, setPricingPool] = useState<any>(null);
 
   const { data: brands } = useGiftCardBrands();
 
@@ -27,7 +32,17 @@ export default function AdminGiftCardMarketplace() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("gift_card_pools")
-        .select("*, gift_card_brands(*)")
+        .select(`
+          *,
+          gift_card_brands (
+            id,
+            brand_name,
+            brand_code,
+            logo_url,
+            category,
+            provider
+          )
+        `)
         .eq("is_master_pool", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -82,7 +97,11 @@ export default function AdminGiftCardMarketplace() {
   ) || 0;
 
   const handleUploadClick = (poolId: string) => {
-    setSelectedPoolForUpload(poolId);
+    setUploadPoolId(poolId);
+  };
+
+  const handlePricingClick = (pool: any) => {
+    setPricingPool(pool);
   };
 
   return (
@@ -94,6 +113,10 @@ export default function AdminGiftCardMarketplace() {
             <p className="text-muted-foreground">Manage master inventory and sell to clients</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setRecordPurchaseOpen(true)}>
+              <Package className="h-4 w-4 mr-2" />
+              Record Purchase
+            </Button>
             <Button onClick={() => setCreatePoolOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Master Pool
@@ -178,6 +201,7 @@ export default function AdminGiftCardMarketplace() {
                 brands={brands || []}
                 onCreatePool={() => setCreatePoolOpen(true)}
                 onUploadCards={handleUploadClick}
+                onEditPricing={handlePricingClick}
               />
             )}
           </TabsContent>
@@ -299,6 +323,27 @@ export default function AdminGiftCardMarketplace() {
           open={sellCardsOpen}
           onOpenChange={setSellCardsOpen}
         />
+
+        {uploadPoolId && (
+          <AdminUploadDialog
+            open={!!uploadPoolId}
+            onOpenChange={(open) => !open && setUploadPoolId(null)}
+            poolId={uploadPoolId}
+          />
+        )}
+
+        <RecordPurchaseDialog
+          open={recordPurchaseOpen}
+          onOpenChange={setRecordPurchaseOpen}
+        />
+
+        {pricingPool && (
+          <EditPoolPricingDialog
+            open={!!pricingPool}
+            onOpenChange={(open) => !open && setPricingPool(null)}
+            pool={pricingPool}
+          />
+        )}
       </div>
     </Layout>
   );

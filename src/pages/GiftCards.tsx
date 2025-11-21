@@ -15,6 +15,7 @@ import { useGiftCardPools } from "@/hooks/useGiftCardPools";
 import { useGiftCardBrands } from "@/hooks/useGiftCardBrands";
 import { useTenant } from "@/contexts/TenantContext";
 import { useToast } from "@/hooks/use-toast";
+import { ClientMarketplace } from "@/components/gift-cards/ClientMarketplace";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 
@@ -94,6 +95,7 @@ export default function GiftCards() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="pools">Pools</TabsTrigger>
+            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="activity">Activity & History</TabsTrigger>
             {hasRole('admin') && <TabsTrigger value="analytics">Analytics & Testing</TabsTrigger>}
@@ -110,6 +112,10 @@ export default function GiftCards() {
                 onUploadCards={handleUploadClick}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="marketplace">
+            <ClientMarketplace clientId={currentClient.id} />
           </TabsContent>
 
           <TabsContent value="inventory">
