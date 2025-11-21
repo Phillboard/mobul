@@ -137,8 +137,6 @@ export default function GiftCards() {
         <CreatePoolDialogV2
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
-          onCreatePool={handleCreatePool}
-          clientId={currentClient.id}
         />
 
         <SellGiftCardsDialog
