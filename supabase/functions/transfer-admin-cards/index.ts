@@ -1,3 +1,52 @@
+/**
+ * Edge Function: transfer-admin-cards
+ * 
+ * Purpose: Transfer gift cards from admin master pool to a client pool
+ * Called by: AdminGiftCardMarketplace (SellGiftCardsDialog component)
+ * 
+ * Permissions: Requires admin authentication
+ * 
+ * Request Body:
+ * - masterPoolId: string (UUID) - ID of the master pool to transfer from
+ * - buyerClientId: string (UUID) - ID of the client purchasing the cards
+ * - quantity: number - Number of cards to transfer
+ * - pricePerCard: number - Sale price per card (client pays this amount)
+ * - soldByUserId: string (UUID) - ID of admin user making the sale
+ * - notes: string (optional) - Additional notes about the transfer
+ * 
+ * Response:
+ * - success: boolean
+ * - message: string - Success/error message
+ * - targetPoolId: string (UUID) - ID of the client pool that received the cards
+ * - totalAmount: number - Total amount charged to client
+ * - remainingBalance: number - Client's remaining wallet balance
+ * 
+ * Database Operations:
+ * 1. gift_card_pools (READ) - Verify master pool has sufficient cards
+ * 2. clients (READ/UPDATE) - Verify balance and deduct payment
+ * 3. gift_card_pools (READ/INSERT/UPDATE) - Find/create client pool, update counts
+ * 4. gift_cards (UPDATE) - Transfer cards by updating pool_id
+ * 5. admin_gift_card_inventory (READ) - Get cost basis for profit calculation
+ * 6. admin_card_sales (INSERT) - Record the sale transaction
+ * 7. gift_card_audit_log (INSERT) - Audit trail of the transfer
+ * 
+ * Business Logic:
+ * - Validates master pool has enough available cards
+ * - Validates client has sufficient wallet credits
+ * - Creates new client pool if one doesn't exist for the brand/value
+ * - Calculates profit based on sale price minus inventory cost
+ * - Maintains accurate card counts across pools
+ * 
+ * Related Functions:
+ * - sell-gift-cards (deprecated, replaced by this function)
+ * - import-gift-cards (loads cards into master pools)
+ * 
+ * Error Handling:
+ * - Returns 400 status for validation errors and operational failures
+ * - Logs errors for failed operations that don't halt the transaction
+ * - Note: Not transactional - partial failures possible (needs improvement)
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -165,9 +214,24 @@ serve(async (req) => {
       // Note: In production, this should be part of a transaction
     }
 
-    // 9. Create admin_card_sales record
-    const costPerCard = 0; // TODO: Track actual cost from admin_gift_card_inventory
+    // 9. Query actual cost from admin_gift_card_inventory
+    const { data: inventoryData } = await supabase
+      .from('admin_gift_card_inventory')
+      .select('cost_per_card')
+      .eq('brand_id', masterPool.brand_id)
+      .order('purchase_date', { ascending: false })
+      .limit(1)
+      .single();
+    
+    const costPerCard = inventoryData?.cost_per_card || 0;
+    
+    if (!inventoryData) {
+      console.warn(`No inventory cost found for brand ${masterPool.brand_id}, using cost = 0`);
+    }
+    
     const profit = totalAmount - (costPerCard * quantity);
+    
+    // 10. Create admin_card_sales record
 
     const { error: salesError } = await supabase
       .from('admin_card_sales')
@@ -188,7 +252,7 @@ serve(async (req) => {
       console.error('Failed to record sale:', salesError);
     }
 
-    // 10. Create audit log
+    // 11. Create audit log
     const { error: auditError } = await supabase
       .from('gift_card_audit_log')
       .insert({
