@@ -50,6 +50,7 @@ import Deals from "./pages/Deals";
 import DealDetail from "./pages/DealDetail";
 import Activities from "./pages/Activities";
 import Tasks from "./pages/Tasks";
+import AdminGiftCardMarketplace from "./pages/AdminGiftCardMarketplace";
 
 const queryClient = new QueryClient();
 
@@ -102,6 +103,7 @@ const App = () => (
               <Route path="/agent-dashboard" element={<ProtectedRoute><AgentCallDashboard /></ProtectedRoute>} />
               <Route path="/call-center" element={<ProtectedRoute requiredRole="call_center"><CallCenterDashboard /></ProtectedRoute>} />
               <Route path="/agency-management" element={<ProtectedRoute requiredRole="agency_owner"><AgencyManagement /></ProtectedRoute>} />
+              <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/settings/:tab" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/zapier-templates" element={<ProtectedRoute><ZapierTemplates /></ProtectedRoute>} />

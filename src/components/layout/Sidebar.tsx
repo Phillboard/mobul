@@ -93,6 +93,14 @@ const navigationGroups: NavGroup[] = [
     ]
   },
   {
+    label: "Platform Admin",
+    collapsible: true,
+    permissions: ['admin'],
+    items: [
+      { name: "Gift Card Marketplace", href: "/admin/gift-card-marketplace", icon: Package, permissions: ['admin'] },
+    ]
+  },
+  {
     label: "Administration",
     collapsible: true,
     permissions: ['settings.view', 'users.view', 'api.view'],
@@ -106,7 +114,7 @@ const navigationGroups: NavGroup[] = [
 ];
 
 export function Sidebar() {
-  const { hasAnyPermission } = useAuth();
+  const { hasAnyPermission, hasRole } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;
@@ -126,14 +134,29 @@ export function Sidebar() {
   const visibleGroups = navigationGroups
     .map(group => ({
       ...group,
-      items: group.items.filter(item => 
-        !item.permissions || hasAnyPermission(item.permissions)
-      )
+      items: group.items.filter(item => {
+        if (!item.permissions) return true;
+        // Check if any permission is a role (admin, agency_owner, etc.)
+        const hasRequiredRole = item.permissions.some(p => 
+          ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer', 'call_center'].includes(p) && 
+          hasRole(p as any)
+        );
+        // Check if any permission is a regular permission
+        const hasRequiredPermission = hasAnyPermission(item.permissions);
+        return hasRequiredRole || hasRequiredPermission;
+      })
     }))
     .filter(group => {
       // Show group if user has any of the group permissions (if specified)
-      if (group.permissions && !hasAnyPermission(group.permissions)) {
-        return false;
+      if (group.permissions) {
+        const hasRequiredRole = group.permissions.some(p => 
+          ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer', 'call_center'].includes(p) && 
+          hasRole(p as any)
+        );
+        const hasRequiredPermission = hasAnyPermission(group.permissions);
+        if (!hasRequiredRole && !hasRequiredPermission) {
+          return false;
+        }
       }
       // Show group if it has any visible items
       return group.items.length > 0;
