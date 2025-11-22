@@ -8,6 +8,7 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DrPhillipChat } from "@/components/DrPhillipChat";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
@@ -57,14 +58,15 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
-      <TooltipProvider>
-        <AuthProvider>
-          <TenantProvider>
-            <ImpersonationBanner />
-            <Toaster />
-            <Sonner />
-            <DrPhillipChat />
-            <Routes>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <TooltipProvider>
+          <AuthProvider>
+            <TenantProvider>
+              <ImpersonationBanner />
+              <Toaster />
+              <Sonner />
+              <DrPhillipChat />
+              <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/c/:campaignId/:token" element={<PURLLandingPage />} />
@@ -116,6 +118,7 @@ const App = () => (
           </TenantProvider>
         </AuthProvider>
       </TooltipProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </QueryClientProvider>
 );
