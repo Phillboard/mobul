@@ -1,29 +1,31 @@
+import { useEffect, useState, useMemo } from "react";
+import { useLocation } from "react-router-dom";
+import {
+  Zap,
+  LayoutDashboard,
+  Mail,
+  Users,
+  FileText,
+  Settings as SettingsIcon,
+  Gift,
+  DollarSign,
+  Building2,
+  Handshake,
+  ChevronDown,
+  Workflow,
+  Phone,
+  Headphones,
+  ListTodo,
+  BarChart3,
+  Home,
+} from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { 
-  LayoutDashboard, 
-  Mail, 
-  Users, 
-  Code2, 
-  Settings as SettingsIcon,
-  Zap,
-  FileStack,
-  Gift,
-  UserCog,
-  Globe,
-  ShoppingCart,
-  Building2,
-  Contact,
-  TrendingUp,
-  Activity,
-  CheckSquare,
-  Workflow,
-  Package,
-  ChevronDown,
-  ArrowLeft,
-} from "lucide-react";
+import { hasPermission } from "@/lib/roleUtils";
+import { settingsConfig } from "@/lib/settingsConfig";
+import { useSettingsTabs } from "@/hooks/useSettingsTabs";
+import { SidebarSearch } from "./SidebarSearch";
+import { useMenuSearch, type SearchableNavItem } from "@/hooks/useMenuSearch";
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -35,136 +37,266 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   useSidebar,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useSettingsTabs } from "@/hooks/useSettingsTabs";
-import { settingsTabs, settingsGroups } from "@/lib/settingsConfig";
-import { Button } from "@/components/ui/button";
 
 interface NavItem {
   name: string;
   href: string;
   icon: any;
   permissions?: string[];
+  keywords?: string[];
+  description?: string;
+  count?: number;
 }
 
 interface NavGroup {
   label: string;
   items: NavItem[];
-  permissions?: string[];
   collapsible?: boolean;
+  permissions?: string[];
 }
 
 const navigationGroups: NavGroup[] = [
   {
     label: "Core",
     items: [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard, permissions: ['dashboard.view'] },
-      { name: "Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'] },
-      { name: "Templates", href: "/templates", icon: FileStack, permissions: ['templates.view'] },
-      { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'] },
-      { name: "Audience Manager", href: "/audiences", icon: Users, permissions: ['audiences.view'] },
-      { name: "Purchase Cards", href: "/purchase-gift-cards", icon: Package, permissions: ['gift_cards.purchase'] },
-    ]
+      { 
+        name: "Dashboard", 
+        href: "/", 
+        icon: LayoutDashboard,
+        keywords: ["home", "overview", "stats", "analytics", "insights"],
+        description: "View your main dashboard and analytics"
+      },
+      { 
+        name: "Campaigns", 
+        href: "/campaigns", 
+        icon: Mail,
+        keywords: ["mail", "direct mail", "postcards", "send", "mailing"],
+        description: "Create and manage direct mail campaigns"
+      },
+      { 
+        name: "Templates", 
+        href: "/templates", 
+        icon: FileText,
+        keywords: ["design", "postcards", "layouts", "builder"],
+        description: "Design and manage postcard templates"
+      },
+      { 
+        name: "Audiences", 
+        href: "/audiences", 
+        icon: Users,
+        keywords: ["contacts", "recipients", "mailing list", "import"],
+        description: "Manage recipient lists and contacts"
+      },
+    ],
   },
   {
     label: "CRM",
-    collapsible: true,
     items: [
-      { name: "Contacts", href: "/contacts", icon: Contact, permissions: ['audiences.view'] },
-      { name: "Companies", href: "/companies", icon: Building2, permissions: ['audiences.view'] },
-      { name: "Deals", href: "/deals", icon: TrendingUp, permissions: ['audiences.view'] },
-      { name: "Activities", href: "/activities", icon: Activity, permissions: ['audiences.view'] },
-      { name: "Tasks", href: "/tasks", icon: CheckSquare, permissions: ['audiences.view'] },
-    ]
+      { 
+        name: "Contacts", 
+        href: "/contacts", 
+        icon: Users,
+        keywords: ["people", "clients", "customers", "crm"],
+        description: "Manage individual contacts"
+      },
+      { 
+        name: "Companies", 
+        href: "/companies", 
+        icon: Building2,
+        keywords: ["organizations", "businesses", "accounts", "crm"],
+        description: "Manage company accounts"
+      },
+      { 
+        name: "Deals", 
+        href: "/deals", 
+        icon: Handshake,
+        keywords: ["opportunities", "pipeline", "sales", "crm"],
+        description: "Track sales opportunities"
+      },
+      { 
+        name: "Tasks", 
+        href: "/tasks", 
+        icon: ListTodo,
+        keywords: ["todos", "activities", "reminders", "crm"],
+        description: "Manage tasks and activities"
+      },
+    ],
+    permissions: ["view_crm"],
   },
   {
     label: "Rewards",
     items: [
-      { name: "Gift Card Manager", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.purchase'] },
-      { name: "Lead Marketplace", href: "/marketplace", icon: ShoppingCart, permissions: ['lead_marketplace.view'] },
-    ]
+      {
+        name: "Gift Card Manager",
+        href: "/gift-cards",
+        icon: Gift,
+        permissions: ["view_gift_cards"],
+        keywords: ["rewards", "incentives", "gifts", "cards", "inventory"],
+        description: "Manage gift card inventory and pools"
+      },
+      {
+        name: "Purchase Cards",
+        href: "/purchase-gift-cards",
+        icon: DollarSign,
+        permissions: ["manage_gift_cards"],
+        keywords: ["buy", "acquire", "order", "rewards"],
+        description: "Purchase gift cards from marketplace"
+      },
+    ],
   },
   {
-    label: "Platform Admin",
-    collapsible: true,
-    permissions: ['admin'],
+    label: "Call Center",
     items: [
-      { name: "Gift Card Marketplace", href: "/admin/gift-card-marketplace", icon: Package, permissions: ['admin'] },
-    ]
+      {
+        name: "Agent Dashboard",
+        href: "/agent-call-dashboard",
+        icon: Headphones,
+        permissions: ["manage_calls"],
+        keywords: ["calls", "phone", "agent", "tracking", "inbound"],
+        description: "Handle incoming calls and track conditions"
+      },
+      {
+        name: "Call Analytics",
+        href: "/call-center-dashboard",
+        icon: Phone,
+        permissions: ["view_call_analytics"],
+        keywords: ["reports", "metrics", "tracking", "phone", "statistics"],
+        description: "View call center analytics and reports"
+      },
+    ],
+    permissions: ["view_call_center"],
   },
   {
     label: "Administration",
-    collapsible: true,
-    permissions: ['settings.view', 'users.view', 'api.view'],
     items: [
-      { name: "API & Integrations", href: "/api", icon: Code2, permissions: ['api.view'] },
-      { name: "Automation", href: "/zapier-templates", icon: Workflow, permissions: ['settings.integrations'] },
-      { name: "User Management", href: "/users", icon: UserCog, permissions: ['users.view'] },
-      { name: "Settings", href: "/settings/account", icon: SettingsIcon, permissions: ['settings.view'] },
-    ]
+      {
+        name: "Analytics",
+        href: "/analytics",
+        icon: BarChart3,
+        permissions: ["view_analytics"],
+        keywords: ["reports", "metrics", "data", "insights", "performance"],
+        description: "View detailed analytics and reports"
+      },
+      {
+        name: "Automation",
+        href: "/zapier-templates",
+        icon: Workflow,
+        permissions: ["manage_integrations"],
+        keywords: ["zapier", "integrations", "workflows", "api", "webhooks", "connect"],
+        description: "Set up Zapier integrations and automations"
+      },
+      {
+        name: "Platform Admin",
+        href: "/platform-dashboard",
+        icon: Home,
+        permissions: ["platform_admin"],
+        keywords: ["admin", "master", "platform", "system"],
+        description: "Platform-level administration"
+      },
+      {
+        name: "Agency Management",
+        href: "/agency-management",
+        icon: Building2,
+        permissions: ["manage_agencies"],
+        keywords: ["agencies", "clients", "white-label", "partners"],
+        description: "Manage agency clients and relationships"
+      },
+      { 
+        name: "Settings", 
+        href: "/settings/account", 
+        icon: SettingsIcon,
+        keywords: ["preferences", "account", "profile", "configuration", "zapier", "integrations", "api"],
+        description: "Configure account and integration settings"
+      },
+    ],
   },
 ];
 
 export function Sidebar() {
-  const { hasAnyPermission, hasRole } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const pathname = location.pathname;
+  const { user } = useAuth();
+  const isOnSettingsPage = location.pathname.startsWith("/settings");
   const { state } = useSidebar();
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const visibleTabs = useSettingsTabs();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const isActive = (path: string) => {
-    if (path === '/') return pathname === '/';
-    return pathname.startsWith(path);
-  };
-
-  // Check if we're on a settings page
-  const isOnSettingsPage = pathname.startsWith('/settings');
-
-  // Filter groups and items by permissions
-  const visibleGroups = navigationGroups
-    .map(group => ({
-      ...group,
-      items: group.items.filter(item => {
-        if (!item.permissions) return true;
-        // Check if any permission is a role (admin, agency_owner, etc.)
-        const hasRequiredRole = item.permissions.some(p => 
-          ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer', 'call_center'].includes(p) && 
-          hasRole(p as any)
-        );
-        // Check if any permission is a regular permission
-        const hasRequiredPermission = hasAnyPermission(item.permissions);
-        return hasRequiredRole || hasRequiredPermission;
-      })
-    }))
-    .filter(group => {
-      // Show group if user has any of the group permissions (if specified)
-      if (group.permissions) {
-        const hasRequiredRole = group.permissions.some(p => 
-          ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer', 'call_center'].includes(p) && 
-          hasRole(p as any)
-        );
-        const hasRequiredPermission = hasAnyPermission(group.permissions);
-        if (!hasRequiredRole && !hasRequiredPermission) {
-          return false;
+  // Filter navigation based on permissions
+  const visibleGroups = useMemo(() => {
+    return navigationGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => {
+          if (!item.permissions) return true;
+          return item.permissions.some((permission) =>
+            hasPermission(user, permission)
+          );
+        }),
+      }))
+      .filter((group) => {
+        // Check if user has group-level permissions
+        if (group.permissions && user) {
+          const hasGroupPermission = group.permissions.some((permission) =>
+            hasPermission(user, permission)
+          );
+          if (!hasGroupPermission) return false;
         }
-      }
-      // Show group if it has any visible items
-      return group.items.length > 0;
-    });
+        return group.items.length > 0;
+      });
+  }, [user]);
 
-  const toggleGroup = (groupLabel: string) => {
-    setOpenGroups(prev => ({ ...prev, [groupLabel]: !prev[groupLabel] }));
-  };
+  // Flatten all items for search
+  const allSearchableItems = useMemo(() => {
+    const items: SearchableNavItem[] = [];
+    visibleGroups.forEach((group) => {
+      group.items.forEach((item) => {
+        items.push({
+          ...item,
+          groupLabel: group.label,
+        });
+      });
+    });
+    return items;
+  }, [visibleGroups]);
+
+  // Search results
+  const searchResults = useMenuSearch(allSearchableItems, searchQuery);
+
+  // Determine which groups have matches
+  const groupsWithMatches = useMemo(() => {
+    const groups = new Set<string>();
+    searchResults.forEach((result) => {
+      if (result.groupLabel) {
+        groups.add(result.groupLabel);
+      }
+    });
+    return groups;
+  }, [searchResults]);
+
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        const searchInput = document.querySelector<HTMLInputElement>(
+          'input[placeholder="Search menu..."]'
+        );
+        searchInput?.focus();
+      }
+      // ESC to clear search
+      if (e.key === "Escape" && searchQuery) {
+        setSearchQuery("");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [searchQuery]);
+
+  const settingsTabs = useSettingsTabs();
 
   // Render settings-specific sidebar
   if (isOnSettingsPage) {
@@ -174,75 +306,75 @@ export function Sidebar() {
           <div className="flex h-16 items-center gap-2 px-3">
             {state === "expanded" ? (
               <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate('/')}
-                  className="h-9 w-9 shrink-0 rounded-[--radius] hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">Settings</h1>
-                  <p className="text-xs text-muted-foreground truncate">Account & Preferences</p>
+                <div className="flex h-10 w-10 items-center justify-center rounded-[--radius] bg-gradient-to-br from-primary to-accent shadow-sm">
+                  <SettingsIcon className="h-5 w-5 text-primary-foreground" />
                 </div>
+                <span className="font-semibold text-sidebar-foreground">Settings</span>
               </>
             ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/')}
-                className="h-9 w-9 rounded-[--radius] hover:bg-primary/10 hover:text-primary transition-all duration-200"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
+              <div className="flex h-10 w-10 items-center justify-center rounded-[--radius] bg-gradient-to-br from-primary to-accent">
+                <SettingsIcon className="h-5 w-5 text-primary-foreground" />
+              </div>
             )}
           </div>
         </SidebarHeader>
 
-        <SidebarContent className="px-2 py-4">
-          {settingsGroups.map((group) => {
-            const groupTabs = visibleTabs.filter(tab => 
-              settingsTabs.find(t => t.id === tab.id)?.group === group.id
-            );
+        {/* Search in Settings */}
+        <SidebarSearch
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search settings..."
+          collapsed={state === "collapsed"}
+        />
 
-            if (groupTabs.length === 0) return null;
+        <SidebarContent>
+          <SidebarMenu>
+            {/* Show filtered results if searching */}
+            {searchQuery ? (
+              searchResults
+                .filter((result) => result.href.startsWith("/settings"))
+                .map((result) => (
+                  <SidebarMenuItem key={result.href}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={result.href}
+                        end
+                        className="hover:bg-primary/8 hover:text-primary hover:translate-x-0.5 transition-all duration-300"
+                        activeClassName="bg-primary/15 text-primary border-l-3 border-primary shadow-[0_0_15px_rgba(139,201,232,0.2)]"
+                      >
+                        <result.icon className="h-4 w-4" />
+                        {state === "expanded" && <span>{result.name}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+            ) : (
+              /* Show all settings tabs normally */
+              settingsTabs.map((setting) => (
+                <SidebarMenuItem key={setting.id}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={`/settings/${setting.id}`}
+                      end
+                      className="hover:bg-primary/8 hover:text-primary hover:translate-x-0.5 transition-all duration-300"
+                      activeClassName="bg-primary/15 text-primary border-l-3 border-primary shadow-[0_0_15px_rgba(139,201,232,0.2)]"
+                    >
+                      <setting.icon className="h-4 w-4" />
+                      {state === "expanded" && <span>{setting.label}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))
+            )}
+          </SidebarMenu>
 
-            return (
-              <SidebarGroup key={group.id}>
-                <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : "text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-2"}>
-                  {group.label}
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {groupTabs.map((tab) => {
-                      const Icon = tab.icon;
-                      const active = pathname === `/settings/${tab.id}`;
-                      
-                      return (
-                        <SidebarMenuItem key={tab.id}>
-                          <SidebarMenuButton 
-                            asChild 
-                            tooltip={tab.label} 
-                            isActive={active}
-                            className="rounded-[--radius] h-11 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/20 data-[active=true]:to-accent/10 data-[active=true]:text-primary data-[active=true]:font-medium data-[active=true]:shadow-sm data-[active=true]:border-l-2 data-[active=true]:border-primary transition-all duration-200"
-                          >
-                            <NavLink
-                              to={`/settings/${tab.id}`}
-                              className="flex items-center gap-3 w-full"
-                            >
-                              <Icon className="h-5 w-5 flex-shrink-0" />
-                              {state === "expanded" && <span>{tab.label}</span>}
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            );
-          })}
+          {/* No results message */}
+          {searchQuery && searchResults.length === 0 && state === "expanded" && (
+            <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+              <p>No settings found</p>
+              <p className="text-xs mt-1">Try a different search term</p>
+            </div>
+          )}
         </SidebarContent>
       </SidebarComponent>
     );
@@ -253,116 +385,163 @@ export function Sidebar() {
     <SidebarComponent collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex h-16 items-center gap-2 px-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[--radius] bg-gradient-to-br from-primary to-accent shadow-glow-sm hover:shadow-glow-md transition-all duration-300 animate-glow-pulse">
+          <div className="flex h-10 w-10 items-center justify-center rounded-[--radius] bg-gradient-to-br from-primary to-accent shadow-sm">
             <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
           {state === "expanded" && (
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">ACE Engage</h1>
-              <p className="text-xs text-muted-foreground truncate">Direct Mail Platform</p>
-            </div>
+            <span className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              ACE Engage
+            </span>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-4">
-        {visibleGroups.map((group) => {
-          if (group.collapsible) {
-            // Collapsible flyout group
-            const hasActiveItem = group.items.some(item => isActive(item.href));
-            const isOpen = openGroups[group.label] || hasActiveItem;
-            
-            return (
-              <Collapsible
-                key={group.label}
-                open={isOpen}
-                onOpenChange={() => toggleGroup(group.label)}
-                className="group/collapsible"
-              >
-                <SidebarGroup>
-                  <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-primary/10 hover:text-primary rounded-[--radius] px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 transition-all duration-200">
-                      {state === "expanded" ? (
-                        <>
-                          <span>{group.label}</span>
-                          <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-                        </>
-                      ) : (
-                        <span className="sr-only">{group.label}</span>
-                      )}
-                    </CollapsibleTrigger>
+      {/* Search Bar */}
+      <SidebarSearch
+        value={searchQuery}
+        onChange={setSearchQuery}
+        collapsed={state === "collapsed"}
+      />
+
+      <SidebarContent>
+        {/* Show search results or normal groups */}
+        {searchQuery ? (
+          /* Search results mode */
+          <>
+            {visibleGroups.map((group) => {
+              const groupHasMatches = groupsWithMatches.has(group.label);
+              if (!groupHasMatches) return null;
+
+              const groupResults = searchResults.filter(
+                (r) => r.groupLabel === group.label
+              );
+
+              return (
+                <SidebarGroup key={group.label}>
+                  <SidebarGroupLabel className="text-xs text-muted-foreground uppercase tracking-wider">
+                    {group.label}
                   </SidebarGroupLabel>
-                  <CollapsibleContent className="transition-all duration-300">
-                    <SidebarGroupContent>
-                      <SidebarMenuSub>
-                        {group.items.map((item) => {
-                          const Icon = item.icon;
-                          const active = isActive(item.href);
-                          
-                          return (
-                            <SidebarMenuSubItem key={item.name}>
-                              <SidebarMenuSubButton 
-                                asChild 
-                                isActive={active}
-                                className="rounded-[--radius] h-10 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/20 data-[active=true]:to-accent/10 data-[active=true]:text-primary data-[active=true]:font-medium data-[active=true]:shadow-sm data-[active=true]:border-l-2 data-[active=true]:border-primary transition-all duration-200"
-                              >
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {groupResults.map((result) => (
+                        <SidebarMenuItem key={result.href}>
+                          <SidebarMenuButton asChild>
+                            <NavLink
+                              to={result.href}
+                              end
+                              className="hover:bg-primary/8 hover:text-primary hover:translate-x-0.5 transition-all duration-300"
+                              activeClassName="bg-primary/15 text-primary border-l-3 border-primary shadow-[0_0_15px_rgba(139,201,232,0.2)]"
+                            >
+                              <result.icon className="h-4 w-4" />
+                              {state === "expanded" && (
+                                <div className="flex flex-col flex-1 min-w-0">
+                                  <span className="truncate">{result.name}</span>
+                                  {result.description && (
+                                    <span className="text-xs text-muted-foreground truncate">
+                                      {result.description}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              );
+            })}
+
+            {/* No results message */}
+            {searchResults.length === 0 && state === "expanded" && (
+              <div className="px-3 py-8 text-center text-sm text-muted-foreground">
+                <p>No menu items found</p>
+                <p className="text-xs mt-1">Try a different search term</p>
+              </div>
+            )}
+          </>
+        ) : (
+          /* Normal navigation mode */
+          visibleGroups.map((group, groupIndex) => {
+            const isLastGroup = groupIndex === visibleGroups.length - 1;
+
+            // If the group is collapsible, wrap it in Collapsible
+            if (group.collapsible) {
+              return (
+                <Collapsible
+                  key={group.label}
+                  defaultOpen={group.items.some((item) =>
+                    location.pathname.startsWith(item.href)
+                  )}
+                  className="group/collapsible"
+                >
+                  <SidebarGroup>
+                    <SidebarGroupLabel asChild>
+                      <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-xs text-muted-foreground uppercase tracking-wider hover:bg-primary/5 rounded-[--radius] transition-colors">
+                        {group.label}
+                        <ChevronDown className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                      </CollapsibleTrigger>
+                    </SidebarGroupLabel>
+                    <CollapsibleContent>
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {group.items.map((item) => (
+                            <SidebarMenuItem key={item.name}>
+                              <SidebarMenuButton asChild>
                                 <NavLink
                                   to={item.href}
-                                  end={item.href === '/'}
-                                  className="flex items-center gap-3 w-full"
+                                  end
+                                  className="hover:bg-primary/8 hover:text-primary hover:translate-x-0.5 transition-all duration-300"
+                                  activeClassName="bg-primary/15 text-primary border-l-3 border-primary shadow-[0_0_15px_rgba(139,201,232,0.2)]"
                                 >
-                                  <Icon className="h-4 w-4 flex-shrink-0" />
-                                  {state === "expanded" && <span className="text-sm">{item.name}</span>}
+                                  <item.icon className="h-4 w-4" />
+                                  {state === "expanded" && <span>{item.name}</span>}
                                 </NavLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          );
-                        })}
-                      </SidebarMenuSub>
-                    </SidebarGroupContent>
-                  </CollapsibleContent>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          ))}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </CollapsibleContent>
+                  </SidebarGroup>
+                  {!isLastGroup && <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mx-2" />}
+                </Collapsible>
+              );
+            }
+
+            // Otherwise, render normally
+            return (
+              <div key={group.label}>
+                <SidebarGroup>
+                  <SidebarGroupLabel className="text-xs text-muted-foreground uppercase tracking-wider">
+                    {group.label}
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {group.items.map((item) => (
+                        <SidebarMenuItem key={item.name}>
+                          <SidebarMenuButton asChild>
+                            <NavLink
+                              to={item.href}
+                              end
+                              className="hover:bg-primary/8 hover:text-primary hover:translate-x-0.5 transition-all duration-300"
+                              activeClassName="bg-primary/15 text-primary border-l-3 border-primary shadow-[0_0_15px_rgba(139,201,232,0.2)]"
+                            >
+                              <item.icon className="h-4 w-4" />
+                              {state === "expanded" && <span>{item.name}</span>}
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
                 </SidebarGroup>
-              </Collapsible>
+                {!isLastGroup && <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent mx-2" />}
+              </div>
             );
-          }
-          
-          // Regular non-collapsible group
-          return (
-            <SidebarGroup key={group.label}>
-              <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : "text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-2"}>
-                {group.label}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    const active = isActive(item.href);
-                    
-                    return (
-                      <SidebarMenuItem key={item.name}>
-                        <SidebarMenuButton 
-                          asChild 
-                          tooltip={item.name} 
-                          isActive={active}
-                          className="rounded-[--radius] h-11 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/20 data-[active=true]:to-accent/10 data-[active=true]:text-primary data-[active=true]:font-medium data-[active=true]:shadow-sm data-[active=true]:border-l-2 data-[active=true]:border-primary transition-all duration-200"
-                        >
-                          <NavLink
-                            to={item.href}
-                            end={item.href === '/'}
-                            className="flex items-center gap-3 w-full"
-                          >
-                            <Icon className="h-5 w-5 flex-shrink-0" />
-                            {state === "expanded" && <span>{item.name}</span>}
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          );
-        })}
+          })
+        )}
       </SidebarContent>
     </SidebarComponent>
   );
