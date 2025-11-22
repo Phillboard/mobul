@@ -40,9 +40,9 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards, onE
 
   const getHealthColor = (health: 'healthy' | 'warning' | 'critical') => {
     switch (health) {
-      case 'healthy': return 'text-green-600 bg-green-50 border-green-200';
-      case 'warning': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'critical': return 'text-red-600 bg-red-50 border-red-200';
+      case 'healthy': return 'text-success bg-success/10 border-success/20';
+      case 'warning': return 'text-warning bg-warning/10 border-warning/20';
+      case 'critical': return 'text-destructive bg-destructive/10 border-destructive/20';
     }
   };
 
@@ -89,8 +89,8 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards, onE
                     </div>
                   )}
                   <div>
-                    <CardTitle className="text-xl">{brand.brand_name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">
+                    <CardTitle className="text-2xl">{brand.brand_name}</CardTitle>
+                    <p className="text-base text-muted-foreground">
                       {totalAvailable} cards available · ${totalValue.toFixed(2)} total value
                     </p>
                   </div>
@@ -124,45 +124,45 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards, onE
                   return (
                     <div 
                       key={pool.id}
-                      className={`p-4 rounded-lg border-2 ${getHealthColor(health)}`}
+                      className={`p-6 rounded-lg border-2 ${getHealthColor(health)} transition-all hover:shadow-md`}
                     >
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start justify-between mb-4">
                         <div>
-                          <h4 className="font-semibold">{pool.pool_name}</h4>
-                          <p className="text-sm text-muted-foreground">
+                          <h4 className="font-semibold text-lg">{pool.pool_name}</h4>
+                          <p className="text-base text-muted-foreground">
                             ${pool.card_value.toFixed(2)} per card
                           </p>
                         </div>
-                        <Badge variant={health === 'healthy' ? 'default' : 'destructive'}>
+                        <Badge variant={health === 'healthy' ? 'default' : 'destructive'} className="text-sm px-3 py-1">
                           {pool.available_cards} available
                         </Badge>
                       </div>
                       
-                      <div className="grid grid-cols-4 gap-4 mb-3 text-sm">
+                      <div className="grid grid-cols-4 gap-4 mb-4 text-base">
                         <div>
                           <div className="text-muted-foreground">Total</div>
-                          <div className="font-semibold">{pool.total_cards}</div>
+                          <div className="font-semibold text-lg">{pool.total_cards}</div>
                         </div>
                         <div>
                           <div className="text-muted-foreground">Claimed</div>
-                          <div className="font-semibold">{pool.claimed_cards}</div>
+                          <div className="font-semibold text-lg">{pool.claimed_cards}</div>
                         </div>
                         <div>
                           <div className="text-muted-foreground">Delivered</div>
-                          <div className="font-semibold">{pool.delivered_cards}</div>
+                          <div className="font-semibold text-lg">{pool.delivered_cards}</div>
                         </div>
                         <div>
                           <div className="text-muted-foreground">Failed</div>
-                          <div className="font-semibold">{pool.failed_cards}</div>
+                          <div className="font-semibold text-lg">{pool.failed_cards}</div>
                         </div>
                       </div>
                       
-                      <div className="space-y-2 mb-3">
-                        <div className="flex justify-between text-sm">
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-base">
                           <span className="text-muted-foreground">Utilization</span>
-                          <span className="font-medium">{utilizationPercent}%</span>
+                          <span className="font-medium text-lg">{utilizationPercent}%</span>
                         </div>
-                        <div className="h-2 rounded-full bg-background overflow-hidden">
+                        <div className="h-3 rounded-full bg-background overflow-hidden shadow-inner">
                           <div 
                             className="h-full bg-primary transition-all"
                             style={{ width: `${utilizationPercent}%` }}
@@ -171,7 +171,7 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards, onE
                       </div>
                       
                       {pool.last_auto_balance_check && (
-                        <p className="text-xs text-muted-foreground mb-3">
+                        <p className="text-sm text-muted-foreground mb-4">
                           Last checked: {formatDistanceToNow(new Date(pool.last_auto_balance_check), { addSuffix: true })}
                         </p>
                       )}

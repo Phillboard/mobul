@@ -27,53 +27,53 @@ interface PoolStatsProps {
 
 export function PoolStats({ stats }: PoolStatsProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
       {/* Total Cards */}
-      <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="border-2 shadow-sm hover:shadow-lg transition-all">
         <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Total Cards
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-6">
-          <div className="text-4xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <div className="text-4xl font-bold text-foreground">
             {stats.totalCards}
           </div>
         </CardContent>
       </Card>
 
       {/* Available Cards */}
-      <Card className="border-2 border-green-200 dark:border-green-900 bg-gradient-to-br from-green-50 to-background dark:from-green-950/20 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="border-2 border-success/20 bg-gradient-to-br from-success/5 to-background shadow-sm hover:shadow-lg transition-all">
         <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Available
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-6">
-          <div className="text-4xl font-bold text-green-600 dark:text-green-400">
+          <div className="text-4xl font-bold text-success">
             {stats.availableCards}
           </div>
         </CardContent>
       </Card>
 
       {/* Claimed Cards */}
-      <Card className="border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-background dark:from-blue-950/20 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background shadow-sm hover:shadow-lg transition-all">
         <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Claimed
           </CardTitle>
         </CardHeader>
         <CardContent className="pb-6">
-          <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+          <div className="text-4xl font-bold text-primary">
             {stats.claimedCards}
           </div>
         </CardContent>
       </Card>
 
       {/* Total Value */}
-      <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="border-2 shadow-sm hover:shadow-lg transition-all">
         <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Total Value
           </CardTitle>
         </CardHeader>
@@ -85,9 +85,9 @@ export function PoolStats({ stats }: PoolStatsProps) {
       </Card>
 
       {/* Utilization */}
-      <Card className="border-2 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="border-2 shadow-sm hover:shadow-lg transition-all">
         <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             Utilization
           </CardTitle>
         </CardHeader>

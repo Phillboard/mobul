@@ -220,19 +220,19 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-y-auto p-8">
-        <DialogHeader className="space-y-4">
-          <div className="flex items-center gap-6">
+      <DialogContent className="max-w-7xl w-full h-[90vh] p-10">
+        <DialogHeader className="space-y-6">
+          <div className="flex items-center gap-8">
             {pool.gift_card_brands?.logo_url && (
               <img 
                 src={pool.gift_card_brands.logo_url} 
                 alt={pool.gift_card_brands.brand_name}
-                className="h-16 w-16 object-contain"
+                className="h-20 w-20 object-contain"
               />
             )}
             <div>
-              <DialogTitle className="text-3xl mb-2">{pool.pool_name}</DialogTitle>
-              <p className="text-base text-muted-foreground">
+              <DialogTitle className="text-4xl mb-3">{pool.pool_name}</DialogTitle>
+              <p className="text-lg text-muted-foreground">
                 {pool.gift_card_brands?.brand_name} • {formatCurrency(pool.card_value)} cards
               </p>
             </div>
@@ -246,33 +246,33 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
         <div className="flex gap-4 mt-8">
           <Button 
             variant="outline" 
-            className="shadow-sm hover:shadow h-11 px-6"
+            className="shadow-sm hover:shadow h-12 px-8 text-base"
             onClick={handleCheckBalances}
             disabled={isCheckingBalances || !cards || cards.length === 0}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isCheckingBalances ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-5 w-5 mr-2 ${isCheckingBalances ? 'animate-spin' : ''}`} />
             {isCheckingBalances ? 'Checking...' : 'Check All Balances'}
           </Button>
           <Button 
             variant="outline" 
-            className="shadow-sm hover:shadow h-11 px-6"
+            className="shadow-sm hover:shadow h-12 px-8 text-base"
             onClick={handleExportCSV}
             disabled={isExporting || !cards || cards.length === 0}
           >
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="h-5 w-5 mr-2" />
             {isExporting ? 'Exporting...' : 'Export CSV'}
           </Button>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="cards" className="mt-10">
-          <TabsList className="bg-muted/50 h-12 p-1">
-            <TabsTrigger value="cards" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-6 text-base">Cards ({cards?.length || 0})</TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-6 text-base">Balance History</TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-6 text-base">Settings</TabsTrigger>
+          <TabsList className="bg-muted/50 h-14 p-1 gap-2">
+            <TabsTrigger value="cards" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-8 text-lg h-12">Cards ({cards?.length || 0})</TabsTrigger>
+            <TabsTrigger value="history" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-8 text-lg h-12">Balance History</TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-8 text-lg h-12">Settings</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="cards" className="mt-8 space-y-6">
+          <TabsContent value="cards" className="mt-8 space-y-6 overflow-auto max-h-[50vh]">
             <PoolCardsTable 
               cards={cards || []}
               cardValue={Number(pool.card_value)}
@@ -280,11 +280,11 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
             />
           </TabsContent>
 
-          <TabsContent value="history" className="mt-8">
+          <TabsContent value="history" className="mt-8 overflow-auto max-h-[50vh]">
             <PoolBalanceHistory history={balanceHistory || []} />
           </TabsContent>
 
-          <TabsContent value="settings" className="mt-8">
+          <TabsContent value="settings" className="mt-8 overflow-auto max-h-[50vh]">
             <PoolSettings 
               pool={pool}
               isAdmin={isAdmin}
