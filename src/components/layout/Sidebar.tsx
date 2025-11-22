@@ -21,8 +21,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
-import { hasPermission } from "@/lib/roleUtils";
-import { settingsConfig } from "@/lib/settingsConfig";
+import { settingsTabs } from "@/lib/settingsConfig";
 import { useSettingsTabs } from "@/hooks/useSettingsTabs";
 import { SidebarSearch } from "./SidebarSearch";
 import { useMenuSearch, type SearchableNavItem } from "@/hooks/useMenuSearch";
@@ -220,7 +219,7 @@ const navigationGroups: NavGroup[] = [
 
 export function Sidebar() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, hasAnyPermission, hasRole } = useAuth();
   const isOnSettingsPage = location.pathname.startsWith("/settings");
   const { state } = useSidebar();
   const [searchQuery, setSearchQuery] = useState("");
@@ -232,22 +231,29 @@ export function Sidebar() {
         ...group,
         items: group.items.filter((item) => {
           if (!item.permissions) return true;
-          return item.permissions.some((permission) =>
-            hasPermission(user, permission)
+          // Check if any permission is a role
+          const hasRequiredRole = item.permissions.some(p => 
+            ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer', 'call_center'].includes(p) && 
+            hasRole(p as any)
           );
+          // Check if any permission is a regular permission
+          const hasRequiredPermission = hasAnyPermission(item.permissions);
+          return hasRequiredRole || hasRequiredPermission;
         }),
       }))
       .filter((group) => {
         // Check if user has group-level permissions
         if (group.permissions && user) {
-          const hasGroupPermission = group.permissions.some((permission) =>
-            hasPermission(user, permission)
+          const hasRequiredRole = group.permissions.some(p => 
+            ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer', 'call_center'].includes(p) && 
+            hasRole(p as any)
           );
-          if (!hasGroupPermission) return false;
+          const hasRequiredPermission = hasAnyPermission(group.permissions);
+          if (!hasRequiredRole && !hasRequiredPermission) return false;
         }
         return group.items.length > 0;
       });
-  }, [user]);
+  }, [user, hasAnyPermission, hasRole]);
 
   // Flatten all items for search
   const allSearchableItems = useMemo(() => {
@@ -296,7 +302,7 @@ export function Sidebar() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [searchQuery]);
 
-  const settingsTabs = useSettingsTabs();
+  const visibleSettingsTabs = useSettingsTabs();
 
   // Render settings-specific sidebar
   if (isOnSettingsPage) {
@@ -350,7 +356,7 @@ export function Sidebar() {
                 ))
             ) : (
               /* Show all settings tabs normally */
-              settingsTabs.map((setting) => (
+              visibleSettingsTabs.map((setting) => (
                 <SidebarMenuItem key={setting.id}>
                   <SidebarMenuButton asChild>
                     <NavLink
