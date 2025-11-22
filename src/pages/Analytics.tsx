@@ -1,367 +1,329 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, Download, TrendingUp, Users, MousePointerClick, FileText, Calendar } from "lucide-react";
+import { BarChart3, Mail, Users, Gift, TrendingUp, Phone, CheckCircle2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { format, differenceInDays } from "date-fns";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { format, subDays } from "date-fns";
 
 export default function Analytics() {
-  const { campaignId } = useParams();
-  const navigate = useNavigate();
-
-  const { data: campaign, isLoading: campaignLoading } = useQuery({
-    queryKey: ['campaign', campaignId],
+  // Fetch campaigns summary
+  const { data: campaignStats } = useQuery({
+    queryKey: ['campaign-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('campaigns')
-        .select('*, audience:audiences(total_count)')
-        .eq('id', campaignId!)
-        .single();
+        .select('status, created_at');
       
       if (error) throw error;
-      return data;
+      
+      const mailed = data?.filter(c => c.status === 'mailed').length || 0;
+      const completed = data?.filter(c => c.status === 'completed').length || 0;
+      const draft = data?.filter(c => c.status === 'draft').length || 0;
+      
+      return { mailed, completed, draft, total: data?.length || 0 };
     },
   });
 
-  const { data: recipients } = useQuery({
-    queryKey: ['campaign-recipients', campaignId],
+  // Fetch recipients summary
+  const { data: recipientStats } = useQuery({
+    queryKey: ['recipient-stats'],
     queryFn: async () => {
-      if (!campaign?.audience_id) return [];
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('recipients')
-        .select('*')
-        .eq('audience_id', campaign.audience_id);
+        .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
-      return data;
+      return count || 0;
     },
-    enabled: !!campaign?.audience_id,
   });
 
-  const { data: events } = useQuery({
-    queryKey: ['campaign-events', campaignId],
+  // Fetch gift card stats
+  const { data: giftCardStats } = useQuery({
+    queryKey: ['gift-card-stats'],
     queryFn: async () => {
+      const { data, error } = await supabase
+        .from('gift_cards')
+        .select('status, current_balance');
+      
+      if (error) throw error;
+      
+      const delivered = data?.filter(c => c.status === 'delivered').length || 0;
+      const redeemed = data?.filter(c => c.status === 'redeemed').length || 0;
+      const totalValue = data?.reduce((sum, c) => sum + (c.current_balance || 0), 0) || 0;
+      
+      return { delivered, redeemed, totalValue };
+    },
+  });
+
+  // Fetch call center stats
+  const { data: callStats } = useQuery({
+    queryKey: ['call-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('call_sessions')
+        .select('call_status, call_duration_seconds');
+      
+      if (error) throw error;
+      
+      const completed = data?.filter(c => c.call_status === 'completed').length || 0;
+      const inProgress = data?.filter(c => c.call_status === 'in-progress').length || 0;
+      const avgDuration = data?.reduce((sum, c) => sum + (c.call_duration_seconds || 0), 0) / (data?.length || 1);
+      
+      return { completed, inProgress, avgDuration: Math.round(avgDuration / 60) };
+    },
+  });
+
+  // Fetch recent activity (last 30 days)
+  const { data: recentActivity } = useQuery({
+    queryKey: ['recent-activity'],
+    queryFn: async () => {
+      const thirtyDaysAgo = subDays(new Date(), 30);
       const { data, error } = await supabase
         .from('events')
-        .select('*')
-        .eq('campaign_id', campaignId!)
+        .select('event_type, occurred_at')
+        .gte('occurred_at', thirtyDaysAgo.toISOString())
         .order('occurred_at', { ascending: true });
       
       if (error) throw error;
-      return data;
+      
+      // Group by day
+      const eventsByDay = new Map<string, any>();
+      
+      data?.forEach(event => {
+        const day = format(new Date(event.occurred_at!), 'MM/dd');
+        if (!eventsByDay.has(day)) {
+          eventsByDay.set(day, {
+            day,
+            qr_scans: 0,
+            form_submissions: 0,
+            purl_views: 0,
+          });
+        }
+        
+        const dayData = eventsByDay.get(day);
+        if (event.event_type === 'qr_scanned') dayData.qr_scans++;
+        if (event.event_type === 'form_submitted') dayData.form_submissions++;
+        if (event.event_type === 'purl_viewed') dayData.purl_views++;
+      });
+      
+      return Array.from(eventsByDay.values());
     },
-    enabled: !!campaignId,
   });
 
-  if (campaignLoading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">Loading analytics...</div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (!campaign) {
-    return (
-      <Layout>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Campaign not found</AlertDescription>
-        </Alert>
-      </Layout>
-    );
-  }
-
-  // Calculate KPIs
-  const totalMailed = campaign.audience?.total_count || 0;
-  const deliveredCount = events?.filter(e => e.event_type === 'imb_delivered').length || 0;
-  const qrScans = events?.filter(e => e.event_type === 'qr_scanned').length || 0;
-  const purlViews = events?.filter(e => e.event_type === 'purl_viewed').length || 0;
-  const formSubmissions = events?.filter(e => e.event_type === 'form_submitted').length || 0;
-
-  const deliveryRate = totalMailed > 0 ? ((deliveredCount / totalMailed) * 100).toFixed(1) : '0';
-  const qrCTR = deliveredCount > 0 ? ((qrScans / deliveredCount) * 100).toFixed(1) : '0';
-  const conversionRate = (qrScans + purlViews) > 0 ? ((formSubmissions / (qrScans + purlViews)) * 100).toFixed(1) : '0';
-
-  // Build timeline chart data
-  const mailDate = campaign.mail_date ? new Date(campaign.mail_date) : new Date();
-  const timelineData: any[] = [];
-  
-  if (events && events.length > 0) {
-    const eventsByDay = new Map<number, any>();
-    
-    events.forEach(event => {
-      const eventDate = new Date(event.occurred_at!);
-      const daysSinceMail = differenceInDays(eventDate, mailDate);
+  // Fetch top performing campaigns
+  const { data: topCampaigns } = useQuery({
+    queryKey: ['top-campaigns'],
+    queryFn: async () => {
+      const { data: campaigns, error: campaignsError } = await supabase
+        .from('campaigns')
+        .select('id, name')
+        .limit(10);
       
-      if (!eventsByDay.has(daysSinceMail)) {
-        eventsByDay.set(daysSinceMail, {
-          day: daysSinceMail,
-          delivered: 0,
-          scanned: 0,
-          forms: 0,
-        });
-      }
+      if (campaignsError) throw campaignsError;
       
-      const dayData = eventsByDay.get(daysSinceMail);
-      if (event.event_type === 'imb_delivered') dayData.delivered++;
-      if (event.event_type === 'qr_scanned') dayData.scanned++;
-      if (event.event_type === 'form_submitted') dayData.forms++;
-    });
-    
-    timelineData.push(...Array.from(eventsByDay.values()).sort((a, b) => a.day - b.day));
-  }
-
-  // Geographic performance
-  const geoData = recipients?.reduce((acc: any, recipient) => {
-    const state = recipient.state;
-    if (!acc[state]) {
-      acc[state] = { state, scans: 0, forms: 0, recipients: 0 };
-    }
-    acc[state].recipients++;
-    
-    const recipientScans = events?.filter(e => 
-      e.recipient_id === recipient.id && e.event_type === 'qr_scanned'
-    ).length || 0;
-    const recipientForms = events?.filter(e => 
-      e.recipient_id === recipient.id && e.event_type === 'form_submitted'
-    ).length || 0;
-    
-    acc[state].scans += recipientScans;
-    acc[state].forms += recipientForms;
-    return acc;
-  }, {});
-
-  const geoChartData = geoData ? Object.values(geoData).sort((a: any, b: any) => b.scans - a.scans).slice(0, 10) : [];
-
-  // Recipient detail data
-  const recipientDetails = recipients?.map(recipient => {
-    const deliveredEvent = events?.find(e => e.recipient_id === recipient.id && e.event_type === 'imb_delivered');
-    const scannedEvent = events?.find(e => e.recipient_id === recipient.id && e.event_type === 'qr_scanned');
-    const formEvent = events?.find(e => e.recipient_id === recipient.id && e.event_type === 'form_submitted');
-    const lastEvent = events?.filter(e => e.recipient_id === recipient.id).sort((a, b) => 
-      new Date(b.occurred_at!).getTime() - new Date(a.occurred_at!).getTime()
-    )[0];
-
-    return {
-      id: recipient.id,
-      name: `${recipient.first_name} ${recipient.last_name}`,
-      address: `${recipient.city}, ${recipient.state}`,
-      deliveredDate: deliveredEvent?.occurred_at,
-      scanned: !!scannedEvent,
-      formSubmitted: !!formEvent,
-      lastEvent: lastEvent?.event_type,
-      lastEventDate: lastEvent?.occurred_at,
-    };
-  }) || [];
-
-  const exportToCsv = () => {
-    const csv = [
-      ['Name', 'Address', 'Delivered Date', 'QR Scanned', 'Form Submitted', 'Last Event', 'Last Event Date'],
-      ...recipientDetails.map(r => [
-        r.name,
-        r.address,
-        r.deliveredDate ? format(new Date(r.deliveredDate), 'yyyy-MM-dd HH:mm') : '',
-        r.scanned ? 'Yes' : 'No',
-        r.formSubmitted ? 'Yes' : 'No',
-        r.lastEvent || '',
-        r.lastEventDate ? format(new Date(r.lastEventDate), 'yyyy-MM-dd HH:mm') : '',
-      ])
-    ].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `campaign-${campaignId}-analytics.csv`;
-    a.click();
-  };
+      const campaignWithStats = await Promise.all(
+        campaigns.map(async (campaign) => {
+          const { count } = await supabase
+            .from('events')
+            .select('*', { count: 'exact', head: true })
+            .eq('campaign_id', campaign.id)
+            .in('event_type', ['qr_scanned', 'form_submitted']);
+          
+          return {
+            name: campaign.name,
+            engagement: count || 0,
+          };
+        })
+      );
+      
+      return campaignWithStats.sort((a, b) => b.engagement - a.engagement).slice(0, 5);
+    },
+  });
 
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Campaign Analytics</h1>
-            <p className="text-muted-foreground">{campaign.name}</p>
-          </div>
-          <Button onClick={exportToCsv} variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Analytics Overview
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Platform-wide performance metrics and insights
+          </p>
         </div>
 
         {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Mailed</CardTitle>
+              <CardTitle className="text-sm font-medium">Mailed Campaigns</CardTitle>
+              <Mail className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{campaignStats?.mailed || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                {campaignStats?.total || 0} total campaigns
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Recipients</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalMailed.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{recipientStats?.toLocaleString() || 0}</div>
+              <p className="text-xs text-muted-foreground">Across all campaigns</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Delivered</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Gift Cards Delivered</CardTitle>
+              <Gift className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{deliveredCount.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">{deliveryRate}% delivery rate</p>
+              <div className="text-2xl font-bold">{giftCardStats?.delivered || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                ${((giftCardStats?.totalValue || 0) / 100).toFixed(2)} total value
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">QR Scans</CardTitle>
-              <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Calls Completed</CardTitle>
+              <Phone className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{qrScans.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">{qrCTR}% CTR</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">PURL Views</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{purlViews.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Form Submissions</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formSubmissions.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">{conversionRate}% conversion</p>
+              <div className="text-2xl font-bold">{callStats?.completed || 0}</div>
+              <p className="text-xs text-muted-foreground">
+                ~{callStats?.avgDuration || 0} min avg duration
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Timeline Chart */}
-        {timelineData.length > 0 && (
+        {/* Activity Timeline */}
+        {recentActivity && recentActivity.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Delivery Timeline</CardTitle>
-              <CardDescription>Days since mail date</CardDescription>
+              <CardTitle>Activity (Last 30 Days)</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={timelineData}>
+                <LineChart data={recentActivity}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" label={{ value: 'Days Since Mailing', position: 'insideBottom', offset: -5 }} />
+                  <XAxis dataKey="day" />
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="delivered" stroke="#10b981" name="Delivered" />
-                  <Line type="monotone" dataKey="scanned" stroke="#3b82f6" name="QR Scans" />
-                  <Line type="monotone" dataKey="forms" stroke="#8b5cf6" name="Forms" />
+                  <Line type="monotone" dataKey="qr_scans" stroke="#3b82f6" name="QR Scans" />
+                  <Line type="monotone" dataKey="form_submissions" stroke="#8b5cf6" name="Forms" />
+                  <Line type="monotone" dataKey="purl_views" stroke="#10b981" name="PURL Views" />
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         )}
 
-        {/* Geographic Performance */}
-        {geoChartData.length > 0 && (
+        {/* Top Campaigns */}
+        {topCampaigns && topCampaigns.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Geographic Performance</CardTitle>
-              <CardDescription>Top 10 states by QR scans</CardDescription>
+              <CardTitle>Top Performing Campaigns</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={geoChartData}>
+                <BarChart data={topCampaigns} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="state" />
-                  <YAxis />
+                  <XAxis type="number" />
+                  <YAxis dataKey="name" type="category" width={150} />
                   <Tooltip />
-                  <Legend />
-                  <Bar dataKey="scans" fill="#3b82f6" name="QR Scans" />
-                  <Bar dataKey="forms" fill="#8b5cf6" name="Forms" />
+                  <Bar dataKey="engagement" fill="#3b82f6" name="Engagement" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         )}
 
-        {/* Recipient Detail Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recipient Details</CardTitle>
-            <CardDescription>Individual recipient performance</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Delivered</TableHead>
-                  <TableHead>QR Scanned</TableHead>
-                  <TableHead>Form Submitted</TableHead>
-                  <TableHead>Last Event</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recipientDetails.slice(0, 50).map(recipient => (
-                  <TableRow key={recipient.id}>
-                    <TableCell className="font-medium">{recipient.name}</TableCell>
-                    <TableCell>{recipient.address}</TableCell>
-                    <TableCell>
-                      {recipient.deliveredDate ? format(new Date(recipient.deliveredDate), 'MM/dd/yyyy') : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={recipient.scanned ? 'default' : 'secondary'}>
-                        {recipient.scanned ? 'Yes' : 'No'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={recipient.formSubmitted ? 'default' : 'secondary'}>
-                        {recipient.formSubmitted ? 'Yes' : 'No'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {recipient.lastEvent ? (
-                        <div>
-                          <div className="capitalize">{recipient.lastEvent.replace(/_/g, ' ')}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {recipient.lastEventDate && format(new Date(recipient.lastEventDate), 'MM/dd HH:mm')}
-                          </div>
-                        </div>
-                      ) : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {recipientDetails.length > 50 && (
-              <div className="text-sm text-muted-foreground text-center mt-4">
-                Showing first 50 of {recipientDetails.length} recipients. Export CSV for full data.
+        {/* Quick Stats */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Campaign Status</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Mailed</span>
+                  <span className="font-medium">{campaignStats?.mailed || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Completed</span>
+                  <span className="font-medium">{campaignStats?.completed || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Draft</span>
+                  <span className="font-medium">{campaignStats?.draft || 0}</span>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Gift Card Performance</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Delivered</span>
+                  <span className="font-medium">{giftCardStats?.delivered || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Redeemed</span>
+                  <span className="font-medium">{giftCardStats?.redeemed || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Redemption Rate</span>
+                  <span className="font-medium">
+                    {giftCardStats?.delivered 
+                      ? ((giftCardStats.redeemed / giftCardStats.delivered) * 100).toFixed(1) 
+                      : 0}%
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Call Center Status</CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Completed</span>
+                  <span className="font-medium">{callStats?.completed || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">In Progress</span>
+                  <span className="font-medium">{callStats?.inProgress || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Avg Duration</span>
+                  <span className="font-medium">{callStats?.avgDuration || 0} min</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Layout>
   );
