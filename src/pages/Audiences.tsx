@@ -10,20 +10,24 @@ export default function Audiences() {
 
   return (
     <Layout>
-      <div className="space-y-4">
+      <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold">Audiences & Leads</h1>
-          <p className="text-muted-foreground mt-1">
-            Import contacts, buy targeted leads, and manage your mailing lists
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            Audiences & Leads
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Import contacts, buy targeted leads, and manage mailing lists
           </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="import">Import</TabsTrigger>
-            <TabsTrigger value="saved">Saved Audiences</TabsTrigger>
-            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
-          </TabsList>
+        <Card variant="glass">
+          <CardContent className="p-2">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full">
+                <TabsTrigger value="import">Import</TabsTrigger>
+                <TabsTrigger value="saved">Saved Audiences</TabsTrigger>
+                <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
+              </TabsList>
 
           <TabsContent value="import" className="mt-4">
             <AudienceImportTab />
@@ -33,14 +37,16 @@ export default function Audiences() {
             <AudiencesListTab />
           </TabsContent>
 
-          <TabsContent value="marketplace" className="mt-4">
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">Lead marketplace coming soon</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="marketplace" className="mt-4">
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <p className="text-muted-foreground">Lead marketplace coming soon</p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

@@ -187,13 +187,13 @@ export default function Analytics() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground">Campaign Analytics</h1>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Campaign Analytics</h1>
             <p className="text-muted-foreground">{campaign.name}</p>
           </div>
           <Button onClick={exportToCsv} variant="outline">

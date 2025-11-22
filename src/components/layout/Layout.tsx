@@ -14,7 +14,7 @@ export function Layout({ children }: LayoutProps) {
   
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full mesh-gradient-light dark:mesh-gradient-dark">
         <Sidebar />
         <div className="flex-1 flex flex-col w-full">
           <Header />

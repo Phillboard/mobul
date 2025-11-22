@@ -209,12 +209,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen mesh-gradient-dark">
-      <div className="space-y-6 animate-fade-in p-4 md:p-6 lg:p-8">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col gap-2 md:gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Dashboard</h1>
           <p className="text-muted-foreground mt-1 text-sm md:text-base">
             {currentClient ? `${currentClient.name} Overview` : "Welcome back"}
           </p>
@@ -236,7 +235,7 @@ const Dashboard = () => {
           const TrendIcon = isPositive ? TrendingUp : TrendingDown;
 
           return (
-            <Card key={index} variant="glass" hover="lift" className="relative overflow-hidden group">
+            <Card key={index} variant="elevated" hover="glow" className="relative overflow-hidden group">
               <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none opacity-50 group-hover:opacity-70 transition-opacity`} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative p-4 md:p-6">
                 <CardTitle className="text-xs sm:text-sm font-medium text-foreground">{kpi.title}</CardTitle>
@@ -267,7 +266,7 @@ const Dashboard = () => {
           const TrendIcon = isPositive ? TrendingUp : TrendingDown;
 
           return (
-            <Card key={index + 4} variant="glass" hover="lift" className="relative overflow-hidden group">
+            <Card key={index + 4} variant="elevated" hover="glow" className="relative overflow-hidden group">
               <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} pointer-events-none opacity-50 group-hover:opacity-70 transition-opacity`} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative p-4 md:p-6">
                 <CardTitle className="text-xs sm:text-sm font-medium text-foreground">{kpi.title}</CardTitle>
@@ -498,7 +497,6 @@ const Dashboard = () => {
           </div>
         </CardContent>
       </Card>
-      </div>
     </div>
   );
 };

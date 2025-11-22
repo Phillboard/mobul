@@ -142,13 +142,13 @@ export default function CampaignDetail() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/campaigns')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground">{campaign.name}</h1>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{campaign.name}</h1>
             <p className="text-muted-foreground">Campaign Details & Tracking</p>
           </div>
           <Badge className={getStatusColor(campaign.status)}>

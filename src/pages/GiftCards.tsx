@@ -71,11 +71,13 @@ export default function GiftCards() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Gift Card Manager</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Gift Card Manager
+            </h1>
+            <p className="text-muted-foreground mt-2">
               Manage your gift card inventory organized by brand
             </p>
           </div>
@@ -85,7 +87,7 @@ export default function GiftCards() {
                 Sell Cards
               </Button>
             )}
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button variant="neon" onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Pool
             </Button>

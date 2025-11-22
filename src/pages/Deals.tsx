@@ -34,11 +34,11 @@ export default function Deals() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Deals</h1>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Deals</h1>
             <p className="text-muted-foreground mt-2">
               Manage your sales pipeline and track opportunities
             </p>
