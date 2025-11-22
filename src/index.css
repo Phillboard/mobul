@@ -7,65 +7,65 @@
 
 @layer base {
   :root {
-    /* Backgrounds - Ultra clean, almost white */
-    --background: 0 0% 100%;           /* Pure white #FFFFFF */
-    --foreground: 240 10% 4%;          /* Near black for contrast */
-
-    /* Cards - Crisp white with subtle elevation */
-    --card: 0 0% 100%;                 /* Pure white */
-    --card-foreground: 240 10% 4%;
-
-    /* Popovers */
+    /* Backgrounds - Clean white with warmth */
+    --background: 0 0% 99%;              /* Soft white #FCFCFC */
+    --foreground: 240 8% 20%;            /* Soft charcoal for readability */
+    
+    /* Cards - White with subtle warmth */
+    --card: 0 0% 100%;
+    --card-foreground: 240 8% 20%;
+    
+    /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 8%;
-
-    /* Primary - Vibrant cyan-blue (Stripe-like) */
-    --primary: 203 92% 55%;
-    --primary-foreground: 0 0% 100%;
-
-    /* Secondary - Soft neutral */
-    --secondary: 240 6% 92%;
-    --secondary-foreground: 240 10% 8%;
-
-    /* Muted */
-    --muted: 240 6% 95%;
-    --muted-foreground: 240 5% 45%;
-
-    /* Accent - Electric purple */
-    --accent: 282 85% 60%;
-    --accent-foreground: 0 0% 100%;
-
-    /* Success - Crypto green */
-    --success: 142 76% 48%;
-    --success-foreground: 0 0% 100%;
-
-    /* Warning */
-    --warning: 35 95% 55%;
-    --warning-foreground: 240 10% 8%;
-
-    /* Destructive */
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 0 0% 100%;
-
-    /* Borders - Very subtle */
-    --border: 240 6% 92%;              /* Light gray */
-    --input: 240 6% 92%;
-    --ring: 203 92% 55%;
+    --popover-foreground: 240 8% 20%;
+    
+    /* Primary - Soft Sky Blue (calm, professional) */
+    --primary: 205 60% 75%;              /* #8BC9E8 - Soft sky blue */
+    --primary-foreground: 240 8% 20%;
+    
+    /* Secondary - Soft Mint (fresh, friendly) */
+    --secondary: 160 50% 80%;            /* #A3D9C9 - Soft mint */
+    --secondary-foreground: 240 8% 20%;
+    
+    /* Accent - Soft Lavender (creative, modern) */
+    --accent: 270 45% 82%;               /* #D4C5E8 - Soft lavender */
+    --accent-foreground: 240 8% 20%;
+    
+    /* Success - Soft Mint Green */
+    --success: 160 50% 75%;              /* #9FD9C2 */
+    --success-foreground: 240 8% 20%;
+    
+    /* Warning - Soft Peach */
+    --warning: 25 70% 80%;               /* #F5CDA7 */
+    --warning-foreground: 240 8% 20%;
+    
+    /* Destructive - Soft Blush/Rose */
+    --destructive: 350 55% 80%;          /* #F5B3C1 - Soft blush */
+    --destructive-foreground: 240 8% 20%;
+    
+    /* Muted - Very light pastels */
+    --muted: 220 20% 96%;
+    --muted-foreground: 240 5% 50%;
+    
+    /* Borders - Soft and subtle */
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 205 60% 75%;
 
     /* Radius - Modern, larger values */
     --radius: 1rem;
     --radius-lg: 1.5rem;
     --radius-xl: 2rem;
 
-    /* Sidebar - Light mode with glassmorphism */
-    --sidebar-background: 0 0% 100%;       /* Pure white with transparency */
-    --sidebar-foreground: 240 10% 8%;      /* Dark text */
-    --sidebar-primary: 203 92% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 6% 96%;          /* Very light gray */
-    --sidebar-accent-foreground: 240 10% 8%;
-    --sidebar-border: 240 6% 90%;          /* Subtle light border */
-    --sidebar-ring: 203 92% 55%;
+    /* Sidebar - Glassmorphism with pastel tint */
+    --sidebar-background: 205 30% 98%;     /* Very light blue tint */
+    --sidebar-foreground: 240 8% 20%;
+    --sidebar-primary: 205 60% 75%;
+    --sidebar-primary-foreground: 240 8% 20%;
+    --sidebar-accent: 220 20% 95%;
+    --sidebar-accent-foreground: 240 8% 20%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 205 60% 75%;
 
     /* Builder specific */
     --builder-sidebar: 240 5% 96%;
@@ -75,60 +75,60 @@
   }
 
   .dark {
-    /* Backgrounds - VERY dark, almost black */
-    --background: 240 10% 3%;          /* Deep black #080809 */
-    --foreground: 0 0% 98%;            /* Near white */
+    /* Backgrounds - Soft dark blues instead of black */
+    --background: 230 25% 12%;           /* #1A1F2E - Soft navy */
+    --foreground: 0 0% 96%;
+    
+    /* Cards - Slightly lighter navy */
+    --card: 230 20% 16%;                 /* #24293A */
+    --card-foreground: 0 0% 96%;
+    
+    /* Popover */
+    --popover: 230 20% 16%;
+    --popover-foreground: 0 0% 96%;
+    
+    /* Primary - Soft Blue (still visible in dark) */
+    --primary: 205 65% 65%;              /* #6BADE8 */
+    --primary-foreground: 230 25% 12%;
+    
+    /* Secondary - Soft Mint */
+    --secondary: 160 40% 55%;            /* #52B896 */
+    --secondary-foreground: 0 0% 96%;
+    
+    /* Accent - Soft Lavender */
+    --accent: 270 40% 70%;               /* #B39DD8 */
+    --accent-foreground: 230 25% 12%;
+    
+    /* Success - Soft Mint Green */
+    --success: 160 45% 60%;
+    --success-foreground: 0 0% 96%;
+    
+    /* Warning - Soft Peach */
+    --warning: 25 65% 70%;
+    --warning-foreground: 230 25% 12%;
+    
+    /* Destructive - Soft Blush */
+    --destructive: 350 50% 70%;
+    --destructive-foreground: 230 25% 12%;
+    
+    /* Muted - Softer dark */
+    --muted: 230 15% 20%;
+    --muted-foreground: 230 10% 65%;
+    
+    /* Borders - Soft and subtle */
+    --border: 230 15% 22%;
+    --input: 230 15% 22%;
+    --ring: 205 65% 65%;
 
-    /* Cards - Dark with subtle elevation */
-    --card: 240 10% 6%;                /* Dark gray #0F0F14 */
-    --card-foreground: 0 0% 98%;
-
-    /* Popovers */
-    --popover: 240 10% 8%;
-    --popover-foreground: 0 0% 98%;
-
-    /* Primary - Glowing neon cyan */
-    --primary: 189 94% 60%;            /* Bright neon cyan */
-    --primary-foreground: 240 10% 3%;
-
-    /* Secondary */
-    --secondary: 240 8% 15%;
-    --secondary-foreground: 0 0% 98%;
-
-    /* Muted */
-    --muted: 240 8% 12%;
-    --muted-foreground: 240 5% 60%;
-
-    /* Accent - Electric purple */
-    --accent: 282 85% 65%;
-    --accent-foreground: 0 0% 100%;
-
-    /* Success - Neon green */
-    --success: 142 76% 52%;
-    --success-foreground: 240 10% 4%;
-
-    /* Warning */
-    --warning: 35 95% 55%;
-    --warning-foreground: 240 10% 8%;
-
-    /* Destructive */
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 0 0% 100%;
-
-    /* Borders - Dark with subtle glow */
-    --border: 240 8% 12%;              /* Dark gray */
-    --input: 240 8% 12%;
-    --ring: 189 94% 60%;
-
-    /* Sidebar - Dark mode */
-    --sidebar-background: 240 10% 6%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 189 94% 55%;
-    --sidebar-primary-foreground: 240 10% 4%;
-    --sidebar-accent: 240 8% 12%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 240 8% 10%;
-    --sidebar-ring: 189 94% 55%;
+    /* Sidebar - Soft dark with pastel accents */
+    --sidebar-background: 230 20% 14%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 205 65% 65%;
+    --sidebar-primary-foreground: 230 25% 12%;
+    --sidebar-accent: 230 15% 20%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 230 15% 18%;
+    --sidebar-ring: 205 65% 65%;
 
     /* Builder specific - dark */
     --builder-sidebar: 240 10% 8%;
