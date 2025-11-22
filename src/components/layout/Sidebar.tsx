@@ -17,7 +17,8 @@ import {
   Headphones,
   ListTodo,
   BarChart3,
-  Home,
+  Activity,
+  ShoppingCart,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,64 +70,88 @@ const navigationGroups: NavGroup[] = [
         href: "/", 
         icon: LayoutDashboard,
         keywords: ["home", "overview", "stats", "analytics", "insights"],
-        description: "View your main dashboard and analytics"
+        description: "View your main dashboard and analytics",
+        permissions: ['dashboard.view']
       },
       { 
         name: "Campaigns", 
         href: "/campaigns", 
         icon: Mail,
         keywords: ["mail", "direct mail", "postcards", "send", "mailing"],
-        description: "Create and manage direct mail campaigns"
+        description: "Create and manage direct mail campaigns",
+        permissions: ['campaigns.view']
       },
       { 
         name: "Templates", 
         href: "/templates", 
         icon: FileText,
         keywords: ["design", "postcards", "layouts", "builder"],
-        description: "Design and manage postcard templates"
+        description: "Design and manage postcard templates",
+        permissions: ['templates.view']
+      },
+      { 
+        name: "Landing Pages", 
+        href: "/landing-pages", 
+        icon: Building2,
+        keywords: ["web pages", "sites", "urls", "web", "landing"],
+        description: "Create landing pages for campaigns",
+        permissions: ['landingpages.view']
       },
       { 
         name: "Audiences", 
         href: "/audiences", 
         icon: Users,
         keywords: ["contacts", "recipients", "mailing list", "import"],
-        description: "Manage recipient lists and contacts"
+        description: "Manage recipient lists and contacts",
+        permissions: ['audiences.view']
       },
     ],
   },
   {
     label: "CRM",
+    collapsible: true,
     items: [
       { 
         name: "Contacts", 
         href: "/contacts", 
         icon: Users,
         keywords: ["people", "clients", "customers", "crm"],
-        description: "Manage individual contacts"
+        description: "Manage individual contacts",
+        permissions: ['audiences.view']
       },
       { 
         name: "Companies", 
         href: "/companies", 
         icon: Building2,
         keywords: ["organizations", "businesses", "accounts", "crm"],
-        description: "Manage company accounts"
+        description: "Manage company accounts",
+        permissions: ['audiences.view']
       },
       { 
         name: "Deals", 
         href: "/deals", 
         icon: Handshake,
         keywords: ["opportunities", "pipeline", "sales", "crm"],
-        description: "Track sales opportunities"
+        description: "Track sales opportunities",
+        permissions: ['audiences.view']
+      },
+      { 
+        name: "Activities", 
+        href: "/activities", 
+        icon: BarChart3,
+        keywords: ["history", "timeline", "events", "crm"],
+        description: "View activity timeline",
+        permissions: ['audiences.view']
       },
       { 
         name: "Tasks", 
         href: "/tasks", 
         icon: ListTodo,
         keywords: ["todos", "activities", "reminders", "crm"],
-        description: "Manage tasks and activities"
+        description: "Manage tasks and activities",
+        permissions: ['audiences.view']
       },
     ],
-    permissions: ["view_crm"],
   },
   {
     label: "Rewards",
@@ -135,83 +160,117 @@ const navigationGroups: NavGroup[] = [
         name: "Gift Card Manager",
         href: "/gift-cards",
         icon: Gift,
-        permissions: ["view_gift_cards"],
         keywords: ["rewards", "incentives", "gifts", "cards", "inventory"],
-        description: "Manage gift card inventory and pools"
+        description: "Manage gift card inventory and pools",
+        permissions: ['gift_cards.purchase']
       },
       {
         name: "Purchase Cards",
         href: "/purchase-gift-cards",
         icon: DollarSign,
-        permissions: ["manage_gift_cards"],
-        keywords: ["buy", "acquire", "order", "rewards"],
-        description: "Purchase gift cards from marketplace"
+        keywords: ["buy", "acquire", "order", "rewards", "marketplace"],
+        description: "Purchase gift cards from marketplace",
+        permissions: ['gift_cards.purchase']
+      },
+      {
+        name: "Lead Marketplace",
+        href: "/marketplace",
+        icon: Building2,
+        keywords: ["leads", "buy", "purchase", "marketplace"],
+        description: "Purchase verified leads",
+        permissions: ['lead_marketplace.view']
       },
     ],
   },
   {
     label: "Call Center",
+    collapsible: true,
+    permissions: ['call_center', 'admin'],
     items: [
       {
         name: "Agent Dashboard",
         href: "/agent-call-dashboard",
         icon: Headphones,
-        permissions: ["manage_calls"],
         keywords: ["calls", "phone", "agent", "tracking", "inbound"],
-        description: "Handle incoming calls and track conditions"
+        description: "Handle incoming calls and track conditions",
+        permissions: ['call_center', 'admin']
       },
       {
         name: "Call Analytics",
         href: "/call-center-dashboard",
         icon: Phone,
-        permissions: ["view_call_analytics"],
         keywords: ["reports", "metrics", "tracking", "phone", "statistics"],
-        description: "View call center analytics and reports"
+        description: "View call center analytics and reports",
+        permissions: ['call_center', 'admin']
       },
     ],
-    permissions: ["view_call_center"],
+  },
+  {
+    label: "Platform Admin",
+    collapsible: true,
+    permissions: ['admin'],
+    items: [
+      {
+        name: "Gift Card Marketplace",
+        href: "/admin/gift-card-marketplace",
+        icon: Gift,
+        keywords: ["admin", "master", "inventory", "wholesale"],
+        description: "Platform gift card marketplace admin",
+        permissions: ['admin']
+      },
+    ],
   },
   {
     label: "Administration",
+    collapsible: true,
     items: [
       {
         name: "Analytics",
         href: "/analytics",
         icon: BarChart3,
-        permissions: ["view_analytics"],
         keywords: ["reports", "metrics", "data", "insights", "performance"],
-        description: "View detailed analytics and reports"
+        description: "View detailed analytics and reports",
+        permissions: ['settings.view', 'admin']
+      },
+      {
+        name: "API & Integrations",
+        href: "/api",
+        icon: Workflow,
+        keywords: ["api", "webhooks", "developer", "integrations"],
+        description: "API keys and webhook management",
+        permissions: ['api.view']
       },
       {
         name: "Automation",
         href: "/zapier-templates",
         icon: Workflow,
-        permissions: ["manage_integrations"],
         keywords: ["zapier", "integrations", "workflows", "api", "webhooks", "connect"],
-        description: "Set up Zapier integrations and automations"
-      },
-      {
-        name: "Platform Admin",
-        href: "/platform-dashboard",
-        icon: Home,
-        permissions: ["platform_admin"],
-        keywords: ["admin", "master", "platform", "system"],
-        description: "Platform-level administration"
+        description: "Set up Zapier integrations and automations",
+        permissions: ['settings.integrations']
       },
       {
         name: "Agency Management",
         href: "/agency-management",
         icon: Building2,
-        permissions: ["manage_agencies"],
         keywords: ["agencies", "clients", "white-label", "partners"],
-        description: "Manage agency clients and relationships"
+        description: "Manage agency clients and relationships",
+        permissions: ['agency_owner', 'admin']
+      },
+      {
+        name: "User Management",
+        href: "/users",
+        icon: Users,
+        keywords: ["team", "users", "invite", "permissions", "roles"],
+        description: "Invite and manage team members",
+        permissions: ['users.view']
       },
       { 
         name: "Settings", 
         href: "/settings/account", 
         icon: SettingsIcon,
         keywords: ["preferences", "account", "profile", "configuration", "zapier", "integrations", "api"],
-        description: "Configure account and integration settings"
+        description: "Configure account and integration settings",
+        permissions: ['settings.view']
       },
     ],
   },
