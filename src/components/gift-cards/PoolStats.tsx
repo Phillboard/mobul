@@ -27,76 +27,76 @@ interface PoolStatsProps {
 
 export function PoolStats({ stats }: PoolStatsProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
       {/* Total Cards */}
-      <Card className="border-2 shadow-sm hover:shadow-lg transition-all">
-        <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Total Cards
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pb-6">
-          <div className="text-4xl font-bold text-foreground">
-            {stats.totalCards}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">
+          Total Cards
+        </div>
+        <Card className="border shadow-sm hover:shadow-md transition-all">
+          <CardContent className="p-4 flex items-center justify-center">
+            <div className="text-3xl font-bold text-foreground">
+              {stats.totalCards}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Available Cards */}
-      <Card className="border-2 border-success/20 bg-gradient-to-br from-success/5 to-background shadow-sm hover:shadow-lg transition-all">
-        <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Available
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pb-6">
-          <div className="text-4xl font-bold text-success">
-            {stats.availableCards}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">
+          Available
+        </div>
+        <Card className="border border-success/30 bg-success/5 shadow-sm hover:shadow-md transition-all">
+          <CardContent className="p-4 flex items-center justify-center">
+            <div className="text-3xl font-bold text-success">
+              {stats.availableCards}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Claimed Cards */}
-      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background shadow-sm hover:shadow-lg transition-all">
-        <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Claimed
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pb-6">
-          <div className="text-4xl font-bold text-primary">
-            {stats.claimedCards}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">
+          Claimed
+        </div>
+        <Card className="border border-primary/30 bg-primary/5 shadow-sm hover:shadow-md transition-all">
+          <CardContent className="p-4 flex items-center justify-center">
+            <div className="text-3xl font-bold text-primary">
+              {stats.claimedCards}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Total Value */}
-      <Card className="border-2 shadow-sm hover:shadow-lg transition-all">
-        <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Total Value
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pb-6">
-          <div className="text-4xl font-bold text-primary">
-            {formatCurrency(stats.totalValue)}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">
+          Total Value
+        </div>
+        <Card className="border shadow-sm hover:shadow-md transition-all">
+          <CardContent className="p-4 flex items-center justify-center">
+            <div className="text-2xl font-bold text-primary">
+              {formatCurrency(stats.totalValue)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Utilization */}
-      <Card className="border-2 shadow-sm hover:shadow-lg transition-all">
-        <CardHeader className="pb-4 pt-6">
-          <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Utilization
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pb-6">
-          <div className="text-4xl font-bold text-primary">
-            {stats.utilizationPercent.toFixed(0)}%
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground px-1">
+          Utilization
+        </div>
+        <Card className="border shadow-sm hover:shadow-md transition-all">
+          <CardContent className="p-4 flex items-center justify-center">
+            <div className="text-3xl font-bold text-primary">
+              {stats.utilizationPercent.toFixed(0)}%
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
