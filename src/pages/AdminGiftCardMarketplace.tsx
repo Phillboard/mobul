@@ -162,7 +162,7 @@ export default function AdminGiftCardMarketplace() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(thisMonthRevenue)}</div>
+              <div className="text-2xl font-bold text-success">{formatCurrency(thisMonthRevenue)}</div>
             </CardContent>
           </Card>
 
@@ -174,7 +174,7 @@ export default function AdminGiftCardMarketplace() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{formatCurrency(thisMonthProfit)}</div>
+              <div className="text-2xl font-bold text-primary">{formatCurrency(thisMonthProfit)}</div>
             </CardContent>
           </Card>
         </div>
@@ -243,7 +243,7 @@ export default function AdminGiftCardMarketplace() {
                             </TableCell>
                             <TableCell>{sale.quantity}</TableCell>
                             <TableCell className="font-semibold">{formatCurrency(sale.total_amount)}</TableCell>
-                            <TableCell className="text-green-600 font-semibold">
+                            <TableCell className="text-success font-semibold">
                               {formatCurrency(sale.profit || 0)}
                             </TableCell>
                             <TableCell>
