@@ -20,6 +20,7 @@ import Templates from "./pages/Templates";
 import CampaignPrototype from "./pages/CampaignPrototype";
 import TemplateBuilderV2 from "./pages/TemplateBuilderV2";
 import Analytics from "./pages/Analytics";
+import CampaignAnalytics from "./pages/CampaignAnalytics";
 import API from "./pages/API";
 import APIDocumentation from "./pages/APIDocumentation";
 import GiftCards from "./pages/GiftCards";
@@ -81,7 +82,8 @@ const App = () => (
               <Route path="/recipients/:id" element={<ProtectedRoute><RecipientDetail /></ProtectedRoute>} />
               <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
               <Route path="/template-builder/:id" element={<ProtectedRoute><TemplateBuilderV2 /></ProtectedRoute>} />
-              <Route path="/analytics/:campaignId" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute requiredPermission="analytics.view"><Analytics /></ProtectedRoute>} />
+              <Route path="/analytics/:campaignId" element={<ProtectedRoute requiredPermission="analytics.view"><CampaignAnalytics /></ProtectedRoute>} />
               <Route path="/campaign-prototype/:id" element={<ProtectedRoute><CampaignPrototype /></ProtectedRoute>} />
               <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
               <Route path="/purchase-gift-cards" element={<ProtectedRoute requiredPermission="gift_cards.purchase"><PurchaseGiftCards /></ProtectedRoute>} />
@@ -102,8 +104,8 @@ const App = () => (
               <Route path="/landing-pages/:id/edit-grapesjs" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
               <Route path="/templates/:id/ai-editor" element={<ProtectedRoute><AITemplateEditor /></ProtectedRoute>} />
               <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
-              <Route path="/agent-dashboard" element={<ProtectedRoute><AgentCallDashboard /></ProtectedRoute>} />
-              <Route path="/call-center" element={<ProtectedRoute requiredRole="call_center"><CallCenterDashboard /></ProtectedRoute>} />
+              <Route path="/agent-dashboard" element={<ProtectedRoute requiredPermissions={['call_center', 'admin']}><AgentCallDashboard /></ProtectedRoute>} />
+              <Route path="/call-center" element={<ProtectedRoute requiredPermissions={['call_center', 'admin']}><CallCenterDashboard /></ProtectedRoute>} />
               <Route path="/agency-management" element={<ProtectedRoute requiredRole="agency_owner"><AgencyManagement /></ProtectedRoute>} />
               <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
