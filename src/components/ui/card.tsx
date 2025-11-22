@@ -3,21 +3,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const cardVariants = cva(
-  "rounded-lg border text-card-foreground shadow-sm transition-all duration-300",
+  "rounded-[var(--radius-lg)] border transition-all duration-300",
   {
     variants: {
       variant: {
-        default: "bg-card border-border",
-        glass: "bg-card/80 backdrop-blur-lg border-border/50 shadow-glow-sm supports-[backdrop-filter]:bg-card/70",
-        gradient: "bg-gradient-to-br from-primary/5 via-accent/5 to-card border-border/50",
-        neon: "bg-card border-primary/30 shadow-glow-md hover:shadow-glow-lg",
-        elevated: "bg-card border-border shadow-lg hover:shadow-xl",
+        default: "bg-card/95 backdrop-blur-xl border-border/50 shadow-sm hover:shadow-md",
+        glass: "bg-card/40 backdrop-blur-2xl border-border/30 shadow-glow-sm hover:shadow-glow-md",
+        elevated: "bg-card shadow-lg hover:shadow-xl border-border/50 hover:translate-y-[-2px]",
+        neon: "bg-card/95 backdrop-blur-xl border-primary/30 shadow-glow-cyan hover:border-primary/60",
+        mesh: "bg-gradient-to-br from-card via-card/95 to-primary/5 backdrop-blur-xl border-border/30",
       },
       hover: {
         none: "",
-        lift: "hover:card-hover hover:-translate-y-1",
+        lift: "hover:translate-y-[-2px]",
         glow: "hover:shadow-glow-md",
-        scale: "hover:scale-[1.02]",
       },
     },
     defaultVariants: {
@@ -35,7 +34,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant, hover, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(cardVariants({ variant, hover, className }))}
+      className={cn(cardVariants({ variant, hover }), className)}
       {...props}
     />
   )
