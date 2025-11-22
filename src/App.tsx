@@ -15,8 +15,8 @@ import PURLLandingPage from "./pages/PURLLandingPage";
 import Audiences from "./pages/Audiences";
 import AudienceDetail from "./pages/AudienceDetail";
 import RecipientDetail from "./pages/RecipientDetail";
-import LeadMarketplace from "./pages/LeadMarketplace";
 import Templates from "./pages/Templates";
+import CampaignPrototype from "./pages/CampaignPrototype";
 import TemplateBuilderV2 from "./pages/TemplateBuilderV2";
 import Analytics from "./pages/Analytics";
 import API from "./pages/API";
@@ -80,7 +80,7 @@ const App = () => (
               <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
               <Route path="/template-builder/:id" element={<ProtectedRoute><TemplateBuilderV2 /></ProtectedRoute>} />
               <Route path="/analytics/:campaignId" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-              <Route path="/marketplace" element={<ProtectedRoute><LeadMarketplace /></ProtectedRoute>} />
+              <Route path="/campaign-prototype/:id" element={<ProtectedRoute><CampaignPrototype /></ProtectedRoute>} />
               <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
               <Route path="/purchase-gift-cards" element={<ProtectedRoute requiredPermission="gift_cards.purchase"><PurchaseGiftCards /></ProtectedRoute>} />
               <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
