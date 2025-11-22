@@ -57,14 +57,14 @@
     --radius-lg: 1.5rem;
     --radius-xl: 2rem;
 
-    /* Sidebar */
-    --sidebar-background: 240 10% 8%;
-    --sidebar-foreground: 0 0% 95%;
+    /* Sidebar - Light mode with glassmorphism */
+    --sidebar-background: 0 0% 100%;       /* Pure white with transparency */
+    --sidebar-foreground: 240 10% 8%;      /* Dark text */
     --sidebar-primary: 203 92% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 8% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 240 8% 12%;
+    --sidebar-accent: 240 6% 96%;          /* Very light gray */
+    --sidebar-accent-foreground: 240 10% 8%;
+    --sidebar-border: 240 6% 90%;          /* Subtle light border */
     --sidebar-ring: 203 92% 55%;
 
     /* Builder specific */
@@ -225,6 +225,19 @@
     radial-gradient(at 80% 70%, hsl(282, 85%, 70% / 0.08) 0px, transparent 50%),
     radial-gradient(at 50% 50%, hsl(142, 76%, 52% / 0.05) 0px, transparent 50%),
     hsl(var(--background));
+}
+
+/* Sidebar glassmorphism - Light theme */
+:root [data-sidebar="sidebar"] {
+  background: hsl(var(--sidebar-background) / 0.6) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  border-right: 1px solid hsl(var(--sidebar-border) / 0.5);
+}
+
+/* Sidebar glassmorphism - Dark theme */
+.dark [data-sidebar="sidebar"] {
+  background: hsl(var(--sidebar-background) / 0.95) !important;
+  backdrop-filter: blur(24px);
 }
 
 /* Glow border effect */

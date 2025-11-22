@@ -169,8 +169,8 @@ export function Sidebar() {
   // Render settings-specific sidebar
   if (isOnSettingsPage) {
     return (
-      <SidebarComponent collapsible="icon" className="border-r border-border/20 bg-card/40 dark:bg-card/95 backdrop-blur-xl">
-        <SidebarHeader className="border-b border-border/20 dark:border-border/30">
+      <SidebarComponent collapsible="icon" className="border-r border-sidebar-border">
+        <SidebarHeader className="border-b border-sidebar-border">
           <div className="flex h-16 items-center gap-2 px-3">
             {state === "expanded" ? (
               <>
@@ -250,8 +250,8 @@ export function Sidebar() {
 
   // Render regular sidebar
   return (
-    <SidebarComponent collapsible="icon" className="border-r border-border/20 bg-card/40 dark:bg-card/95 backdrop-blur-xl">
-      <SidebarHeader className="border-b border-border/20 dark:border-border/30">
+    <SidebarComponent collapsible="icon" className="border-r border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex h-16 items-center gap-2 px-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-[--radius] bg-gradient-to-br from-primary to-accent shadow-glow-sm hover:shadow-glow-md transition-all duration-300 animate-glow-pulse">
             <Zap className="h-5 w-5 text-primary-foreground" />
