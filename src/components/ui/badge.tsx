@@ -4,14 +4,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center gap-1.5 rounded-[calc(var(--radius)-4px)] px-2.5 py-1 text-xs font-medium ring-1 ring-inset transition-all duration-200",
   {
     variants: {
       variant: {
-        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80 hover:shadow-glow-sm",
-        secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80 hover:shadow-glow-sm",
-        outline: "text-foreground border-border hover:bg-accent/50",
+        default: "bg-primary/10 text-primary ring-primary/20 hover:bg-primary/20",
+        success: "bg-success/10 text-success ring-success/20 hover:bg-success/20",
+        warning: "bg-warning/10 text-warning ring-warning/20 hover:bg-warning/20",
+        destructive: "bg-destructive/10 text-destructive ring-destructive/20 hover:bg-destructive/20",
+        secondary: "bg-secondary/50 text-secondary-foreground ring-border hover:bg-secondary/70",
+        outline: "text-foreground ring-border hover:bg-accent/50",
+        neon: "bg-neon-cyan/10 text-neon-cyan ring-neon-cyan/30 shadow-glow-cyan",
       },
     },
     defaultVariants: {

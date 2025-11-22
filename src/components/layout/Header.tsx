@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { ImpersonateUserDialog } from "@/components/admin/ImpersonateUserDialog";
 import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Header() {
   const { profile, roles, signOut, hasRole } = useAuth();
@@ -70,7 +71,7 @@ export function Header() {
   return (
     <>
       <ImpersonationBanner />
-      <header className="sticky top-0 z-30 h-14 md:h-16 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <header className="sticky top-0 z-30 h-14 md:h-16 border-b border-border/30 bg-card/80 backdrop-blur-2xl shadow-sm">
       <div className="flex h-full items-center justify-between px-2 md:px-6 gap-1 md:gap-4">
         <div className="flex-1 flex items-center gap-1 md:gap-3 min-w-0">
           {/* Sidebar Toggle */}
@@ -222,6 +223,9 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
+          {/* Theme Toggle */}
+          <ThemeToggle />
+          
           {/* Admin Impersonation Tool */}
           {hasRole('admin') && (
             <ImpersonateUserDialog 

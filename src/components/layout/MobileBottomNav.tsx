@@ -47,7 +47,7 @@ export function MobileBottomNav() {
   }, {} as Record<string, typeof secondaryNavItems>);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-lg border-t border-border shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-2xl border-t border-border/30 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
       <div className="flex items-center justify-around px-2 py-2 safe-area-inset-bottom">
         {primaryNavItems.map((item) => {
           const Icon = item.icon;
@@ -58,16 +58,16 @@ export function MobileBottomNav() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition-all duration-200 min-h-[56px] min-w-[64px]",
+                "relative flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-[var(--radius)] transition-all duration-200 min-h-[56px] min-w-[64px]",
                 active
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50 active:scale-95"
+                  ? "bg-primary/10 text-primary shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-card/60 active:scale-95"
               )}
             >
-              <Icon className={cn("h-5 w-5", active && "drop-shadow-glow")} />
+              <Icon className={cn("h-5 w-5 transition-all", active && "scale-110")} />
               <span className="text-xs font-medium">{item.label}</span>
               {active && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-glow-sm" />
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary shadow-glow-sm animate-pulse-scale" />
               )}
             </button>
           );
@@ -76,7 +76,7 @@ export function MobileBottomNav() {
         <Sheet>
           <SheetTrigger asChild>
             <button
-              className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent/50 active:scale-95 min-h-[56px] min-w-[64px]"
+              className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-[var(--radius)] transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-card/60 active:scale-95 min-h-[56px] min-w-[64px]"
             >
               <MoreHorizontal className="h-5 w-5" />
               <span className="text-xs font-medium">More</span>

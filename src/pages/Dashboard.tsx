@@ -209,7 +209,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="min-h-screen mesh-gradient-dark">
+      <div className="space-y-6 animate-fade-in p-4 md:p-6 lg:p-8">
       {/* Header */}
       <div className="flex flex-col gap-2 md:gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -497,6 +498,7 @@ const Dashboard = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };
