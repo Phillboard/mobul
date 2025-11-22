@@ -38,24 +38,29 @@ export function CampaignCard({
 }: CampaignCardProps) {
   return (
     <Card 
-      className="cursor-pointer hover:shadow-md transition-shadow"
+      variant="glass"
+      hover="lift"
+      className="cursor-pointer group relative overflow-hidden transition-all duration-300"
       onClick={onViewDetails}
     >
-      <CardContent className="p-4">
+      {/* Animated gradient background on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <CardContent className="p-4 relative z-10">
         <div className="flex items-start justify-between gap-4 mb-3">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base truncate">{campaign.name}</h3>
+            <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors duration-200">{campaign.name}</h3>
             <Badge className={`${getStatusColor(campaign.status)} mt-1`}>
               {getStatusLabel(campaign.status)}
             </Badge>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-[--radius] hover:bg-primary/10 hover:text-primary transition-all duration-200">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-48 bg-card/95 backdrop-blur-xl border-border/50">
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewDetails(); }}>
                 View Details
               </DropdownMenuItem>
@@ -82,7 +87,7 @@ export function CampaignCard({
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                className="text-destructive"
+                className="text-destructive focus:text-destructive"
               >
                 Delete
               </DropdownMenuItem>
@@ -92,25 +97,35 @@ export function CampaignCard({
 
         <div className="space-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 shrink-0" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-[calc(var(--radius)-4px)] bg-primary/10">
+              <Calendar className="h-4 w-4 shrink-0 text-primary" />
+            </div>
             <span className="truncate">
               {campaign.mail_date ? format(new Date(campaign.mail_date), 'MMM d, yyyy') : 'No date set'}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 shrink-0" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-[calc(var(--radius)-4px)] bg-accent/10">
+              <Users className="h-4 w-4 shrink-0 text-accent" />
+            </div>
             <span>{campaign.audiences?.valid_count || 0} recipients</span>
           </div>
           <div className="flex items-center gap-2">
-            <Phone className="h-4 w-4 shrink-0" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-[calc(var(--radius)-4px)] bg-success/10">
+              <Phone className="h-4 w-4 shrink-0 text-success" />
+            </div>
             <span>{campaign.callsCount || 0} calls</span>
           </div>
           <div className="flex items-center gap-2">
-            <Gift className="h-4 w-4 shrink-0" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-[calc(var(--radius)-4px)] bg-warning/10">
+              <Gift className="h-4 w-4 shrink-0 text-warning" />
+            </div>
             <span>{campaign.rewardsCount || 0} rewards</span>
           </div>
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 shrink-0" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-[calc(var(--radius)-4px)] bg-primary/10">
+              <TrendingUp className="h-4 w-4 shrink-0 text-primary" />
+            </div>
             <span>{campaign.conversionRate?.toFixed(1) || 0}% conversion</span>
           </div>
         </div>
