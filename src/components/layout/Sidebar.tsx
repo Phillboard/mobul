@@ -38,43 +38,76 @@ interface NavGroup {
 
 const navigationGroups: NavGroup[] = [
   {
-    label: "Core",
+    label: "Dashboard",
     items: [
       { name: "Dashboard", href: "/", icon: LayoutDashboard, permissions: ['dashboard.view'], keywords: ["home", "overview"], description: "Main dashboard" },
+    ]
+  },
+  {
+    label: "Marketing",
+    collapsible: true,
+    items: [
       { name: "Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'], keywords: ["mail", "postcards"], description: "Manage campaigns" },
       { name: "Templates", href: "/templates", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts"], description: "Design templates" },
       { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl"], description: "Manage landing pages" },
       { name: "Audiences", href: "/audiences", icon: Users, permissions: ['audiences.view'], keywords: ["contacts", "lists"], description: "Manage audiences" },
     ]
   },
-  { label: "CRM", collapsible: true, items: [
-    { name: "Contacts", href: "/contacts", icon: Users, permissions: ['audiences.view'], keywords: ["people"], description: "Manage contacts" },
-    { name: "Companies", href: "/companies", icon: Building2, permissions: ['audiences.view'], keywords: ["businesses"], description: "Manage companies" },
-    { name: "Deals", href: "/deals", icon: Handshake, permissions: ['audiences.view'], keywords: ["sales"], description: "Track deals" },
-    { name: "Activities", href: "/activities", icon: Activity, permissions: ['audiences.view'], keywords: ["timeline"], description: "Activity timeline" },
-    { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['audiences.view'], keywords: ["todos"], description: "Manage tasks" },
-  ]},
-  { label: "Rewards", items: [
-    { name: "Gift Card Manager", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.manage'], keywords: ["rewards"], description: "Manage gift cards" },
-    { name: "Purchase Gift Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase'], keywords: ["buy"], description: "Purchase cards" },
-  ]},
-  { label: "Call Center", collapsible: true, roles: ['call_center', 'admin'], items: [
-    { name: "Agent Dashboard", href: "/agent-dashboard", icon: Headphones, roles: ['call_center', 'admin'], keywords: ["calls"], description: "Handle calls" },
-    { name: "Call Analytics", href: "/call-center", icon: Phone, roles: ['call_center', 'admin'], keywords: ["reports"], description: "Call metrics" },
-  ]},
-  { label: "Agency", collapsible: true, roles: ['agency_owner'], items: [
-    { name: "Client Management", href: "/agency-management", icon: Building2, roles: ['agency_owner'], keywords: ["clients"], description: "Manage clients" },
-  ]},
-  { label: "Administration", collapsible: true, items: [
-    { name: "Analytics", href: "/analytics", icon: BarChart3, permissions: ['analytics.view'], keywords: ["reports", "metrics"], description: "View analytics" },
-    { name: "User Management", href: "/users", icon: Users, permissions: ['users.view'], keywords: ["team"], description: "Manage users" },
-    { name: "API & Integrations", href: "/api", icon: Code, permissions: ['api.view'], keywords: ["developer"], description: "API keys" },
-    { name: "Automation", href: "/zapier-templates", icon: Workflow, permissions: ['settings.integrations'], keywords: ["zapier"], description: "Zapier integrations" },
-    { name: "Settings", href: "/settings/account", icon: SettingsIcon, permissions: ['settings.view'], keywords: ["configuration"], description: "Settings" },
-  ]},
-  { label: "Platform Admin", collapsible: true, roles: ['admin'], items: [
-    { name: "Gift Card Marketplace", href: "/admin/gift-card-marketplace", icon: Gift, roles: ['admin'], keywords: ["admin"], description: "Admin marketplace" },
-  ]},
+  { 
+    label: "CRM", 
+    collapsible: true, 
+    items: [
+      { name: "Contacts", href: "/contacts", icon: Users, permissions: ['audiences.view'], keywords: ["people"], description: "Manage contacts" },
+      { name: "Companies", href: "/companies", icon: Building2, permissions: ['audiences.view'], keywords: ["businesses"], description: "Manage companies" },
+      { name: "Deals", href: "/deals", icon: Handshake, permissions: ['audiences.view'], keywords: ["sales"], description: "Track deals" },
+      { name: "Activities", href: "/activities", icon: Activity, permissions: ['audiences.view'], keywords: ["timeline"], description: "Activity timeline" },
+      { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['audiences.view'], keywords: ["todos"], description: "Manage tasks" },
+    ]
+  },
+  { 
+    label: "Rewards", 
+    collapsible: true,
+    items: [
+      { name: "Gift Card Manager", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.manage'], keywords: ["rewards"], description: "Manage gift cards" },
+      { name: "Purchase Gift Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase'], keywords: ["buy"], description: "Purchase cards" },
+    ]
+  },
+  { 
+    label: "Call Center", 
+    collapsible: true, 
+    roles: ['call_center', 'admin'], 
+    items: [
+      { name: "Agent Dashboard", href: "/agent-dashboard", icon: Headphones, roles: ['call_center', 'admin'], keywords: ["calls"], description: "Handle calls" },
+      { name: "Call Analytics", href: "/call-center", icon: Phone, roles: ['call_center', 'admin'], keywords: ["reports"], description: "Call metrics" },
+    ]
+  },
+  { 
+    label: "Administration", 
+    collapsible: true, 
+    items: [
+      { name: "Analytics", href: "/analytics", icon: BarChart3, permissions: ['analytics.view'], keywords: ["reports", "metrics"], description: "View analytics" },
+      { name: "User Management", href: "/users", icon: Users, permissions: ['users.view'], keywords: ["team"], description: "Manage users" },
+      { name: "API & Integrations", href: "/api", icon: Code, permissions: ['api.view'], keywords: ["developer"], description: "API keys" },
+      { name: "Automation", href: "/zapier-templates", icon: Workflow, permissions: ['settings.integrations'], keywords: ["zapier"], description: "Zapier integrations" },
+      { name: "Settings", href: "/settings/account", icon: SettingsIcon, permissions: ['settings.view'], keywords: ["configuration"], description: "Settings" },
+    ]
+  },
+  { 
+    label: "Agency", 
+    collapsible: true, 
+    roles: ['agency_owner'], 
+    items: [
+      { name: "Client Management", href: "/agency-management", icon: Building2, roles: ['agency_owner'], keywords: ["clients"], description: "Manage clients" },
+    ]
+  },
+  { 
+    label: "Platform Admin", 
+    collapsible: true, 
+    roles: ['admin'], 
+    items: [
+      { name: "Gift Card Marketplace", href: "/admin/gift-card-marketplace", icon: Gift, roles: ['admin'], keywords: ["admin"], description: "Admin marketplace" },
+    ]
+  },
 ];
 
 export function Sidebar() {
@@ -106,6 +139,10 @@ export function Sidebar() {
       return g.items.length > 0;
     });
   }, [user, hasAnyPermission, currentOrg, roles, menuCounts]);
+
+  useEffect(() => {
+    setOpenGroups(new Set(["Dashboard", "Marketing"]));
+  }, []);
 
   const allSearchableItems = useMemo(() => visibleGroups.flatMap(g => g.items.map(i => ({...i, groupLabel: g.label}))), [visibleGroups]);
   const searchResults = useMenuSearch(allSearchableItems, searchQuery);
@@ -157,7 +194,16 @@ export function Sidebar() {
   return (
     <SidebarRoot collapsible="icon" className={collapsed ? "w-14" : "w-60"}>
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="px-4 py-3">{!collapsed && <h2 className="text-lg font-semibold">Menu</h2>}</div>
+        <div className="px-4 py-4 flex items-center gap-3">
+          {!collapsed ? (
+            <>
+              <img src="/favicon.png" alt="Mobul ACE" className="h-8 w-8" />
+              <h2 className="text-xl font-bold">Mobul ACE</h2>
+            </>
+          ) : (
+            <img src="/favicon.png" alt="Mobul ACE" className="h-6 w-6 mx-auto" />
+          )}
+        </div>
       </SidebarHeader>
       <SidebarSearch value={searchQuery} onChange={setSearchQuery} collapsed={collapsed} />
       <SidebarContent>
