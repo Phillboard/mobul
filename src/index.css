@@ -7,13 +7,13 @@
 
 @layer base {
   :root {
-    /* Backgrounds - Super clean, almost white */
-    --background: 0 0% 99%;
-    --foreground: 240 10% 8%;
+    /* Backgrounds - Ultra clean, almost white */
+    --background: 0 0% 100%;           /* Pure white #FFFFFF */
+    --foreground: 240 10% 4%;          /* Near black for contrast */
 
-    /* Cards - Pure white with subtle elevation */
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 8%;
+    /* Cards - Crisp white with subtle elevation */
+    --card: 0 0% 100%;                 /* Pure white */
+    --card-foreground: 240 10% 4%;
 
     /* Popovers */
     --popover: 0 0% 100%;
@@ -47,9 +47,9 @@
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - Subtle with alpha */
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
+    /* Borders - Very subtle */
+    --border: 240 6% 92%;              /* Light gray */
+    --input: 240 6% 92%;
     --ring: 203 92% 55%;
 
     /* Radius - Modern, larger values */
@@ -75,21 +75,21 @@
   }
 
   .dark {
-    /* Backgrounds - Deep, rich blacks */
-    --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
+    /* Backgrounds - VERY dark, almost black */
+    --background: 240 10% 3%;          /* Deep black #080809 */
+    --foreground: 0 0% 98%;            /* Near white */
 
-    /* Cards - Elevated with subtle glow */
-    --card: 240 10% 8%;
+    /* Cards - Dark with subtle elevation */
+    --card: 240 10% 6%;                /* Dark gray #0F0F14 */
     --card-foreground: 0 0% 98%;
 
     /* Popovers */
     --popover: 240 10% 8%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary - Glowing cyan */
-    --primary: 189 94% 55%;
-    --primary-foreground: 240 10% 4%;
+    /* Primary - Glowing neon cyan */
+    --primary: 189 94% 60%;            /* Bright neon cyan */
+    --primary-foreground: 240 10% 3%;
 
     /* Secondary */
     --secondary: 240 8% 15%;
@@ -115,10 +115,10 @@
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - Subtle with glow potential */
-    --border: 240 8% 15%;
-    --input: 240 8% 15%;
-    --ring: 189 94% 55%;
+    /* Borders - Dark with subtle glow */
+    --border: 240 8% 12%;              /* Dark gray */
+    --input: 240 8% 12%;
+    --ring: 189 94% 60%;
 
     /* Sidebar - Dark mode */
     --sidebar-background: 240 10% 6%;
@@ -209,10 +209,20 @@
     hsl(var(--background));
 }
 
+/* Light theme mesh gradient - clean and subtle */
+.mesh-gradient-light {
+  background: 
+    radial-gradient(at 20% 20%, hsl(203, 92%, 55% / 0.05) 0px, transparent 50%),
+    radial-gradient(at 80% 80%, hsl(282, 85%, 60% / 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, hsl(142, 76%, 52% / 0.03) 0px, transparent 50%),
+    hsl(var(--background));
+}
+
+/* Dark theme mesh gradient - deep and rich */
 .mesh-gradient-dark {
   background: 
-    radial-gradient(at 20% 30%, hsl(189, 94%, 55% / 0.08) 0px, transparent 50%),
-    radial-gradient(at 80% 70%, hsl(282, 85%, 65% / 0.08) 0px, transparent 50%),
+    radial-gradient(at 20% 30%, hsl(189, 94%, 60% / 0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 70%, hsl(282, 85%, 70% / 0.08) 0px, transparent 50%),
     radial-gradient(at 50% 50%, hsl(142, 76%, 52% / 0.05) 0px, transparent 50%),
     hsl(var(--background));
 }

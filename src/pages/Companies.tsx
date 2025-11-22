@@ -16,11 +16,11 @@ export default function Companies() {
 
   return (
     <Layout>
-      <div className="space-y-4 md:space-y-6 pb-4">
+      <div className="space-y-6 animate-fade-in pb-4">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold">Companies</h1>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Companies</h1>
             <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
               Manage your company accounts and organizations
             </p>

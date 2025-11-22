@@ -101,10 +101,10 @@ export default function LandingPages() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent flex items-center gap-2">
               <Globe className="h-8 w-8" />
               Landing Pages
             </h1>
@@ -115,7 +115,7 @@ export default function LandingPages() {
           {canCreate && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button>
+                <Button variant="neon">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Landing Page
                 </Button>

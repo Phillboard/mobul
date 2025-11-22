@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { TemplateGrid } from "@/components/templates/TemplateGrid";
 import { TemplateFilters } from "@/components/templates/TemplateFilters";
@@ -57,40 +58,44 @@ export default function Templates() {
 
   return (
     <Layout>
-      <div className="space-y-4 md:space-y-6 pb-4">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold">Template Library</h1>
-            <p className="text-muted-foreground mt-1 md:mt-2 text-sm md:text-base">
-              Create and manage your direct mail templates with our visual canvas editor
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Template Library
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Create stunning direct mail designs with our visual editor
             </p>
           </div>
           <Button 
+            variant="neon"
             onClick={() => setCreateDialogOpen(true)} 
-            className="shrink-0 h-12 md:h-10 hidden sm:flex shadow-lg"
+            className="shrink-0"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Create New Template
+            Create Template
           </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-          <div className="flex-1">
-            <TemplateSearch value={searchQuery} onChange={setSearchQuery} />
-          </div>
-          <ViewToggle view={view} onViewChange={setView} />
-        </div>
-
-        <TemplateFilters
+        <Card variant="glass" hover="lift">
+          <CardContent className="p-6 space-y-4">
+            <div className="flex gap-3">
+              <TemplateSearch value={searchQuery} onChange={setSearchQuery} />
+              <ViewToggle view={view} onViewChange={setView} />
+            </div>
+            <TemplateFilters
           selectedCategory={selectedCategory}
           selectedFormat={selectedFormat}
           onCategoryChange={setSelectedCategory}
-          onFormatChange={setSelectedFormat}
-          onClearFilters={() => {
-            setSelectedCategory("all");
-            setSelectedFormat("all");
-          }}
-        />
+              onFormatChange={setSelectedFormat}
+              onClearFilters={() => {
+                setSelectedCategory("all");
+                setSelectedFormat("all");
+              }}
+            />
+          </CardContent>
+        </Card>
 
         <TemplateGrid
           clientId={currentClient.id}
