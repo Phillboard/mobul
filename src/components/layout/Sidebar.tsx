@@ -169,8 +169,8 @@ export function Sidebar() {
   // Render settings-specific sidebar
   if (isOnSettingsPage) {
     return (
-      <SidebarComponent collapsible="icon" className="border-r border-sidebar-border">
-        <SidebarHeader className="border-b border-sidebar-border">
+      <SidebarComponent collapsible="icon" className="border-r border-border/30 bg-card/95 backdrop-blur-xl">
+        <SidebarHeader className="border-b border-border/30">
           <div className="flex h-16 items-center gap-2 px-3">
             {state === "expanded" ? (
               <>
@@ -178,13 +178,13 @@ export function Sidebar() {
                   variant="ghost"
                   size="icon"
                   onClick={() => navigate('/')}
-                  className="h-8 w-8 shrink-0"
+                  className="h-9 w-9 shrink-0 rounded-[--radius] hover:bg-primary/10 hover:text-primary transition-all duration-200"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-lg font-bold text-sidebar-foreground truncate">Settings</h1>
-                  <p className="text-xs text-sidebar-foreground/60 truncate">Account & Preferences</p>
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">Settings</h1>
+                  <p className="text-xs text-muted-foreground truncate">Account & Preferences</p>
                 </div>
               </>
             ) : (
@@ -192,7 +192,7 @@ export function Sidebar() {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate('/')}
-                className="h-8 w-8"
+                className="h-9 w-9 rounded-[--radius] hover:bg-primary/10 hover:text-primary transition-all duration-200"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
@@ -200,7 +200,7 @@ export function Sidebar() {
           </div>
         </SidebarHeader>
 
-        <SidebarContent>
+        <SidebarContent className="px-2 py-4">
           {settingsGroups.map((group) => {
             const groupTabs = visibleTabs.filter(tab => 
               settingsTabs.find(t => t.id === tab.id)?.group === group.id
@@ -210,7 +210,7 @@ export function Sidebar() {
 
             return (
               <SidebarGroup key={group.id}>
-                <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : ""}>
+                <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : "text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-2"}>
                   {group.label}
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
@@ -221,7 +221,12 @@ export function Sidebar() {
                       
                       return (
                         <SidebarMenuItem key={tab.id}>
-                          <SidebarMenuButton asChild tooltip={tab.label} isActive={active}>
+                          <SidebarMenuButton 
+                            asChild 
+                            tooltip={tab.label} 
+                            isActive={active}
+                            className="rounded-[--radius] h-11 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/20 data-[active=true]:to-accent/10 data-[active=true]:text-primary data-[active=true]:font-medium data-[active=true]:shadow-sm data-[active=true]:border-l-2 data-[active=true]:border-primary transition-all duration-200"
+                          >
                             <NavLink
                               to={`/settings/${tab.id}`}
                               className="flex items-center gap-3 w-full"
@@ -245,22 +250,22 @@ export function Sidebar() {
 
   // Render regular sidebar
   return (
-    <SidebarComponent collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border">
+    <SidebarComponent collapsible="icon" className="border-r border-border/30 bg-card/95 backdrop-blur-xl">
+      <SidebarHeader className="border-b border-border/30">
         <div className="flex h-16 items-center gap-2 px-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary shadow-glow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-[--radius] bg-gradient-to-br from-primary to-accent shadow-glow-sm hover:shadow-glow-md transition-all duration-300 animate-glow-pulse">
             <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
           {state === "expanded" && (
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-bold text-sidebar-foreground truncate">ACE Engage</h1>
-              <p className="text-xs text-sidebar-foreground/60 truncate">Direct Mail Platform</p>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent truncate">ACE Engage</h1>
+              <p className="text-xs text-muted-foreground truncate">Direct Mail Platform</p>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-2 py-4">
         {visibleGroups.map((group) => {
           if (group.collapsible) {
             // Collapsible flyout group
@@ -276,18 +281,18 @@ export function Sidebar() {
               >
                 <SidebarGroup>
                   <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md px-2 py-1.5 text-sm font-medium transition-colors">
+                    <CollapsibleTrigger className="flex w-full items-center justify-between hover:bg-primary/10 hover:text-primary rounded-[--radius] px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 transition-all duration-200">
                       {state === "expanded" ? (
                         <>
                           <span>{group.label}</span>
-                          <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                          <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                         </>
                       ) : (
                         <span className="sr-only">{group.label}</span>
                       )}
                     </CollapsibleTrigger>
                   </SidebarGroupLabel>
-                  <CollapsibleContent>
+                  <CollapsibleContent className="transition-all duration-300">
                     <SidebarGroupContent>
                       <SidebarMenuSub>
                         {group.items.map((item) => {
@@ -296,14 +301,18 @@ export function Sidebar() {
                           
                           return (
                             <SidebarMenuSubItem key={item.name}>
-                              <SidebarMenuSubButton asChild isActive={active}>
+                              <SidebarMenuSubButton 
+                                asChild 
+                                isActive={active}
+                                className="rounded-[--radius] h-10 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/20 data-[active=true]:to-accent/10 data-[active=true]:text-primary data-[active=true]:font-medium data-[active=true]:shadow-sm data-[active=true]:border-l-2 data-[active=true]:border-primary transition-all duration-200"
+                              >
                                 <NavLink
                                   to={item.href}
                                   end={item.href === '/'}
                                   className="flex items-center gap-3 w-full"
                                 >
                                   <Icon className="h-4 w-4 flex-shrink-0" />
-                                  {state === "expanded" && <span>{item.name}</span>}
+                                  {state === "expanded" && <span className="text-sm">{item.name}</span>}
                                 </NavLink>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
@@ -320,7 +329,7 @@ export function Sidebar() {
           // Regular non-collapsible group
           return (
             <SidebarGroup key={group.label}>
-              <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : ""}>
+              <SidebarGroupLabel className={state === "collapsed" ? "sr-only" : "text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 px-2"}>
                 {group.label}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -331,7 +340,12 @@ export function Sidebar() {
                     
                     return (
                       <SidebarMenuItem key={item.name}>
-                        <SidebarMenuButton asChild tooltip={item.name} isActive={active}>
+                        <SidebarMenuButton 
+                          asChild 
+                          tooltip={item.name} 
+                          isActive={active}
+                          className="rounded-[--radius] h-11 hover:bg-primary/10 hover:text-primary data-[active=true]:bg-gradient-to-r data-[active=true]:from-primary/20 data-[active=true]:to-accent/10 data-[active=true]:text-primary data-[active=true]:font-medium data-[active=true]:shadow-sm data-[active=true]:border-l-2 data-[active=true]:border-primary transition-all duration-200"
+                        >
                           <NavLink
                             to={item.href}
                             end={item.href === '/'}

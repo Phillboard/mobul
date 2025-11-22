@@ -30,16 +30,17 @@ export default function Campaigns() {
 
   return (
     <Layout>
-      <div className="space-y-4 md:space-y-6 pb-4">
+      <div className="space-y-4 md:space-y-6 pb-4 animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Campaigns</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Campaigns</h1>
             <p className="mt-1 text-muted-foreground text-sm md:text-base">
               Create, manage, and track your direct mail campaigns
             </p>
           </div>
           <Button 
-            className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 h-12 md:h-10 shadow-lg hidden sm:flex"
+            variant="neon"
+            className="shrink-0 h-12 md:h-10 hidden sm:flex shadow-glow-cyan"
             onClick={() => setWizardOpen(true)}
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -47,11 +48,11 @@ export default function Campaigns() {
           </Button>
         </div>
 
-        <Card>
+        <Card variant="glass" hover="glow">
           <CardHeader className="p-4 md:p-6">
             <div className="flex flex-col gap-4">
               <div>
-                <CardTitle className="text-lg md:text-xl">Your Campaigns</CardTitle>
+                <CardTitle className="text-lg md:text-xl font-bold tracking-tight">Your Campaigns</CardTitle>
                 <CardDescription className="text-sm">
                   Manage and track your direct mail campaigns
                 </CardDescription>
@@ -66,7 +67,7 @@ export default function Campaigns() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button variant="outline" size="icon" className="h-12 w-12 md:h-10 md:w-10 shrink-0 hidden sm:flex">
+                <Button variant="outline" size="icon" className="h-12 w-12 md:h-10 md:w-10 shrink-0 hidden sm:flex hover:border-primary/50 hover:bg-primary/5 transition-all duration-200">
                   <Filter className="h-4 w-4" />
                 </Button>
               </div>
@@ -81,7 +82,8 @@ export default function Campaigns() {
         <Button 
           onClick={() => setWizardOpen(true)}
           size="icon"
-          className="fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-2xl sm:hidden z-40 hover:scale-110 active:scale-95"
+          variant="neon"
+          className="fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-glow-lg sm:hidden z-40 hover:scale-110 active:scale-95 transition-all duration-200"
         >
           <Plus className="h-6 w-6" />
         </Button>
