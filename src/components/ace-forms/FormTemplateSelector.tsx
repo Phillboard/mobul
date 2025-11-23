@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { aceFormTemplates } from "@/lib/aceFormTemplates";
+import { getContextualTemplates } from "@/lib/aceFormTemplates";
 import { FormTemplate } from "@/types/aceForms";
+import { useFormContext } from "@/hooks/useFormContext";
 
 interface FormTemplateSelectorProps {
   onSelect: (template: FormTemplate) => void;
@@ -10,39 +10,38 @@ interface FormTemplateSelectorProps {
 }
 
 export function FormTemplateSelector({ onSelect, onCancel }: FormTemplateSelectorProps) {
-  return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Choose a Template</h1>
-          <p className="text-muted-foreground mt-1">Start with a pre-built form or create from scratch</p>
-        </div>
-        <Button variant="ghost" onClick={onCancel}>
-          <X className="w-4 h-4 mr-2" />
-          Cancel
-        </Button>
-      </div>
+  const { context } = useFormContext();
+  const templates = getContextualTemplates(context);
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {aceFormTemplates.map((template) => (
-          <Card key={template.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onSelect(template)}>
-            <CardHeader>
-              <CardTitle>{template.name}</CardTitle>
-              <CardDescription>{template.description}</CardDescription>
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4">
+        {templates.map((template) => (
+          <Card 
+            key={template.id} 
+            className="hover:shadow-md transition-all cursor-pointer hover:border-primary" 
+            onClick={() => onSelect(template)}
+          >
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">{template.name}</CardTitle>
+              <CardDescription className="text-sm">{template.description}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">Use This Template</Button>
+              <Button size="sm" className="w-full">Use Template</Button>
             </CardContent>
           </Card>
         ))}
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-dashed" onClick={() => onSelect(aceFormTemplates[0])}>
-          <CardHeader>
-            <CardTitle>Blank Form</CardTitle>
-            <CardDescription>Start from scratch and build your own</CardDescription>
+        <Card 
+          className="hover:shadow-md transition-all cursor-pointer border-dashed hover:border-primary" 
+          onClick={() => onSelect(templates[0])}
+        >
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Start Blank</CardTitle>
+            <CardDescription className="text-sm">Build from scratch with full control</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full" variant="outline">Start Blank</Button>
+            <Button size="sm" className="w-full" variant="outline">Start Blank</Button>
           </CardContent>
         </Card>
       </div>

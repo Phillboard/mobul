@@ -121,18 +121,27 @@ export default function AceFormPublic() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-card rounded-lg shadow-lg p-8">
-          {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-foreground">
-              {form.form_config.settings?.title || form.name}
-            </h1>
-            {form.form_config.settings?.description && (
-              <p className="text-muted-foreground mt-2">{form.form_config.settings.description}</p>
-            )}
-          </div>
+    <div className="min-h-screen bg-background">
+      {/* Simple Header with Back Link */}
+      <header className="border-b bg-card py-4 px-6 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <span className="font-semibold text-foreground">Secure Form</span>
+        </div>
+      </header>
+
+      {/* Form Content */}
+      <div className="py-8 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-card rounded-lg shadow-lg p-8">
+            {/* Header */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-foreground">
+                {form.form_config.settings?.title || form.name}
+              </h1>
+              {form.form_config.settings?.description && (
+                <p className="text-muted-foreground mt-2">{form.form_config.settings.description}</p>
+              )}
+            </div>
 
           {/* Rate Limit Warning */}
           {rateLimitError && (
@@ -210,15 +219,16 @@ export default function AceFormPublic() {
               );
             })}
 
-            <Button
-              type="submit"
-              className="w-full"
-              style={{ backgroundColor: primaryColor }}
-              disabled={submitting || !!rateLimitError}
-            >
-              {submitting ? "Submitting..." : (form.form_config.settings?.submitButtonText || "Submit")}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                className="w-full"
+                style={{ backgroundColor: primaryColor }}
+                disabled={submitting || !!rateLimitError}
+              >
+                {submitting ? "Submitting..." : (form.form_config.settings?.submitButtonText || "Submit")}
+              </Button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
