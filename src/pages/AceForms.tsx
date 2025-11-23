@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAceForms } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
 import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
+import { AceFormsLayout } from "@/components/ace-forms/AceFormsLayout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,16 +38,19 @@ export default function AceForms() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <AceFormsLayout>
+        <div className="container mx-auto py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
         </div>
-      </div>
+      </AceFormsLayout>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <AceFormsLayout>
+      <div className="container mx-auto py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -203,6 +207,7 @@ export default function AceForms() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </AceFormsLayout>
   );
 }
