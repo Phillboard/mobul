@@ -20,8 +20,9 @@ export function createFieldSchema(field: FormField): z.ZodTypeAny {
       break;
     case 'gift-card-code':
       schema = z.string()
-        .length(12, { message: "Code must be exactly 12 characters" })
-        .regex(/^[A-Z0-9]+$/, { message: "Code must contain only uppercase letters and numbers" });
+        .min(4, { message: "Code must be at least 4 characters" })
+        .max(20, { message: "Code must be no more than 20 characters" })
+        .regex(/^[A-Za-z0-9]+$/i, { message: "Code must contain only letters and numbers" });
       break;
     case 'date':
       schema = z.string().datetime();
@@ -75,7 +76,7 @@ export function createFormSchema(fields: FormField[]): z.ZodObject<any> {
 }
 
 export function validateGiftCardCode(code: string): boolean {
-  return /^[A-Z0-9]{12}$/.test(code);
+  return /^[A-Za-z0-9]{4,20}$/i.test(code);
 }
 
 export function formatPhone(value: string): string {
