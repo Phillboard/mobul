@@ -29,20 +29,26 @@ export function OnboardingChecklist() {
     setLoading(true);
     
     try {
-      const { data: profile } = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
-      const { data: client } = await supabase.from("clients").select("id").limit(1).maybeSingle();
-      const { count: templates } = await supabase.from("templates").select("*", { count: "exact", head: true });
-      const { count: audiences } = await supabase.from("audiences").select("*", { count: "exact", head: true });
-      const { count: campaigns } = await supabase.from("campaigns").select("*", { count: "exact", head: true });
-      const { count: pages } = await supabase.from("landing_pages").select("*", { count: "exact", head: true });
+      // @ts-ignore - Supabase type inference causing deep instantiation error
+      const profile = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+      // @ts-ignore
+      const client = await supabase.from("clients").select("id").limit(1).maybeSingle();
+      // @ts-ignore
+      const templates = await supabase.from("templates").select("*", { count: "exact", head: true });
+      // @ts-ignore
+      const audiences = await supabase.from("audiences").select("*", { count: "exact", head: true });
+      // @ts-ignore
+      const campaigns = await supabase.from("campaigns").select("*", { count: "exact", head: true });
+      // @ts-ignore
+      const pages = await supabase.from("landing_pages").select("*", { count: "exact", head: true });
 
       const updated = [...items];
-      updated[0].completed = !!profile?.full_name;
-      updated[1].completed = !!client;
-      updated[2].completed = (templates || 0) > 0;
-      updated[3].completed = (audiences || 0) > 0;
-      updated[4].completed = (campaigns || 0) > 0;
-      updated[5].completed = (pages || 0) > 0;
+      updated[0].completed = !!profile?.data?.full_name;
+      updated[1].completed = !!client?.data;
+      updated[2].completed = (templates?.count || 0) > 0;
+      updated[3].completed = (audiences?.count || 0) > 0;
+      updated[4].completed = (campaigns?.count || 0) > 0;
+      updated[5].completed = (pages?.count || 0) > 0;
 
       setItems(updated);
       const completedCount = updated.filter(i => i.completed).length;
