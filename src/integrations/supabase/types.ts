@@ -14,6 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
+      ace_form_submissions: {
+        Row: {
+          form_id: string
+          gift_card_id: string | null
+          id: string
+          ip_address: string | null
+          recipient_id: string | null
+          redemption_token: string | null
+          submission_data: Json
+          submitted_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          form_id: string
+          gift_card_id?: string | null
+          id?: string
+          ip_address?: string | null
+          recipient_id?: string | null
+          redemption_token?: string | null
+          submission_data?: Json
+          submitted_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          form_id?: string
+          gift_card_id?: string | null
+          id?: string
+          ip_address?: string | null
+          recipient_id?: string | null
+          redemption_token?: string | null
+          submission_data?: Json
+          submitted_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ace_form_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "ace_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ace_form_submissions_gift_card_id_fkey"
+            columns: ["gift_card_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ace_form_submissions_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ace_forms: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          form_config: Json
+          id: string
+          is_active: boolean | null
+          name: string
+          template_id: string | null
+          total_submissions: number | null
+          total_views: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          form_config?: Json
+          id?: string
+          is_active?: boolean | null
+          name: string
+          template_id?: string | null
+          total_submissions?: number | null
+          total_views?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          form_config?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          template_id?: string | null
+          total_submissions?: number | null
+          total_views?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ace_forms_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_card_sales: {
         Row: {
           buyer_client_id: string | null
@@ -1427,6 +1538,7 @@ export type Database = {
           balance_check_enabled: boolean | null
           balance_check_url: string | null
           brand_code: string
+          brand_color: string | null
           brand_name: string
           category: string | null
           created_at: string | null
@@ -1434,12 +1546,16 @@ export type Database = {
           is_active: boolean | null
           logo_url: string | null
           provider: string
+          redemption_instructions: string | null
+          store_url: string | null
           typical_denominations: Json | null
+          usage_restrictions: Json | null
         }
         Insert: {
           balance_check_enabled?: boolean | null
           balance_check_url?: string | null
           brand_code: string
+          brand_color?: string | null
           brand_name: string
           category?: string | null
           created_at?: string | null
@@ -1447,12 +1563,16 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           provider?: string
+          redemption_instructions?: string | null
+          store_url?: string | null
           typical_denominations?: Json | null
+          usage_restrictions?: Json | null
         }
         Update: {
           balance_check_enabled?: boolean | null
           balance_check_url?: string | null
           brand_code?: string
+          brand_color?: string | null
           brand_name?: string
           category?: string | null
           created_at?: string | null
@@ -1460,7 +1580,10 @@ export type Database = {
           is_active?: boolean | null
           logo_url?: string | null
           provider?: string
+          redemption_instructions?: string | null
+          store_url?: string | null
           typical_denominations?: Json | null
+          usage_restrictions?: Json | null
         }
         Relationships: []
       }
