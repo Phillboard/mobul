@@ -118,9 +118,9 @@ const App = () => (
               <Route path="/forms/:formId" element={<AceFormPublic />} />
               <Route path="/analytics" element={<ProtectedRoute requiredPermission="analytics.view"><Analytics /></ProtectedRoute>} />
               <Route path="/analytics/:campaignId" element={<ProtectedRoute requiredPermission="analytics.view"><CampaignAnalytics /></ProtectedRoute>} />
-              <Route path="/performance-monitoring" element={<ProtectedRoute requiredPermission="analytics.view"><PerformanceMonitoring /></ProtectedRoute>} />
-              <Route path="/error-tracking" element={<ProtectedRoute requiredPermission="analytics.view"><ErrorTracking /></ProtectedRoute>} />
-              <Route path="/system-alerts" element={<ProtectedRoute requiredPermission="analytics.view"><SystemAlerts /></ProtectedRoute>} />
+              <Route path="/performance" element={<ProtectedRoute requiredPermission="analytics.view"><PerformanceMonitoring /></ProtectedRoute>} />
+              <Route path="/errors" element={<ProtectedRoute requiredPermission="analytics.view"><ErrorTracking /></ProtectedRoute>} />
+              <Route path="/alerts" element={<ProtectedRoute requiredPermission="analytics.view"><SystemAlerts /></ProtectedRoute>} />
               <Route path="/campaign-prototype/:id" element={<ProtectedRoute><CampaignPrototype /></ProtectedRoute>} />
               <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
               <Route path="/purchase-gift-cards" element={<ProtectedRoute requiredPermission="gift_cards.purchase"><PurchaseGiftCards /></ProtectedRoute>} />
