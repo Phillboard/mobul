@@ -13,7 +13,7 @@ import { GiftCardReveal } from "@/components/ace-forms/GiftCardReveal";
 import { GiftCardRedemption } from "@/types/aceForms";
 import { useFormSubmissionRateLimit } from "@/hooks/useFormSubmissionRateLimit";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Shield } from "lucide-react";
 import DOMPurify from "dompurify";
 
 const MAX_SUBMISSIONS_PER_HOUR = 5;
@@ -28,10 +28,12 @@ export default function AceFormPublic() {
   const { data: form, isLoading } = useAceForm(formId || "");
   const [submitting, setSubmitting] = useState(false);
   const [redemption, setRedemption] = useState<GiftCardRedemption | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
   const { checkRateLimit, recordSubmission } = useFormSubmissionRateLimit();
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
 
   const primaryColor = searchParams.get("primaryColor") || form?.form_config.settings?.primaryColor || "#6366f1";
+  const embedMode = searchParams.get("embed") === "true";
 
   const schema = form ? createFormSchema(form.form_config.fields) : null;
   const {
@@ -87,6 +89,7 @@ export default function AceFormPublic() {
         if (result.success && result.giftCard) {
           recordSubmission();
           setRedemption(result.giftCard);
+          setTimeout(() => setIsFlipped(true), 100);
         } else {
           throw new Error(result.error || 'Redemption failed');
         }
@@ -101,6 +104,7 @@ export default function AceFormPublic() {
         if (result.success && result.giftCard) {
           recordSubmission();
           setRedemption(result.giftCard);
+          setTimeout(() => setIsFlipped(true), 100);
         } else {
           throw new Error(result.error || 'Submission failed');
         }
@@ -140,32 +144,55 @@ export default function AceFormPublic() {
     );
   }
 
-  if (redemption) {
-    return <GiftCardReveal redemption={redemption} />;
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Simple Header with Back Link */}
-      <header className="border-b bg-card py-4 px-6 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <span className="font-semibold text-foreground">Secure Form</span>
-        </div>
-      </header>
-
-      {/* Form Content */}
-      <div className="py-8 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-card rounded-lg shadow-lg p-8">
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-foreground">
-                {form.form_config.settings?.title || form.name}
-              </h1>
-              {form.form_config.settings?.description && (
-                <p className="text-muted-foreground mt-2">{form.form_config.settings.description}</p>
-              )}
-            </div>
+    <div 
+      className={`min-h-screen flex items-center justify-center ${
+        embedMode ? 'bg-transparent p-4' : 'bg-gradient-to-br from-purple-50 via-white to-blue-50 p-6'
+      }`}
+      style={{ perspective: '1000px' }}
+    >
+      <div
+        className="w-full max-w-md transition-transform duration-700"
+        style={{ 
+          transformStyle: 'preserve-3d',
+          transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+        }}
+      >
+        {/* Front: Form */}
+        <div 
+          className="w-full"
+          style={{ backfaceVisibility: 'hidden' }}
+        >
+          <div className={`bg-card rounded-lg shadow-lg ${embedMode ? 'p-6' : 'p-8'}`}>
+            {!embedMode && (
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
+                  Secure Form
+                </h1>
+              </div>
+            )}
+            {embedMode && (
+              <div className="mb-4 text-center">
+                <h2 className="text-xl font-bold text-foreground">
+                  {form.form_config.settings?.title || "Enter Your Gift Card Code"}
+                </h2>
+                {form.form_config.settings?.description && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {form.form_config.settings.description}
+                  </p>
+                )}
+              </div>
+            )}
+            {!embedMode && (
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-foreground">
+                  {form.form_config.settings?.title || form.name}
+                </h1>
+                {form.form_config.settings?.description && (
+                  <p className="text-muted-foreground mt-2">{form.form_config.settings.description}</p>
+                )}
+              </div>
+            )}
 
           {/* Rate Limit Warning */}
           {rateLimitError && (
@@ -243,16 +270,34 @@ export default function AceFormPublic() {
               );
             })}
 
-              <Button
-                type="submit"
-                className="w-full"
-                style={{ backgroundColor: primaryColor }}
-                disabled={submitting || !!rateLimitError}
-              >
-                {submitting ? "Submitting..." : (form.form_config.settings?.submitButtonText || "Submit")}
-              </Button>
-            </form>
+            <Button
+              type="submit"
+              className="w-full"
+              style={{ backgroundColor: primaryColor }}
+              disabled={submitting || !!rateLimitError}
+            >
+              {submitting ? "Submitting..." : (form.form_config.settings?.submitButtonText || "Submit")}
+            </Button>
+          </form>
           </div>
+        </div>
+
+        {/* Back: Gift Card (rendered but hidden when not flipped) */}
+        <div
+          className="absolute inset-0 w-full"
+          style={{ 
+            transform: 'rotateY(180deg)',
+            backfaceVisibility: 'hidden',
+            pointerEvents: isFlipped ? 'auto' : 'none'
+          }}
+        >
+          {redemption && (
+            <GiftCardReveal 
+              redemption={redemption} 
+              embedMode={embedMode}
+              skipReveal={true}
+            />
+          )}
         </div>
       </div>
     </div>

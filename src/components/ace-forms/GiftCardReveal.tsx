@@ -10,12 +10,21 @@ import { useToast } from "@/hooks/use-toast";
 
 interface GiftCardRevealProps {
   redemption: GiftCardRedemption;
+  embedMode?: boolean;
+  skipReveal?: boolean;
 }
 
-export function GiftCardReveal({ redemption }: GiftCardRevealProps) {
-  const [revealed, setRevealed] = useState(false);
+export function GiftCardReveal({ redemption, embedMode = false, skipReveal = false }: GiftCardRevealProps) {
+  const [revealed, setRevealed] = useState(skipReveal);
   const [showConfetti, setShowConfetti] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (skipReveal) {
+      setRevealed(true);
+      setShowConfetti(true);
+    }
+  }, [skipReveal]);
 
   useEffect(() => {
     if (revealed) {
@@ -84,16 +93,16 @@ ${redemption.redemption_instructions || ''}
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4 overflow-hidden">
+    <div className={`${embedMode ? 'bg-transparent' : 'min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50'} flex items-center justify-center p-4 overflow-hidden`}>
       <AnimatePresence>
         {showConfetti && <FireworksAnimation />}
       </AnimatePresence>
       
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-2xl w-full"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className={embedMode ? 'w-full' : 'max-w-2xl w-full'}
       >
         {!revealed ? (
           <motion.div
@@ -161,61 +170,53 @@ ${redemption.redemption_instructions || ''}
             className="space-y-6"
           >
             <motion.div
-              initial={{ y: -50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 100 }}
+              className="flex items-center justify-center"
             >
-              <GiftCardDisplay redemption={redemption} />
+              <GiftCardDisplay redemption={redemption} embedMode={embedMode} />
             </motion.div>
 
-            {/* Action Buttons */}
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="flex flex-wrap gap-3 justify-center"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleShare}
-                className="gap-2"
+            {/* Action Buttons - Smaller in embed mode */}
+            {!embedMode && (
+              <motion.div
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="flex flex-wrap gap-2 justify-center"
               >
-                <Share2 className="w-4 h-4" />
-                Share
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleAddToWallet}
-                className="gap-2"
-              >
-                <Smartphone className="w-4 h-4" />
-                Add to Wallet
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleDownload}
-                className="gap-2"
-              >
-                <Download className="w-4 h-4" />
-                Download
-              </Button>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              <GiftCardInstructions 
-                instructions={redemption.redemption_instructions}
-                restrictions={redemption.usage_restrictions}
-              />
-            </motion.div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShare}
+                  className="gap-2"
+                >
+                  <Share2 className="w-3 h-3" />
+                  Share
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddToWallet}
+                  className="gap-2"
+                >
+                  <Smartphone className="w-3 h-3" />
+                  Wallet
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownload}
+                  className="gap-2"
+                >
+                  <Download className="w-3 h-3" />
+                  Download
+                </Button>
+              </motion.div>
+            )}
           </motion.div>
         )}
       </motion.div>
