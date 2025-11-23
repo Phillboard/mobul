@@ -8,6 +8,7 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DrPhillipChat } from "@/components/DrPhillipChat";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Campaigns from "./pages/Campaigns";
@@ -79,17 +80,18 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <TooltipProvider>
-          <AuthProvider>
-            <TenantProvider>
-              <ImpersonationBanner />
-              <Toaster />
-              <Sonner />
-              <DrPhillipChat />
-              <Routes>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <AuthProvider>
+              <TenantProvider>
+                <ImpersonationBanner />
+                <Toaster />
+                <Sonner />
+                <DrPhillipChat />
+                <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/accept-invite" element={<AcceptInvite />} />
               <Route path="/c/:campaignId/:token" element={<PURLLandingPage />} />
@@ -154,6 +156,7 @@ const App = () => (
       </ThemeProvider>
     </BrowserRouter>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
