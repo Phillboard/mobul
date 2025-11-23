@@ -141,8 +141,13 @@ export function Sidebar() {
   }, [user, hasAnyPermission, currentOrg, roles, menuCounts]);
 
   useEffect(() => {
-    setOpenGroups(new Set(["Dashboard", "Marketing"]));
-  }, []);
+    const activeGroup = visibleGroups.find(g => 
+      g.items.some(i => location.pathname === i.href || location.pathname.startsWith(i.href + '/'))
+    );
+    const defaultOpen = new Set(["Dashboard", "Marketing", "Rewards"]);
+    if (activeGroup?.label) defaultOpen.add(activeGroup.label);
+    setOpenGroups(defaultOpen);
+  }, [location.pathname, visibleGroups]);
 
   const allSearchableItems = useMemo(() => visibleGroups.flatMap(g => g.items.map(i => ({...i, groupLabel: g.label}))), [visibleGroups]);
   const searchResults = useMenuSearch(allSearchableItems, searchQuery);
