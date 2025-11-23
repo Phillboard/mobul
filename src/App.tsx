@@ -66,6 +66,11 @@ import PerformanceMonitoring from "./pages/PerformanceMonitoring";
 import ErrorTracking from "./pages/ErrorTracking";
 import SystemAlerts from "./pages/SystemAlerts";
 import Help from "./pages/Help";
+import BetaTesting from "./pages/BetaTesting";
+import LaunchChecklist from "./pages/LaunchChecklist";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import { CookieConsent } from "./components/CookieConsent";
 
 // Optimized React Query configuration for better performance
 const queryClient = new QueryClient({
@@ -95,6 +100,7 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <DrPhillipChat />
+                <CookieConsent />
                 <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/accept-invite" element={<AcceptInvite />} />
@@ -153,6 +159,10 @@ const App = () => (
               <Route path="/zapier-templates" element={<ProtectedRoute><ZapierTemplates /></ProtectedRoute>} />
               <Route path="/generate-favicon" element={<ProtectedRoute><GenerateFavicon /></ProtectedRoute>} />
               <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
+              <Route path="/beta-testing" element={<ProtectedRoute><BetaTesting /></ProtectedRoute>} />
+              <Route path="/launch-checklist" element={<ProtectedRoute requiredRole="admin"><LaunchChecklist /></ProtectedRoute>} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="/users" element={<ProtectedRoute requiredPermission="users.view"><UserManagement /></ProtectedRoute>} />
               <Route path="/agent/call/:sessionId" element={<ProtectedRoute><AgentCallDashboard /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
