@@ -11,6 +11,12 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { GiftCardReveal } from "@/components/ace-forms/GiftCardReveal";
 import { GiftCardRedemption } from "@/types/aceForms";
+import { useFormSubmissionRateLimit } from "@/hooks/useFormSubmissionRateLimit";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import DOMPurify from "dompurify";
+
+const MAX_SUBMISSIONS_PER_HOUR = 5;
 
 /**
  * Public form page - No authentication required
@@ -22,6 +28,8 @@ export default function AceFormPublic() {
   const { data: form, isLoading } = useAceForm(formId || "");
   const [submitting, setSubmitting] = useState(false);
   const [redemption, setRedemption] = useState<GiftCardRedemption | null>(null);
+  const { checkRateLimit, recordSubmission } = useFormSubmissionRateLimit();
+  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
 
   const primaryColor = searchParams.get("primaryColor") || form?.form_config.settings?.primaryColor || "#6366f1";
 
@@ -37,20 +45,53 @@ export default function AceFormPublic() {
   const onSubmit = async (data: any) => {
     if (!formId) return;
 
+    // Check rate limit
+    const rateCheck = checkRateLimit();
+    if (!rateCheck.allowed) {
+      const resetTime = rateCheck.resetTime?.toLocaleTimeString() || "soon";
+      setRateLimitError(
+        `You've reached the submission limit (${MAX_SUBMISSIONS_PER_HOUR} per hour). Please try again after ${resetTime}.`
+      );
+      return;
+    }
+
     setSubmitting(true);
+    setRateLimitError(null);
+
     try {
+      // Sanitize all string inputs to prevent XSS
+      const sanitizedData = Object.entries(data).reduce((acc, [key, value]) => {
+        if (typeof value === 'string') {
+          acc[key] = DOMPurify.sanitize(value, { ALLOWED_TAGS: [] });
+        } else {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as any);
+
       const { data: result, error } = await supabase.functions.invoke("submit-ace-form", {
-        body: { formId, data },
+        body: { formId, data: sanitizedData },
       });
 
       if (error) throw error;
 
       if (result.success && result.giftCard) {
+        recordSubmission();
         setRedemption(result.giftCard);
+      } else {
+        throw new Error(result.error || 'Submission failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Submission error:", error);
-      alert("Failed to submit form. Please try again.");
+      
+      let errorMessage = "Failed to submit form. Please try again.";
+      if (error.message?.includes("already claimed")) {
+        errorMessage = "This gift card code has already been claimed.";
+      } else if (error.message?.includes("Invalid")) {
+        errorMessage = "Invalid gift card code. Please check and try again.";
+      }
+      
+      setRateLimitError(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -93,61 +134,87 @@ export default function AceFormPublic() {
             )}
           </div>
 
+          {/* Rate Limit Warning */}
+          {rateLimitError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{rateLimitError}</AlertDescription>
+            </Alert>
+          )}
+
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {form.form_config.fields.map((field) => (
-              <div key={field.id}>
-                <Label htmlFor={field.id}>
-                  {field.label}
-                  {field.required && <span className="text-destructive ml-1">*</span>}
-                </Label>
-                {field.helpText && (
-                  <p className="text-sm text-muted-foreground mt-1">{field.helpText}</p>
-                )}
+            {form.form_config.fields.map((field) => {
+              // Check conditional logic
+              if (field.conditional) {
+                const dependentField = form.form_config.fields.find(
+                  (f) => f.id === field.conditional?.showIf.fieldId
+                );
+                // For now, show all fields (conditional logic evaluation would need form state)
+              }
 
-                {field.type === "textarea" ? (
-                  <Textarea
-                    id={field.id}
-                    {...register(field.id)}
-                    placeholder={field.placeholder}
-                    className="mt-2"
-                  />
-                ) : field.type === "select" ? (
-                  <select
-                    id={field.id}
-                    {...register(field.id)}
-                    className="w-full mt-2 px-3 py-2 border rounded-md"
-                  >
-                    <option value="">Select...</option>
-                    {field.options?.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <Input
-                    id={field.id}
-                    type={field.type === "gift-card-code" ? "text" : field.type}
-                    {...register(field.id)}
-                    placeholder={field.placeholder}
-                    className="mt-2"
-                  />
-                )}
+              return (
+                <div key={field.id}>
+                  <Label htmlFor={field.id}>
+                    {field.label}
+                    {field.required && <span className="text-destructive ml-1">*</span>}
+                  </Label>
+                  {field.helpText && (
+                    <p className="text-sm text-muted-foreground mt-1">{field.helpText}</p>
+                  )}
 
-                {errors[field.id] && (
-                  <p className="text-sm text-destructive mt-1">
-                    {errors[field.id]?.message as string}
-                  </p>
-                )}
-              </div>
-            ))}
+                  {field.type === "textarea" ? (
+                    <Textarea
+                      id={field.id}
+                      {...register(field.id)}
+                      placeholder={field.placeholder}
+                      className="mt-2"
+                      maxLength={1000}
+                    />
+                  ) : field.type === "select" ? (
+                    <select
+                      id={field.id}
+                      {...register(field.id)}
+                      className="w-full mt-2 px-3 py-2 border rounded-md"
+                    >
+                      <option value="">Select...</option>
+                      {field.options?.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      id={field.id}
+                      type={field.type === "gift-card-code" ? "text" : field.type}
+                      {...register(field.id)}
+                      placeholder={field.placeholder}
+                      className="mt-2"
+                      maxLength={field.type === "email" ? 255 : 200}
+                      autoComplete={
+                        field.type === "email" ? "email" :
+                        field.type === "phone" ? "tel" :
+                        field.type === "text" && field.label.toLowerCase().includes("name") ? "name" :
+                        "off"
+                      }
+                    />
+                  )}
+
+                  {errors[field.id] && (
+                    <p className="text-sm text-destructive mt-1">
+                      {errors[field.id]?.message as string}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
 
             <Button
               type="submit"
               className="w-full"
               style={{ backgroundColor: primaryColor }}
-              disabled={submitting}
+              disabled={submitting || !!rateLimitError}
             >
               {submitting ? "Submitting..." : (form.form_config.settings?.submitButtonText || "Submit")}
             </Button>

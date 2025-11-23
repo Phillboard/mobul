@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Copy, ExternalLink, Trash2, Edit, Eye } from "lucide-react";
+import { Plus, Copy, ExternalLink, Trash2, Edit, Eye, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAceForms } from "@/hooks/useAceForms";
@@ -123,7 +123,16 @@ export default function AceForms() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => navigate(`/ace-forms/${form.id}/analytics`)}
+                      title="Analytics"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => navigate(`/forms/${form.id}`)}
+                      title="Preview"
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
@@ -131,6 +140,7 @@ export default function AceForms() {
                       variant="outline"
                       size="sm"
                       onClick={() => duplicateForm.mutate(form.id)}
+                      title="Duplicate"
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
@@ -138,6 +148,7 @@ export default function AceForms() {
                       variant="outline"
                       size="sm"
                       onClick={() => setDeleteId(form.id)}
+                      title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

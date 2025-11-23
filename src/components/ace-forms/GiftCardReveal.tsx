@@ -1,105 +1,224 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GiftCardRedemption } from "@/types/aceForms";
 import { GiftCardDisplay } from "./GiftCardDisplay";
+import { GiftCardInstructions } from "./GiftCardInstructions";
 import { FireworksAnimation } from "./FireworksAnimation";
+import { GiftCardRedemption } from "@/types/aceForms";
+import { Share2, Download, Smartphone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface GiftCardRevealProps {
   redemption: GiftCardRedemption;
 }
 
 export function GiftCardReveal({ redemption }: GiftCardRevealProps) {
-  const [stage, setStage] = useState<"validating" | "fireworks" | "flipping" | "revealed">("validating");
+  const [revealed, setRevealed] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const timer1 = setTimeout(() => setStage("fireworks"), 1000);
-    const timer2 = setTimeout(() => setStage("flipping"), 2500);
-    const timer3 = setTimeout(() => setStage("revealed"), 3500);
+    if (revealed) {
+      setShowConfetti(true);
+      // Play a subtle sound effect (optional)
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGmi77eefTRAMUKjj8LZjHAU5ktfyzH');
+        audio.volume = 0.3;
+        audio.play().catch(() => {});
+      } catch (e) {
+        // Ignore audio errors
+      }
+    }
+  }, [revealed]);
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
-  }, []);
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${redemption.brand_name} Gift Card`,
+          text: `I just received a $${redemption.card_value} ${redemption.brand_name} gift card!`,
+        });
+      } catch (err) {
+        // User cancelled
+      }
+    } else {
+      toast({
+        title: "Share",
+        description: "Sharing is not supported on this device",
+      });
+    }
+  };
+
+  const handleAddToWallet = () => {
+    toast({
+      title: "Add to Wallet",
+      description: "Wallet integration coming soon!",
+    });
+  };
+
+  const handleDownload = () => {
+    // Generate a simple text file with the gift card details
+    const content = `
+${redemption.brand_name} Gift Card
+Value: $${redemption.card_value}
+Code: ${redemption.card_code}
+${redemption.card_number ? `Number: ${redemption.card_number}` : ''}
+
+${redemption.redemption_instructions || ''}
+    `.trim();
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gift-card-${redemption.card_code}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Downloaded",
+      description: "Gift card details saved to your device",
+    });
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      <AnimatePresence mode="wait">
-        {stage === "validating" && (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4 overflow-hidden">
+      <AnimatePresence>
+        {showConfetti && <FireworksAnimation />}
+      </AnimatePresence>
+      
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-2xl w-full"
+      >
+        {!revealed ? (
           <motion.div
-            key="validating"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center"
-          >
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
-            <p className="text-lg font-medium">Validating code...</p>
-          </motion.div>
-        )}
-
-        {stage === "fireworks" && (
-          <motion.div
-            key="fireworks"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center"
-          >
-            <FireworksAnimation />
-            <motion.p
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.5, type: "spring" }}
-              className="text-2xl font-bold text-primary"
-            >
-              Success! 🎉
-            </motion.p>
-          </motion.div>
-        )}
-
-        {stage === "flipping" && (
-          <motion.div
-            key="flipping"
-            className="perspective-1000"
-            style={{ perspective: "1000px" }}
+            className="text-center space-y-8"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5 }}
           >
             <motion.div
-              animate={{ rotateY: 180 }}
-              transition={{ duration: 1, ease: "easeInOut" }}
-              style={{ transformStyle: "preserve-3d" }}
-              className="w-80 h-48 relative"
+              animate={{
+                scale: [1, 1.05, 1],
+                rotate: [0, 2, -2, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+              }}
+              className="text-8xl filter drop-shadow-2xl"
             >
-              {/* Front of card */}
-              <div
-                className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/40 rounded-xl flex items-center justify-center"
-                style={{ backfaceVisibility: "hidden" }}
+              🎁
+            </motion.div>
+            
+            <motion.h1 
+              className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              You've Got a Gift!
+            </motion.h1>
+            
+            <motion.p 
+              className="text-xl text-gray-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              Click the gift to reveal your reward
+            </motion.p>
+            
+            <motion.button
+              onClick={() => setRevealed(true)}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-12 py-5 rounded-full text-xl font-semibold shadow-2xl hover:shadow-3xl transition-all relative overflow-hidden group"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <span className="relative z-10">Reveal My Gift Card</span>
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600"
+                initial={{ x: '-100%' }}
+                whileHover={{ x: 0 }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.button>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-6"
+          >
+            <motion.div
+              initial={{ y: -50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+            >
+              <GiftCardDisplay redemption={redemption} />
+            </motion.div>
+
+            {/* Action Buttons */}
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="flex flex-wrap gap-3 justify-center"
+            >
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleShare}
+                className="gap-2"
               >
-                <div className="text-4xl">🎁</div>
-              </div>
-              {/* Back of card - revealed */}
-              <div
-                className="absolute inset-0"
-                style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                <Share2 className="w-4 h-4" />
+                Share
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleAddToWallet}
+                className="gap-2"
               >
-                <GiftCardDisplay redemption={redemption} />
-              </div>
+                <Smartphone className="w-4 h-4" />
+                Add to Wallet
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleDownload}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              <GiftCardInstructions 
+                instructions={redemption.redemption_instructions}
+                restrictions={redemption.usage_restrictions}
+              />
             </motion.div>
           </motion.div>
         )}
-
-        {stage === "revealed" && (
-          <motion.div
-            key="revealed"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring" }}
-          >
-            <GiftCardDisplay redemption={redemption} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

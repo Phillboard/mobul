@@ -190,6 +190,22 @@ serve(async (req) => {
       stat_name: 'submissions'
     });
 
+    // Send notifications (async, don't block response)
+    supabase.functions.invoke('send-form-notification', {
+      body: {
+        type: 'user_confirmation',
+        formId,
+        submissionData: data,
+        userEmail: email,
+        giftCardDetails: {
+          card_code: giftCard.card_code,
+          card_value: giftCard.gift_card_pools.card_value,
+          brand_name: brand?.brand_name || giftCard.gift_card_pools.provider,
+          redemption_instructions: brand?.redemption_instructions,
+        },
+      },
+    }).catch(err => console.error('Failed to send notification:', err));
+
     console.log('Form submission completed successfully');
 
     return new Response(
