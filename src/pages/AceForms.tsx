@@ -86,7 +86,12 @@ export default function AceForms() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle>{form.name}</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      {form.name}
+                      {form.is_draft && (
+                        <Badge variant="outline" className="text-xs">Draft</Badge>
+                      )}
+                    </CardTitle>
                     <CardDescription className="mt-1">
                       {form.description || "No description"}
                     </CardDescription>

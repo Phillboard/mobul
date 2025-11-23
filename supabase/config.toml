@@ -1,5 +1,11 @@
 project_id = "arzthloosvnasokxygfo"
 
+[functions.submit-ace-form]
+verify_jwt = false
+
+[functions.generate-ace-form-ai]
+verify_jwt = true
+
 [functions.handle-purl]
 verify_jwt = false
 

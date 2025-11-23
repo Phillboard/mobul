@@ -10,7 +10,8 @@ export function generateHTMLExport(
   options: ExportOptions
 ): string {
   const { primaryColor = '#6366f1', customDomain } = options;
-  const apiUrl = customDomain || import.meta.env.VITE_SUPABASE_URL;
+  // Use actual project URL for exports (not env vars which won't work in exported HTML)
+  const apiUrl = customDomain || 'https://arzthloosvnasokxygfo.supabase.co';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -111,7 +112,7 @@ export function generateJavaScriptEmbed(
   options: ExportOptions
 ): string {
   const { primaryColor = '#6366f1', customDomain } = options;
-  const baseUrl = customDomain || window.location.origin;
+  const baseUrl = customDomain || 'https://arzthloosvnasokxygfo.supabase.co';
 
   return `<div id="ace-form-${formId}"></div>
 <script>
@@ -131,7 +132,7 @@ export function generateIframeEmbed(
   options: ExportOptions
 ): string {
   const { primaryColor = '#6366f1', customDomain } = options;
-  const baseUrl = customDomain || window.location.origin;
+  const baseUrl = customDomain || 'https://arzthloosvnasokxygfo.supabase.co';
 
   return `<iframe 
   src="${baseUrl}/forms/${formId}?primaryColor=${encodeURIComponent(primaryColor)}" 
