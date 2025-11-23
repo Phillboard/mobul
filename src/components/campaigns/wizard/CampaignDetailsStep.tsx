@@ -110,6 +110,21 @@ export function CampaignDetailsStep({
     },
   });
 
+  // Fetch gift card pools for inventory display
+  const { data: giftCardPools } = useQuery({
+    queryKey: ["gift-card-pools", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gift_card_pools")
+        .select("id, pool_name, available_cards, total_cards")
+        .eq("client_id", clientId)
+        .order("pool_name");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const selectedTemplate = templates?.find(
     (t) => t.id === form.watch("template_id")
   );
@@ -232,6 +247,25 @@ export function CampaignDetailsStep({
                   ))}
                 </SelectContent>
               </Select>
+              {field.value && giftCardPools && giftCardPools.length > 0 && (
+                <FormDescription className="mt-2">
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-semibold">Gift Card Inventory:</span>
+                    <div className="mt-1 space-y-1">
+                      {giftCardPools.map(pool => {
+                        const audienceCount = audiences?.find(a => a.id === field.value)?.valid_count || 0;
+                        const isLow = pool.available_cards < audienceCount;
+                        return (
+                          <div key={pool.id} className={`flex items-center gap-2 ${isLow ? 'text-amber-600' : ''}`}>
+                            {isLow && '⚠️'} {pool.pool_name}: {pool.available_cards} available
+                            {isLow && ` (Need ${audienceCount}, short by ${audienceCount - pool.available_cards})`}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </FormDescription>
+              )}
               <FormMessage />
             </FormItem>
           )}
