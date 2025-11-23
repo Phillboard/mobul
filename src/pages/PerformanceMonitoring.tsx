@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -5,19 +6,43 @@ import { supabase } from "@/integrations/supabase/client";
 import { Activity, Clock, Database, TrendingDown, TrendingUp, Zap } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { format, subHours } from "date-fns";
+import { ExportButton } from "@/components/monitoring/ExportButton";
+import { FilterPanel } from "@/components/monitoring/FilterPanel";
 
 export default function PerformanceMonitoring() {
-  // Fetch performance metrics for last 24 hours
+  const [filters, setFilters] = useState({
+    timeRange: "24h",
+    metricType: "all",
+  });
+
+  const getTimeAgo = (range: string) => {
+    switch (range) {
+      case "1h": return subHours(new Date(), 1);
+      case "6h": return subHours(new Date(), 6);
+      case "24h": return subHours(new Date(), 24);
+      case "7d": return subHours(new Date(), 168);
+      case "30d": return subHours(new Date(), 720);
+      default: return subHours(new Date(), 24);
+    }
+  };
+
+  // Fetch performance metrics
   const { data: metrics, isLoading } = useQuery({
-    queryKey: ['performance-metrics'],
+    queryKey: ['performance-metrics', filters],
     queryFn: async () => {
-      const twentyFourHoursAgo = subHours(new Date(), 24);
+      const timeAgo = getTimeAgo(filters.timeRange);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('performance_metrics')
         .select('*')
-        .gte('recorded_at', twentyFourHoursAgo.toISOString())
+        .gte('recorded_at', timeAgo.toISOString())
         .order('recorded_at', { ascending: true });
+
+      if (filters.metricType !== "all") {
+        query = query.eq('metric_type', filters.metricType);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
@@ -84,17 +109,43 @@ export default function PerformanceMonitoring() {
     ? Math.round(metrics.reduce((sum, m) => sum + m.duration_ms, 0) / metrics.length)
     : 0;
 
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ timeRange: "24h", metricType: "all" });
+  };
+
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Performance Monitoring
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Real-time performance metrics and system health monitoring
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Performance Monitoring
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Real-time performance metrics and system health monitoring
+            </p>
+          </div>
+          {metrics && metrics.length > 0 && (
+            <ExportButton 
+              data={metrics} 
+              filename={`performance-metrics-${format(new Date(), 'yyyy-MM-dd')}`}
+            />
+          )}
         </div>
+
+        <FilterPanel
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={clearFilters}
+          availableFilters={{
+            timeRange: true,
+            metricType: true,
+          }}
+        />
 
         {/* Summary Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
