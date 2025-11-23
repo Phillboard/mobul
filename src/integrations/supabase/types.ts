@@ -1401,6 +1401,71 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          client_id: string | null
+          component_name: string | null
+          error_code: string | null
+          error_message: string
+          error_type: string
+          function_name: string | null
+          id: string
+          occurred_at: string
+          request_data: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          stack_trace: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          component_name?: string | null
+          error_code?: string | null
+          error_message: string
+          error_type: string
+          function_name?: string | null
+          id?: string
+          occurred_at?: string
+          request_data?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          component_name?: string | null
+          error_code?: string | null
+          error_message?: string
+          error_type?: string
+          function_name?: string | null
+          id?: string
+          occurred_at?: string
+          request_data?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           campaign_id: string
@@ -2459,6 +2524,47 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_metrics: {
+        Row: {
+          client_id: string | null
+          duration_ms: number
+          id: string
+          metadata: Json | null
+          metric_name: string
+          metric_type: string
+          recorded_at: string
+          user_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          duration_ms: number
+          id?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_type: string
+          recorded_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          duration_ms?: number
+          id?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_type?: string
+          recorded_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_metrics_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permission_templates: {
         Row: {
           created_at: string | null
@@ -3193,6 +3299,44 @@ export type Database = {
           },
           {
             foreignKeyName: "tracked_phone_numbers_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_analytics: {
+        Row: {
+          client_id: string | null
+          event_type: string
+          feature_name: string
+          id: string
+          metadata: Json | null
+          occurred_at: string
+          user_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          event_type: string
+          feature_name: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          event_type?: string
+          feature_name?: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_analytics_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"

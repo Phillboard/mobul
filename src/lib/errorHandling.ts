@@ -7,6 +7,7 @@
 import { toast } from "@/hooks/use-toast";
 import { logger } from "./logger";
 import { PostgrestError } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ApiError {
   message: string;
@@ -21,18 +22,20 @@ export interface ApiError {
  * @param context - Context string for logging (e.g., "CreateCampaign")
  * @param customMessage - Optional custom user-facing message
  */
-export function handleApiError(
+export async function handleApiError(
   error: unknown,
   context: string,
   customMessage?: string
-): void {
+): Promise<void> {
   let userMessage = customMessage || 'An unexpected error occurred';
   let errorDetails: any = error;
+  let errorCode: string | undefined;
 
   // Handle Supabase PostgrestError
   if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
     const pgError = error as PostgrestError;
     userMessage = customMessage || pgError.message;
+    errorCode = pgError.code;
     errorDetails = {
       code: pgError.code,
       message: pgError.message,
@@ -54,6 +57,24 @@ export function handleApiError(
   // Handle unknown errors
   else {
     logger.error(`[${context}] Unknown error:`, error);
+  }
+
+  // Log to database for monitoring
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from('error_logs').insert({
+      user_id: user?.id,
+      error_type: context,
+      error_message: userMessage,
+      error_code: errorCode,
+      stack_trace: errorDetails.stack || JSON.stringify(errorDetails),
+      component_name: context,
+      url: window.location.href,
+      user_agent: navigator.userAgent,
+    });
+  } catch (logError) {
+    // Don't fail if logging fails
+    logger.error('Failed to log error to database:', logError);
   }
 
   // Show toast notification to user
