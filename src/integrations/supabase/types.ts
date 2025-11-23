@@ -539,6 +539,76 @@ export type Database = {
           },
         ]
       }
+      bulk_code_uploads: {
+        Row: {
+          audience_id: string | null
+          campaign_id: string | null
+          client_id: string
+          created_at: string | null
+          duplicate_codes: number
+          error_codes: number
+          error_log: Json | null
+          file_name: string
+          id: string
+          successful_codes: number
+          total_codes: number
+          upload_status: string
+          uploaded_by_user_id: string
+        }
+        Insert: {
+          audience_id?: string | null
+          campaign_id?: string | null
+          client_id: string
+          created_at?: string | null
+          duplicate_codes?: number
+          error_codes?: number
+          error_log?: Json | null
+          file_name: string
+          id?: string
+          successful_codes?: number
+          total_codes?: number
+          upload_status?: string
+          uploaded_by_user_id: string
+        }
+        Update: {
+          audience_id?: string | null
+          campaign_id?: string | null
+          client_id?: string
+          created_at?: string | null
+          duplicate_codes?: number
+          error_codes?: number
+          error_log?: Json | null
+          file_name?: string
+          id?: string
+          successful_codes?: number
+          total_codes?: number
+          upload_status?: string
+          uploaded_by_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bulk_code_uploads_audience_id_fkey"
+            columns: ["audience_id"]
+            isOneToOne: false
+            referencedRelation: "audiences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bulk_code_uploads_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bulk_code_uploads_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_conditions_met: {
         Row: {
           call_session_id: string
@@ -2675,10 +2745,65 @@ export type Database = {
           },
         ]
       }
+      recipient_audit_log: {
+        Row: {
+          action: string
+          call_session_id: string | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          performed_by_user_id: string | null
+          recipient_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          call_session_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          performed_by_user_id?: string | null
+          recipient_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          call_session_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          performed_by_user_id?: string | null
+          recipient_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipient_audit_log_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipient_audit_log_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipients: {
         Row: {
           address1: string
           address2: string | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by_user_id: string | null
+          approved_call_session_id: string | null
           audience_id: string
           city: string
           company: string | null
@@ -2687,9 +2812,15 @@ export type Database = {
           email: string | null
           first_name: string | null
           geocode_json: Json | null
+          gift_card_assigned_id: string | null
           id: string
           last_name: string | null
           phone: string | null
+          redemption_code: string | null
+          redemption_completed_at: string | null
+          redemption_ip: string | null
+          redemption_user_agent: string | null
+          rejection_reason: string | null
           state: string
           token: string
           validation_details_json: Json | null
@@ -2702,6 +2833,10 @@ export type Database = {
         Insert: {
           address1: string
           address2?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by_user_id?: string | null
+          approved_call_session_id?: string | null
           audience_id: string
           city: string
           company?: string | null
@@ -2710,9 +2845,15 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           geocode_json?: Json | null
+          gift_card_assigned_id?: string | null
           id?: string
           last_name?: string | null
           phone?: string | null
+          redemption_code?: string | null
+          redemption_completed_at?: string | null
+          redemption_ip?: string | null
+          redemption_user_agent?: string | null
+          rejection_reason?: string | null
           state: string
           token: string
           validation_details_json?: Json | null
@@ -2725,6 +2866,10 @@ export type Database = {
         Update: {
           address1?: string
           address2?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by_user_id?: string | null
+          approved_call_session_id?: string | null
           audience_id?: string
           city?: string
           company?: string | null
@@ -2733,9 +2878,15 @@ export type Database = {
           email?: string | null
           first_name?: string | null
           geocode_json?: Json | null
+          gift_card_assigned_id?: string | null
           id?: string
           last_name?: string | null
           phone?: string | null
+          redemption_code?: string | null
+          redemption_completed_at?: string | null
+          redemption_ip?: string | null
+          redemption_user_agent?: string | null
+          rejection_reason?: string | null
           state?: string
           token?: string
           validation_details_json?: Json | null
@@ -2747,10 +2898,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "recipients_approved_call_session_id_fkey"
+            columns: ["approved_call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "recipients_audience_id_fkey"
             columns: ["audience_id"]
             isOneToOne: false
             referencedRelation: "audiences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipients_gift_card_assigned_id_fkey"
+            columns: ["gift_card_assigned_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
             referencedColumns: ["id"]
           },
         ]
@@ -3391,6 +3556,7 @@ export type Database = {
       }
       expire_old_invitations: { Args: never; Returns: undefined }
       generate_recipient_token: { Args: never; Returns: string }
+      generate_redemption_code: { Args: never; Returns: string }
       get_audience_geo_distribution: {
         Args: { audience_id_param: string }
         Returns: {

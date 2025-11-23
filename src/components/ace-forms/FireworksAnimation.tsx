@@ -46,8 +46,7 @@ export function FireworksAnimation() {
     createFirework(canvas.width * 0.5, canvas.height * 0.5);
 
     const animate = () => {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       particles.forEach((particle, index) => {
         particle.x += particle.vx;
