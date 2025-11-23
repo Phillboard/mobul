@@ -48,7 +48,8 @@ const navigationGroups: NavGroup[] = [
     collapsible: true,
     items: [
       { name: "Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'], keywords: ["mail", "postcards"], description: "Manage campaigns" },
-      { name: "Templates", href: "/templates", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts"], description: "Design templates" },
+      { name: "DirectMail", href: "/templates", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts", "templates"], description: "Direct mail templates" },
+      { name: "Webinar", href: "/webinar", icon: Users, permissions: ['campaigns.view'], keywords: ["events", "online", "meetings"], description: "Manage webinars" },
       { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl"], description: "Manage landing pages" },
     ]
   },

@@ -53,6 +53,7 @@ import DealDetail from "./pages/DealDetail";
 import Activities from "./pages/Activities";
 import Tasks from "./pages/Tasks";
 import AdminGiftCardMarketplace from "./pages/AdminGiftCardMarketplace";
+import Webinar from "./pages/Webinar";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
               <Route path="/recipients/:id" element={<ProtectedRoute><RecipientDetail /></ProtectedRoute>} />
               <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
               <Route path="/template-builder/:id" element={<ProtectedRoute><TemplateBuilderV2 /></ProtectedRoute>} />
+              <Route path="/webinar" element={<ProtectedRoute><Webinar /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute requiredPermission="analytics.view"><Analytics /></ProtectedRoute>} />
               <Route path="/analytics/:campaignId" element={<ProtectedRoute requiredPermission="analytics.view"><CampaignAnalytics /></ProtectedRoute>} />
               <Route path="/campaign-prototype/:id" element={<ProtectedRoute><CampaignPrototype /></ProtectedRoute>} />
