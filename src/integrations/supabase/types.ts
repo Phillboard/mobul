@@ -483,6 +483,42 @@ export type Database = {
           },
         ]
       }
+      beta_feedback: {
+        Row: {
+          created_at: string
+          description: string
+          feedback_type: string
+          id: string
+          rating: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          feedback_type: string
+          id?: string
+          rating?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          feedback_type?: string
+          id?: string
+          rating?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       brand_kits: {
         Row: {
           client_id: string
