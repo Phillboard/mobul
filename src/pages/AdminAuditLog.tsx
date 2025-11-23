@@ -21,13 +21,29 @@ import {
 
 export default function AdminAuditLog() {
   const [actionFilter, setActionFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [agentFilter, setAgentFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
+  // Fetch unique agents for filter
+  const { data: agents } = useQuery({
+    queryKey: ["agents-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("role", ["admin", "call_center", "company_owner"]);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch audit logs
   const { data: auditLogs, isLoading, refetch } = useQuery({
-    queryKey: ["audit-logs", actionFilter, searchTerm, dateFrom, dateTo],
+    queryKey: ["audit-logs", actionFilter, statusFilter, agentFilter, searchTerm, dateFrom, dateTo],
     queryFn: async () => {
       let query = supabase
         .from("recipient_audit_log")
@@ -43,6 +59,10 @@ export default function AdminAuditLog() {
         query = query.eq("action", actionFilter);
       }
 
+      if (agentFilter !== "all") {
+        query = query.eq("performed_by_user_id", agentFilter);
+      }
+
       if (dateFrom) {
         query = query.gte("created_at", new Date(dateFrom).toISOString());
       }
@@ -54,9 +74,11 @@ export default function AdminAuditLog() {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Filter by search term locally
+      // Filter by search term and status locally
+      let filteredData = data;
+
       if (searchTerm) {
-        return data.filter((log: any) => {
+        filteredData = filteredData.filter((log: any) => {
           const searchLower = searchTerm.toLowerCase();
           return (
             log.recipient?.redemption_code?.toLowerCase().includes(searchLower) ||
@@ -67,7 +89,13 @@ export default function AdminAuditLog() {
         });
       }
 
-      return data;
+      if (statusFilter !== "all") {
+        filteredData = filteredData.filter((log: any) => 
+          log.recipient?.status === statusFilter
+        );
+      }
+
+      return filteredData;
     },
   });
 
@@ -179,7 +207,7 @@ export default function AdminAuditLog() {
             <CardTitle>Filter Activity</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
                 <Label>Action Type</Label>
                 <Select value={actionFilter} onValueChange={setActionFilter}>
@@ -198,6 +226,39 @@ export default function AdminAuditLog() {
               </div>
 
               <div>
+                <Label>Status</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="redeemed">Redeemed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Agent</Label>
+                <Select value={agentFilter} onValueChange={setAgentFilter}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Agents</SelectItem>
+                    {agents?.map((agent) => (
+                      <SelectItem key={agent.user_id} value={agent.user_id}>
+                        {agent.user_id.substring(0, 8)}...
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label>Search</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -210,6 +271,9 @@ export default function AdminAuditLog() {
                 </div>
               </div>
 
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Date From</Label>
                 <Input

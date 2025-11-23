@@ -248,6 +248,34 @@ serve(async (req) => {
 
     console.log(`[PROVISION-CC] Successfully provisioned card for recipient ${recipient.id}`);
 
+    // Auto-send SMS if phone number is available (Phase 4: Automated Delivery)
+    if (recipient.phone && giftCard) {
+      try {
+        console.log(`[PROVISION-CC] Auto-sending SMS to ${recipient.phone}`);
+        const brand = giftCard.gift_card_pools?.gift_card_brands;
+        const pool = giftCard.gift_card_pools;
+        const value = pool?.card_value || 0;
+        
+        const smsMessage = `Your ${brand?.brand_name || pool?.provider || "Gift Card"} is ready!\n\nCode: ${giftCard.card_code}\n${giftCard.card_number ? `Card: ${giftCard.card_number}\n` : ""}Value: $${value}\n\nRedeem at the store`;
+        
+        const { error: smsError } = await supabaseAdmin.functions.invoke("send-gift-card-sms", {
+          body: {
+            phone: recipient.phone,
+            message: smsMessage,
+            recipientId: recipient.id,
+          },
+        });
+
+        if (smsError) {
+          console.error("[PROVISION-CC] SMS auto-send failed:", smsError);
+        } else {
+          console.log("[PROVISION-CC] SMS auto-sent successfully");
+        }
+      } catch (smsError) {
+        console.error("[PROVISION-CC] SMS auto-send error:", smsError);
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       alreadyRedeemed: false,

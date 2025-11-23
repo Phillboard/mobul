@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone } from "lucide-react";
+import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface RecipientData {
@@ -79,6 +79,43 @@ export function CallCenterRedemptionPanel() {
     onError: (error: Error) => {
       toast({
         title: "Redemption Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Send SMS with card details
+  const sendSmsMutation = useMutation({
+    mutationFn: async () => {
+      if (!result?.giftCard || !result?.recipient.phone) {
+        throw new Error("Missing card or phone number");
+      }
+
+      const brand = result.giftCard.gift_card_pools?.gift_card_brands;
+      const pool = result.giftCard.gift_card_pools;
+      const value = pool?.card_value || result.giftCard.card_value || 0;
+
+      const { data, error } = await supabase.functions.invoke("send-gift-card-sms", {
+        body: {
+          phone: result.recipient.phone,
+          message: `Your ${brand?.brand_name || pool?.provider || "Gift Card"} is ready!\n\nCode: ${result.giftCard.card_code}\n${result.giftCard.card_number ? `Card: ${result.giftCard.card_number}\n` : ""}Value: $${value}\n\nRedeem at the store`,
+          recipientId: result.recipient.id,
+        },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "SMS Sent",
+        description: "Card details sent to customer's phone successfully!",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "SMS Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -320,6 +357,25 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                   </div>
                 )}
               </div>
+
+              {/* Post-Redemption Actions */}
+              {result.recipient.phone && (
+                <div className="pt-4">
+                  <Button
+                    onClick={() => sendSmsMutation.mutate()}
+                    disabled={sendSmsMutation.isPending}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {sendSmsMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                    )}
+                    Send Card via SMS
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </>

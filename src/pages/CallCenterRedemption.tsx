@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CallCenterRedemptionPanel } from "@/components/call-center/CallCenterRedemptionPanel";
-import { Gift, TrendingUp, Clock } from "lucide-react";
+import { AgentActivityFeed } from "@/components/call-center/AgentActivityFeed";
 
 export default function CallCenterRedemption() {
   return (
@@ -20,40 +20,7 @@ export default function CallCenterRedemption() {
 
           {/* Stats Sidebar */}
           <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Today's Activity</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Gift className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">0</div>
-                    <div className="text-xs text-muted-foreground">Cards Provisioned</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-500/10 rounded-lg">
-                    <TrendingUp className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">0</div>
-                    <div className="text-xs text-muted-foreground">Successful Redemptions</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-500/10 rounded-lg">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-muted-foreground">Avg. Time</div>
-                    <div className="text-lg font-semibold">-- sec</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AgentActivityFeed />
 
             <Card>
               <CardHeader className="pb-3">
