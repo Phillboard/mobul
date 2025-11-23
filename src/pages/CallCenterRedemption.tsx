@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CallCenterRedemptionPanel } from "@/components/call-center/CallCenterRedemptionPanel";
+import { CallCenterMetrics } from "@/components/call-center/CallCenterMetrics";
 import { AgentActivityFeed } from "@/components/call-center/AgentActivityFeed";
 
 export default function CallCenterRedemption() {
@@ -20,7 +21,7 @@ export default function CallCenterRedemption() {
 
           {/* Stats Sidebar */}
           <div className="space-y-4">
-            <AgentActivityFeed />
+            <CallCenterMetrics />
 
             <Card>
               <CardHeader className="pb-3">
