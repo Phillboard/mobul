@@ -50,26 +50,26 @@ const navigationGroups: NavGroup[] = [
       { name: "Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'], keywords: ["mail", "postcards"], description: "Manage campaigns" },
       { name: "Templates", href: "/templates", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts"], description: "Design templates" },
       { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl"], description: "Manage landing pages" },
-      { name: "Audiences", href: "/audiences", icon: Users, permissions: ['audiences.view'], keywords: ["contacts", "lists"], description: "Manage audiences" },
     ]
   },
   { 
     label: "CRM", 
     collapsible: true, 
     items: [
-      { name: "Contacts", href: "/contacts", icon: Users, permissions: ['audiences.view'], keywords: ["people"], description: "Manage contacts" },
-      { name: "Companies", href: "/companies", icon: Building2, permissions: ['audiences.view'], keywords: ["businesses"], description: "Manage companies" },
-      { name: "Deals", href: "/deals", icon: Handshake, permissions: ['audiences.view'], keywords: ["sales"], description: "Track deals" },
-      { name: "Activities", href: "/activities", icon: Activity, permissions: ['audiences.view'], keywords: ["timeline"], description: "Activity timeline" },
-      { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['audiences.view'], keywords: ["todos"], description: "Manage tasks" },
+      { name: "Contacts", href: "/contacts", icon: Users, permissions: ['audiences.view', 'contacts.view'], keywords: ["people", "audiences", "lists"], description: "Manage contacts and audiences" },
+      { name: "Companies", href: "/companies", icon: Building2, permissions: ['audiences.view', 'companies.view'], keywords: ["businesses"], description: "Manage companies" },
+      { name: "Deals", href: "/deals", icon: Handshake, permissions: ['audiences.view', 'deals.view'], keywords: ["sales"], description: "Track deals" },
+      { name: "Activities", href: "/activities", icon: Activity, permissions: ['audiences.view', 'activities.view'], keywords: ["timeline"], description: "Activity timeline" },
+      { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['audiences.view', 'tasks.view'], keywords: ["todos"], description: "Manage tasks" },
     ]
   },
   { 
-    label: "Rewards", 
+    label: "Gift Cards", 
     collapsible: true,
     items: [
-      { name: "Gift Card Manager", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.manage'], keywords: ["rewards"], description: "Manage gift cards" },
-      { name: "Purchase Gift Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase'], keywords: ["buy"], description: "Purchase cards" },
+      { name: "Manage Cards", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.manage', 'giftcards.view'], keywords: ["rewards", "inventory"], description: "Manage gift card inventory" },
+      { name: "Purchase Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase', 'giftcards.purchase'], keywords: ["buy"], description: "Purchase gift cards" },
+      { name: "Marketplace", href: "/admin/gift-card-marketplace", icon: Gift, roles: ['admin'], permissions: ['giftcards.admin_view'], keywords: ["admin", "master"], description: "Admin marketplace" },
     ]
   },
   { 
@@ -77,8 +77,8 @@ const navigationGroups: NavGroup[] = [
     collapsible: true, 
     roles: ['call_center', 'admin'], 
     items: [
-      { name: "Agent Dashboard", href: "/agent-dashboard", icon: Headphones, roles: ['call_center', 'admin'], keywords: ["calls"], description: "Handle calls" },
-      { name: "Call Analytics", href: "/call-center", icon: Phone, roles: ['call_center', 'admin'], keywords: ["reports"], description: "Call metrics" },
+      { name: "Agent Dashboard", href: "/agent-dashboard", icon: Headphones, roles: ['call_center', 'admin'], permissions: ['calls.agent_dashboard', 'calls.confirm_redemption'], keywords: ["calls"], description: "Handle calls" },
+      { name: "Call Analytics", href: "/call-center", icon: Phone, roles: ['call_center', 'admin'], permissions: ['calls.view', 'calls.manage'], keywords: ["reports"], description: "Call metrics" },
     ]
   },
   { 
@@ -86,8 +86,8 @@ const navigationGroups: NavGroup[] = [
     collapsible: true, 
     items: [
       { name: "Analytics", href: "/analytics", icon: BarChart3, permissions: ['analytics.view'], keywords: ["reports", "metrics"], description: "View analytics" },
-      { name: "User Management", href: "/users", icon: Users, permissions: ['users.view'], keywords: ["team"], description: "Manage users" },
-      { name: "API & Integrations", href: "/api", icon: Code, permissions: ['api.view'], keywords: ["developer"], description: "API keys" },
+      { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team"], description: "Manage users" },
+      { name: "API & Integrations", href: "/api", icon: Code, permissions: ['api.view', 'settings.integrations'], keywords: ["developer"], description: "API keys" },
       { name: "Automation", href: "/zapier-templates", icon: Workflow, permissions: ['settings.integrations'], keywords: ["zapier"], description: "Zapier integrations" },
       { name: "Settings", href: "/settings/account", icon: SettingsIcon, permissions: ['settings.view'], keywords: ["configuration"], description: "Settings" },
     ]
@@ -97,15 +97,7 @@ const navigationGroups: NavGroup[] = [
     collapsible: true, 
     roles: ['agency_owner'], 
     items: [
-      { name: "Client Management", href: "/agency-management", icon: Building2, roles: ['agency_owner'], keywords: ["clients"], description: "Manage clients" },
-    ]
-  },
-  { 
-    label: "Platform Admin", 
-    collapsible: true, 
-    roles: ['admin'], 
-    items: [
-      { name: "Gift Card Marketplace", href: "/admin/gift-card-marketplace", icon: Gift, roles: ['admin'], keywords: ["admin"], description: "Admin marketplace" },
+      { name: "Client Management", href: "/agency-management", icon: Building2, roles: ['agency_owner'], permissions: ['clients.view', 'clients.manage'], keywords: ["clients"], description: "Manage clients" },
     ]
   },
 ];
@@ -144,9 +136,9 @@ export function Sidebar() {
     const activeGroup = visibleGroups.find(g => 
       g.items.some(i => location.pathname === i.href || location.pathname.startsWith(i.href + '/'))
     );
-    const defaultOpen = new Set(["Dashboard", "Marketing", "Rewards"]);
-    if (activeGroup?.label) defaultOpen.add(activeGroup.label);
-    setOpenGroups(defaultOpen);
+    const newOpenGroups = new Set<string>();
+    if (activeGroup?.label) newOpenGroups.add(activeGroup.label);
+    setOpenGroups(newOpenGroups);
   }, [location.pathname, visibleGroups]);
 
   const allSearchableItems = useMemo(() => visibleGroups.flatMap(g => g.items.map(i => ({...i, groupLabel: g.label}))), [visibleGroups]);
