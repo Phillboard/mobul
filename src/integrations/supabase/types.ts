@@ -2851,6 +2851,30 @@ export type Database = {
           },
         ]
       }
+      rate_limit_tracking: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          identifier: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          identifier: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          identifier?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       recipient_audit_log: {
         Row: {
           action: string
@@ -3158,6 +3182,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_alerts: {
+        Row: {
+          acknowledged: boolean | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          severity: string
+          title: string
+        }
+        Insert: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity: string
+          title: string
+        }
+        Update: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity?: string
+          title?: string
+        }
+        Relationships: []
       }
       templates: {
         Row: {
@@ -3697,6 +3766,20 @@ export type Database = {
           provider: string
           provisioned_via_api: boolean
         }[]
+      }
+      cleanup_rate_limit_tracking: {
+        Args: { retention_hours?: number }
+        Returns: number
+      }
+      create_system_alert: {
+        Args: {
+          p_alert_type: string
+          p_message: string
+          p_metadata?: Json
+          p_severity: string
+          p_title: string
+        }
+        Returns: string
       }
       expire_old_invitations: { Args: never; Returns: undefined }
       generate_recipient_token: { Args: never; Returns: string }
