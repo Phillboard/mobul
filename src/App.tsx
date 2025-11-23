@@ -38,6 +38,7 @@ import GiftCardReveal from "./pages/GiftCardReveal";
 import EmbedGiftCard from "./pages/EmbedGiftCard";
 import AgencyManagement from "./pages/AgencyManagement";
 import CallCenterDashboard from "./pages/CallCenterDashboard";
+import CallCenterRedemption from "./pages/CallCenterRedemption";
 import ZapierTemplates from "./pages/ZapierTemplates";
 import AIGeneratedLandingPage from "./pages/AIGeneratedLandingPage";
 
@@ -116,6 +117,7 @@ const App = () => (
               <Route path="/landing-pages/:id/edit-grapesjs" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
               <Route path="/templates/:id/ai-editor" element={<ProtectedRoute><AITemplateEditor /></ProtectedRoute>} />
               <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
+              <Route path="/call-center/redeem" element={<ProtectedRoute requiredPermissions={['call_center', 'admin']}><CallCenterRedemption /></ProtectedRoute>} />
               <Route path="/agent-dashboard" element={<ProtectedRoute requiredPermissions={['call_center', 'admin']}><AgentCallDashboard /></ProtectedRoute>} />
               <Route path="/call-center" element={<ProtectedRoute requiredPermissions={['call_center', 'admin']}><CallCenterDashboard /></ProtectedRoute>} />
               <Route path="/agency-management" element={<ProtectedRoute requiredRole="agency_owner"><AgencyManagement /></ProtectedRoute>} />

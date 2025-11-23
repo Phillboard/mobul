@@ -80,6 +80,7 @@ const navigationGroups: NavGroup[] = [
     collapsible: true, 
     roles: ['call_center', 'admin'], 
     items: [
+      { name: "Redeem Cards", href: "/call-center/redeem", icon: Gift, roles: ['call_center', 'admin'], permissions: ['calls.confirm_redemption'], keywords: ["redemption", "provision"], description: "Redeem gift cards" },
       { name: "Agent Dashboard", href: "/agent-dashboard", icon: Headphones, roles: ['call_center', 'admin'], permissions: ['calls.agent_dashboard', 'calls.confirm_redemption'], keywords: ["calls"], description: "Handle calls" },
       { name: "Call Analytics", href: "/call-center", icon: Phone, roles: ['call_center', 'admin'], permissions: ['calls.view', 'calls.manage'], keywords: ["reports"], description: "Call metrics" },
     ]
