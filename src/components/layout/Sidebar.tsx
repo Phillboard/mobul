@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Mail, FileText, Users, Building2, Gift, Headphones, Phone,
   BarChart3, Code, Settings as SettingsIcon, ShoppingCart, Globe, Handshake,
-  Activity, ListTodo, Workflow, ChevronRight
+  Activity, ListTodo, Workflow, ChevronRight, ArrowLeft
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { settingsTabs } from "@/lib/settingsConfig";
 import { useSettingsTabs } from "@/hooks/useSettingsTabs";
 import { useMenuSearch, SearchableNavItem } from "@/hooks/useMenuSearch";
 import { AppRole } from "@/lib/roleUtils";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar as SidebarRoot, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -167,7 +168,14 @@ export function Sidebar() {
     return (
       <SidebarRoot collapsible="icon" className={collapsed ? "w-14" : "w-60"}>
         <SidebarHeader className="border-b border-sidebar-border">
-          <div className="px-4 py-3">{!collapsed && <h2 className="text-lg font-semibold">Settings</h2>}</div>
+          <div className="px-4 py-3 flex items-center justify-between">
+            {!collapsed && <h2 className="text-lg font-semibold">Settings</h2>}
+            <NavLink to="/">
+              <Button variant="ghost" size="icon" title="Back to main menu">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </NavLink>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
