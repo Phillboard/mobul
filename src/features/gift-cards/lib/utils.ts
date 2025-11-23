@@ -74,13 +74,12 @@ export function formatCurrency(value: number): string {
 /**
  * Mask gift card code for security
  * Shows first 4 and last 4 characters
+ * 
+ * @deprecated Use maskCardCode from @/lib/giftCardUtils instead
  */
 export function maskCardCode(code: string): string {
-  if (code.length <= 8) return code;
-  const first4 = code.substring(0, 4);
-  const last4 = code.substring(code.length - 4);
-  const middle = '*'.repeat(Math.min(code.length - 8, 8));
-  return `${first4}${middle}${last4}`;
+  // Re-export from centralized utility
+  return require('@/lib/giftCardUtils').maskCardCode(code);
 }
 
 /**

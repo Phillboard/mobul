@@ -4,28 +4,37 @@
 
 This is a multi-tenant direct mail marketing platform that enables businesses to create, manage, and track personalized direct mail campaigns with integrated digital experiences. The system combines physical mail with digital landing pages, gift card rewards, call tracking, and CRM integration.
 
+**Last Updated**: 2025-01-23  
+**Version**: 2.0  
+**Performance Optimizations**: Phase 1 & 2 completed (Jan 2025)
+
 ## Technology Stack
 
 ### Frontend
 - **Framework**: React 18 + TypeScript
 - **Build Tool**: Vite
 - **Routing**: React Router v6
-- **State Management**: TanStack Query (React Query)
+- **State Management**: TanStack Query (React Query v5)
+  - Optimized caching: 5min stale time, 10min gc time
+  - Reduced refetching on window focus
 - **UI Framework**: Shadcn UI + Radix UI
-- **Styling**: Tailwind CSS
-- **Forms**: React Hook Form + Zod
+- **Styling**: Tailwind CSS with semantic design tokens
+- **Forms**: React Hook Form + Zod validation
+- **Testing**: Vitest + Testing Library
 
 ### Backend (Lovable Cloud / Supabase)
 - **Database**: PostgreSQL 15
-- **Auth**: Supabase Auth (Email/Password)
-- **Storage**: Supabase Storage
-- **Functions**: Edge Functions (Deno)
-- **Real-time**: Supabase Realtime
+  - 13 performance indexes added (Jan 2025)
+  - RLS policies enforced on all tables
+- **Auth**: Supabase Auth with password strength validation
+- **Storage**: Supabase Storage (client-logos, templates, qr-codes)
+- **Functions**: 56 Edge Functions (Deno runtime)
+- **Real-time**: Supabase Realtime (campaigns, call sessions)
 
 ### External Services
-- **SMS**: Twilio
-- **Gift Cards**: Tillo API
-- **AI**: Gemini, GPT-4 (via edge functions)
+- **SMS**: Twilio (call tracking, gift card delivery)
+- **Gift Cards**: Tillo API (balance checks, provisioning)
+- **AI**: Gemini 2.5 Pro, GPT-5 (via Lovable AI integration)
 
 ## Architecture Patterns
 
