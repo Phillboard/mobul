@@ -1,16 +1,18 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Save, Eye, ArrowLeft, Sparkles } from "lucide-react";
+import { Save, Eye, ArrowLeft, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFormBuilder } from "@/hooks/useFormBuilder";
 import { useAceForms, useAceForm } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
+import { Layout } from "@/components/layout/Layout";
 import { FormBuilder } from "@/components/ace-forms/FormBuilder";
 import { FormTemplateSelector } from "@/components/ace-forms/FormTemplateSelector";
 import { ExportDialog } from "@/components/ace-forms/ExportDialog";
 import { AIFormGenerator } from "@/components/ace-forms/AIFormGenerator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
  * Ace Form Builder - Visual form editor
@@ -131,16 +133,24 @@ export default function AceFormBuilder() {
 
   if (showTemplates) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto py-8 space-y-6">
-          <Button variant="ghost" onClick={() => navigate("/ace-forms")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Forms
-          </Button>
+      <Layout>
+        <div className="space-y-6">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Button 
+              variant="link" 
+              className="p-0 h-auto font-normal"
+              onClick={() => navigate("/ace-forms")}
+            >
+              Ace Forms
+            </Button>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-foreground font-medium">Create New Form</span>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* AI Generator */}
-            <div className="border rounded-lg p-6 space-y-4">
+            <div className="border rounded-lg p-6 space-y-4 bg-card">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
                 <h2 className="text-xl font-semibold">Generate with AI</h2>
@@ -152,7 +162,7 @@ export default function AceFormBuilder() {
             </div>
 
             {/* Template Selector */}
-            <div className="border rounded-lg p-6">
+            <div className="border rounded-lg p-6 bg-card">
               <h2 className="text-xl font-semibold mb-4">Or Choose a Template</h2>
               <FormTemplateSelector
                 onSelect={(template) => {
@@ -165,68 +175,103 @@ export default function AceFormBuilder() {
             </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Top Bar */}
-      <div className="border-b bg-background px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/ace-forms")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <input
-              type="text"
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              placeholder="Form Name"
-              className="text-lg font-semibold bg-transparent border-none focus:outline-none"
-            />
+    <Layout>
+      <div className="h-[calc(100vh-8rem)] flex flex-col -m-3 md:-m-4">
+        {/* Top Bar with Breadcrumbs */}
+        <div className="border-b bg-background px-4 py-3 flex flex-col gap-2">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Button 
+              variant="link" 
+              className="p-0 h-auto font-normal"
+              onClick={() => navigate("/ace-forms")}
+            >
+              Ace Forms
+            </Button>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-foreground font-medium">{formName || "Untitled Form"}</span>
+          </div>
+
+          {/* Actions Bar */}
+          <div className="flex items-center justify-between">
+            <div>
+              <input
+                type="text"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Form Name"
+                className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              {lastSaved && (
+                <span className="text-xs text-muted-foreground">
+                  Last saved: {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+              <Button variant="outline" size="sm" onClick={() => setShowAIGenerator(true)}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                AI Assistant
+              </Button>
+              
+              {/* Preview button - disabled if form not saved */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => navigate(`/forms/${formId}`)}
+                        disabled={!formId}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!formId && (
+                    <TooltipContent>
+                      <p>Save form first to preview</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+
+              {formId && (
+                <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
+                  Export
+                </Button>
+              )}
+              <Button size="sm" onClick={handleSave} disabled={createForm.isPending || updateForm.isPending}>
+                <Save className="w-4 h-4 mr-2" />
+                {createForm.isPending || updateForm.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {lastSaved && (
-            <span className="text-xs text-muted-foreground">
-              Last saved: {lastSaved.toLocaleTimeString()}
-            </span>
-          )}
-          <Button variant="outline" size="sm" onClick={() => setShowAIGenerator(true)}>
-            <Sparkles className="w-4 h-4 mr-2" />
-            AI Assistant
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate(`/forms/${formId}`)}>
-            <Eye className="w-4 h-4 mr-2" />
-            Preview
-          </Button>
-          {formId && (
-            <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
-              Export
-            </Button>
-          )}
-          <Button size="sm" onClick={handleSave} disabled={createForm.isPending || updateForm.isPending}>
-            <Save className="w-4 h-4 mr-2" />
-            {createForm.isPending || updateForm.isPending ? "Saving..." : "Save"}
-          </Button>
+        {/* Builder */}
+        <div className="flex-1 overflow-hidden">
+          <FormBuilder
+            config={config}
+            selectedFieldId={selectedFieldId}
+            selectedField={selectedField}
+            onSelectField={setSelectedFieldId}
+            onAddField={addField}
+            onUpdateField={updateField}
+            onDeleteField={deleteField}
+            onReorderFields={reorderFields}
+            onUpdateSettings={updateSettings}
+          />
         </div>
       </div>
-
-      {/* Builder */}
-      <FormBuilder
-        config={config}
-        selectedFieldId={selectedFieldId}
-        selectedField={selectedField}
-        onSelectField={setSelectedFieldId}
-        onAddField={addField}
-        onUpdateField={updateField}
-        onDeleteField={deleteField}
-        onReorderFields={reorderFields}
-        onUpdateSettings={updateSettings}
-      />
 
       {/* AI Generator Dialog */}
       <Dialog open={showAIGenerator} onOpenChange={setShowAIGenerator}>
@@ -250,6 +295,6 @@ export default function AceFormBuilder() {
           config={config}
         />
       )}
-    </div>
+    </Layout>
   );
 }
