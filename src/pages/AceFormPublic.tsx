@@ -69,15 +69,16 @@ export default function AceFormPublic() {
         return acc;
       }, {} as any);
 
-      // Check if this is a customer code redemption (has redemption_code field)
-      const hasRedemptionCode = form.form_config.fields.some(f => f.type === 'gift-card-code');
+      // Check if this is customer code redemption (requires campaignId parameter)
+      const campaignId = searchParams.get('campaignId');
+      const hasGiftCardField = form.form_config.fields.some(f => f.type === 'gift-card-code');
       
-      if (hasRedemptionCode && sanitizedData.code) {
-        // Use new customer code redemption flow
+      if (campaignId && hasGiftCardField && sanitizedData.code) {
+        // NEW FLOW: Customer redemption code (approved by call center)
         const { data: result, error } = await supabase.functions.invoke("redeem-customer-code", {
           body: { 
             redemptionCode: sanitizedData.code,
-            campaignId: searchParams.get('campaignId') || formId
+            campaignId: campaignId
           },
         });
 
@@ -90,7 +91,7 @@ export default function AceFormPublic() {
           throw new Error(result.error || 'Redemption failed');
         }
       } else {
-        // Original submit-ace-form flow for direct gift card codes
+        // OLD FLOW: Direct gift card code entry
         const { data: result, error } = await supabase.functions.invoke("submit-ace-form", {
           body: { formId, data: sanitizedData },
         });
