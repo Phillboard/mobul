@@ -14,18 +14,38 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Building2, Plus, Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * AgencyManagement Component
+ * 
+ * This page allows agency owners to:
+ * - View all companies/clients they manage
+ * - Create new companies under their agency
+ * - Monitor gift card pool assignments per company
+ * 
+ * Access: Only visible to users with 'agency_owner' role
+ */
 export default function AgencyManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { currentOrg } = useTenant();
+  const { currentOrg } = useTenant(); // Get current organization context
+  
+  // Dialog and form state management
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
   const [newCompanyIndustry, setNewCompanyIndustry] = useState("");
 
-  // Fetch companies under this agency
+  /**
+   * Query: Fetch all companies/clients under this agency
+   * 
+   * This query:
+   * - Filters by current organization ID
+   * - Includes count of gift card pools per company
+   * - Orders by creation date (newest first)
+   * - Re-fetches when currentOrg changes
+   */
   const { data: companies } = useQuery({
     queryKey: ['agency-companies', currentOrg?.id],
-    enabled: !!currentOrg,
+    enabled: !!currentOrg, // Only run query if organization is loaded
     queryFn: async () => {
       if (!currentOrg) return [];
       
@@ -40,7 +60,12 @@ export default function AgencyManagement() {
     }
   });
 
-  // Fetch gift card pools
+  /**
+   * Query: Fetch all gift card pools
+   * 
+   * Currently fetches all pools - may need filtering in future
+   * to show only pools relevant to this agency
+   */
   const { data: giftCardPools } = useQuery({
     queryKey: ['gift-card-pools'],
     queryFn: async () => {
@@ -54,7 +79,15 @@ export default function AgencyManagement() {
     }
   });
 
-  // Create company mutation
+  /**
+   * Mutation: Create a new company under the agency
+   * 
+   * Flow:
+   * 1. Validates organization is selected
+   * 2. Inserts new client record with agency's org_id
+   * 3. On success: refreshes company list, shows toast, closes dialog
+   * 4. On error: displays error message to user
+   */
   const createCompanyMutation = useMutation({
     mutationFn: async () => {
       if (!currentOrg) throw new Error("No organization selected");
@@ -63,7 +96,7 @@ export default function AgencyManagement() {
         .from('clients')
         .insert([{
           name: newCompanyName,
-          industry: newCompanyIndustry as any,
+          industry: newCompanyIndustry as any, // Cast to database enum type
           org_id: currentOrg.id,
         }])
         .select()
@@ -73,16 +106,22 @@ export default function AgencyManagement() {
       return data;
     },
     onSuccess: () => {
+      // Refresh the companies list to show new company
       queryClient.invalidateQueries({ queryKey: ['agency-companies'] });
+      
+      // Show success notification
       toast({
         title: "Company created",
         description: "New company has been created successfully",
       });
+      
+      // Reset form and close dialog
       setIsCreateDialogOpen(false);
       setNewCompanyName("");
       setNewCompanyIndustry("");
     },
     onError: (error: any) => {
+      // Show error notification with details
       toast({
         title: "Failed to create company",
         description: error.message,
@@ -91,7 +130,17 @@ export default function AgencyManagement() {
     }
   });
 
+  /**
+   * Handler: Validate and submit company creation
+   * 
+   * Validates:
+   * - Company name is not empty
+   * - Industry is selected
+   * 
+   * Then triggers the mutation to create the company
+   */
   const handleCreateCompany = () => {
+    // Validate company name
     if (!newCompanyName.trim()) {
       toast({
         title: "Company name required",
@@ -100,6 +149,8 @@ export default function AgencyManagement() {
       });
       return;
     }
+    
+    // Validate industry selection
     if (!newCompanyIndustry) {
       toast({
         title: "Industry required",
@@ -108,6 +159,8 @@ export default function AgencyManagement() {
       });
       return;
     }
+    
+    // Submit the form
     createCompanyMutation.mutate();
   };
 
@@ -143,6 +196,7 @@ export default function AgencyManagement() {
                     placeholder="Acme Corporation"
                   />
                 </div>
+                {/* Industry Selection - MUST match database enum values */}
                 <div className="space-y-2">
                   <Label htmlFor="industry">Industry</Label>
                   <Select value={newCompanyIndustry} onValueChange={setNewCompanyIndustry}>
@@ -150,15 +204,40 @@ export default function AgencyManagement() {
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="healthcare">Healthcare</SelectItem>
-                      <SelectItem value="real_estate">Real Estate</SelectItem>
-                      <SelectItem value="automotive">Automotive</SelectItem>
+                      {/* Core Service Industries */}
+                      <SelectItem value="roofing">Roofing</SelectItem>
+                      <SelectItem value="roofing_services">Roofing Services</SelectItem>
+                      <SelectItem value="home_services">Home Services</SelectItem>
+                      <SelectItem value="landscaping">Landscaping</SelectItem>
+                      <SelectItem value="moving_company">Moving Company</SelectItem>
+                      
+                      {/* Automotive */}
+                      <SelectItem value="auto_service">Auto Service</SelectItem>
+                      <SelectItem value="auto_warranty">Auto Warranty</SelectItem>
+                      <SelectItem value="auto_buyback">Auto Buyback</SelectItem>
+                      
+                      {/* Real Estate */}
+                      <SelectItem value="rei">Real Estate Investment</SelectItem>
+                      <SelectItem value="rei_postcard">REI Postcard</SelectItem>
+                      <SelectItem value="realtor_listing">Realtor Listing</SelectItem>
+                      
+                      {/* Healthcare & Wellness */}
+                      <SelectItem value="healthcare_checkup">Healthcare Checkup</SelectItem>
+                      <SelectItem value="dental">Dental</SelectItem>
+                      <SelectItem value="veterinary">Veterinary</SelectItem>
+                      <SelectItem value="fitness_gym">Fitness Gym</SelectItem>
+                      
+                      {/* Professional Services */}
+                      <SelectItem value="legal_services">Legal Services</SelectItem>
+                      <SelectItem value="financial_advisor">Financial Advisor</SelectItem>
                       <SelectItem value="insurance">Insurance</SelectItem>
-                      <SelectItem value="financial_services">Financial Services</SelectItem>
-                      <SelectItem value="retail">Retail</SelectItem>
-                      <SelectItem value="hospitality">Hospitality</SelectItem>
-                      <SelectItem value="nonprofit">Nonprofit</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      
+                      {/* Retail & Food */}
+                      <SelectItem value="retail_promo">Retail Promo</SelectItem>
+                      <SelectItem value="restaurant_promo">Restaurant Promo</SelectItem>
+                      
+                      {/* Events */}
+                      <SelectItem value="event_invite">Event Invite</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -174,6 +253,7 @@ export default function AgencyManagement() {
           </Dialog>
         </div>
 
+        {/* Companies Table Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -194,24 +274,33 @@ export default function AgencyManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {/* Map through companies and display each row */}
                 {companies?.map((company) => (
                   <TableRow key={company.id}>
                     <TableCell className="font-medium">{company.name}</TableCell>
                     <TableCell>
+                      {/* Display industry as a badge */}
                       <Badge variant="outline">{company.industry}</Badge>
                     </TableCell>
                     <TableCell>
+                      {/* Show gift card pool count with icon */}
                       <div className="flex items-center gap-2">
                         <Gift className="h-4 w-4 text-muted-foreground" />
                         {company.gift_card_pools?.[0]?.count || 0}
                       </div>
                     </TableCell>
-                    <TableCell>{company.credits?.toLocaleString() || 0}</TableCell>
                     <TableCell>
+                      {/* Format credits with thousand separators */}
+                      {company.credits?.toLocaleString() || 0}
+                    </TableCell>
+                    <TableCell>
+                      {/* Format creation date */}
                       {new Date(company.created_at || '').toLocaleDateString()}
                     </TableCell>
                   </TableRow>
                 ))}
+                
+                {/* Empty state when no companies exist */}
                 {(!companies || companies.length === 0) && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
