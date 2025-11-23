@@ -3449,6 +3449,33 @@ export type Database = {
           },
         ]
       }
+      user_dashboard_preferences: {
+        Row: {
+          created_at: string | null
+          hidden_widgets: Json
+          id: string
+          updated_at: string | null
+          user_id: string | null
+          widget_layout: Json
+        }
+        Insert: {
+          created_at?: string | null
+          hidden_widgets?: Json
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+          widget_layout?: Json
+        }
+        Update: {
+          created_at?: string | null
+          hidden_widgets?: Json
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+          widget_layout?: Json
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           accepted_at: string | null
