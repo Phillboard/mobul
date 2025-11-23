@@ -1,8 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Copy, Trash2, Edit, Eye, BarChart3, Code2 } from "lucide-react";
+import { Plus, Copy, Trash2, Edit, Eye, BarChart3, Code2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAceForms } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
 import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
@@ -126,46 +133,39 @@ export default function AceForms() {
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEmbedFormId(form.id)}
-                      title="Get Embed Code"
-                    >
-                      <Code2 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/ace-forms/${form.id}/analytics`)}
-                      title="Analytics"
-                    >
-                      <BarChart3 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(`/forms/${form.id}`, '_blank')}
-                      title="Preview"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => duplicateForm.mutate(form.id)}
-                      title="Duplicate"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDeleteId(form.id)}
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => window.open(`/forms/${form.id}`, '_blank')}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Preview
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/ace-forms/${form.id}/analytics`)}>
+                          <BarChart3 className="w-4 h-4 mr-2" />
+                          Analytics
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEmbedFormId(form.id)}>
+                          <Code2 className="w-4 h-4 mr-2" />
+                          Embed Code
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => duplicateForm.mutate(form.id)}>
+                          <Copy className="w-4 h-4 mr-2" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          onClick={() => setDeleteId(form.id)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardContent>
