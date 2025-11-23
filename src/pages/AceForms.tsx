@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Copy, ExternalLink, Trash2, Edit, Eye, BarChart3 } from "lucide-react";
+import { Plus, Copy, Trash2, Edit, Eye, BarChart3, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAceForms } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
+import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,7 @@ export default function AceForms() {
   const { currentClient } = useTenant();
   const { forms, isLoading, deleteForm, duplicateForm } = useAceForms(currentClient?.id);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [embedFormId, setEmbedFormId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredForms = forms?.filter(form =>
@@ -123,6 +125,14 @@ export default function AceForms() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setEmbedFormId(form.id)}
+                      title="Get Embed Code"
+                    >
+                      <Code2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => navigate(`/ace-forms/${form.id}/analytics`)}
                       title="Analytics"
                     >
@@ -131,7 +141,7 @@ export default function AceForms() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => navigate(`/forms/${form.id}`)}
+                      onClick={() => window.open(`/forms/${form.id}`, '_blank')}
                       title="Preview"
                     >
                       <Eye className="w-4 h-4" />
@@ -158,6 +168,15 @@ export default function AceForms() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Embed Code Dialog */}
+      {embedFormId && (
+        <FormEmbedDialog
+          open={!!embedFormId}
+          onOpenChange={(open) => !open && setEmbedFormId(null)}
+          formId={embedFormId}
+        />
       )}
 
       {/* Delete Confirmation Dialog */}

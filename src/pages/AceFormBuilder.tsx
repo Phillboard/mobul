@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Save, Eye, ArrowLeft, Sparkles, ChevronRight } from "lucide-react";
+import { Save, Eye, Sparkles, ChevronRight, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFormBuilder } from "@/hooks/useFormBuilder";
 import { useAceForms, useAceForm } from "@/hooks/useAceForms";
@@ -9,10 +9,10 @@ import { Layout } from "@/components/layout/Layout";
 import { FormBuilder } from "@/components/ace-forms/FormBuilder";
 import { FormTemplateSelector } from "@/components/ace-forms/FormTemplateSelector";
 import { ExportDialog } from "@/components/ace-forms/ExportDialog";
+import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
 import { AIFormGenerator } from "@/components/ace-forms/AIFormGenerator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
  * Ace Form Builder - Visual form editor
@@ -25,6 +25,7 @@ export default function AceFormBuilder() {
   const { createForm, updateForm } = useAceForms(currentClient?.id);
   const [showTemplates, setShowTemplates] = useState(!formId);
   const [showExport, setShowExport] = useState(false);
+  const [showEmbed, setShowEmbed] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [formName, setFormName] = useState("");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -220,34 +221,36 @@ export default function AceFormBuilder() {
                 AI Assistant
               </Button>
               
-              {/* Preview button - disabled if form not saved */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => navigate(`/forms/${formId}`)}
-                        disabled={!formId}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Preview
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  {!formId && (
-                    <TooltipContent>
-                      <p>Save form first to preview</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              {/* Preview button - always enabled */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  if (formId) {
+                    window.open(`/forms/${formId}`, '_blank');
+                  } else {
+                    toast({
+                      title: "Save First",
+                      description: "Please save your form to get a preview link",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                Preview
+              </Button>
 
               {formId && (
-                <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
-                  Export
-                </Button>
+                <>
+                  <Button variant="outline" size="sm" onClick={() => setShowEmbed(true)}>
+                    <Code2 className="w-4 h-4 mr-2" />
+                    Embed Code
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
+                    Export
+                  </Button>
+                </>
               )}
               <Button size="sm" onClick={handleSave} disabled={createForm.isPending || updateForm.isPending}>
                 <Save className="w-4 h-4 mr-2" />
@@ -285,6 +288,15 @@ export default function AceFormBuilder() {
           <AIFormGenerator onGenerated={handleAIGenerated} />
         </DialogContent>
       </Dialog>
+
+      {/* Embed Dialog */}
+      {formId && (
+        <FormEmbedDialog
+          open={showEmbed}
+          onOpenChange={setShowEmbed}
+          formId={formId}
+        />
+      )}
 
       {/* Export Dialog */}
       {formId && (
