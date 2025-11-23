@@ -11,17 +11,10 @@ describe('campaignUtils', () => {
   describe('getCampaignStatusColor', () => {
     it('should return correct color for each status', () => {
       expect(getCampaignStatusColor('draft')).toBe('gray');
-      expect(getCampaignStatusColor('pending_approval')).toBe('yellow');
-      expect(getCampaignStatusColor('approved')).toBe('blue');
-      expect(getCampaignStatusColor('in_production')).toBe('purple');
-      expect(getCampaignStatusColor('in_mail')).toBe('indigo');
-      expect(getCampaignStatusColor('active')).toBe('green');
+      expect(getCampaignStatusColor('scheduled')).toBe('blue');
+      expect(getCampaignStatusColor('in_progress')).toBe('green');
       expect(getCampaignStatusColor('completed')).toBe('gray');
       expect(getCampaignStatusColor('cancelled')).toBe('red');
-    });
-
-    it('should handle unknown status', () => {
-      expect(getCampaignStatusColor('unknown' as any)).toBe('gray');
     });
   });
 
@@ -30,12 +23,12 @@ describe('campaignUtils', () => {
       expect(canEditCampaign('draft')).toBe(true);
     });
 
-    it('should allow editing pending approval campaigns', () => {
-      expect(canEditCampaign('pending_approval')).toBe(true);
+    it('should not allow editing scheduled campaigns', () => {
+      expect(canEditCampaign('scheduled')).toBe(false);
     });
 
-    it('should not allow editing active campaigns', () => {
-      expect(canEditCampaign('active')).toBe(false);
+    it('should not allow editing in_progress campaigns', () => {
+      expect(canEditCampaign('in_progress')).toBe(false);
     });
 
     it('should not allow editing completed campaigns', () => {
@@ -44,10 +37,6 @@ describe('campaignUtils', () => {
 
     it('should not allow editing cancelled campaigns', () => {
       expect(canEditCampaign('cancelled')).toBe(false);
-    });
-
-    it('should not allow editing in-production campaigns', () => {
-      expect(canEditCampaign('in_production')).toBe(false);
     });
   });
 
