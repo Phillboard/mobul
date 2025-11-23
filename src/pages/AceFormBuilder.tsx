@@ -111,6 +111,7 @@ export default function AceFormBuilder() {
         title: "Form Saved",
         description: "Your form has been saved successfully.",
       });
+      return formId;
     } else {
       const newForm = await createForm.mutateAsync(formData);
       navigate(`/ace-forms/${newForm.id}/edit`);
@@ -118,8 +119,9 @@ export default function AceFormBuilder() {
         title: "Form Created",
         description: "Your form has been created successfully.",
       });
+      setLastSaved(new Date());
+      return newForm.id;
     }
-    setLastSaved(new Date());
   };
 
   const handleAIGenerated = (name: string, description: string, aiConfig: any) => {
@@ -226,14 +228,12 @@ export default function AceFormBuilder() {
                 variant="outline" 
                 size="sm" 
                 onClick={async () => {
-                  if (!formId) {
-                    // If no formId, save first to create the form
-                    await handleSave();
-                    return;
+                  const id = formId || await handleSave();
+                  if (id) {
+                    window.open(`/forms/${id}`, '_blank');
                   }
-                  window.open(`/forms/${formId}`, '_blank');
                 }}
-                disabled={!formId && (createForm.isPending || updateForm.isPending)}
+                disabled={createForm.isPending || updateForm.isPending}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 {!formId ? "Save & Preview" : "Preview"}
