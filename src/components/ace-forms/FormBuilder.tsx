@@ -8,6 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { FormField, FormConfig, FieldType } from "@/types/aceForms";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { ConditionalLogicBuilder } from "./ConditionalLogicBuilder";
+import { SmartFieldSuggestions } from "./SmartFieldSuggestions";
 
 const fieldTypes: { type: FieldType; label: string }[] = [
   { type: "gift-card-code", label: "Gift Card Code" },
@@ -142,11 +144,19 @@ export function FormBuilder({
       </div>
 
       {/* Right Panel - Properties */}
-      <div className="w-80 border-l bg-muted/50 p-4 overflow-y-auto">
+      <div className="w-80 border-l bg-muted/50 p-4 overflow-y-auto space-y-4">
         {selectedField ? (
-          <div className="space-y-4">
-            <h3 className="font-semibold">Field Properties</h3>
-            <Separator />
+          <>
+            <div>
+              <h3 className="font-semibold">Field Properties</h3>
+              <Separator className="mt-2" />
+            </div>
+
+            {/* Smart Suggestions */}
+            <SmartFieldSuggestions
+              field={selectedField}
+              onApplySuggestion={(updates) => onUpdateField(selectedField.id, updates)}
+            />
 
             <div>
               <Label>Label</Label>
@@ -200,7 +210,16 @@ export function FormBuilder({
                 />
               </div>
             )}
-          </div>
+
+            <Separator className="my-4" />
+
+            {/* Conditional Logic */}
+            <ConditionalLogicBuilder
+              field={selectedField}
+              allFields={config.fields}
+              onUpdate={(conditional) => onUpdateField(selectedField.id, { conditional })}
+            />
+          </>
         ) : (
           <div className="space-y-4">
             <h3 className="font-semibold">Form Settings</h3>

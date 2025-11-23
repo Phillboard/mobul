@@ -57,6 +57,7 @@ import Webinar from "./pages/Webinar";
 import AceForms from "./pages/AceForms";
 import AceFormBuilder from "./pages/AceFormBuilder";
 import AceFormPublic from "./pages/AceFormPublic";
+import AceFormAnalytics from "./pages/AceFormAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,7 @@ const App = () => (
               <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
               <Route path="/ace-forms/new" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
               <Route path="/ace-forms/:id/edit" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
+              <Route path="/ace-forms/:formId/analytics" element={<ProtectedRoute><AceFormAnalytics /></ProtectedRoute>} />
               <Route path="/forms/:formId" element={<AceFormPublic />} />
               <Route path="/analytics" element={<ProtectedRoute requiredPermission="analytics.view"><Analytics /></ProtectedRoute>} />
               <Route path="/analytics/:campaignId" element={<ProtectedRoute requiredPermission="analytics.view"><CampaignAnalytics /></ProtectedRoute>} />
