@@ -147,7 +147,7 @@ export default function AceFormPublic() {
   return (
     <div 
       className={`min-h-screen flex items-center justify-center ${
-        embedMode ? 'bg-transparent p-4' : 'bg-gradient-to-br from-purple-50 via-white to-blue-50 p-6'
+        embedMode ? 'bg-transparent p-4' : 'bg-gradient-to-br from-background to-muted/20 p-6'
       }`}
       style={{ perspective: '1000px' }}
     >
@@ -163,36 +163,17 @@ export default function AceFormPublic() {
           className="w-full"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <div className={`bg-card rounded-lg shadow-lg ${embedMode ? 'p-6' : 'p-8'}`}>
-            {!embedMode && (
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
-                  Secure Form
-                </h1>
-              </div>
-            )}
-            {embedMode && (
-              <div className="mb-4 text-center">
-                <h2 className="text-xl font-bold text-foreground">
-                  {form.form_config.settings?.title || "Enter Your Gift Card Code"}
-                </h2>
-                {form.form_config.settings?.description && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {form.form_config.settings.description}
-                  </p>
-                )}
-              </div>
-            )}
-            {!embedMode && (
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-foreground">
-                  {form.form_config.settings?.title || form.name}
-                </h1>
-                {form.form_config.settings?.description && (
-                  <p className="text-muted-foreground mt-2">{form.form_config.settings.description}</p>
-                )}
-              </div>
-            )}
+          <div className={`bg-card rounded-lg shadow-xl ${embedMode ? 'p-6 border-2' : 'p-8 backdrop-blur-sm'}`}>
+            <div className={embedMode ? 'mb-4' : 'mb-6'}>
+              <h2 className={`font-bold text-foreground text-center ${embedMode ? 'text-xl' : 'text-2xl'}`}>
+                {form.form_config.settings?.title || "Enter Your Gift Card Code"}
+              </h2>
+              {form.form_config.settings?.description && !embedMode && (
+                <p className="text-muted-foreground mt-2 text-center text-base">
+                  {form.form_config.settings.description}
+                </p>
+              )}
+            </div>
 
           {/* Rate Limit Warning */}
           {rateLimitError && (

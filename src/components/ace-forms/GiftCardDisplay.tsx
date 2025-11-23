@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { GiftCardRedemption } from "@/types/aceForms";
 import { GiftCardInstructions } from "./GiftCardInstructions";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface GiftCardDisplayProps {
   redemption: GiftCardRedemption;
@@ -14,105 +15,131 @@ export function GiftCardDisplay({ redemption, embedMode = false }: GiftCardDispl
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(redemption.card_code);
-    setCopied(true);
-    toast({
-      title: "Copied!",
-      description: "Gift card code copied to clipboard",
-    });
-    setTimeout(() => setCopied(false), 2000);
+  // Cash App style - copy ALL gift card info
+  const handleCopyAll = async () => {
+    try {
+      const fullInfo = [
+        `Gift Card Code: ${redemption.card_code}`,
+        redemption.card_number ? `Card Number: ${redemption.card_number}` : null,
+        redemption.expiration_date ? `Expires: ${new Date(redemption.expiration_date).toLocaleDateString()}` : null,
+        `Value: $${redemption.card_value}`,
+        `Brand: ${redemption.brand_name}`,
+      ].filter(Boolean).join('\n');
+
+      await navigator.clipboard.writeText(fullInfo);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "Copied!",
+        description: "Gift card details copied. Paste in text messages or notes to save.",
+      });
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   };
 
   return (
-    <div className={`w-full space-y-4 ${embedMode ? 'max-w-sm' : 'max-w-md space-y-6'}`}>
+    <div className={cn("w-full", embedMode ? 'max-w-sm' : 'max-w-md')}>
       {/* Gift Card */}
       <div
-        className={`rounded-2xl text-white shadow-2xl relative overflow-hidden ${
+        className={cn(
+          "rounded-2xl text-white shadow-2xl relative overflow-hidden",
           embedMode ? 'p-6' : 'p-8'
-        }`}
+        )}
         style={{
-          background: `linear-gradient(135deg, ${redemption.brand_color || "#6366f1"}dd, ${redemption.brand_color || "#6366f1"}88)`,
+          background: redemption.brand_color 
+            ? `linear-gradient(135deg, ${redemption.brand_color} 0%, ${redemption.brand_color}dd 100%)`
+            : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
         }}
       >
         {/* Brand Logo */}
         {redemption.brand_logo && (
-          <div className={embedMode ? 'mb-3' : 'mb-4'}>
+          <div className={cn(embedMode ? 'mb-3' : 'mb-4')}>
             <img
               src={redemption.brand_logo}
               alt={redemption.brand_name}
-              className={embedMode ? 'h-10 object-contain' : 'h-12 object-contain'}
+              className={cn("object-contain bg-white/90 rounded p-1", embedMode ? 'h-10' : 'h-12')}
             />
           </div>
         )}
 
         {/* Brand Name */}
-        <div className={`opacity-90 ${embedMode ? 'text-xs mb-1' : 'text-sm mb-2'}`}>
-          {redemption.provider}
+        <div className={cn("opacity-90", embedMode ? 'text-xs mb-1' : 'text-sm mb-2')}>
+          {redemption.brand_name}
         </div>
 
         {/* Value */}
-        <div className={`font-bold ${embedMode ? 'text-3xl mb-4' : 'text-4xl mb-6'}`}>
+        <div className={cn("font-bold", embedMode ? 'text-4xl mb-4' : 'text-5xl mb-6')}>
           ${redemption.card_value.toFixed(2)}
         </div>
 
-        {/* Code */}
-        <div className={`bg-white/20 backdrop-blur rounded-lg mb-2 ${embedMode ? 'p-2' : 'p-3'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className={`opacity-75 mb-1 ${embedMode ? 'text-[10px]' : 'text-xs'}`}>
-                Redemption Code
+        {/* Code with Copy Button - Cash App Style */}
+        <div className={cn("bg-white/20 backdrop-blur rounded-lg", embedMode ? 'p-3' : 'p-4')}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className={cn("opacity-75 mb-1", embedMode ? 'text-[10px]' : 'text-xs')}>
+                Gift Card Code
               </div>
-              <div className={`font-mono font-semibold ${embedMode ? 'text-base' : 'text-lg'}`}>
+              <div className={cn("font-mono font-semibold break-all", embedMode ? 'text-base' : 'text-lg')}>
                 {redemption.card_code}
               </div>
             </div>
-            <button
-              onClick={handleCopy}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleCopyAll}
+              className="shrink-0 hover:bg-white/20 text-white h-auto py-2 px-3"
             >
               {copied ? (
-                <Check className={embedMode ? 'w-4 h-4' : 'w-5 h-5'} />
+                <>
+                  <Check className={cn(embedMode ? 'w-4 h-4 mr-1' : 'w-4 h-4 mr-1')} />
+                  <span className="text-xs font-medium">Copied!</span>
+                </>
               ) : (
-                <Copy className={embedMode ? 'w-4 h-4' : 'w-5 h-5'} />
+                <>
+                  <Copy className={cn(embedMode ? 'w-4 h-4 mr-1' : 'w-4 h-4 mr-1')} />
+                  <span className="text-xs font-medium">Copy All</span>
+                </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* Card Number */}
-        {redemption.card_number && (
-          <div className={`opacity-75 ${embedMode ? 'text-xs' : 'text-sm'}`}>
-            Card #: {redemption.card_number.replace(/(\d{4})/g, "$1 ").trim()}
-          </div>
-        )}
-
-        {/* Expiration */}
-        {redemption.expiration_date && (
-          <div className={`opacity-75 mt-1 ${embedMode ? 'text-xs' : 'text-sm'}`}>
-            Expires: {new Date(redemption.expiration_date).toLocaleDateString()}
-          </div>
-        )}
+        {/* Card Details */}
+        <div className={cn("mt-3 space-y-1", embedMode ? 'text-xs' : 'text-sm')}>
+          {redemption.card_number && (
+            <div className="opacity-75">
+              Card: {redemption.card_number.replace(/(\d{4})/g, "$1 ").trim()}
+            </div>
+          )}
+          {redemption.expiration_date && (
+            <div className="opacity-75">
+              Expires: {new Date(redemption.expiration_date).toLocaleDateString()}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Store Link */}
       {redemption.store_url && (
         <Button
-          className="w-full"
+          className={cn("w-full", embedMode ? 'mt-3' : 'mt-4')}
           size={embedMode ? 'default' : 'lg'}
           onClick={() => window.open(redemption.store_url, "_blank")}
         >
           <ExternalLink className="w-4 h-4 mr-2" />
-          Use at {redemption.brand_name}
+          Use Now at {redemption.brand_name}
         </Button>
       )}
 
       {/* Instructions - Collapsed by default in embed mode */}
       {!embedMode && (redemption.usage_restrictions || redemption.redemption_instructions) && (
-        <GiftCardInstructions
-          instructions={redemption.redemption_instructions}
-          restrictions={redemption.usage_restrictions}
-        />
+        <div className="mt-4">
+          <GiftCardInstructions
+            instructions={redemption.redemption_instructions}
+            restrictions={redemption.usage_restrictions}
+          />
+        </div>
       )}
     </div>
   );
