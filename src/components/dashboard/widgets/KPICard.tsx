@@ -6,6 +6,8 @@ import { useRewardSummary } from '@/hooks/useRewardSummary';
 import { useConditionCompletionRate } from '@/hooks/useConditionCompletionRate';
 import { useTenant } from '@/contexts/TenantContext';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 
 interface KPICardProps {
   title: string;
@@ -16,7 +18,7 @@ interface KPICardProps {
   dateRange?: number;
 }
 
-export function KPICard({ title, icon: Icon, color, bgGradient, dataKey, dateRange = 30 }: KPICardProps) {
+export function KPICard({ title, icon: Icon, color, dataKey, dateRange = 30 }: KPICardProps) {
   const { currentClient } = useTenant();
   const { stats } = useDashboardData(dateRange);
   const { data: callStats } = useCallStats(currentClient?.id);
@@ -50,27 +52,54 @@ export function KPICard({ title, icon: Icon, color, bgGradient, dataKey, dateRan
   const { value, change } = getKPIData();
 
   return (
-    <Card className={cn('p-6 transition-all hover:shadow-lg', `bg-gradient-to-br ${bgGradient}`)}>
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground font-medium">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold">{value}</p>
+    <motion.div
+      whileHover={{ scale: 1.02, y: -2 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+    >
+      <Card className="relative overflow-hidden p-6 border-border/50 bg-card hover:shadow-xl hover:border-primary/20 transition-all duration-300 h-full">
+        {/* Floating Icon */}
+        <div className={cn(
+          'absolute -top-4 -right-4 p-8 rounded-full opacity-10',
+          color
+        )}>
+          <Icon className="h-20 w-20" />
+        </div>
+
+        {/* Content */}
+        <div className="relative space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground font-medium tracking-wide uppercase">
+              {title}
+            </p>
+            <div className={cn('p-2 rounded-lg', color, 'bg-opacity-10')}>
+              <Icon className="h-5 w-5" />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <p className="text-5xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">
+              {value}
+            </p>
+            
             {change !== null && change !== undefined && (
-              <div className={cn(
-                'flex items-center gap-1 text-sm font-medium',
-                change >= 0 ? 'text-green-600' : 'text-red-600'
-              )}>
-                {change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+              <Badge 
+                variant={change >= 0 ? "default" : "destructive"} 
+                className="gap-1 font-semibold"
+              >
+                {change >= 0 ? (
+                  <TrendingUp className="h-3 w-3" />
+                ) : (
+                  <TrendingDown className="h-3 w-3" />
+                )}
                 <span>{Math.abs(change)}%</span>
-              </div>
+              </Badge>
             )}
           </div>
         </div>
-        <div className={cn('p-4 rounded-full', color, 'bg-background/50')}>
-          <Icon className="h-6 w-6" />
-        </div>
-      </div>
-    </Card>
+
+        {/* Bottom accent line */}
+        <div className={cn('absolute bottom-0 left-0 right-0 h-1', color, 'opacity-50')} />
+      </Card>
+    </motion.div>
   );
 }
