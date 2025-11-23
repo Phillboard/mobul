@@ -65,6 +65,7 @@ import AdminAuditLog from "./pages/AdminAuditLog";
 import PerformanceMonitoring from "./pages/PerformanceMonitoring";
 import ErrorTracking from "./pages/ErrorTracking";
 import SystemAlerts from "./pages/SystemAlerts";
+import Help from "./pages/Help";
 
 // Optimized React Query configuration for better performance
 const queryClient = new QueryClient({
@@ -151,6 +152,7 @@ const App = () => (
               <Route path="/settings/:tab" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/zapier-templates" element={<ProtectedRoute><ZapierTemplates /></ProtectedRoute>} />
               <Route path="/generate-favicon" element={<ProtectedRoute><GenerateFavicon /></ProtectedRoute>} />
+              <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
               <Route path="/users" element={<ProtectedRoute requiredPermission="users.view"><UserManagement /></ProtectedRoute>} />
               <Route path="/agent/call/:sessionId" element={<ProtectedRoute><AgentCallDashboard /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

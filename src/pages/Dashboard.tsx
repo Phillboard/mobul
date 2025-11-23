@@ -47,6 +47,7 @@ import { useNavigate } from "react-router-dom";
 import { ConditionsSummaryCard } from "@/components/dashboard/ConditionsSummaryCard";
 import { GiftCardSummaryCard } from "@/components/dashboard/GiftCardSummaryCard";
 import { AIInsightsPanel } from "@/components/dashboard/AIInsightsPanel";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 
 const Dashboard = () => {
   const { currentClient, isAdminMode } = useTenant();
@@ -208,8 +209,20 @@ const Dashboard = () => {
     );
   }
 
+  const dashboardData = {
+    total_campaigns: stats?.activeCampaigns || 0,
+    active_campaigns: stats?.activeCampaigns || 0,
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Onboarding Checklist - Show for new users */}
+      {dashboardData?.total_campaigns === 0 && (
+        <div className="mb-6">
+          <OnboardingChecklist />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-2 md:gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
