@@ -13,7 +13,7 @@ import Index from "./pages/Index";
 import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
 import PURLLandingPage from "./pages/PURLLandingPage";
-import Audiences from "./pages/Audiences";
+
 import AudienceDetail from "./pages/AudienceDetail";
 import RecipientDetail from "./pages/RecipientDetail";
 import Templates from "./pages/Templates";
