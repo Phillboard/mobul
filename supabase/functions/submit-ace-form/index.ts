@@ -22,11 +22,76 @@ serve(async (req) => {
     // Get form config
     const { data: form, error: formError } = await supabase
       .from('ace_forms')
-      .select('*')
+      .select('*, clients(id)')
       .eq('id', formId)
       .single();
 
-    if (formError) throw formError;
+    if (formError) {
+      console.error('Form error:', formError);
+      throw formError;
+    }
+
+    // Extract email from form data for contact enrichment
+    const email = data.email?.toLowerCase().trim();
+    let contactId: string | null = null;
+
+    // Phase 1: Contact Enrichment - Find or create contact
+    if (email && form.clients?.id) {
+      try {
+        // Try to find existing contact
+        const { data: existingContact } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('email', email)
+          .eq('client_id', form.clients.id)
+          .single();
+
+        if (existingContact) {
+          // Update existing contact with new data
+          const updateData: any = {
+            last_interaction_date: new Date().toISOString(),
+          };
+          
+          if (data.first_name) updateData.first_name = data.first_name;
+          if (data.last_name) updateData.last_name = data.last_name;
+          if (data.phone) updateData.phone = data.phone;
+          if (data.company) updateData.company = data.company;
+
+          await supabase
+            .from('contacts')
+            .update(updateData)
+            .eq('id', existingContact.id);
+
+          contactId = existingContact.id;
+          console.log('Updated existing contact:', contactId);
+        } else {
+          // Create new contact
+          const { data: newContact } = await supabase
+            .from('contacts')
+            .insert({
+              client_id: form.clients.id,
+              email: email,
+              first_name: data.first_name || null,
+              last_name: data.last_name || null,
+              phone: data.phone || null,
+              company: data.company || null,
+              source: 'ace_form',
+              lifecycle_stage: 'lead',
+              last_interaction_date: new Date().toISOString(),
+            })
+            .select('id')
+            .single();
+
+          if (newContact) {
+            contactId = newContact.id;
+            console.log('Created new contact:', contactId);
+          }
+        }
+      } catch (contactError) {
+        console.error('Contact enrichment error:', contactError);
+        // Continue even if contact enrichment fails
+      }
+    }
 
     // Check if gift card code is provided
     const giftCardCode = data.code;
@@ -45,7 +110,8 @@ serve(async (req) => {
         gift_card_pools!inner(
           card_value,
           provider,
-          brand_id
+          brand_id,
+          client_id
         )
       `)
       .eq('card_code', giftCardCode.toUpperCase())
@@ -53,6 +119,7 @@ serve(async (req) => {
       .single();
 
     if (cardError || !giftCard) {
+      console.error('Gift card error:', cardError);
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid or already claimed gift card code' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
@@ -66,29 +133,64 @@ serve(async (req) => {
       .eq('id', giftCard.gift_card_pools.brand_id)
       .single();
 
+    // Find recipient if this card was assigned to someone
+    let recipientId: string | null = null;
+    const { data: recipient } = await supabase
+      .from('recipients')
+      .select('id')
+      .eq('gift_card_id', giftCard.id)
+      .single();
+
+    if (recipient) {
+      recipientId = recipient.id;
+      
+      // Update recipient with contact info if we have it
+      if (contactId) {
+        await supabase
+          .from('recipients')
+          .update({
+            email: email,
+            first_name: data.first_name || null,
+            last_name: data.last_name || null,
+            phone: data.phone || null,
+          })
+          .eq('id', recipient.id);
+        
+        console.log('Updated recipient with contact data');
+      }
+    }
+
     // Mark card as claimed
     await supabase
       .from('gift_cards')
-      .update({ status: 'claimed', claimed_at: new Date().toISOString() })
+      .update({ 
+        status: 'claimed', 
+        claimed_at: new Date().toISOString(),
+        claimed_by_email: email || null,
+      })
       .eq('id', giftCard.id);
 
-    // Save submission
+    // Save submission with contact and enrichment data
     await supabase
       .from('ace_form_submissions')
       .insert({
         form_id: formId,
         gift_card_id: giftCard.id,
+        recipient_id: recipientId,
+        contact_id: contactId,
         submission_data: data,
         ip_address: req.headers.get('x-forwarded-for'),
         user_agent: req.headers.get('user-agent'),
+        enrichment_status: contactId ? 'completed' : 'no_email',
       });
 
-    // Update form stats
-    await supabase.rpc('increment', {
-      table_name: 'ace_forms',
-      row_id: formId,
-      column_name: 'total_submissions'
+    // Update form stats using the new RPC function
+    await supabase.rpc('increment_form_stat', {
+      form_id: formId,
+      stat_name: 'submissions'
     });
+
+    console.log('Form submission completed successfully');
 
     return new Response(
       JSON.stringify({

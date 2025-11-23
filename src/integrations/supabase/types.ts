@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       ace_form_submissions: {
         Row: {
+          contact_id: string | null
+          enrichment_status: string | null
           form_id: string
           gift_card_id: string | null
           id: string
@@ -27,6 +29,8 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
+          contact_id?: string | null
+          enrichment_status?: string | null
           form_id: string
           gift_card_id?: string | null
           id?: string
@@ -38,6 +42,8 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
+          contact_id?: string | null
+          enrichment_status?: string | null
           form_id?: string
           gift_card_id?: string | null
           id?: string
@@ -81,6 +87,8 @@ export type Database = {
           form_config: Json
           id: string
           is_active: boolean | null
+          is_draft: boolean | null
+          last_auto_save: string | null
           name: string
           template_id: string | null
           total_submissions: number | null
@@ -95,6 +103,8 @@ export type Database = {
           form_config?: Json
           id?: string
           is_active?: boolean | null
+          is_draft?: boolean | null
+          last_auto_save?: string | null
           name: string
           template_id?: string | null
           total_submissions?: number | null
@@ -109,6 +119,8 @@ export type Database = {
           form_config?: Json
           id?: string
           is_active?: boolean | null
+          is_draft?: boolean | null
+          last_auto_save?: string | null
           name?: string
           template_id?: string | null
           total_submissions?: number | null
@@ -3403,6 +3415,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_form_stat: {
+        Args: { form_id: string; stat_name: string }
+        Returns: undefined
       }
       platform_admin_exists: { Args: never; Returns: boolean }
       user_can_access_client: {

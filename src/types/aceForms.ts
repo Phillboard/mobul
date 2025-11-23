@@ -72,6 +72,8 @@ export interface AceForm {
   form_config: FormConfig;
   template_id?: string;
   is_active: boolean;
+  is_draft?: boolean;
+  last_auto_save?: string;
   total_submissions: number;
   total_views: number;
   created_by?: string;

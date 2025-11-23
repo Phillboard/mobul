@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Save, Eye, ArrowLeft } from "lucide-react";
+import { Save, Eye, ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFormBuilder } from "@/hooks/useFormBuilder";
 import { useAceForms, useAceForm } from "@/hooks/useAceForms";
@@ -8,7 +8,9 @@ import { useTenant } from "@/contexts/TenantContext";
 import { FormBuilder } from "@/components/ace-forms/FormBuilder";
 import { FormTemplateSelector } from "@/components/ace-forms/FormTemplateSelector";
 import { ExportDialog } from "@/components/ace-forms/ExportDialog";
-import { useState } from "react";
+import { AIFormGenerator } from "@/components/ace-forms/AIFormGenerator";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Ace Form Builder - Visual form editor
@@ -21,7 +23,11 @@ export default function AceFormBuilder() {
   const { createForm, updateForm } = useAceForms(currentClient?.id);
   const [showTemplates, setShowTemplates] = useState(!formId);
   const [showExport, setShowExport] = useState(false);
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [formName, setFormName] = useState("");
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimerRef = useRef<number>();
+  const { toast } = useToast();
 
   const {
     config,
@@ -40,8 +46,51 @@ export default function AceFormBuilder() {
     if (existingForm) {
       setConfig(existingForm.form_config);
       setFormName(existingForm.name);
+      setLastSaved(new Date(existingForm.updated_at || existingForm.created_at));
     }
   }, [existingForm, setConfig]);
+
+  // Auto-save every 3 seconds
+  const performAutoSave = useCallback(async () => {
+    if (!currentClient || !formId) return;
+
+    try {
+      await updateForm.mutateAsync({
+        id: formId,
+        updates: {
+          client_id: currentClient.id,
+          name: formName || "Untitled Form",
+          form_config: config,
+          is_draft: true,
+          last_auto_save: new Date().toISOString(),
+        },
+      });
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    }
+  }, [currentClient, formId, formName, config, updateForm]);
+
+  useEffect(() => {
+    // Only auto-save for existing forms
+    if (!formId) return;
+
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Set new timer
+    autoSaveTimerRef.current = window.setTimeout(() => {
+      performAutoSave();
+    }, 3000);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [formId, config, formName, performAutoSave]);
 
   const handleSave = async () => {
     if (!currentClient) return;
@@ -50,26 +99,73 @@ export default function AceFormBuilder() {
       client_id: currentClient.id,
       name: formName || "Untitled Form",
       form_config: config,
+      is_draft: false, // Mark as not draft when explicitly saved
     };
 
     if (formId) {
       await updateForm.mutateAsync({ id: formId, updates: formData });
+      toast({
+        title: "Form Saved",
+        description: "Your form has been saved successfully.",
+      });
     } else {
       const newForm = await createForm.mutateAsync(formData);
       navigate(`/ace-forms/${newForm.id}/edit`);
+      toast({
+        title: "Form Created",
+        description: "Your form has been created successfully.",
+      });
     }
+    setLastSaved(new Date());
+  };
+
+  const handleAIGenerated = (name: string, description: string, aiConfig: any) => {
+    setFormName(name);
+    setConfig(aiConfig);
+    setShowAIGenerator(false);
+    toast({
+      title: "AI Form Ready",
+      description: "Your form has been generated. You can now customize it further.",
+    });
   };
 
   if (showTemplates) {
     return (
-      <FormTemplateSelector
-        onSelect={(template) => {
-          setConfig(template.config);
-          setFormName(template.name);
-          setShowTemplates(false);
-        }}
-        onCancel={() => navigate("/ace-forms")}
-      />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto py-8 space-y-6">
+          <Button variant="ghost" onClick={() => navigate("/ace-forms")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Forms
+          </Button>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* AI Generator */}
+            <div className="border rounded-lg p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold">Generate with AI</h2>
+              </div>
+              <p className="text-muted-foreground">
+                Describe your form and let AI create it for you in seconds.
+              </p>
+              <AIFormGenerator onGenerated={handleAIGenerated} />
+            </div>
+
+            {/* Template Selector */}
+            <div className="border rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Or Choose a Template</h2>
+              <FormTemplateSelector
+                onSelect={(template) => {
+                  setConfig(template.config);
+                  setFormName(template.name);
+                  setShowTemplates(false);
+                }}
+                onCancel={() => navigate("/ace-forms")}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -94,6 +190,15 @@ export default function AceFormBuilder() {
         </div>
 
         <div className="flex items-center gap-2">
+          {lastSaved && (
+            <span className="text-xs text-muted-foreground">
+              Last saved: {lastSaved.toLocaleTimeString()}
+            </span>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setShowAIGenerator(true)}>
+            <Sparkles className="w-4 h-4 mr-2" />
+            AI Assistant
+          </Button>
           <Button variant="outline" size="sm" onClick={() => navigate(`/forms/${formId}`)}>
             <Eye className="w-4 h-4 mr-2" />
             Preview
@@ -122,6 +227,19 @@ export default function AceFormBuilder() {
         onReorderFields={reorderFields}
         onUpdateSettings={updateSettings}
       />
+
+      {/* AI Generator Dialog */}
+      <Dialog open={showAIGenerator} onOpenChange={setShowAIGenerator}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>AI Form Assistant</DialogTitle>
+            <DialogDescription>
+              Describe what you want to add or change, and AI will help you.
+            </DialogDescription>
+          </DialogHeader>
+          <AIFormGenerator onGenerated={handleAIGenerated} />
+        </DialogContent>
+      </Dialog>
 
       {/* Export Dialog */}
       {formId && (
