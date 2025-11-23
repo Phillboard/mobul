@@ -221,24 +221,22 @@ export default function AceFormBuilder() {
                 AI Assistant
               </Button>
               
-              {/* Preview button - always enabled */}
+              {/* Preview button */}
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => {
-                  if (formId) {
-                    window.open(`/forms/${formId}`, '_blank');
-                  } else {
-                    toast({
-                      title: "Save First",
-                      description: "Please save your form to get a preview link",
-                      variant: "destructive"
-                    });
+                onClick={async () => {
+                  if (!formId) {
+                    // If no formId, save first to create the form
+                    await handleSave();
+                    return;
                   }
+                  window.open(`/forms/${formId}`, '_blank');
                 }}
+                disabled={!formId && (createForm.isPending || updateForm.isPending)}
               >
                 <Eye className="w-4 h-4 mr-2" />
-                Preview
+                {!formId ? "Save & Preview" : "Preview"}
               </Button>
 
               {formId && (
