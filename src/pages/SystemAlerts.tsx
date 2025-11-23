@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,19 +8,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, Bell, CheckCircle2, Info, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { ExportButton } from "@/components/monitoring/ExportButton";
+import { FilterPanel } from "@/components/monitoring/FilterPanel";
 
 export default function SystemAlerts() {
   const queryClient = useQueryClient();
+  const [filters, setFilters] = useState({
+    severity: "all",
+    status: "all",
+  });
 
-  // Fetch system alerts
+  // Fetch system alerts with filtering
   const { data: alerts, isLoading } = useQuery({
-    queryKey: ['system-alerts'],
+    queryKey: ['system-alerts', filters],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('system_alerts')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
+
+      // Apply filters
+      if (filters.severity !== "all") {
+        query = query.eq('severity', filters.severity);
+      }
+
+      if (filters.status === "unresolved") {
+        query = query.eq('resolved', false);
+      } else if (filters.status === "acknowledged") {
+        query = query.eq('acknowledged', true).eq('resolved', false);
+      } else if (filters.status === "resolved") {
+        query = query.eq('resolved', true);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
@@ -74,6 +96,14 @@ export default function SystemAlerts() {
     },
   });
 
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ severity: "all", status: "all" });
+  };
+
   const unresolvedAlerts = alerts?.filter(a => !a.resolved).length || 0;
   const criticalAlerts = alerts?.filter(a => !a.resolved && a.severity === 'critical').length || 0;
   const warningAlerts = alerts?.filter(a => !a.resolved && a.severity === 'warning').length || 0;
@@ -103,14 +133,32 @@ export default function SystemAlerts() {
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            System Alerts
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Monitor system health and operational alerts
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              System Alerts
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Monitor system health and operational alerts
+            </p>
+          </div>
+          {alerts && alerts.length > 0 && (
+            <ExportButton 
+              data={alerts} 
+              filename={`system-alerts-${format(new Date(), 'yyyy-MM-dd')}`}
+            />
+          )}
         </div>
+
+        <FilterPanel
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={clearFilters}
+          availableFilters={{
+            severity: true,
+            status: true,
+          }}
+        />
 
         {/* Summary Cards */}
         <div className="grid gap-4 md:grid-cols-3">

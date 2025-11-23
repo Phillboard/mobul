@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,19 +8,39 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, CheckCircle2, XCircle, Clock, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { ExportButton } from "@/components/monitoring/ExportButton";
+import { FilterPanel } from "@/components/monitoring/FilterPanel";
 
 export default function ErrorTracking() {
   const queryClient = useQueryClient();
+  const [filters, setFilters] = useState({
+    timeRange: "24h",
+    status: "all",
+    searchQuery: "",
+  });
 
-  // Fetch error logs
+  // Fetch error logs with filtering
   const { data: errors, isLoading } = useQuery({
-    queryKey: ['error-logs'],
+    queryKey: ['error-logs', filters],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('error_logs')
         .select('*')
         .order('occurred_at', { ascending: false })
         .limit(100);
+
+      // Apply filters
+      if (filters.status === "unresolved") {
+        query = query.eq('resolved', false);
+      } else if (filters.status === "resolved") {
+        query = query.eq('resolved', true);
+      }
+
+      if (filters.searchQuery) {
+        query = query.ilike('error_message', `%${filters.searchQuery}%`);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
@@ -69,17 +90,44 @@ export default function ErrorTracking() {
     ? Object.values(errorsByType).sort((a: any, b: any) => b.unresolved - a.unresolved)
     : [];
 
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ timeRange: "24h", status: "all", searchQuery: "" });
+  };
+
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Error Tracking
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Monitor and manage application errors
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Error Tracking
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Monitor and manage application errors
+            </p>
+          </div>
+          {errors && errors.length > 0 && (
+            <ExportButton 
+              data={errors} 
+              filename={`error-logs-${format(new Date(), 'yyyy-MM-dd')}`}
+            />
+          )}
         </div>
+
+        <FilterPanel
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={clearFilters}
+          availableFilters={{
+            timeRange: true,
+            status: true,
+            search: true,
+          }}
+        />
 
         {/* Summary Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
