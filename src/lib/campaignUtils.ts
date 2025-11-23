@@ -210,3 +210,49 @@ export function generateUniqueCampaignName(baseName: string, existingNames: stri
 
   return name;
 }
+
+/**
+ * Get color for campaign status badge
+ * 
+ * @param status - Campaign status
+ * @returns Color name for badge
+ */
+export function getCampaignStatusColor(status: CampaignStatus): string {
+  switch (status) {
+    case 'draft':
+      return 'gray';
+    case 'scheduled':
+      return 'blue';
+    case 'in_progress':
+      return 'green';
+    case 'completed':
+      return 'gray';
+    case 'cancelled':
+      return 'red';
+    default:
+      return 'gray';
+  }
+}
+
+/**
+ * Check if a campaign can be edited based on its status
+ * 
+ * @param status - Campaign status
+ * @returns True if campaign can be edited
+ */
+export function canEditCampaign(status: CampaignStatus): boolean {
+  return status === 'draft';
+}
+
+/**
+ * Calculate campaign progress percentage
+ * 
+ * @param current - Current progress value
+ * @param total - Total target value
+ * @returns Progress percentage (0-100)
+ */
+export function calculateCampaignProgress(current: number, total: number): number {
+  if (total === 0) return 0;
+  const progress = (current / total) * 100;
+  return Math.min(Math.round(progress), 100);
+}

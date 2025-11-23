@@ -139,3 +139,34 @@ export function calculatePercentage(
   const percent = (partial / total) * 100;
   return formatPercentage(percent, decimals);
 }
+
+/**
+ * Calculates the final price after applying a markup percentage
+ * 
+ * @param basePrice - The base price before markup
+ * @param markupPercent - The markup percentage to apply
+ * @returns Final price after markup
+ * 
+ * @example
+ * calculateMarkup(100, 20) // 120 (100 + 20%)
+ * calculateMarkup(50, 10) // 55 (50 + 10%)
+ */
+export function calculateMarkup(basePrice: number, markupPercent: number): number {
+  return basePrice + (basePrice * markupPercent / 100);
+}
+
+/**
+ * Calculates profit from a sale
+ * 
+ * @param salePrice - Price sold at
+ * @param costPrice - Cost to acquire
+ * @param quantity - Number of units
+ * @returns Total profit
+ * 
+ * @example
+ * calculateProfit(120, 100, 1) // 20
+ * calculateProfit(55, 50, 10) // 50 (total profit)
+ */
+export function calculateProfit(salePrice: number, costPrice: number, quantity: number): number {
+  return (salePrice - costPrice) * quantity;
+}
