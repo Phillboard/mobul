@@ -3,7 +3,8 @@ import { useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Mail, FileText, Users, Building2, Gift, Headphones, Phone,
   BarChart3, Code, Settings as SettingsIcon, ShoppingCart, Globe, Handshake,
-  Activity, ListTodo, Workflow, ChevronRight, ArrowLeft, FormInput
+  Activity, ListTodo, Workflow, ChevronRight, ArrowLeft, FormInput, AlertTriangle,
+  Gauge, Bug
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -90,6 +91,9 @@ const navigationGroups: NavGroup[] = [
     collapsible: true, 
     items: [
       { name: "Analytics", href: "/analytics", icon: BarChart3, permissions: ['analytics.view'], keywords: ["reports", "metrics"], description: "View analytics" },
+      { name: "Performance", href: "/performance", icon: Gauge, permissions: ['analytics.view'], keywords: ["monitoring", "speed", "metrics"], description: "Performance monitoring" },
+      { name: "Error Tracking", href: "/errors", icon: Bug, permissions: ['analytics.view'], keywords: ["bugs", "issues", "debugging"], description: "Error logs" },
+      { name: "System Alerts", href: "/alerts", icon: AlertTriangle, permissions: ['analytics.view'], keywords: ["warnings", "notifications"], description: "System alerts" },
       { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team"], description: "Manage users" },
       { name: "API & Integrations", href: "/api", icon: Code, permissions: ['api.view', 'settings.integrations'], keywords: ["developer"], description: "API keys" },
       { name: "Automation", href: "/zapier-templates", icon: Workflow, permissions: ['settings.integrations'], keywords: ["zapier"], description: "Zapier integrations" },
