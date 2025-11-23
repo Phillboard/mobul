@@ -1,6 +1,7 @@
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { DraggableWidget } from './DraggableWidget';
 import { DashboardWidget } from '@/config/dashboardWidgets';
+import { motion } from 'framer-motion';
 
 interface DashboardGridProps {
   widgets: DashboardWidget[];
@@ -37,10 +38,15 @@ export function DashboardGrid({
     <DragDropContext onDragEnd={handleDragEnd}>
       <Droppable droppableId="dashboard">
         {(provided, snapshot) => (
-          <div
+          <motion.div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`grid gap-6 ${snapshot.isDraggingOver ? 'bg-accent/5 rounded-lg p-2' : ''}`}
+            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ${
+              snapshot.isDraggingOver ? 'bg-primary/5 rounded-xl p-2 transition-colors' : ''
+            }`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
           >
             {orderedWidgets.map((widget, index) => (
               <DraggableWidget
@@ -53,7 +59,7 @@ export function DashboardGrid({
               />
             ))}
             {provided.placeholder}
-          </div>
+          </motion.div>
         )}
       </Droppable>
     </DragDropContext>

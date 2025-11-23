@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid';
 import { DashboardSettingsDialog } from '@/components/dashboard/DashboardSettingsDialog';
 import { useDashboardPreferences } from '@/hooks/useDashboardPreferences';
+import { motion } from 'framer-motion';
 
 export default function Dashboard() {
   const { currentClient, isAdminMode } = useTenant();
@@ -89,11 +90,25 @@ export default function Dashboard() {
 
       {/* Drag Mode Banner */}
       {isDragMode && (
-        <div className="bg-primary/10 border-2 border-primary/50 rounded-lg p-4 text-center animate-in fade-in slide-in-from-top-2">
-          <p className="font-medium text-primary">
-            🎯 Drag Mode Active - Drag widgets to rearrange or click the eye icon to hide
-          </p>
-        </div>
+        <motion.div 
+          className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-2 border-primary/30 rounded-xl p-6 shadow-lg"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+        >
+          <div className="flex items-center justify-center gap-3 text-center">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 bg-primary rounded-full animate-pulse" />
+              <p className="font-semibold text-primary text-lg">
+                🎯 Drag Mode Active
+              </p>
+            </div>
+            <div className="hidden md:block h-4 w-px bg-primary/30" />
+            <p className="hidden md:block text-sm text-muted-foreground">
+              Drag widgets to rearrange • Click 👁️ to hide • Click ⚙️ to customize
+            </p>
+          </div>
+        </motion.div>
       )}
 
       {/* Draggable Dashboard Grid */}
