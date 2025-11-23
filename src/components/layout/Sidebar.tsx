@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Mail, FileText, Users, Building2, Gift, Headphones, Phone,
   BarChart3, Code, Settings as SettingsIcon, ShoppingCart, Globe, Handshake,
-  Activity, ListTodo, Workflow, ChevronRight, ArrowLeft
+  Activity, ListTodo, Workflow, ChevronRight, ArrowLeft, FormInput
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -50,6 +50,7 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'], keywords: ["mail", "postcards"], description: "Manage campaigns" },
       { name: "DirectMail", href: "/templates", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts", "templates"], description: "Direct mail templates" },
+      { name: "Ace Forms", href: "/ace-forms", icon: FormInput, permissions: ['campaigns.view'], keywords: ["forms", "gift card", "redemption"], description: "AI form builder" },
       { name: "Webinar", href: "/webinar", icon: Users, permissions: ['campaigns.view'], keywords: ["events", "online", "meetings"], description: "Manage webinars" },
       { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl"], description: "Manage landing pages" },
     ]

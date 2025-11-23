@@ -54,6 +54,9 @@ import Activities from "./pages/Activities";
 import Tasks from "./pages/Tasks";
 import AdminGiftCardMarketplace from "./pages/AdminGiftCardMarketplace";
 import Webinar from "./pages/Webinar";
+import AceForms from "./pages/AceForms";
+import AceFormBuilder from "./pages/AceFormBuilder";
+import AceFormPublic from "./pages/AceFormPublic";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +87,10 @@ const App = () => (
               <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
               <Route path="/template-builder/:id" element={<ProtectedRoute><TemplateBuilderV2 /></ProtectedRoute>} />
               <Route path="/webinar" element={<ProtectedRoute><Webinar /></ProtectedRoute>} />
+              <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
+              <Route path="/ace-forms/new" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
+              <Route path="/ace-forms/:id/edit" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
+              <Route path="/forms/:formId" element={<AceFormPublic />} />
               <Route path="/analytics" element={<ProtectedRoute requiredPermission="analytics.view"><Analytics /></ProtectedRoute>} />
               <Route path="/analytics/:campaignId" element={<ProtectedRoute requiredPermission="analytics.view"><CampaignAnalytics /></ProtectedRoute>} />
               <Route path="/campaign-prototype/:id" element={<ProtectedRoute><CampaignPrototype /></ProtectedRoute>} />
