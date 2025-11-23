@@ -62,7 +62,21 @@ import AceFormAnalytics from "./pages/AceFormAnalytics";
 import AceFormsDocumentation from "./pages/AceFormsDocumentation";
 import AdminAuditLog from "./pages/AdminAuditLog";
 
-const queryClient = new QueryClient();
+// Optimized React Query configuration for better performance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetching
+      gcTime: 10 * 60 * 1000, // 10 minutes - garbage collection time
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      retry: 1, // Only retry once on failure
+      refetchOnMount: 'always', // Always refetch on component mount
+    },
+    mutations: {
+      retry: 0, // Don't retry mutations
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
