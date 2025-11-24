@@ -1,8 +1,16 @@
 # Gift Card Redemption - Monitoring & Alerting Setup
 
+> ⚠️ **Prerequisites:** Complete [CONFIGURATION_SETUP.md](./CONFIGURATION_SETUP.md) first to configure alert recipients.
+
 ## Overview
 
 This guide provides SQL queries and configurations for monitoring the gift card redemption system in production.
+
+**Alert Channels** (configured via environment variables):
+- **Slack:** `${ALERT_SLACK_WEBHOOK_URL}` → Channels: `#redemption-critical`, `#redemption-alerts`, `#redemption-daily`
+- **Email:** `${ALERT_EMAIL_RECIPIENTS}` (comma-separated list)
+
+[→ Configure Alert Recipients](./CONFIGURATION_SETUP.md)
 
 ---
 
@@ -353,6 +361,11 @@ WHERE jobname LIKE '%gift%' OR jobname LIKE '%sms%';
 
 ## Alert Configurations
 
+> **Note:** Alert recipients are configured in [CONFIGURATION_SETUP.md](./CONFIGURATION_SETUP.md)
+> - Critical alerts → `${ALERT_EMAIL_RECIPIENTS}` + Slack `#redemption-critical`
+> - Warning alerts → `${ALERT_EMAIL_RECIPIENTS}` + Slack `#redemption-alerts`
+> - Info alerts → Slack `#redemption-daily` + Email distribution list
+
 ### Critical Alerts (Immediate Response Required)
 
 **Alert 1: Pool Empty**
@@ -368,8 +381,8 @@ AND active = true;
 
 -- If any results, trigger:
 -- - Slack: #redemption-critical
--- - Email: ops@company.com
--- - PagerDuty: Incident creation
+-- - Email: ${ALERT_EMAIL_RECIPIENTS}
+-- - PagerDuty: Incident creation (if configured)
 ```
 
 **Alert 2: High Error Rate**
@@ -412,7 +425,7 @@ WHERE failure_rate > 20;
 
 -- If triggered:
 -- - Slack: #redemption-alerts
--- - Email: sms-team@company.com
+-- - Email: ${ALERT_EMAIL_RECIPIENTS} (SMS monitoring team)
 ```
 
 ---
@@ -433,7 +446,7 @@ AND available_cards > 0;
 
 -- If triggered:
 -- - Slack: #redemption-alerts
--- - Email: inventory-team@company.com
+-- - Email: ${ALERT_EMAIL_RECIPIENTS} (inventory team)
 ```
 
 **Alert 5: Stuck Cards Detected**
@@ -476,7 +489,7 @@ AND (
 
 -- If any results:
 -- - Slack: #redemption-alerts
--- - Email: devops@company.com
+-- - Email: ${ALERT_EMAIL_RECIPIENTS} (devops team)
 ```
 
 ---
@@ -504,7 +517,7 @@ SELECT
   (SELECT COUNT(*) FROM gift_card_pools WHERE available_cards <= low_stock_threshold) as low_pools;
 
 -- Send to:
--- - Email: daily-report@company.com
+-- - Email: ${ALERT_EMAIL_RECIPIENTS} (daily summary)
 -- - Slack: #redemption-daily
 ```
 
@@ -559,7 +572,7 @@ await fetch(slackWebhook, {
               type: 'plain_text',
               text: 'View Pool'
             },
-            url: `https://yourapp.lovable.app/gift-cards/pools/${poolId}`
+            url: `${Deno.env.get('APP_URL') || 'https://yourapp.lovable.app'}/gift-cards/pools/${poolId}`
           }
         ]
       }

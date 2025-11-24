@@ -1,18 +1,20 @@
 # Gift Card Redemption System - Operations Runbook
 
+> ⚠️ **Before using this runbook:** Complete configuration in [CONFIGURATION_SETUP.md](./CONFIGURATION_SETUP.md)
+
 ## Quick Reference
 
 ### Emergency Contacts
-- **Tech Support Lead:** [Name] - [Phone]
-- **Database Admin:** [Name] - [Phone]
-- **Twilio Support:** 1-888-XXX-XXXX
-- **On-Call Engineer:** [Rotation Schedule]
+- **Customer Support Line:** `${SUPPORT_PHONE_NUMBER}` (see [CONFIGURATION_SETUP.md](./CONFIGURATION_SETUP.md))
+- **Support Email:** `${SUPPORT_EMAIL}`
+- **Twilio Support:** 1-888-843-9377 (Real Twilio Support)
+- **Alert Channels:** Slack `#redemption-critical` or `${ALERT_EMAIL_RECIPIENTS}`
 
 ### Critical Links
-- **Supabase Dashboard:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo
+- **Backend Dashboard:** <lov-presentation-actions><lov-presentation-open-backend>View Backend</lov-presentation-open-backend></lov-presentation-actions>
 - **Twilio Console:** https://console.twilio.com
-- **Error Logs:** [Link to monitoring dashboard]
-- **System Alerts:** [Link to Slack channel]
+- **System Alerts:** Check Slack `#redemption-critical` channel (configured in setup)
+- **Configuration Guide:** [CONFIGURATION_SETUP.md](./CONFIGURATION_SETUP.md)
 
 ---
 
@@ -584,7 +586,7 @@ Lessons Learned:
 
 **For Call Center Agents:**
 
-> "Thank you for calling [Company Name] Gift Card Support. I understand you're having trouble redeeming your gift card. Let me help you with that.
+> "Thank you for calling ${COMPANY_NAME} Gift Card Support. I understand you're having trouble redeeming your gift card. Let me help you with that.
 >
 > [Pause for customer to explain]
 >
@@ -601,6 +603,8 @@ Lessons Learned:
 > **If code invalid:**
 > I'm having trouble locating that code in our system. Let me verify - you said [repeat code]. Is that correct? Could you also confirm where you received this code from? [Check if typo or expired campaign]
 >
+> **If customer needs immediate help:**
+> For urgent assistance, you can also email us at ${SUPPORT_EMAIL} or call our support line at ${SUPPORT_PHONE_NUMBER}. Your reference number is [ticket number]."
 > Is there anything else I can help you with today?"
 
 ---

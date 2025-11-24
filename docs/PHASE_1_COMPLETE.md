@@ -203,13 +203,30 @@ All critical MVP redemption fixes have been successfully implemented and deploye
 
 ## Configuration Required
 
-### Environment Variables to Add
+> ⚠️ **IMPORTANT:** Complete these configurations before production launch!
+
+See [CONFIGURATION_SETUP.md](./CONFIGURATION_SETUP.md) for detailed setup instructions.
+
+### Required Environment Variables
+
+Configure these in **Lovable Cloud → Settings → Secrets**:
+
+```bash
+# CRITICAL - Customer-facing support info
+COMPANY_NAME="Your Company Name"
+SUPPORT_PHONE_NUMBER="1-800-555-GIFT"  # Your actual support line
+SUPPORT_EMAIL="support@yourcompany.com"
+
+# Recommended - System alerts
+ALERT_EMAIL_RECIPIENTS="ops@yourcompany.com,admin@yourcompany.com"
+ALERT_SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
 ```
-SUPPORT_PHONE_NUMBER=1-800-XXX-XXXX
-SUPPORT_EMAIL=support@yourdomain.com
-ALERT_SLACK_WEBHOOK_URL=https://hooks.slack.com/... (optional)
-ALERT_EMAIL_RECIPIENTS=admin@yourdomain.com,manager@yourdomain.com
-```
+
+**Status:**
+- Already configured: Supabase, Twilio credentials
+- **Needs configuration**: Company info, support contacts, alert recipients
+
+[→ Complete Configuration Setup](./CONFIGURATION_SETUP.md)
 
 ---
 

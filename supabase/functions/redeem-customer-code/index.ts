@@ -1,18 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
 import { checkRateLimit, createRateLimitResponse } from '../_shared/rate-limiter.ts';
+import { ERROR_MESSAGES } from '../_shared/config.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-const ERROR_MESSAGES = {
-  INVALID_CODE: "We couldn't find that code. Please double-check and try again.",
-  CAMPAIGN_MISMATCH: "This code is not valid for this campaign.",
-  PENDING_APPROVAL: "Your code is being reviewed. You'll receive a call within 24 hours.",
-  REJECTED: "This code has been declined. Please contact support for assistance.",
-  ALREADY_REDEEMED: "Good news! You already claimed this card. Your details are shown below.",
-  POOL_EMPTY: "We're temporarily out of gift cards. Please try again in 30 minutes.",
 };
 
 Deno.serve(async (req) => {
