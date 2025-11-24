@@ -1,4 +1,4 @@
-import { LayoutGrid, Plus, BarChart3, FileText } from "lucide-react";
+import { LayoutGrid, Plus, FileText } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -9,6 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const menuItems = [
@@ -18,8 +19,10 @@ const menuItems = [
 ];
 
 export function AceFormsSidebar() {
+  const { open } = useSidebar();
+
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon" className={open ? "w-60" : "w-14"}>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Ace Forms</SidebarGroupLabel>
@@ -34,8 +37,8 @@ export function AceFormsSidebar() {
                       className="hover:bg-muted/50"
                       activeClassName="bg-muted text-primary font-medium"
                     >
-                      <item.icon className="h-4 w-4 mr-2" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-4 w-4" />
+                      {open && <span className="ml-2">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
