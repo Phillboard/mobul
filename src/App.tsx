@@ -71,6 +71,7 @@ import LaunchChecklist from "./pages/LaunchChecklist";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import { CookieConsent } from "./components/CookieConsent";
+import Documentation from "./pages/Documentation";
 
 // Optimized React Query configuration for better performance
 const queryClient = new QueryClient({
@@ -154,6 +155,8 @@ const App = () => (
               <Route path="/agency-management" element={<ProtectedRoute requiredRole="agency_owner"><AgencyManagement /></ProtectedRoute>} />
               <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
               <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
+              <Route path="/admin/docs" element={<ProtectedRoute requiredRole="admin"><Documentation /></ProtectedRoute>} />
+              <Route path="/admin/docs/:category/:slug" element={<ProtectedRoute requiredRole="admin"><Documentation /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/settings/:tab" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/zapier-templates" element={<ProtectedRoute><ZapierTemplates /></ProtectedRoute>} />

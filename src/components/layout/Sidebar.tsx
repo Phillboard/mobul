@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Mail, FileText, Users, Building2, Gift, Headphones, Phone,
   BarChart3, Code, Settings as SettingsIcon, ShoppingCart, Globe, Handshake,
   Activity, ListTodo, Workflow, ChevronRight, ArrowLeft, FormInput, AlertTriangle,
-  Gauge, Bug, HelpCircle
+  Gauge, Bug, HelpCircle, BookOpen
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -94,6 +94,7 @@ const navigationGroups: NavGroup[] = [
       { name: "Performance", href: "/performance", icon: Gauge, permissions: ['analytics.view'], keywords: ["monitoring", "speed", "metrics"], description: "Performance monitoring" },
       { name: "Error Tracking", href: "/errors", icon: Bug, permissions: ['analytics.view'], keywords: ["bugs", "issues", "debugging"], description: "Error logs" },
       { name: "System Alerts", href: "/alerts", icon: AlertTriangle, permissions: ['analytics.view'], keywords: ["warnings", "notifications"], description: "System alerts" },
+      { name: "Documentation", href: "/admin/docs", icon: BookOpen, roles: ['admin'], keywords: ["docs", "help", "guide", "manual"], description: "System documentation" },
       { name: "Help", href: "/help", icon: HelpCircle, keywords: ["support", "faq", "documentation"], description: "Help center" },
       { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team"], description: "Manage users" },
       { name: "API & Integrations", href: "/api", icon: Code, permissions: ['api.view', 'settings.integrations'], keywords: ["developer"], description: "API keys" },
