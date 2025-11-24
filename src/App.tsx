@@ -72,8 +72,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import { CookieConsent } from "./components/CookieConsent";
 import Documentation from "./pages/Documentation";
+import AdminDocumentation from "./pages/AdminDocumentation";
 
-// Optimized React Query configuration for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -157,6 +157,7 @@ const App = () => (
               <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
               <Route path="/admin/docs" element={<ProtectedRoute requiredRole="admin"><Documentation /></ProtectedRoute>} />
               <Route path="/admin/docs/:category/:slug" element={<ProtectedRoute requiredRole="admin"><Documentation /></ProtectedRoute>} />
+              <Route path="/admin/docs/manage" element={<ProtectedRoute requiredRole="admin"><AdminDocumentation /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/settings/:tab" element={<ProtectedRoute requiredPermission="settings.view"><Settings /></ProtectedRoute>} />
               <Route path="/zapier-templates" element={<ProtectedRoute><ZapierTemplates /></ProtectedRoute>} />
