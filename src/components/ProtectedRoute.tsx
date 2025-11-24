@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: 'admin' | 'tech_support' | 'agency_owner' | 'company_owner' | 'developer' | 'call_center';
+  requiredRoles?: Array<'admin' | 'tech_support' | 'agency_owner' | 'company_owner' | 'developer' | 'call_center'>;
   requiredPermission?: string;
   requiredPermissions?: string[];
   requireAllPermissions?: boolean;
@@ -12,7 +13,8 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ 
   children, 
-  requiredRole, 
+  requiredRole,
+  requiredRoles,
   requiredPermission,
   requiredPermissions,
   requireAllPermissions = false 
@@ -41,13 +43,25 @@ export function ProtectedRoute({
     return null;
   }
 
-  // Check role requirement
+  // Check role requirement (single role)
   if (requiredRole && !hasRole(requiredRole)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
           <p className="text-muted-foreground">You don't have the required role to view this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check multiple roles requirement (user needs ANY one of them)
+  if (requiredRoles && !requiredRoles.some(role => hasRole(role))) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground">You don't have any of the required roles to view this page.</p>
         </div>
       </div>
     );
