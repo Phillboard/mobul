@@ -13,7 +13,7 @@ import {
 import { useAceForms } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
 import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
-import { AceFormsLayout } from "@/components/ace-forms/AceFormsLayout";
+import { Layout } from "@/components/layout/Layout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,18 +45,18 @@ export default function AceForms() {
 
   if (isLoading) {
     return (
-      <AceFormsLayout>
+      <Layout>
         <div className="container mx-auto py-8">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         </div>
-      </AceFormsLayout>
+      </Layout>
     );
   }
 
   return (
-    <AceFormsLayout>
+    <Layout>
       <div className="container mx-auto py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -208,6 +208,6 @@ export default function AceForms() {
         </AlertDialogContent>
       </AlertDialog>
       </div>
-    </AceFormsLayout>
+    </Layout>
   );
 }

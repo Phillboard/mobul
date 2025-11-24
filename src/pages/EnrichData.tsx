@@ -1,4 +1,4 @@
-import { enrichData } from './lib/enrich-data';
+import { enrichData } from '@/lib/enrich-data';
 
 // Simple page to run data enrichment
 export default function EnrichDataPage() {
