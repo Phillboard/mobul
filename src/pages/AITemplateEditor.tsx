@@ -32,7 +32,7 @@ export default function AITemplateEditor() {
         <AIDesignEditor
           designType="template"
           designId={id === "new" ? undefined : id}
-          onSwitchToManual={() => navigate(`/templates/${id}/builder-v2`)}
+          onSwitchToManual={() => navigate(`/template-builder/${id}`)}
         />
       </div>
     </div>

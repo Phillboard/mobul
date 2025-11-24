@@ -19,7 +19,7 @@ import AudienceDetail from "./pages/AudienceDetail";
 import RecipientDetail from "./pages/RecipientDetail";
 import Templates from "./pages/Templates";
 import CampaignPrototype from "./pages/CampaignPrototype";
-import TemplateBuilderV2 from "./pages/TemplateBuilderV2";
+import GrapesJSTemplateEditor from "./pages/GrapesJSTemplateEditor";
 import Analytics from "./pages/Analytics";
 import CampaignAnalytics from "./pages/CampaignAnalytics";
 import API from "./pages/API";
@@ -117,7 +117,7 @@ const App = () => (
                   <Route path="/audiences/:id" element={<ProtectedRoute><AudienceDetail /></ProtectedRoute>} />
                   <Route path="/recipients/:id" element={<ProtectedRoute><RecipientDetail /></ProtectedRoute>} />
                   <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
-                  <Route path="/template-builder/:id" element={<ProtectedRoute><TemplateBuilderV2 /></ProtectedRoute>} />
+                  <Route path="/template-builder/:id" element={<ProtectedRoute><GrapesJSTemplateEditor /></ProtectedRoute>} />
                   <Route path="/webinar" element={<ProtectedRoute><Webinar /></ProtectedRoute>} />
                   <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
                   <Route path="/ace-forms/new" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
