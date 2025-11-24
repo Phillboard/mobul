@@ -34,7 +34,6 @@ export default function BetaTesting() {
   const { data: feedback, isLoading } = useQuery({
     queryKey: ["beta-feedback"],
     queryFn: async () => {
-      // @ts-ignore - Supabase type inference
       const { data, error } = await supabase
         .from("beta_feedback")
         .select("*")

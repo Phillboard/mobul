@@ -9,8 +9,8 @@ export function GiftCardAnalytics({ clientId }: { clientId?: string }) {
     queryKey: ["gift-card-analytics", clientId],
     queryFn: async () => {
       let poolsQuery = supabase.from("gift_card_pools").select("*");
-      let cardsQuery = supabase.from("gift_cards").select("*, gift_card_pools(client_id)");
-      let deliveriesQuery = supabase.from("gift_card_deliveries").select("*, campaigns(client_id)");
+      const cardsQuery = supabase.from("gift_cards").select("*, gift_card_pools(client_id)");
+      const deliveriesQuery = supabase.from("gift_card_deliveries").select("*, campaigns(client_id)");
 
       if (clientId) {
         poolsQuery = poolsQuery.eq("client_id", clientId);
@@ -23,7 +23,7 @@ export function GiftCardAnalytics({ clientId }: { clientId?: string }) {
       ]);
 
       const pools = poolsResult.data || [];
-      const cards = clientId 
+      const cards = clientId
         ? (cardsResult.data || []).filter((c: any) => c.gift_card_pools?.client_id === clientId)
         : (cardsResult.data || []);
       const deliveries = clientId
@@ -110,7 +110,7 @@ export function GiftCardAnalytics({ clientId }: { clientId?: string }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {stats?.deliveredCards && stats?.claimedCards 
+              {stats?.deliveredCards && stats?.claimedCards
                 ? ((stats.deliveredCards / stats.claimedCards) * 100).toFixed(1)
                 : 0}%
             </div>
