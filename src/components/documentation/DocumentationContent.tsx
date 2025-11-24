@@ -3,6 +3,7 @@ import { useDocumentationPage } from "@/hooks/useDocumentation";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { DocumentationBreadcrumb } from "./DocumentationBreadcrumb";
 import { DocumentationTOC } from "./DocumentationTOC";
+import { DocumentationFeedback } from "./DocumentationFeedback";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileQuestion, ChevronLeft, ChevronRight } from "lucide-react";
@@ -126,7 +127,9 @@ export function DocumentationContent() {
             </Alert>
           )}
 
-          <div className="flex justify-between mt-12 pt-8 border-t border-border">
+          <DocumentationFeedback pageId={page.id} />
+
+          <div className="flex justify-between mt-8 pt-8 border-t border-border">
             <Button variant="outline" size="sm" asChild>
               <Link to="/admin/docs">
                 <ChevronLeft className="h-4 w-4 mr-2" />
