@@ -1399,6 +1399,118 @@ export type Database = {
         }
         Relationships: []
       }
+      documentation_feedback: {
+        Row: {
+          created_at: string | null
+          feedback_text: string | null
+          id: string
+          is_helpful: boolean | null
+          page_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          is_helpful?: boolean | null
+          page_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          is_helpful?: boolean | null
+          page_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentation_feedback_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "documentation_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentation_pages: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string | null
+          file_path: string
+          id: string
+          is_admin_only: boolean | null
+          last_updated: string | null
+          order_index: number | null
+          search_keywords: string[] | null
+          slug: string
+          title: string
+        }
+        Insert: {
+          category: string
+          content?: string | null
+          created_at?: string | null
+          file_path: string
+          id?: string
+          is_admin_only?: boolean | null
+          last_updated?: string | null
+          order_index?: number | null
+          search_keywords?: string[] | null
+          slug: string
+          title: string
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          is_admin_only?: boolean | null
+          last_updated?: string | null
+          order_index?: number | null
+          search_keywords?: string[] | null
+          slug?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      documentation_views: {
+        Row: {
+          id: string
+          page_id: string | null
+          referrer: string | null
+          time_spent_seconds: number | null
+          user_id: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          page_id?: string | null
+          referrer?: string | null
+          time_spent_seconds?: number | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          page_id?: string | null
+          referrer?: string | null
+          time_spent_seconds?: number | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentation_views_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "documentation_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dr_phillip_chats: {
         Row: {
           client_id: string | null
