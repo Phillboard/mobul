@@ -16,9 +16,9 @@ interface DraggableWidgetProps {
 const getSizeClasses = (size: string) => {
   const sizeMap: Record<string, string> = {
     'small': 'col-span-1',
-    'medium': 'col-span-1 md:col-span-2',
-    'large': 'col-span-1 md:col-span-2 lg:col-span-3',
-    'full': 'col-span-1 md:col-span-2 lg:col-span-4'
+    'medium': 'col-span-1 sm:col-span-2 lg:col-span-2',
+    'large': 'col-span-1 sm:col-span-2 lg:col-span-3',
+    'full': 'col-span-1 sm:col-span-2 lg:col-span-4'
   };
   return sizeMap[size] || 'col-span-1';
 };

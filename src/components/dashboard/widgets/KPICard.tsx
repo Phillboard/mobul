@@ -53,31 +53,32 @@ export function KPICard({ title, icon: Icon, color, dataKey, dateRange = 30 }: K
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02, y: -2 }}
+      whileHover={{ scale: 1.02, y: -4 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
+      className="h-[140px]"
     >
-      <Card className="relative overflow-hidden p-6 border-border/50 bg-card hover:shadow-xl hover:border-primary/20 transition-all duration-300 h-full">
+      <Card className="relative overflow-hidden p-4 border-border/60 bg-card shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 h-full">
         {/* Floating Icon */}
         <div className={cn(
-          'absolute -top-4 -right-4 p-8 rounded-full opacity-10',
+          'absolute -top-3 -right-3 p-6 rounded-full opacity-10',
           color
         )}>
-          <Icon className="h-20 w-20" />
+          <Icon className="h-16 w-16" />
         </div>
 
         {/* Content */}
-        <div className="relative space-y-3">
+        <div className="relative space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground font-medium tracking-wide uppercase">
               {title}
             </p>
             <div className={cn('p-2 rounded-lg', color, 'bg-opacity-10')}>
-              <Icon className="h-5 w-5" />
+              <Icon className="h-4 w-4" />
             </div>
           </div>
           
           <div className="space-y-2">
-            <p className="text-5xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">
+            <p className="text-3xl font-bold tracking-tight">
               {value}
             </p>
             
@@ -98,7 +99,7 @@ export function KPICard({ title, icon: Icon, color, dataKey, dateRange = 30 }: K
         </div>
 
         {/* Bottom accent line */}
-        <div className={cn('absolute bottom-0 left-0 right-0 h-1', color, 'opacity-50')} />
+        <div className={cn('absolute bottom-0 left-0 right-0 h-0.5', color, 'opacity-30')} />
       </Card>
     </motion.div>
   );
