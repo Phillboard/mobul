@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, Sparkles } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -19,6 +19,7 @@ export function OnboardingChecklist() {
   ]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) checkProgress();
@@ -27,10 +28,11 @@ export function OnboardingChecklist() {
   const checkProgress = async () => {
     if (!user) return;
     setLoading(true);
+    setError(null);
 
     try {
       // @ts-expect-error - Supabase type inference causing deep instantiation error
-      const profile = await supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle();
+      const profile = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
       // @ts-expect-error - Supabase type inference
       const client = await supabase.from("clients").select("id").limit(1).maybeSingle();
       // @ts-expect-error - Supabase type inference
@@ -55,6 +57,7 @@ export function OnboardingChecklist() {
       setProgress((completedCount / updated.length) * 100);
     } catch (error) {
       console.error("Error checking progress:", error);
+      setError(error instanceof Error ? error.message : "Failed to load progress. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -70,6 +73,23 @@ export function OnboardingChecklist() {
           <div className="flex items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-destructive/50 bg-destructive/5">
+        <CardContent className="py-8 text-center">
+          <div className="mb-4 flex justify-center">
+            <AlertCircle className="h-12 w-12 text-destructive" />
+          </div>
+          <h3 className="mb-2 text-xl font-semibold">Unable to Load Progress</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={checkProgress} variant="outline">
+            Try Again
+          </Button>
         </CardContent>
       </Card>
     );

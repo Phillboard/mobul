@@ -96,21 +96,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('*')
         .eq('user_id', userId);
 
-      if (rolesError) throw rolesError;
-      // The database has new role names but TypeScript hasn't caught up yet
-      setRoles((rolesData as unknown as UserRole[]) || []);
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
+        // Don't throw - allow user to continue with limited functionality
+        setRoles([]);
+      } else {
+        // The database has new role names but TypeScript hasn't caught up yet
+        setRoles((rolesData as unknown as UserRole[]) || []);
+      }
 
       // Fetch permissions
       const { data: permissionsData, error: permissionsError } = await supabase
         .rpc('get_user_permissions', { _user_id: userId });
 
       if (permissionsError) {
-        throw permissionsError;
+        console.error('Error fetching user permissions:', permissionsError);
+        // Don't throw - allow user to continue with limited functionality
+        setPermissions([]);
+      } else {
+        const userPermissions = permissionsData?.map((p: { permission_name: string }) => p.permission_name) || [];
+        setPermissions(userPermissions);
       }
-
-      const userPermissions = permissionsData?.map((p: { permission_name: string }) => p.permission_name) || [];
-      setPermissions(userPermissions);
     } catch (error) {
+      console.error('Error fetching user data:', error);
       // Silent fail - user will see limited functionality
     } finally {
       setLoading(false);
