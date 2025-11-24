@@ -367,7 +367,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
 
               {/* Post-Redemption Actions */}
               {result.recipient.phone && (
-                <div className="pt-4">
+                <div className="pt-4 space-y-2">
                   <Button
                     onClick={() => sendSmsMutation.mutate()}
                     disabled={sendSmsMutation.isPending}
@@ -381,6 +381,16 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                     )}
                     Send Card via SMS
                   </Button>
+                  
+                  <ResendSmsButton
+                    giftCardId={result.giftCard.id}
+                    recipientId={result.recipient.id}
+                    recipientPhone={result.recipient.phone}
+                    giftCardCode={result.giftCard.card_code}
+                    giftCardValue={value}
+                    brandName={brand?.brand_name || pool?.provider}
+                    cardNumber={result.giftCard.card_number || undefined}
+                  />
                 </div>
               )}
             </CardContent>
