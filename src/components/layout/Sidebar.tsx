@@ -56,9 +56,9 @@ const navigationGroups: NavGroup[] = [
       { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl"], description: "Manage landing pages" },
     ]
   },
-  { 
-    label: "CRM", 
-    collapsible: true, 
+  {
+    label: "CRM",
+    collapsible: true,
     items: [
       { name: "Contacts", href: "/contacts", icon: Users, permissions: ['audiences.view', 'contacts.view'], keywords: ["people", "audiences", "lists"], description: "Manage contacts and audiences" },
       { name: "Companies", href: "/companies", icon: Building2, permissions: ['audiences.view', 'companies.view'], keywords: ["businesses"], description: "Manage companies" },
@@ -67,8 +67,8 @@ const navigationGroups: NavGroup[] = [
       { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['audiences.view', 'tasks.view'], keywords: ["todos"], description: "Manage tasks" },
     ]
   },
-  { 
-    label: "Gift Cards", 
+  {
+    label: "Gift Cards",
     collapsible: true,
     items: [
       { name: "Manage Cards", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.manage', 'giftcards.view'], keywords: ["rewards", "inventory"], description: "Manage gift card inventory" },
@@ -76,19 +76,19 @@ const navigationGroups: NavGroup[] = [
       { name: "Marketplace", href: "/admin/gift-card-marketplace", icon: Gift, roles: ['admin'], permissions: ['giftcards.admin_view'], keywords: ["admin", "master"], description: "Admin marketplace" },
     ]
   },
-  { 
-    label: "Call Center", 
-    collapsible: true, 
-    roles: ['call_center', 'admin'], 
+  {
+    label: "Call Center",
+    collapsible: true,
+    roles: ['call_center', 'admin'],
     items: [
       { name: "Redeem Cards", href: "/call-center/redeem", icon: Gift, roles: ['call_center', 'admin'], permissions: ['calls.confirm_redemption'], keywords: ["redemption", "provision"], description: "Redeem gift cards" },
       { name: "Agent Dashboard", href: "/agent-dashboard", icon: Headphones, roles: ['call_center', 'admin'], permissions: ['calls.agent_dashboard', 'calls.confirm_redemption'], keywords: ["calls"], description: "Handle calls" },
       { name: "Call Analytics", href: "/call-center", icon: Phone, roles: ['call_center', 'admin'], permissions: ['calls.view', 'calls.manage'], keywords: ["reports"], description: "Call metrics" },
     ]
   },
-  { 
-    label: "Administration", 
-    collapsible: true, 
+  {
+    label: "Administration",
+    collapsible: true,
     items: [
       { name: "Analytics", href: "/analytics", icon: BarChart3, permissions: ['analytics.view'], keywords: ["reports", "metrics"], description: "View analytics" },
       { name: "Performance", href: "/performance", icon: Gauge, permissions: ['analytics.view'], keywords: ["monitoring", "speed", "metrics"], description: "Performance monitoring" },
@@ -103,10 +103,10 @@ const navigationGroups: NavGroup[] = [
       { name: "Settings", href: "/settings/account", icon: SettingsIcon, permissions: ['settings.view'], keywords: ["configuration"], description: "Settings" },
     ]
   },
-  { 
-    label: "Agency", 
-    collapsible: true, 
-    roles: ['agency_owner'], 
+  {
+    label: "Agency",
+    collapsible: true,
+    roles: ['agency_owner'],
     items: [
       { name: "Client Management", href: "/agency-management", icon: Building2, roles: ['agency_owner'], permissions: ['clients.view', 'clients.manage'], keywords: ["clients"], description: "Manage clients" },
     ]
@@ -134,7 +134,7 @@ export function Sidebar() {
         if (i.roles?.length && !i.roles.some(hasRole)) return false;
         if (i.permissions?.length && !hasAnyPermission(i.permissions)) return false;
         return true;
-      }).map(i => i.name === "Campaigns" ? {...i, count: menuCounts?.mailedCampaigns} : i)
+      }).map(i => i.name === "Campaigns" ? { ...i, count: menuCounts?.mailedCampaigns } : i)
     })).filter(g => {
       if (g.roles?.length && !g.roles.some(hasRole)) return false;
       if (g.permissions?.length && !hasAnyPermission(g.permissions)) return false;
@@ -144,7 +144,7 @@ export function Sidebar() {
   }, [user, hasAnyPermission, currentOrg, roles, menuCounts]);
 
   useEffect(() => {
-    const activeGroup = visibleGroups.find(g => 
+    const activeGroup = visibleGroups.find(g =>
       g.items.some(i => location.pathname === i.href || location.pathname.startsWith(i.href + '/'))
     );
     const newOpenGroups = new Set<string>();
@@ -152,7 +152,7 @@ export function Sidebar() {
     setOpenGroups(newOpenGroups);
   }, [location.pathname, visibleGroups]);
 
-  const allSearchableItems = useMemo(() => visibleGroups.flatMap(g => g.items.map(i => ({...i, groupLabel: g.label}))), [visibleGroups]);
+  const allSearchableItems = useMemo(() => visibleGroups.flatMap(g => g.items.map(i => ({ ...i, groupLabel: g.label }))), [visibleGroups]);
   const searchResults = useMenuSearch(allSearchableItems, searchQuery);
 
   useEffect(() => {
@@ -169,7 +169,11 @@ export function Sidebar() {
 
   const toggleGroup = (label: string) => setOpenGroups(p => {
     const n = new Set(p);
-    n.has(label) ? n.delete(label) : n.add(label);
+    if (n.has(label)) {
+      n.delete(label);
+    } else {
+      n.add(label);
+    }
     return n;
   });
 

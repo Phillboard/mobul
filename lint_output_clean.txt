@@ -1,0 +1,931 @@
+
+> vite_react_shadcn_ts@0.0.0 lint
+> eslint .
+
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\DrPhillipChat.tsx
+   30:13  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   52:6   warning  React Hook useEffect has a missing dependency: 'loadChatSessions'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   60:37  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  104:39  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  116:39  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  121:16  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  142:6   warning  React Hook useEffect has a missing dependency: 'saveCurrentChat'. Either include it or remove the dependency array   react-hooks/exhaustive-deps
+  274:37  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ace-forms\AIFormGenerator.tsx
+  59:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ace-forms\ConditionalLogicBuilder.tsx
+  97:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ace-forms\FormAnalytics.tsx
+  41:6  warning  React Hook useEffect has a missing dependency: 'loadAnalytics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ace-forms\FormBuilder.tsx
+  49:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\activities\ActivityLogger.tsx
+   87:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\activities\TaskForm.tsx
+   81:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\admin\CustomerCodeBulkActions.tsx
+   13:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  110:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\admin\ImpersonateUserDialog.tsx
+  98:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\admin\ImpersonationBanner.tsx
+  46:6   warning  React Hook useEffect has a missing dependency: 'handleExitImpersonation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  66:21  error    Unexpected any. Specify a different type                                                                                    @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\agent\CallNotes.tsx
+  9:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\agent\CallVerificationDialog.tsx
+  16:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\agent\CallerInfoPanel.tsx
+  8:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\agent\CodeApprovalPanel.tsx
+  20:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\agent\CompleteCallDialog.tsx
+  60:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\agent\ConditionTriggers.tsx
+   19:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   28:9   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   33:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   80:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ai-design\AIDesignEditor.tsx
+   71:44  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  115:6   warning  React Hook useEffect has missing dependencies: 'currentHtml', 'loadChatHistory', 'loadDesign', and 'loadVersionHistory'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  122:22  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  132:31  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  136:36  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  137:36  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  149:22  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  155:32  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  219:21  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  244:22  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  246:41  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  262:78  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  279:42  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  422:79  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+  624:77  error    Unexpected any. Specify a different type                                                                                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\api\CreateAPIKeyDialog.tsx
+  11:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\api\ZapierEventsTab.tsx
+  13:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\audiences\AudienceImportTab.tsx
+  97:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\audiences\CustomerCodeUpload.tsx
+  25:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  89:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\audiences\FileUploadZone.tsx
+  59:6  warning  React Hook useCallback has a missing dependency: 'handleFile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\audiences\ManualRecipientEntry.tsx
+  228:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\ApprovalsTab.tsx
+  157:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  230:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\CallLogTable.tsx
+   70:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\CampaignCard.tsx
+  15:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\CommentsTab.tsx
+  130:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\ConditionBuilder.tsx
+  23:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\ConditionsDisplay.tsx
+  11:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\CreateCampaignWizard.tsx
+   53:34  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+   87:6   warning  React Hook useEffect has a missing dependency: 'saveDraftMutation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  118:35  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\DeliveryTimelinePanel.tsx
+  81:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\DraftManager.tsx
+  18:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\GiftCardInventoryPanel.tsx
+  51:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  62:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  64:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  79:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\QRAnalytics.tsx
+  42:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\RewardsTab.tsx
+  161:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\VersionHistory.tsx
+  48:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\wizard\CallTrackingStep.tsx
+  48:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\wizard\ConditionsStep.tsx
+  15:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\campaigns\wizard\SummaryStep.tsx
+    9:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\contacts\ContactCard.tsx
+  14:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\dashboard\ConditionsSummaryCard.tsx
+  31:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\dashboard\GiftCardSummaryCard.tsx
+  41:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\deals\DealForm.tsx
+   41:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   42:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\documentation\AdminDocsAnalytics.tsx
+  40:81  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  97:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\documentation\AdminDocsList.tsx
+  42:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\documentation\EditDocDialog.tsx
+  36:8  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\documentation\MarkdownRenderer.tsx
+  53:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\documentation\SeedDocsButton.tsx
+  22:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\ClientMarketplace.tsx
+  16:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  84:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\DeliveryHistory.tsx
+  63:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\EditPoolPricingDialog.tsx
+  65:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  94:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\GiftCardAnalytics.tsx
+  12:11  error  'cardsQuery' is never reassigned. Use 'const' instead       prefer-const
+  13:11  error  'deliveriesQuery' is never reassigned. Use 'const' instead  prefer-const
+  27:47  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  30:52  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  39:42  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  40:40  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  41:47  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  42:49  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  59:61  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  59:71  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\GiftCardTesting.tsx
+  16:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  26:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\GiftCardUploadTab.tsx
+  66:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\PoolDetailDialog.tsx
+  158:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  204:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\PurchaseGiftCardsDialog.tsx
+  67:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\PurchasePoolDialog.tsx
+  16:9   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  92:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\RecordPurchaseDialog.tsx
+  71:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\gift-cards\SellGiftCardsDialog.tsx
+  95:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\landing-pages\AIGenerationDialog.tsx
+   38:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  145:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  167:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  210:77  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\landing-pages\IndustryTemplateSelector.tsx
+  55:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\landing-pages\VariationSelector.tsx
+  20:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\layout\Sidebar.tsx
+  144:6  warning  React Hook useMemo has a missing dependency: 'hasRole'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  172:5  error    Expected an assignment or function call and instead saw an expression                                     @typescript-eslint/no-unused-expressions
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\monitoring\ExportButton.tsx
+  12:9  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\onboarding\OnboardingChecklist.tsx
+  25:6  warning  React Hook useEffect has a missing dependency: 'checkProgress'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+  32:7  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  34:7  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  36:7  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  38:7  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  40:7  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  42:7  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\AccountSettings.tsx
+  77:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\CRMIntegrationDialog.tsx
+   25:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\CRMIntegrationTab.tsx
+   37:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   41:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:72  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\ClaimPlatformAdmin.tsx
+  53:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\ClientBrandingEditor.tsx
+   11:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  174:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\ClientBrandingPreview.tsx
+  8:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\GeneralSettings.tsx
+  60:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  73:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\InviteUserDialog.tsx
+  96:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\PendingInvitations.tsx
+   73:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\PermissionCategoryManager.tsx
+  29:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\PhoneNumbersSettings.tsx
+  27:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\ProvisionNumberDialog.tsx
+  51:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\settings\SMSDeliveryLog.tsx
+   23:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\BackgroundPanel.tsx
+  57:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\Canvas.tsx
+   10:13  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   12:20  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   13:26  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   14:32  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   15:27  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   16:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   18:84  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+   46:13  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  118:40  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  125:40  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  142:36  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  152:37  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  160:35  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  166:33  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  175:6   warning  React Hook useEffect has missing dependencies: 'data.canvasSize', 'data.layers', 'onContextMenu', 'onDoubleClickLayer', 'onExportBlob', 'onSelectLayer', 'snapToGrid', 'snapToGridValue', and 'syncCanvasToData'. Either include them or remove the dependency array. If 'onExportBlob' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+  183:6   warning  React Hook useEffect has a missing dependency: 'data.canvasSize'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                            react-hooks/exhaustive-deps
+  191:59  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  193:16  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+  282:45  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\ElementsPanel.tsx
+  8:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\LayersPanel.tsx
+  12:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\PreviewModal.tsx
+  17:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\PropertiesPanel.tsx
+  8:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  9:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\UploadPanel.tsx
+  39:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\v2\CanvasWrapper.tsx
+   4:9   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   5:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   6:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   7:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   8:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   9:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:83  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\v2\ContextMenu.tsx
+  21:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\v2\dialogs\ImageDialog.tsx
+  40:6  warning  React Hook useEffect has a missing dependency: 'config'. Either include it or remove the dependency array. You can also do a functional update 'setConfig(c => ...)' if you only need 'config' in the 'setConfig' call  react-hooks/exhaustive-deps
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\v2\dialogs\QRCodeDialog.tsx
+   51:6   warning  React Hook useEffect has a missing dependency: 'config'. Either include it or remove the dependency array. You can also do a functional update 'setConfig(c => ...)' if you only need 'config' in the 'setConfig' call  react-hooks/exhaustive-deps
+  171:39  error    Unexpected any. Specify a different type                                                                                                                                                                                @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\v2\dialogs\RegenerateElementDialog.tsx
+  21:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  72:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\v2\dialogs\ShapeDialog.tsx
+  47:6  warning  React Hook useEffect has a missing dependency: 'config'. Either include it or remove the dependency array. You can also do a functional update 'setConfig(c => ...)' if you only need 'config' in the 'setConfig' call  react-hooks/exhaustive-deps
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\template-builder\v2\dialogs\TextDialog.tsx
+   61:6   warning  React Hook useEffect has a missing dependency: 'config'. Either include it or remove the dependency array. You can also do a functional update 'setConfig(c => ...)' if you only need 'config' in the 'setConfig' call  react-hooks/exhaustive-deps
+  269:50  error    Unexpected any. Specify a different type                                                                                                                                                                                @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\templates\AITemplateDialog.tsx
+   59:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   76:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\templates\BulkActions.tsx
+  9:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\templates\EditTemplateDialog.tsx
+  50:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\templates\TemplateCard.tsx
+  36:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\templates\TemplateGrid.tsx
+   53:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\templates\TemplateListItem.tsx
+  18:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\templates\TemplatePreviewRenderer.tsx
+  117:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ui\badge.tsx
+  32:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ui\button.tsx
+  64:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ui\command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ui\form.tsx
+  129:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ui\navigation-menu.tsx
+  111:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ui\sidebar.tsx
+  636:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ui\sonner.tsx
+  27:19  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ui\textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\components\ui\toggle.tsx
+  37:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\contexts\AuthContext.tsx
+  226:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\contexts\TenantContext.tsx
+   10:18  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   20:22  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   63:6   warning  React Hook useEffect has a missing dependency: 'fetchTenantData'. Either include it or remove the dependency array              react-hooks/exhaustive-deps
+   70:11  error    'orgsQuery' is never reassigned. Use 'const' instead                                                                            prefer-const
+  187:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\features\gift-cards\lib\utils.ts
+  82:10  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\features\gift-cards\types\index.ts
+  33:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:9   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useAPIKeys.ts
+  44:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useAceForms.ts
+  39:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  80:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useActivities.ts
+   25:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   30:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   32:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   33:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   49:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useCRMIntegrations.ts
+   32:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   33:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useCallTracking.ts
+   93:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useCampaignConditions.ts
+   16:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   78:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useCompanies.ts
+   26:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   72:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useContacts.ts
+   22:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  145:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  171:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  196:79  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useDeals.ts
+   27:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   33:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   35:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   36:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   53:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   96:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  170:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useGiftCardPools.ts
+  43:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useLandingPages.ts
+  33:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  63:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useMenuSearch.ts
+  6:9  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\usePipelines.ts
+   32:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   70:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useTasks.ts
+   28:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   29:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   30:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   32:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  153:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useWebhooks.ts
+   77:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\hooks\useZapierConnections.ts
+   24:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   83:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\lib\__tests__\giftCardUtils.test.ts
+   62:8   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:70  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\lib\aceFormExport.ts
+  82:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\lib\aceFormValidation.ts
+  68:68  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\lib\alerts.ts
+  24:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\lib\errorHandling.ts
+   15:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\lib\logger.ts
+  15:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  33:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\lib\monitoring.ts
+   19:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   71:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\lib\starterTemplates.ts
+  28:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\AIGeneratedLandingPage.tsx
+  36:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\AcceptInvite.tsx
+   87:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:78  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\AceFormBuilder.tsx
+  127:75  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\AceFormPublic.tsx
+   47:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   72:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\AdminAuditLog.tsx
+   81:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  393:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\AdminGiftCardMarketplace.tsx
+   26:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\AgencyManagement.tsx
+   99:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\Analytics.tsx
+  91:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\AudienceDetail.tsx
+  128:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  171:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  351:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\BetaTesting.tsx
+  37:7  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\CampaignAnalytics.tsx
+   96:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:74  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\CampaignPrototype.tsx
+  48:6   warning  React Hook useEffect has a missing dependency: 'trackViewMutation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  84:53  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+  85:42  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\CompanyDetail.tsx
+   32:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  192:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  216:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  272:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  330:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\ContactDetail.tsx
+   40:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  244:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  276:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  321:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\DealDetail.tsx
+   98:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  206:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\EmbedGiftCard.tsx
+  22:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\ErrorTracking.tsx
+   87:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\GiftCards.tsx
+  58:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\GrapesJSLandingPageEditor.tsx
+   34:50  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   48:6   warning  React Hook useEffect has a missing dependency: 'loadPage'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   64:75  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   78:21  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  237:33  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\LandingPages.tsx
+   60:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  370:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\LaunchChecklist.tsx
+  151:6  warning  React Hook useEffect has a missing dependency: 'runAutoChecks'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\PerformanceMonitoring.tsx
+  72:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  75:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  95:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  98:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\PurchaseGiftCards.tsx
+  57:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\RecipientDetail.tsx
+  218:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  221:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  224:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  226:70  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\SimpleLandingPageEditor.tsx
+   23:42  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   31:6   warning  React Hook useEffect has a missing dependency: 'loadPage'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   52:21  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   79:21  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   87:23  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  206:51  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\TemplateBuilderV2.tsx
+   29:54   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+   46:52   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+   47:60   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+   65:36   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+   89:6    warning  React Hook useEffect has a missing dependency: 'history'. Either include it or remove the dependency array                                                        react-hooks/exhaustive-deps
+   92:30   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  134:22   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  155:6    warning  React Hook useEffect has missing dependencies: 'handleSave' and 'id'. Either include them or remove the dependency array                                          react-hooks/exhaustive-deps
+  157:28   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  239:100  error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  344:44   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  354:44   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  364:47   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  373:49   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  397:35   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  416:46   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  440:46   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  461:46   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  482:46   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  502:40   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  515:40   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  532:49   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  535:20   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  564:44   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  573:37   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  622:53   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  625:24   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  633:48   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+  642:6    warning  React Hook useEffect has missing dependencies: 'handleDeleteLayer', 'handleDuplicateLayer', and 'handleSave'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  956:64   error    Unexpected any. Specify a different type                                                                                                                          @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\pages\UserManagement.tsx
+  228:78  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  244:77  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  247:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  248:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  258:77  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\types\aceForms.ts
+  89:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\src\types\audiences.ts
+  143:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\ai-design-chat\index.ts
+   72:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   74:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\approve-customer-code\index.ts
+  113:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\check-alert-triggers\index.ts
+  124:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\check-gift-card-balance\index.ts
+   56:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  115:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\claim-and-provision-card\index.ts
+  30:5  error  Unnecessary try/catch wrapper  no-useless-catch
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\complete-condition\index.ts
+  191:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\crm-webhook-receiver\index.ts
+   12:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   20:9   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   30:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   50:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   87:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  206:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  257:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\dispatch-zapier-event\index.ts
+   12:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   14:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   19:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\evaluate-conditions\index.ts
+   12:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  147:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  222:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  225:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  290:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  290:71  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  308:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  311:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  357:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  360:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  383:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  383:73  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\export-audience\index.ts
+  125:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\export-pool-cards\index.ts
+  65:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\generate-ace-form-ai\index.ts
+  182:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\generate-landing-page\index.ts
+    9:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  264:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\handle-call-webhook\index.ts
+  51:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\import-audience\index.ts
+   59:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  271:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\import-customer-codes\index.ts
+   92:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\import-gift-cards\index.ts
+  36:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  94:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\process-time-delayed-conditions\index.ts
+  131:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\provision-gift-card-from-api\index.ts
+   11:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   21:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   87:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\provision-twilio-number\index.ts
+  135:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\redeem-gift-card-embed\index.ts
+  122:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\release-twilio-number\index.ts
+  79:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\retry-failed-sms\index.ts
+  112:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\send-alert-notification\index.ts
+  131:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\send-gift-card-sms\index.ts
+  167:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\submit-ace-form\index.ts
+  51:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\track-mail-delivery\index.ts
+   12:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  113:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\trigger-webhook\index.ts
+  24:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:80  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\update-call-status\index.ts
+  31:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Acer Nitro 5\Desktop\antigravity-Mobul\mobul\supabase\functions\zapier-incoming-webhook\index.ts
+  10:24  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 533 problems (501 errors, 32 warnings)
+  3 errors and 0 warnings potentially fixable with the `--fix` option.
+

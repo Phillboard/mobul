@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
@@ -8,7 +8,7 @@ interface Profile {
   full_name: string | null;
   phone: string | null;
   timezone: string;
-  notification_preferences?: any;
+  notification_preferences?: Record<string, unknown>;
 }
 
 interface UserRole {
@@ -29,8 +29,8 @@ interface AuthContextType {
   hasAnyPermission: (permissions: string[]) => boolean;
   getRoleLevel: () => number;
   canManageUser: (targetUserId: string) => Promise<boolean>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           // Fetch profile and roles after state is set
           setTimeout(() => {
@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (rolesError) throw rolesError;
       // The database has new role names but TypeScript hasn't caught up yet
-      setRoles(rolesData as any || []);
+      setRoles((rolesData as unknown as UserRole[]) || []);
 
       // Fetch permissions
       const { data: permissionsData, error: permissionsError } = await supabase
@@ -107,8 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (permissionsError) {
         throw permissionsError;
       }
-      
-      const userPermissions = permissionsData?.map((p: any) => p.permission_name) || [];
+
+      const userPermissions = permissionsData?.map((p: { permission_name: string }) => p.permission_name) || [];
       setPermissions(userPermissions);
     } catch (error) {
       // Silent fail - user will see limited functionality
@@ -137,14 +137,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const canManageUser = async (targetUserId: string) => {
     if (!user) return false;
     const userLevel = getRoleLevel();
-    
+
     const { data: targetRoles } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', targetUserId);
-    
+
     if (!targetRoles || targetRoles.length === 0) return false;
-    
+
     const levels = {
       admin: 1,
       tech_support: 2,
@@ -153,8 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       developer: 5,
       call_center: 6
     };
-    const targetLevel = Math.min(...targetRoles.map((r: any) => levels[r.role] || 999));
-    
+    const targetLevel = Math.min(...targetRoles.map((r: { role: string }) => levels[r.role as keyof typeof levels] || 999));
+
     return userLevel < targetLevel;
   };
 
@@ -176,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -208,11 +208,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roles,
         permissions,
         loading,
-    hasRole,
-    hasPermission,
-    hasAnyPermission,
-    getRoleLevel,
-    canManageUser,
+        hasRole,
+        hasPermission,
+        hasAnyPermission,
+        getRoleLevel,
+        canManageUser,
         signIn,
         signUp,
         signOut,
