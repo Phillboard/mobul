@@ -88,7 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (profileError) throw profileError;
-      setProfile(profileData);
+      if (profileData) {
+        setProfile({
+          ...profileData,
+          notification_preferences: profileData.notification_preferences as Record<string, unknown>
+        });
+      }
 
       // Fetch roles
       const { data: rolesData, error: rolesError } = await supabase
