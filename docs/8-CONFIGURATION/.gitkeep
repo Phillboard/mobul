@@ -1,0 +1,10 @@
+# Configuration Documentation
+
+This folder contains configuration and setup documentation.
+
+## Contents
+
+- ENVIRONMENT_VARIABLES.md - Environment variable reference
+- CONFIGURATION_GUIDE.md - Complete configuration guide
+- SECRETS_MANAGEMENT.md - Secrets and credentials
+- FEATURE_FLAGS.md - Feature flag system (if applicable)
