@@ -177,7 +177,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     description: 'Automated triggers and rewards performance',
     icon: Zap,
     category: 'summary',
-    defaultSize: 'large',
+    defaultSize: 'medium',
     defaultEnabled: true,
     requiresClient: true,
     component: ConditionsSummaryCard,
@@ -188,7 +188,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     description: 'Gift card pool status and deliveries',
     icon: Gift,
     category: 'summary',
-    defaultSize: 'large',
+    defaultSize: 'medium',
     defaultEnabled: true,
     requiresClient: true,
     component: GiftCardSummaryCard,
@@ -211,7 +211,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     description: 'Track mail delivery and engagement over time',
     icon: BarChart3,
     category: 'chart',
-    defaultSize: 'large',
+    defaultSize: 'full',
     defaultEnabled: true,
     requiresClient: true,
     component: PerformanceChart,
@@ -223,7 +223,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     description: 'Common tasks and shortcuts',
     icon: Zap,
     category: 'actions',
-    defaultSize: 'medium',
+    defaultSize: 'small',
     defaultEnabled: true,
     requiresClient: false,
     component: QuickActionsCard,
@@ -253,6 +253,26 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
   },
 ];
 
-export const DEFAULT_WIDGET_LAYOUT = DASHBOARD_WIDGETS
-  .filter(w => w.defaultEnabled)
-  .map(w => w.id);
+export const DEFAULT_WIDGET_LAYOUT = [
+  // Row 1: KPIs (4 small = 4 cols)
+  'kpi-active-campaigns',
+  'kpi-active-calls',
+  'kpi-gift-cards-delivered',
+  'kpi-avg-call-duration',
+  // Row 2: KPIs (4 small = 4 cols)
+  'kpi-condition-completion',
+  'kpi-total-recipients',
+  'kpi-delivery-rate',
+  'kpi-response-rate',
+  // Row 3: Full-width chart (1 full = 4 cols)
+  'chart-performance',
+  // Row 4: Two medium cards (2 medium = 4 cols)
+  'conditions-summary',
+  'gift-card-summary',
+  // Row 5: Large + Small (3 + 1 = 4 cols)
+  'ai-insights',
+  'quick-actions',
+  // Row 6+: Lists
+  'recent-campaigns',
+  'recent-activity',
+];
