@@ -31,17 +31,11 @@ export function OnboardingChecklist() {
     setError(null);
 
     try {
-      // @ts-expect-error - Supabase type inference causing deep instantiation error
       const profile = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
-      // @ts-expect-error - Supabase type inference
       const client = await supabase.from("clients").select("id").limit(1).maybeSingle();
-      // @ts-expect-error - Supabase type inference
       const templates = await supabase.from("templates").select("*", { count: "exact", head: true });
-      // @ts-expect-error - Supabase type inference
       const audiences = await supabase.from("audiences").select("*", { count: "exact", head: true });
-      // @ts-expect-error - Supabase type inference
       const campaigns = await supabase.from("campaigns").select("*", { count: "exact", head: true });
-      // @ts-expect-error - Supabase type inference
       const pages = await supabase.from("landing_pages").select("*", { count: "exact", head: true });
 
       const updated = [...items];
