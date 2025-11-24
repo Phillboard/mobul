@@ -30,7 +30,7 @@ export function calculatePoolHealth(
   lowStockThreshold?: number
 ): PoolHealth {
   if (totalCards === 0) return 'critical';
-  
+
   const percentAvailable = (availableCards / totalCards) * 100;
   const threshold = lowStockThreshold || 20;
 
@@ -79,7 +79,9 @@ export function formatCurrency(value: number): string {
  */
 export function maskCardCode(code: string): string {
   // Re-export from centralized utility
-  return require('@/lib/giftCardUtils').maskCardCode(code);
+  // This is a deprecated function - use maskCardCode from @/lib/giftCardUtils directly
+  if (code.length <= 8) return code;
+  return `${code.slice(0, 4)}****${code.slice(-4)}`;
 }
 
 /**

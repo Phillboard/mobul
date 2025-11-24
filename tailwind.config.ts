@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -205,13 +206,13 @@ export default {
           "50%": { transform: "scale(1.05)", opacity: "0.9" },
         },
         "gradient-xy": {
-          "0%, 100%": { 
+          "0%, 100%": {
             backgroundPosition: "0% 50%",
-            backgroundSize: "200% 200%" 
+            backgroundSize: "200% 200%"
           },
-          "50%": { 
+          "50%": {
             backgroundPosition: "100% 50%",
-            backgroundSize: "200% 200%" 
+            backgroundSize: "200% 200%"
           },
         },
         "shimmer-slide": {
@@ -239,5 +240,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

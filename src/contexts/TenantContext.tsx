@@ -67,8 +67,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       setLoading(true);
 
       // Fetch organizations based on role
-      let orgsQuery = supabase.from('organizations').select('*');
-      
+      const orgsQuery = supabase.from('organizations').select('*');
+
       const { data: orgsData, error: orgsError } = await orgsQuery;
       if (orgsError) throw orgsError;
 
@@ -93,9 +93,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('*');
-      
+
       if (clientsError) throw clientsError;
-      
+
       setClients(clientsData || []);
 
       // Restore or set default client
