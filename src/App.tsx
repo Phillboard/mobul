@@ -149,9 +149,9 @@ const App = () => (
               <Route path="/landing-pages/:id/edit-grapesjs" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
               <Route path="/templates/:id/ai-editor" element={<ProtectedRoute><AITemplateEditor /></ProtectedRoute>} />
               <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
-              <Route path="/call-center/redeem" element={<ProtectedRoute requiredPermissions={['call_center', 'admin']}><CallCenterRedemption /></ProtectedRoute>} />
-              <Route path="/agent-dashboard" element={<ProtectedRoute requiredPermissions={['call_center', 'admin']}><AgentCallDashboard /></ProtectedRoute>} />
-              <Route path="/call-center" element={<ProtectedRoute requiredPermissions={['call_center', 'admin']}><CallCenterDashboard /></ProtectedRoute>} />
+              <Route path="/call-center/redeem" element={<ProtectedRoute requiredPermissions={['calls.confirm_redemption']}><CallCenterRedemption /></ProtectedRoute>} />
+              <Route path="/agent-dashboard" element={<ProtectedRoute requiredPermissions={['calls.agent_dashboard', 'calls.confirm_redemption']}><AgentCallDashboard /></ProtectedRoute>} />
+              <Route path="/call-center" element={<ProtectedRoute requiredPermissions={['calls.view', 'calls.manage']}><CallCenterDashboard /></ProtectedRoute>} />
               <Route path="/agency-management" element={<ProtectedRoute requiredRole="agency_owner"><AgencyManagement /></ProtectedRoute>} />
               <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
               <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
