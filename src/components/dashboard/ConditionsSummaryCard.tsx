@@ -73,39 +73,64 @@ export function ConditionsSummaryCard({ clientId }: ConditionsSummaryCardProps) 
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center text-base">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center">
           <Zap className="h-5 w-5 mr-2 text-primary" />
           Campaign Conditions
         </CardTitle>
+        <CardDescription>
+          Automated triggers and rewards performance
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {/* Total Conditions */}
-          <div className="text-center p-3 border border-border rounded-lg hover:border-primary/30 transition-colors">
-            <Clock className="h-6 w-6 mx-auto text-primary mb-1" />
-            <p className="text-2xl font-bold">{stats?.totalConditions || 0}</p>
-            <p className="text-xs text-muted-foreground mt-1">Total Conditions</p>
-            <Badge variant="secondary" className="mt-1 text-xs">
-              {stats?.activeConditions || 0} active
-            </Badge>
+          <div className="flex items-start space-x-3 p-4 border border-border rounded-lg">
+            <div className="flex-shrink-0">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-muted-foreground">Total Conditions</p>
+              <p className="text-2xl font-bold text-foreground">{stats?.totalConditions || 0}</p>
+              <Badge variant="secondary" className="mt-1">
+                {stats?.activeConditions || 0} active
+              </Badge>
+            </div>
           </div>
 
-          {/* 7-Day Triggers */}
-          <div className="text-center p-3 border border-border rounded-lg hover:border-primary/30 transition-colors">
-            <TrendingUp className="h-6 w-6 mx-auto text-green-500 mb-1" />
-            <p className="text-2xl font-bold">{stats?.recentTriggers || 0}</p>
-            <p className="text-xs text-muted-foreground mt-1">7-Day Triggers</p>
-            <p className="text-xs text-muted-foreground mt-1">Auto-triggered</p>
+          {/* Recent Triggers */}
+          <div className="flex items-start space-x-3 p-4 border border-border rounded-lg">
+            <div className="flex-shrink-0">
+              <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-green-500" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-muted-foreground">7-Day Triggers</p>
+              <p className="text-2xl font-bold text-foreground">{stats?.recentTriggers || 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Auto-triggered events
+              </p>
+            </div>
           </div>
 
-          {/* Conditions Completed */}
-          <div className="text-center p-3 border border-border rounded-lg hover:border-primary/30 transition-colors">
-            <CheckCircle2 className="h-6 w-6 mx-auto text-blue-500 mb-1" />
-            <p className="text-2xl font-bold">{stats?.conditionsMet || 0}</p>
-            <p className="text-xs text-muted-foreground mt-1">Completed</p>
-            <p className="text-xs text-muted-foreground mt-1">Rewards sent</p>
+          {/* Conditions Met */}
+          <div className="flex items-start space-x-3 p-4 border border-border rounded-lg col-span-2">
+            <div className="flex-shrink-0">
+              <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <CheckCircle2 className="h-5 w-5 text-blue-500" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-muted-foreground">Conditions Completed (7 days)</p>
+              <p className="text-2xl font-bold text-foreground">{stats?.conditionsMet || 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Rewards delivered to recipients
+              </p>
+            </div>
           </div>
         </div>
       </CardContent>

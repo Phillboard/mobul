@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Gift, TrendingUp, DollarSign, Package } from "lucide-react";
@@ -56,60 +56,71 @@ export function GiftCardSummaryCard({ clientId }: GiftCardSummaryCardProps) {
 
   if (isLoading) {
     return (
-      <Card className="h-full">
+      <Card>
         <CardHeader>
-          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-48 mt-2" />
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-8 w-24" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center text-base">
-          <Gift className="h-5 w-5 mr-2 text-primary" />
-          Gift Card Inventory
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex gap-3 justify-between">
-          {/* Total Value */}
-          <div className="flex-1 text-center p-3 border border-border rounded-lg hover:border-primary/30 transition-colors">
-            <DollarSign className="h-6 w-6 mx-auto text-green-600 mb-1" />
-            <p className="text-2xl font-bold">${summary?.totalValue.toFixed(0)}</p>
-            <p className="text-xs text-muted-foreground mt-1">Total Value</p>
-            <p className="text-xs text-muted-foreground">{summary?.pools} pools</p>
-          </div>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Inventory Value</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">${summary?.totalValue.toFixed(2)}</div>
+          <p className="text-xs text-muted-foreground">
+            {summary?.totalCards} cards across {summary?.pools} pools
+          </p>
+        </CardContent>
+      </Card>
 
-          {/* Available Cards */}
-          <div className="flex-1 text-center p-3 border border-border rounded-lg hover:border-primary/30 transition-colors">
-            <Package className="h-6 w-6 mx-auto text-blue-600 mb-1" />
-            <p className="text-2xl font-bold">{summary?.availableCards}</p>
-            <p className="text-xs text-muted-foreground mt-1">Available</p>
-            <p className="text-xs text-muted-foreground">Ready</p>
-          </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Available Cards</CardTitle>
+          <Package className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{summary?.availableCards}</div>
+          <p className="text-xs text-muted-foreground">
+            Ready to be claimed
+          </p>
+        </CardContent>
+      </Card>
 
-          {/* Delivered */}
-          <div className="flex-1 text-center p-3 border border-border rounded-lg hover:border-primary/30 transition-colors">
-            <Gift className="h-6 w-6 mx-auto text-purple-600 mb-1" />
-            <p className="text-2xl font-bold">{summary?.deliveredCards}</p>
-            <p className="text-xs text-muted-foreground mt-1">Delivered</p>
-            <p className="text-xs text-muted-foreground">Sent</p>
-          </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Delivered</CardTitle>
+          <Gift className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{summary?.deliveredCards}</div>
+          <p className="text-xs text-muted-foreground">
+            Successfully sent to recipients
+          </p>
+        </CardContent>
+      </Card>
 
-          {/* Last 30 Days */}
-          <div className="flex-1 text-center p-3 border border-border rounded-lg hover:border-primary/30 transition-colors">
-            <TrendingUp className="h-6 w-6 mx-auto text-orange-600 mb-1" />
-            <p className="text-2xl font-bold">{summary?.recentCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">30 Days</p>
-            <p className="text-xs text-muted-foreground">${summary?.recentValue.toFixed(0)}</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Last 30 Days</CardTitle>
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{summary?.recentCount}</div>
+          <p className="text-xs text-muted-foreground">
+            ${summary?.recentValue.toFixed(2)} value delivered
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -411,11 +411,6 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Custom slow pulse for dashboard widgets */
-  .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
   /* Disable hover effects on touch devices */
   @media (hover: none) {
     .hover\:scale-105:hover {
