@@ -1,9 +1,21 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
+import { checkRateLimit, createRateLimitResponse } from '../_shared/rate-limiter.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const ERROR_MESSAGES = {
+  INVALID_CODE: "We couldn't find that code. Please double-check and try again.",
+  ALREADY_REDEEMED: "Good news! You already claimed this card. Your details are shown below.",
+  PENDING_APPROVAL: "Your code is being reviewed. You'll receive a call within 24 hours.",
+  REJECTED: "This code has been declined. Please contact support for assistance.",
+  POOL_EMPTY: "We're temporarily out of gift cards. Our team has been notified. Please try again in 30 minutes.",
+  RATE_LIMIT: "Too many attempts. Please wait a few minutes and try again.",
+  NETWORK_ERROR: "Connection issue. Your request is being processed - please wait...",
+  SMS_FAILED: "Your gift card is ready, but we couldn't send it via text. We'll resend it shortly.",
 };
 
 serve(async (req) => {
@@ -12,6 +24,22 @@ serve(async (req) => {
   }
 
   try {
+    // Apply rate limiting: 5 attempts per IP per 5 minutes
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const tempSupabase = createClient(supabaseUrl, supabaseKey);
+    
+    const rateLimitResult = await checkRateLimit(
+      tempSupabase,
+      req,
+      { maxRequests: 5, windowMs: 5 * 60 * 1000 },
+      'provision-gift-card-call-center'
+    );
+
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult, corsHeaders);
+    }
+
     // Get auth header to verify agent
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
@@ -82,7 +110,7 @@ serve(async (req) => {
       console.error("[PROVISION-CC] Recipient not found:", recipientError);
       return new Response(JSON.stringify({ 
         error: "INVALID_CODE",
-        message: "Invalid code. Please check and try again." 
+        message: ERROR_MESSAGES.INVALID_CODE
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 404,
@@ -139,7 +167,7 @@ serve(async (req) => {
     if (recipient.approval_status === "rejected") {
       return new Response(JSON.stringify({ 
         error: "REJECTED",
-        message: "This code was rejected. Contact support for assistance." 
+        message: ERROR_MESSAGES.REJECTED
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
@@ -147,7 +175,7 @@ serve(async (req) => {
     }
 
     if (recipient.approval_status === "pending") {
-      return new Response(JSON.stringify({ 
+      return new Response(JSON.stringify({
         error: "PENDING_APPROVAL",
         message: "This code needs approval first. Contact your supervisor." 
       }), {
@@ -169,6 +197,57 @@ serve(async (req) => {
 
     console.log(`[PROVISION-CC] Claiming card from pool: ${poolId}`);
 
+    // PRE-CHECK: Verify pool has inventory before claiming
+    const { data: poolCheck, error: poolCheckError } = await supabaseAdmin
+      .from('gift_card_pools')
+      .select('available_cards, pool_name, low_stock_threshold')
+      .eq('id', poolId)
+      .single();
+
+    if (poolCheckError) {
+      console.error("[PROVISION-CC] Error checking pool:", poolCheckError);
+      throw poolCheckError;
+    }
+
+    // Critical: Pool empty - alert immediately
+    if (poolCheck.available_cards === 0) {
+      console.error(`[PROVISION-CC] Pool ${poolCheck.pool_name} is EMPTY`);
+      
+      // Send critical alert (async, don't wait)
+      supabaseAdmin.functions.invoke('send-inventory-alert', {
+        body: {
+          severity: 'critical',
+          poolId,
+          poolName: poolCheck.pool_name,
+          availableCards: 0
+        }
+      }).catch(err => console.error('Failed to send alert:', err));
+      
+      return new Response(JSON.stringify({ 
+        error: "POOL_EMPTY",
+        message: ERROR_MESSAGES.POOL_EMPTY
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+      });
+    }
+
+    // Warning: Low stock - alert but continue
+    const lowStockThreshold = poolCheck.low_stock_threshold || 20;
+    if (poolCheck.available_cards <= lowStockThreshold) {
+      console.warn(`[PROVISION-CC] Pool ${poolCheck.pool_name} low: ${poolCheck.available_cards} cards`);
+      
+      // Send warning alert (async, don't block redemption)
+      supabaseAdmin.functions.invoke('send-inventory-alert', {
+        body: {
+          severity: 'warning',
+          poolId,
+          poolName: poolCheck.pool_name,
+          availableCards: poolCheck.available_cards
+        }
+      }).catch(err => console.error('Failed to send alert:', err));
+    }
+
     // Claim a gift card
     const { data: claimData, error: claimError } = await supabaseAdmin.rpc('claim_available_card', {
       p_pool_id: poolId,
@@ -182,7 +261,7 @@ serve(async (req) => {
       if (claimError.message?.includes('No available cards')) {
         return new Response(JSON.stringify({ 
           error: "POOL_EMPTY",
-          message: "No gift cards available. Contact your supervisor." 
+          message: ERROR_MESSAGES.POOL_EMPTY
         }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 400,
@@ -258,16 +337,43 @@ serve(async (req) => {
         
         const smsMessage = `Your ${brand?.brand_name || pool?.provider || "Gift Card"} is ready!\n\nCode: ${giftCard.card_code}\n${giftCard.card_number ? `Card: ${giftCard.card_number}\n` : ""}Value: $${value}\n\nRedeem at the store`;
         
+        // Create SMS delivery log entry
+        const { data: smsLogEntry } = await supabaseAdmin
+          .from('sms_delivery_log')
+          .insert({
+            recipient_id: recipient.id,
+            gift_card_id: giftCard.id,
+            campaign_id: campaign.id,
+            phone_number: recipient.phone,
+            message_body: smsMessage,
+            delivery_status: 'pending',
+            retry_count: 0
+          })
+          .select()
+          .single();
+
         const { error: smsError } = await supabaseAdmin.functions.invoke("send-gift-card-sms", {
           body: {
+            deliveryId: smsLogEntry?.id,
             phone: recipient.phone,
             message: smsMessage,
             recipientId: recipient.id,
+            giftCardId: giftCard.id,
           },
         });
 
         if (smsError) {
           console.error("[PROVISION-CC] SMS auto-send failed:", smsError);
+          // Update log to failed
+          if (smsLogEntry) {
+            await supabaseAdmin
+              .from('sms_delivery_log')
+              .update({ 
+                delivery_status: 'failed',
+                error_message: smsError.message 
+              })
+              .eq('id', smsLogEntry.id);
+          }
         } else {
           console.log("[PROVISION-CC] SMS auto-sent successfully");
         }

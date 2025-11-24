@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { PoolInventoryWidget } from "./PoolInventoryWidget";
+import { ResendSmsButton } from "./ResendSmsButton";
 
 interface RecipientData {
   id: string;
@@ -164,8 +166,13 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
   const pool = result?.giftCard.gift_card_pools;
   const value = pool?.card_value || result?.giftCard.card_value || 0;
 
+  const poolId = result?.giftCard.gift_card_pools ? result.giftCard.id : null;
+
   return (
     <div className="space-y-6">
+      {/* Inventory Widget */}
+      {poolId && <PoolInventoryWidget poolId={poolId} />}
+      
       {/* Code Input Section */}
       <Card>
         <CardHeader>

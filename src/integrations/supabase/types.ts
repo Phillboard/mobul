@@ -3172,6 +3172,76 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_delivery_log: {
+        Row: {
+          campaign_id: string | null
+          created_at: string | null
+          delivered_at: string | null
+          delivery_status: string
+          error_message: string | null
+          gift_card_id: string | null
+          id: string
+          last_retry_at: string | null
+          message_body: string
+          phone_number: string
+          recipient_id: string | null
+          retry_count: number | null
+          twilio_message_sid: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_status?: string
+          error_message?: string | null
+          gift_card_id?: string | null
+          id?: string
+          last_retry_at?: string | null
+          message_body: string
+          phone_number: string
+          recipient_id?: string | null
+          retry_count?: number | null
+          twilio_message_sid?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          delivery_status?: string
+          error_message?: string | null
+          gift_card_id?: string | null
+          id?: string
+          last_retry_at?: string | null
+          message_body?: string
+          phone_number?: string
+          recipient_id?: string | null
+          retry_count?: number | null
+          twilio_message_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_delivery_log_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_delivery_log_gift_card_id_fkey"
+            columns: ["gift_card_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_delivery_log_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_addresses: {
         Row: {
           address1: string
@@ -3833,6 +3903,13 @@ export type Database = {
       cleanup_rate_limit_tracking: {
         Args: { retention_hours?: number }
         Returns: number
+      }
+      cleanup_stuck_gift_cards: {
+        Args: never
+        Returns: {
+          card_ids: string[]
+          cleaned_count: number
+        }[]
       }
       create_system_alert: {
         Args: {

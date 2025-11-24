@@ -1,8 +1,18 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
+import { checkRateLimit, createRateLimitResponse } from '../_shared/rate-limiter.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const ERROR_MESSAGES = {
+  INVALID_CODE: "We couldn't find that code. Please double-check and try again.",
+  CAMPAIGN_MISMATCH: "This code is not valid for this campaign.",
+  PENDING_APPROVAL: "Your code is being reviewed. You'll receive a call within 24 hours.",
+  REJECTED: "This code has been declined. Please contact support for assistance.",
+  ALREADY_REDEEMED: "Good news! You already claimed this card. Your details are shown below.",
+  POOL_EMPTY: "We're temporarily out of gift cards. Please try again in 30 minutes.",
 };
 
 Deno.serve(async (req) => {
@@ -24,6 +34,18 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Apply rate limiting
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      req,
+      { maxRequests: 10, windowMs: 60 * 60 * 1000 },
+      'redeem-customer-code'
+    );
+
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult, corsHeaders);
+    }
 
     // 1. Look up recipient by redemption code
     const { data: recipient, error: recipientError } = await supabase
@@ -51,7 +73,7 @@ Deno.serve(async (req) => {
       });
       
       return Response.json(
-        { success: false, error: 'Invalid redemption code. Please check and try again.' },
+        { success: false, error: ERROR_MESSAGES.INVALID_CODE },
         { headers: corsHeaders, status: 404 }
       );
     }

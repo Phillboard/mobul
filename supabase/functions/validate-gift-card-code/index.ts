@@ -1,8 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
+import { checkRateLimit, createRateLimitResponse } from '../_shared/rate-limiter.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const ERROR_MESSAGES = {
+  INVALID_CODE: "We couldn't find that code. Please double-check and try again.",
+  CAMPAIGN_MISMATCH: "This code is not valid for this campaign.",
+  NO_DELIVERY: "No gift card has been approved for this code yet. Please contact support.",
+  NETWORK_ERROR: "Error checking gift card status. Please try again.",
 };
 
 Deno.serve(async (req) => {
@@ -24,6 +32,18 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Apply rate limiting: 5 attempts per IP per 5 minutes
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      req,
+      { maxRequests: 5, windowMs: 5 * 60 * 1000 },
+      'validate-gift-card-code'
+    );
+
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult, corsHeaders);
+    }
+
     // 1. Look up recipient by token (code)
     const { data: recipient, error: recipientError } = await supabase
       .from("recipients")
@@ -36,7 +56,7 @@ Deno.serve(async (req) => {
       return Response.json(
         {
           valid: false,
-          message: "Code not found. Please check and try again.",
+          message: ERROR_MESSAGES.INVALID_CODE,
         },
         { headers: corsHeaders }
       );
@@ -55,7 +75,7 @@ Deno.serve(async (req) => {
       return Response.json(
         {
           valid: false,
-          message: "This code is not valid for this campaign.",
+          message: ERROR_MESSAGES.CAMPAIGN_MISMATCH,
         },
         { headers: corsHeaders }
       );
