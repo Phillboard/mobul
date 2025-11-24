@@ -61,8 +61,23 @@ serve(async (req) => {
     }
 
     if (!campaign.audience_id) {
-      throw new Error('Campaign has no audience assigned');
+      throw new Error('Campaign has no audience assigned. Please assign an audience to this campaign before generating tokens.');
     }
+
+    console.log(`Checking audience ${campaign.audience_id} for recipients`);
+
+    // Verify audience exists
+    const { data: audience, error: audienceError } = await supabase
+      .from('audiences')
+      .select('id, name, total_count')
+      .eq('id', campaign.audience_id)
+      .single();
+
+    if (audienceError || !audience) {
+      throw new Error(`Audience not found: ${campaign.audience_id}`);
+    }
+
+    console.log(`Found audience "${audience.name}" with ${audience.total_count || 0} total recipients`);
 
     // Get all recipients for this audience
     const { data: recipients, error: recipientsError } = await supabase
@@ -75,7 +90,7 @@ serve(async (req) => {
     }
 
     if (!recipients || recipients.length === 0) {
-      throw new Error('No recipients found for this audience');
+      throw new Error(`No recipients found in audience "${audience.name}". Please upload recipients to this audience before generating tokens.`);
     }
 
     console.log(`Processing ${recipients.length} recipients`);
