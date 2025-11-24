@@ -18,6 +18,7 @@ serve(async (req) => {
 
     // Sample documentation pages to seed
     const docs = [
+      // Getting Started
       {
         category: "getting-started",
         title: "Quickstart Guide",
@@ -29,17 +30,48 @@ Welcome to the Mobul ACE Platform! This guide will help you get started quickly.
 
 ## Getting Started
 
-1. Create your first campaign
-2. Upload your audience
-3. Design your mailer
-4. Launch your campaign
+1. **Create your first campaign** - Navigate to Campaigns and click "Create Campaign"
+2. **Upload your audience** - Import contacts via CSV or manual entry
+3. **Design your mailer** - Use our template builder to create stunning direct mail
+4. **Launch your campaign** - Review, approve, and send
 
 ## Next Steps
 
-Once you've completed these steps, you can explore more advanced features.`,
+- Explore gift card rewards
+- Set up call tracking
+- Configure landing pages
+- Integrate with your CRM`,
         search_keywords: ["quickstart", "getting started", "guide", "tutorial"],
         is_admin_only: false,
       },
+      {
+        category: "getting-started",
+        title: "Platform Overview",
+        slug: "overview",
+        order_index: 2,
+        content: `# Platform Overview
+
+Mobul ACE is a comprehensive direct mail marketing platform with integrated gift card rewards, call tracking, and landing pages.
+
+## Core Features
+
+- **Campaign Management** - Create and manage direct mail campaigns
+- **Gift Card Rewards** - Integrated gift card provisioning and tracking
+- **Call Tracking** - Track campaign responses with dedicated phone numbers
+- **Landing Pages** - Build personalized landing pages (PURLs)
+- **Analytics** - Comprehensive campaign analytics and reporting
+
+## User Roles
+
+- **Admin** - Full platform access
+- **Agency Owner** - Manage multiple clients
+- **Company Owner** - Manage company campaigns
+- **Call Center** - Gift card redemption only`,
+        search_keywords: ["overview", "introduction", "features"],
+        is_admin_only: false,
+      },
+      
+      // Features
       {
         category: "features",
         title: "Campaigns Overview",
@@ -56,16 +88,61 @@ Learn how to create and manage campaigns in the ACE Platform.
 3. Fill in campaign details
 4. Select your audience
 5. Design your mailer
+6. Configure call tracking and landing pages
+7. Add gift card rewards (optional)
 
 ## Campaign Statuses
 
-- **Draft**: Campaign is being created
-- **Pending**: Awaiting approval
-- **Active**: Campaign is live
-- **Completed**: Campaign has finished`,
+- **Draft** - Campaign is being created
+- **Pending** - Awaiting approval
+- **Active** - Campaign is live
+- **Completed** - Campaign has finished
+
+## Best Practices
+
+- Test with a small audience first
+- Use clear call-to-actions
+- Track all response channels
+- Monitor analytics regularly`,
         search_keywords: ["campaigns", "create campaign", "campaign management"],
         is_admin_only: false,
       },
+      {
+        category: "features",
+        title: "Gift Card System",
+        slug: "gift-cards",
+        order_index: 2,
+        content: `# Gift Card System
+
+The gift card system allows you to offer rewards to campaign recipients.
+
+## Gift Card Pools
+
+Pools organize gift cards by brand and client. Each pool has:
+- Brand (Amazon, Visa, etc.)
+- Face value
+- Cost per card
+- Available inventory
+
+## Provisioning
+
+Gift cards can be provisioned:
+- Automatically when conditions are met
+- Manually by call center agents
+- Via API integration
+
+## Tracking
+
+All gift card redemptions are tracked with:
+- Timestamp
+- Recipient information
+- Campaign association
+- Delivery method (SMS/Email)`,
+        search_keywords: ["gift cards", "rewards", "provisioning"],
+        is_admin_only: false,
+      },
+      
+      // API Reference
       {
         category: "api-reference",
         title: "REST API",
@@ -82,6 +159,8 @@ All API requests require authentication using an API key:
 \`\`\`
 Authorization: Bearer YOUR_API_KEY
 \`\`\`
+
+Generate API keys in Settings → API & Integrations.
 
 ## Endpoints
 
@@ -101,10 +180,24 @@ Content-Type: application/json
 
 \`\`\`http
 GET /api/campaigns/:id
+\`\`\`
+
+### Provision Gift Card
+
+\`\`\`http
+POST /api/gift-cards/provision
+Content-Type: application/json
+
+{
+  "recipient_phone": "+15125551234",
+  "pool_id": "pool_id_here"
+}
 \`\`\``,
         search_keywords: ["api", "rest", "endpoints", "integration"],
         is_admin_only: false,
       },
+      
+      // Developer Guide
       {
         category: "developer-guide",
         title: "Development Setup",
@@ -136,8 +229,62 @@ Create a \`.env\` file with the following:
 \`\`\`
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_anon_key
+\`\`\`
+
+## Database Setup
+
+The platform uses Supabase for backend services. Database migrations are located in \`supabase/migrations/\`.
+
+## Edge Functions
+
+Edge functions are located in \`supabase/functions/\`. Deploy using:
+
+\`\`\`bash
+supabase functions deploy
 \`\`\``,
         search_keywords: ["development", "setup", "installation", "local"],
+        is_admin_only: true,
+      },
+      {
+        category: "developer-guide",
+        title: "Architecture",
+        slug: "architecture",
+        order_index: 2,
+        content: `# Architecture
+
+The ACE Platform is built on modern web technologies.
+
+## Tech Stack
+
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **UI**: Tailwind CSS + shadcn/ui
+- **State Management**: React Query
+- **Routing**: React Router
+
+## Project Structure
+
+\`\`\`
+src/
+├── components/     # Reusable UI components
+├── pages/         # Page components
+├── hooks/         # Custom React hooks
+├── lib/           # Utility functions
+├── contexts/      # React contexts
+└── integrations/  # External service integrations
+
+supabase/
+├── functions/     # Edge functions
+└── migrations/    # Database migrations
+\`\`\`
+
+## Key Concepts
+
+- Multi-tenant architecture
+- Role-based access control
+- Real-time updates via Supabase
+- Serverless edge functions`,
+        search_keywords: ["architecture", "structure", "tech stack"],
         is_admin_only: true,
       },
     ];

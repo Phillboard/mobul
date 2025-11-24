@@ -83,3 +83,6 @@ verify_jwt = true
 
 [functions.bulk-approve-codes]
 verify_jwt = true
+
+[functions.seed-documentation]
+verify_jwt = true

@@ -95,6 +95,7 @@ const navigationGroups: NavGroup[] = [
       { name: "Error Tracking", href: "/errors", icon: Bug, permissions: ['analytics.view'], keywords: ["bugs", "issues", "debugging"], description: "Error logs" },
       { name: "System Alerts", href: "/alerts", icon: AlertTriangle, permissions: ['analytics.view'], keywords: ["warnings", "notifications"], description: "System alerts" },
       { name: "Documentation", href: "/admin/docs", icon: BookOpen, roles: ['admin'], keywords: ["docs", "help", "guide", "manual"], description: "System documentation" },
+      { name: "Docs Management", href: "/admin/docs/manage", icon: SettingsIcon, roles: ['admin'], keywords: ["manage", "documentation", "admin"], description: "Manage documentation" },
       { name: "Help", href: "/help", icon: HelpCircle, keywords: ["support", "faq", "documentation"], description: "Help center" },
       { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team"], description: "Manage users" },
       { name: "API & Integrations", href: "/api", icon: Code, permissions: ['api.view', 'settings.integrations'], keywords: ["developer"], description: "API keys" },
