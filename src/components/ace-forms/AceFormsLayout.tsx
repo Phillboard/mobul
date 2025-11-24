@@ -8,7 +8,7 @@ interface AceFormsLayoutProps {
 
 export function AceFormsLayout({ children }: AceFormsLayoutProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full">
         <AceFormsSidebar />
         <div className="flex-1 flex flex-col">
