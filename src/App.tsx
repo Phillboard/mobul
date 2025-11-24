@@ -48,14 +48,44 @@ import AILandingPageEditor from "./pages/AILandingPageEditor";
 import AITemplateEditor from "./pages/AITemplateEditor";
 import Contacts from "./pages/Contacts";
 import ContactDetail from "./pages/ContactDetail";
-staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetching
-  gcTime: 10 * 60 * 1000, // 10 minutes - garbage collection time
-    refetchOnWindowFocus: false, // Don't refetch on window focus
+import Companies from "./pages/Companies";
+import CompanyDetail from "./pages/CompanyDetail";
+import Deals from "./pages/Deals";
+import DealDetail from "./pages/DealDetail";
+import Activities from "./pages/Activities";
+import Tasks from "./pages/Tasks";
+import AdminGiftCardMarketplace from "./pages/AdminGiftCardMarketplace";
+import Webinar from "./pages/Webinar";
+import AceForms from "./pages/AceForms";
+import AceFormBuilder from "./pages/AceFormBuilder";
+import AceFormPublic from "./pages/AceFormPublic";
+import AceFormAnalytics from "./pages/AceFormAnalytics";
+import AceFormsDocumentation from "./pages/AceFormsDocumentation";
+import AdminAuditLog from "./pages/AdminAuditLog";
+import PerformanceMonitoring from "./pages/PerformanceMonitoring";
+import ErrorTracking from "./pages/ErrorTracking";
+import SystemAlerts from "./pages/SystemAlerts";
+import Help from "./pages/Help";
+import BetaTesting from "./pages/BetaTesting";
+import LaunchChecklist from "./pages/LaunchChecklist";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import { CookieConsent } from "./components/CookieConsent";
+import Documentation from "./pages/Documentation";
+import AdminDocumentation from "./pages/AdminDocumentation";
+import EnrichData from "./pages/EnrichData";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetching
+      gcTime: 10 * 60 * 1000, // 10 minutes - garbage collection time
+      refetchOnWindowFocus: false, // Don't refetch on window focus
       retry: 1, // Only retry once on failure
-        refetchOnMount: 'always', // Always refetch on component mount
+      refetchOnMount: 'always', // Always refetch on component mount
     },
-mutations: {
-  retry: 0, // Don't retry mutations
+    mutations: {
+      retry: 0, // Don't retry mutations
     },
   },
 });
