@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CallCenterRedemptionPanel } from "@/components/call-center/CallCenterRedemptionPanel";
+import { PoolInventoryWidget } from "@/components/call-center/PoolInventoryWidget";
 import { Gift, TrendingUp, Clock } from "lucide-react";
 
 export default function CallCenterDashboard() {
@@ -21,6 +22,9 @@ export default function CallCenterDashboard() {
 
           {/* Stats Sidebar */}
           <div className="space-y-4">
+            {/* Pool Inventory - will populate dynamically when pool selected */}
+            <PoolInventoryWidget poolId={null} />
+            
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Today's Stats</CardTitle>

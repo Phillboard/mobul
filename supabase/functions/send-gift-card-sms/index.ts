@@ -12,6 +12,8 @@ interface SendGiftCardSMSRequest {
   recipientPhone: string;
   recipientName?: string;
   customMessage?: string;
+  recipientId?: string;
+  giftCardId?: string;
 }
 
 Deno.serve(async (req) => {
@@ -32,6 +34,8 @@ Deno.serve(async (req) => {
       recipientPhone,
       recipientName,
       customMessage,
+      recipientId,
+      giftCardId,
     }: SendGiftCardSMSRequest = await req.json();
 
     console.log('Sending gift card SMS:', { deliveryId, recipientPhone, value: giftCardValue });
@@ -44,6 +48,24 @@ Deno.serve(async (req) => {
     // Build SMS message
     const defaultMessage = `Congratulations ${recipientName || ''}! You've earned a $${giftCardValue} gift card. Your code: ${giftCardCode}. Thank you for your business!`;
     const smsMessage = customMessage || defaultMessage;
+
+    // Log SMS attempt to sms_delivery_log
+    const { data: logEntry, error: logError } = await supabaseClient
+      .from('sms_delivery_log')
+      .insert({
+        recipient_id: recipientId,
+        gift_card_id: giftCardId,
+        phone_number: formattedPhone,
+        message_body: smsMessage,
+        delivery_status: 'pending',
+        retry_count: 0,
+      })
+      .select()
+      .single();
+
+    if (logError) {
+      console.error('Failed to create SMS delivery log:', logError);
+    }
 
     // Update delivery record with SMS text
     await supabaseClient
@@ -81,6 +103,18 @@ Deno.serve(async (req) => {
     if (!twilioResponse.ok) {
       console.error('Twilio error:', twilioData);
       
+      // Update SMS delivery log with failure
+      if (logEntry) {
+        await supabaseClient
+          .from('sms_delivery_log')
+          .update({
+            delivery_status: 'failed',
+            error_message: twilioData.message || 'Unknown Twilio error',
+            last_retry_at: new Date().toISOString(),
+          })
+          .eq('id', logEntry.id);
+      }
+      
       // Update delivery with error
       await supabaseClient
         .from('gift_card_deliveries')
@@ -95,6 +129,18 @@ Deno.serve(async (req) => {
     }
 
     console.log('SMS sent successfully:', twilioData.sid);
+
+    // Update SMS delivery log with success
+    if (logEntry) {
+      await supabaseClient
+        .from('sms_delivery_log')
+        .update({
+          delivery_status: 'sent',
+          twilio_message_sid: twilioData.sid,
+          delivered_at: new Date().toISOString(),
+        })
+        .eq('id', logEntry.id);
+    }
 
     // Update delivery record with success
     const { error: updateError } = await supabaseClient
