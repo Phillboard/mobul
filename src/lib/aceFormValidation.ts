@@ -1,5 +1,13 @@
 import { z } from "zod";
 import { FormField, ValidationRule } from "@/types/aceForms";
+import {
+  emailSchema,
+  phoneSchema,
+  giftCardCodeSchema,
+  validateGiftCardCode,
+  formatPhone,
+  sanitizeInput,
+} from "./validationSchemas";
 
 /**
  * Form validation utilities using Zod
@@ -8,21 +16,16 @@ import { FormField, ValidationRule } from "@/types/aceForms";
 export function createFieldSchema(field: FormField): z.ZodTypeAny {
   let schema: z.ZodTypeAny;
 
-  // Base schema by field type
+  // Base schema by field type - use centralized schemas
   switch (field.type) {
     case 'email':
-      schema = z.string().email({ message: "Invalid email address" });
+      schema = emailSchema;
       break;
     case 'phone':
-      schema = z.string().regex(/^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/, {
-        message: "Invalid phone number"
-      });
+      schema = phoneSchema;
       break;
     case 'gift-card-code':
-      schema = z.string()
-        .min(4, { message: "Code must be at least 4 characters" })
-        .max(20, { message: "Code must be no more than 20 characters" })
-        .regex(/^[A-Za-z0-9]+$/i, { message: "Code must contain only letters and numbers" });
+      schema = giftCardCodeSchema;
       break;
     case 'date':
       schema = z.string().datetime();
@@ -75,19 +78,5 @@ export function createFormSchema(fields: FormField[]): z.ZodObject<any> {
   return z.object(shape);
 }
 
-export function validateGiftCardCode(code: string): boolean {
-  return /^[A-Za-z0-9]{4,20}$/i.test(code);
-}
-
-export function formatPhone(value: string): string {
-  const cleaned = value.replace(/\D/g, '');
-  const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-  if (match) {
-    return `(${match[1]}) ${match[2]}-${match[3]}`;
-  }
-  return value;
-}
-
-export function sanitizeInput(value: string): string {
-  return value.trim().replace(/[<>]/g, '');
-}
+// Re-export validation utilities from central schemas
+export { validateGiftCardCode, formatPhone, sanitizeInput };
