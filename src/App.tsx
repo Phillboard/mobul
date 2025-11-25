@@ -16,9 +16,9 @@ import CampaignDetail from "./pages/CampaignDetail";
 import PURLLandingPage from "./pages/PURLLandingPage";
 import AudienceDetail from "./pages/AudienceDetail";
 import RecipientDetail from "./pages/RecipientDetail";
-import Templates from "./pages/Templates";
-import CampaignPrototype from "./pages/CampaignPrototype";
-import GrapesJSTemplateEditor from "./pages/GrapesJSTemplateEditor";
+  import Mail from "./pages/Mail";
+  import CampaignPrototype from "./pages/CampaignPrototype";
+  import MailDesigner from "./pages/MailDesigner";
 import CampaignAnalytics from "./pages/CampaignAnalytics";
 import APIDocumentation from "./pages/APIDocumentation";
 import GiftCards from "./pages/GiftCards";
@@ -36,7 +36,7 @@ import AgencyManagement from "./pages/AgencyManagement";
 import CallCenterDashboard from "./pages/CallCenterDashboard";
 import CallCenterRedemption from "./pages/CallCenterRedemption";
 import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
-import AITemplateEditor from "./pages/AITemplateEditor";
+
 import Contacts from "./pages/Contacts";
 import ContactDetail from "./pages/ContactDetail";
 import ContactLists from "./pages/ContactLists";
@@ -131,10 +131,12 @@ const App = () => (
                   <Route path="/analytics/campaigns/:id" element={<ProtectedRoute><CampaignAnalytics /></ProtectedRoute>} />
                   <Route path="/prototype/:id" element={<ProtectedRoute><CampaignPrototype /></ProtectedRoute>} />
                   
-                  {/* Templates & Landing Pages */}
-                  <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
-                  <Route path="/template-builder/:id" element={<ProtectedRoute><GrapesJSTemplateEditor /></ProtectedRoute>} />
-                  <Route path="/templates/:id/ai-editor" element={<ProtectedRoute><AITemplateEditor /></ProtectedRoute>} />
+                  {/* Mail & Landing Pages */}
+                  <Route path="/mail" element={<ProtectedRoute><Mail /></ProtectedRoute>} />
+                  <Route path="/mail-designer/:id" element={<ProtectedRoute><MailDesigner /></ProtectedRoute>} />
+                  {/* Redirects from old template routes */}
+                  <Route path="/templates" element={<Navigate to="/mail" replace />} />
+                  <Route path="/template-builder/:id" element={<Navigate to="/mail-designer/:id" replace />} />
                   <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
                   <Route path="/landing-pages/new/visual-editor" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
                   <Route path="/landing-pages/:id/visual-editor" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
