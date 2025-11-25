@@ -70,15 +70,15 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Gift Card Inventory", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.manage', 'giftcards.view'], keywords: ["rewards", "inventory", "pools"], description: "Manage gift card inventory" },
       { name: "Purchase Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase', 'giftcards.purchase'], keywords: ["buy", "order"], description: "Purchase gift cards" },
-      { name: "Redemption Center", href: "/call-center/redeem", icon: Phone, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision"], description: "Redeem gift cards for callers" },
       { name: "Marketplace", href: "/admin/gift-card-marketplace", icon: Gift, roles: ['admin'], permissions: ['giftcards.admin_view'], keywords: ["admin", "master", "platform"], description: "Platform gift card marketplace" },
     ]
   },
   {
-    label: "Analytics & Tracking",
+    label: "Call Center",
     collapsible: true,
     items: [
       { name: "Call Tracking", href: "/call-center", icon: Phone, permissions: ['calls.view', 'calls.manage'], keywords: ["calls", "phone", "tracking", "reports"], description: "Call tracking analytics" },
+      { name: "Redemption Center", href: "/call-center/redeem", icon: Phone, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision"], description: "Redeem gift cards for callers" },
       { name: "System Health", href: "/admin/system-health", icon: Activity, permissions: ['analytics.view'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
     ]
   },
