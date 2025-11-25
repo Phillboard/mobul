@@ -67,6 +67,68 @@ export function useCampaignCreateForm({ clientId }: UseCampaignCreateFormProps) 
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: Partial<CampaignFormData>) => {
+      let audienceId = null;
+
+      // If contact list selected, create audience and recipients
+      if (data.contact_list_id) {
+        // Get contact list details
+        const { data: contactList, error: listError } = await supabase
+          .from("contact_lists")
+          .select("name, contact_count")
+          .eq("id", data.contact_list_id)
+          .single();
+
+        if (listError) throw listError;
+
+        // Create audience
+        const { data: audience, error: audienceError } = await supabase
+          .from("audiences")
+          .insert([{
+            client_id: clientId,
+            name: `${data.name} - Recipients`,
+            source: "import",
+            status: "ready",
+            total_count: contactList.contact_count || 0,
+            valid_count: contactList.contact_count || 0,
+          }])
+          .select()
+          .single();
+
+        if (audienceError) throw audienceError;
+        audienceId = audience.id;
+
+        // Get contacts from list
+        const { data: listMembers, error: membersError } = await supabase
+          .from("contact_list_members")
+          .select("contact:contacts(id, first_name, last_name, email, phone, address, city, state, zip)")
+          .eq("list_id", data.contact_list_id);
+
+        if (membersError) throw membersError;
+
+        // Create recipients for all contacts
+        if (listMembers && listMembers.length > 0) {
+          const recipients = listMembers.map((member: any) => ({
+            audience_id: audienceId,
+            contact_id: member.contact?.id,
+            token: crypto.randomUUID().replace(/-/g, '').substring(0, 16),
+            first_name: member.contact?.first_name,
+            last_name: member.contact?.last_name,
+            email: member.contact?.email,
+            phone: member.contact?.phone,
+            address: member.contact?.address,
+            city: member.contact?.city,
+            state: member.contact?.state,
+            zip: member.contact?.zip,
+          }));
+
+          const { error: recipientsError } = await supabase
+            .from("recipients")
+            .insert(recipients);
+
+          if (recipientsError) throw recipientsError;
+        }
+      }
+
       // Create campaign
       const { data: campaign, error: campaignError } = await supabase
         .from("campaigns")
@@ -78,6 +140,7 @@ export function useCampaignCreateForm({ clientId }: UseCampaignCreateFormProps) 
           postage: data.postage || "standard",
           mail_date: data.mail_date ? new Date(data.mail_date).toISOString() : null,
           contact_list_id: data.contact_list_id || null,
+          audience_id: audienceId,
           landing_page_id: data.landing_page_id || null,
           lp_mode: data.lp_mode as any || "bridge",
           utm_source: data.utm_source || null,
