@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Mail, FileText, Users, Gift, Phone,
   BarChart3, Code, Settings as SettingsIcon, ShoppingCart, Globe,
   Activity, ListTodo, Workflow, ChevronRight, ArrowLeft, FormInput, AlertTriangle,
-  Gauge, Bug, HelpCircle, BookOpen
+  Gauge, Bug, HelpCircle, BookOpen, List, Upload
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,6 +44,15 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Dashboard", href: "/", icon: LayoutDashboard, permissions: ['dashboard.view'], keywords: ["home", "overview"], description: "Main dashboard" },
     ]
+  },
+  {
+    label: "Contacts",
+    items: [
+      { name: "All Contacts", href: "/contacts", icon: Users, roles: ["admin", "agency_owner", "company_owner"], keywords: ["contacts", "customers"], description: "Manage contacts" },
+      { name: "Lists & Segments", href: "/contacts/lists", icon: List, roles: ["admin", "agency_owner", "company_owner"], keywords: ["lists", "segments"], description: "Organize contacts" },
+      { name: "Import", href: "/contacts/import", icon: Upload, roles: ["admin", "agency_owner", "company_owner"], keywords: ["import", "csv"], description: "Import contacts" },
+    ],
+    collapsible: true,
   },
   {
     label: "Marketing",

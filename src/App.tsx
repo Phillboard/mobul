@@ -37,7 +37,10 @@ import CallCenterDashboard from "./pages/CallCenterDashboard";
 import CallCenterRedemption from "./pages/CallCenterRedemption";
 import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
 import AITemplateEditor from "./pages/AITemplateEditor";
-// Contacts removed - using recipients table only
+import Contacts from "./pages/Contacts";
+import ContactDetail from "./pages/ContactDetail";
+import ContactLists from "./pages/ContactLists";
+import ContactImport from "./pages/ContactImport";
 import Activities from "./pages/Activities";
 import Tasks from "./pages/Tasks";
 import AdminGiftCardMarketplace from "./pages/AdminGiftCardMarketplace";
