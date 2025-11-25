@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -31,7 +31,7 @@ export function ContactsTable({ filters }: ContactsTableProps) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
-  // Initialize column visibility from preferences
+  // Initialize column visibility from preferences (only once)
   useEffect(() => {
     const allColumns = [
       "customer_code", "name", "email", "phone", "mobile_phone", "company",
@@ -46,17 +46,6 @@ export function ContactsTable({ filters }: ContactsTableProps) {
     
     setColumnVisibility(visibilityState);
   }, [preferences.visible_columns]);
-
-  // Persist column visibility changes to database (debounced at hook level)
-  useEffect(() => {
-    const visibleColumns = Object.entries(columnVisibility)
-      .filter(([_, isVisible]) => isVisible)
-      .map(([columnId]) => columnId);
-    
-    if (visibleColumns.length > 0) {
-      updatePreferences({ visible_columns: visibleColumns });
-    }
-  }, [columnVisibility, updatePreferences]);
 
   const columns = useMemo(() => createColumns(() => {}), []);
 
@@ -75,6 +64,18 @@ export function ContactsTable({ filters }: ContactsTableProps) {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+
+  // Handle column visibility changes with debouncing
+  const handleColumnVisibilityChange = useCallback((columnId: string, isVisible: boolean) => {
+    // Get current visibility from the columnVisibility state
+    const visibleColumns = Object.entries(columnVisibility)
+      .filter(([id, visible]) => id === columnId ? isVisible : visible)
+      .map(([id]) => id);
+    
+    if (visibleColumns.length > 0) {
+      updatePreferences({ visible_columns: visibleColumns });
+    }
+  }, [columnVisibility, updatePreferences]);
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedIds = selectedRows.map(row => row.original.id);
@@ -100,7 +101,7 @@ export function ContactsTable({ filters }: ContactsTableProps) {
           {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
           {selectedIds.length > 0 && ` • ${selectedIds.length} selected`}
         </div>
-        <ColumnSelector table={table} />
+        <ColumnSelector table={table} onVisibilityChange={handleColumnVisibilityChange} />
       </div>
 
       {selectedIds.length > 0 && (
