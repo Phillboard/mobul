@@ -11,6 +11,9 @@ interface EnrichmentParams {
   selectedBrands?: string[];
   scope?: 'total' | 'per_agency' | 'per_client';
   markAsSimulated?: boolean;
+  randomnessFactor?: number; // 0-50, percentage variance
+  timeRangeDays?: number; // 30, 60, 90, 180
+  trendPattern?: 'growing' | 'stable' | 'declining';
 }
 
 interface EnrichmentResult {
@@ -42,16 +45,68 @@ const firstNames = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', '
 const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'White', 'Harris', 'Clark'];
 const cities = ['Phoenix', 'Scottsdale', 'Tempe', 'Mesa', 'Chandler', 'Gilbert', 'Glendale', 'Peoria', 'Surprise', 'Avondale'];
 const streets = ['Main St', 'Oak Ave', 'Maple Dr', 'Cedar Ln', 'Pine Rd', 'Elm Blvd', 'Washington St', 'Lincoln Ave'];
+const aptSuffixes = ['', '', '', '', ' Apt 201', ' Unit B', ' Suite 5', ' #302'];
 
 const jobTitles: Record<string, string[]> = {
-  roofing: ['Property Manager', 'Homeowner', 'Building Manager', 'Facilities Director', 'HOA President'],
-  realty: ['Home Buyer', 'Seller', 'Real Estate Investor', 'Property Developer', 'First-Time Buyer'],
-  auto: ['Fleet Manager', 'Vehicle Owner', 'Operations Manager', 'Dealership Owner', 'Auto Enthusiast'],
-  default: ['Business Owner', 'Director', 'Manager', 'VP Operations', 'Executive'],
+  roofing: ['Property Manager', 'Homeowner', 'Building Manager', 'Facilities Director', 'HOA President', 'Maintenance Supervisor', 'Construction Manager'],
+  realty: ['Home Buyer', 'Seller', 'Real Estate Investor', 'Property Developer', 'First-Time Buyer', 'Landlord', 'Commercial Investor'],
+  auto: ['Fleet Manager', 'Vehicle Owner', 'Operations Manager', 'Dealership Owner', 'Auto Enthusiast', 'Lease Manager', 'Transport Director'],
+  default: ['Business Owner', 'Director', 'Manager', 'VP Operations', 'Executive', 'President', 'CFO'],
 };
 
 const leadSources = ['website', 'referral', 'direct_mail', 'event', 'social_media', 'cold_call', 'partner'];
 const tags = ['hot-lead', 'vip', 'decision-maker', 'budget-approved', 'needs-followup', 'high-value', 'urgent'];
+
+const contactNoteTemplates = [
+  'Initial inquiry about {service} - very interested in pricing',
+  'Called back, scheduled consultation for next week',
+  'Left voicemail, will follow up in 2 days',
+  'Meeting with decision maker on {date}',
+  'Sent detailed proposal via email',
+  'Hot lead - ready to move forward, just needs final approval',
+  'Follow-up needed - waiting on budget confirmation',
+  'Positive conversation, interested in {season} timeframe',
+  'Requested additional references and case studies',
+  'High priority - competitor quote expires end of month',
+];
+
+const campaignNameTemplates = [
+  'Spring {service} Special',
+  'Summer Value Assessment',
+  'End of Year {service} Push',
+  'New Year Savings Event',
+  '{season} Inspection Campaign',
+  'Limited Time {service} Offer',
+  'Annual {service} Promotion',
+  'Q{quarter} Growth Initiative',
+];
+
+const applyRandomness = (value: number, factor: number): number => {
+  if (factor === 0) return value;
+  const variance = (factor / 100) * value;
+  const min = Math.floor(value - variance);
+  const max = Math.ceil(value + variance);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+const getBusinessHourDate = (daysAgo: number): Date => {
+  const date = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+  const dayOfWeek = date.getDay();
+  
+  // 70% weekdays, 30% weekend
+  if (Math.random() < 0.7) {
+    if (dayOfWeek === 0) date.setDate(date.getDate() - 1); // Sunday -> Saturday
+    if (dayOfWeek === 6 && Math.random() < 0.5) date.setDate(date.getDate() - 1); // Some Saturdays -> Friday
+  }
+  
+  // Business hours 9am-5pm, with peaks at 10-11am and 2-4pm
+  const hourWeights = [9, 10, 10, 10, 11, 11, 12, 13, 14, 14, 14, 15, 15, 16, 17];
+  const hour = hourWeights[Math.floor(Math.random() * hourWeights.length)];
+  const minute = Math.floor(Math.random() * 60);
+  
+  date.setHours(hour, minute, 0, 0);
+  return date;
+};
 
 const generatePhone = () => `${480 + Math.floor(Math.random() * 3)}${Math.floor(Math.random() * 9000000 + 1000000)}`;
 const generateEmail = (first: string, last: string, domain: string) => 
@@ -129,7 +184,6 @@ const randomDate = (start: Date, end: Date) => {
 };
 
 const randomElement = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-
 const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 // ============= MAIN FUNCTION =============
@@ -154,9 +208,12 @@ Deno.serve(async (req) => {
       selectedBrands = ['AMZN', 'VISA', 'TARG', 'APPL', 'BEST', 'HOME'],
       scope = 'per_client',
       markAsSimulated = true,
+      randomnessFactor = 15,
+      timeRangeDays = 90,
+      trendPattern = 'stable',
     } = params;
 
-    console.log('🚀 Starting bulletproof data simulation:', { dataTypes, quantities, scope });
+    console.log('🚀 Starting bulletproof data simulation:', { dataTypes, quantities, scope, randomnessFactor, timeRangeDays, trendPattern });
 
     const batchId = crypto.randomUUID();
     await supabase.from('simulation_batches').insert({
@@ -284,14 +341,16 @@ Deno.serve(async (req) => {
         poolsByClient.set(client.id, clientPools);
       }
 
-      // Generate gift cards
+      // Generate gift cards with randomness
       if (dataTypes.includes('giftCards')) {
-        const cardsPerPool = quantities.giftCards || 100;
         const statusDistribution = ['available', 'available', 'available', 'available', 'claimed', 'claimed', 'delivered', 'delivered', 'delivered', 'redeemed'];
 
         for (const [clientId, pools] of poolsByClient) {
           for (const pool of pools) {
+            const baseCards = quantities.giftCards || 100;
+            const cardsPerPool = applyRandomness(baseCards, randomnessFactor);
             const cards = [];
+            
             for (let i = 0; i < cardsPerPool; i++) {
               const status = randomElement(statusDistribution);
               let cardData: any = {
@@ -316,7 +375,8 @@ Deno.serve(async (req) => {
               }
 
               if (status !== 'available') {
-                cardData.claimed_at = new Date(Date.now() - randomInt(1, 60) * 24 * 60 * 60 * 1000).toISOString();
+                const daysAgo = randomInt(1, timeRangeDays);
+                cardData.claimed_at = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
               }
               cards.push(cardData);
             }
@@ -340,10 +400,9 @@ Deno.serve(async (req) => {
     if (dataTypes.includes('contacts')) {
       console.log('👥 Phase 2: CRM Foundation...');
 
-      const contactsPerClient = quantities.contacts || 150;
-      const lifecycleDistribution = { lead: 0.25, mql: 0.25, sql: 0.20, opportunity: 0.15, customer: 0.10, evangelist: 0.05 };
-
       for (const client of clients) {
+        const baseContacts = quantities.contacts || 150;
+        const contactsPerClient = applyRandomness(baseContacts, randomnessFactor);
         const contacts: any[] = [];
         const industryKey = client.industry === 'roofing' ? 'roofing' : client.industry === 'realty' ? 'realty' : client.industry === 'auto' ? 'auto' : 'default';
 
@@ -351,8 +410,23 @@ Deno.serve(async (req) => {
           const firstName = randomElement(firstNames);
           const lastName = randomElement(lastNames);
           const stage = Math.random() < 0.25 ? 'lead' : Math.random() < 0.5 ? 'mql' : Math.random() < 0.7 ? 'sql' : Math.random() < 0.85 ? 'opportunity' : Math.random() < 0.95 ? 'customer' : 'evangelist';
+          
+          // Behavioral correlation: higher stages = higher scores
           const leadScore = stage === 'lead' ? randomInt(0, 40) : stage === 'mql' ? randomInt(40, 60) : stage === 'sql' ? randomInt(60, 75) : stage === 'opportunity' ? randomInt(75, 90) : randomInt(90, 100);
-          const daysAgo = randomInt(0, 90);
+          
+          // Higher lead score = more recent activity
+          const maxDaysAgo = leadScore > 80 ? 7 : leadScore > 60 ? 30 : leadScore > 40 ? 60 : 90;
+          const daysAgo = randomInt(0, maxDaysAgo);
+          
+          // Higher lead score = more interactions
+          const interactions = Math.floor(leadScore / 10);
+
+          // Generate realistic note
+          const noteTemplate = randomElement(contactNoteTemplates);
+          const note = noteTemplate
+            .replace('{service}', industryKey === 'roofing' ? 'roof inspection' : industryKey === 'realty' ? 'property valuation' : 'warranty coverage')
+            .replace('{season}', randomElement(['spring', 'summer', 'fall', 'winter']))
+            .replace('{date}', 'Thursday');
 
           contacts.push({
             client_id: client.id,
@@ -363,7 +437,7 @@ Deno.serve(async (req) => {
             mobile_phone: generatePhone(),
             company: `${randomElement(lastNames)} ${randomElement(['Inc', 'LLC', 'Corp', 'Group', 'Industries'])}`,
             job_title: randomElement(jobTitles[industryKey]),
-            address: `${randomInt(100, 9999)} ${randomElement(streets)}`,
+            address: `${randomInt(100, 9999)} ${randomElement(streets)}${randomElement(aptSuffixes)}`,
             city: randomElement(cities),
             state: 'AZ',
             zip: `85${randomInt(100, 999)}`,
@@ -371,10 +445,11 @@ Deno.serve(async (req) => {
             lifecycle_stage: stage,
             lead_source: randomElement(leadSources),
             lead_score: leadScore,
-            engagement_score: randomInt(0, 100),
+            engagement_score: Math.min(leadScore + randomInt(-10, 10), 100),
             last_activity_date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
-            total_interactions: randomInt(0, 20),
-            email_opens_count: randomInt(0, 10),
+            total_interactions: interactions,
+            email_opens_count: Math.floor(interactions * 0.6),
+            notes: note,
             is_simulated: markAsSimulated,
             simulation_batch_id: batchId,
           });
@@ -404,36 +479,35 @@ Deno.serve(async (req) => {
               result.contactListsCreated++;
 
               // Add random contacts to lists
-              const listSize = randomInt(20, 40);
-              const listMembers = createdContacts.slice(0, listSize).map(contact => ({
+              const listSize = Math.floor(createdContacts.length * 0.25);
+              const listContacts = createdContacts.slice(0, listSize);
+              
+              const members = listContacts.map(c => ({
                 list_id: list.id,
-                contact_id: contact.id,
+                contact_id: c.id,
                 is_simulated: markAsSimulated,
                 simulation_batch_id: batchId,
               }));
 
-              await supabase.from('contact_list_members').insert(listMembers);
+              await supabase.from('contact_list_members').insert(members);
               await supabase.from('contact_lists').update({ contact_count: listSize }).eq('id', list.id);
             }
           }
           listsByClient.set(client.id, lists);
 
-          // Add tags to contacts
-          const tagInserts: any[] = [];
-          for (const contact of createdContacts.slice(0, Math.floor(createdContacts.length * 0.6))) {
-            const numTags = randomInt(1, 3);
-            for (let i = 0; i < numTags; i++) {
-              tagInserts.push({
-                contact_id: contact.id,
-                tag: randomElement(tags),
-                is_simulated: markAsSimulated,
-                simulation_batch_id: batchId,
-              });
-            }
+          // Create tags for contacts
+          const tagRecords: any[] = [];
+          for (const contact of createdContacts.slice(0, Math.floor(createdContacts.length * 0.3))) {
+            tagRecords.push({
+              contact_id: contact.id,
+              tag: randomElement(tags),
+              is_simulated: markAsSimulated,
+              simulation_batch_id: batchId,
+            });
           }
-          if (tagInserts.length > 0) {
-            await supabase.from('contact_tags').insert(tagInserts);
-            result.contactTagsCreated += tagInserts.length;
+          if (tagRecords.length > 0) {
+            await supabase.from('contact_tags').insert(tagRecords);
+            result.contactTagsCreated += tagRecords.length;
           }
         }
       }
@@ -441,49 +515,57 @@ Deno.serve(async (req) => {
 
     // ===== PHASE 3: MARKETING ASSETS =====
     if (dataTypes.includes('templates') || dataTypes.includes('landingPages')) {
-      console.log('🎨 Phase 3: Marketing Assets...');
+      console.log('📄 Phase 3: Marketing Assets...');
 
       for (const client of clients) {
-        // Create templates
         if (dataTypes.includes('templates')) {
-          const sizes = ['4x6', '6x9', '6x11'];
-          for (const size of sizes) {
-            const { data: template } = await supabase.from('templates').insert({
+          const baseTemplates = quantities.templates || 3;
+          const templatesCount = applyRandomness(baseTemplates, randomnessFactor);
+          const templates: any[] = [];
+
+          for (let i = 0; i < templatesCount; i++) {
+            const season = randomElement(['Spring', 'Summer', 'Fall', 'Winter']);
+            const service = client.industry === 'roofing' ? 'Roof Inspection' : client.industry === 'realty' ? 'Home Value' : 'Warranty';
+            
+            templates.push({
               client_id: client.id,
-              name: `${client.name} - ${size} Postcard`,
-              size: size as any,
-              project_data: { pages: [], styles: [], components: [] },
-              thumbnail_url: '',
+              name: `${season} ${service} Campaign ${i + 1}`,
+              category: 'postcard',
+              format: '6x9',
+              design_json: { components: [], styles: {}, html: '<div>Mock template</div>', css: '' },
               is_simulated: markAsSimulated,
               simulation_batch_id: batchId,
-            }).select().single();
+            });
+          }
 
-            if (template) {
-              templatesByClient.set(client.id, [...(templatesByClient.get(client.id) || []), template]);
-              result.templatesCreated++;
-            }
+          const { data: createdTemplates } = await supabase.from('templates').insert(templates).select();
+          if (createdTemplates) {
+            templatesByClient.set(client.id, createdTemplates);
+            result.templatesCreated += createdTemplates.length;
           }
         }
 
-        // Create landing pages
         if (dataTypes.includes('landingPages')) {
-          const lpNames = ['Main Campaign Page', 'Thank You Page'];
-          for (const lpName of lpNames) {
-            const { data: lp } = await supabase.from('landing_pages').insert({
+          const baseLPs = quantities.landingPages || 2;
+          const lpCount = applyRandomness(baseLPs, randomnessFactor);
+          const landingPages: any[] = [];
+
+          for (let i = 0; i < lpCount; i++) {
+            landingPages.push({
               client_id: client.id,
-              name: lpName,
-              slug: lpName.toLowerCase().replace(/\s+/g, '-'),
-              editor_type: 'grapesjs',
-              project_data: {},
-              status: Math.random() > 0.5 ? 'published' : 'draft',
+              name: `Campaign Landing Page ${i + 1}`,
+              slug: `campaign-lp-${i + 1}-${Math.random().toString(36).slice(2, 8)}`,
+              page_content: { html: '<div>Landing Page</div>', css: '', components: [] },
+              is_published: Math.random() > 0.3,
               is_simulated: markAsSimulated,
               simulation_batch_id: batchId,
-            }).select().single();
+            });
+          }
 
-            if (lp) {
-              landingPagesByClient.set(client.id, [...(landingPagesByClient.get(client.id) || []), lp]);
-              result.landingPagesCreated++;
-            }
+          const { data: createdLPs } = await supabase.from('landing_pages').insert(landingPages).select();
+          if (createdLPs) {
+            landingPagesByClient.set(client.id, createdLPs);
+            result.landingPagesCreated += createdLPs.length;
           }
         }
       }
@@ -493,137 +575,181 @@ Deno.serve(async (req) => {
     if (dataTypes.includes('campaigns')) {
       console.log('📢 Phase 4: Campaigns...');
 
-      const campaignsPerClient = quantities.campaigns || 8;
-      const statuses = ['draft', 'scheduled', 'scheduled', 'in_progress', 'in_progress', 'in_progress', 'in_progress', 'completed'];
-
       for (const client of clients) {
-        const clientContacts = contactsByClient.get(client.id) || [];
-        const clientLists = listsByClient.get(client.id) || [];
+        const baseCampaigns = quantities.campaigns || 8;
+        const campaignsCount = applyRandomness(baseCampaigns, randomnessFactor);
         const clientTemplates = templatesByClient.get(client.id) || [];
         const clientLPs = landingPagesByClient.get(client.id) || [];
-        const clientPools = poolsByClient.get(client.id) || [];
+        const clientLists = listsByClient.get(client.id) || [];
 
-        for (let i = 0; i < campaignsPerClient; i++) {
+        for (let i = 0; i < campaignsCount; i++) {
+          const daysAgo = Math.floor((timeRangeDays / campaignsCount) * i);
+          const service = client.industry === 'roofing' ? 'Inspection' : client.industry === 'realty' ? 'Assessment' : 'Protection';
+          const quarter = Math.floor(Math.random() * 4) + 1;
+          
+          const nameTemplate = randomElement(campaignNameTemplates);
+          const campaignName = nameTemplate
+            .replace('{service}', service)
+            .replace('{season}', randomElement(['Spring', 'Summer', 'Fall', 'Winter']))
+            .replace('{quarter}', quarter.toString());
+
           // Create audience first
-          const audienceSize = randomInt(50, 150);
           const { data: audience } = await supabase.from('audiences').insert({
             client_id: client.id,
-            name: `Campaign ${i + 1} Audience`,
-            source: 'list',
+            name: `${campaignName} Audience`,
+            source: 'csv',
             status: 'completed',
-            total_count: audienceSize,
-            valid_count: audienceSize,
-            invalid_count: 0,
+            total_count: 0,
+            valid_count: 0,
             is_simulated: markAsSimulated,
             simulation_batch_id: batchId,
           }).select().single();
 
           if (!audience) continue;
-          result.audiencesCreated++;
 
-          // Create campaign
-          const status = randomElement(statuses);
-          const mailDate = status === 'completed' ? new Date(Date.now() - randomInt(30, 60) * 24 * 60 * 60 * 1000) :
-                          status === 'in_progress' ? new Date(Date.now() - randomInt(1, 15) * 24 * 60 * 60 * 1000) :
-                          new Date(Date.now() + randomInt(1, 30) * 24 * 60 * 60 * 1000);
-
+          const statusWeights = ['draft', 'ready', 'scheduled', 'in_production', 'completed', 'completed', 'completed'];
           const { data: campaign } = await supabase.from('campaigns').insert({
             client_id: client.id,
+            name: campaignName,
             audience_id: audience.id,
-            template_id: clientTemplates[0]?.id,
-            landing_page_id: clientLPs[0]?.id,
-            name: `${client.name} - Campaign ${i + 1}`,
+            template_id: clientTemplates.length > 0 ? randomElement(clientTemplates).id : null,
+            landing_page_id: clientLPs.length > 0 && Math.random() > 0.3 ? randomElement(clientLPs).id : null,
             size: randomElement(['4x6', '6x9', '6x11']),
-            status: status as any,
-            mail_date: mailDate.toISOString().split('T')[0],
-            lp_mode: 'bridge',
-            utm_source: 'directmail',
-            utm_medium: 'postcard',
+            postage: randomElement(['standard', 'first_class']),
+            status: randomElement(statusWeights),
+            mail_date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            lp_mode: 'purl',
             is_simulated: markAsSimulated,
             simulation_batch_id: batchId,
           }).select().single();
 
           if (!campaign) continue;
-          campaignsByClient.set(client.id, [...(campaignsByClient.get(client.id) || []), campaign]);
+          
+          if (!campaignsByClient.has(client.id)) {
+            campaignsByClient.set(client.id, []);
+          }
+          campaignsByClient.get(client.id)!.push(campaign);
+          audiencesByClient.set(campaign.id, [audience]);
           result.campaignsCreated++;
+          result.audiencesCreated++;
 
           // Create conditions
-          const conditionNames = ['Confirmed Appointment', 'Requested Callback', 'Information Requested'];
-          for (let c = 0; c < conditionNames.length; c++) {
+          const conditionsCount = randomInt(1, 3);
+          for (let j = 0; j < conditionsCount; j++) {
             const { data: condition } = await supabase.from('campaign_conditions').insert({
               campaign_id: campaign.id,
-              condition_number: c + 1,
-              condition_name: conditionNames[c],
-              trigger_type: c === 0 ? 'manual_agent' : c === 1 ? 'form_submission' : 'time_delayed',
-              time_delay_hours: c === 2 ? 48 : null,
+              condition_number: j + 1,
+              condition_name: `Condition ${j + 1}`,
+              trigger_type: j === 0 ? 'call' : randomElement(['call', 'time_delay', 'crm_event']),
+              time_delay_hours: j > 0 ? randomInt(24, 168) : null,
               is_active: true,
               is_simulated: markAsSimulated,
               simulation_batch_id: batchId,
             }).select().single();
 
-            if (condition) result.conditionsCreated++;
+            if (condition) {
+              result.conditionsCreated++;
 
-            // Create reward config
-            if (clientPools.length > 0) {
-              await supabase.from('campaign_reward_configs').insert({
-                campaign_id: campaign.id,
-                condition_number: c + 1,
-                gift_card_pool_id: randomElement(clientPools).id,
-                reward_description: `$${clientPools[0].card_value} Gift Card`,
-                sms_template: 'Thank you! Your gift card: {code}',
-                is_simulated: markAsSimulated,
-                simulation_batch_id: batchId,
-              });
-              result.rewardConfigsCreated++;
+              // Create reward config for this condition
+              const clientPools = poolsByClient.get(client.id) || [];
+              if (clientPools.length > 0) {
+                await supabase.from('campaign_reward_configs').insert({
+                  campaign_id: campaign.id,
+                  condition_number: j + 1,
+                  gift_card_pool_id: randomElement(clientPools).id,
+                  reward_description: `$${randomElement([25, 50, 100])} Gift Card`,
+                  sms_template: 'Thank you! Here is your reward: {gift_card_code}',
+                  is_simulated: markAsSimulated,
+                  simulation_batch_id: batchId,
+                });
+                result.rewardConfigsCreated++;
+              }
             }
           }
+        }
+      }
+    }
 
-          // Create recipients
-          if (dataTypes.includes('recipients')) {
-            const recipients: any[] = [];
-            const audienceContacts = clientContacts.slice(0, audienceSize);
+    // ===== PHASE 5: RECIPIENTS =====
+    if (dataTypes.includes('recipients')) {
+      console.log('📮 Phase 5: Recipients...');
+
+      for (const [clientId, campaigns] of campaignsByClient) {
+        const clientContacts = contactsByClient.get(clientId) || [];
+
+        for (const campaign of campaigns) {
+          const audiences = audiencesByClient.get(campaign.id) || [];
+          if (audiences.length === 0) continue;
+
+          const audience = audiences[0];
+          const baseRecipients = quantities.recipients || 100;
+          const recipientsCount = applyRandomness(baseRecipients, randomnessFactor);
+          const recipients: any[] = [];
+
+          // Use existing contacts or create minimal recipient data
+          const selectedContacts = clientContacts.slice(0, Math.min(recipientsCount, clientContacts.length));
+
+          for (let i = 0; i < recipientsCount; i++) {
+            const contact = selectedContacts[i % selectedContacts.length];
             
-            for (const contact of audienceContacts) {
-              recipients.push({
-                audience_id: audience.id,
-                contact_id: contact.id,
-                first_name: contact.first_name,
-                last_name: contact.last_name,
-                email: contact.email,
-                phone: contact.phone,
-                address: contact.address,
-                city: contact.city,
-                state: contact.state,
-                zip: contact.zip,
-                redemption_code: generateRedemptionCode(),
-                token: generateToken(),
-                approval_status: randomElement(['pending', 'pending', 'approved', 'approved', 'approved', 'redeemed']),
-                is_simulated: markAsSimulated,
-                simulation_batch_id: batchId,
-              });
-            }
-
-            const { data: createdRecipients } = await supabase.from('recipients').insert(recipients).select();
-            if (createdRecipients) {
-              recipientsByCampaign.set(campaign.id, createdRecipients);
-              result.recipientsCreated += createdRecipients.length;
-            }
+            recipients.push({
+              audience_id: audience.id,
+              contact_id: contact?.id,
+              customer_code: contact?.customer_code || null,
+              first_name: contact?.first_name || null,
+              last_name: contact?.last_name || null,
+              phone: contact?.phone || null,
+              email: contact?.email || null,
+              address: contact?.address || null,
+              city: contact?.city || null,
+              state: contact?.state || null,
+              zip: contact?.zip || null,
+              token: generateToken(),
+              redemption_code: generateRedemptionCode(),
+              approval_status: Math.random() > 0.1 ? 'approved' : 'pending',
+              is_simulated: markAsSimulated,
+              simulation_batch_id: batchId,
+            });
           }
 
-          // Create tracked numbers
-          if (dataTypes.includes('trackedNumbers')) {
-            const { data: trackedNum } = await supabase.from('tracked_phone_numbers').insert({
+          const { data: createdRecipients } = await supabase.from('recipients').insert(recipients).select();
+          if (createdRecipients) {
+            recipientsByCampaign.set(campaign.id, createdRecipients);
+            result.recipientsCreated += createdRecipients.length;
+
+            await supabase.from('audiences').update({
+              total_count: createdRecipients.length,
+              valid_count: createdRecipients.length,
+            }).eq('id', audience.id);
+          }
+        }
+      }
+    }
+
+    // ===== PHASE 6: TRACKED PHONE NUMBERS =====
+    if (dataTypes.includes('trackedNumbers')) {
+      console.log('📞 Phase 6: Tracked Phone Numbers...');
+
+      for (const [clientId, campaigns] of campaignsByClient) {
+        for (const campaign of campaigns) {
+          const baseNumbers = quantities.trackedNumbers || 1;
+          const numbersCount = applyRandomness(baseNumbers, randomnessFactor);
+
+          for (let i = 0; i < numbersCount; i++) {
+            const { data: trackedNumber } = await supabase.from('tracked_phone_numbers').insert({
               campaign_id: campaign.id,
-              phone_number: generatePhone(),
-              forward_to_number: generatePhone(),
-              provider: 'twilio',
+              phone_number: `+1480${Math.floor(Math.random() * 9000000 + 1000000)}`,
+              forward_to_number: `+1602${Math.floor(Math.random() * 9000000 + 1000000)}`,
               status: 'active',
               is_simulated: markAsSimulated,
               simulation_batch_id: batchId,
             }).select().single();
 
-            if (trackedNum) {
-              trackedNumbersByCampaign.set(campaign.id, [trackedNum]);
+            if (trackedNumber) {
+              if (!trackedNumbersByCampaign.has(campaign.id)) {
+                trackedNumbersByCampaign.set(campaign.id, []);
+              }
+              trackedNumbersByCampaign.get(campaign.id)!.push(trackedNumber);
               result.trackedNumbersCreated++;
             }
           }
@@ -633,51 +759,154 @@ Deno.serve(async (req) => {
 
     // ===== PHASE 7: CALL SESSIONS =====
     if (dataTypes.includes('callSessions')) {
-      console.log('📞 Phase 7: Call Sessions...');
+      console.log('☎️ Phase 7: Call Sessions...');
 
-      const totalCallSessions = quantities.callSessions || 800;
-      const allCampaigns = Array.from(campaignsByClient.values()).flat();
-      const statusDistribution = ['completed', 'completed', 'completed', 'completed', 'completed', 'missed', 'voicemail', 'in-progress'];
+      for (const [clientId, campaigns] of campaignsByClient) {
+        for (const campaign of campaigns) {
+          const trackedNumbers = trackedNumbersByCampaign.get(campaign.id) || [];
+          if (trackedNumbers.length === 0) continue;
 
-      for (let i = 0; i < totalCallSessions; i++) {
-        const campaign = randomElement(allCampaigns);
-        const trackedNumbers = trackedNumbersByCampaign.get(campaign.id) || [];
-        const recipients = recipientsByCampaign.get(campaign.id) || [];
-        
-        if (trackedNumbers.length === 0) continue;
+          const recipients = recipientsByCampaign.get(campaign.id) || [];
+          const baseCalls = quantities.callSessions || 800;
+          const callsPerCampaign = Math.floor(applyRandomness(baseCalls, randomnessFactor) / campaigns.length);
 
-        const status = randomElement(statusDistribution);
-        const recipient = Math.random() > 0.3 && recipients.length > 0 ? randomElement(recipients) : null;
-        const daysAgo = randomInt(0, 90);
-        const startTime = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
-        const duration = status === 'completed' ? randomInt(60, 480) : 0;
+          const callSessions: any[] = [];
+          const statusWeights = ['completed', 'completed', 'completed', 'no-answer', 'busy', 'failed'];
 
-        await supabase.from('call_sessions').insert({
-          campaign_id: campaign.id,
-          tracked_number_id: trackedNumbers[0].id,
-          recipient_id: recipient?.id,
-          caller_phone: generatePhone(),
-          call_status: status,
-          match_status: recipient ? 'matched' : 'unmatched',
-          call_started_at: startTime.toISOString(),
-          call_answered_at: status === 'completed' ? new Date(startTime.getTime() + 3000).toISOString() : null,
-          call_ended_at: status === 'completed' ? new Date(startTime.getTime() + duration * 1000).toISOString() : null,
-          call_duration_seconds: duration,
-          recording_url: status === 'completed' ? `https://api.twilio.com/recordings/RE${crypto.randomUUID().replace(/-/g, '')}` : null,
-          is_simulated: markAsSimulated,
-          simulation_batch_id: batchId,
-        });
-        result.callSessionsCreated++;
+          for (let i = 0; i < callsPerCampaign; i++) {
+            const recipient = recipients[i % recipients.length];
+            const status = randomElement(statusWeights);
+            const daysAgo = randomInt(0, timeRangeDays);
+            const callStarted = getBusinessHourDate(daysAgo);
+
+            let callData: any = {
+              campaign_id: campaign.id,
+              tracked_number_id: trackedNumbers[0].id,
+              caller_phone: recipient?.phone || generatePhone(),
+              recipient_id: recipient?.id || null,
+              match_status: recipient ? 'matched' : 'unmatched',
+              call_status: status,
+              call_started_at: callStarted.toISOString(),
+              is_simulated: markAsSimulated,
+              simulation_batch_id: batchId,
+            };
+
+            if (status === 'completed') {
+              const duration = randomInt(180, 600); // 3-10 minutes
+              callData.call_answered_at = new Date(callStarted.getTime() + 5000).toISOString();
+              callData.call_ended_at = new Date(callStarted.getTime() + duration * 1000).toISOString();
+              callData.call_duration_seconds = duration;
+              callData.recording_sid = `RE${Math.random().toString(36).slice(2, 34)}`;
+            }
+
+            callSessions.push(callData);
+          }
+
+          await supabase.from('call_sessions').insert(callSessions);
+          result.callSessionsCreated += callSessions.length;
+        }
+      }
+    }
+
+    // ===== PHASE 8: CONDITIONS MET & DELIVERIES =====
+    if (dataTypes.includes('callSessions')) {
+      console.log('✅ Phase 8: Conditions Met & Gift Card Deliveries...');
+
+      for (const [clientId, campaigns] of campaignsByClient) {
+        const clientPools = poolsByClient.get(clientId) || [];
+        if (clientPools.length === 0) continue;
+
+        for (const campaign of campaigns) {
+          // Get completed calls for this campaign
+          const { data: completedCalls } = await supabase
+            .from('call_sessions')
+            .select('*')
+            .eq('campaign_id', campaign.id)
+            .eq('call_status', 'completed')
+            .not('recipient_id', 'is', null);
+
+          if (!completedCalls || completedCalls.length === 0) continue;
+
+          // 40-60% of completed calls meet conditions
+          const qualificationRate = 0.4 + Math.random() * 0.2;
+          const qualifiedCalls = completedCalls.slice(0, Math.floor(completedCalls.length * qualificationRate));
+
+          // Get available gift cards for this client
+          const { data: availableCards } = await supabase
+            .from('gift_cards')
+            .select('*')
+            .in('pool_id', clientPools.map(p => p.id))
+            .eq('status', 'available')
+            .limit(qualifiedCalls.length);
+
+          for (let i = 0; i < qualifiedCalls.length; i++) {
+            const call = qualifiedCalls[i];
+            const card = availableCards?.[i];
+
+            // Create condition met record
+            const { data: conditionMet } = await supabase.from('call_conditions_met').insert({
+              call_session_id: call.id,
+              campaign_id: campaign.id,
+              recipient_id: call.recipient_id,
+              condition_number: 1,
+              met_at: call.call_ended_at || call.call_started_at,
+              gift_card_id: card?.id,
+              delivery_status: card ? (Math.random() > 0.1 ? 'delivered' : 'pending') : null,
+              is_simulated: markAsSimulated,
+              simulation_batch_id: batchId,
+            }).select().single();
+
+            if (conditionMet) {
+              result.conditionsMetCreated++;
+
+              // If card assigned, create delivery record
+              if (card) {
+                await supabase.from('gift_cards')
+                  .update({ status: 'delivered', claimed_at: new Date().toISOString() })
+                  .eq('id', card.id);
+
+                const deliveryMethod = Math.random() > 0.7 ? 'email' : 'sms';
+                const { data: delivery } = await supabase.from('gift_card_deliveries').insert({
+                  gift_card_id: card.id,
+                  recipient_id: call.recipient_id,
+                  campaign_id: campaign.id,
+                  condition_met_id: conditionMet.id,
+                  delivery_method: deliveryMethod,
+                  delivery_status: Math.random() > 0.95 ? 'failed' : 'delivered',
+                  delivered_at: new Date().toISOString(),
+                  is_simulated: markAsSimulated,
+                  simulation_batch_id: batchId,
+                }).select().single();
+
+                if (delivery) {
+                  result.deliveriesCreated++;
+
+                  // Create SMS log for SMS deliveries
+                  if (deliveryMethod === 'sms') {
+                    await supabase.from('sms_delivery_log').insert({
+                      gift_card_id: card.id,
+                      recipient_phone: call.caller_phone,
+                      message_body: `Thank you! Your gift card code is: ${card.card_code}`,
+                      twilio_message_sid: `SM${Math.random().toString(36).slice(2, 34)}`,
+                      delivery_status: delivery.delivery_status === 'delivered' ? 'sent' : 'failed',
+                      sent_at: new Date().toISOString(),
+                      is_simulated: markAsSimulated,
+                      simulation_batch_id: batchId,
+                    });
+                    result.smsLogsCreated++;
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
 
     // Calculate total
-    result.totalRecords = result.brandsCreated + result.poolsCreated + result.giftCardsCreated + 
-                          result.contactsCreated + result.contactListsCreated + result.contactTagsCreated +
-                          result.templatesCreated + result.landingPagesCreated + result.audiencesCreated +
-                          result.campaignsCreated + result.conditionsCreated + result.rewardConfigsCreated +
-                          result.recipientsCreated + result.trackedNumbersCreated + result.callSessionsCreated +
-                          result.conditionsMetCreated + result.deliveriesCreated + result.smsLogsCreated;
+    result.totalRecords = Object.values(result).reduce((sum, val) => 
+      typeof val === 'number' && val !== result.totalRecords ? sum + val : sum, 0
+    );
 
     await supabase.from('simulation_batches').update({
       status: 'completed',
@@ -689,9 +918,8 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
   } catch (error: any) {
-    console.error('❌ Simulation failed:', error);
+    console.error('❌ Simulation error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
