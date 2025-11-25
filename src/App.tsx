@@ -162,6 +162,7 @@ const App = () => (
                   
                   {/* ACE Forms */}
                   <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
+                  <Route path="/ace-forms/new" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
                   <Route path="/ace-forms/:id/builder" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
                   <Route path="/ace-forms/:id/analytics" element={<ProtectedRoute><AceFormAnalytics /></ProtectedRoute>} />
                   <Route path="/ace-forms/docs" element={<ProtectedRoute><AceFormsDocumentation /></ProtectedRoute>} />
