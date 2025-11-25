@@ -8,6 +8,7 @@ const corsHeaders = {
 interface EnrichmentParams {
   dataTypes?: string[];
   quantities?: Record<string, number>;
+  selectedBrands?: string[];
   scope?: 'total' | 'per_agency' | 'per_client';
   markAsSimulated?: boolean;
 }
@@ -150,6 +151,7 @@ Deno.serve(async (req) => {
     const {
       dataTypes = [],
       quantities = {},
+      selectedBrands = ['AMZN', 'VISA', 'TARG', 'APPL', 'BEST', 'HOME'],
       scope = 'per_client',
       markAsSimulated = true,
     } = params;
@@ -214,14 +216,20 @@ Deno.serve(async (req) => {
     if (dataTypes.includes('brands') || dataTypes.includes('pools') || dataTypes.includes('giftCards')) {
       console.log('📦 Phase 1: Gift Card Infrastructure...');
 
-      const brandConfigs = [
-        { brand_name: 'Amazon', brand_code: 'AMZN', provider: 'Amazon', category: 'E-Commerce', logo_url: 'https://logo.clearbit.com/amazon.com' },
-        { brand_name: 'Visa', brand_code: 'VISA', provider: 'Visa', category: 'Prepaid Card', logo_url: 'https://logo.clearbit.com/visa.com' },
-        { brand_name: 'Target', brand_code: 'TGT', provider: 'Target', category: 'Retail', logo_url: 'https://logo.clearbit.com/target.com' },
-        { brand_name: 'Apple', brand_code: 'AAPL', provider: 'Apple', category: 'Entertainment', logo_url: 'https://logo.clearbit.com/apple.com' },
-        { brand_name: 'Best Buy', brand_code: 'BBY', provider: 'BestBuy', category: 'Electronics', logo_url: 'https://logo.clearbit.com/bestbuy.com' },
-        { brand_name: 'Home Depot', brand_code: 'HD', provider: 'HomeDepot', category: 'Home Improvement', logo_url: 'https://logo.clearbit.com/homedepot.com' },
-      ];
+      const allBrandConfigs: Record<string, { brand_name: string; brand_code: string; provider: string; category: string; logo_url: string }> = {
+        'AMZN': { brand_name: 'Amazon', brand_code: 'AMZN', provider: 'Amazon', category: 'E-Commerce', logo_url: 'https://logo.clearbit.com/amazon.com' },
+        'VISA': { brand_name: 'Visa', brand_code: 'VISA', provider: 'Visa', category: 'Prepaid Card', logo_url: 'https://logo.clearbit.com/visa.com' },
+        'TARG': { brand_name: 'Target', brand_code: 'TGT', provider: 'Target', category: 'Retail', logo_url: 'https://logo.clearbit.com/target.com' },
+        'APPL': { brand_name: 'Apple', brand_code: 'APPL', provider: 'Apple', category: 'Technology', logo_url: 'https://logo.clearbit.com/apple.com' },
+        'BEST': { brand_name: 'Best Buy', brand_code: 'BEST', provider: 'Best Buy', category: 'Electronics', logo_url: 'https://logo.clearbit.com/bestbuy.com' },
+        'HOME': { brand_name: 'Home Depot', brand_code: 'HOME', provider: 'Home Depot', category: 'Home Improvement', logo_url: 'https://logo.clearbit.com/homedepot.com' },
+        'STAR': { brand_name: 'Starbucks', brand_code: 'STAR', provider: 'Starbucks', category: 'Food & Beverage', logo_url: 'https://logo.clearbit.com/starbucks.com' },
+        'WALM': { brand_name: 'Walmart', brand_code: 'WALM', provider: 'Walmart', category: 'Retail', logo_url: 'https://logo.clearbit.com/walmart.com' },
+      };
+
+      const brandConfigs = selectedBrands
+        .filter((code): code is keyof typeof allBrandConfigs => code in allBrandConfigs)
+        .map(code => allBrandConfigs[code]);
 
       // Create brands
       for (const brandConfig of brandConfigs) {
