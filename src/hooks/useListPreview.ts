@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export function useListPreview(listId: string | null, enabled = true) {
+export function useListPreview(listId: string | undefined, tagFilters: string[] = []) {
   return useQuery({
-    queryKey: ['list-preview', listId],
+    queryKey: ['list-preview', listId, tagFilters],
     queryFn: async () => {
-      if (!listId) return null;
+      if (!listId) return [];
       
       // Get contacts via list membership
-      const { data: members, error } = await supabase
+      let query = supabase
         .from('contact_list_members')
         .select(`
           contact:contacts (
@@ -24,13 +24,14 @@ export function useListPreview(listId: string | null, enabled = true) {
             )
           )
         `)
-        .eq('list_id', listId)
-        .limit(5);
+        .eq('list_id', listId);
+      
+      const { data: members, error } = await query;
       
       if (error) throw error;
       
-      // Transform the data
-      return members?.map(m => {
+      // Transform and filter the data
+      let contacts = members?.map(m => {
         const contact = m.contact as any;
         return {
           id: contact.id,
@@ -43,7 +44,16 @@ export function useListPreview(listId: string | null, enabled = true) {
           tags: contact.contact_tags?.map((t: any) => t.tag) || [],
         };
       }) || [];
+
+      // Apply tag filtering if specified
+      if (tagFilters.length > 0) {
+        contacts = contacts.filter(contact => 
+          tagFilters.every(tag => contact.tags.includes(tag))
+        );
+      }
+
+      return contacts;
     },
-    enabled: enabled && !!listId,
+    enabled: !!listId,
   });
 }
