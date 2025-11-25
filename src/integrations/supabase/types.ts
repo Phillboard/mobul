@@ -440,7 +440,9 @@ export type Database = {
           hygiene_json: Json | null
           id: string
           invalid_count: number | null
+          is_simulated: boolean | null
           name: string
+          simulation_batch_id: string | null
           source: Database["public"]["Enums"]["audience_source"]
           status: Database["public"]["Enums"]["audience_status"] | null
           suppressed_json: Json | null
@@ -453,7 +455,9 @@ export type Database = {
           hygiene_json?: Json | null
           id?: string
           invalid_count?: number | null
+          is_simulated?: boolean | null
           name: string
+          simulation_batch_id?: string | null
           source?: Database["public"]["Enums"]["audience_source"]
           status?: Database["public"]["Enums"]["audience_status"] | null
           suppressed_json?: Json | null
@@ -466,7 +470,9 @@ export type Database = {
           hygiene_json?: Json | null
           id?: string
           invalid_count?: number | null
+          is_simulated?: boolean | null
           name?: string
+          simulation_batch_id?: string | null
           source?: Database["public"]["Enums"]["audience_source"]
           status?: Database["public"]["Enums"]["audience_status"] | null
           suppressed_json?: Json | null
@@ -479,6 +485,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audiences_simulation_batch_id_fkey"
+            columns: ["simulation_batch_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -1380,21 +1393,27 @@ export type Database = {
           added_by_user_id: string | null
           contact_id: string
           id: string
+          is_simulated: boolean | null
           list_id: string
+          simulation_batch_id: string | null
         }
         Insert: {
           added_at?: string | null
           added_by_user_id?: string | null
           contact_id: string
           id?: string
+          is_simulated?: boolean | null
           list_id: string
+          simulation_batch_id?: string | null
         }
         Update: {
           added_at?: string | null
           added_by_user_id?: string | null
           contact_id?: string
           id?: string
+          is_simulated?: boolean | null
           list_id?: string
+          simulation_batch_id?: string | null
         }
         Relationships: [
           {
@@ -1411,6 +1430,13 @@ export type Database = {
             referencedRelation: "contact_lists"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contact_list_members_simulation_batch_id_fkey"
+            columns: ["simulation_batch_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_batches"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contact_lists: {
@@ -1422,9 +1448,11 @@ export type Database = {
           description: string | null
           filter_rules: Json | null
           id: string
+          is_simulated: boolean | null
           last_sync_at: string | null
           list_type: string
           name: string
+          simulation_batch_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1435,9 +1463,11 @@ export type Database = {
           description?: string | null
           filter_rules?: Json | null
           id?: string
+          is_simulated?: boolean | null
           last_sync_at?: string | null
           list_type?: string
           name: string
+          simulation_batch_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1448,9 +1478,11 @@ export type Database = {
           description?: string | null
           filter_rules?: Json | null
           id?: string
+          is_simulated?: boolean | null
           last_sync_at?: string | null
           list_type?: string
           name?: string
+          simulation_batch_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1461,6 +1493,13 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contact_lists_simulation_batch_id_fkey"
+            columns: ["simulation_batch_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_batches"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contact_tags: {
@@ -1469,6 +1508,8 @@ export type Database = {
           created_at: string | null
           created_by_user_id: string | null
           id: string
+          is_simulated: boolean | null
+          simulation_batch_id: string | null
           tag: string
           tag_category: string | null
         }
@@ -1477,6 +1518,8 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           id?: string
+          is_simulated?: boolean | null
+          simulation_batch_id?: string | null
           tag: string
           tag_category?: string | null
         }
@@ -1485,6 +1528,8 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           id?: string
+          is_simulated?: boolean | null
+          simulation_batch_id?: string | null
           tag?: string
           tag_category?: string | null
         }
@@ -1494,6 +1539,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_tags_simulation_batch_id_fkey"
+            columns: ["simulation_batch_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -2758,6 +2810,7 @@ export type Database = {
           grapesjs_project: Json | null
           html_content: string | null
           id: string
+          is_simulated: boolean | null
           last_ai_edit_at: string | null
           manual_edits_count: number | null
           meta_description: string | null
@@ -2765,6 +2818,7 @@ export type Database = {
           name: string
           og_image_url: string | null
           published: boolean | null
+          simulation_batch_id: string | null
           slug: string
           updated_at: string | null
           version_number: number | null
@@ -2786,6 +2840,7 @@ export type Database = {
           grapesjs_project?: Json | null
           html_content?: string | null
           id?: string
+          is_simulated?: boolean | null
           last_ai_edit_at?: string | null
           manual_edits_count?: number | null
           meta_description?: string | null
@@ -2793,6 +2848,7 @@ export type Database = {
           name: string
           og_image_url?: string | null
           published?: boolean | null
+          simulation_batch_id?: string | null
           slug: string
           updated_at?: string | null
           version_number?: number | null
@@ -2814,6 +2870,7 @@ export type Database = {
           grapesjs_project?: Json | null
           html_content?: string | null
           id?: string
+          is_simulated?: boolean | null
           last_ai_edit_at?: string | null
           manual_edits_count?: number | null
           meta_description?: string | null
@@ -2821,6 +2878,7 @@ export type Database = {
           name?: string
           og_image_url?: string | null
           published?: boolean | null
+          simulation_batch_id?: string | null
           slug?: string
           updated_at?: string | null
           version_number?: number | null
@@ -2831,6 +2889,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "landing_pages_simulation_batch_id_fkey"
+            columns: ["simulation_batch_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -3772,11 +3837,13 @@ export type Database = {
           error_message: string | null
           gift_card_id: string | null
           id: string
+          is_simulated: boolean | null
           last_retry_at: string | null
           message_body: string
           phone_number: string
           recipient_id: string | null
           retry_count: number | null
+          simulation_batch_id: string | null
           twilio_message_sid: string | null
         }
         Insert: {
@@ -3787,11 +3854,13 @@ export type Database = {
           error_message?: string | null
           gift_card_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           last_retry_at?: string | null
           message_body: string
           phone_number: string
           recipient_id?: string | null
           retry_count?: number | null
+          simulation_batch_id?: string | null
           twilio_message_sid?: string | null
         }
         Update: {
@@ -3802,11 +3871,13 @@ export type Database = {
           error_message?: string | null
           gift_card_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           last_retry_at?: string | null
           message_body?: string
           phone_number?: string
           recipient_id?: string | null
           retry_count?: number | null
+          simulation_batch_id?: string | null
           twilio_message_sid?: string | null
         }
         Relationships: [
@@ -3829,6 +3900,13 @@ export type Database = {
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_delivery_log_simulation_batch_id_fkey"
+            columns: ["simulation_batch_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -3940,11 +4018,13 @@ export type Database = {
           id: string
           industry_vertical: Database["public"]["Enums"]["industry_type"] | null
           is_favorite: boolean | null
+          is_simulated: boolean | null
           json_layers: Json | null
           last_ai_edit_at: string | null
           manual_edits_count: number | null
           name: string
           print_specifications: Json | null
+          simulation_batch_id: string | null
           size: Database["public"]["Enums"]["template_size"]
           thumbnail_url: string | null
           updated_at: string | null
@@ -3965,11 +4045,13 @@ export type Database = {
             | Database["public"]["Enums"]["industry_type"]
             | null
           is_favorite?: boolean | null
+          is_simulated?: boolean | null
           json_layers?: Json | null
           last_ai_edit_at?: string | null
           manual_edits_count?: number | null
           name: string
           print_specifications?: Json | null
+          simulation_batch_id?: string | null
           size: Database["public"]["Enums"]["template_size"]
           thumbnail_url?: string | null
           updated_at?: string | null
@@ -3990,11 +4072,13 @@ export type Database = {
             | Database["public"]["Enums"]["industry_type"]
             | null
           is_favorite?: boolean | null
+          is_simulated?: boolean | null
           json_layers?: Json | null
           last_ai_edit_at?: string | null
           manual_edits_count?: number | null
           name?: string
           print_specifications?: Json | null
+          simulation_batch_id?: string | null
           size?: Database["public"]["Enums"]["template_size"]
           thumbnail_url?: string | null
           updated_at?: string | null
@@ -4005,6 +4089,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_simulation_batch_id_fkey"
+            columns: ["simulation_batch_id"]
+            isOneToOne: false
+            referencedRelation: "simulation_batches"
             referencedColumns: ["id"]
           },
         ]
