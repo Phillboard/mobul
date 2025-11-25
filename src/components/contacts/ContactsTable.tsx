@@ -74,6 +74,7 @@ export function ContactsTable({ filters }: ContactsTableProps) {
                   onCheckedChange={toggleAll}
                 />
               </TableHead>
+              <TableHead>Code</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
@@ -95,6 +96,11 @@ export function ContactsTable({ filters }: ContactsTableProps) {
                       checked={selectedIds.includes(contact.id)}
                       onCheckedChange={() => toggleSelection(contact.id)}
                     />
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="font-mono text-xs">
+                      {contact.customer_code}
+                    </Badge>
                   </TableCell>
                   <TableCell className="font-medium">
                     <div>
