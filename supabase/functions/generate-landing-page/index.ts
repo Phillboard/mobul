@@ -1,12 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function callLovableAI(messages: any[]) {
+async function callClaudeAI(messages: any[]) {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
@@ -17,16 +17,16 @@ async function callLovableAI(messages: any[]) {
       'Authorization': `Bearer ${LOVABLE_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
+      model: 'anthropic/claude-sonnet-4-5',
       messages,
-      temperature: 0.8,
-      max_tokens: 4096,
+      temperature: 0.9,
+      max_tokens: 8192,
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('Lovable AI error:', error);
+    console.error('Claude AI error:', error);
     if (response.status === 429) {
       throw new Error('Rate limit exceeded. Please try again later.');
     }
@@ -41,17 +41,33 @@ async function callLovableAI(messages: any[]) {
 }
 
 function cleanForGrapesJS(html: string): string {
+  // Remove any markdown code fences first
+  html = html.replace(/```html\s*/gi, '');
+  html = html.replace(/```\s*/g, '');
+
+  // Remove DOCTYPE and html/head/body tags
   html = html.replace(/<!DOCTYPE[^>]*>/gi, '');
   html = html.replace(/<\/?html[^>]*>/gi, '');
   html = html.replace(/<\/?head[^>]*>/gi, '');
   html = html.replace(/<\/?body[^>]*>/gi, '');
+
+  // Remove style and script tags (GrapesJS uses inline styles)
   html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
   html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-  html = html.replace(/```html\s*/gi, '');
-  html = html.replace(/```\s*/g, '');
-  
+
+  // Extract the main container (div or section)
   const match = html.match(/<(div|section)[^>]*>[\s\S]*<\/\1>/i);
-  return match ? match[0].trim() : html.trim();
+  if (match) {
+    return match[0].trim();
+  }
+
+  // If no container found, wrap in a div to ensure GrapesJS compatibility
+  html = html.trim();
+  if (!html.startsWith('<div') && !html.startsWith('<section')) {
+    return `<div style="width: 100%; min-height: 100vh;">${html}</div>`;
+  }
+
+  return html;
 }
 
 serve(async (req) => {
@@ -152,41 +168,100 @@ serve(async (req) => {
       brandingMessages = [{ role: 'user', content: `${brandingPrompt}\n\nDescription: ${sourceDescription}` }];
     }
 
-    const brandingText = await callLovableAI(brandingMessages);
+    const brandingText = await callClaudeAI(brandingMessages);
     const branding = JSON.parse(brandingText.replace(/```json\s*/g, '').replace(/```\s*/g, ''));
     console.log('Branding extracted:', branding);
 
     console.log('Generating 3 variations...');
 
-    const createPrompt = (style: string, desc: string) => `Create a STUNNING gift card redemption page.
+    const createPrompt = (style: string, desc: string) => `You are an expert web designer creating a stunning, conversion-optimized gift card redemption landing page.
 
-BRANDING: ${JSON.stringify(branding)}
-GIFT CARD: ${giftCardBrand} $${giftCardValue}
-USER ACTION: ${userAction}
+BRANDING CONTEXT:
+${JSON.stringify(branding, null, 2)}
+
+GIFT CARD DETAILS:
+- Brand: ${giftCardBrand}
+- Value: $${giftCardValue}
+- User earned this by: ${userAction}
 
 DESIGN STYLE: ${style}
 ${desc}
 
-CRITICAL RULES:
-❌ NO: <!DOCTYPE>, <html>, <head>, <body>, <style>, <script>
-✅ START with <div> or <section>
-✅ ALL styles inline (style="...")
-✅ MUST include: <form id="redemption-form">, <input id="gift-card-code">, <button id="submit-button">
-✅ Simple HTML, mobile-responsive
+CRITICAL TECHNICAL REQUIREMENTS (NON-NEGOTIABLE):
+❌ NEVER include: <!DOCTYPE>, <html>, <head>, <body>, <style>, <script>, or any tags outside the main container
+✅ START with a single <div> or <section> container
+✅ ALL styles MUST be inline (style="...") - no external stylesheets
+✅ REQUIRED form elements with EXACT IDs:
+   - <form id="giftCardRedemptionForm">
+   - <input id="codeInput" type="text" placeholder="Enter your gift card code">
+   - <button id="submitButton" type="submit">
+✅ Mobile-first responsive design using inline media queries if needed
+✅ Use modern CSS (flexbox, grid) for layouts
+✅ Ensure accessibility (proper labels, ARIA attributes where helpful)
 
-SECTIONS:
-1. Hero - Bold headline
-2. How It Works - 3 steps
-3. Redemption Form - Centered, beautiful
-4. Benefits
-5. Footer - ${branding.companyName}
+DESIGN GUIDELINES:
+1. **Hero Section** (Above the fold):
+   - Eye-catching headline emphasizing the gift value
+   - Subheadline thanking them for ${userAction}
+   - Use ${branding.primaryColor} and ${branding.accentColor} strategically
+   - High-contrast, visually appealing gradient or solid backgrounds
+   - Include brand name: ${branding.companyName}
 
-Make it BEAUTIFUL!`;
+2. **Visual Hierarchy**:
+   - Make the gift card value ($${giftCardValue} ${giftCardBrand}) prominent
+   - Use typography hierarchy (48px+ headlines, 18px+ body)
+   - Ample whitespace for breathing room
+   - Strategic use of ${branding.emotionalTone} tone
+
+3. **Redemption Form** (Center of attention):
+   - Large, beautiful form centered on page
+   - Clear input field with placeholder
+   - Prominent CTA button (e.g., "Claim My $${giftCardValue} ${giftCardBrand} Gift Card")
+   - Button should use ${branding.accentColor} or a high-converting color
+   - Add subtle shadows, borders, or 3D effects for depth
+   - Include form validation hints visually
+
+4. **How It Works** (3 simple steps):
+   - Icon or number for each step
+   - Step 1: Enter your code
+   - Step 2: Confirm your details
+   - Step 3: Receive your ${giftCardBrand} gift card
+   - Use cards or panels with subtle shadows
+
+5. **Trust & Benefits Section**:
+   - 3-4 benefit points (Fast delivery, No fees, Instant redemption, etc.)
+   - Use icons or visual markers
+   - Reinforce brand trust and ${branding.emotionalTone} tone
+
+6. **Footer**:
+   - Company name: ${branding.companyName}
+   - Professional, subtle
+   - Copyright and privacy link placeholders
+   - Use ${branding.backgroundColor} or complementary color
+
+DESIGN EXCELLENCE CRITERIA:
+- Use gradients, shadows, and modern visual effects
+- Implement card-based layouts with proper spacing
+- Add hover effects on buttons (use :hover pseudo-class in inline styles if possible, or make button visually 3D)
+- Use ${branding.fontFamily} if web-safe, otherwise use system fonts (Inter, SF Pro, Roboto)
+- Ensure text is readable with proper contrast ratios
+- Make it feel premium and conversion-focused
+- The page should look like it was designed by a professional agency, not a template
+
+COLOR PALETTE TO USE:
+- Primary: ${branding.primaryColor}
+- Accent: ${branding.accentColor}
+- Background: ${branding.backgroundColor}
+- Text: ${branding.textColor}
+
+RETURN ONLY THE HTML CODE. No explanations, no markdown fences, just pure HTML starting with <div> or <section>.`;
+
+    console.log('Generating 3 variations with Claude Sonnet 4.5...');
 
     const [html1, html2, html3] = await Promise.all([
-      callLovableAI([{ role: 'user', content: createPrompt('Modern Minimalist (Apple-inspired)', 'Clean lines, whitespace, subtle gradients, soft shadows') }]),
-      callLovableAI([{ role: 'user', content: createPrompt('Bold & Energetic (Startup vibe)', 'Vibrant colors, large typography, high contrast, exciting energy') }]),
-      callLovableAI([{ role: 'user', content: createPrompt('Professional Luxury (High-end)', 'Elegant typography, sophisticated colors, premium aesthetic, gold accents') }])
+      callClaudeAI([{ role: 'user', content: createPrompt('Modern Minimalist (Apple-inspired)', 'Clean lines, generous whitespace, subtle gradients with soft shadows, premium feel with understated elegance. Think Apple product pages - simple but sophisticated.') }]),
+      callClaudeAI([{ role: 'user', content: createPrompt('Bold & Energetic (Startup vibe)', 'Vibrant, eye-popping colors with high contrast. Large, bold typography. Energetic gradients. Modern, fun, and exciting. Think Stripe or Spotify landing pages.') }]),
+      callClaudeAI([{ role: 'user', content: createPrompt('Professional Luxury (High-end)', 'Sophisticated, elegant design with premium typography. Use gold (#D4AF37) accents, deep colors, and refined spacing. Think luxury brands like Rolex or high-end hotels.') }])
     ]);
 
     const variations = [
@@ -220,12 +295,18 @@ Make it BEAUTIFUL!`;
     ];
 
     const contentJson = {
-      metadata: { generatedAt: new Date().toISOString(), aiModel: 'claude-sonnet-4-5', sourceType },
+      metadata: {
+        generatedAt: new Date().toISOString(),
+        aiModel: 'anthropic/claude-sonnet-4-5',
+        sourceType,
+        version: '2.0'
+      },
       branding,
       giftCard: { brand: giftCardBrand, value: giftCardValue, userAction },
       variations,
       selectedVariation: 0,
-      pages: []
+      pages: [],
+      grapesJSCompatible: true
     };
 
     const slug = `${branding.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
