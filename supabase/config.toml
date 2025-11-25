@@ -66,9 +66,6 @@ verify_jwt = false
 [functions.zapier-incoming-webhook]
 verify_jwt = false
 
-[functions.generate-landing-page]
-verify_jwt = true
-
 [functions.provision-gift-card-from-api]
 verify_jwt = false
 
