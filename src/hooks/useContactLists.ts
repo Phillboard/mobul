@@ -153,7 +153,23 @@ export function useAddContactsToList() {
 
   return useMutation({
     mutationFn: async ({ listId, contactIds }: { listId: string; contactIds: string[] }) => {
-      const members = contactIds.map((contactId) => ({
+      // Get existing members to avoid duplicates
+      const { data: existingMembers } = await supabase
+        .from("contact_list_members")
+        .select("contact_id")
+        .eq("list_id", listId)
+        .in("contact_id", contactIds);
+
+      const existingContactIds = new Set(existingMembers?.map(m => m.contact_id) || []);
+      
+      // Filter out contacts that are already in the list
+      const newContactIds = contactIds.filter(id => !existingContactIds.has(id));
+
+      if (newContactIds.length === 0) {
+        return { skipped: contactIds.length, added: 0 };
+      }
+
+      const members = newContactIds.map((contactId) => ({
         list_id: listId,
         contact_id: contactId,
         added_by_user_id: user?.id,
@@ -162,11 +178,21 @@ export function useAddContactsToList() {
       const { error } = await supabase.from("contact_list_members").insert(members);
 
       if (error) throw error;
+      
+      return { skipped: contactIds.length - newContactIds.length, added: newContactIds.length };
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["list-members", variables.listId] });
       queryClient.invalidateQueries({ queryKey: ["contact-lists"] });
-      toast.success("Contacts added to list");
+      
+      if (result.added > 0) {
+        const message = result.skipped > 0 
+          ? `${result.added} contact(s) added, ${result.skipped} already in list`
+          : `${result.added} contact(s) added to list`;
+        toast.success(message);
+      } else {
+        toast.info("All selected contacts are already in this list");
+      }
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to add contacts to list");
