@@ -4,14 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Plus, Filter, Search, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { CreateCampaignWizard } from "@/components/campaigns/CreateCampaignWizard";
 import { CampaignsList } from "@/components/campaigns/CampaignsList";
 import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Campaigns() {
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const { currentClient } = useTenant();
 
@@ -41,7 +41,7 @@ export default function Campaigns() {
           <Button 
             variant="neon"
             className="shrink-0 h-12 md:h-10 hidden sm:flex shadow-glow-cyan"
-            onClick={() => setWizardOpen(true)}
+            onClick={() => navigate("/campaigns/new")}
           >
             <Plus className="mr-2 h-4 w-4" />
             New Campaign
@@ -80,7 +80,7 @@ export default function Campaigns() {
         
         {/* Floating Action Button for Mobile */}
         <Button 
-          onClick={() => setWizardOpen(true)}
+          onClick={() => navigate("/campaigns/new")}
           size="icon"
           variant="neon"
           className="fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-glow-lg sm:hidden z-40 hover:scale-110 active:scale-95 transition-all duration-200"
@@ -88,12 +88,6 @@ export default function Campaigns() {
           <Plus className="h-6 w-6" />
         </Button>
       </div>
-
-      <CreateCampaignWizard
-        open={wizardOpen}
-        onOpenChange={setWizardOpen}
-        clientId={currentClient.id}
-      />
     </Layout>
   );
 }

@@ -7,12 +7,12 @@ import { cn } from "@/lib/utils";
 
 interface TagSelectorProps {
   selectedTags: string[];
-  availableTags: { tag: string; count: number }[];
   onTagsChange: (tags: string[]) => void;
   disabled?: boolean;
+  availableTags?: { tag: string; count?: number }[];
 }
 
-export function TagSelector({ selectedTags, availableTags, onTagsChange, disabled }: TagSelectorProps) {
+export function TagSelector({ selectedTags, onTagsChange, disabled, availableTags = [] }: TagSelectorProps) {
   const handleToggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
       onTagsChange(selectedTags.filter(t => t !== tag));
@@ -61,7 +61,9 @@ export function TagSelector({ selectedTags, availableTags, onTagsChange, disable
                       )}
                     />
                     <span className="flex-1">{tagData.tag}</span>
-                    <span className="text-xs text-muted-foreground">({tagData.count})</span>
+                    {tagData.count !== undefined && (
+                      <span className="text-xs text-muted-foreground">({tagData.count})</span>
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>
