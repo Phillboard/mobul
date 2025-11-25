@@ -59,7 +59,7 @@ const navigationGroups: NavGroup[] = [
     collapsible: true,
     items: [
       { name: "All Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'], keywords: ["mail", "postcards", "direct mail"], description: "Manage direct mail campaigns" },
-      { name: "Templates", href: "/templates", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts", "postcard designs"], description: "Direct mail template designs" },
+      { name: "Mail", href: "/mail", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts", "postcard designs", "templates"], description: "Direct mail designs" },
       { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl", "personalized urls"], description: "Personalized landing pages" },
       { name: "Forms", href: "/ace-forms", icon: FormInput, permissions: ['campaigns.view'], keywords: ["forms", "lead capture", "redemption"], description: "Lead capture & gift card forms" },
     ]
