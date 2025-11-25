@@ -3607,16 +3607,19 @@ export type Database = {
           created_at: string | null
           id: string
           permission_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
         }
         Insert: {
           created_at?: string | null
           id?: string
           permission_id?: string | null
+          role: Database["public"]["Enums"]["app_role"]
         }
         Update: {
           created_at?: string | null
           id?: string
           permission_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: [
           {
