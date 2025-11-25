@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,25 +51,29 @@ interface ColumnSelectorProps {
 export function ColumnSelector({ visibleColumns, onColumnsChange }: ColumnSelectorProps) {
   // Local state for immediate UI feedback
   const [localColumns, setLocalColumns] = useState<string[]>(visibleColumns);
+  const isUpdatingRef = useRef(false);
 
-  // Sync local state when prop changes (only if values actually differ)
+  // Sync local state when prop changes from external source (not our own updates)
   useEffect(() => {
-    const columnsChanged = 
-      visibleColumns.length !== localColumns.length ||
-      visibleColumns.some((col, idx) => col !== localColumns[idx]);
-    
-    if (columnsChanged) {
+    if (!isUpdatingRef.current) {
       setLocalColumns(visibleColumns);
     }
-  }, [visibleColumns, localColumns]);
+  }, [visibleColumns]);
 
   // Debounced save to database
   const debouncedSave = useMemo(
-    () => debounce((columns: string[]) => onColumnsChange(columns), 500),
+    () => debounce((columns: string[]) => {
+      onColumnsChange(columns);
+      // Clear the updating flag after a delay to allow sync
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 1000);
+    }, 500),
     [onColumnsChange]
   );
 
   const handleToggle = (columnId: string, checked: boolean) => {
+    isUpdatingRef.current = true;
     const newColumns = checked
       ? [...localColumns, columnId]
       : localColumns.filter(id => id !== columnId);
