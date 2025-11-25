@@ -457,7 +457,14 @@ Deno.serve(async (req) => {
 
         const { data: createdContacts, error: contactsError } = await supabase.from('contacts').insert(contacts).select();
         if (contactsError) {
-          console.error('❌ Error creating contacts:', contactsError);
+          console.error('❌ ERROR creating contacts:', {
+            message: contactsError.message,
+            details: contactsError.details,
+            hint: contactsError.hint,
+            code: contactsError.code,
+            clientId: client.id,
+            contactCount: contacts.length,
+          });
           continue;
         }
         if (createdContacts && createdContacts.length > 0) {
@@ -479,7 +486,11 @@ Deno.serve(async (req) => {
             }).select().single();
 
             if (listError) {
-              console.error('❌ Error creating list:', listError);
+              console.error('❌ ERROR creating contact list:', {
+                message: listError.message,
+                details: listError.details,
+                listName,
+              });
               continue;
             }
 
@@ -549,7 +560,12 @@ Deno.serve(async (req) => {
 
           const { data: createdTemplates, error: templatesError } = await supabase.from('templates').insert(templates).select();
           if (templatesError) {
-            console.error('❌ Error creating templates:', templatesError);
+            console.error('❌ ERROR creating templates:', {
+              message: templatesError.message,
+              details: templatesError.details,
+              hint: templatesError.hint,
+              templateCount: templates.length,
+            });
           } else if (createdTemplates && createdTemplates.length > 0) {
             templatesByClient.set(client.id, createdTemplates);
             result.templatesCreated += createdTemplates.length;
@@ -575,7 +591,12 @@ Deno.serve(async (req) => {
 
           const { data: createdLPs, error: lpsError } = await supabase.from('landing_pages').insert(landingPages).select();
           if (lpsError) {
-            console.error('❌ Error creating landing pages:', lpsError);
+            console.error('❌ ERROR creating landing pages:', {
+              message: lpsError.message,
+              details: lpsError.details,
+              hint: lpsError.hint,
+              lpCount: landingPages.length,
+            });
           } else if (createdLPs && createdLPs.length > 0) {
             landingPagesByClient.set(client.id, createdLPs);
             result.landingPagesCreated += createdLPs.length;
@@ -619,7 +640,12 @@ Deno.serve(async (req) => {
           }).select().single();
 
           if (audienceError) {
-            console.error('❌ Error creating audience:', audienceError);
+            console.error('❌ ERROR creating audience:', {
+              message: audienceError.message,
+              details: audienceError.details,
+              hint: audienceError.hint,
+              campaignName,
+            });
             continue;
           }
           if (!audience) continue;
@@ -641,7 +667,13 @@ Deno.serve(async (req) => {
           }).select().single();
 
           if (campaignError) {
-            console.error('❌ Error creating campaign:', campaignError);
+            console.error('❌ ERROR creating campaign:', {
+              message: campaignError.message,
+              details: campaignError.details,
+              hint: campaignError.hint,
+              campaignName,
+              audienceId: audience.id,
+            });
             continue;
           }
           if (!campaign) continue;
