@@ -1,16 +1,28 @@
-import { useState } from "react";
+/**
+ * Call Log Table - Migrated to TanStack Table
+ * Displays complete history of all campaign calls with advanced filtering
+ */
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  SortingState,
+  ColumnFiltersState,
+} from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, ExternalLink, Download } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Search, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { CallRecordingPlayer } from "./CallRecordingPlayer";
+import { createCallLogColumns, CallSessionRow } from "./callLogColumns";
+import { exportTableToCSV } from "@/lib/tableHelpers";
+import { formatDate, DATE_FORMATS } from "@/lib/dateUtils";
 
 interface CallLogTableProps {
   campaignId: string;
@@ -21,62 +33,80 @@ export function CallLogTable({ campaignId }: CallLogTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [matchFilter, setMatchFilter] = useState("all");
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "call_started_at", desc: true },
+  ]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
+  // Fetch data with filters
   const { data: sessions, isLoading } = useQuery({
-    queryKey: ['call-sessions-log', campaignId, statusFilter, matchFilter],
+    queryKey: ["call-sessions-log", campaignId, statusFilter, matchFilter],
     queryFn: async () => {
       let query = supabase
-        .from('call_sessions')
-        .select('*, recipient:recipients(*), tracked_number:tracked_phone_numbers(*), conditions:call_conditions_met(count)')
-        .eq('campaign_id', campaignId)
-        .order('call_started_at', { ascending: false });
+        .from("call_sessions")
+        .select(
+          "*, recipient:recipients(*), tracked_number:tracked_phone_numbers(*), conditions:call_conditions_met(count)"
+        )
+        .eq("campaign_id", campaignId)
+        .order("call_started_at", { ascending: false });
 
-      if (statusFilter !== 'all') {
-        query = query.eq('call_status', statusFilter);
+      if (statusFilter !== "all") {
+        query = query.eq("call_status", statusFilter);
       }
 
-      if (matchFilter !== 'all') {
-        query = query.eq('match_status', matchFilter);
+      if (matchFilter !== "all") {
+        query = query.eq("match_status", matchFilter);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as CallSessionRow[];
     },
     enabled: !!campaignId,
   });
 
-  const filteredSessions = sessions?.filter(session => {
-    if (!searchQuery) return true;
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      session.caller_phone.includes(searchQuery) ||
-      session.recipient?.first_name?.toLowerCase().includes(searchLower) ||
-      session.recipient?.last_name?.toLowerCase().includes(searchLower)
-    );
+  // Create columns with navigation handler
+  const columns = useMemo(
+    () => createCallLogColumns((id) => navigate(`/recipients/${id}`)),
+    [navigate]
+  );
+
+  // Setup TanStack Table
+  const table = useReactTable({
+    data: sessions || [],
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+      globalFilter: searchQuery,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setSearchQuery,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    globalFilterFn: (row, columnId, filterValue) => {
+      const value = row.getValue(columnId);
+      return String(value).toLowerCase().includes(String(filterValue).toLowerCase());
+    },
   });
 
+  // Export to CSV
   const handleExportCSV = () => {
-    if (!filteredSessions) return;
+    if (!sessions) return;
 
-    const headers = ['Call Date', 'Caller', 'Match Status', 'Recipient', 'Duration', 'Status', 'Conditions Met'];
-    const rows = filteredSessions.map(session => [
-      new Date(session.call_started_at).toLocaleString(),
-      session.caller_phone,
-      session.match_status,
-      session.recipient ? `${session.recipient.first_name} ${session.recipient.last_name}` : '-',
-      session.call_duration_seconds ? `${Math.floor(session.call_duration_seconds / 60)}m ${session.call_duration_seconds % 60}s` : '-',
-      session.call_status,
-      (session.conditions as any)?.[0]?.count || 0,
-    ]);
-
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `call-log-${campaignId}.csv`;
-    a.click();
+    exportTableToCSV(
+      sessions,
+      [
+        { header: "Call Date", accessorKey: "call_started_at" },
+        { header: "Caller", accessorKey: "caller_phone" },
+        { header: "Match Status", accessorKey: "match_status" },
+        { header: "Call Status", accessorKey: "call_status" },
+        { header: "Duration (s)", accessorKey: "call_duration_seconds" },
+      ],
+      `call-log-${campaignId}-${formatDate(new Date(), DATE_FORMATS.DATE_ONLY)}`
+    );
   };
 
   return (
@@ -87,12 +117,12 @@ export function CallLogTable({ campaignId }: CallLogTableProps) {
             <CardTitle>Call Log</CardTitle>
             <CardDescription>Complete history of all calls</CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={handleExportCSV}>
+          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!sessions?.length}>
             <Download className="mr-2 h-4 w-4" />
             Export CSV
           </Button>
         </div>
-        
+
         {/* Filters */}
         <div className="flex gap-4 mt-4">
           <div className="relative flex-1">
@@ -133,96 +163,59 @@ export function CallLogTable({ campaignId }: CallLogTableProps) {
         {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">Loading call log...</div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Call Date</TableHead>
-                <TableHead>Caller</TableHead>
-                <TableHead>Match Status</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Conditions Met</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSessions?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    No calls found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredSessions?.map((session: any) => (
-                  <>
-                    <TableRow key={session.id}>
-                      <TableCell className="text-muted-foreground">
-                        {formatDistanceToNow(new Date(session.call_started_at), { addSuffix: true })}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {session.caller_phone}
-                      </TableCell>
-                      <TableCell>
-                        {session.match_status === 'matched' ? (
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-green-600">✓ Matched</Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {session.recipient?.first_name} {session.recipient?.last_name}
-                            </span>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <div
+                            className={
+                              header.column.getCanSort()
+                                ? "cursor-pointer select-none flex items-center gap-2"
+                                : ""
+                            }
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            {typeof header.column.columnDef.header === "function"
+                              ? header.column.columnDef.header(header.getContext())
+                              : header.column.columnDef.header}
+                            {{
+                              asc: " 🔼",
+                              desc: " 🔽",
+                            }[header.column.getIsSorted() as string] ?? null}
                           </div>
-                        ) : (
-                          <Badge variant="secondary">✗ Unmatched</Badge>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        {session.call_duration_seconds ? (
-                          <span className="font-mono text-sm">
-                            {Math.floor(session.call_duration_seconds / 60)}m {session.call_duration_seconds % 60}s
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={session.call_status === 'completed' ? 'default' : 'secondary'}>
-                          {session.call_status.replace(/_/g, ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {session.conditions?.[0]?.count > 0 ? (
-                          <Badge className="bg-purple-600">
-                            {session.conditions[0].count} condition(s)
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/agent/call/${session.id}`)}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    {session.recording_url && (
-                      <TableRow key={`${session.id}-recording`}>
-                        <TableCell colSpan={7} className="p-4 bg-muted/50">
-                          <CallRecordingPlayer
-                            recordingUrl={session.recording_url}
-                            callSid={session.twilio_call_sid || undefined}
-                            duration={session.recording_duration || undefined}
-                          />
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {typeof cell.column.columnDef.cell === "function"
+                            ? cell.column.columnDef.cell(cell.getContext())
+                            : cell.renderValue()}
                         </TableCell>
-                      </TableRow>
-                    )}
-                  </>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      No calls found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
