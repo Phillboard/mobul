@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Copy, Check, ExternalLink } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GiftCardRedemption } from "@/types/aceForms";
 import { GiftCardInstructions } from "./GiftCardInstructions";
+import { GiftCardQRCode } from "./GiftCardQRCode";
+import { SmartRedeemButton } from "./SmartRedeemButton";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -120,17 +122,19 @@ export function GiftCardDisplay({ redemption, embedMode = false }: GiftCardDispl
         </div>
       </div>
 
-      {/* Store Link */}
-      {redemption.store_url && (
-        <Button
-          className={cn("w-full", embedMode ? 'mt-3' : 'mt-4')}
+      {/* Smart Redeem Button */}
+      <div className={cn("space-y-2", embedMode ? 'mt-3' : 'mt-4')}>
+        <SmartRedeemButton 
+          redemption={redemption} 
+          className="w-full"
           size={embedMode ? 'default' : 'lg'}
-          onClick={() => window.open(redemption.store_url, "_blank")}
-        >
-          <ExternalLink className="w-4 h-4 mr-2" />
-          Use Now at {redemption.brand_name}
-        </Button>
-      )}
+        />
+        
+        {/* QR Code Button */}
+        <div className="flex justify-center">
+          <GiftCardQRCode redemption={redemption} variant="button" />
+        </div>
+      </div>
 
       {/* Instructions - Collapsed by default in embed mode */}
       {!embedMode && (redemption.usage_restrictions || redemption.redemption_instructions) && (
