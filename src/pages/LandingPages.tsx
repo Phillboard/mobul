@@ -3,8 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { LibraryHeader } from "@/components/shared/LibraryHeader";
+import { LibrarySearch } from "@/components/shared/LibrarySearch";
+import { ViewToggle } from "@/components/shared/ViewToggle";
+import { LibraryEmptyState } from "@/components/shared/LibraryEmptyState";
+import { LandingPageFilters } from "@/components/landing-pages/LandingPageFilters";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,12 +38,22 @@ export default function LandingPages() {
   const { canCreate, canEdit, canDelete } = usePermissions("landingpages");
   const { pages, isLoading, deletePage, publishPage } = useLandingPages(currentClient?.id);
   const [searchQuery, setSearchQuery] = useState("");
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [editorFilter, setEditorFilter] = useState("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
-  const filteredPages = pages?.filter((page) =>
-    page.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPages = pages?.filter((page) => {
+    const matchesSearch = page.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || 
+      (statusFilter === "published" && page.published) || 
+      (statusFilter === "draft" && !page.published);
+    const matchesEditor = editorFilter === "all" || 
+      (editorFilter === "visual" && page.editor_type !== "ai") || 
+      (editorFilter === "ai" && page.editor_type === "ai");
+    return matchesSearch && matchesStatus && matchesEditor;
+  });
 
   const handleDelete = () => {
     if (pageToDelete) {
@@ -71,80 +85,45 @@ export default function LandingPages() {
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent flex items-center gap-2">
-              <Globe className="h-8 w-8" />
-              Landing Pages
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Create and manage landing pages for gift card redemption
-            </p>
-          </div>
-          {canCreate && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="neon">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Landing Page
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuItem onClick={() => navigate("/landing-pages/new/visual-editor")}>
-                  <Palette className="h-4 w-4 mr-2" />
-                  <div>
-                    <div className="font-medium">Visual Editor</div>
-                    <div className="text-xs text-muted-foreground">
-                      Design with drag-and-drop builder
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+        {canCreate && (
+          <LibraryHeader
+            title="Landing Pages"
+            subtitle="Create and manage landing pages for gift card redemption"
+            createButtonText="Create Landing Page"
+            onCreateClick={() => navigate("/landing-pages/new/visual-editor")}
+          />
+        )}
+
+        <div className="flex gap-4 items-center">
+          <LibrarySearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search landing pages..."
+          />
+          <ViewToggle view={view} onViewChange={setView} />
         </div>
 
-        <div className="flex gap-4">
-          <Input
-            placeholder="Search landing pages..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
+        <LandingPageFilters
+          selectedStatus={statusFilter}
+          selectedEditor={editorFilter}
+          onStatusChange={setStatusFilter}
+          onEditorChange={setEditorFilter}
+          onClearFilters={() => {
+            setStatusFilter("all");
+            setEditorFilter("all");
+          }}
+        />
 
         {isLoading ? (
           <div className="text-center text-muted-foreground">Loading...</div>
         ) : filteredPages?.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Globe className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
-                No landing pages yet. Create your first one to get started.
-              </p>
-              {canCreate && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Landing Page
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => navigate("/landing-pages/new/visual-editor")}>
-                      <Palette className="h-4 w-4 mr-2" />
-                      <div>
-                        <div className="font-medium">Visual Editor</div>
-                        <div className="text-xs text-muted-foreground">
-                          Design with drag-and-drop builder
-                        </div>
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </CardContent>
-          </Card>
+          <LibraryEmptyState
+            icon={Globe}
+            title="No landing pages found"
+            message={searchQuery ? `No landing pages match "${searchQuery}"` : "Create your first landing page to get started"}
+            actionLabel="Create Landing Page"
+            onAction={() => navigate("/landing-pages/new/visual-editor")}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredPages?.map((page) => (

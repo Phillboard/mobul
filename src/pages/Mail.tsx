@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/Layout";
 import { useTenant } from "@/contexts/TenantContext";
-import { MailSearch } from "@/components/mail/MailSearch";
-import { ViewToggle } from "@/components/mail/ViewToggle";
+import { LibrarySearch } from "@/components/shared/LibrarySearch";
+import { ViewToggle } from "@/components/shared/ViewToggle";
+import { LibraryHeader } from "@/components/shared/LibraryHeader";
 import { MailFilters } from "@/components/mail/MailFilters";
 import { MailGrid } from "@/components/mail/MailGrid";
 import { BulkActions } from "@/components/mail/BulkActions";
@@ -67,23 +68,19 @@ export default function Mail() {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Mail Library</h1>
-            <p className="text-muted-foreground mt-1">
-              Create and manage direct mail designs
-            </p>
-          </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Mail Piece
-          </Button>
-        </div>
+        <LibraryHeader
+          title="Mail Library"
+          subtitle="Create and manage direct mail pieces"
+          createButtonText="Create Mail Piece"
+          onCreateClick={() => setCreateDialogOpen(true)}
+        />
 
-        {/* Search & Filters */}
-        <div className="flex flex-col lg:flex-row gap-4">
-          <MailSearch value={searchQuery} onChange={setSearchQuery} />
+        <div className="flex gap-4 items-center">
+          <LibrarySearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search mail pieces..."
+          />
           <ViewToggle view={view} onViewChange={setView} />
         </div>
 

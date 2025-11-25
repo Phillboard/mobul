@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Copy, Trash2, Edit, Eye, BarChart3, Code2, MoreVertical } from "lucide-react";
+import { Plus, Copy, Trash2, Edit, Eye, BarChart3, Code2, MoreVertical, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LibraryHeader } from "@/components/shared/LibraryHeader";
+import { LibrarySearch } from "@/components/shared/LibrarySearch";
+import { ViewToggle } from "@/components/shared/ViewToggle";
+import { LibraryEmptyState } from "@/components/shared/LibraryEmptyState";
+import { AceFormsFilters } from "@/components/ace-forms/AceFormsFilters";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,11 +42,21 @@ export default function AceForms() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [embedFormId, setEmbedFormId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [draftFilter, setDraftFilter] = useState("all");
 
-  const filteredForms = forms?.filter(form =>
-    form.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    form.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredForms = forms?.filter(form => {
+    const matchesSearch = form.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      form.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" ||
+      (statusFilter === "active" && form.is_active) ||
+      (statusFilter === "inactive" && !form.is_active);
+    const matchesDraft = draftFilter === "all" ||
+      (draftFilter === "published" && !form.is_draft) ||
+      (draftFilter === "draft" && form.is_draft);
+    return matchesSearch && matchesStatus && matchesDraft;
+  });
 
   if (isLoading) {
     return (
@@ -58,40 +73,42 @@ export default function AceForms() {
   return (
     <Layout>
       <div className="container mx-auto py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Ace Forms</h1>
-          <p className="text-muted-foreground mt-1">
-            AI-powered form builder for gift card redemption
-          </p>
-        </div>
-        <Button onClick={() => navigate("/ace-forms/new")}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Form
-        </Button>
+      <LibraryHeader
+        title="Ace Forms"
+        subtitle="AI-powered form builder for gift card redemption"
+        createButtonText="Create Form"
+        onCreateClick={() => navigate("/ace-forms/new")}
+      />
+
+      <div className="flex gap-4 items-center">
+        <LibrarySearch
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search forms..."
+        />
+        <ViewToggle view={view} onViewChange={setView} />
       </div>
 
-      {/* Search */}
-      <div className="max-w-md">
-        <Input
-          placeholder="Search forms..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      <AceFormsFilters
+        selectedStatus={statusFilter}
+        selectedDraft={draftFilter}
+        onStatusChange={setStatusFilter}
+        onDraftChange={setDraftFilter}
+        onClearFilters={() => {
+          setStatusFilter("all");
+          setDraftFilter("all");
+        }}
+      />
 
       {/* Forms Grid */}
       {!filteredForms || filteredForms.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No forms yet</p>
-            <Button onClick={() => navigate("/ace-forms/new")}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Your First Form
-            </Button>
-          </CardContent>
-        </Card>
+        <LibraryEmptyState
+          icon={FileText}
+          title="No forms found"
+          message={searchQuery ? `No forms match "${searchQuery}"` : "Create your first form to get started"}
+          actionLabel="Create Form"
+          onAction={() => navigate("/ace-forms/new")}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredForms.map((form) => (
