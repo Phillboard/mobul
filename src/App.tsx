@@ -121,7 +121,7 @@ const App = () => (
                   {/* Protected Routes */}
                   <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/platform" element={<ProtectedRoute requiredPermissions={['admin']}><PlatformDashboard /></ProtectedRoute>} />
+                  <Route path="/platform" element={<ProtectedRoute requiredRole="admin"><PlatformDashboard /></ProtectedRoute>} />
                   
                   {/* Campaigns */}
                   <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
@@ -145,8 +145,8 @@ const App = () => (
                   {/* Gift Cards */}
                   <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
                   <Route path="/gift-cards/purchase" element={<ProtectedRoute><PurchaseGiftCards /></ProtectedRoute>} />
-                  <Route path="/gift-cards/marketplace" element={<ProtectedRoute requiredPermissions={['admin']}><AdminGiftCardMarketplace /></ProtectedRoute>} />
-                  <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredPermissions={['admin']}><AdminGiftCardMarketplace /></ProtectedRoute>} />
+                  <Route path="/gift-cards/marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
+                  <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
                   <Route path="/purchase-gift-cards" element={<ProtectedRoute><PurchaseGiftCards /></ProtectedRoute>} />
                   
                   {/* Contacts System */}
@@ -171,7 +171,7 @@ const App = () => (
                   <Route path="/admin/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
                   <Route path="/admin/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                   <Route path="/users" element={<ProtectedRoute requiredPermissions={['users.view', 'users.manage']}><UserManagement /></ProtectedRoute>} />
-                  <Route path="/user-management" element={<ProtectedRoute requiredPermissions={['admin', 'users.manage']}><UserManagement /></ProtectedRoute>} />
+                  <Route path="/user-management" element={<ProtectedRoute requiredPermissions={['users.manage']}><UserManagement /></ProtectedRoute>} />
                   
                   {/* Documentation */}
                   <Route path="/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
@@ -186,10 +186,10 @@ const App = () => (
                   <Route path="/api-docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
                   
                   {/* Admin Routes */}
-                  <Route path="/agencies" element={<ProtectedRoute requiredPermissions={['admin']}><AgencyManagement /></ProtectedRoute>} />
-                  <Route path="/agency-management" element={<ProtectedRoute requiredPermissions={['admin']}><AgencyManagement /></ProtectedRoute>} />
-                  <Route path="/admin/audit-log" element={<ProtectedRoute requiredPermissions={['admin']}><AdminAuditLog /></ProtectedRoute>} />
-                  <Route path="/enrich-data" element={<ProtectedRoute requiredPermissions={['admin']}><EnrichData /></ProtectedRoute>} />
+                  <Route path="/agencies" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
+                  <Route path="/agency-management" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
+                  <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
+                  <Route path="/enrich-data" element={<ProtectedRoute requiredRole="admin"><EnrichData /></ProtectedRoute>} />
                   <Route path="/beta" element={<ProtectedRoute><BetaTesting /></ProtectedRoute>} />
                   <Route path="/launch" element={<ProtectedRoute><LaunchChecklist /></ProtectedRoute>} />
                   
