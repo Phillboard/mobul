@@ -105,8 +105,11 @@ export interface CampaignFormData {
   size: MailSize;
   template_id?: string | null;
   
-  // Step 2: Audience
-  audience_id?: string;
+  // Step 2: Recipients (Contacts/Lists/Segments)
+  contact_list_id?: string;
+  recipient_source?: 'list' | 'segment';
+  tag_filters?: string[];
+  audience_id?: string; // DEPRECATED: Legacy audience system
   
   // Step 3: Tracking & Rewards
   enableCallTracking?: boolean;

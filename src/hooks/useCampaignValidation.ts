@@ -15,25 +15,46 @@ interface CampaignFormData {
   name?: string;
   template_id?: string | null;
   size?: string;
-  audience_id?: string;
+  contact_list_id?: string;
+  audience_id?: string; // Legacy
   conditions?: any[];
   lp_mode?: string;
 }
 
 export function useCampaignValidation(formData: CampaignFormData, clientId: string): ValidationResult {
-  const { data: audience } = useQuery({
-    queryKey: ['audience', formData.audience_id],
+  // Support both new contact_list_id and legacy audience_id
+  const listOrAudienceId = formData.contact_list_id || formData.audience_id;
+  
+  const { data: contactList } = useQuery({
+    queryKey: ['contact-list', listOrAudienceId],
     queryFn: async () => {
-      if (!formData.audience_id) return null;
-      const { data, error } = await supabase
-        .from('audiences')
-        .select('valid_count')
-        .eq('id', formData.audience_id)
-        .single();
-      if (error) throw error;
-      return data;
+      if (!listOrAudienceId) return null;
+      
+      // Try contact_lists first
+      if (formData.contact_list_id) {
+        const { data, error } = await supabase
+          .from('contact_lists')
+          .select('contact_count')
+          .eq('id', formData.contact_list_id)
+          .single();
+        if (error) throw error;
+        return { count: data.contact_count || 0 };
+      }
+      
+      // Fall back to legacy audiences
+      if (formData.audience_id) {
+        const { data, error } = await supabase
+          .from('audiences')
+          .select('valid_count')
+          .eq('id', formData.audience_id)
+          .single();
+        if (error) throw error;
+        return { count: data.valid_count || 0 };
+      }
+      
+      return null;
     },
-    enabled: !!formData.audience_id,
+    enabled: !!listOrAudienceId,
   });
 
   const { data: pools } = useQuery({
@@ -85,19 +106,19 @@ export function useCampaignValidation(formData: CampaignFormData, clientId: stri
       checks.push({ label: 'Mail size missing', status: 'error' as const, message: 'Required' });
     }
 
-    // Check 4: Audience
-    if (formData.audience_id && audience) {
+    // Check 4: Recipients (List/Segment or legacy Audience)
+    if (listOrAudienceId && contactList) {
       checks.push({ 
-        label: `Audience selected (${audience.valid_count} recipients)`, 
+        label: `Recipients selected (${contactList.count} contacts)`, 
         status: 'success' as const 
       });
     } else {
-      checks.push({ label: 'No audience selected', status: 'error' as const, message: 'Required' });
+      checks.push({ label: 'No recipients selected', status: 'error' as const, message: 'Required' });
     }
 
     // Check 5: Gift card inventory
-    if (formData.audience_id && audience && pools) {
-      const hasEnoughInventory = pools.every(pool => pool.available_cards >= audience.valid_count);
+    if (listOrAudienceId && contactList && pools) {
+      const hasEnoughInventory = pools.every(pool => pool.available_cards >= contactList.count);
       if (hasEnoughInventory) {
         checks.push({ label: 'Gift card inventory sufficient', status: 'success' as const });
       } else {
@@ -144,5 +165,5 @@ export function useCampaignValidation(formData: CampaignFormData, clientId: stri
     const isValid = checks.every(check => check.status !== 'error');
 
     return { isValid, checks };
-  }, [formData, audience, pools, mailProvider]);
+  }, [formData, contactList, pools, mailProvider]);
 }

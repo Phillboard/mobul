@@ -6,13 +6,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CampaignDetailsStep } from "./wizard/CampaignDetailsStep";
-import { PURLSettingsStep } from "./wizard/PURLSettingsStep";
-import { CallTrackingStep } from "./wizard/CallTrackingStep";
-import { ConditionsStep } from "./wizard/ConditionsStep";
+import { CampaignSetupStep } from "./wizard/CampaignSetupStep";
+import { RecipientsStep } from "./wizard/RecipientsStep";
+import { TrackingRewardsStep } from "./wizard/TrackingRewardsStep";
+import { DeliveryFulfillmentStep } from "./wizard/DeliveryFulfillmentStep";
 import { SummaryStep } from "./wizard/SummaryStep";
-import { Progress } from "@/components/ui/progress";
+import { StepIndicator } from "./wizard/StepIndicator";
+import { WizardSidebar } from "./wizard/WizardSidebar";
 import { DraftManager } from "./DraftManager";
+import type { CampaignFormData } from "@/types/campaigns";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,38 +22,6 @@ interface CreateCampaignWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
-}
-
-export interface CampaignFormData {
-  // Step 1
-  name: string;
-  template_id: string | null;
-  size: "4x6" | "6x9" | "6x11" | "letter" | "trifold";
-  audience_id: string | null;
-  postage: "first_class" | "standard";
-  mail_date_mode: "asap" | "scheduled";
-  mail_date: Date | null;
-  
-  // Step 2
-  lp_mode: "bridge" | "redirect";
-  base_lp_url: string;
-  utm_source: string;
-  utm_medium: string;
-  utm_campaign: string;
-
-  // Step 3
-  conditions: Array<{
-    id?: string;
-    condition_number: number;
-    condition_type: string;
-    trigger_action: string;
-    sequence_order: number;
-    is_required: boolean;
-    gift_card_pool_id?: string;
-    sms_template?: string;
-    webhook_url?: string;
-    config_json?: Record<string, any>;
-  }>;
 }
 
 export function CreateCampaignWizard({
@@ -62,16 +32,25 @@ export function CreateCampaignWizard({
   const [currentStep, setCurrentStep] = useState(1);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<CampaignFormData>>({
+    name: "",
+    size: "4x6",
+    recipient_source: "list",
     postage: "standard",
     mail_date_mode: "asap",
     lp_mode: "bridge",
     utm_source: "directmail",
     utm_medium: "postcard",
-    conditions: [],
   });
 
-  const totalSteps = 4;
-  const progress = (currentStep / totalSteps) * 100;
+  const steps = [
+    { label: "Setup", description: "Campaign basics" },
+    { label: "Recipients", description: "Select contacts" },
+    { label: "Tracking", description: "Calls & rewards" },
+    { label: "Delivery", description: "Mail settings" },
+    { label: "Review", description: "Confirm & create" },
+  ];
+
+  const totalSteps = steps.length;
 
   // Auto-save draft every 30 seconds
   useEffect(() => {
@@ -125,81 +104,94 @@ export function CreateCampaignWizard({
     setCurrentStep(1);
     setCurrentDraftId(null);
     setFormData({
+      name: "",
+      size: "4x6",
+      recipient_source: "list",
       postage: "standard",
       mail_date_mode: "asap",
       lp_mode: "bridge",
       utm_source: "directmail",
       utm_medium: "postcard",
-      conditions: [],
     });
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle>
-                Create Campaign - Step {currentStep} of {totalSteps}
-              </DialogTitle>
-              <DialogDescription>
-                {currentStep === 1 && "Set up campaign details and mailing information"}
-                {currentStep === 2 && "Configure personalized URLs and tracking"}
-                {currentStep === 3 && "Review and confirm campaign details"}
-              </DialogDescription>
-            </div>
-            {currentStep < totalSteps && (
-              <DraftManager
+          <DialogTitle>Create Campaign</DialogTitle>
+        </DialogHeader>
+
+        <StepIndicator currentStep={currentStep} steps={steps} />
+
+        <div className="flex gap-6 flex-1 overflow-hidden">
+          <div className="hidden lg:block w-64 flex-shrink-0">
+            <WizardSidebar
+              formData={formData}
+              recipientCount={0}
+              clientId={clientId}
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-2">
+            {currentStep === 1 && (
+              <CampaignSetupStep
                 clientId={clientId}
-                onLoadDraft={handleLoadDraft}
-                currentFormData={formData}
-                currentStep={currentStep}
+                initialData={formData}
+                onNext={handleNext}
+                onCancel={handleClose}
+              />
+            )}
+
+            {currentStep === 2 && (
+              <RecipientsStep
+                clientId={clientId}
+                initialData={formData}
+                onNext={handleNext}
+                onBack={handleBack}
+              />
+            )}
+
+            {currentStep === 3 && (
+              <TrackingRewardsStep
+                clientId={clientId}
+                initialData={formData}
+                onNext={handleNext}
+                onBack={handleBack}
+              />
+            )}
+
+            {currentStep === 4 && (
+              <DeliveryFulfillmentStep
+                clientId={clientId}
+                initialData={formData}
+                recipientCount={0}
+                onNext={handleNext}
+                onBack={handleBack}
+              />
+            )}
+
+            {currentStep === 5 && (
+              <SummaryStep
+                formData={formData}
+                clientId={clientId}
+                recipientCount={0}
+                onBack={handleBack}
+                onConfirm={handleClose}
               />
             )}
           </div>
-        </DialogHeader>
+        </div>
 
-        <Progress value={progress} className="mb-4" />
-
-        {currentStep === 1 && (
-          <CampaignDetailsStep
+        <div className="border-t pt-4">
+          <DraftManager
             clientId={clientId}
-            initialData={formData}
-            onNext={handleNext}
-            onCancel={handleClose}
+            onLoadDraft={handleLoadDraft}
+            currentFormData={formData}
+            currentStep={currentStep}
           />
-        )}
-
-        {currentStep === 2 && (
-          <PURLSettingsStep
-            clientId={clientId}
-            formData={formData}
-            onBack={handleBack}
-            onNext={handleNext}
-          />
-        )}
-
-        {currentStep === 3 && (
-          <ConditionsStep
-            clientId={clientId}
-            conditions={formData.conditions || []}
-            onConditionsChange={(conditions) => setFormData({ ...formData, conditions })}
-            onNext={() => setCurrentStep(4)}
-            onBack={handleBack}
-          />
-        )}
-
-        {currentStep === 4 && (
-          <SummaryStep
-            formData={formData}
-            clientId={clientId}
-            recipientCount={0}
-            onBack={handleBack}
-            onConfirm={handleClose}
-          />
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );
