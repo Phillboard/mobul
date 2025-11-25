@@ -65,10 +65,15 @@ serve(async (req) => {
 
     console.log(`[PROVISION-CC] Agent ${user.id} (${roleData.role}) initiating redemption`);
 
-    const { redemptionCode, agentNotes } = await req.json();
+    const { redemptionCode, deliveryPhone, deliveryEmail, conditionNumber, conditionId, agentNotes } = await req.json();
     
     if (!redemptionCode) {
       throw new Error("Redemption code is required");
+    }
+
+    // Validate that at least one contact method is provided
+    if (!deliveryPhone && !deliveryEmail) {
+      throw new Error("Must provide phone number OR email address for gift card delivery");
     }
 
     // Use service role for data operations
@@ -175,17 +180,27 @@ serve(async (req) => {
     }
 
     // Get the gift card pool from campaign reward configs
+    // If conditionNumber is provided, use that specific pool; otherwise use the first one
     const campaign = recipient.audiences.campaigns[0];
     if (!campaign || !campaign.campaign_reward_configs || campaign.campaign_reward_configs.length === 0) {
       throw new Error("No gift card pool configured for this campaign");
     }
 
-    const poolId = campaign.campaign_reward_configs[0].gift_card_pool_id;
-    if (!poolId) {
-      throw new Error("No gift card pool assigned to this campaign");
+    let poolId: string | null = null;
+    if (conditionNumber) {
+      const rewardConfig = campaign.campaign_reward_configs.find(
+        (rc: any) => rc.condition_number === conditionNumber
+      );
+      poolId = rewardConfig?.gift_card_pool_id || null;
+    } else {
+      poolId = campaign.campaign_reward_configs[0].gift_card_pool_id;
     }
 
-    console.log(`[PROVISION-CC] Claiming card from pool: ${poolId}`);
+    if (!poolId) {
+      throw new Error(`No gift card pool assigned for condition ${conditionNumber || 'default'}`);
+    }
+
+    console.log(`[PROVISION-CC] Claiming card from pool: ${poolId} for condition: ${conditionNumber || 'default'}`);
 
     // PRE-CHECK: Verify pool has inventory before claiming
     const { data: poolCheck, error: poolCheckError } = await supabaseAdmin
@@ -264,12 +279,16 @@ serve(async (req) => {
     const claimedCard = claimData[0];
     console.log(`[PROVISION-CC] Claimed card: ${claimedCard.id}`);
 
-    // Update recipient status to redeemed
+    // Update recipient status to redeemed AND update contact information
     const { error: updateError } = await supabaseAdmin
       .from("recipients")
       .update({
         approval_status: "redeemed",
         gift_card_assigned_id: claimedCard.id,
+        // Update contact info with agent-provided data
+        phone: deliveryPhone || recipient.phone,
+        email: deliveryEmail || recipient.email,
+        approved_by_user_id: user.id,
         updated_at: new Date().toISOString(),
       })
       .eq("id", recipient.id);
@@ -278,6 +297,8 @@ serve(async (req) => {
       console.error("[PROVISION-CC] Failed to update recipient:", updateError);
     }
 
+    console.log(`[PROVISION-CC] Updated recipient with contact: ${deliveryPhone ? 'phone' : 'email'}`);
+
     // Log the action in audit log
     await supabaseAdmin
       .from("recipient_audit_log")
@@ -285,12 +306,31 @@ serve(async (req) => {
         recipient_id: recipient.id,
         action: "redeemed_by_agent",
         user_id: user.id,
-        notes: agentNotes || `Redeemed by call center agent`,
+        notes: agentNotes || `Redeemed by call center agent. Condition: ${conditionNumber || 'default'}`,
         metadata: { 
           gift_card_id: claimedCard.id,
-          redemption_code: redemptionCode 
+          redemption_code: redemptionCode,
+          condition_number: conditionNumber,
+          contact_method: deliveryPhone ? 'sms' : 'email'
         }
       });
+
+    // If conditionNumber was provided, log it in call_conditions_met
+    if (conditionNumber && conditionId) {
+      await supabaseAdmin
+        .from("call_conditions_met")
+        .insert({
+          campaign_id: campaign.id,
+          recipient_id: recipient.id,
+          condition_number: conditionNumber,
+          met_by_agent_id: user.id,
+          gift_card_id: claimedCard.id,
+          delivery_status: 'pending',
+          call_session_id: null, // No call session for manual call center redemption
+        });
+
+      console.log(`[PROVISION-CC] Logged condition ${conditionNumber} as met`);
+    }
 
     // Fetch full gift card details
     const { data: giftCard, error: giftCardError } = await supabaseAdmin
@@ -317,58 +357,70 @@ serve(async (req) => {
 
     console.log(`[PROVISION-CC] Successfully provisioned card for recipient ${recipient.id}`);
 
-    // Auto-send SMS if phone number is available (Phase 4: Automated Delivery)
-    if (recipient.phone && giftCard) {
+    // Auto-send SMS/Email based on delivery method chosen by agent
+    const deliveryContact = deliveryPhone || deliveryEmail;
+    if (deliveryContact && giftCard) {
       try {
-        console.log(`[PROVISION-CC] Auto-sending SMS to ${recipient.phone}`);
         const brand = giftCard.gift_card_pools?.gift_card_brands;
         const pool = giftCard.gift_card_pools;
         const value = pool?.card_value || 0;
-        
-        const smsMessage = `Your ${brand?.brand_name || pool?.provider || "Gift Card"} is ready!\n\nCode: ${giftCard.card_code}\n${giftCard.card_number ? `Card: ${giftCard.card_number}\n` : ""}Value: $${value}\n\nRedeem at the store`;
-        
-        // Create SMS delivery log entry
-        const { data: smsLogEntry } = await supabaseAdmin
-          .from('sms_delivery_log')
-          .insert({
-            recipient_id: recipient.id,
-            gift_card_id: giftCard.id,
-            campaign_id: campaign.id,
-            phone_number: recipient.phone,
-            message_body: smsMessage,
-            delivery_status: 'pending',
-            retry_count: 0
-          })
-          .select()
-          .single();
 
-        const { error: smsError } = await supabaseAdmin.functions.invoke("send-gift-card-sms", {
-          body: {
-            deliveryId: smsLogEntry?.id,
-            phone: recipient.phone,
-            message: smsMessage,
-            recipientId: recipient.id,
-            giftCardId: giftCard.id,
-          },
-        });
+        if (deliveryPhone) {
+          console.log(`[PROVISION-CC] Auto-sending SMS to ${deliveryPhone}`);
+          const smsMessage = `Your ${brand?.brand_name || pool?.provider || "Gift Card"} is ready!\n\nCode: ${giftCard.card_code}\n${giftCard.card_number ? `Card: ${giftCard.card_number}\n` : ""}Value: $${value}\n\nRedeem at the store`;
+          
+          // Create SMS delivery log entry
+          const { data: smsLogEntry } = await supabaseAdmin
+            .from('sms_delivery_log')
+            .insert({
+              recipient_id: recipient.id,
+              gift_card_id: giftCard.id,
+              campaign_id: campaign.id,
+              phone_number: deliveryPhone,
+              message_body: smsMessage,
+              delivery_status: 'pending',
+              retry_count: 0
+            })
+            .select()
+            .single();
 
-        if (smsError) {
-          console.error("[PROVISION-CC] SMS auto-send failed:", smsError);
-          // Update log to failed
-          if (smsLogEntry) {
-            await supabaseAdmin
-              .from('sms_delivery_log')
-              .update({ 
-                delivery_status: 'failed',
-                error_message: smsError.message 
-              })
-              .eq('id', smsLogEntry.id);
+          const { error: smsError } = await supabaseAdmin.functions.invoke("send-gift-card-sms", {
+            body: {
+              deliveryId: smsLogEntry?.id,
+              phone: deliveryPhone,
+              message: smsMessage,
+              recipientId: recipient.id,
+              giftCardId: giftCard.id,
+            },
+          });
+
+          if (smsError) {
+            console.error("[PROVISION-CC] SMS auto-send failed:", smsError);
+            // Update log to failed
+            if (smsLogEntry) {
+              await supabaseAdmin
+                .from('sms_delivery_log')
+                .update({ 
+                  delivery_status: 'failed',
+                  error_message: smsError.message 
+                })
+                .eq('id', smsLogEntry.id);
+            }
+          } else {
+            console.log("[PROVISION-CC] SMS sent successfully");
+            if (smsLogEntry) {
+              await supabaseAdmin
+                .from('sms_delivery_log')
+                .update({ delivery_status: 'delivered' })
+                .eq('id', smsLogEntry.id);
+            }
           }
-        } else {
-          console.log("[PROVISION-CC] SMS auto-sent successfully");
+        } else if (deliveryEmail) {
+          // TODO: Implement email delivery
+          console.log(`[PROVISION-CC] Email delivery to ${deliveryEmail} - not yet implemented`);
         }
-      } catch (smsError) {
-        console.error("[PROVISION-CC] SMS auto-send error:", smsError);
+      } catch (deliveryError) {
+        console.error("[PROVISION-CC] Delivery error:", deliveryError);
       }
     }
 
