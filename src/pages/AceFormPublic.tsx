@@ -15,6 +15,7 @@ import { useFormSubmissionRateLimit } from "@/hooks/useFormSubmissionRateLimit";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Shield } from "lucide-react";
 import DOMPurify from "dompurify";
+import { motion, AnimatePresence } from "framer-motion";
 
 const MAX_SUBMISSIONS_PER_HOUR = 5;
 
@@ -148,140 +149,137 @@ export default function AceFormPublic() {
 
   return (
     <div 
-      className={`min-h-screen flex items-center justify-center ${
-        embedMode ? 'bg-transparent p-4' : 'bg-gradient-to-br from-background to-muted/20 p-6'
+      className={`flex items-center justify-center ${
+        embedMode ? 'bg-transparent p-4 max-h-[800px]' : 'min-h-screen bg-gradient-to-br from-background to-muted/20 p-6'
       }`}
-      style={{ perspective: '1000px' }}
     >
-      <div
-        className="w-full max-w-md transition-transform duration-700"
-        style={{ 
-          transformStyle: 'preserve-3d',
-          transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
-        }}
-      >
-        {/* Front: Form */}
-        <div 
-          className="w-full"
-          style={{ backfaceVisibility: 'hidden' }}
-        >
-          <div className={`bg-card rounded-lg shadow-xl ${embedMode ? 'p-6 border-2' : 'p-8 backdrop-blur-sm'}`}>
-            <div className={embedMode ? 'mb-4' : 'mb-6'}>
-              <h2 className={`font-bold text-foreground text-center ${embedMode ? 'text-xl' : 'text-2xl'}`}>
-                {form.form_config.settings?.title || "Enter Your Gift Card Code"}
-              </h2>
-              {form.form_config.settings?.description && !embedMode && (
-                <p className="text-muted-foreground mt-2 text-center text-base">
-                  {form.form_config.settings.description}
-                </p>
-              )}
-            </div>
-
-          {/* Rate Limit Warning */}
-          {rateLimitError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{rateLimitError}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {form.form_config.fields.map((field) => {
-              // Check conditional logic
-              if (field.conditional) {
-                const dependentField = form.form_config.fields.find(
-                  (f) => f.id === field.conditional?.showIf.fieldId
-                );
-                // For now, show all fields (conditional logic evaluation would need form state)
-              }
-
-              return (
-                <div key={field.id}>
-                  <Label htmlFor={field.id}>
-                    {field.label}
-                    {field.required && <span className="text-destructive ml-1">*</span>}
-                  </Label>
-                  {field.helpText && (
-                    <p className="text-sm text-muted-foreground mt-1">{field.helpText}</p>
-                  )}
-
-                  {field.type === "textarea" ? (
-                    <Textarea
-                      id={field.id}
-                      {...register(field.id)}
-                      placeholder={field.placeholder}
-                      className="mt-2"
-                      maxLength={1000}
-                    />
-                  ) : field.type === "select" ? (
-                    <select
-                      id={field.id}
-                      {...register(field.id)}
-                      className="w-full mt-2 px-3 py-2 border rounded-md"
-                    >
-                      <option value="">Select...</option>
-                      {field.options?.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <Input
-                      id={field.id}
-                      type={field.type === "gift-card-code" ? "text" : field.type}
-                      {...register(field.id)}
-                      placeholder={field.placeholder}
-                      className="mt-2"
-                      maxLength={field.type === "email" ? 255 : 200}
-                      autoComplete={
-                        field.type === "email" ? "email" :
-                        field.type === "phone" ? "tel" :
-                        field.type === "text" && field.label.toLowerCase().includes("name") ? "name" :
-                        "off"
-                      }
-                    />
-                  )}
-
-                  {errors[field.id] && (
-                    <p className="text-sm text-destructive mt-1">
-                      {errors[field.id]?.message as string}
+      <div className={`w-full ${embedMode ? 'max-w-sm' : 'max-w-md'} relative overflow-hidden`}>
+        <AnimatePresence mode="wait">
+          {!isFlipped ? (
+            <motion.div
+              key="form"
+              initial={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <div className={`bg-card rounded-lg shadow-xl ${embedMode ? 'p-6 border-2' : 'p-8 backdrop-blur-sm'}`}>
+                <div className={embedMode ? 'mb-4' : 'mb-6'}>
+                  <h2 className={`font-bold text-foreground text-center ${embedMode ? 'text-xl' : 'text-2xl'}`}>
+                    {form.form_config.settings?.title || "Enter Your Gift Card Code"}
+                  </h2>
+                  {form.form_config.settings?.description && !embedMode && (
+                    <p className="text-muted-foreground mt-2 text-center text-base">
+                      {form.form_config.settings.description}
                     </p>
                   )}
                 </div>
-              );
-            })}
 
-            <Button
-              type="submit"
+              {/* Rate Limit Warning */}
+              {rateLimitError && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{rateLimitError}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Form */}
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {form.form_config.fields.map((field) => {
+                  // Check conditional logic
+                  if (field.conditional) {
+                    const dependentField = form.form_config.fields.find(
+                      (f) => f.id === field.conditional?.showIf.fieldId
+                    );
+                    // For now, show all fields (conditional logic evaluation would need form state)
+                  }
+
+                  return (
+                    <div key={field.id}>
+                      <Label htmlFor={field.id}>
+                        {field.label}
+                        {field.required && <span className="text-destructive ml-1">*</span>}
+                      </Label>
+                      {field.helpText && (
+                        <p className="text-sm text-muted-foreground mt-1">{field.helpText}</p>
+                      )}
+
+                      {field.type === "textarea" ? (
+                        <Textarea
+                          id={field.id}
+                          {...register(field.id)}
+                          placeholder={field.placeholder}
+                          className="mt-2"
+                          maxLength={1000}
+                        />
+                      ) : field.type === "select" ? (
+                        <select
+                          id={field.id}
+                          {...register(field.id)}
+                          className="w-full mt-2 px-3 py-2 border rounded-md"
+                        >
+                          <option value="">Select...</option>
+                          {field.options?.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Input
+                          id={field.id}
+                          type={field.type === "gift-card-code" ? "text" : field.type}
+                          {...register(field.id)}
+                          placeholder={field.placeholder}
+                          className="mt-2"
+                          maxLength={field.type === "email" ? 255 : 200}
+                          autoComplete={
+                            field.type === "email" ? "email" :
+                            field.type === "phone" ? "tel" :
+                            field.type === "text" && field.label.toLowerCase().includes("name") ? "name" :
+                            "off"
+                          }
+                        />
+                      )}
+
+                      {errors[field.id] && (
+                        <p className="text-sm text-destructive mt-1">
+                          {errors[field.id]?.message as string}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  style={{ backgroundColor: primaryColor }}
+                  disabled={submitting || !!rateLimitError}
+                >
+                  {submitting ? "Submitting..." : (form.form_config.settings?.submitButtonText || "Submit")}
+                </Button>
+              </form>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="gift-card"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
               className="w-full"
-              style={{ backgroundColor: primaryColor }}
-              disabled={submitting || !!rateLimitError}
             >
-              {submitting ? "Submitting..." : (form.form_config.settings?.submitButtonText || "Submit")}
-            </Button>
-          </form>
-          </div>
-        </div>
-
-        {/* Back: Gift Card (rendered but hidden when not flipped) */}
-        <div
-          className="absolute inset-0 w-full"
-          style={{ 
-            transform: 'rotateY(180deg)',
-            backfaceVisibility: 'hidden',
-            pointerEvents: isFlipped ? 'auto' : 'none'
-          }}
-        >
-          {redemption && (
-            <GiftCardReveal 
-              redemption={redemption} 
-              embedMode={embedMode}
-              skipReveal={true}
-            />
+              {redemption && (
+                <GiftCardReveal 
+                  redemption={redemption} 
+                  embedMode={embedMode}
+                  skipReveal={true}
+                />
+              )}
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
     </div>
   );
