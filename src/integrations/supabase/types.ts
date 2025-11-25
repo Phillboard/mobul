@@ -1346,6 +1346,7 @@ export type Database = {
           created_at: string | null
           created_by_user_id: string | null
           custom_fields: Json | null
+          customer_code: string | null
           do_not_contact: boolean | null
           email: string | null
           email_opt_out: boolean | null
@@ -1375,6 +1376,7 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           custom_fields?: Json | null
+          customer_code?: string | null
           do_not_contact?: boolean | null
           email?: string | null
           email_opt_out?: boolean | null
@@ -1404,6 +1406,7 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           custom_fields?: Json | null
+          customer_code?: string | null
           do_not_contact?: boolean | null
           email?: string | null
           email_opt_out?: boolean | null
@@ -4269,6 +4272,7 @@ export type Database = {
         Returns: string
       }
       expire_old_invitations: { Args: never; Returns: undefined }
+      generate_customer_code: { Args: never; Returns: string }
       generate_recipient_token: { Args: never; Returns: string }
       generate_redemption_code: { Args: never; Returns: string }
       get_audience_geo_distribution: {
