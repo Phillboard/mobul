@@ -52,10 +52,16 @@ export function ColumnSelector({ visibleColumns, onColumnsChange }: ColumnSelect
   // Local state for immediate UI feedback
   const [localColumns, setLocalColumns] = useState<string[]>(visibleColumns);
 
-  // Sync local state when prop changes
+  // Sync local state when prop changes (only if values actually differ)
   useEffect(() => {
-    setLocalColumns(visibleColumns);
-  }, [visibleColumns]);
+    const columnsChanged = 
+      visibleColumns.length !== localColumns.length ||
+      visibleColumns.some((col, idx) => col !== localColumns[idx]);
+    
+    if (columnsChanged) {
+      setLocalColumns(visibleColumns);
+    }
+  }, [visibleColumns, localColumns]);
 
   // Debounced save to database
   const debouncedSave = useMemo(
