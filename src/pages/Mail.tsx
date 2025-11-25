@@ -6,9 +6,9 @@ import { useTenant } from "@/contexts/TenantContext";
 import { MailSearch } from "@/components/mail/MailSearch";
 import { ViewToggle } from "@/components/mail/ViewToggle";
 import { MailFilters } from "@/components/mail/MailFilters";
-import { MailGrid } from "@/components/mail/MailGrid";
+import { TemplateGrid as MailGrid } from "@/components/templates/TemplateGrid";
 import { BulkActions } from "@/components/mail/BulkActions";
-import { CreateMailDialog } from "@/components/mail/CreateMailDialog";
+import { CreateTemplateDialog as CreateMailDialog } from "@/components/templates/CreateTemplateDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -99,8 +99,8 @@ export default function Mail() {
         <MailGrid
           clientId={currentClient.id}
           searchQuery={searchQuery}
-          selectedSize={selectedFormat}
-          selectedIndustry={selectedCategory}
+          sizeFilter={selectedFormat}
+          industryFilter={selectedCategory}
           view={view}
           selectedIds={selectedIds}
           onToggleSelect={handleToggleSelect}
