@@ -82,7 +82,7 @@ export function CampaignDetailsStep({
   });
 
   const { data: templates } = useQuery({
-    queryKey: ["templates", clientId],
+    queryKey: ["mail", clientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("templates")
@@ -158,7 +158,7 @@ export function CampaignDetailsStep({
           name="template_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Template (Optional)</FormLabel>
+              <FormLabel>Mail Piece (Optional)</FormLabel>
               <Select
                 onValueChange={(value) => {
                   // Convert "none" string to null for UUID compatibility
@@ -168,7 +168,7 @@ export function CampaignDetailsStep({
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a template" />
+                    <SelectValue placeholder="Select a mail piece" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="bg-background z-50">
@@ -219,7 +219,7 @@ export function CampaignDetailsStep({
               </Select>
               {selectedTemplate && (
                 <FormDescription>
-                  Pre-filled from selected template: {selectedTemplate.size}
+                  Pre-filled from selected mail piece: {selectedTemplate.size}
                 </FormDescription>
               )}
               <FormMessage />

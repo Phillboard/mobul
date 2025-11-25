@@ -207,8 +207,8 @@ export function CampaignProofDialog({
                   <p className="font-medium">{campaignData.name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Template</p>
-                  <p className="font-medium">{campaignData.templates?.name || "No template"}</p>
+                  <p className="text-sm text-muted-foreground">Mail Piece</p>
+                  <p className="font-medium">{campaignData.templates?.name || "No mail piece"}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -247,11 +247,11 @@ export function CampaignProofDialog({
             </CardContent>
           </Card>
 
-          {/* Template Preview */}
+          {/* Mail Piece Preview */}
           {campaignData.templates?.thumbnail_url && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Template Preview</CardTitle>
+                <CardTitle className="text-lg">Mail Piece Preview</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg border bg-muted/20 p-4">

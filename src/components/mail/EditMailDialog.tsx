@@ -31,7 +31,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const templateSchema = z.object({
+const mailPieceSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
   size: z.enum(["4x6", "6x9", "6x11", "letter", "trifold"], {
     required_error: "Size is required",
@@ -44,53 +44,53 @@ const templateSchema = z.object({
   ),
 });
 
-type TemplateFormData = z.infer<typeof templateSchema>;
+type MailPieceFormData = z.infer<typeof mailPieceSchema>;
 
-interface EditTemplateDialogProps {
-  template: any;
+interface EditMailDialogProps {
+  mailPiece: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditTemplateDialog({
-  template,
+export function EditMailDialog({
+  mailPiece,
   open,
   onOpenChange,
-}: EditTemplateDialogProps) {
+}: EditMailDialogProps) {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const form = useForm<TemplateFormData>({
-    resolver: zodResolver(templateSchema),
+  const form = useForm<MailPieceFormData>({
+    resolver: zodResolver(mailPieceSchema),
     defaultValues: {
-      name: template.name,
-      size: template.size,
-      industry_vertical: template.industry_vertical,
+      name: mailPiece.name,
+      size: mailPiece.size,
+      industry_vertical: mailPiece.industry_vertical,
     },
   });
 
   useEffect(() => {
     if (open) {
       form.reset({
-        name: template.name,
-        size: template.size,
-        industry_vertical: template.industry_vertical,
+        name: mailPiece.name,
+        size: mailPiece.size,
+        industry_vertical: mailPiece.industry_vertical,
       });
-      setPreviewUrl(template.thumbnail_url);
+      setPreviewUrl(mailPiece.thumbnail_url);
       setThumbnailFile(null);
     }
-  }, [open, template, form]);
+  }, [open, mailPiece, form]);
 
   const updateMutation = useMutation({
-    mutationFn: async (data: TemplateFormData) => {
-      let thumbnailUrl = template.thumbnail_url;
+    mutationFn: async (data: MailPieceFormData) => {
+      let thumbnailUrl = mailPiece.thumbnail_url;
 
       // Upload new thumbnail if provided
       if (thumbnailFile) {
         // Delete old thumbnail if exists
-        if (template.thumbnail_url) {
-          const oldPath = template.thumbnail_url.split("/").pop();
+        if (mailPiece.thumbnail_url) {
+          const oldPath = mailPiece.thumbnail_url.split("/").pop();
           if (oldPath) {
             await supabase.storage
               .from("template-thumbnails")
@@ -113,7 +113,7 @@ export function EditTemplateDialog({
         thumbnailUrl = urlData.publicUrl;
       }
 
-      // Update template record
+      // Update mail piece record
       const { error } = await supabase
         .from("templates")
         .update({
@@ -122,17 +122,17 @@ export function EditTemplateDialog({
           industry_vertical: data.industry_vertical,
           thumbnail_url: thumbnailUrl,
         })
-        .eq("id", template.id);
+        .eq("id", mailPiece.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["mail"] });
+      toast.success("Mail piece updated successfully");
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error("Failed to update template");
+      toast.error("Failed to update mail piece");
       console.error(error);
     },
   });
@@ -149,7 +149,7 @@ export function EditTemplateDialog({
     }
   };
 
-  const onSubmit = (data: TemplateFormData) => {
+  const onSubmit = (data: MailPieceFormData) => {
     updateMutation.mutate(data);
   };
 
@@ -157,9 +157,9 @@ export function EditTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Edit Template</DialogTitle>
+          <DialogTitle>Edit Mail Piece</DialogTitle>
           <DialogDescription>
-            Update template details and metadata
+            Update mail piece details and metadata
           </DialogDescription>
         </DialogHeader>
 
@@ -170,7 +170,7 @@ export function EditTemplateDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Template Name</FormLabel>
+                  <FormLabel>Mail Piece Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Spring Roofing Campaign" {...field} />
                   </FormControl>

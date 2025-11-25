@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TemplateCard } from "./TemplateCard";
-import { TemplateListItem } from "./TemplateListItem";
+import { MailCard } from "./MailCard";
+import { MailListItem } from "./MailListItem";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface TemplateGridProps {
+interface MailGridProps {
   clientId: string;
   sizeFilter: string;
   industryFilter: string;
@@ -30,7 +30,7 @@ const industryLabels: Record<string, string> = {
   auto_buyback: "Auto Buyback",
 };
 
-export function TemplateGrid({ 
+export function MailGrid({ 
   clientId, 
   sizeFilter, 
   industryFilter, 
@@ -38,9 +38,9 @@ export function TemplateGrid({
   view,
   selectedIds,
   onToggleSelect 
-}: TemplateGridProps) {
-  const { data: allTemplates, isLoading } = useQuery({
-    queryKey: ["templates", clientId, sizeFilter, industryFilter],
+}: MailGridProps) {
+  const { data: allMailPieces, isLoading } = useQuery({
+    queryKey: ["mail", clientId, sizeFilter, industryFilter],
     queryFn: async () => {
       let query = supabase
         .from("templates")
@@ -65,14 +65,14 @@ export function TemplateGrid({
   });
 
   // Filter by search query
-  const templates = allTemplates?.filter((template) =>
-    template.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const mailPieces = allMailPieces?.filter((mailPiece) =>
+    mailPiece.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Separate favorites and recent
-  const favoriteTemplates = templates?.filter((t) => t.is_favorite);
-  const recentTemplates = templates?.filter((t) => !t.is_favorite).slice(0, 8);
-  const otherTemplates = templates?.filter((t) => !t.is_favorite).slice(8);
+  const favoriteMailPieces = mailPieces?.filter((m) => m.is_favorite);
+  const recentMailPieces = mailPieces?.filter((m) => !m.is_favorite).slice(0, 8);
+  const otherMailPieces = mailPieces?.filter((m) => !m.is_favorite).slice(8);
 
   if (isLoading) {
     return (
@@ -87,21 +87,21 @@ export function TemplateGrid({
     );
   }
 
-  if (!templates || templates.length === 0) {
+  if (!mailPieces || mailPieces.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">
           {searchQuery 
-            ? `No templates found matching "${searchQuery}"`
-            : "No templates found. Create your first template to get started."
+            ? `No mail pieces found matching "${searchQuery}"`
+            : "No mail pieces found. Create your first mail piece to get started."
           }
         </p>
       </div>
     );
   }
 
-  const renderTemplates = (templateList: any[], title?: string) => {
-    if (!templateList || templateList.length === 0) return null;
+  const renderMailPieces = (mailPieceList: any[], title?: string) => {
+    if (!mailPieceList || mailPieceList.length === 0) return null;
 
     return (
       <div className="space-y-4">
@@ -109,21 +109,21 @@ export function TemplateGrid({
           <h2 className="text-xl font-semibold flex items-center gap-2">
             {title}
             <span className="text-sm font-normal text-muted-foreground">
-              ({templateList.length})
+              ({mailPieceList.length})
             </span>
           </h2>
         )}
         {view === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {templateList.map((template, index) => (
+            {mailPieceList.map((mailPiece, index) => (
               <div
-                key={template.id}
+                key={mailPiece.id}
                 className="animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <TemplateCard
-                  template={template}
-                  isSelected={selectedIds.includes(template.id)}
+                <MailCard
+                  mailPiece={mailPiece}
+                  isSelected={selectedIds.includes(mailPiece.id)}
                   onToggleSelect={onToggleSelect}
                 />
               </div>
@@ -131,15 +131,15 @@ export function TemplateGrid({
           </div>
         ) : (
           <div className="space-y-3">
-            {templateList.map((template, index) => (
+            {mailPieceList.map((mailPiece, index) => (
               <div
-                key={template.id}
+                key={mailPiece.id}
                 className="animate-fade-in"
                 style={{ animationDelay: `${index * 30}ms` }}
               >
-                <TemplateListItem
-                  template={template}
-                  isSelected={selectedIds.includes(template.id)}
+                <MailListItem
+                  mailPiece={mailPiece}
+                  isSelected={selectedIds.includes(mailPiece.id)}
                   onToggleSelect={onToggleSelect}
                   sizeLabels={sizeLabels}
                   industryLabels={industryLabels}
@@ -154,9 +154,9 @@ export function TemplateGrid({
 
   return (
     <div className="space-y-8">
-      {favoriteTemplates && favoriteTemplates.length > 0 && renderTemplates(favoriteTemplates, "⭐ Favorites")}
-      {recentTemplates && recentTemplates.length > 0 && renderTemplates(recentTemplates, "🕐 Recent")}
-      {otherTemplates && otherTemplates.length > 0 && renderTemplates(otherTemplates, "📁 All Templates")}
+      {favoriteMailPieces && favoriteMailPieces.length > 0 && renderMailPieces(favoriteMailPieces, "⭐ Favorites")}
+      {recentMailPieces && recentMailPieces.length > 0 && renderMailPieces(recentMailPieces, "🕐 Recent")}
+      {otherMailPieces && otherMailPieces.length > 0 && renderMailPieces(otherMailPieces, "📁 All Mail Pieces")}
     </div>
   );
 }
