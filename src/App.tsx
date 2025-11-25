@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Campaigns from "./pages/Campaigns";
+import CampaignCreate from "./pages/CampaignCreate";
 import CampaignDetail from "./pages/CampaignDetail";
 import PURLLandingPage from "./pages/PURLLandingPage";
 import AudienceDetail from "./pages/AudienceDetail";
@@ -125,6 +126,7 @@ const App = () => (
                   
                   {/* Campaigns */}
                   <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
+                  <Route path="/campaigns/new" element={<ProtectedRoute><CampaignCreate /></ProtectedRoute>} />
                   <Route path="/campaigns/:id" element={<ProtectedRoute><CampaignDetail /></ProtectedRoute>} />
                   <Route path="/audiences/:id" element={<ProtectedRoute><AudienceDetail /></ProtectedRoute>} />
                   <Route path="/recipients/:id" element={<ProtectedRoute><RecipientDetail /></ProtectedRoute>} />

@@ -83,7 +83,7 @@ export function RecipientsStep({ clientId, initialData, onNext, onBack }: Recipi
 
   const { data: contactPreview, isLoading: loadingPreview } = useListPreview(
     selectedListId,
-    !!selectedListId
+    []
   );
 
   const selectedList = contactLists?.find(l => l.id === selectedListId);
