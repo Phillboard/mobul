@@ -8,22 +8,12 @@ interface ConditionsDisplayProps {
   campaignId: string;
 }
 
-const conditionTypeIcons: Record<string, any> = {
+const triggerTypeIcons: Record<string, any> = {
+  manual_agent: Phone,
+  crm_event: Webhook,
+  time_delay: Zap,
   mail_delivered: Mail,
   call_completed: Phone,
-  qr_scanned: Mail,
-  purl_visited: Mail,
-  form_submitted: Mail,
-  time_delay: Zap,
-  manual_trigger: Zap,
-};
-
-const triggerActionIcons: Record<string, any> = {
-  send_gift_card: Gift,
-  send_sms: Phone,
-  trigger_webhook: Webhook,
-  update_crm: Webhook,
-  send_email: Mail,
 };
 
 const formatConditionType = (type: string) => {
@@ -77,8 +67,7 @@ export function ConditionsDisplay({ campaignId }: ConditionsDisplayProps) {
       <CardContent>
         <div className="space-y-4">
           {conditions.map((condition, index) => {
-            const ConditionIcon = conditionTypeIcons[condition.condition_type] || Mail;
-            const ActionIcon = triggerActionIcons[condition.trigger_action] || Gift;
+            const TriggerIcon = triggerTypeIcons[condition.trigger_type] || Mail;
 
             return (
               <div key={condition.id || index} className="relative">
@@ -91,43 +80,33 @@ export function ConditionsDisplay({ campaignId }: ConditionsDisplayProps) {
                   {/* Condition Details */}
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <ConditionIcon className="h-4 w-4 text-muted-foreground" />
+                      <TriggerIcon className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">
-                        {formatConditionType(condition.condition_type)}
+                        {condition.condition_name}
                       </span>
-                      {condition.is_required && (
+                      {!condition.is_active && (
                         <Badge variant="outline" className="text-xs">
-                          Required
+                          Inactive
                         </Badge>
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <ArrowRight className="h-3 w-3" />
-                      <ActionIcon className="h-4 w-4" />
-                      <span>{formatConditionType(condition.trigger_action)}</span>
+                    <div className="text-sm text-muted-foreground">
+                      Trigger: {formatConditionType(condition.trigger_type)}
                     </div>
 
                     {/* Additional Details */}
-                    {condition.gift_card_pool_id && (
-                      <div className="text-xs text-muted-foreground">
-                        <Gift className="h-3 w-3 inline mr-1" />
-                        Gift card will be sent
-                      </div>
-                    )}
-                    
-                    {condition.sms_template && (
-                      <div className="text-xs text-muted-foreground">
-                        <Phone className="h-3 w-3 inline mr-1" />
-                        SMS: {condition.sms_template.substring(0, 50)}
-                        {condition.sms_template.length > 50 ? '...' : ''}
-                      </div>
-                    )}
-                    
-                    {condition.webhook_url && (
+                    {condition.crm_event_name && (
                       <div className="text-xs text-muted-foreground">
                         <Webhook className="h-3 w-3 inline mr-1" />
-                        Webhook: {condition.webhook_url}
+                        CRM Event: {condition.crm_event_name}
+                      </div>
+                    )}
+                    
+                    {condition.time_delay_hours && (
+                      <div className="text-xs text-muted-foreground">
+                        <Zap className="h-3 w-3 inline mr-1" />
+                        Delay: {condition.time_delay_hours} hours
                       </div>
                     )}
                   </div>

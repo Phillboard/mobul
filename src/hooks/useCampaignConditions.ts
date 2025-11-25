@@ -6,14 +6,14 @@ interface Condition {
   id?: string;
   campaign_id?: string;
   condition_number: number;
-  condition_type: string;
-  trigger_action: string;
-  sequence_order: number;
-  is_required: boolean;
-  gift_card_pool_id?: string;
-  sms_template?: string;
-  webhook_url?: string;
-  config_json?: Record<string, any>;
+  condition_name: string;
+  trigger_type: string;
+  crm_event_name?: string;
+  time_delay_hours?: number;
+  is_active: boolean;
+  is_simulated?: boolean;
+  simulation_batch_id?: string;
+  created_at?: string;
 }
 
 export function useCampaignConditions(campaignId: string) {
@@ -27,7 +27,7 @@ export function useCampaignConditions(campaignId: string) {
         .from("campaign_conditions")
         .select("*")
         .eq("campaign_id", campaignId)
-        .order("sequence_order");
+        .order("condition_number");
 
       if (error) throw error;
       return data as unknown as Condition[];
@@ -48,14 +48,11 @@ export function useCampaignConditions(campaignId: string) {
         const conditionsToInsert = newConditions.map(c => ({
           campaign_id: campaignId,
           condition_number: c.condition_number,
-          condition_type: c.condition_type,
-          trigger_action: c.trigger_action,
-          sequence_order: c.sequence_order,
-          is_required: c.is_required,
-          gift_card_pool_id: c.gift_card_pool_id,
-          sms_template: c.sms_template,
-          webhook_url: c.webhook_url,
-          config_json: c.config_json || {},
+          condition_name: c.condition_name,
+          trigger_type: c.trigger_type,
+          crm_event_name: c.crm_event_name || null,
+          time_delay_hours: c.time_delay_hours || null,
+          is_active: c.is_active,
         }));
 
         const { data, error } = await supabase

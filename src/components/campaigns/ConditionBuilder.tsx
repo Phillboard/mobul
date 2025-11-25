@@ -13,14 +13,14 @@ import { supabase } from "@/integrations/supabase/client";
 interface Condition {
   id?: string;
   condition_number: number;
-  condition_type: string;
-  trigger_action: string;
-  sequence_order: number;
-  is_required: boolean;
-  gift_card_pool_id?: string;
-  sms_template?: string;
-  webhook_url?: string;
-  config_json?: Record<string, any>;
+  condition_name: string;
+  trigger_type: string;
+  crm_event_name?: string;
+  time_delay_hours?: number;
+  is_active: boolean;
+  is_simulated?: boolean;
+  simulation_batch_id?: string;
+  created_at?: string;
 }
 
 interface ConditionBuilderProps {
@@ -30,49 +30,23 @@ interface ConditionBuilderProps {
   onChange: (conditions: Condition[]) => void;
 }
 
-const conditionTypeOptions = [
+const triggerTypeOptions = [
+  { value: 'manual_agent', label: 'Manual Agent Trigger', icon: Phone },
+  { value: 'crm_event', label: 'CRM Event', icon: Webhook },
+  { value: 'time_delay', label: 'Time Delay', icon: Mail },
   { value: 'mail_delivered', label: 'Mail Delivered', icon: Mail },
   { value: 'call_completed', label: 'Call Completed', icon: Phone },
-  { value: 'qr_scanned', label: 'QR Code Scanned', icon: Mail },
-  { value: 'purl_visited', label: 'Landing Page Visited', icon: Mail },
-  { value: 'form_submitted', label: 'Form Submitted', icon: Mail },
-  { value: 'time_delay', label: 'Time Delay', icon: Mail },
-  { value: 'manual_trigger', label: 'Manual Trigger', icon: Mail },
-];
-
-const triggerActionOptions = [
-  { value: 'send_gift_card', label: 'Send Gift Card', icon: Gift },
-  { value: 'send_sms', label: 'Send SMS', icon: Phone },
-  { value: 'trigger_webhook', label: 'Trigger Webhook', icon: Webhook },
-  { value: 'update_crm', label: 'Update CRM', icon: Webhook },
-  { value: 'send_email', label: 'Send Email', icon: Mail },
 ];
 
 export function ConditionBuilder({ campaignId, clientId, conditions, onChange }: ConditionBuilderProps) {
-  const { data: giftCardPools } = useQuery({
-    queryKey: ['gift-card-pools', clientId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('gift_card_pools')
-        .select('*')
-        .eq('client_id', clientId)
-        .gt('available_cards', 0);
-      
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const addCondition = () => {
     if (conditions.length >= 3) return;
     
     const newCondition: Condition = {
       condition_number: conditions.length + 1,
-      condition_type: 'mail_delivered',
-      trigger_action: 'send_gift_card',
-      sequence_order: conditions.length + 1,
-      is_required: true,
-      config_json: {},
+      condition_name: `Condition ${conditions.length + 1}`,
+      trigger_type: 'manual_agent',
+      is_active: true,
     };
     
     onChange([...conditions, newCondition]);
@@ -84,7 +58,6 @@ export function ConditionBuilder({ campaignId, clientId, conditions, onChange }:
     const renumbered = newConditions.map((c, i) => ({
       ...c,
       condition_number: i + 1,
-      sequence_order: i + 1,
     }));
     onChange(renumbered);
   };
@@ -137,19 +110,29 @@ export function ConditionBuilder({ campaignId, clientId, conditions, onChange }:
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Condition Type */}
+                <div className="grid grid-cols-1 gap-4">
+                  {/* Condition Name */}
                   <div className="space-y-2">
-                    <Label>When</Label>
+                    <Label>Condition Name</Label>
+                    <Input
+                      value={condition.condition_name}
+                      onChange={(e) => updateCondition(index, { condition_name: e.target.value })}
+                      placeholder="Enter condition name..."
+                    />
+                  </div>
+
+                  {/* Trigger Type */}
+                  <div className="space-y-2">
+                    <Label>Trigger Type</Label>
                     <Select
-                      value={condition.condition_type}
-                      onValueChange={(value) => updateCondition(index, { condition_type: value })}
+                      value={condition.trigger_type}
+                      onValueChange={(value) => updateCondition(index, { trigger_type: value })}
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {conditionTypeOptions.map((option) => (
+                        {triggerTypeOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -158,85 +141,44 @@ export function ConditionBuilder({ campaignId, clientId, conditions, onChange }:
                     </Select>
                   </div>
 
-                  {/* Trigger Action */}
-                  <div className="space-y-2">
-                    <Label>Then</Label>
-                    <Select
-                      value={condition.trigger_action}
-                      onValueChange={(value) => updateCondition(index, { trigger_action: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {triggerActionOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* CRM Event Name (if CRM event selected) */}
+                  {condition.trigger_type === 'crm_event' && (
+                    <div className="space-y-2">
+                      <Label>CRM Event Name</Label>
+                      <Input
+                        value={condition.crm_event_name || ''}
+                        onChange={(e) => updateCondition(index, { crm_event_name: e.target.value })}
+                        placeholder="e.g., deal_closed, contact_updated"
+                      />
+                    </div>
+                  )}
+
+                  {/* Time Delay (if time delay selected) */}
+                  {condition.trigger_type === 'time_delay' && (
+                    <div className="space-y-2">
+                      <Label>Delay Hours</Label>
+                      <Input
+                        type="number"
+                        value={condition.time_delay_hours || ''}
+                        onChange={(e) => updateCondition(index, { time_delay_hours: parseInt(e.target.value) || 0 })}
+                        placeholder="24"
+                        min="0"
+                      />
+                    </div>
+                  )}
                 </div>
 
-                {/* Gift Card Pool Selection */}
-                {condition.trigger_action === 'send_gift_card' && (
-                  <div className="space-y-2">
-                    <Label>Gift Card Pool</Label>
-                    <Select
-                      value={condition.gift_card_pool_id || ''}
-                      onValueChange={(value) => updateCondition(index, { gift_card_pool_id: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a gift card pool" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {giftCardPools?.map((pool) => (
-                          <SelectItem key={pool.id} value={pool.id}>
-                            {pool.pool_name} - ${pool.card_value} ({pool.available_cards} available)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* SMS Template */}
-                {(condition.trigger_action === 'send_sms' || condition.trigger_action === 'send_gift_card') && (
-                  <div className="space-y-2">
-                    <Label>SMS Message</Label>
-                    <Textarea
-                      value={condition.sms_template || ''}
-                      onChange={(e) => updateCondition(index, { sms_template: e.target.value })}
-                      placeholder="Enter SMS message template..."
-                      rows={3}
-                    />
-                  </div>
-                )}
-
-                {/* Webhook URL */}
-                {(condition.trigger_action === 'trigger_webhook' || condition.trigger_action === 'update_crm') && (
-                  <div className="space-y-2">
-                    <Label>Webhook URL</Label>
-                    <Input
-                      value={condition.webhook_url || ''}
-                      onChange={(e) => updateCondition(index, { webhook_url: e.target.value })}
-                      placeholder="https://example.com/webhook"
-                    />
-                  </div>
-                )}
-
-                {/* Required Toggle */}
+                {/* Active Toggle */}
                 <div className="flex items-center justify-between pt-2">
                   <div className="space-y-0.5">
-                    <Label>Required Condition</Label>
+                    <Label>Active</Label>
                     <p className="text-xs text-muted-foreground">
-                      Must be met before next condition can trigger
+                      Enable or disable this condition
                     </p>
                   </div>
                   <Switch
-                    checked={condition.is_required}
-                    onCheckedChange={(checked) => updateCondition(index, { is_required: checked })}
+                    checked={condition.is_active}
+                    onCheckedChange={(checked) => updateCondition(index, { is_active: checked })}
                   />
                 </div>
               </CardContent>
