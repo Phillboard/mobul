@@ -23,9 +23,11 @@ const MAX_SUBMISSIONS_PER_HOUR = 5;
  * Used for embedded forms and direct links
  */
 export default function AceFormPublic() {
-  const { formId } = useParams();
+  const { formId, formSlug } = useParams();
   const [searchParams] = useSearchParams();
-  const { data: form, isLoading } = useAceForm(formId || "");
+  // Support both /forms/:formId and /f/:formSlug routes
+  const formIdentifier = formId || formSlug || "";
+  const { data: form, isLoading } = useAceForm(formIdentifier);
   const [submitting, setSubmitting] = useState(false);
   const [redemption, setRedemption] = useState<GiftCardRedemption | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -45,7 +47,7 @@ export default function AceFormPublic() {
   });
 
   const onSubmit = async (data: any) => {
-    if (!formId) return;
+    if (!formIdentifier) return;
 
     // Check rate limit
     const rateCheck = checkRateLimit();
@@ -96,7 +98,7 @@ export default function AceFormPublic() {
       } else {
         // OLD FLOW: Direct gift card code entry
         const { data: result, error } = await supabase.functions.invoke("submit-ace-form", {
-          body: { formId, data: sanitizedData },
+          body: { formId: formIdentifier, data: sanitizedData },
         });
 
         if (error) throw error;
