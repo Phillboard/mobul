@@ -65,6 +65,12 @@ export interface ContactFilters {
   has_email?: boolean;
   has_phone?: boolean;
   do_not_contact?: boolean;
+  lead_score_min?: number;
+  lead_score_max?: number;
+  engagement_score_min?: number;
+  engagement_score_max?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface SegmentRule {

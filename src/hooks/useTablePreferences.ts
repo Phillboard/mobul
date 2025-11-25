@@ -16,6 +16,7 @@ const DEFAULT_CONTACT_COLUMNS = [
   "company",
   "lifecycle_stage",
   "lead_score",
+  "engagement_score",
   "last_activity_date",
 ];
 
