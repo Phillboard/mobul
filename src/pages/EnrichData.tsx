@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { Loader2, CheckCircle2, AlertCircle, Trash2, Database, Settings, History } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +55,9 @@ export default function EnrichDataPage() {
     AVAILABLE_BRANDS.map(b => b.code)
   );
   const [scope, setScope] = useState<'total' | 'per_agency' | 'per_client'>('per_client');
+  const [randomnessFactor, setRandomnessFactor] = useState<number>(15);
+  const [timeRangeDays, setTimeRangeDays] = useState<number>(90);
+  const [trendPattern, setTrendPattern] = useState<'growing' | 'stable' | 'declining'>('stable');
   const [batches, setBatches] = useState<any[]>([]);
   const [loadingBatches, setLoadingBatches] = useState(false);
   const [resetConfirmed, setResetConfirmed] = useState(false);
@@ -95,19 +99,22 @@ export default function EnrichDataPage() {
     }
   };
 
+  const calculateRange = (value: number) => {
+    const variance = (randomnessFactor / 100) * value;
+    const clientCount = scope === 'per_client' ? 4 : 1;
+    const baseValue = value * clientCount;
+    const min = Math.floor(baseValue - variance * clientCount);
+    const max = Math.ceil(baseValue + variance * clientCount);
+    return { min, max, base: baseValue };
+  };
+
   const calculateTotals = () => {
-    const clientCount = 4; // MoPads has 4 clients
-    const agencyCount = 1;
-    
     return Object.entries(quantities).reduce((acc, [typeId, qty]) => {
       const isSelected = selectedTypes.has(typeId);
       if (!isSelected) return acc;
       
-      let total = qty;
-      if (scope === 'per_client') total *= clientCount;
-      if (scope === 'per_agency') total *= agencyCount;
-      
-      return acc + total;
+      const range = calculateRange(qty);
+      return acc + range.base;
     }, 0);
   };
 
@@ -123,6 +130,9 @@ export default function EnrichDataPage() {
         selectedBrands,
         scope,
         markAsSimulated: true,
+        randomnessFactor,
+        timeRangeDays,
+        trendPattern,
       };
 
       const { data, error } = await supabase.functions.invoke('enrich-demo-data', {
@@ -270,7 +280,7 @@ export default function EnrichDataPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Data Simulation Dashboard</h1>
-          <p className="text-muted-foreground">Generate and manage realistic demo data for testing and training</p>
+          <p className="text-muted-foreground">Generate realistic, analytics-optimized demo data with advanced controls</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="w-full">
@@ -297,7 +307,7 @@ export default function EnrichDataPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Custom Data Generation</CardTitle>
-                <CardDescription>Select data types and quantities to generate</CardDescription>
+                <CardDescription>Advanced controls for realistic, time-based simulation</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Preset Buttons */}
@@ -305,6 +315,65 @@ export default function EnrichDataPage() {
                   <Button variant="outline" size="sm" onClick={() => applyPreset('light')}>Light (25%)</Button>
                   <Button variant="outline" size="sm" onClick={() => applyPreset('medium')}>Medium (50%)</Button>
                   <Button variant="outline" size="sm" onClick={() => applyPreset('heavy')}>Heavy (100%)</Button>
+                </div>
+
+                {/* Advanced Controls */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 border rounded-lg bg-muted/30">
+                  {/* Randomness Factor */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label>Randomness</Label>
+                      <Badge variant="outline">{randomnessFactor}%</Badge>
+                    </div>
+                    <Slider
+                      value={[randomnessFactor]}
+                      onValueChange={(v) => setRandomnessFactor(v[0])}
+                      min={0}
+                      max={50}
+                      step={5}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      ±{randomnessFactor}% variance on all quantities
+                    </p>
+                  </div>
+
+                  {/* Time Range */}
+                  <div className="space-y-3">
+                    <Label>Time Range</Label>
+                    <Select value={timeRangeDays.toString()} onValueChange={(v) => setTimeRangeDays(parseInt(v))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="30">Last 30 days</SelectItem>
+                        <SelectItem value="60">Last 60 days</SelectItem>
+                        <SelectItem value="90">Last 90 days</SelectItem>
+                        <SelectItem value="180">Last 180 days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Activity distributed over {timeRangeDays} days
+                    </p>
+                  </div>
+
+                  {/* Trend Pattern */}
+                  <div className="space-y-3">
+                    <Label>Trend Pattern</Label>
+                    <Select value={trendPattern} onValueChange={(v: any) => setTrendPattern(v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="growing">📈 Growing</SelectItem>
+                        <SelectItem value="stable">➡️ Stable</SelectItem>
+                        <SelectItem value="declining">📉 Declining</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Analytics trend visualization
+                    </p>
+                  </div>
                 </div>
 
                 {/* Scope Selector */}
@@ -321,7 +390,8 @@ export default function EnrichDataPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-sm text-muted-foreground">
-                    This will create approximately <strong>{calculateTotals()}</strong> total records
+                    Will create approximately <strong>{calculateTotals()}</strong> total records
+                    {randomnessFactor > 0 && <span className="text-orange-600"> (±{randomnessFactor}%)</span>}
                   </p>
                 </div>
 
@@ -355,31 +425,41 @@ export default function EnrichDataPage() {
 
                 {/* Data Type Selection */}
                 <div className="space-y-4">
-                  <Label>Data Types</Label>
+                  <Label>Data Types & Quantities</Label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {DATA_TYPES.map(type => (
-                      <div key={type.id} className="flex items-start space-x-3 border rounded-lg p-4">
-                        <Checkbox
-                          id={type.id}
-                          checked={selectedTypes.has(type.id)}
-                          onCheckedChange={() => handleTypeToggle(type.id)}
-                        />
-                        <div className="flex-1 space-y-2">
-                          <Label htmlFor={type.id} className="cursor-pointer">
-                            {type.label}
-                          </Label>
-                          <p className="text-xs text-muted-foreground">{type.description}</p>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={quantities[type.id]}
-                            onChange={(e) => handleQuantityChange(type.id, e.target.value)}
-                            disabled={!selectedTypes.has(type.id)}
-                            className="w-32"
+                    {DATA_TYPES.map(type => {
+                      const range = calculateRange(quantities[type.id]);
+                      return (
+                        <div key={type.id} className="flex items-start space-x-3 border rounded-lg p-4">
+                          <Checkbox
+                            id={type.id}
+                            checked={selectedTypes.has(type.id)}
+                            onCheckedChange={() => handleTypeToggle(type.id)}
                           />
+                          <div className="flex-1 space-y-2">
+                            <Label htmlFor={type.id} className="cursor-pointer">
+                              {type.label}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">{type.description}</p>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                min="0"
+                                value={quantities[type.id]}
+                                onChange={(e) => handleQuantityChange(type.id, e.target.value)}
+                                disabled={!selectedTypes.has(type.id)}
+                                className="w-24"
+                              />
+                              {randomnessFactor > 0 && selectedTypes.has(type.id) && (
+                                <span className="text-xs text-muted-foreground">
+                                  ≈ {range.min}-{range.max}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -393,7 +473,7 @@ export default function EnrichDataPage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating Data...
+                      Generating Realistic Data...
                     </>
                   ) : (
                     'Generate Simulated Data'
@@ -403,7 +483,7 @@ export default function EnrichDataPage() {
                 {loading && (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <AlertCircle className="h-4 w-4" />
-                    <span>This may take 30-90 seconds depending on quantity...</span>
+                    <span>Generating data with business hours, behavioral patterns, and analytics optimization...</span>
                   </div>
                 )}
               </CardContent>
@@ -421,7 +501,7 @@ export default function EnrichDataPage() {
                         <Badge variant="outline">Batch #{result.batchId?.slice(0, 8)}</Badge>
                       </div>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
                         {result.brandsCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
                             <p className="text-muted-foreground text-xs">🏷️ Brands</p>
@@ -436,14 +516,14 @@ export default function EnrichDataPage() {
                         )}
                         {result.giftCardsCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
-                            <p className="text-muted-foreground text-xs">💳 Gift Cards</p>
-                            <p className="text-xl font-bold">{result.giftCardsCreated.toLocaleString()}</p>
+                            <p className="text-muted-foreground text-xs">💳 Cards</p>
+                            <p className="text-xl font-bold">{result.giftCardsCreated}</p>
                           </div>
                         )}
                         {result.contactsCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
                             <p className="text-muted-foreground text-xs">👥 Contacts</p>
-                            <p className="text-xl font-bold">{result.contactsCreated.toLocaleString()}</p>
+                            <p className="text-xl font-bold">{result.contactsCreated}</p>
                           </div>
                         )}
                         {result.contactListsCreated > 0 && (
@@ -454,7 +534,7 @@ export default function EnrichDataPage() {
                         )}
                         {result.contactTagsCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
-                            <p className="text-muted-foreground text-xs">🏷️ Tags</p>
+                            <p className="text-muted-foreground text-xs">🏷 Tags</p>
                             <p className="text-xl font-bold">{result.contactTagsCreated}</p>
                           </div>
                         )}
@@ -470,63 +550,39 @@ export default function EnrichDataPage() {
                             <p className="text-xl font-bold">{result.landingPagesCreated}</p>
                           </div>
                         )}
-                        {result.audiencesCreated > 0 && (
-                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
-                            <p className="text-muted-foreground text-xs">🎯 Audiences</p>
-                            <p className="text-xl font-bold">{result.audiencesCreated}</p>
-                          </div>
-                        )}
                         {result.campaignsCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
                             <p className="text-muted-foreground text-xs">📢 Campaigns</p>
                             <p className="text-xl font-bold">{result.campaignsCreated}</p>
                           </div>
                         )}
-                        {result.conditionsCreated > 0 && (
-                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
-                            <p className="text-muted-foreground text-xs">⚡ Conditions</p>
-                            <p className="text-xl font-bold">{result.conditionsCreated}</p>
-                          </div>
-                        )}
-                        {result.rewardConfigsCreated > 0 && (
-                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
-                            <p className="text-muted-foreground text-xs">🎁 Rewards</p>
-                            <p className="text-xl font-bold">{result.rewardConfigsCreated}</p>
-                          </div>
-                        )}
                         {result.recipientsCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
                             <p className="text-muted-foreground text-xs">📮 Recipients</p>
-                            <p className="text-xl font-bold">{result.recipientsCreated.toLocaleString()}</p>
-                          </div>
-                        )}
-                        {result.trackedNumbersCreated > 0 && (
-                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
-                            <p className="text-muted-foreground text-xs">📞 Numbers</p>
-                            <p className="text-xl font-bold">{result.trackedNumbersCreated}</p>
+                            <p className="text-xl font-bold">{result.recipientsCreated}</p>
                           </div>
                         )}
                         {result.callSessionsCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
                             <p className="text-muted-foreground text-xs">☎️ Calls</p>
-                            <p className="text-xl font-bold">{result.callSessionsCreated.toLocaleString()}</p>
+                            <p className="text-xl font-bold">{result.callSessionsCreated}</p>
                           </div>
                         )}
                         {result.conditionsMetCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
-                            <p className="text-muted-foreground text-xs">✅ Met</p>
+                            <p className="text-muted-foreground text-xs">✅ Conditions</p>
                             <p className="text-xl font-bold">{result.conditionsMetCreated}</p>
                           </div>
                         )}
                         {result.deliveriesCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
-                            <p className="text-muted-foreground text-xs">📬 Deliveries</p>
+                            <p className="text-muted-foreground text-xs">🎁 Deliveries</p>
                             <p className="text-xl font-bold">{result.deliveriesCreated}</p>
                           </div>
                         )}
                         {result.smsLogsCreated > 0 && (
                           <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
-                            <p className="text-muted-foreground text-xs">💬 SMS</p>
+                            <p className="text-muted-foreground text-xs">💬 SMS Logs</p>
                             <p className="text-xl font-bold">{result.smsLogsCreated}</p>
                           </div>
                         )}
@@ -542,7 +598,7 @@ export default function EnrichDataPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Simulation History</CardTitle>
-                <CardDescription>View and manage past simulation batches</CardDescription>
+                <CardDescription>View past simulation batches</CardDescription>
               </CardHeader>
               <CardContent>
                 {loadingBatches ? (
@@ -550,45 +606,24 @@ export default function EnrichDataPage() {
                     <Loader2 className="h-6 w-6 animate-spin" />
                   </div>
                 ) : batches.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No simulation batches found
-                  </div>
+                  <p className="text-center text-muted-foreground py-8">No simulation history yet</p>
                 ) : (
-                  <div className="space-y-3">
-                    {batches.map(batch => (
+                  <div className="space-y-2">
+                    {batches.map((batch) => (
                       <div key={batch.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary">{batch.id.slice(0, 8)}</Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {new Date(batch.created_at).toLocaleString()}
-                            </span>
-                          </div>
-                          <p className="text-sm">
-                            {batch.total_records} records • {batch.data_types?.length || 0} data types
+                        <div>
+                          <p className="font-medium">Batch #{batch.id.slice(0, 8)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(batch.created_at).toLocaleString()} · {batch.total_records || 0} records
                           </p>
                         </div>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Simulation Batch?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete all {batch.total_records} records from this batch. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleCleanupBatch(batch.id)}>
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleCleanupBatch(batch.id)}
+                        >
+                          Delete
+                        </Button>
                       </div>
                     ))}
                   </div>
@@ -598,106 +633,77 @@ export default function EnrichDataPage() {
           </TabsContent>
 
           <TabsContent value="cleanup" className="space-y-4">
-            <Card className="border-destructive">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                <CardDescription>Permanently delete simulated data</CardDescription>
+                <CardTitle>Cleanup Simulated Data</CardTitle>
+                <CardDescription>Remove all simulated data from the database</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    This will delete ALL simulated data across all tables. Real data will not be affected.
-                  </p>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" disabled={loading}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete All Simulated Data
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will permanently delete ALL simulated data from the database. This action cannot be undone.
-                          Real data will not be affected.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleCleanupAll} className="bg-destructive">
-                          Delete Everything
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete All Simulated Data
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all records marked as simulated. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleCleanupAll}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="reset" className="space-y-6">
-            <Card className="border-destructive border-2">
+          <TabsContent value="reset" className="space-y-4">
+            <Card className="border-destructive">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-destructive">
-                  <AlertCircle className="h-5 w-5" />
-                  Nuclear Option: Complete Database Reset
-                </CardTitle>
-                <CardDescription className="text-base">
-                  <strong className="text-destructive">⚠️ DANGER ZONE</strong> - This is a complete database wipe of ALL transactional data.
-                </CardDescription>
+                <CardTitle className="text-destructive">⚠️ Nuclear Option: Reset Database</CardTitle>
+                <CardDescription>Permanently delete ALL transactional data</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="rounded-lg bg-destructive/10 p-4 space-y-2">
-                    <h4 className="font-semibold text-sm">What Will Be Deleted:</h4>
-                    <ul className="text-sm space-y-1 list-disc list-inside">
-                      <li>All Contacts, Lists, and Segments</li>
-                      <li>All Campaigns, Templates, and Landing Pages</li>
-                      <li>All Gift Cards, Pools, and Brands</li>
-                      <li>All Call Sessions and Tracking Numbers</li>
-                      <li>All Recipients and Audience Data</li>
-                      <li>All Form Submissions</li>
-                      <li>All CRM Events and Integrations</li>
-                      <li>All Simulation History</li>
-                    </ul>
-                  </div>
-
-                  <div className="rounded-lg bg-primary/10 p-4 space-y-2">
-                    <h4 className="font-semibold text-sm">What Will Be Preserved:</h4>
-                    <ul className="text-sm space-y-1 list-disc list-inside">
-                      <li>Organizations and Clients (MoPads structure)</li>
-                      <li>User Accounts and Roles</li>
-                      <li>Permissions and Access Control</li>
-                      <li>Documentation and Help Content</li>
-                      <li>System Configuration</li>
-                    </ul>
-                  </div>
-
-                  <div className="rounded-lg border-2 border-destructive bg-destructive/5 p-4">
-                    <div className="flex items-start gap-3">
-                      <Checkbox 
-                        id="reset-confirm" 
-                        checked={resetConfirmed}
-                        onCheckedChange={(checked) => setResetConfirmed(checked === true)}
-                      />
-                      <label 
-                        htmlFor="reset-confirm" 
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        I understand this will permanently delete ALL transactional data and cannot be undone. 
-                        I want to start with a completely clean database.
-                      </label>
-                    </div>
-                  </div>
+                <div className="space-y-4 p-4 border border-destructive rounded-lg bg-destructive/5">
+                  <p className="font-medium text-destructive">This will DELETE:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>All contacts, lists, and tags</li>
+                    <li>All campaigns, templates, and landing pages</li>
+                    <li>All gift cards, pools, and deliveries</li>
+                    <li>All call sessions and tracking data</li>
+                    <li>All recipients and audiences</li>
+                    <li>All simulation batches</li>
+                  </ul>
+                  <p className="font-medium text-green-600">This will PRESERVE:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>Organizations and clients</li>
+                    <li>User accounts and roles</li>
+                    <li>Permissions configuration</li>
+                  </ul>
                 </div>
 
-                <Button 
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="reset-confirm"
+                    checked={resetConfirmed}
+                    onCheckedChange={(checked: boolean) => setResetConfirmed(checked)}
+                  />
+                  <Label htmlFor="reset-confirm" className="text-sm cursor-pointer">
+                    I understand this will permanently delete all transactional data
+                  </Label>
+                </div>
+
+                <Button
+                  variant="destructive"
+                  className="w-full"
                   onClick={handleResetDatabase}
                   disabled={!resetConfirmed || isResetting}
-                  variant="destructive"
-                  size="lg"
-                  className="w-full"
                 >
                   {isResetting ? (
                     <>
@@ -707,14 +713,10 @@ export default function EnrichDataPage() {
                   ) : (
                     <>
                       <AlertCircle className="mr-2 h-4 w-4" />
-                      Reset Database & Start Fresh
+                      Reset Database
                     </>
                   )}
                 </Button>
-
-                <p className="text-xs text-muted-foreground text-center">
-                  After reset, you'll be redirected to generate new simulation data
-                </p>
               </CardContent>
             </Card>
           </TabsContent>
