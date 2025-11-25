@@ -146,13 +146,15 @@ const App = () => (
                   <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredPermissions={['admin']}><AdminGiftCardMarketplace /></ProtectedRoute>} />
                   <Route path="/purchase-gift-cards" element={<ProtectedRoute><PurchaseGiftCards /></ProtectedRoute>} />
                   
-                  {/* Call Center */}
+                  {/* Contacts System */}
+                  <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+                  <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetail /></ProtectedRoute>} />
+                  <Route path="/contacts/lists" element={<ProtectedRoute><ContactLists /></ProtectedRoute>} />
+                  <Route path="/contacts/import" element={<ProtectedRoute><ContactImport /></ProtectedRoute>} />
+                  
+                  {/* Call Center - Redemption & Fulfillment */}
                   <Route path="/call-center" element={<ProtectedRoute requiredPermissions={['calls.view', 'calls.manage']}><CallCenterDashboard /></ProtectedRoute>} />
                   <Route path="/call-center/redeem" element={<ProtectedRoute requiredPermissions={['calls.confirm_redemption']}><CallCenterRedemption /></ProtectedRoute>} />
-                  
-                  {/* CRM - Simplified (Contacts removed, using recipients table) */}
-                  <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
-                  <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
                   
                   {/* ACE Forms */}
                   <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
