@@ -5,11 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Phone, MapPin, Building2, Trash2, ArrowLeft, MessageSquare, Calendar, DollarSign } from "lucide-react";
+import { Mail, Phone, MapPin, Building2, Trash2, ArrowLeft, MessageSquare, Calendar } from "lucide-react";
 import { useContact, useDeleteContact } from "@/hooks/useContacts";
 import { useActivities } from "@/hooks/useActivities";
 import { useTasks } from "@/hooks/useTasks";
-import { useDeals } from "@/hooks/useDeals";
 import { useTenant } from "@/contexts/TenantContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UniversalActivityFeed } from "@/components/activities/UniversalActivityFeed";
@@ -34,10 +33,6 @@ export default function ContactDetail() {
   const { data: tasks } = useTasks(contact?.client_id || null, {
     contactId: id,
   });
-  
-  const { data: deals } = useDeals(contact?.client_id || null);
-  
-  const contactDeals = deals?.filter((d: any) => d.primary_contact_id === id) || [];
 
   const handleDelete = async () => {
     if (!id || !window.confirm("Are you sure you want to delete this contact?")) return;
@@ -243,9 +238,6 @@ export default function ContactDetail() {
                 <TabsTrigger value="tasks">
                   Tasks ({tasks?.filter((t: any) => t.status !== "completed").length || 0})
                 </TabsTrigger>
-                <TabsTrigger value="deals">
-                  Deals ({contactDeals.length})
-                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="activity">
@@ -310,46 +302,6 @@ export default function ContactDetail() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="deals">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Associated Deals</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {contactDeals.length > 0 ? (
-                      <div className="space-y-3">
-                        {contactDeals.map((deal: any) => (
-                          <div
-                            key={deal.id}
-                            className="flex items-start justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50"
-                            onClick={() => navigate(`/deals/${deal.id}`)}
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                <h4 className="font-medium">{deal.deal_name}</h4>
-                                <Badge>{deal.status}</Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                Value: ${deal.deal_value.toLocaleString()}
-                              </p>
-                              {deal.close_date && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Close Date: {new Date(deal.close_date).toLocaleDateString()}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-muted-foreground text-center py-8">
-                        No deals associated with this contact.
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
             </Tabs>
           </div>
         </div>

@@ -21,8 +21,9 @@ export default function EnrichDataPage() {
                 </p>
                 <ul className="list-disc list-inside mb-6 text-sm text-gray-700">
                     <li>1 Demo Client (Summit Roofing)</li>
-                    <li>25 Realistic Contacts</li>
-                    <li>Various lifecycle stages</li>
+                    <li>60 Realistic CRM Contacts</li>
+                    <li>6 lifecycle stages (Leads → Evangelists)</li>
+                    <li>Notes, tags, and activity history</li>
                 </ul>
                 <button
                     onClick={handleEnrich}
