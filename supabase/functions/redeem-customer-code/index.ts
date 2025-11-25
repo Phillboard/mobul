@@ -27,6 +27,31 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // TEST CODE: Always allow 1234-5678-abcd for testing
+    if (redemptionCode.toUpperCase() === '1234-5678-ABCD') {
+      console.log('Test code used in customer redemption - returning mock gift card');
+      
+      return Response.json(
+        {
+          success: true,
+          giftCard: {
+            card_code: '1234-5678-ABCD',
+            card_number: 'TEST-1234-5678-9012',
+            card_value: 25.00,
+            provider: 'Test Provider',
+            brand_name: 'Amazon',
+            brand_logo: null,
+            brand_color: '#FF9900',
+            store_url: 'https://www.amazon.com',
+            expiration_date: null,
+            usage_restrictions: ['Valid for testing only'],
+            redemption_instructions: 'This is a test gift card. Use code TEST-1234-5678-9012 to redeem.',
+          }
+        },
+        { headers: corsHeaders }
+      );
+    }
+
     // Apply rate limiting
     const rateLimitResult = await checkRateLimit(
       supabase,
