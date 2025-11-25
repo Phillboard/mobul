@@ -655,7 +655,7 @@ Deno.serve(async (req) => {
           }
           if (!audience) continue;
 
-          const statusWeights = ['draft', 'ready', 'scheduled', 'in_production', 'completed', 'completed', 'completed'];
+          const statusWeights = ['draft', 'proofed', 'in_production', 'mailed', 'completed', 'completed', 'completed'];
           const { data: campaign, error: campaignError } = await supabase.from('campaigns').insert({
             client_id: client.id,
             name: campaignName,
@@ -753,12 +753,11 @@ Deno.serve(async (req) => {
             recipients.push({
               audience_id: audience.id,
               contact_id: contact?.id,
-              customer_code: contact?.customer_code || null,
               first_name: contact?.first_name || null,
               last_name: contact?.last_name || null,
               phone: contact?.phone || null,
               email: contact?.email || null,
-              address: contact?.address || null,
+              address1: contact?.address || null,
               city: contact?.city || null,
               state: contact?.state || null,
               zip: contact?.zip || null,
@@ -799,6 +798,7 @@ Deno.serve(async (req) => {
 
           for (let i = 0; i < numbersCount; i++) {
             const { data: trackedNumber, error: numberError } = await supabase.from('tracked_phone_numbers').insert({
+              client_id: clientId,
               campaign_id: campaign.id,
               phone_number: `+1480${Math.floor(Math.random() * 9000000 + 1000000)}`,
               forward_to_number: `+1602${Math.floor(Math.random() * 9000000 + 1000000)}`,
