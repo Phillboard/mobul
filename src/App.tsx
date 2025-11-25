@@ -103,6 +103,7 @@ const App = () => (
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/f/:formSlug" element={<AceFormPublic />} />
+                  <Route path="/forms/:formId" element={<AceFormPublic />} />
                   <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
 
                   {/* Redirects for consolidated pages */}
@@ -165,8 +166,8 @@ const App = () => (
                   {/* ACE Forms */}
                   <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
                   <Route path="/ace-forms/new" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
-                  <Route path="/ace-forms/:id/builder" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
-                  <Route path="/ace-forms/:id/analytics" element={<ProtectedRoute><AceFormAnalytics /></ProtectedRoute>} />
+                  <Route path="/ace-forms/:formId/builder" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
+                  <Route path="/ace-forms/:formId/analytics" element={<ProtectedRoute><AceFormAnalytics /></ProtectedRoute>} />
                   <Route path="/ace-forms/docs" element={<ProtectedRoute><AceFormsDocumentation /></ProtectedRoute>} />
                   
                   {/* Administration - Consolidated */}
