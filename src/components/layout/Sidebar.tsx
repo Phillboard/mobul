@@ -47,58 +47,48 @@ const navigationGroups: NavGroup[] = [
   },
   {
     label: "Contacts",
-    items: [
-      { name: "All Contacts", href: "/contacts", icon: Users, roles: ["admin", "agency_owner", "company_owner"], keywords: ["contacts", "customers"], description: "Manage contacts" },
-      { name: "Lists & Segments", href: "/contacts/lists", icon: List, roles: ["admin", "agency_owner", "company_owner"], keywords: ["lists", "segments"], description: "Organize contacts" },
-      { name: "Import", href: "/contacts/import", icon: Upload, roles: ["admin", "agency_owner", "company_owner"], keywords: ["import", "csv"], description: "Import contacts" },
-    ],
-    collapsible: true,
-  },
-  {
-    label: "Marketing",
     collapsible: true,
     items: [
-      { name: "Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'], keywords: ["mail", "postcards"], description: "Manage campaigns" },
-      { name: "DirectMail", href: "/templates", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts", "templates"], description: "Direct mail templates" },
-      { name: "Ace Forms", href: "/ace-forms", icon: FormInput, permissions: ['campaigns.view'], keywords: ["forms", "gift card", "redemption"], description: "AI form builder" },
-      { name: "Webinar", href: "/webinar", icon: Users, permissions: ['campaigns.view'], keywords: ["events", "online", "meetings"], description: "Manage webinars" },
-      { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl"], description: "Manage landing pages" },
+      { name: "All Contacts", href: "/contacts", icon: Users, permissions: ['contacts.view'], keywords: ["contacts", "customers", "crm"], description: "Manage customer database" },
+      { name: "Lists & Segments", href: "/contacts/lists", icon: List, permissions: ['contacts.view'], keywords: ["lists", "segments", "groups"], description: "Organize and segment contacts" },
+      { name: "Import Contacts", href: "/contacts/import", icon: Upload, permissions: ['contacts.create'], keywords: ["import", "csv", "upload"], description: "Import contacts from CSV" },
     ]
   },
   {
-    label: "CRM",
+    label: "Campaigns",
     collapsible: true,
     items: [
-      { name: "Activities", href: "/activities", icon: Activity, permissions: ['audiences.view', 'activities.view'], keywords: ["timeline"], description: "Activity timeline" },
-      { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['audiences.view', 'tasks.view'], keywords: ["todos"], description: "Manage tasks" },
+      { name: "All Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'], keywords: ["mail", "postcards", "direct mail"], description: "Manage direct mail campaigns" },
+      { name: "Templates", href: "/templates", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts", "postcard designs"], description: "Direct mail template designs" },
+      { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl", "personalized urls"], description: "Personalized landing pages" },
+      { name: "Forms", href: "/ace-forms", icon: FormInput, permissions: ['campaigns.view'], keywords: ["forms", "lead capture", "redemption"], description: "Lead capture & gift card forms" },
     ]
   },
   {
-    label: "Gift Cards",
+    label: "Rewards & Fulfillment",
     collapsible: true,
     items: [
-      { name: "Manage Cards", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.manage', 'giftcards.view'], keywords: ["rewards", "inventory"], description: "Manage gift card inventory" },
-      { name: "Purchase Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase', 'giftcards.purchase'], keywords: ["buy"], description: "Purchase gift cards" },
-      { name: "Marketplace", href: "/admin/gift-card-marketplace", icon: Gift, roles: ['admin'], permissions: ['giftcards.admin_view'], keywords: ["admin", "master"], description: "Admin marketplace" },
+      { name: "Gift Card Inventory", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.manage', 'giftcards.view'], keywords: ["rewards", "inventory", "pools"], description: "Manage gift card inventory" },
+      { name: "Purchase Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase', 'giftcards.purchase'], keywords: ["buy", "order"], description: "Purchase gift cards" },
+      { name: "Redemption Center", href: "/call-center/redeem", icon: Phone, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision"], description: "Redeem gift cards for callers" },
+      { name: "Marketplace", href: "/admin/gift-card-marketplace", icon: Gift, roles: ['admin'], permissions: ['giftcards.admin_view'], keywords: ["admin", "master", "platform"], description: "Platform gift card marketplace" },
     ]
   },
   {
-    label: "Call Center",
+    label: "Analytics & Tracking",
     collapsible: true,
-    roles: ['call_center', 'admin'],
     items: [
-      { name: "Redeem Cards", href: "/call-center/redeem", icon: Gift, roles: ['call_center', 'admin'], permissions: ['calls.confirm_redemption'], keywords: ["redemption", "provision"], description: "Redeem gift cards" },
-      { name: "Call Analytics", href: "/call-center", icon: Phone, roles: ['call_center', 'admin'], permissions: ['calls.view', 'calls.manage'], keywords: ["reports"], description: "Call metrics" },
+      { name: "Call Tracking", href: "/call-center", icon: Phone, permissions: ['calls.view', 'calls.manage'], keywords: ["calls", "phone", "tracking", "reports"], description: "Call tracking analytics" },
+      { name: "System Health", href: "/admin/system-health", icon: Activity, permissions: ['analytics.view'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
     ]
   },
   {
     label: "Administration",
     collapsible: true,
     items: [
-      { name: "System Health", href: "/admin/system-health", icon: Activity, permissions: ['analytics.view'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
-      { name: "Documentation", href: "/admin/docs", icon: BookOpen, keywords: ["docs", "help", "guide", "manual", "support", "faq"], description: "Documentation & help" },
+      { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
       { name: "Integrations", href: "/admin/integrations", icon: Workflow, permissions: ['api.view', 'settings.integrations'], keywords: ["api", "webhooks", "zapier", "automation", "developer"], description: "API & integrations" },
-      { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team", "permissions", "roles"], description: "Manage users" },
+      { name: "Documentation", href: "/admin/docs", icon: BookOpen, keywords: ["docs", "help", "guide", "manual", "support", "faq"], description: "Platform documentation" },
     ]
   },
   {
@@ -106,7 +96,7 @@ const navigationGroups: NavGroup[] = [
     collapsible: true,
     roles: ['agency_owner'],
     items: [
-      { name: "Client Management", href: "/agency-management", icon: Users, roles: ['agency_owner'], permissions: ['clients.view', 'clients.manage'], keywords: ["clients"], description: "Manage clients" },
+      { name: "Client Management", href: "/agency-management", icon: Users, roles: ['agency_owner'], permissions: ['clients.view', 'clients.manage'], keywords: ["clients", "agencies"], description: "Manage agency clients" },
     ]
   },
 ];
