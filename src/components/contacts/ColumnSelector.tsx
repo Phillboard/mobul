@@ -1,4 +1,3 @@
-import { useState, useEffect, useCallback, useRef } from "react";
 import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,59 +11,14 @@ import { Table } from "@tanstack/react-table";
 
 interface ColumnSelectorProps {
   table: Table<any>;
-  onVisibilityChange?: (columnId: string, isVisible: boolean) => void;
 }
 
-export function ColumnSelector({ table, onVisibilityChange }: ColumnSelectorProps) {
+export function ColumnSelector({ table }: ColumnSelectorProps) {
   const columns = table.getAllColumns().filter(
     (column) => column.getCanHide()
   );
 
-  // Local state for immediate UI feedback
-  const [localVisibility, setLocalVisibility] = useState<Record<string, boolean>>({});
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Sync local state with table state
-  useEffect(() => {
-    const visibility: Record<string, boolean> = {};
-    columns.forEach((col) => {
-      visibility[col.id] = col.getIsVisible();
-    });
-    setLocalVisibility(visibility);
-  }, [columns.map(c => c.getIsVisible()).join(',')]);
-
-  // Cleanup debounce timer on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
-
-  // Debounced persistence handler
-  const debouncedToggle = useCallback((columnId: string, newValue: boolean) => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      const column = table.getAllColumns().find(col => col.id === columnId);
-      if (column) {
-        column.toggleVisibility(newValue);
-        onVisibilityChange?.(columnId, newValue);
-      }
-    }, 300);
-  }, [table, onVisibilityChange]);
-
-  const handleToggle = (columnId: string, newValue: boolean) => {
-    // Immediate local update for responsive UI
-    setLocalVisibility(prev => ({ ...prev, [columnId]: newValue }));
-    // Debounced actual toggle
-    debouncedToggle(columnId, newValue);
-  };
-
-  const visibleCount = Object.values(localVisibility).filter(Boolean).length;
+  const visibleCount = columns.filter((col) => col.getIsVisible()).length;
 
   return (
     <DropdownMenu>
@@ -78,13 +32,12 @@ export function ColumnSelector({ table, onVisibilityChange }: ColumnSelectorProp
         {columns.map((column) => {
           const columnDef = column.columnDef as any;
           const isRequired = columnDef.enableHiding === false;
-          const isVisible = localVisibility[column.id] ?? column.getIsVisible();
           
           return (
             <DropdownMenuCheckboxItem
               key={column.id}
-              checked={isVisible}
-              onCheckedChange={(value) => handleToggle(column.id, !!value)}
+              checked={column.getIsVisible()}
+              onCheckedChange={(value) => column.toggleVisibility(!!value)}
               onSelect={(e) => e.preventDefault()}
               disabled={isRequired}
             >
