@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useContact, useDeleteContact } from "@/hooks/useContacts";
 import { ArrowLeft, Mail, Phone, MapPin, Edit, Trash2, Tag } from "lucide-react";
 import { useState } from "react";
 import { ContactEditDialog } from "@/components/contacts/ContactEditDialog";
+import { ContactCampaignsTab } from "@/components/contacts/ContactCampaignsTab";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,9 +81,16 @@ export default function ContactDetail() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Contact Information */}
-          <Card>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Contact Information */}
+              <Card>
             <CardHeader>
               <CardTitle>Contact Information</CardTitle>
             </CardHeader>
@@ -196,7 +205,13 @@ export default function ContactDetail() {
               </CardContent>
             </Card>
           )}
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="campaigns">
+            <ContactCampaignsTab contactId={id!} />
+          </TabsContent>
+        </Tabs>
 
         {/* Dialogs */}
         {id && (

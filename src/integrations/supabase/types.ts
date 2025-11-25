@@ -1211,6 +1211,80 @@ export type Database = {
           },
         ]
       }
+      contact_campaign_participation: {
+        Row: {
+          campaign_id: string
+          contact_id: string
+          created_at: string | null
+          delivered_at: string | null
+          gift_card_id: string | null
+          id: string
+          participated_at: string | null
+          participation_status: string
+          recipient_id: string | null
+          redeemed_at: string | null
+          redemption_code: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          contact_id: string
+          created_at?: string | null
+          delivered_at?: string | null
+          gift_card_id?: string | null
+          id?: string
+          participated_at?: string | null
+          participation_status?: string
+          recipient_id?: string | null
+          redeemed_at?: string | null
+          redemption_code?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          contact_id?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          gift_card_id?: string | null
+          id?: string
+          participated_at?: string | null
+          participation_status?: string
+          recipient_id?: string | null
+          redeemed_at?: string | null
+          redemption_code?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_campaign_participation_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_campaign_participation_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_campaign_participation_gift_card_id_fkey"
+            columns: ["gift_card_id"]
+            isOneToOne: false
+            referencedRelation: "gift_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_campaign_participation_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_list_members: {
         Row: {
           added_at: string | null
@@ -4006,6 +4080,39 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_table_preferences: {
+        Row: {
+          column_order: Json
+          column_widths: Json
+          created_at: string | null
+          id: string
+          table_name: string
+          updated_at: string | null
+          user_id: string
+          visible_columns: Json
+        }
+        Insert: {
+          column_order?: Json
+          column_widths?: Json
+          created_at?: string | null
+          id?: string
+          table_name: string
+          updated_at?: string | null
+          user_id: string
+          visible_columns?: Json
+        }
+        Update: {
+          column_order?: Json
+          column_widths?: Json
+          created_at?: string | null
+          id?: string
+          table_name?: string
+          updated_at?: string | null
+          user_id?: string
+          visible_columns?: Json
         }
         Relationships: []
       }
