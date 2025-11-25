@@ -71,15 +71,9 @@ export function AdvancedOptionsPanel({ form, clientId }: AdvancedOptionsPanelPro
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="direct" id="lp-direct" />
-                  <Label htmlFor="lp-direct" className="cursor-pointer font-normal">
+                  <RadioGroupItem value="redirect" id="lp-redirect" />
+                  <Label htmlFor="lp-redirect" className="cursor-pointer font-normal">
                     Direct Redirect
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="purl" id="lp-purl" />
-                  <Label htmlFor="lp-purl" className="cursor-pointer font-normal">
-                    PURL (Personalized URL)
                   </Label>
                 </div>
               </RadioGroup>
