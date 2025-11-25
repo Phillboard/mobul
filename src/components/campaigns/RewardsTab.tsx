@@ -1,10 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRewardStats } from "@/hooks/useCallAnalytics";
 import { Gift, DollarSign, CheckCircle, XCircle, Clock } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { RecentDeliveriesTable } from "./RecentDeliveriesTable";
 
 interface RewardsTabProps {
   campaignId: string;
@@ -133,64 +131,7 @@ export function RewardsTab({ campaignId }: RewardsTabProps) {
       </Card>
 
       {/* Recent Deliveries */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Deliveries</CardTitle>
-          <CardDescription>Latest gift card fulfillments</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Recipient</TableHead>
-                <TableHead>Condition</TableHead>
-                <TableHead>Value</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Delivery Method</TableHead>
-                <TableHead>Sent</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rewards.recentDeliveries.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    No deliveries yet
-                  </TableCell>
-                </TableRow>
-              ) : (
-                rewards.recentDeliveries.map((delivery: any) => (
-                  <TableRow key={delivery.id}>
-                    <TableCell>
-                      {delivery.recipient?.first_name} {delivery.recipient?.last_name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">Condition #{delivery.condition_number}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      ${delivery.gift_card?.pool?.card_value || 0}
-                    </TableCell>
-                    <TableCell>
-                      {delivery.delivery_status === 'sent' ? (
-                        <Badge className="bg-green-600">Sent</Badge>
-                      ) : delivery.delivery_status === 'failed' ? (
-                        <Badge variant="destructive">Failed</Badge>
-                      ) : (
-                        <Badge variant="secondary">Pending</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="capitalize">
-                      {delivery.delivery_method}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDistanceToNow(new Date(delivery.delivered_at || delivery.created_at), { addSuffix: true })}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <RecentDeliveriesTable campaignId={campaignId} deliveries={rewards.recentDeliveries} />
     </div>
   );
 }
