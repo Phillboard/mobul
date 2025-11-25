@@ -90,6 +90,9 @@ serve(async (req) => {
     }
 
     if (!recipients || recipients.length === 0) {
+      if (audience.total_count && audience.total_count > 0) {
+        throw new Error(`Audience "${audience.name}" shows ${audience.total_count} expected recipients, but no recipient records were found. The audience data may be out of sync. Please re-import recipients to this audience.`);
+      }
       throw new Error(`No recipients found in audience "${audience.name}". Please upload recipients to this audience before generating tokens.`);
     }
 
