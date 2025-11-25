@@ -102,13 +102,11 @@ export function isLayerOffCanvas(
   layer: CanvasLayer,
   canvasSize: { width: number; height: number }
 ): boolean {
-  if (!layer.left || !layer.top) return false;
-  
   return (
-    layer.left < 0 ||
-    layer.top < 0 ||
-    layer.left > canvasSize.width ||
-    layer.top > canvasSize.height
+    layer.x < 0 ||
+    layer.y < 0 ||
+    layer.x > canvasSize.width ||
+    layer.y > canvasSize.height
   );
 }
 
@@ -123,13 +121,10 @@ export function centerLayerOnCanvas<T extends CanvasLayer>(
   layer: T,
   canvasSize: { width: number; height: number }
 ): T {
-  const layerWidth = 'width' in layer ? (layer.width || 100) : 100;
-  const layerHeight = 'height' in layer ? (layer.height || 100) : 100;
-  
   return {
     ...layer,
-    left: (canvasSize.width - layerWidth) / 2,
-    top: (canvasSize.height - layerHeight) / 2,
+    x: (canvasSize.width - layer.width) / 2,
+    y: (canvasSize.height - layer.height) / 2,
   };
 }
 
@@ -149,8 +144,8 @@ export function duplicateLayer<T extends CanvasLayer>(
   return {
     ...layer,
     id: generateLayerId(),
-    left: layer.left + offsetX,
-    top: layer.top + offsetY,
+    x: layer.x + offsetX,
+    y: layer.y + offsetY,
   };
 }
 
@@ -186,17 +181,22 @@ export function reorderLayers<T extends CanvasLayer>(
  */
 export function validateLayer(layer: CanvasLayer): boolean {
   if (!layer.id || !layer.type) return false;
-  if (typeof layer.left !== 'number' || typeof layer.top !== 'number') return false;
+  if (typeof layer.x !== 'number' || typeof layer.y !== 'number') return false;
   
   switch (layer.type) {
     case 'text':
       return !!layer.text && !!layer.fontSize && !!layer.fontFamily;
     case 'image':
       return !!layer.src;
-    case 'shape':
-      return !!layer.shape;
+    case 'rect':
+    case 'circle':
+    case 'ellipse':
+    case 'polygon':
+      return true;
     case 'qr_code':
-      return !!layer.data && !!layer.size;
+      return !!layer.data;
+    case 'merge_field':
+      return !!layer.fieldName;
     default:
       return true;
   }
