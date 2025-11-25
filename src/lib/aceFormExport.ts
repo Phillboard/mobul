@@ -112,13 +112,14 @@ export function generateJavaScriptEmbed(
   options: ExportOptions
 ): string {
   const { primaryColor = '#6366f1', customDomain } = options;
-  const baseUrl = customDomain || 'https://arzthloosvnasokxygfo.supabase.co';
+  // Use app URL for iframe embeds (frontend route), not Supabase URL
+  const appUrl = customDomain || (typeof window !== 'undefined' ? window.location.origin : '');
 
   return `<div id="ace-form-${formId}"></div>
 <script>
   (function() {
     const iframe = document.createElement('iframe');
-    iframe.src = '${baseUrl}/forms/${formId}?primaryColor=${encodeURIComponent(primaryColor)}';
+    iframe.src = '${appUrl}/forms/${formId}?primaryColor=${encodeURIComponent(primaryColor)}';
     iframe.style.width = '100%';
     iframe.style.border = 'none';
     iframe.style.minHeight = '500px';
@@ -132,10 +133,11 @@ export function generateIframeEmbed(
   options: ExportOptions
 ): string {
   const { primaryColor = '#6366f1', customDomain } = options;
-  const baseUrl = customDomain || 'https://arzthloosvnasokxygfo.supabase.co';
+  // Use app URL for iframe embeds (frontend route), not Supabase URL
+  const appUrl = customDomain || (typeof window !== 'undefined' ? window.location.origin : '');
 
   return `<iframe 
-  src="${baseUrl}/forms/${formId}?primaryColor=${encodeURIComponent(primaryColor)}" 
+  src="${appUrl}/forms/${formId}?primaryColor=${encodeURIComponent(primaryColor)}" 
   width="100%" 
   height="600" 
   frameborder="0"
