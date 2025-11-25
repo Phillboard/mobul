@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo, useRef } from "react";
 import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,82 +7,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Debounce utility
-function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return ((...args: any[]) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  }) as T;
-}
-
-export interface ColumnDefinition {
-  id: string;
-  label: string;
-  required?: boolean;
-}
-
-const AVAILABLE_COLUMNS: ColumnDefinition[] = [
-  { id: "customer_code", label: "Code", required: true },
-  { id: "name", label: "Name", required: true },
-  { id: "email", label: "Email" },
-  { id: "phone", label: "Phone" },
-  { id: "mobile_phone", label: "Mobile Phone" },
-  { id: "company", label: "Company" },
-  { id: "job_title", label: "Job Title" },
-  { id: "address", label: "Address" },
-  { id: "city", label: "City" },
-  { id: "state", label: "State" },
-  { id: "lifecycle_stage", label: "Lifecycle Stage" },
-  { id: "lead_score", label: "Lead Score" },
-  { id: "engagement_score", label: "Engagement Score" },
-  { id: "lead_source", label: "Lead Source" },
-  { id: "last_activity_date", label: "Last Activity" },
-  { id: "created_at", label: "Created Date" },
-];
+import { Table } from "@tanstack/react-table";
 
 interface ColumnSelectorProps {
-  visibleColumns: string[];
-  onColumnsChange: (columns: string[]) => void;
+  table: Table<any>;
 }
 
-export function ColumnSelector({ visibleColumns, onColumnsChange }: ColumnSelectorProps) {
-  // Local state for immediate UI feedback
-  const [localColumns, setLocalColumns] = useState<string[]>(visibleColumns);
-  const isUpdatingRef = useRef(false);
-
-  // Sync local state when prop changes from external source (not our own updates)
-  useEffect(() => {
-    if (!isUpdatingRef.current) {
-      setLocalColumns(visibleColumns);
-    }
-  }, [visibleColumns]);
-
-  // Debounced save to database
-  const debouncedSave = useMemo(
-    () => debounce((columns: string[]) => {
-      onColumnsChange(columns);
-      // Clear the updating flag after a delay to allow sync
-      setTimeout(() => {
-        isUpdatingRef.current = false;
-      }, 1000);
-    }, 500),
-    [onColumnsChange]
+export function ColumnSelector({ table }: ColumnSelectorProps) {
+  const columns = table.getAllColumns().filter(
+    (column) => column.getCanHide()
   );
 
-  const handleToggle = (columnId: string, checked: boolean) => {
-    isUpdatingRef.current = true;
-    const newColumns = checked
-      ? [...localColumns, columnId]
-      : localColumns.filter(id => id !== columnId);
-    
-    // Update local state immediately
-    setLocalColumns(newColumns);
-    
-    // Debounced save to database
-    debouncedSave(newColumns);
-  };
+  const visibleCount = columns.filter((col) => col.getIsVisible()).length;
 
   return (
     <DropdownMenu>
@@ -94,21 +29,41 @@ export function ColumnSelector({ visibleColumns, onColumnsChange }: ColumnSelect
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        {AVAILABLE_COLUMNS.map((column) => (
-          <DropdownMenuCheckboxItem
-            key={column.id}
-            checked={localColumns.includes(column.id)}
-            onCheckedChange={(checked) => handleToggle(column.id, checked)}
-            onSelect={(e) => e.preventDefault()}
-            disabled={column.required}
-          >
-            {column.label}
-            {column.required && <span className="ml-2 text-xs text-muted-foreground">(required)</span>}
-          </DropdownMenuCheckboxItem>
-        ))}
+        {columns.map((column) => {
+          const columnDef = column.columnDef as any;
+          const isRequired = columnDef.enableHiding === false;
+          
+          return (
+            <DropdownMenuCheckboxItem
+              key={column.id}
+              checked={column.getIsVisible()}
+              onCheckedChange={(value) => column.toggleVisibility(!!value)}
+              onSelect={(e) => e.preventDefault()}
+              disabled={isRequired}
+            >
+              {column.id === "customer_code" && "Code"}
+              {column.id === "name" && "Name"}
+              {column.id === "email" && "Email"}
+              {column.id === "phone" && "Phone"}
+              {column.id === "mobile_phone" && "Mobile Phone"}
+              {column.id === "company" && "Company"}
+              {column.id === "job_title" && "Job Title"}
+              {column.id === "address" && "Address"}
+              {column.id === "city" && "City"}
+              {column.id === "state" && "State"}
+              {column.id === "lifecycle_stage" && "Lifecycle Stage"}
+              {column.id === "lead_score" && "Lead Score"}
+              {column.id === "engagement_score" && "Engagement Score"}
+              {column.id === "lead_source" && "Lead Source"}
+              {column.id === "last_activity_date" && "Last Activity"}
+              {column.id === "created_at" && "Created Date"}
+              {isRequired && <span className="ml-2 text-xs text-muted-foreground">(required)</span>}
+            </DropdownMenuCheckboxItem>
+          );
+        })}
         <DropdownMenuSeparator />
         <div className="px-2 py-1.5 text-xs text-muted-foreground">
-          {localColumns.length} columns visible
+          {visibleCount} columns visible
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
