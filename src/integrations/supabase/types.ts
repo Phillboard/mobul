@@ -1073,6 +1073,7 @@ export type Database = {
           audience_id: string | null
           base_lp_url: string | null
           client_id: string
+          contact_list_id: string | null
           created_at: string | null
           created_by_user_id: string | null
           id: string
@@ -1096,6 +1097,7 @@ export type Database = {
           audience_id?: string | null
           base_lp_url?: string | null
           client_id: string
+          contact_list_id?: string | null
           created_at?: string | null
           created_by_user_id?: string | null
           id?: string
@@ -1119,6 +1121,7 @@ export type Database = {
           audience_id?: string | null
           base_lp_url?: string | null
           client_id?: string
+          contact_list_id?: string | null
           created_at?: string | null
           created_by_user_id?: string | null
           id?: string
@@ -1151,6 +1154,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_contact_list_id_fkey"
+            columns: ["contact_list_id"]
+            isOneToOne: false
+            referencedRelation: "contact_lists"
             referencedColumns: ["id"]
           },
           {
