@@ -666,7 +666,7 @@ Deno.serve(async (req) => {
             postage: randomElement(['standard', 'first_class']),
             status: randomElement(statusWeights),
             mail_date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            lp_mode: 'purl',
+            lp_mode: randomElement(['bridge', 'redirect']),
             is_simulated: markAsSimulated,
             simulation_batch_id: batchId,
           }).select().single();
