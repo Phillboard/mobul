@@ -39,18 +39,8 @@ export default function MailDesigner() {
     mutationFn: async ({ html, css, json_layers }: { html: string; css: string; json_layers: any }) => {
       if (!editorRef.current) return;
 
-      const canvas = editorRef.current.Canvas.getElement();
-      const dataUrl = await new Promise<string>((resolve) => {
-        editorRef.current!.Canvas.getElement()?.toBlob((blob) => {
-          if (!blob) {
-            resolve("");
-            return;
-          }
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-      });
+      // Skip thumbnail generation for now
+      const dataUrl = "";
 
       if (id === "new" || !mailPiece) {
         const { data: newMail, error: insertError } = await supabase
@@ -126,7 +116,14 @@ export default function MailDesigner() {
     });
 
     if (mailPiece?.json_layers) {
-      editor.loadProjectData(mailPiece.json_layers);
+      try {
+        const projectData = typeof mailPiece.json_layers === 'string' 
+          ? JSON.parse(mailPiece.json_layers)
+          : mailPiece.json_layers;
+        editor.loadProjectData(projectData);
+      } catch (error) {
+        console.error("Failed to load project data:", error);
+      }
     }
 
     editorRef.current = editor;
