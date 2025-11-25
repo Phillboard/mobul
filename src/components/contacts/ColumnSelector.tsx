@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from "react";
 import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,6 +8,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+// Debounce utility
+function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return ((...args: any[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  }) as T;
+}
 
 export interface ColumnDefinition {
   id: string;
@@ -39,12 +49,30 @@ interface ColumnSelectorProps {
 }
 
 export function ColumnSelector({ visibleColumns, onColumnsChange }: ColumnSelectorProps) {
+  // Local state for immediate UI feedback
+  const [localColumns, setLocalColumns] = useState<string[]>(visibleColumns);
+
+  // Sync local state when prop changes
+  useEffect(() => {
+    setLocalColumns(visibleColumns);
+  }, [visibleColumns]);
+
+  // Debounced save to database
+  const debouncedSave = useMemo(
+    () => debounce((columns: string[]) => onColumnsChange(columns), 500),
+    [onColumnsChange]
+  );
+
   const handleToggle = (columnId: string, checked: boolean) => {
-    if (checked) {
-      onColumnsChange([...visibleColumns, columnId]);
-    } else {
-      onColumnsChange(visibleColumns.filter(id => id !== columnId));
-    }
+    const newColumns = checked
+      ? [...localColumns, columnId]
+      : localColumns.filter(id => id !== columnId);
+    
+    // Update local state immediately
+    setLocalColumns(newColumns);
+    
+    // Debounced save to database
+    debouncedSave(newColumns);
   };
 
   return (
@@ -59,8 +87,9 @@ export function ColumnSelector({ visibleColumns, onColumnsChange }: ColumnSelect
         {AVAILABLE_COLUMNS.map((column) => (
           <DropdownMenuCheckboxItem
             key={column.id}
-            checked={visibleColumns.includes(column.id)}
+            checked={localColumns.includes(column.id)}
             onCheckedChange={(checked) => handleToggle(column.id, checked)}
+            onSelect={(e) => e.preventDefault()}
             disabled={column.required}
           >
             {column.label}
@@ -69,7 +98,7 @@ export function ColumnSelector({ visibleColumns, onColumnsChange }: ColumnSelect
         ))}
         <DropdownMenuSeparator />
         <div className="px-2 py-1.5 text-xs text-muted-foreground">
-          {visibleColumns.length} columns visible
+          {localColumns.length} columns visible
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

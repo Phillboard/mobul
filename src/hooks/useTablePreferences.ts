@@ -113,7 +113,7 @@ export function useTablePreferences(tableName: string) {
         );
       }
     },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["table-preferences", user?.id, tableName] });
     },
   });
