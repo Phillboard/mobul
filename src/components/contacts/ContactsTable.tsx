@@ -15,7 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ContactBulkActions } from "./ContactBulkActions";
 import { ColumnSelector } from "./ColumnSelector";
-import { Mail, Phone, Eye, MapPin, Briefcase, Calendar } from "lucide-react";
+import { EngagementBadge } from "./EngagementBadge";
+import { LeadScoreBadge } from "./LeadScoreBadge";
+import { Mail, Phone, Eye, MapPin, Briefcase, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import type { ContactFilters } from "@/types/contacts";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Users } from "lucide-react";
@@ -23,9 +25,10 @@ import { format } from "date-fns";
 
 interface ContactsTableProps {
   filters?: ContactFilters;
+  onFiltersChange?: (filters: ContactFilters) => void;
 }
 
-export function ContactsTable({ filters }: ContactsTableProps) {
+export function ContactsTable({ filters, onFiltersChange }: ContactsTableProps) {
   const navigate = useNavigate();
   const { data: contacts = [], isLoading } = useContacts(filters);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -36,6 +39,41 @@ export function ContactsTable({ filters }: ContactsTableProps) {
   const handleColumnsChange = (columns: string[]) => {
     updatePreferences({ visible_columns: columns, column_order: columns });
   };
+
+  const handleSort = (columnId: string) => {
+    if (!onFiltersChange) return;
+    
+    const currentSort = filters?.sortBy;
+    const currentOrder = filters?.sortOrder || "desc";
+    
+    if (currentSort === columnId) {
+      // Toggle order
+      onFiltersChange({
+        ...filters,
+        sortOrder: currentOrder === "asc" ? "desc" : "asc",
+      });
+    } else {
+      // New column
+      onFiltersChange({
+        ...filters,
+        sortBy: columnId,
+        sortOrder: "desc",
+      });
+    }
+  };
+
+  const getSortIcon = (columnId: string) => {
+    if (filters?.sortBy !== columnId) {
+      return <ArrowUpDown className="h-3 w-3 ml-2 text-muted-foreground" />;
+    }
+    return filters?.sortOrder === "asc" ? (
+      <ArrowUp className="h-3 w-3 ml-2" />
+    ) : (
+      <ArrowDown className="h-3 w-3 ml-2" />
+    );
+  };
+
+  const sortableColumns = ["name", "lead_score", "engagement_score", "lifecycle_stage", "last_activity_date", "created_at", "company"];
 
   const renderCell = (contact: any, columnId: string) => {
     const fullName = [contact.first_name, contact.last_name].filter(Boolean).join(" ") || "Unnamed";
@@ -101,7 +139,11 @@ export function ContactsTable({ filters }: ContactsTableProps) {
         return <Badge variant="outline">{contact.lifecycle_stage}</Badge>;
       case "lead_score":
         return contact.lead_score !== null ? (
-          <span className="font-medium">{contact.lead_score}</span>
+          <LeadScoreBadge score={contact.lead_score} />
+        ) : null;
+      case "engagement_score":
+        return contact.engagement_score !== null ? (
+          <EngagementBadge score={contact.engagement_score} />
         ) : null;
       case "lead_source":
         return contact.lead_source || null;
@@ -138,6 +180,7 @@ export function ContactsTable({ filters }: ContactsTableProps) {
       state: "State",
       lifecycle_stage: "Stage",
       lead_score: "Score",
+      engagement_score: "Engagement",
       lead_source: "Source",
       last_activity_date: "Last Activity",
       created_at: "Created",
@@ -201,8 +244,15 @@ export function ContactsTable({ filters }: ContactsTableProps) {
                 />
               </TableHead>
               {visibleColumns.map((columnId) => (
-                <TableHead key={columnId}>
-                  {getColumnLabel(columnId)}
+                <TableHead 
+                  key={columnId}
+                  className={sortableColumns.includes(columnId) ? "cursor-pointer hover:bg-muted/50" : ""}
+                  onClick={() => sortableColumns.includes(columnId) && handleSort(columnId)}
+                >
+                  <div className="flex items-center">
+                    {getColumnLabel(columnId)}
+                    {sortableColumns.includes(columnId) && getSortIcon(columnId)}
+                  </div>
                 </TableHead>
               ))}
               <TableHead className="w-12"></TableHead>

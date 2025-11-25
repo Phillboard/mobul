@@ -27,6 +27,7 @@ const AVAILABLE_COLUMNS: ColumnDefinition[] = [
   { id: "state", label: "State" },
   { id: "lifecycle_stage", label: "Lifecycle Stage" },
   { id: "lead_score", label: "Lead Score" },
+  { id: "engagement_score", label: "Engagement Score" },
   { id: "lead_source", label: "Lead Source" },
   { id: "last_activity_date", label: "Last Activity" },
   { id: "created_at", label: "Created Date" },

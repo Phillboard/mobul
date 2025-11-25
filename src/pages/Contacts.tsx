@@ -98,7 +98,7 @@ export default function Contacts() {
         </Card>
 
         {/* Contacts Table */}
-        <ContactsTable filters={appliedFilters} />
+        <ContactsTable filters={appliedFilters} onFiltersChange={setFilters} />
 
         {/* Create Dialog */}
         <ContactQuickCreate
