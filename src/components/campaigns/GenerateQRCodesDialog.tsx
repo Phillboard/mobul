@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -37,6 +37,40 @@ export function GenerateQRCodesDialog({
   const [sampleQRs, setSampleQRs] = useState<SampleQR[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [successCount, setSuccessCount] = useState(0);
+  const [audienceId, setAudienceId] = useState<string | null>(null);
+
+  // Fetch campaign audience
+  useEffect(() => {
+    if (open && campaignId) {
+      supabase
+        .from('campaigns')
+        .select('audience_id')
+        .eq('id', campaignId)
+        .single()
+        .then(({ data }) => {
+          if (data?.audience_id) {
+            setAudienceId(data.audience_id);
+          }
+        });
+    }
+  }, [open, campaignId]);
+
+  // Pre-check recipient count
+  const { data: recipientCheck } = useQuery({
+    queryKey: ['recipient-count', audienceId],
+    queryFn: async () => {
+      if (!audienceId) return null;
+      
+      const { count, error } = await supabase
+        .from('recipients')
+        .select('*', { count: 'exact', head: true })
+        .eq('audience_id', audienceId);
+      
+      if (error) throw error;
+      return count;
+    },
+    enabled: open && !!audienceId,
+  });
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -89,15 +123,27 @@ export function GenerateQRCodesDialog({
 
         <div className="space-y-4">
           {!generateMutation.isPending && !generateMutation.isSuccess && (
-            <Card>
+            <Card className={recipientCheck === 0 ? "border-destructive" : ""}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <QrCode className="h-8 w-8 text-primary" />
+                  <QrCode className={`h-8 w-8 ${recipientCheck === 0 ? 'text-destructive' : 'text-primary'}`} />
                   <div className="flex-1">
-                    <p className="text-sm font-medium">Ready to Generate</p>
-                    <p className="text-xs text-muted-foreground">
-                      Each recipient will receive a unique PURL and QR code for tracking
-                    </p>
+                    {recipientCheck === 0 ? (
+                      <>
+                        <p className="text-sm font-medium text-destructive">No Recipients Found</p>
+                        <p className="text-xs text-muted-foreground">
+                          This campaign's audience has no recipient records. Please upload recipients before generating QR codes.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium">Ready to Generate</p>
+                        <p className="text-xs text-muted-foreground">
+                          {recipientCheck !== null && `${recipientCheck} recipients ready. `}
+                          Each will receive a unique PURL and QR code for tracking.
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -178,7 +224,7 @@ export function GenerateQRCodesDialog({
             {!generateMutation.isSuccess && (
               <Button
                 onClick={handleGenerate}
-                disabled={generateMutation.isPending}
+                disabled={generateMutation.isPending || recipientCheck === 0}
               >
                 {generateMutation.isPending ? "Generating..." : "Generate QR Codes"}
               </Button>
