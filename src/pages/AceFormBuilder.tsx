@@ -114,7 +114,7 @@ export default function AceFormBuilder() {
       return formId;
     } else {
       const newForm = await createForm.mutateAsync(formData);
-      navigate(`/ace-forms/${newForm.id}/edit`);
+      navigate(`/ace-forms/${newForm.id}/builder`);
       toast({
         title: "Form Created",
         description: "Your form has been created successfully.",
