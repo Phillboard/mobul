@@ -16,7 +16,7 @@ const primaryNavItems = [
   { icon: Home, label: "Dashboard", path: "/" },
   { icon: Mail, label: "Campaigns", path: "/campaigns" },
   { icon: Users, label: "Contacts", path: "/contacts" },
-  { icon: FileText, label: "Templates", path: "/templates" },
+  { icon: FileText, label: "Mail", path: "/mail" },
 ];
 
 const secondaryNavItems = [
