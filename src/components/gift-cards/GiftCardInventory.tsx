@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import {
+  useReactTable,
+  SortingState,
+} from "@tanstack/react-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, EyeOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useGiftCards } from "@/hooks/useGiftCards";
 import { useGiftCardPools } from "@/hooks/useGiftCardPools";
-import { format } from "date-fns";
+import { createGiftCardInventoryColumns } from "./giftCardInventoryColumns";
+import { basicTableModels } from "@/lib/tableHelpers";
 
 interface GiftCardInventoryProps {
   clientId: string;
@@ -17,6 +19,7 @@ export function GiftCardInventory({ clientId }: GiftCardInventoryProps) {
   const [selectedPoolId, setSelectedPoolId] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [revealedCodes, setRevealedCodes] = useState<Set<string>>(new Set());
+  const [sorting, setSorting] = useState<SortingState>([]);
   
   const { pools } = useGiftCardPools(clientId);
   const { cards, isLoading } = useGiftCards(selectedPoolId || undefined);
@@ -24,11 +27,6 @@ export function GiftCardInventory({ clientId }: GiftCardInventoryProps) {
   const filteredCards = cards?.filter(card => 
     statusFilter === "all" || card.status === statusFilter
   );
-
-  const maskCode = (code: string) => {
-    if (code.length <= 4) return code;
-    return "•".repeat(code.length - 4) + code.slice(-4);
-  };
 
   const toggleReveal = (cardId: string) => {
     const newRevealed = new Set(revealedCodes);
@@ -40,21 +38,20 @@ export function GiftCardInventory({ clientId }: GiftCardInventoryProps) {
     setRevealedCodes(newRevealed);
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      available: "default",
-      claimed: "secondary",
-      delivered: "outline",
-      failed: "destructive",
-      expired: "destructive",
-    };
+  const columns = useMemo(
+    () => createGiftCardInventoryColumns(revealedCodes, toggleReveal),
+    [revealedCodes]
+  );
 
-    return (
-      <Badge variant={variants[status] || "default"}>
-        {status}
-      </Badge>
-    );
-  };
+  const table = useReactTable({
+    data: filteredCards || [],
+    columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    ...basicTableModels,
+  });
 
   return (
     <div className="space-y-4">
@@ -105,68 +102,58 @@ export function GiftCardInventory({ clientId }: GiftCardInventoryProps) {
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Card Code</TableHead>
-                  <TableHead>Card Number</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Claimed Date</TableHead>
-                  <TableHead>Delivered Date</TableHead>
-                  <TableHead>Expiration</TableHead>
-                </TableRow>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id} className="bg-muted/30 hover:bg-muted/30">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <div
+                            className={
+                              header.column.getCanSort()
+                                ? "cursor-pointer select-none flex items-center gap-2"
+                                : ""
+                            }
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            {typeof header.column.columnDef.header === "function"
+                              ? header.column.columnDef.header(header.getContext())
+                              : header.column.columnDef.header}
+                            {{
+                              asc: " 🔼",
+                              desc: " 🔽",
+                            }[header.column.getIsSorted() as string] ?? null}
+                          </div>
+                        )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
                       Loading cards...
                     </TableCell>
                   </TableRow>
-                ) : filteredCards?.length === 0 ? (
+                ) : table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} className="hover:bg-muted/50">
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {typeof cell.column.columnDef.cell === "function"
+                            ? cell.column.columnDef.cell(cell.getContext())
+                            : cell.renderValue()}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
                       No cards found
                     </TableCell>
                   </TableRow>
-                ) : (
-                  filteredCards?.map((card) => (
-                    <TableRow key={card.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <code className="text-sm">
-                            {revealedCodes.has(card.id) ? card.card_code : maskCode(card.card_code)}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleReveal(card.id)}
-                          >
-                            {revealedCodes.has(card.id) ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {card.card_number ? (
-                          <code className="text-sm">{maskCode(card.card_number)}</code>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(card.status)}</TableCell>
-                      <TableCell>
-                        {card.claimed_at ? format(new Date(card.claimed_at), "PPp") : "—"}
-                      </TableCell>
-                      <TableCell>
-                        {card.delivered_at ? format(new Date(card.delivered_at), "PPp") : "—"}
-                      </TableCell>
-                      <TableCell>
-                        {card.expiration_date ? format(new Date(card.expiration_date), "PP") : "—"}
-                      </TableCell>
-                    </TableRow>
-                  ))
                 )}
               </TableBody>
             </Table>
