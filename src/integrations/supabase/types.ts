@@ -1285,6 +1285,65 @@ export type Database = {
           },
         ]
       }
+      contact_custom_field_definitions: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          default_value: string | null
+          display_order: number | null
+          field_group: string | null
+          field_label: string
+          field_name: string
+          field_type: string
+          id: string
+          is_active: boolean | null
+          is_required: boolean | null
+          options: Json | null
+          updated_at: string | null
+          validation_rules: Json | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          default_value?: string | null
+          display_order?: number | null
+          field_group?: string | null
+          field_label: string
+          field_name: string
+          field_type: string
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          options?: Json | null
+          updated_at?: string | null
+          validation_rules?: Json | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          default_value?: string | null
+          display_order?: number | null
+          field_group?: string | null
+          field_label?: string
+          field_name?: string
+          field_type?: string
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          options?: Json | null
+          updated_at?: string | null
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_custom_field_definitions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_list_members: {
         Row: {
           added_at: string | null
@@ -1423,7 +1482,9 @@ export type Database = {
           customer_code: string | null
           do_not_contact: boolean | null
           email: string | null
+          email_opens_count: number | null
           email_opt_out: boolean | null
+          engagement_score: number | null
           first_name: string | null
           id: string
           job_title: string | null
@@ -1435,8 +1496,10 @@ export type Database = {
           mobile_phone: string | null
           notes: string | null
           phone: string | null
+          redemptions_count: number | null
           sms_opt_out: boolean | null
           state: string | null
+          total_interactions: number | null
           updated_at: string | null
           zip: string | null
         }
@@ -1453,7 +1516,9 @@ export type Database = {
           customer_code?: string | null
           do_not_contact?: boolean | null
           email?: string | null
+          email_opens_count?: number | null
           email_opt_out?: boolean | null
+          engagement_score?: number | null
           first_name?: string | null
           id?: string
           job_title?: string | null
@@ -1465,8 +1530,10 @@ export type Database = {
           mobile_phone?: string | null
           notes?: string | null
           phone?: string | null
+          redemptions_count?: number | null
           sms_opt_out?: boolean | null
           state?: string | null
+          total_interactions?: number | null
           updated_at?: string | null
           zip?: string | null
         }
@@ -1483,7 +1550,9 @@ export type Database = {
           customer_code?: string | null
           do_not_contact?: boolean | null
           email?: string | null
+          email_opens_count?: number | null
           email_opt_out?: boolean | null
+          engagement_score?: number | null
           first_name?: string | null
           id?: string
           job_title?: string | null
@@ -1495,8 +1564,10 @@ export type Database = {
           mobile_phone?: string | null
           notes?: string | null
           phone?: string | null
+          redemptions_count?: number | null
           sms_opt_out?: boolean | null
           state?: string | null
+          total_interactions?: number | null
           updated_at?: string | null
           zip?: string | null
         }
@@ -4342,6 +4413,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_engagement_score: {
+        Args: {
+          p_email_opens_count: number
+          p_last_activity_date: string
+          p_redemptions_count: number
+          p_total_interactions: number
+        }
+        Returns: number
+      }
       claim_available_card: {
         Args: {
           p_call_session_id?: string
