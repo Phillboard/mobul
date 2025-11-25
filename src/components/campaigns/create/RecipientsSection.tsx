@@ -5,6 +5,7 @@ import { UseFormReturn } from "react-hook-form";
 import type { CampaignFormData } from "@/types/campaigns";
 import { useContactLists } from "@/hooks/useContactLists";
 import { useListPreview } from "@/hooks/useListPreview";
+import { useContactTags } from "@/hooks/useContactTags";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TagSelector } from "../wizard/TagSelector";
 import { Users, Filter } from "lucide-react";
@@ -21,6 +22,7 @@ export function RecipientsSection({ form, clientId }: RecipientsSectionProps) {
 
   const { data: staticLists } = useContactLists("static");
   const { data: segments } = useContactLists("dynamic");
+  const { data: availableTags } = useContactTags(clientId);
 
   const { data: preview } = useListPreview(contactListId, tagFilters || []);
 
@@ -109,6 +111,7 @@ export function RecipientsSection({ form, clientId }: RecipientsSectionProps) {
             <TagSelector
               selectedTags={tagFilters}
               onTagsChange={handleTagsChange}
+              availableTags={availableTags?.map(t => ({ tag: t.tag, count: t.count })) || []}
             />
           </div>
         )}
