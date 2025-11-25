@@ -9,11 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Star, Edit, Copy, Trash2, Palette, Check, Sparkles } from "lucide-react";
+import { MoreVertical, Star, Edit, Copy, Trash2, Palette, Check } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { EditTemplateDialog } from "./EditTemplateDialog";
+import { EditMailDialog } from "./EditMailDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,8 +32,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
-interface TemplateCardProps {
-  template: any;
+interface MailCardProps {
+  mailPiece: any;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
 }
@@ -54,7 +54,7 @@ const industryLabels: Record<string, string> = {
   auto_buyback: "Auto Buyback",
 };
 
-export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateCardProps) {
+export function MailCard({ mailPiece, isSelected, onToggleSelect }: MailCardProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -65,15 +65,15 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
     mutationFn: async () => {
       const { error } = await supabase
         .from("templates")
-        .update({ is_favorite: !template.is_favorite })
-        .eq("id", template.id);
+        .update({ is_favorite: !mailPiece.is_favorite })
+        .eq("id", mailPiece.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["mail"] });
       toast.success(
-        template.is_favorite ? "Removed from favorites" : "Added to favorites"
+        mailPiece.is_favorite ? "Removed from favorites" : "Added to favorites"
       );
     },
     onError: (error) => {
@@ -85,23 +85,23 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
   const duplicateMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("templates").insert({
-        name: `${template.name} (Copy)`,
-        client_id: template.client_id,
-        size: template.size,
-        industry_vertical: template.industry_vertical,
-        thumbnail_url: template.thumbnail_url,
-        json_layers: template.json_layers,
+        name: `${mailPiece.name} (Copy)`,
+        client_id: mailPiece.client_id,
+        size: mailPiece.size,
+        industry_vertical: mailPiece.industry_vertical,
+        thumbnail_url: mailPiece.thumbnail_url,
+        json_layers: mailPiece.json_layers,
         is_favorite: false,
       });
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template duplicated successfully");
+      queryClient.invalidateQueries({ queryKey: ["mail"] });
+      toast.success("Mail piece duplicated successfully");
     },
     onError: (error) => {
-      toast.error("Failed to duplicate template");
+      toast.error("Failed to duplicate mail piece");
       console.error(error);
     },
   });
@@ -109,8 +109,8 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
   const deleteMutation = useMutation({
     mutationFn: async () => {
       // Delete thumbnail from storage if exists
-      if (template.thumbnail_url) {
-        const path = template.thumbnail_url.split("/").pop();
+      if (mailPiece.thumbnail_url) {
+        const path = mailPiece.thumbnail_url.split("/").pop();
         if (path) {
           await supabase.storage.from("template-thumbnails").remove([path]);
         }
@@ -119,17 +119,17 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
       const { error } = await supabase
         .from("templates")
         .delete()
-        .eq("id", template.id);
+        .eq("id", mailPiece.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["mail"] });
+      toast.success("Mail piece deleted successfully");
       setDeleteDialogOpen(false);
     },
     onError: (error) => {
-      toast.error("Failed to delete template");
+      toast.error("Failed to delete mail piece");
       console.error(error);
     },
   });
@@ -143,8 +143,8 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
           className="relative aspect-[3/4] bg-muted overflow-hidden cursor-pointer"
           onClick={(e) => {
             if (e.shiftKey || e.ctrlKey || e.metaKey) {
-              onToggleSelect(template.id);
-            } else if (template.thumbnail_url) {
+              onToggleSelect(mailPiece.id);
+            } else if (mailPiece.thumbnail_url) {
               setPreviewOpen(true);
             }
           }}
@@ -158,16 +158,16 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
             }`}
             onClick={(e) => {
               e.stopPropagation();
-              onToggleSelect(template.id);
+              onToggleSelect(mailPiece.id);
             }}
           >
             {isSelected && <Check className="h-4 w-4 text-primary-foreground" />}
           </div>
-          {template.thumbnail_url ? (
+          {mailPiece.thumbnail_url ? (
             <>
               <img
-                src={template.thumbnail_url}
-                alt={template.name}
+                src={mailPiece.thumbnail_url}
+                alt={mailPiece.name}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -187,9 +187,9 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
           <div className="absolute top-3 right-3 flex gap-2">
             <Button
               size="icon"
-              variant={template.is_favorite ? "default" : "secondary"}
+              variant={mailPiece.is_favorite ? "default" : "secondary"}
               className={`transition-all duration-300 ${
-                template.is_favorite 
+                mailPiece.is_favorite 
                   ? "opacity-100 scale-100" 
                   : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
               } shadow-lg hover:scale-110`}
@@ -197,7 +197,7 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
             >
               <Star
                 className={`h-4 w-4 transition-all ${
-                  template.is_favorite ? "fill-current animate-pulse" : ""
+                  mailPiece.is_favorite ? "fill-current animate-pulse" : ""
                 }`}
               />
             </Button>
@@ -207,15 +207,15 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-base line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-                {template.name}
+                {mailPiece.name}
               </h3>
               <div className="flex gap-2 flex-wrap">
                 <Badge variant="secondary" className="text-xs">
-                  {sizeLabels[template.size]}
+                  {sizeLabels[mailPiece.size]}
                 </Badge>
-                {template.industry_vertical && (
+                {mailPiece.industry_vertical && (
                   <Badge variant="outline" className="text-xs">
-                    {industryLabels[template.industry_vertical]}
+                    {industryLabels[mailPiece.industry_vertical]}
                   </Badge>
                 )}
               </div>
@@ -231,10 +231,6 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-background z-50">
-                <DropdownMenuItem onClick={() => navigate(`/templates/${template.id}/ai-editor`)}>
-                  <Sparkles className="mr-2 h-4 w-4 text-purple-500" />
-                  Edit with AI Chat
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setEditDialogOpen(true)}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Details
@@ -257,10 +253,10 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
           <Button 
             className="w-full transition-all duration-300 group-hover:shadow-lg group-hover:shadow-primary/20" 
             size="sm"
-            onClick={() => navigate(`/template-builder/${template.id}`)}
+            onClick={() => navigate(`/mail-designer/${mailPiece.id}`)}
           >
             <Palette className="mr-2 h-4 w-4" />
-            Design Template
+            Design Mail Piece
           </Button>
         </CardContent>
       </Card>
@@ -268,14 +264,14 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-4">
-            <DialogTitle className="text-xl">{template.name}</DialogTitle>
+            <DialogTitle className="text-xl">{mailPiece.name}</DialogTitle>
           </DialogHeader>
           <div className="px-6 pb-6">
-            {template.thumbnail_url ? (
+            {mailPiece.thumbnail_url ? (
               <div className="relative bg-muted rounded-lg overflow-hidden">
                 <img
-                  src={template.thumbnail_url}
-                  alt={template.name}
+                  src={mailPiece.thumbnail_url}
+                  alt={mailPiece.name}
                   className="w-full h-auto max-h-[70vh] object-contain animate-scale-in"
                 />
               </div>
@@ -285,10 +281,10 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
               </div>
             )}
             <div className="flex gap-2 mt-4 flex-wrap">
-              <Badge variant="secondary">{sizeLabels[template.size]}</Badge>
-              {template.industry_vertical && (
+              <Badge variant="secondary">{sizeLabels[mailPiece.size]}</Badge>
+              {mailPiece.industry_vertical && (
                 <Badge variant="outline">
-                  {industryLabels[template.industry_vertical]}
+                  {industryLabels[mailPiece.industry_vertical]}
                 </Badge>
               )}
             </div>
@@ -296,8 +292,8 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
         </DialogContent>
       </Dialog>
 
-      <EditTemplateDialog
-        template={template}
+      <EditMailDialog
+        mailPiece={mailPiece}
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
       />
@@ -305,9 +301,9 @@ export function TemplateCard({ template, isSelected, onToggleSelect }: TemplateC
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogTitle>Delete Mail Piece</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{template.name}"? This action cannot be
+              Are you sure you want to delete "{mailPiece.name}"? This action cannot be
               undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

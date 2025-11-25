@@ -30,15 +30,13 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { starterTemplates, type StarterTemplate } from "@/lib/starterTemplates";
+import { starterMailPieces, type StarterMailPiece } from "@/lib/starterMailPieces";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TemplatePreviewRenderer } from "./TemplatePreviewRenderer";
-import { AITemplateDialog } from "./AITemplateDialog";
+import { MailPreviewRenderer } from "./MailPreviewRenderer";
 
-const templateSchema = z.object({
+const mailPieceSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
   size: z.enum(["4x6", "6x9", "6x11", "letter", "trifold"], {
     required_error: "Size is required",
@@ -51,37 +49,36 @@ const templateSchema = z.object({
   ),
 });
 
-type TemplateFormData = z.infer<typeof templateSchema>;
+type MailPieceFormData = z.infer<typeof mailPieceSchema>;
 
-interface CreateTemplateDialogProps {
+interface CreateMailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
 }
 
-export function CreateTemplateDialog({
+export function CreateMailDialog({
   open,
   onOpenChange,
   clientId,
-}: CreateTemplateDialogProps) {
+}: CreateMailDialogProps) {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectedStarter, setSelectedStarter] = useState<StarterTemplate | null>(null);
-  const [showAIDialog, setShowAIDialog] = useState(false);
+  const [selectedStarter, setSelectedStarter] = useState<StarterMailPiece | null>(null);
   const queryClient = useQueryClient();
 
-  const form = useForm<TemplateFormData>({
-    resolver: zodResolver(templateSchema),
+  const form = useForm<MailPieceFormData>({
+    resolver: zodResolver(mailPieceSchema),
     defaultValues: {
       name: "",
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: TemplateFormData) => {
+    mutationFn: async (data: MailPieceFormData) => {
       let thumbnailUrl = selectedStarter?.thumbnailUrl || null;
 
-      // Upload thumbnail if provided (for blank templates)
+      // Upload thumbnail if provided (for blank mail pieces)
       if (thumbnailFile) {
         const fileExt = thumbnailFile.name.split(".").pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
@@ -98,10 +95,10 @@ export function CreateTemplateDialog({
         thumbnailUrl = urlData.publicUrl;
       }
 
-      // Use starter template layers if selected, otherwise empty
+      // Use starter mail piece layers if selected, otherwise empty
       const jsonLayers = selectedStarter?.layers || { version: 1, layers: [] };
 
-      // Create template record
+      // Create mail piece record
       const { error } = await supabase.from("templates").insert({
         name: data.name,
         client_id: clientId,
@@ -115,8 +112,8 @@ export function CreateTemplateDialog({
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template created successfully");
+      queryClient.invalidateQueries({ queryKey: ["mail"] });
+      toast.success("Mail piece created successfully");
       form.reset();
       setThumbnailFile(null);
       setPreviewUrl(null);
@@ -124,7 +121,7 @@ export function CreateTemplateDialog({
       onOpenChange(false);
     },
     onError: (error) => {
-      toast.error("Failed to create template");
+      toast.error("Failed to create mail piece");
       console.error(error);
     },
   });
@@ -141,7 +138,7 @@ export function CreateTemplateDialog({
     }
   };
 
-  const onSubmit = (data: TemplateFormData) => {
+  const onSubmit = (data: MailPieceFormData) => {
     createMutation.mutate(data);
   };
 
@@ -149,80 +146,62 @@ export function CreateTemplateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Template</DialogTitle>
+          <DialogTitle>Create Mail Piece</DialogTitle>
           <DialogDescription>
-            Start with a pre-designed template or create your own from scratch
+            Start with a pre-designed mail piece or create your own from scratch
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="starter" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="ai">
-              <Sparkles className="mr-2 h-4 w-4" />
-              AI Designer
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="starter">
-              Starter Templates
+              Starter Mail Pieces
             </TabsTrigger>
-            <TabsTrigger value="blank">Blank Template</TabsTrigger>
+            <TabsTrigger value="blank">Blank Mail Piece</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="ai" className="space-y-4">
-            <div className="text-center py-8">
-              <Sparkles className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">AI-Powered Template Design</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                Describe your perfect postcard and let AI create a professional design for you in seconds.
-              </p>
-              <Button onClick={() => setShowAIDialog(true)}>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Start AI Design
-              </Button>
-            </div>
-          </TabsContent>
 
           <TabsContent value="starter" className="space-y-4">
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium mb-3">Choose a starter template</h3>
+                <h3 className="text-sm font-medium mb-3">Choose a starter mail piece</h3>
                 <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2">
-                  {starterTemplates.map((template) => (
+                  {starterMailPieces.map((mailPiece) => (
                     <Card
-                      key={template.id}
+                      key={mailPiece.id}
                       className={`cursor-pointer transition-all hover:shadow-md ${
-                        selectedStarter?.id === template.id
+                        selectedStarter?.id === mailPiece.id
                           ? "ring-2 ring-primary"
                           : ""
                       }`}
                       onClick={() => {
-                        setSelectedStarter(template);
-                        form.setValue("size", template.size);
-                        form.setValue("industry_vertical", template.industryVertical);
+                        setSelectedStarter(mailPiece);
+                        form.setValue("size", mailPiece.size);
+                        form.setValue("industry_vertical", mailPiece.industryVertical);
                         if (!form.getValues("name")) {
-                          form.setValue("name", template.name);
+                          form.setValue("name", mailPiece.name);
                         }
                       }}
                     >
                       <CardContent className="p-4">
                         <div className="aspect-[3/2] mb-3 overflow-hidden rounded border bg-muted">
                           <img
-                            src={template.thumbnailUrl}
-                            alt={template.name}
+                            src={mailPiece.thumbnailUrl}
+                            alt={mailPiece.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <h4 className="font-semibold text-sm mb-1">
-                          {template.name}
+                          {mailPiece.name}
                         </h4>
                         <p className="text-xs text-muted-foreground mb-2">
-                          {template.description}
+                          {mailPiece.description}
                         </p>
                         <div className="flex gap-1 flex-wrap">
                           <Badge variant="secondary" className="text-xs">
-                            {template.size}
+                            {mailPiece.size}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
-                            {template.industryVertical}
+                            {mailPiece.industryVertical}
                           </Badge>
                         </div>
                       </CardContent>
@@ -234,7 +213,7 @@ export function CreateTemplateDialog({
               {selectedStarter && (
                 <div className="space-y-4">
                   {selectedStarter.layers?.layers && (
-                    <TemplatePreviewRenderer
+                    <MailPreviewRenderer
                       layers={selectedStarter.layers.layers}
                       canvasSize={
                         selectedStarter.layers.canvasSize || { width: 600, height: 400 }
@@ -249,7 +228,7 @@ export function CreateTemplateDialog({
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Template Name</FormLabel>
+                            <FormLabel>Mail Piece Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Spring Roofing Campaign" {...field} />
                             </FormControl>
@@ -319,7 +298,7 @@ export function CreateTemplateDialog({
                           Cancel
                         </Button>
                         <Button type="submit" disabled={createMutation.isPending}>
-                          {createMutation.isPending ? "Creating..." : "Create Template"}
+                          {createMutation.isPending ? "Creating..." : "Create Mail Piece"}
                         </Button>
                       </DialogFooter>
                     </form>
@@ -337,7 +316,7 @@ export function CreateTemplateDialog({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Template Name</FormLabel>
+                  <FormLabel>Mail Piece Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Spring Roofing Campaign" {...field} />
                   </FormControl>
@@ -418,7 +397,7 @@ export function CreateTemplateDialog({
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Upload a thumbnail image to help identify this template
+                Upload a thumbnail image to help identify this mail piece
               </p>
             </div>
 
@@ -431,7 +410,7 @@ export function CreateTemplateDialog({
                     Cancel
                   </Button>
                   <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Creating..." : "Create Template"}
+                    {createMutation.isPending ? "Creating..." : "Create Mail Piece"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -439,12 +418,6 @@ export function CreateTemplateDialog({
           </TabsContent>
         </Tabs>
       </DialogContent>
-      
-      <AITemplateDialog
-        open={showAIDialog}
-        onOpenChange={setShowAIDialog}
-        clientId={clientId}
-      />
     </Dialog>
   );
 }

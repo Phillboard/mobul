@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Mail, Smartphone, ExternalLink } from "lucide-react";
-import { TemplatePreviewRenderer } from "@/components/templates/TemplatePreviewRenderer";
+import { MailPreviewRenderer } from "@/components/mail/MailPreviewRenderer";
 import { useState, useEffect } from "react";
 
 export default function CampaignPrototype() {
@@ -144,7 +144,7 @@ export default function CampaignPrototype() {
               {/* Template Preview */}
               <div className="bg-white rounded-lg shadow-lg p-4 md:p-8 mx-auto max-w-2xl">
                 {layers.length > 0 ? (
-                  <TemplatePreviewRenderer
+                  <MailPreviewRenderer
                     layers={layers}
                     canvasSize={{ width: 800, height: 1200 }}
                   />
