@@ -102,9 +102,10 @@ serve(async (req) => {
       );
     }
 
-    // TEST CODE: Always allow 1234-5678-abcd for testing
-    if (giftCardCode.toUpperCase() === '1234-5678-ABCD') {
-      console.log('Test code used - returning mock gift card');
+    // TEST CODE: Always allow 1234-5678-abcd for testing (normalize by removing dashes/spaces)
+    const normalizedCode = giftCardCode.replace(/[\s-]/g, '').toUpperCase();
+    if (normalizedCode === '12345678ABCD') {
+      console.log('Test code used - returning mock Jimmy Johns gift card');
       
       // Create mock submission record
       await supabase
@@ -128,16 +129,16 @@ serve(async (req) => {
           success: true,
           giftCard: {
             card_code: '1234-5678-ABCD',
-            card_number: 'TEST-1234-5678-9012',
+            card_number: 'JJ-TEST-9876-5432',
             card_value: 25.00,
             provider: 'Test Provider',
-            brand_name: 'Amazon',
+            brand_name: "Jimmy John's",
             brand_logo: null,
-            brand_color: '#FF9900',
-            store_url: 'https://www.amazon.com',
+            brand_color: '#DA291C',
+            store_url: 'https://www.jimmyjohns.com',
             expiration_date: null,
-            usage_restrictions: ['Valid for testing only'],
-            redemption_instructions: 'This is a test gift card. Use code TEST-1234-5678-9012 to redeem.',
+            usage_restrictions: ['Valid for testing only', 'Use at any Jimmy John\'s location'],
+            redemption_instructions: 'Present this card at any Jimmy John\'s location or use card number JJ-TEST-9876-5432 for online orders.',
           }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
