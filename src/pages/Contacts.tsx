@@ -10,14 +10,14 @@ import { ContactFilters } from "@/components/contacts/ContactFilters";
 import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useHasAnyRole } from "@/hooks/useUserRole";
 import { seedContactsData } from "@/lib/seed-contacts-data";
 import { toast } from "sonner";
 import type { ContactFilters as ContactFiltersType } from "@/types/contacts";
 
 export default function Contacts() {
   const { currentClient } = useTenant();
-  const { data: userRole } = useUserRole();
+  const { hasAnyRole: canSeedData } = useHasAnyRole(['admin', 'agency_owner', 'company_owner']);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<ContactFiltersType>({});
@@ -70,7 +70,7 @@ export default function Contacts() {
             </p>
           </div>
           <div className="flex gap-2">
-            {userRole === 'admin' && (
+            {canSeedData && (
               <Button 
                 variant="outline" 
                 onClick={handleSeedData}
