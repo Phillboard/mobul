@@ -206,7 +206,7 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
                 <div className="font-medium">{campaign.name}</div>
                 {campaign.templates && (
                   <div className="text-xs text-muted-foreground">
-                    Template: {campaign.templates.name}
+                    Mail Piece: {campaign.templates.name}
                   </div>
                 )}
               </div>

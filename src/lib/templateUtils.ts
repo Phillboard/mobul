@@ -4,7 +4,11 @@
  * Helper functions for template building, canvas operations, and design validation.
  */
 
-import { TemplateSize, CanvasData, CanvasLayer, TEMPLATE_DIMENSIONS } from "@/types/templates";
+import { MailSize, CanvasData, CanvasLayer, MAIL_DIMENSIONS } from "@/types/mail";
+
+// Type alias for backward compatibility
+export type TemplateSize = MailSize;
+export const TEMPLATE_DIMENSIONS = MAIL_DIMENSIONS;
 
 /**
  * Get template dimensions in pixels

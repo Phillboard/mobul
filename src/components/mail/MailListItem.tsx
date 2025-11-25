@@ -14,21 +14,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-interface TemplateListItemProps {
-  template: any;
+interface MailListItemProps {
+  mailPiece: any;
   isSelected: boolean;
   onToggleSelect: (id: string) => void;
   sizeLabels: Record<string, string>;
   industryLabels: Record<string, string>;
 }
 
-export function TemplateListItem({
-  template,
+export function MailListItem({
+  mailPiece,
   isSelected,
   onToggleSelect,
   sizeLabels,
   industryLabels,
-}: TemplateListItemProps) {
+}: MailListItemProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -37,15 +37,15 @@ export function TemplateListItem({
     mutationFn: async () => {
       const { error } = await supabase
         .from("templates")
-        .update({ is_favorite: !template.is_favorite })
-        .eq("id", template.id);
+        .update({ is_favorite: !mailPiece.is_favorite })
+        .eq("id", mailPiece.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
+      queryClient.invalidateQueries({ queryKey: ["mail"] });
       toast.success(
-        template.is_favorite ? "Removed from favorites" : "Added to favorites"
+        mailPiece.is_favorite ? "Removed from favorites" : "Added to favorites"
       );
     },
   });
@@ -53,27 +53,27 @@ export function TemplateListItem({
   const duplicateMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("templates").insert({
-        name: `${template.name} (Copy)`,
-        client_id: template.client_id,
-        size: template.size,
-        industry_vertical: template.industry_vertical,
-        thumbnail_url: template.thumbnail_url,
-        json_layers: template.json_layers,
+        name: `${mailPiece.name} (Copy)`,
+        client_id: mailPiece.client_id,
+        size: mailPiece.size,
+        industry_vertical: mailPiece.industry_vertical,
+        thumbnail_url: mailPiece.thumbnail_url,
+        json_layers: mailPiece.json_layers,
         is_favorite: false,
       });
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template duplicated");
+      queryClient.invalidateQueries({ queryKey: ["mail"] });
+      toast.success("Mail piece duplicated");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      if (template.thumbnail_url) {
-        const path = template.thumbnail_url.split("/").pop();
+      if (mailPiece.thumbnail_url) {
+        const path = mailPiece.thumbnail_url.split("/").pop();
         if (path) {
           await supabase.storage.from("template-thumbnails").remove([path]);
         }
@@ -82,13 +82,13 @@ export function TemplateListItem({
       const { error } = await supabase
         .from("templates")
         .delete()
-        .eq("id", template.id);
+        .eq("id", mailPiece.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template deleted");
+      queryClient.invalidateQueries({ queryKey: ["mail"] });
+      toast.success("Mail piece deleted");
     },
   });
 
@@ -97,17 +97,17 @@ export function TemplateListItem({
       <div className="group flex items-center gap-4 p-4 bg-card border rounded-lg hover:shadow-lg hover:border-primary/30 transition-all">
         <Checkbox
           checked={isSelected}
-          onCheckedChange={() => onToggleSelect(template.id)}
+          onCheckedChange={() => onToggleSelect(mailPiece.id)}
         />
         
         <div 
           className="w-24 h-32 bg-muted rounded overflow-hidden flex-shrink-0 cursor-pointer"
-          onClick={() => template.thumbnail_url && setPreviewOpen(true)}
+          onClick={() => mailPiece.thumbnail_url && setPreviewOpen(true)}
         >
-          {template.thumbnail_url ? (
+          {mailPiece.thumbnail_url ? (
             <img
-              src={template.thumbnail_url}
-              alt={template.name}
+              src={mailPiece.thumbnail_url}
+              alt={mailPiece.name}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
           ) : (
@@ -118,12 +118,12 @@ export function TemplateListItem({
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-lg mb-2 line-clamp-1">{template.name}</h3>
+          <h3 className="font-semibold text-lg mb-2 line-clamp-1">{mailPiece.name}</h3>
           <div className="flex gap-2 flex-wrap">
-            <Badge variant="secondary">{sizeLabels[template.size]}</Badge>
-            {template.industry_vertical && (
+            <Badge variant="secondary">{sizeLabels[mailPiece.size]}</Badge>
+            {mailPiece.industry_vertical && (
               <Badge variant="outline">
-                {industryLabels[template.industry_vertical]}
+                {industryLabels[mailPiece.industry_vertical]}
               </Badge>
             )}
           </div>
@@ -132,17 +132,17 @@ export function TemplateListItem({
         <div className="flex items-center gap-2">
           <Button
             size="icon"
-            variant={template.is_favorite ? "default" : "ghost"}
+            variant={mailPiece.is_favorite ? "default" : "ghost"}
             onClick={() => toggleFavoriteMutation.mutate()}
           >
             <Star
-              className={`h-4 w-4 ${template.is_favorite ? "fill-current" : ""}`}
+              className={`h-4 w-4 ${mailPiece.is_favorite ? "fill-current" : ""}`}
             />
           </Button>
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => template.thumbnail_url && setPreviewOpen(true)}
+            onClick={() => mailPiece.thumbnail_url && setPreviewOpen(true)}
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -162,7 +162,7 @@ export function TemplateListItem({
             <Trash2 className="h-4 w-4" />
           </Button>
           <Button
-            onClick={() => navigate(`/template-builder/${template.id}`)}
+            onClick={() => navigate(`/mail-designer/${mailPiece.id}`)}
           >
             <Palette className="mr-2 h-4 w-4" />
             Design
@@ -173,14 +173,14 @@ export function TemplateListItem({
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-4">
-            <DialogTitle className="text-xl">{template.name}</DialogTitle>
+            <DialogTitle className="text-xl">{mailPiece.name}</DialogTitle>
           </DialogHeader>
           <div className="px-6 pb-6">
-            {template.thumbnail_url && (
+            {mailPiece.thumbnail_url && (
               <div className="relative bg-muted rounded-lg overflow-hidden">
                 <img
-                  src={template.thumbnail_url}
-                  alt={template.name}
+                  src={mailPiece.thumbnail_url}
+                  alt={mailPiece.name}
                   className="w-full h-auto max-h-[70vh] object-contain animate-scale-in"
                 />
               </div>

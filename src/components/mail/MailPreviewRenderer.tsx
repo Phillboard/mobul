@@ -20,7 +20,7 @@ interface Layer {
   shape?: string;
 }
 
-interface TemplatePreviewRendererProps {
+interface MailPreviewRendererProps {
   layers: Layer[];
   canvasSize: { width: number; height: number };
 }
@@ -74,10 +74,10 @@ const replaceMergeFields = (text: string) => {
     .replace(/\{\{address\}\}/g, sampleData.address);
 };
 
-export function TemplatePreviewRenderer({
+export function MailPreviewRenderer({
   layers,
   canvasSize,
-}: TemplatePreviewRendererProps) {
+}: MailPreviewRendererProps) {
   const scale = 0.4; // Scale down for preview
   const scaledWidth = canvasSize.width * scale;
   const scaledHeight = canvasSize.height * scale;
@@ -141,7 +141,7 @@ export function TemplatePreviewRenderer({
                 >
                   <img
                     src={layer.url || layer.src}
-                    alt="Template image"
+                    alt="Mail piece image"
                     className="w-full h-full object-cover"
                   />
                 </div>
