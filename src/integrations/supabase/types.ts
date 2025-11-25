@@ -654,10 +654,12 @@ export type Database = {
           delivery_status: string | null
           gift_card_id: string | null
           id: string
+          is_simulated: boolean | null
           met_at: string
           met_by_agent_id: string | null
           notes: string | null
           recipient_id: string
+          simulation_batch_id: string | null
         }
         Insert: {
           call_session_id: string
@@ -667,10 +669,12 @@ export type Database = {
           delivery_status?: string | null
           gift_card_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           met_at?: string
           met_by_agent_id?: string | null
           notes?: string | null
           recipient_id: string
+          simulation_batch_id?: string | null
         }
         Update: {
           call_session_id?: string
@@ -680,10 +684,12 @@ export type Database = {
           delivery_status?: string | null
           gift_card_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           met_at?: string
           met_by_agent_id?: string | null
           notes?: string | null
           recipient_id?: string
+          simulation_batch_id?: string | null
         }
         Relationships: [
           {
@@ -729,12 +735,14 @@ export type Database = {
           created_at: string
           forward_to_number: string | null
           id: string
+          is_simulated: boolean | null
           match_status: string
           notes: string | null
           recipient_id: string | null
           recording_duration: number | null
           recording_sid: string | null
           recording_url: string | null
+          simulation_batch_id: string | null
           tracked_number_id: string
           twilio_call_sid: string | null
         }
@@ -750,12 +758,14 @@ export type Database = {
           created_at?: string
           forward_to_number?: string | null
           id?: string
+          is_simulated?: boolean | null
           match_status?: string
           notes?: string | null
           recipient_id?: string | null
           recording_duration?: number | null
           recording_sid?: string | null
           recording_url?: string | null
+          simulation_batch_id?: string | null
           tracked_number_id: string
           twilio_call_sid?: string | null
         }
@@ -771,12 +781,14 @@ export type Database = {
           created_at?: string
           forward_to_number?: string | null
           id?: string
+          is_simulated?: boolean | null
           match_status?: string
           notes?: string | null
           recipient_id?: string | null
           recording_duration?: number | null
           recording_sid?: string | null
           recording_url?: string | null
+          simulation_batch_id?: string | null
           tracked_number_id?: string
           twilio_call_sid?: string | null
         }
@@ -864,6 +876,8 @@ export type Database = {
           crm_event_name: string | null
           id: string
           is_active: boolean
+          is_simulated: boolean | null
+          simulation_batch_id: string | null
           time_delay_hours: number | null
           trigger_type: string
         }
@@ -875,6 +889,8 @@ export type Database = {
           crm_event_name?: string | null
           id?: string
           is_active?: boolean
+          is_simulated?: boolean | null
+          simulation_batch_id?: string | null
           time_delay_hours?: number | null
           trigger_type?: string
         }
@@ -886,6 +902,8 @@ export type Database = {
           crm_event_name?: string | null
           id?: string
           is_active?: boolean
+          is_simulated?: boolean | null
+          simulation_batch_id?: string | null
           time_delay_hours?: number | null
           trigger_type?: string
         }
@@ -963,7 +981,9 @@ export type Database = {
           created_at: string | null
           gift_card_pool_id: string | null
           id: string
+          is_simulated: boolean | null
           reward_description: string | null
+          simulation_batch_id: string | null
           sms_template: string | null
         }
         Insert: {
@@ -972,7 +992,9 @@ export type Database = {
           created_at?: string | null
           gift_card_pool_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           reward_description?: string | null
+          simulation_batch_id?: string | null
           sms_template?: string | null
         }
         Update: {
@@ -981,7 +1003,9 @@ export type Database = {
           created_at?: string | null
           gift_card_pool_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           reward_description?: string | null
+          simulation_batch_id?: string | null
           sms_template?: string | null
         }
         Relationships: [
@@ -1039,11 +1063,13 @@ export type Database = {
           created_at: string | null
           created_by_user_id: string | null
           id: string
+          is_simulated: boolean | null
           landing_page_id: string | null
           lp_mode: Database["public"]["Enums"]["lp_mode"] | null
           mail_date: string | null
           name: string
           postage: Database["public"]["Enums"]["postage_class"] | null
+          simulation_batch_id: string | null
           size: Database["public"]["Enums"]["template_size"]
           status: Database["public"]["Enums"]["campaign_status"] | null
           template_id: string | null
@@ -1060,11 +1086,13 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           landing_page_id?: string | null
           lp_mode?: Database["public"]["Enums"]["lp_mode"] | null
           mail_date?: string | null
           name: string
           postage?: Database["public"]["Enums"]["postage_class"] | null
+          simulation_batch_id?: string | null
           size: Database["public"]["Enums"]["template_size"]
           status?: Database["public"]["Enums"]["campaign_status"] | null
           template_id?: string | null
@@ -1081,11 +1109,13 @@ export type Database = {
           created_at?: string | null
           created_by_user_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           landing_page_id?: string | null
           lp_mode?: Database["public"]["Enums"]["lp_mode"] | null
           mail_date?: string | null
           name?: string
           postage?: Database["public"]["Enums"]["postage_class"] | null
+          simulation_batch_id?: string | null
           size?: Database["public"]["Enums"]["template_size"]
           status?: Database["public"]["Enums"]["campaign_status"] | null
           template_id?: string | null
@@ -1487,6 +1517,7 @@ export type Database = {
           engagement_score: number | null
           first_name: string | null
           id: string
+          is_simulated: boolean | null
           job_title: string | null
           last_activity_date: string | null
           last_name: string | null
@@ -1497,6 +1528,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           redemptions_count: number | null
+          simulation_batch_id: string | null
           sms_opt_out: boolean | null
           state: string | null
           total_interactions: number | null
@@ -1521,6 +1553,7 @@ export type Database = {
           engagement_score?: number | null
           first_name?: string | null
           id?: string
+          is_simulated?: boolean | null
           job_title?: string | null
           last_activity_date?: string | null
           last_name?: string | null
@@ -1531,6 +1564,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           redemptions_count?: number | null
+          simulation_batch_id?: string | null
           sms_opt_out?: boolean | null
           state?: string | null
           total_interactions?: number | null
@@ -1555,6 +1589,7 @@ export type Database = {
           engagement_score?: number | null
           first_name?: string | null
           id?: string
+          is_simulated?: boolean | null
           job_title?: string | null
           last_activity_date?: string | null
           last_name?: string | null
@@ -1565,6 +1600,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           redemptions_count?: number | null
+          simulation_batch_id?: string | null
           sms_opt_out?: boolean | null
           state?: string | null
           total_interactions?: number | null
@@ -2265,8 +2301,10 @@ export type Database = {
           error_message: string | null
           gift_card_id: string
           id: string
+          is_simulated: boolean | null
           recipient_id: string
           retry_count: number | null
+          simulation_batch_id: string | null
           sms_error_message: string | null
           sms_message: string | null
           sms_sent_at: string | null
@@ -2285,8 +2323,10 @@ export type Database = {
           error_message?: string | null
           gift_card_id: string
           id?: string
+          is_simulated?: boolean | null
           recipient_id: string
           retry_count?: number | null
+          simulation_batch_id?: string | null
           sms_error_message?: string | null
           sms_message?: string | null
           sms_sent_at?: string | null
@@ -2305,8 +2345,10 @@ export type Database = {
           error_message?: string | null
           gift_card_id?: string
           id?: string
+          is_simulated?: boolean | null
           recipient_id?: string
           retry_count?: number | null
+          simulation_batch_id?: string | null
           sms_error_message?: string | null
           sms_message?: string | null
           sms_sent_at?: string | null
@@ -2354,6 +2396,7 @@ export type Database = {
           failed_cards: number | null
           id: string
           is_master_pool: boolean | null
+          is_simulated: boolean | null
           last_auto_balance_check: string | null
           low_stock_threshold: number | null
           markup_percentage: number | null
@@ -2362,6 +2405,7 @@ export type Database = {
           provider: string | null
           purchase_method: string | null
           sale_price_per_card: number | null
+          simulation_batch_id: string | null
           total_cards: number | null
           updated_at: string | null
         }
@@ -2381,6 +2425,7 @@ export type Database = {
           failed_cards?: number | null
           id?: string
           is_master_pool?: boolean | null
+          is_simulated?: boolean | null
           last_auto_balance_check?: string | null
           low_stock_threshold?: number | null
           markup_percentage?: number | null
@@ -2389,6 +2434,7 @@ export type Database = {
           provider?: string | null
           purchase_method?: string | null
           sale_price_per_card?: number | null
+          simulation_batch_id?: string | null
           total_cards?: number | null
           updated_at?: string | null
         }
@@ -2408,6 +2454,7 @@ export type Database = {
           failed_cards?: number | null
           id?: string
           is_master_pool?: boolean | null
+          is_simulated?: boolean | null
           last_auto_balance_check?: string | null
           low_stock_threshold?: number | null
           markup_percentage?: number | null
@@ -2416,6 +2463,7 @@ export type Database = {
           provider?: string | null
           purchase_method?: string | null
           sale_price_per_card?: number | null
+          simulation_batch_id?: string | null
           total_cards?: number | null
           updated_at?: string | null
         }
@@ -2573,9 +2621,11 @@ export type Database = {
           delivery_method: string | null
           expiration_date: string | null
           id: string
+          is_simulated: boolean | null
           last_balance_check: string | null
           notes: string | null
           pool_id: string
+          simulation_batch_id: string | null
           status: string | null
           tags: Json | null
         }
@@ -2594,9 +2644,11 @@ export type Database = {
           delivery_method?: string | null
           expiration_date?: string | null
           id?: string
+          is_simulated?: boolean | null
           last_balance_check?: string | null
           notes?: string | null
           pool_id: string
+          simulation_batch_id?: string | null
           status?: string | null
           tags?: Json | null
         }
@@ -2615,9 +2667,11 @@ export type Database = {
           delivery_method?: string | null
           expiration_date?: string | null
           id?: string
+          is_simulated?: boolean | null
           last_balance_check?: string | null
           notes?: string | null
           pool_id?: string
+          simulation_batch_id?: string | null
           status?: string | null
           tags?: Json | null
         }
@@ -3464,6 +3518,7 @@ export type Database = {
           geocode_json: Json | null
           gift_card_assigned_id: string | null
           id: string
+          is_simulated: boolean | null
           last_name: string | null
           phone: string | null
           redemption_code: string | null
@@ -3471,6 +3526,7 @@ export type Database = {
           redemption_ip: string | null
           redemption_user_agent: string | null
           rejection_reason: string | null
+          simulation_batch_id: string | null
           state: string | null
           token: string
           validation_details_json: Json | null
@@ -3499,6 +3555,7 @@ export type Database = {
           geocode_json?: Json | null
           gift_card_assigned_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           last_name?: string | null
           phone?: string | null
           redemption_code?: string | null
@@ -3506,6 +3563,7 @@ export type Database = {
           redemption_ip?: string | null
           redemption_user_agent?: string | null
           rejection_reason?: string | null
+          simulation_batch_id?: string | null
           state?: string | null
           token: string
           validation_details_json?: Json | null
@@ -3534,6 +3592,7 @@ export type Database = {
           geocode_json?: Json | null
           gift_card_assigned_id?: string | null
           id?: string
+          is_simulated?: boolean | null
           last_name?: string | null
           phone?: string | null
           redemption_code?: string | null
@@ -3541,6 +3600,7 @@ export type Database = {
           redemption_ip?: string | null
           redemption_user_agent?: string | null
           rejection_reason?: string | null
+          simulation_batch_id?: string | null
           state?: string | null
           token?: string
           validation_details_json?: Json | null
@@ -3667,6 +3727,39 @@ export type Database = {
           success?: boolean | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      simulation_batches: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          data_types: string[] | null
+          error_message: string | null
+          id: string
+          parameters: Json | null
+          status: string | null
+          total_records: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          data_types?: string[] | null
+          error_message?: string | null
+          id?: string
+          parameters?: Json | null
+          status?: string | null
+          total_records?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          data_types?: string[] | null
+          error_message?: string | null
+          id?: string
+          parameters?: Json | null
+          status?: string | null
+          total_records?: number | null
         }
         Relationships: []
       }
@@ -3925,10 +4018,12 @@ export type Database = {
           forward_to_number: string | null
           friendly_name: string | null
           id: string
+          is_simulated: boolean | null
           monthly_cost: number | null
           phone_number: string
           purchased_at: string | null
           recording_enabled: boolean | null
+          simulation_batch_id: string | null
           status: string
           twilio_sid: string | null
         }
@@ -3940,10 +4035,12 @@ export type Database = {
           forward_to_number?: string | null
           friendly_name?: string | null
           id?: string
+          is_simulated?: boolean | null
           monthly_cost?: number | null
           phone_number: string
           purchased_at?: string | null
           recording_enabled?: boolean | null
+          simulation_batch_id?: string | null
           status?: string
           twilio_sid?: string | null
         }
@@ -3955,10 +4052,12 @@ export type Database = {
           forward_to_number?: string | null
           friendly_name?: string | null
           id?: string
+          is_simulated?: boolean | null
           monthly_cost?: number | null
           phone_number?: string
           purchased_at?: string | null
           recording_enabled?: boolean | null
+          simulation_batch_id?: string | null
           status?: string
           twilio_sid?: string | null
         }
