@@ -3108,6 +3108,159 @@ export type Database = {
         }
         Relationships: []
       }
+      mail_provider_settings: {
+        Row: {
+          allow_clients_custom: boolean | null
+          allow_clients_postgrid: boolean | null
+          client_id: string | null
+          created_at: string | null
+          created_by_user_id: string | null
+          custom_auth_header_name: string | null
+          custom_auth_type: string | null
+          custom_enabled: boolean | null
+          custom_provider_name: string | null
+          custom_webhook_secret_name: string | null
+          custom_webhook_url: string | null
+          id: string
+          org_id: string | null
+          postgrid_api_key_name: string | null
+          postgrid_enabled: boolean | null
+          postgrid_test_mode: boolean | null
+          provider_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          allow_clients_custom?: boolean | null
+          allow_clients_postgrid?: boolean | null
+          client_id?: string | null
+          created_at?: string | null
+          created_by_user_id?: string | null
+          custom_auth_header_name?: string | null
+          custom_auth_type?: string | null
+          custom_enabled?: boolean | null
+          custom_provider_name?: string | null
+          custom_webhook_secret_name?: string | null
+          custom_webhook_url?: string | null
+          id?: string
+          org_id?: string | null
+          postgrid_api_key_name?: string | null
+          postgrid_enabled?: boolean | null
+          postgrid_test_mode?: boolean | null
+          provider_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          allow_clients_custom?: boolean | null
+          allow_clients_postgrid?: boolean | null
+          client_id?: string | null
+          created_at?: string | null
+          created_by_user_id?: string | null
+          custom_auth_header_name?: string | null
+          custom_auth_type?: string | null
+          custom_enabled?: boolean | null
+          custom_provider_name?: string | null
+          custom_webhook_secret_name?: string | null
+          custom_webhook_url?: string | null
+          id?: string
+          org_id?: string | null
+          postgrid_api_key_name?: string | null
+          postgrid_enabled?: boolean | null
+          postgrid_test_mode?: boolean | null
+          provider_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_provider_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_provider_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_submissions: {
+        Row: {
+          actual_cost_cents: number | null
+          campaign_id: string
+          client_id: string
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          estimated_cost_cents: number | null
+          id: string
+          provider_job_id: string | null
+          provider_name: string | null
+          provider_type: string
+          recipient_count: number
+          request_payload: Json | null
+          response_payload: Json | null
+          status: string | null
+          submitted_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_cost_cents?: number | null
+          campaign_id: string
+          client_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          estimated_cost_cents?: number | null
+          id?: string
+          provider_job_id?: string | null
+          provider_name?: string | null
+          provider_type: string
+          recipient_count: number
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_cost_cents?: number | null
+          campaign_id?: string
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          estimated_cost_cents?: number | null
+          id?: string
+          provider_job_id?: string | null
+          provider_name?: string | null
+          provider_type?: string
+          recipient_count?: number
+          request_payload?: Json | null
+          response_payload?: Json | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_submissions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_submissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_members: {
         Row: {
           created_at: string | null
