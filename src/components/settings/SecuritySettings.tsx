@@ -8,7 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  SortingState,
+} from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -17,6 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { createAuditLogsColumns } from "./auditLogsColumns";
+import { basicTableModels } from "@/lib/tableHelpers";
 
 interface AuditLog {
   id: string;
@@ -34,6 +42,7 @@ export function SecuritySettings() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
 
   const isAdmin = roles.some(r => r.role === 'admin');
   const isTechSupport = roles.some(r => r.role === 'tech_support');
@@ -82,6 +91,16 @@ export function SecuritySettings() {
     log.resource_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     log.ip_address?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const columns = createAuditLogsColumns();
+
+  const table = useReactTable({
+    data: filteredLogs,
+    columns,
+    ...basicTableModels,
+    state: { sorting },
+    onSortingChange: setSorting,
+  });
 
   return (
     <div className="space-y-6">
@@ -184,38 +203,52 @@ export function SecuritySettings() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Timestamp</TableHead>
-                      <TableHead>Action</TableHead>
-                      <TableHead>Resource</TableHead>
-                      <TableHead>IP Address</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredLogs.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="font-mono text-xs">
-                          {format(new Date(log.created_at), 'MMM d, yyyy HH:mm:ss')}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{log.action_type}</Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {log.resource_type || 'N/A'}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {log.ip_address || 'N/A'}
-                        </TableCell>
-                        <TableCell>
-                          {log.success ? (
-                            <Badge variant="secondary">Success</Badge>
-                          ) : (
-                            <Badge variant="destructive">Failed</Badge>
-                          )}
-                        </TableCell>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id}>
+                            {header.isPlaceholder ? null : (
+                              <div
+                                className={
+                                  header.column.getCanSort()
+                                    ? "flex items-center gap-2 cursor-pointer select-none"
+                                    : ""
+                                }
+                                onClick={header.column.getToggleSortingHandler()}
+                              >
+                                {typeof header.column.columnDef.header === "function"
+                                  ? header.column.columnDef.header(header.getContext())
+                                  : header.column.columnDef.header}
+                                {header.column.getIsSorted() && (
+                                  <span>{header.column.getIsSorted() === "asc" ? "↑" : "↓"}</span>
+                                )}
+                              </div>
+                            )}
+                          </TableHead>
+                        ))}
                       </TableRow>
                     ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id}>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                              {typeof cell.column.columnDef.cell === "function"
+                                ? cell.column.columnDef.cell(cell.getContext())
+                                : cell.getValue()}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                          No audit logs found
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               )}
