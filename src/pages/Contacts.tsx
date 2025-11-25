@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Database } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,13 +10,33 @@ import { ContactFilters } from "@/components/contacts/ContactFilters";
 import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useUserRole } from "@/hooks/useUserRole";
+import { seedContactsData } from "@/lib/seed-contacts-data";
+import { toast } from "sonner";
 import type { ContactFilters as ContactFiltersType } from "@/types/contacts";
 
 export default function Contacts() {
   const { currentClient } = useTenant();
+  const { data: userRole } = useUserRole();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<ContactFiltersType>({});
+  const [isSeeding, setIsSeeding] = useState(false);
+
+  const handleSeedData = async () => {
+    if (!currentClient) return;
+    
+    setIsSeeding(true);
+    try {
+      await seedContactsData(currentClient.id);
+      toast.success("Dummy data created successfully! Refresh the page to see the data.");
+    } catch (error) {
+      console.error("Error seeding data:", error);
+      toast.error("Failed to create dummy data. Check console for details.");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   if (!currentClient) {
     return (
@@ -49,10 +69,22 @@ export default function Contacts() {
               Manage your customer database
             </p>
           </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Contact
-          </Button>
+          <div className="flex gap-2">
+            {userRole === 'admin' && (
+              <Button 
+                variant="outline" 
+                onClick={handleSeedData}
+                disabled={isSeeding}
+              >
+                <Database className="h-4 w-4 mr-2" />
+                {isSeeding ? "Creating..." : "Seed Demo Data"}
+              </Button>
+            )}
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Contact
+            </Button>
+          </div>
         </div>
 
         {/* Search & Filters */}
