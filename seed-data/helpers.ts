@@ -178,3 +178,102 @@ export function futureDate(daysAhead: number): string {
     date.setDate(date.getDate() + randomInt(0, daysAhead));
     return date.toISOString();
 }
+
+// Generate realistic job title based on industry
+export function generateJobTitle(industry?: string): string {
+    const genericTitles = [
+        'Owner', 'President', 'CEO', 'General Manager', 'Director', 'Manager',
+        'VP of Operations', 'VP of Sales', 'Marketing Director', 'Operations Manager',
+        'Sales Manager', 'Account Executive', 'Office Manager', 'Controller',
+    ];
+
+    const industryTitles: Record<string, string[]> = {
+        roofing: ['Roofing Contractor', 'Construction Manager', 'Property Manager', 'Facility Manager', 'Building Owner', 'Homeowner'],
+        rei: ['Real Estate Investor', 'Property Owner', 'Portfolio Manager', 'Asset Manager', 'Landlord', 'Property Manager'],
+        dental: ['Practice Manager', 'Office Manager', 'Dental Office Administrator', 'Patient Coordinator'],
+        veterinary: ['Veterinary Practice Manager', 'Office Manager', 'Clinic Administrator'],
+        insurance: ['Insurance Agent', 'Broker', 'Risk Manager', 'Claims Manager', 'Underwriter'],
+        home_services: ['Homeowner', 'Property Manager', 'Facility Director', 'Maintenance Manager'],
+        landscaping: ['Property Manager', 'Facility Manager', 'Homeowner', 'HOA Board Member'],
+    };
+
+    if (industry && industryTitles[industry]) {
+        return randomElement([...industryTitles[industry], ...genericTitles]);
+    }
+
+    return randomElement(genericTitles);
+}
+
+// Generate contextual note based on lifecycle stage
+export function generateNote(lifecycleStage: string): string {
+    const notesByStage: Record<string, string[]> = {
+        lead: [
+            'Initial contact via website form',
+            'Downloaded our service guide',
+            'Attended virtual demo session',
+            'Referred by existing customer',
+            'Found us through Google search',
+            'Interested in learning more about our services',
+            'Requested callback during business hours',
+        ],
+        mql: [
+            'Engaged with email campaign - opened 3/5 emails',
+            'Visited pricing page multiple times',
+            'Downloaded case study and ROI calculator',
+            'High engagement score - needs follow-up',
+            'Matches our ideal customer profile',
+            'Requested detailed pricing information',
+        ],
+        sql: [
+            'Scheduled discovery call for next Tuesday 2pm',
+            'Budget confirmed: $15k-25k range',
+            'Decision maker identified - CEO approval needed',
+            'Requested custom proposal',
+            'Strong fit, ready to move forward',
+            'Timeline: wants to start within 30 days',
+        ],
+        opportunity: [
+            'Proposal sent - follow up scheduled',
+            'In contract negotiation phase',
+            'Decision expected by end of month',
+            'Comparing us with two other vendors',
+            'Need to address concerns about implementation timeline',
+            '75% probability to close',
+        ],
+        customer: [
+            'Onboarded successfully last quarter',
+            'Very satisfied - potential for expansion',
+            'Renewal coming up in 90 days',
+            'Great relationship - asked for referrals',
+            'Using all features, high engagement',
+            'Excellent payment history',
+        ],
+        evangelist: [
+            'Provided testimonial and case study',
+            'Referred 3 new clients this year',
+            'Active in our customer community',
+            'Featured in our success stories',
+            'Always willing to be a reference',
+            'NPS score: 10 - Promoter',
+        ],
+    };
+
+    return randomElement(notesByStage[lifecycleStage] || notesByStage.lead);
+}
+
+// Generate relevant tags based on lifecycle stage
+export function generateTags(lifecycleStage: string): string[] {
+    const tagsByStage: Record<string, string[][]> = {
+        lead: [['new-lead'], ['website-inquiry'], ['cold'], ['unqualified']],
+        mql: [['qualified'], ['engaged'], ['warm'], ['marketing-qualified']],
+        sql: [['hot-lead'], ['qualified'], ['ready-to-buy'], ['sales-qualified']],
+        opportunity: [['in-negotiation'], ['proposal-sent'], ['decision-pending'], ['hot']],
+        customer: [['active-customer'], ['satisfied'], ['expansion-opportunity']],
+        evangelist: [['vip'], ['promoter'], ['referral-source'], ['case-study']],
+    };
+
+    const commonTags = [['decision-maker'], ['budget-approved'], ['high-priority'], ['needs-follow-up']];
+    const availableTags = [...(tagsByStage[lifecycleStage] || []), ...commonTags];
+    
+    return randomElement(availableTags);
+}

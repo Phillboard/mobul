@@ -26,7 +26,6 @@ import API from "./pages/API";
 import APIDocumentation from "./pages/APIDocumentation";
 import GiftCards from "./pages/GiftCards";
 import PurchaseGiftCards from "./pages/PurchaseGiftCards";
-import AgentCallDashboard from "./pages/AgentCallDashboard";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -44,10 +43,6 @@ import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
 import AITemplateEditor from "./pages/AITemplateEditor";
 import Contacts from "./pages/Contacts";
 import ContactDetail from "./pages/ContactDetail";
-import Companies from "./pages/Companies";
-import CompanyDetail from "./pages/CompanyDetail";
-import Deals from "./pages/Deals";
-import DealDetail from "./pages/DealDetail";
 import Activities from "./pages/Activities";
 import Tasks from "./pages/Tasks";
 import AdminGiftCardMarketplace from "./pages/AdminGiftCardMarketplace";
@@ -125,7 +120,6 @@ const App = () => (
                   <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
                   <Route path="/gift-cards/purchase" element={<ProtectedRoute><PurchaseGiftCards /></ProtectedRoute>} />
                   <Route path="/gift-cards/marketplace" element={<ProtectedRoute requiredPermissions={['admin']}><AdminGiftCardMarketplace /></ProtectedRoute>} />
-                  <Route path="/agent-dashboard" element={<ProtectedRoute requiredPermissions={['calls.view', 'calls.manage']}><AgentCallDashboard /></ProtectedRoute>} />
                   <Route path="/call-center" element={<ProtectedRoute requiredPermissions={['calls.view', 'calls.manage']}><CallCenterDashboard /></ProtectedRoute>} />
                   <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                   <Route path="/user-management" element={<ProtectedRoute requiredPermissions={['admin', 'users.manage']}><UserManagement /></ProtectedRoute>} />
@@ -143,10 +137,6 @@ const App = () => (
                   <Route path="/zapier" element={<ProtectedRoute><ZapierTemplates /></ProtectedRoute>} />
                   <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
                   <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetail /></ProtectedRoute>} />
-                  <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
-                  <Route path="/companies/:id" element={<ProtectedRoute><CompanyDetail /></ProtectedRoute>} />
-                  <Route path="/deals" element={<ProtectedRoute><Deals /></ProtectedRoute>} />
-                  <Route path="/deals/:id" element={<ProtectedRoute><DealDetail /></ProtectedRoute>} />
                   <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
                   <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
                   <Route path="/webinar" element={<ProtectedRoute><Webinar /></ProtectedRoute>} />
