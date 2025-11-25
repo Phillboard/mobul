@@ -20,15 +20,16 @@ interface DataTypeConfig {
 }
 
 const DATA_TYPES: DataTypeConfig[] = [
-  { id: 'brands', label: 'Gift Card Brands', defaultQuantity: 10, description: 'Amazon, Visa, Apple, Target, etc.' },
-  { id: 'pools', label: 'Gift Card Pools', defaultQuantity: 15, description: 'Per client pools' },
-  { id: 'giftCards', label: 'Gift Cards', defaultQuantity: 500, description: 'Realistic card codes' },
-  { id: 'campaigns', label: 'Campaigns', defaultQuantity: 5, description: 'Marketing campaigns' },
-  { id: 'trackedNumbers', label: 'Tracked Phone Numbers', defaultQuantity: 12, description: 'Call tracking' },
-  { id: 'conditions', label: 'Campaign Conditions', defaultQuantity: 30, description: 'Reward triggers' },
-  { id: 'callSessions', label: 'Call Sessions', defaultQuantity: 300, description: 'Historical calls' },
-  { id: 'contacts', label: 'Contacts', defaultQuantity: 75, description: 'CRM contacts' },
-  { id: 'recipients', label: 'Recipients', defaultQuantity: 100, description: 'Campaign recipients' },
+  { id: 'brands', label: '🏷️ Gift Card Brands', defaultQuantity: 6, description: 'Amazon, Visa, Apple, etc.' },
+  { id: 'pools', label: '🎁 Gift Card Pools', defaultQuantity: 12, description: '3-4 pools per client' },
+  { id: 'giftCards', label: '💳 Gift Cards', defaultQuantity: 300, description: 'Cards with realistic codes' },
+  { id: 'contacts', label: '👥 Contacts', defaultQuantity: 150, description: 'CRM contacts with full data' },
+  { id: 'templates', label: '📄 Templates', defaultQuantity: 3, description: 'Mail templates per client' },
+  { id: 'landingPages', label: '🌐 Landing Pages', defaultQuantity: 2, description: 'Campaign landing pages' },
+  { id: 'campaigns', label: '📢 Campaigns', defaultQuantity: 8, description: 'Campaigns with conditions' },
+  { id: 'recipients', label: '📮 Recipients', defaultQuantity: 100, description: 'Campaign recipients' },
+  { id: 'trackedNumbers', label: '📞 Tracked Numbers', defaultQuantity: 1, description: 'Per campaign' },
+  { id: 'callSessions', label: '☎️ Call Sessions', defaultQuantity: 800, description: 'Historical call data' },
 ];
 
 export default function EnrichDataPage() {
@@ -62,11 +63,13 @@ export default function EnrichDataPage() {
   };
 
   const applyPreset = (preset: 'light' | 'medium' | 'heavy') => {
-    const multipliers = { light: 0.25, medium: 0.5, heavy: 1.0 };
-    const mult = multipliers[preset];
-    setQuantities(
-      Object.fromEntries(DATA_TYPES.map(t => [t.id, Math.floor(t.defaultQuantity * mult)]))
-    );
+    const presetMultipliers = {
+      light: { brands: 6, pools: 12, giftCards: 100, contacts: 50, templates: 3, landingPages: 2, campaigns: 3, recipients: 30, trackedNumbers: 1, callSessions: 200 },
+      medium: { brands: 6, pools: 12, giftCards: 200, contacts: 100, templates: 3, landingPages: 2, campaigns: 5, recipients: 60, trackedNumbers: 1, callSessions: 500 },
+      heavy: { brands: 6, pools: 12, giftCards: 300, contacts: 150, templates: 3, landingPages: 2, campaigns: 8, recipients: 100, trackedNumbers: 1, callSessions: 800 },
+    };
+    setQuantities(presetMultipliers[preset]);
+    setSelectedTypes(new Set(DATA_TYPES.map(t => t.id)));
   };
 
   const calculateTotals = () => {
@@ -362,45 +365,117 @@ export default function EnrichDataPage() {
                     <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
                     <div className="space-y-3 flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium text-green-900 dark:text-green-100">Simulation Complete</p>
+                        <p className="font-medium text-green-900 dark:text-green-100">Simulation Complete - {result.totalRecords.toLocaleString()} Total Records</p>
                         <Badge variant="outline">Batch #{result.batchId?.slice(0, 8)}</Badge>
                       </div>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                         {result.brandsCreated > 0 && (
-                          <div>
-                            <p className="text-green-700 dark:text-green-300">Gift Card Brands</p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-100">{result.brandsCreated}</p>
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">🏷️ Brands</p>
+                            <p className="text-xl font-bold">{result.brandsCreated}</p>
                           </div>
                         )}
                         {result.poolsCreated > 0 && (
-                          <div>
-                            <p className="text-green-700 dark:text-green-300">Gift Card Pools</p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-100">{result.poolsCreated}</p>
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">🎁 Pools</p>
+                            <p className="text-xl font-bold">{result.poolsCreated}</p>
                           </div>
                         )}
                         {result.giftCardsCreated > 0 && (
-                          <div>
-                            <p className="text-green-700 dark:text-green-300">Gift Cards</p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-100">{result.giftCardsCreated}</p>
-                          </div>
-                        )}
-                        {result.trackedNumbersCreated > 0 && (
-                          <div>
-                            <p className="text-green-700 dark:text-green-300">Tracked Numbers</p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-100">{result.trackedNumbersCreated}</p>
-                          </div>
-                        )}
-                        {result.callSessionsCreated > 0 && (
-                          <div>
-                            <p className="text-green-700 dark:text-green-300">Call Sessions</p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-100">{result.callSessionsCreated}</p>
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">💳 Gift Cards</p>
+                            <p className="text-xl font-bold">{result.giftCardsCreated.toLocaleString()}</p>
                           </div>
                         )}
                         {result.contactsCreated > 0 && (
-                          <div>
-                            <p className="text-green-700 dark:text-green-300">Contacts</p>
-                            <p className="text-2xl font-bold text-green-900 dark:text-green-100">{result.contactsCreated}</p>
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">👥 Contacts</p>
+                            <p className="text-xl font-bold">{result.contactsCreated.toLocaleString()}</p>
+                          </div>
+                        )}
+                        {result.contactListsCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">📋 Lists</p>
+                            <p className="text-xl font-bold">{result.contactListsCreated}</p>
+                          </div>
+                        )}
+                        {result.contactTagsCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">🏷️ Tags</p>
+                            <p className="text-xl font-bold">{result.contactTagsCreated}</p>
+                          </div>
+                        )}
+                        {result.templatesCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">📄 Templates</p>
+                            <p className="text-xl font-bold">{result.templatesCreated}</p>
+                          </div>
+                        )}
+                        {result.landingPagesCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">🌐 Pages</p>
+                            <p className="text-xl font-bold">{result.landingPagesCreated}</p>
+                          </div>
+                        )}
+                        {result.audiencesCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">🎯 Audiences</p>
+                            <p className="text-xl font-bold">{result.audiencesCreated}</p>
+                          </div>
+                        )}
+                        {result.campaignsCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">📢 Campaigns</p>
+                            <p className="text-xl font-bold">{result.campaignsCreated}</p>
+                          </div>
+                        )}
+                        {result.conditionsCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">⚡ Conditions</p>
+                            <p className="text-xl font-bold">{result.conditionsCreated}</p>
+                          </div>
+                        )}
+                        {result.rewardConfigsCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">🎁 Rewards</p>
+                            <p className="text-xl font-bold">{result.rewardConfigsCreated}</p>
+                          </div>
+                        )}
+                        {result.recipientsCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">📮 Recipients</p>
+                            <p className="text-xl font-bold">{result.recipientsCreated.toLocaleString()}</p>
+                          </div>
+                        )}
+                        {result.trackedNumbersCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">📞 Numbers</p>
+                            <p className="text-xl font-bold">{result.trackedNumbersCreated}</p>
+                          </div>
+                        )}
+                        {result.callSessionsCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">☎️ Calls</p>
+                            <p className="text-xl font-bold">{result.callSessionsCreated.toLocaleString()}</p>
+                          </div>
+                        )}
+                        {result.conditionsMetCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">✅ Met</p>
+                            <p className="text-xl font-bold">{result.conditionsMetCreated}</p>
+                          </div>
+                        )}
+                        {result.deliveriesCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">📬 Deliveries</p>
+                            <p className="text-xl font-bold">{result.deliveriesCreated}</p>
+                          </div>
+                        )}
+                        {result.smsLogsCreated > 0 && (
+                          <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border">
+                            <p className="text-muted-foreground text-xs">💬 SMS</p>
+                            <p className="text-xl font-bold">{result.smsLogsCreated}</p>
                           </div>
                         )}
                       </div>
