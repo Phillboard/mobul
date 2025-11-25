@@ -26,7 +26,14 @@ export function useContactLists(type?: "static" | "dynamic") {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as ContactList[];
+      
+      // Transform to include proper count
+      return (data as any[])?.map(list => ({
+        ...list,
+        contact_count: Array.isArray(list.contact_list_members) 
+          ? list.contact_list_members[0]?.count || 0 
+          : 0
+      })) as ContactList[];
     },
     enabled: !!currentClient?.id,
   });

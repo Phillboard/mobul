@@ -95,7 +95,7 @@ export default function ContactLists() {
                           {list.description || "—"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{list.contact_count}</Badge>
+                          <Badge variant="secondary">{list.contact_count || 0}</Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {new Date(list.updated_at).toLocaleDateString()}
@@ -163,7 +163,7 @@ export default function ContactLists() {
                           {segment.description || "—"}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{segment.contact_count}</Badge>
+                          <Badge variant="secondary">{segment.contact_count || 0}</Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {segment.last_sync_at
