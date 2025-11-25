@@ -1,17 +1,24 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  useReactTable,
+  SortingState,
+} from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { createAudiencesColumns } from "./audiencesColumns";
+import { basicTableModels } from "@/lib/tableHelpers";
 
 export function AudiencesListTab() {
   const { currentClient } = useTenant();
   const navigate = useNavigate();
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "created_at", desc: true }
+  ]);
 
   const { data: audiences, isLoading } = useQuery({
     queryKey: ['audiences', currentClient?.id],
@@ -30,18 +37,20 @@ export function AudiencesListTab() {
     enabled: !!currentClient,
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ready':
-        return 'default';
-      case 'processing':
-        return 'secondary';
-      case 'error':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
+  const columns = useMemo(
+    () => createAudiencesColumns((id) => navigate(`/audiences/${id}`)),
+    [navigate]
+  );
+
+  const table = useReactTable({
+    data: audiences || [],
+    columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    ...basicTableModels,
+  });
 
   if (!currentClient) {
     return (
@@ -84,49 +93,57 @@ export function AudiencesListTab() {
       <CardContent className="p-0">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead className="text-right">Valid</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {audiences.map((audience) => (
-              <TableRow 
-                key={audience.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => navigate(`/audiences/${audience.id}`)}
-              >
-                <TableCell className="font-medium">{audience.name}</TableCell>
-                <TableCell className="capitalize">{audience.source}</TableCell>
-                <TableCell className="text-right">{audience.total_count?.toLocaleString()}</TableCell>
-                <TableCell className="text-right">{audience.valid_count?.toLocaleString()}</TableCell>
-                <TableCell>
-                  <Badge variant={getStatusColor(audience.status || 'unknown')}>
-                    {audience.status || 'unknown'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {audience.created_at ? format(new Date(audience.created_at), 'MMM d, yyyy') : '-'}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/audiences/${audience.id}`);
-                    }}
-                  >
-                    View
-                  </Button>
-                </TableCell>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="bg-muted/30 hover:bg-muted/30">
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder ? null : (
+                      <div
+                        className={
+                          header.column.getCanSort()
+                            ? "cursor-pointer select-none flex items-center gap-2"
+                            : ""
+                        }
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {typeof header.column.columnDef.header === "function"
+                          ? header.column.columnDef.header(header.getContext())
+                          : header.column.columnDef.header}
+                        {{
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() as string] ?? null}
+                      </div>
+                    )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow 
+                  key={row.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/audiences/${row.original.id}`)}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {typeof cell.column.columnDef.cell === "function"
+                        ? cell.column.columnDef.cell(cell.getContext())
+                        : cell.renderValue()}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                  No audiences found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

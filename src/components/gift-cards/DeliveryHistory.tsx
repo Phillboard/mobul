@@ -1,8 +1,13 @@
+import { useMemo, useState } from "react";
+import {
+  useReactTable,
+  SortingState,
+} from "@tanstack/react-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { useGiftCardDeliveries } from "@/hooks/useGiftCards";
-import { format } from "date-fns";
+import { createDeliveryHistoryColumns } from "./deliveryHistoryColumns";
+import { basicTableModels } from "@/lib/tableHelpers";
 
 interface DeliveryHistoryProps {
   campaignId?: string;
@@ -10,20 +15,21 @@ interface DeliveryHistoryProps {
 
 export function DeliveryHistory({ campaignId }: DeliveryHistoryProps) {
   const { deliveries, isLoading } = useGiftCardDeliveries(campaignId);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "delivered_at", desc: true }
+  ]);
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "destructive" | "outline"> = {
-      sent: "default",
-      failed: "destructive",
-      bounced: "destructive",
-    };
+  const columns = useMemo(() => createDeliveryHistoryColumns(), []);
 
-    return (
-      <Badge variant={variants[status] || "outline"}>
-        {status}
-      </Badge>
-    );
-  };
+  const table = useReactTable({
+    data: deliveries || [],
+    columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    ...basicTableModels,
+  });
 
   return (
     <Card>
@@ -36,65 +42,58 @@ export function DeliveryHistory({ campaignId }: DeliveryHistoryProps) {
       <CardContent className="p-0">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Delivered</TableHead>
-              <TableHead>Recipient</TableHead>
-              <TableHead>Campaign</TableHead>
-              <TableHead>Condition</TableHead>
-              <TableHead>Value</TableHead>
-              <TableHead>Method</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="bg-muted/30 hover:bg-muted/30">
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder ? null : (
+                      <div
+                        className={
+                          header.column.getCanSort()
+                            ? "cursor-pointer select-none flex items-center gap-2"
+                            : ""
+                        }
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {typeof header.column.columnDef.header === "function"
+                          ? header.column.columnDef.header(header.getContext())
+                          : header.column.columnDef.header}
+                        {{
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() as string] ?? null}
+                      </div>
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
                   Loading deliveries...
                 </TableCell>
               </TableRow>
-            ) : deliveries?.length === 0 ? (
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="hover:bg-muted/50">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {typeof cell.column.columnDef.cell === "function"
+                        ? cell.column.columnDef.cell(cell.getContext())
+                        : cell.renderValue()}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
                   No deliveries found
                 </TableCell>
               </TableRow>
-            ) : (
-              deliveries?.map((delivery: any) => (
-                <TableRow key={delivery.id}>
-                  <TableCell>
-                    {format(new Date(delivery.delivered_at), "PPp")}
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">
-                        {delivery.recipients?.first_name} {delivery.recipients?.last_name}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {delivery.delivery_address}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{delivery.campaigns?.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">Condition {delivery.condition_number}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-semibold">
-                      ${delivery.gift_cards?.gift_card_pools?.card_value?.toFixed(2)}
-                    </span>
-                    <div className="text-xs text-muted-foreground">
-                      {delivery.gift_cards?.gift_card_pools?.provider}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {delivery.delivery_method.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(delivery.delivery_status)}</TableCell>
-                </TableRow>
-              ))
             )}
           </TableBody>
         </Table>
