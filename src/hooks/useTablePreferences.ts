@@ -114,7 +114,8 @@ export function useTablePreferences(tableName: string) {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["table-preferences", user?.id, tableName] });
+      // Don't invalidate immediately - optimistic update is sufficient
+      // This prevents the flicker when toggling columns
     },
   });
 

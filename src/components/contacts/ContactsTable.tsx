@@ -29,10 +29,9 @@ export function ContactsTable({ filters }: ContactsTableProps) {
   
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-
-  // Initialize column visibility from preferences (only once on mount or pref change from DB)
-  useEffect(() => {
+  
+  // Initialize column visibility directly from preferences
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
     const allColumns = [
       "customer_code", "name", "email", "phone", "mobile_phone", "company",
       "job_title", "address", "city", "state", "lifecycle_stage", "lead_score",
@@ -43,26 +42,49 @@ export function ContactsTable({ filters }: ContactsTableProps) {
     allColumns.forEach(col => {
       visibilityState[col] = preferences.visible_columns.includes(col);
     });
+    return visibilityState;
+  });
+
+  // Only update visibility when preferences change from external source (not our own updates)
+  useEffect(() => {
+    const allColumns = [
+      "customer_code", "name", "email", "phone", "mobile_phone", "company",
+      "job_title", "address", "city", "state", "lifecycle_stage", "lead_score",
+      "engagement_score", "lead_source", "last_activity_date", "created_at"
+    ];
     
-    setColumnVisibility(visibilityState);
+    const currentVisible = Object.entries(columnVisibility)
+      .filter(([_, visible]) => visible)
+      .map(([col]) => col)
+      .sort()
+      .join(',');
+    
+    const prefsVisible = preferences.visible_columns.sort().join(',');
+    
+    // Only update if preferences actually changed
+    if (currentVisible !== prefsVisible) {
+      const visibilityState: VisibilityState = {};
+      allColumns.forEach(col => {
+        visibilityState[col] = preferences.visible_columns.includes(col);
+      });
+      setColumnVisibility(visibilityState);
+    }
   }, [preferences.visible_columns]);
 
-  // Debounce persistence to avoid rapid DB writes
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      const visibleColumns = Object.entries(columnVisibility)
-        .filter(([_, isVisible]) => isVisible)
-        .map(([columnId]) => columnId);
-      
-      // Only persist if we have columns and they differ from current preferences
-      if (visibleColumns.length > 0 && 
-          JSON.stringify(visibleColumns.sort()) !== JSON.stringify(preferences.visible_columns.sort())) {
-        updatePreferences({ visible_columns: visibleColumns });
-      }
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(handler);
-  }, [columnVisibility, updatePreferences, preferences.visible_columns]);
+  // Custom handler to persist column visibility changes immediately
+  const handleColumnVisibilityChange = (updater: VisibilityState | ((old: VisibilityState) => VisibilityState)) => {
+    const newVisibility = typeof updater === 'function' ? updater(columnVisibility) : updater;
+    setColumnVisibility(newVisibility);
+    
+    // Immediately persist to database
+    const visibleColumns = Object.entries(newVisibility)
+      .filter(([_, isVisible]) => isVisible)
+      .map(([columnId]) => columnId);
+    
+    if (visibleColumns.length > 0) {
+      updatePreferences({ visible_columns: visibleColumns });
+    }
+  };
 
   const columns = useMemo(() => createColumns(() => {}), []);
 
@@ -77,7 +99,7 @@ export function ContactsTable({ filters }: ContactsTableProps) {
     enableRowSelection: true,
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: handleColumnVisibilityChange,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
