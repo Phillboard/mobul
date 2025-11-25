@@ -120,8 +120,8 @@ TARGETABC123,,,10.00,Target`;
 
           <FileUploadZone
             onFileSelect={handleFileSelect}
-            accept=".csv"
-            maxSize={10}
+            accept={{ 'text/csv': ['.csv'] }}
+            maxSize={10 * 1024 * 1024}
           />
 
           {file && (
