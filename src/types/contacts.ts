@@ -25,6 +25,7 @@ export interface ContactListWithCount extends ContactList {
 }
 
 export interface ContactFormData {
+  customer_code?: string;
   first_name?: string;
   last_name?: string;
   email?: string;
