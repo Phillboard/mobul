@@ -455,7 +455,13 @@ Deno.serve(async (req) => {
           });
         }
 
-        const { data: createdContacts, error: contactsError } = await supabase.from('contacts').insert(contacts).select();
+        // Make emails unique by adding timestamp if duplicates exist
+        const uniqueContacts = contacts.map(c => ({
+          ...c,
+          email: `${c.email?.split('@')[0]}_${Date.now()}_${Math.random().toString(36).slice(2, 5)}@${c.email?.split('@')[1] || 'example.com'}`
+        }));
+
+        const { data: createdContacts, error: contactsError} = await supabase.from('contacts').insert(uniqueContacts).select();
         if (contactsError) {
           console.error('❌ ERROR creating contacts:', {
             message: contactsError.message,
@@ -550,9 +556,8 @@ Deno.serve(async (req) => {
             templates.push({
               client_id: client.id,
               name: `${season} ${service} Campaign ${i + 1}`,
-              category: 'postcard',
-              format: '6x9',
-              design_json: { components: [], styles: {}, html: '<div>Mock template</div>', css: '' },
+              size: randomElement(['4x6', '6x9', '6x11']),
+              grapesjs_project: { components: [], styles: {}, html: '<div>Mock template</div>', css: '' },
               is_simulated: markAsSimulated,
               simulation_batch_id: batchId,
             });
@@ -582,8 +587,8 @@ Deno.serve(async (req) => {
               client_id: client.id,
               name: `Campaign Landing Page ${i + 1}`,
               slug: `campaign-lp-${i + 1}-${Math.random().toString(36).slice(2, 8)}`,
-              page_content: { html: '<div>Landing Page</div>', css: '', components: [] },
-              is_published: Math.random() > 0.3,
+              content_json: { html: '<div>Landing Page</div>', css: '', components: [] },
+              published: Math.random() > 0.3,
               is_simulated: markAsSimulated,
               simulation_batch_id: batchId,
             });
@@ -631,8 +636,8 @@ Deno.serve(async (req) => {
           const { data: audience, error: audienceError } = await supabase.from('audiences').insert({
             client_id: client.id,
             name: `${campaignName} Audience`,
-            source: 'csv',
-            status: 'completed',
+            source: 'import',
+            status: 'ready',
             total_count: 0,
             valid_count: 0,
             is_simulated: markAsSimulated,
