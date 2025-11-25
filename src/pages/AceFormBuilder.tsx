@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Save, Eye, Sparkles, ChevronRight, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useFormBuilder } from "@/hooks/useFormBuilder";
+import { useFormBuilderRHF } from "@/hooks/useFormBuilderRHF";
 import { useAceForms, useAceForm } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
 import { Layout } from "@/components/layout/Layout";
@@ -43,7 +43,7 @@ export default function AceFormBuilder() {
     deleteField,
     reorderFields,
     updateSettings,
-  } = useFormBuilder(existingForm?.form_config);
+  } = useFormBuilderRHF(existingForm?.form_config);
 
   useEffect(() => {
     if (existingForm) {
