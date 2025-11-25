@@ -32,12 +32,26 @@ const DATA_TYPES: DataTypeConfig[] = [
   { id: 'callSessions', label: '☎️ Call Sessions', defaultQuantity: 800, description: 'Historical call data' },
 ];
 
+const AVAILABLE_BRANDS = [
+  { code: 'AMZN', name: 'Amazon', category: 'retail' },
+  { code: 'VISA', name: 'Visa', category: 'prepaid' },
+  { code: 'TARG', name: 'Target', category: 'retail' },
+  { code: 'APPL', name: 'Apple', category: 'technology' },
+  { code: 'BEST', name: 'Best Buy', category: 'electronics' },
+  { code: 'HOME', name: 'Home Depot', category: 'home_improvement' },
+  { code: 'STAR', name: 'Starbucks', category: 'food_beverage' },
+  { code: 'WALM', name: 'Walmart', category: 'retail' },
+];
+
 export default function EnrichDataPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(DATA_TYPES.map(t => t.id)));
   const [quantities, setQuantities] = useState<Record<string, number>>(
     Object.fromEntries(DATA_TYPES.map(t => [t.id, t.defaultQuantity]))
+  );
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(
+    AVAILABLE_BRANDS.map(b => b.code)
   );
   const [scope, setScope] = useState<'total' | 'per_agency' | 'per_client'>('per_client');
   const [batches, setBatches] = useState<any[]>([]);
@@ -70,6 +84,15 @@ export default function EnrichDataPage() {
     };
     setQuantities(presetMultipliers[preset]);
     setSelectedTypes(new Set(DATA_TYPES.map(t => t.id)));
+    
+    // Set brands based on preset
+    if (preset === 'heavy') {
+      setSelectedBrands(AVAILABLE_BRANDS.map(b => b.code));
+    } else if (preset === 'medium') {
+      setSelectedBrands(['AMZN', 'VISA', 'TARG', 'APPL', 'BEST']);
+    } else {
+      setSelectedBrands(['AMZN', 'VISA', 'TARG']);
+    }
   };
 
   const calculateTotals = () => {
@@ -97,6 +120,7 @@ export default function EnrichDataPage() {
       const params = {
         dataTypes,
         quantities,
+        selectedBrands,
         scope,
         markAsSimulated: true,
       };
@@ -298,6 +322,34 @@ export default function EnrichDataPage() {
                   </Select>
                   <p className="text-sm text-muted-foreground">
                     This will create approximately <strong>{calculateTotals()}</strong> total records
+                  </p>
+                </div>
+
+                {/* Gift Card Brands */}
+                <div className="space-y-3">
+                  <Label>Gift Card Brands</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {AVAILABLE_BRANDS.map((brand) => (
+                      <div key={brand.code} className="flex items-center space-x-2 border rounded-lg p-3">
+                        <Checkbox
+                          id={`brand-${brand.code}`}
+                          checked={selectedBrands.includes(brand.code)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedBrands([...selectedBrands, brand.code]);
+                            } else {
+                              setSelectedBrands(selectedBrands.filter(b => b !== brand.code));
+                            }
+                          }}
+                        />
+                        <Label htmlFor={`brand-${brand.code}`} className="cursor-pointer text-sm">
+                          {brand.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Selected: {selectedBrands.length} of {AVAILABLE_BRANDS.length} brands
                   </p>
                 </div>
 
