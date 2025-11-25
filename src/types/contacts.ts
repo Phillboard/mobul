@@ -22,6 +22,7 @@ export interface ContactWithRelations extends Contact {
 export interface ContactListWithCount extends ContactList {
   contact_count: number;
   member_count?: number;
+  contact_list_members?: Array<{ count: number }>;
 }
 
 export interface ContactFormData {
