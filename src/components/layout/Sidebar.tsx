@@ -87,17 +87,10 @@ const navigationGroups: NavGroup[] = [
     label: "Administration",
     collapsible: true,
     items: [
-      { name: "Analytics", href: "/analytics", icon: BarChart3, permissions: ['analytics.view'], keywords: ["reports", "metrics"], description: "View analytics" },
-      { name: "Performance", href: "/performance", icon: Gauge, permissions: ['analytics.view'], keywords: ["monitoring", "speed", "metrics"], description: "Performance monitoring" },
-      { name: "Error Tracking", href: "/errors", icon: Bug, permissions: ['analytics.view'], keywords: ["bugs", "issues", "debugging"], description: "Error logs" },
-      { name: "System Alerts", href: "/alerts", icon: AlertTriangle, permissions: ['analytics.view'], keywords: ["warnings", "notifications"], description: "System alerts" },
-      { name: "Documentation", href: "/admin/docs", icon: BookOpen, roles: ['admin'], keywords: ["docs", "help", "guide", "manual"], description: "System documentation" },
-      { name: "Docs Management", href: "/admin/docs/manage", icon: SettingsIcon, roles: ['admin'], keywords: ["manage", "documentation", "admin"], description: "Manage documentation" },
-      { name: "Help", href: "/help", icon: HelpCircle, keywords: ["support", "faq", "documentation"], description: "Help center" },
-      { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team"], description: "Manage users" },
-      { name: "API & Integrations", href: "/api", icon: Code, permissions: ['api.view', 'settings.integrations'], keywords: ["developer"], description: "API keys" },
-      { name: "Automation", href: "/zapier-templates", icon: Workflow, permissions: ['settings.integrations'], keywords: ["zapier"], description: "Zapier integrations" },
-      { name: "Settings", href: "/settings/account", icon: SettingsIcon, permissions: ['settings.view'], keywords: ["configuration"], description: "Settings" },
+      { name: "System Health", href: "/admin/system-health", icon: Activity, permissions: ['analytics.view'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
+      { name: "Documentation", href: "/admin/docs", icon: BookOpen, keywords: ["docs", "help", "guide", "manual", "support", "faq"], description: "Documentation & help" },
+      { name: "Integrations", href: "/admin/integrations", icon: Workflow, permissions: ['api.view', 'settings.integrations'], keywords: ["api", "webhooks", "zapier", "automation", "developer"], description: "API & integrations" },
+      { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team", "permissions", "roles"], description: "Manage users" },
     ]
   },
   {
