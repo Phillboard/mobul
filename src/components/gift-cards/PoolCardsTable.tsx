@@ -1,39 +1,32 @@
 /**
- * PoolCardsTable Component
+ * PoolCardsTable Component - Migrated to TanStack Table
  * 
- * Purpose: Displays gift cards in a searchable, filterable table
+ * Purpose: Displays gift cards in a searchable, filterable table with reveal/hide
  * Used by: PoolDetailDialog
  * 
  * Key Features:
- * - Search by card code or status
+ * - Search by card code or status (TanStack global filter)
  * - Toggle reveal/hide for card codes (security)
  * - Status badges with color coding
  * - Balance and date information
- * - Responsive table design
- * 
- * Props:
- * @param {GiftCard[]} cards - Array of gift cards to display
- * @param {number} cardValue - Default card value (for cards without balance)
- * @param {boolean} isLoading - Loading state
- * 
- * State Management:
- * - Local state for search query
- * - Local state for revealed card IDs (Set)
+ * - Sortable columns
  * 
  * Related Components: Table, Input, Button, Badge
- * Edge Functions: None (display only)
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  SortingState,
+} from "@tanstack/react-table";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Eye, EyeOff } from "lucide-react";
-import { format } from "date-fns";
-import { formatCurrency } from "@/lib/currencyUtils";
-import { maskCardCode, getStatusBadgeVariant } from "@/lib/giftCardUtils";
+import { Search } from "lucide-react";
 import { GiftCard } from "@/types/giftCards";
+import { createPoolCardsColumns, PoolCardRow } from "./poolCardsColumns";
 
 interface PoolCardsTableProps {
   cards: GiftCard[];
@@ -44,6 +37,7 @@ interface PoolCardsTableProps {
 export function PoolCardsTable({ cards, cardValue, isLoading }: PoolCardsTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [revealedCards, setRevealedCards] = useState<Set<string>>(new Set());
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   /**
    * Toggles visibility of a card's full code
@@ -58,13 +52,32 @@ export function PoolCardsTable({ cards, cardValue, isLoading }: PoolCardsTablePr
     setRevealedCards(newRevealed);
   };
 
-  /**
-   * Filters cards based on search query
-   */
-  const filteredCards = cards?.filter(card => 
-    card.card_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    card.status?.toLowerCase().includes(searchQuery.toLowerCase())
+  // Prepare data with card value
+  const tableData: PoolCardRow[] = useMemo(
+    () => cards?.map((card) => ({ ...card, cardValue })) || [],
+    [cards, cardValue]
   );
+
+  // Create columns with reveal handlers
+  const columns = useMemo(
+    () => createPoolCardsColumns(revealedCards, toggleReveal),
+    [revealedCards]
+  );
+
+  // Setup TanStack Table
+  const table = useReactTable({
+    data: tableData,
+    columns,
+    state: {
+      sorting,
+      globalFilter: searchQuery,
+    },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setSearchQuery,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
 
   return (
     <div className="space-y-6">
@@ -83,70 +96,58 @@ export function PoolCardsTable({ cards, cardValue, isLoading }: PoolCardsTablePr
       <div className="border-2 rounded-xl overflow-hidden shadow-sm bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="border-b-2 bg-muted/30 hover:bg-muted/30 h-14">
-              <TableHead className="font-semibold text-base px-6">Card Code</TableHead>
-              <TableHead className="font-semibold text-base px-6">Status</TableHead>
-              <TableHead className="font-semibold text-base px-6">Balance</TableHead>
-              <TableHead className="font-semibold text-base px-6">Last Check</TableHead>
-              <TableHead className="font-semibold text-base px-6">Created</TableHead>
-              <TableHead className="text-right font-semibold text-base px-6">Actions</TableHead>
-            </TableRow>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className="border-b-2 bg-muted/30 hover:bg-muted/30 h-14">
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} className="font-semibold text-base px-6">
+                    {header.isPlaceholder ? null : (
+                      <div
+                        className={
+                          header.column.getCanSort()
+                            ? "cursor-pointer select-none flex items-center gap-2"
+                            : ""
+                        }
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {typeof header.column.columnDef.header === "function"
+                          ? header.column.columnDef.header(header.getContext())
+                          : header.column.columnDef.header}
+                        {{
+                          asc: " 🔼",
+                          desc: " 🔽",
+                        }[header.column.getIsSorted() as string] ?? null}
+                      </div>
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-base">
+                <TableCell colSpan={columns.length} className="text-center py-12 text-muted-foreground text-base">
                   Loading cards...
                 </TableCell>
               </TableRow>
-            ) : filteredCards?.length === 0 ? (
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="hover:bg-muted/50 transition-colors h-16">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="px-6">
+                      {typeof cell.column.columnDef.cell === "function"
+                        ? cell.column.columnDef.cell(cell.getContext())
+                        : cell.renderValue()}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-base">
+                <TableCell colSpan={columns.length} className="text-center py-12 text-muted-foreground text-base">
                   No cards found
                 </TableCell>
               </TableRow>
-            ) : (
-              filteredCards?.map((card) => (
-                <TableRow key={card.id} className="hover:bg-muted/50 transition-colors h-16">
-                  <TableCell className="font-mono font-medium px-6 text-base">
-                    {revealedCards.has(card.id) ? card.card_code : maskCardCode(card.card_code)}
-                  </TableCell>
-                  <TableCell className="px-6">
-                    <Badge variant={getStatusBadgeVariant(card.status || 'available')}>
-                      {card.status || 'available'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-semibold px-6 text-base">
-                    {card.current_balance 
-                      ? formatCurrency(card.current_balance)
-                      : formatCurrency(cardValue)
-                    }
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground px-6">
-                    {card.last_balance_check 
-                      ? format(new Date(card.last_balance_check), "MMM d, yyyy")
-                      : "Never"
-                    }
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground px-6">
-                    {format(new Date(card.created_at!), "MMM d, yyyy")}
-                  </TableCell>
-                  <TableCell className="text-right px-6">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleReveal(card.id)}
-                      className="hover:bg-muted h-10 w-10"
-                    >
-                      {revealedCards.has(card.id) ? (
-                        <EyeOff className="h-5 w-5" />
-                      ) : (
-                        <Eye className="h-5 w-5" />
-                      )}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
             )}
           </TableBody>
         </Table>
