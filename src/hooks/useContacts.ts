@@ -16,18 +16,21 @@ export function useContacts(filters?: ContactFilters) {
       let query = supabase
         .from("contacts")
         .select("*, contact_tags(*)")
-        .eq("client_id", currentClient.id)
-        .order("created_at", { ascending: false });
+        .eq("client_id", currentClient.id);
 
       // Apply filters
       if (filters?.search) {
         query = query.or(
-          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,company.ilike.%${filters.search}%`
+          `first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,company.ilike.%${filters.search}%,customer_code.ilike.%${filters.search}%`
         );
       }
 
       if (filters?.lifecycle_stage && filters.lifecycle_stage.length > 0) {
         query = query.in("lifecycle_stage", filters.lifecycle_stage);
+      }
+
+      if (filters?.lead_source && filters.lead_source.length > 0) {
+        query = query.in("lead_source", filters.lead_source);
       }
 
       if (filters?.has_email !== undefined) {
@@ -41,6 +44,27 @@ export function useContacts(filters?: ContactFilters) {
       if (filters?.do_not_contact !== undefined) {
         query = query.eq("do_not_contact", filters.do_not_contact);
       }
+
+      if (filters?.lead_score_min !== undefined) {
+        query = query.gte("lead_score", filters.lead_score_min);
+      }
+
+      if (filters?.lead_score_max !== undefined) {
+        query = query.lte("lead_score", filters.lead_score_max);
+      }
+
+      if (filters?.engagement_score_min !== undefined) {
+        query = query.gte("engagement_score", filters.engagement_score_min);
+      }
+
+      if (filters?.engagement_score_max !== undefined) {
+        query = query.lte("engagement_score", filters.engagement_score_max);
+      }
+
+      // Apply sorting
+      const sortBy = filters?.sortBy || "created_at";
+      const sortOrder = filters?.sortOrder || "desc";
+      query = query.order(sortBy, { ascending: sortOrder === "asc" });
 
       const { data, error } = await query;
 
