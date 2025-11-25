@@ -166,6 +166,20 @@ Deno.serve(async (req) => {
             continue;
           }
 
+          // Extract custom fields - everything that's not a standard field
+          const standardFields = [
+            'redemption_code', 'first_name', 'last_name', 
+            'email', 'phone', 'company', 'address1', 'address2', 
+            'city', 'state', 'zip', 'zip4'
+          ];
+          
+          const customFields: any = {};
+          for (const [key, value] of Object.entries(code)) {
+            if (!standardFields.includes(key) && value !== null && value !== undefined) {
+              customFields[key] = value;
+            }
+          }
+
           recipientsToInsert.push({
             audience_id: targetAudienceId,
             redemption_code: code.redemption_code.toUpperCase(),
@@ -174,8 +188,13 @@ Deno.serve(async (req) => {
             phone: code.phone || null,
             email: code.email?.toLowerCase() || null,
             company: code.company || null,
+            address1: code.address1 || null,
+            address2: code.address2 || null,
+            city: code.city || null,
+            state: code.state || null,
+            zip: code.zip || null,
             approval_status: 'pending',
-            custom_fields: code.custom_fields || {}
+            custom_fields: customFields
           });
         } catch (error) {
           errorCount++;

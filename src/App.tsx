@@ -37,8 +37,7 @@ import CallCenterDashboard from "./pages/CallCenterDashboard";
 import CallCenterRedemption from "./pages/CallCenterRedemption";
 import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
 import AITemplateEditor from "./pages/AITemplateEditor";
-import Contacts from "./pages/Contacts";
-import ContactDetail from "./pages/ContactDetail";
+// Contacts removed - using recipients table only
 import Activities from "./pages/Activities";
 import Tasks from "./pages/Tasks";
 import AdminGiftCardMarketplace from "./pages/AdminGiftCardMarketplace";
@@ -148,9 +147,7 @@ const App = () => (
                   <Route path="/call-center" element={<ProtectedRoute requiredPermissions={['calls.view', 'calls.manage']}><CallCenterDashboard /></ProtectedRoute>} />
                   <Route path="/call-center/redeem" element={<ProtectedRoute requiredPermissions={['calls.confirm_redemption']}><CallCenterRedemption /></ProtectedRoute>} />
                   
-                  {/* CRM */}
-                  <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
-                  <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetail /></ProtectedRoute>} />
+                  {/* CRM - Simplified (Contacts removed, using recipients table) */}
                   <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
                   <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
                   
