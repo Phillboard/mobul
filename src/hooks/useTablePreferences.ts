@@ -56,14 +56,20 @@ export function useTablePreferences(tableName: string) {
     mutationFn: async (newPreferences: Partial<TablePreferences>) => {
       if (!user?.id) throw new Error("No user");
 
+      const currentPrefs = preferences || {
+        visible_columns: DEFAULT_CONTACT_COLUMNS,
+        column_order: DEFAULT_CONTACT_COLUMNS,
+        column_widths: {},
+      };
+
       const { data, error } = await supabase
         .from("user_table_preferences")
         .upsert({
           user_id: user.id,
           table_name: tableName,
-          visible_columns: newPreferences.visible_columns || DEFAULT_CONTACT_COLUMNS,
-          column_order: newPreferences.column_order || DEFAULT_CONTACT_COLUMNS,
-          column_widths: newPreferences.column_widths || {},
+          visible_columns: newPreferences.visible_columns ?? currentPrefs.visible_columns,
+          column_order: newPreferences.column_order ?? currentPrefs.column_order,
+          column_widths: newPreferences.column_widths ?? currentPrefs.column_widths,
           updated_at: new Date().toISOString(),
         })
         .select()
@@ -72,7 +78,42 @@ export function useTablePreferences(tableName: string) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onMutate: async (newPreferences) => {
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: ["table-preferences", user?.id, tableName] });
+
+      // Snapshot previous value
+      const previousPreferences = queryClient.getQueryData<TablePreferences>(
+        ["table-preferences", user?.id, tableName]
+      );
+
+      // Optimistically update
+      const currentPrefs = preferences || {
+        visible_columns: DEFAULT_CONTACT_COLUMNS,
+        column_order: DEFAULT_CONTACT_COLUMNS,
+        column_widths: {},
+      };
+
+      queryClient.setQueryData(
+        ["table-preferences", user?.id, tableName],
+        {
+          ...currentPrefs,
+          ...newPreferences,
+        }
+      );
+
+      return { previousPreferences };
+    },
+    onError: (err, newPreferences, context) => {
+      // Rollback on error
+      if (context?.previousPreferences) {
+        queryClient.setQueryData(
+          ["table-preferences", user?.id, tableName],
+          context.previousPreferences
+        );
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["table-preferences", user?.id, tableName] });
     },
   });
