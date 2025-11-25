@@ -4,9 +4,13 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Mail, Users, FileText, Link as LinkIcon } from "lucide-react";
 import { format } from "date-fns";
+import { ValidationChecklist } from "./ValidationChecklist";
+import { useCampaignValidation } from "@/hooks/useCampaignValidation";
 
 interface SummaryStepProps {
   formData: any;
+  clientId: string;
+  recipientCount: number;
   onBack: () => void;
   onConfirm: () => void;
   isCreating?: boolean;
@@ -14,10 +18,13 @@ interface SummaryStepProps {
 
 export function SummaryStep({
   formData,
+  clientId,
+  recipientCount,
   onBack,
   onConfirm,
   isCreating,
 }: SummaryStepProps) {
+  const validation = useCampaignValidation(formData, clientId);
   const getSizeName = (size: string) => {
     const sizes: Record<string, string> = {
       "4x6": "4\" × 6\" Postcard",
@@ -36,11 +43,13 @@ export function SummaryStep({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold mb-2">Campaign Summary</h3>
-        <p className="text-sm text-muted-foreground">
-          Review your campaign details before creating
+        <h2 className="text-2xl font-bold">Review & Create</h2>
+        <p className="text-muted-foreground mt-2">
+          Review your campaign details and validation status
         </p>
       </div>
+
+      <ValidationChecklist checks={validation.checks} />
 
       <Card className="p-6 space-y-4">
         <div>
@@ -74,7 +83,7 @@ export function SummaryStep({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Audience:</span>
-              <span>{formData.audience_id ? "Selected" : "None"}</span>
+              <span>{recipientCount > 0 ? `${recipientCount} recipients` : "None"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Postage:</span>
@@ -169,8 +178,11 @@ export function SummaryStep({
         <Button variant="outline" onClick={onBack} disabled={isCreating}>
           Back
         </Button>
-        <Button onClick={onConfirm} disabled={isCreating}>
-          {isCreating ? "Creating..." : "Create Campaign"}
+        <Button 
+          onClick={onConfirm} 
+          disabled={isCreating || !validation.isValid}
+        >
+          {isCreating ? "Creating Campaign..." : "Create Campaign"}
         </Button>
       </div>
     </div>
