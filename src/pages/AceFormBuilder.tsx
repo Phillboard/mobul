@@ -21,9 +21,20 @@ export default function AceFormBuilder() {
   const { formId } = useParams();
   const navigate = useNavigate();
   const { currentClient } = useTenant();
-  const { data: existingForm } = useAceForm(formId || "");
+  const { data: existingForm, isLoading: isLoadingForm } = useAceForm(formId || "");
   const { createForm, updateForm } = useAceForms(currentClient?.id);
   const [showTemplates, setShowTemplates] = useState(!formId);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('AceFormBuilder Debug:', {
+      formId,
+      hasExistingForm: !!existingForm,
+      isLoadingForm,
+      showTemplates,
+      formName: existingForm?.name
+    });
+  }, [formId, existingForm, isLoadingForm, showTemplates]);
   const [showExport, setShowExport] = useState(false);
   const [showEmbed, setShowEmbed] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
@@ -47,9 +58,11 @@ export default function AceFormBuilder() {
 
   useEffect(() => {
     if (existingForm) {
+      console.log('Loading existing form data:', existingForm);
       setConfig(existingForm.form_config);
       setFormName(existingForm.name);
       setLastSaved(new Date(existingForm.updated_at || existingForm.created_at));
+      setShowTemplates(false); // Explicitly hide templates when form loads
     }
   }, [existingForm, setConfig]);
 
@@ -176,6 +189,20 @@ export default function AceFormBuilder() {
                 onCancel={() => navigate("/ace-forms")}
               />
             </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show loading state while fetching existing form
+  if (formId && isLoadingForm) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading form...</p>
           </div>
         </div>
       </Layout>
