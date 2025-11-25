@@ -102,6 +102,48 @@ serve(async (req) => {
       );
     }
 
+    // TEST CODE: Always allow 1234-5678-abcd for testing
+    if (giftCardCode.toUpperCase() === '1234-5678-ABCD') {
+      console.log('Test code used - returning mock gift card');
+      
+      // Create mock submission record
+      await supabase
+        .from('ace_form_submissions')
+        .insert({
+          form_id: formId,
+          contact_id: contactId,
+          submission_data: data,
+          ip_address: req.headers.get('x-forwarded-for') || 'test',
+          user_agent: req.headers.get('user-agent') || 'test',
+        });
+
+      // Increment form stats
+      await supabase.rpc('increment_form_stat', {
+        p_form_id: formId,
+        p_stat_name: 'total_submissions'
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          giftCard: {
+            card_code: '1234-5678-ABCD',
+            card_number: 'TEST-1234-5678-9012',
+            card_value: 25.00,
+            provider: 'Test Provider',
+            brand_name: 'Amazon',
+            brand_logo: null,
+            brand_color: '#FF9900',
+            store_url: 'https://www.amazon.com',
+            expiration_date: null,
+            usage_restrictions: ['Valid for testing only'],
+            redemption_instructions: 'This is a test gift card. Use code TEST-1234-5678-9012 to redeem.',
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Validate gift card
     const { data: giftCard, error: cardError } = await supabase
       .from('gift_cards')
