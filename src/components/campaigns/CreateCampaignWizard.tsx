@@ -194,6 +194,8 @@ export function CreateCampaignWizard({
         {currentStep === 4 && (
           <SummaryStep
             formData={formData}
+            clientId={clientId}
+            recipientCount={0}
             onBack={handleBack}
             onConfirm={handleClose}
           />

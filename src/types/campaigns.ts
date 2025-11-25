@@ -100,28 +100,35 @@ export type CampaignPrototype = Tables<'campaign_prototypes'>;
  * Shape of data in campaign creation wizard
  */
 export interface CampaignFormData {
-  // Step 1: Details
+  // Step 1: Setup
   name: string;
   size: MailSize;
-  template_id?: string;
-  mail_date?: string;
-  postage?: PostageClass;
-  vendor?: string;
+  template_id?: string | null;
   
-  // Step 2: PURL Settings
+  // Step 2: Audience
+  audience_id?: string;
+  
+  // Step 3: Tracking & Rewards
+  enableCallTracking?: boolean;
+  trackedNumberId?: string;
   lp_mode?: LandingPageMode;
   landing_page_id?: string;
   base_lp_url?: string;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
+  condition1PoolId?: string;
+  condition1SmsTemplate?: string;
   
-  // Step 3: Conditions
+  // Step 4: Delivery
+  postage?: PostageClass;
+  mail_date_mode?: 'asap' | 'scheduled';
+  mail_date?: Date | null;
+  vendor?: string;
+  
+  // Legacy fields for conditions
   conditions?: Partial<CampaignCondition>[];
   reward_configs?: Partial<CampaignRewardConfig>[];
-  
-  // Step 4: Audience (set when launching)
-  audience_id?: string;
 }
 
 /**
