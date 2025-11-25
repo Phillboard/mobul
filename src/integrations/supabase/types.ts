@@ -1211,6 +1211,228 @@ export type Database = {
           },
         ]
       }
+      contact_list_members: {
+        Row: {
+          added_at: string | null
+          added_by_user_id: string | null
+          contact_id: string
+          id: string
+          list_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          added_by_user_id?: string | null
+          contact_id: string
+          id?: string
+          list_id: string
+        }
+        Update: {
+          added_at?: string | null
+          added_by_user_id?: string | null
+          contact_id?: string
+          id?: string
+          list_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_list_members_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_list_members_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "contact_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_lists: {
+        Row: {
+          client_id: string
+          contact_count: number | null
+          created_at: string | null
+          created_by_user_id: string | null
+          description: string | null
+          filter_rules: Json | null
+          id: string
+          last_sync_at: string | null
+          list_type: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          contact_count?: number | null
+          created_at?: string | null
+          created_by_user_id?: string | null
+          description?: string | null
+          filter_rules?: Json | null
+          id?: string
+          last_sync_at?: string | null
+          list_type?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          contact_count?: number | null
+          created_at?: string | null
+          created_by_user_id?: string | null
+          description?: string | null
+          filter_rules?: Json | null
+          id?: string
+          last_sync_at?: string | null
+          list_type?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_lists_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_tags: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          created_by_user_id: string | null
+          id: string
+          tag: string
+          tag_category: string | null
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+          tag: string
+          tag_category?: string | null
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          created_by_user_id?: string | null
+          id?: string
+          tag?: string
+          tag_category?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_tags_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          address: string | null
+          address2: string | null
+          city: string | null
+          client_id: string
+          company: string | null
+          country: string | null
+          created_at: string | null
+          created_by_user_id: string | null
+          custom_fields: Json | null
+          do_not_contact: boolean | null
+          email: string | null
+          email_opt_out: boolean | null
+          first_name: string | null
+          id: string
+          job_title: string | null
+          last_activity_date: string | null
+          last_name: string | null
+          lead_score: number | null
+          lead_source: string | null
+          lifecycle_stage: string | null
+          mobile_phone: string | null
+          notes: string | null
+          phone: string | null
+          sms_opt_out: boolean | null
+          state: string | null
+          updated_at: string | null
+          zip: string | null
+        }
+        Insert: {
+          address?: string | null
+          address2?: string | null
+          city?: string | null
+          client_id: string
+          company?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by_user_id?: string | null
+          custom_fields?: Json | null
+          do_not_contact?: boolean | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          first_name?: string | null
+          id?: string
+          job_title?: string | null
+          last_activity_date?: string | null
+          last_name?: string | null
+          lead_score?: number | null
+          lead_source?: string | null
+          lifecycle_stage?: string | null
+          mobile_phone?: string | null
+          notes?: string | null
+          phone?: string | null
+          sms_opt_out?: boolean | null
+          state?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address?: string | null
+          address2?: string | null
+          city?: string | null
+          client_id?: string
+          company?: string | null
+          country?: string | null
+          created_at?: string | null
+          created_by_user_id?: string | null
+          custom_fields?: Json | null
+          do_not_contact?: boolean | null
+          email?: string | null
+          email_opt_out?: boolean | null
+          first_name?: string | null
+          id?: string
+          job_title?: string | null
+          last_activity_date?: string | null
+          last_name?: string | null
+          lead_score?: number | null
+          lead_source?: string | null
+          lifecycle_stage?: string | null
+          mobile_phone?: string | null
+          notes?: string | null
+          phone?: string | null
+          sms_opt_out?: boolean | null
+          state?: string | null
+          updated_at?: string | null
+          zip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_events: {
         Row: {
           call_session_id: string | null
@@ -3085,6 +3307,7 @@ export type Database = {
           audience_id: string
           city: string | null
           company: string | null
+          contact_id: string | null
           created_at: string | null
           custom_fields: Json | null
           delivery_status: string | null
@@ -3119,6 +3342,7 @@ export type Database = {
           audience_id: string
           city?: string | null
           company?: string | null
+          contact_id?: string | null
           created_at?: string | null
           custom_fields?: Json | null
           delivery_status?: string | null
@@ -3153,6 +3377,7 @@ export type Database = {
           audience_id?: string
           city?: string | null
           company?: string | null
+          contact_id?: string | null
           created_at?: string | null
           custom_fields?: Json | null
           delivery_status?: string | null
@@ -3190,6 +3415,13 @@ export type Database = {
             columns: ["audience_id"]
             isOneToOne: false
             referencedRelation: "audiences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipients_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
           {
