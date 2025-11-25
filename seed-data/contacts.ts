@@ -5,7 +5,9 @@ import {
     generateEmail,
     generatePhone,
     generateAddress,
-    generateCompanyName,
+    generateJobTitle,
+    generateNote,
+    generateTags,
     randomElement,
     randomInt,
     randomBoolean,
@@ -13,84 +15,75 @@ import {
 } from './helpers';
 
 export async function seedContactsAndCompanies(clients: any[]) {
-    console.log('👥 Seeding contacts and companies...');
+    console.log('👥 Seeding CRM contacts...');
 
-    const lifecycleStages = ['subscriber', 'lead', 'mql', 'sql', 'opportunity', 'customer', 'evangelist'];
-    const contactSources = ['website', 'referral', 'cold_call', 'event', 'social_media', 'email_campaign'];
+    // Realistic lifecycle distribution
+    const lifecycleDistribution = [
+        { stage: 'lead', weight: 25 },           // 25% new leads
+        { stage: 'mql', weight: 15 },            // 15% marketing qualified
+        { stage: 'sql', weight: 10 },            // 10% sales qualified
+        { stage: 'opportunity', weight: 15 },    // 15% opportunities
+        { stage: 'customer', weight: 30 },       // 30% customers
+        { stage: 'evangelist', weight: 5 },      // 5% evangelists
+    ];
+
+    const contactSources = [
+        'website', 'referral', 'direct_mail', 'event', 'social_media', 
+        'cold_call', 'email_campaign', 'partner', 'trade_show', 'organic_search'
+    ];
 
     let totalContacts = 0;
-    let totalCompanies = 0;
 
     for (const client of clients) {
-        // Create 5-8 companies per client
-        const numCompanies = randomInt(5, 8);
-        const companies = [];
-
-        for (let i = 0; i < numCompanies; i++) {
-            const companyName = generateCompanyName();
-            const address = generateAddress();
-
-            const company = {
-                id: generateId(),
-                client_id: client.id,
-                company_name: companyName,
-                industry: randomElement(['technology', 'healthcare', 'finance', 'retail', 'manufacturing']),
-                website: `www.${companyName.toLowerCase().replace(/\s+/g, '')}.com`,
-                phone: generatePhone(),
-                address: address.street,
-                city: address.city,
-                state: address.state,
-                zip: address.zip,
-                employee_count: randomElement([10, 25, 50, 100, 250, 500, 1000]),
-                annual_revenue: randomElement([100000, 500000, 1000000, 5000000, 10000000]),
-                created_at: pastDate(150),
-            };
-
-            const { error: companyError } = await supabase
-                .from('companies')
-                .insert(company);
-
-            if (companyError) {
-                console.error('Error creating company:', companyError);
-            } else {
-                companies.push(company);
-                totalCompanies++;
-            }
-        }
-
-        // Create 20-30 contacts per client
-        const numContacts = randomInt(20, 30);
+        // Create 50-75 contacts per client
+        const numContacts = randomInt(50, 75);
+        console.log(`Creating ${numContacts} contacts for ${client.name}...`);
 
         for (let i = 0; i < numContacts; i++) {
+            // Select lifecycle stage based on realistic distribution
+            const rand = randomInt(1, 100);
+            let cumulativeWeight = 0;
+            let selectedStage = 'lead';
+            
+            for (const { stage, weight } of lifecycleDistribution) {
+                cumulativeWeight += weight;
+                if (rand <= cumulativeWeight) {
+                    selectedStage = stage;
+                    break;
+                }
+            }
+
             const person = generatePersonName();
             const address = generateAddress();
-            const hasCompany = randomBoolean(0.6); // 60% have a company
-            const company = hasCompany && companies.length > 0 ? randomElement(companies) : null;
+            const leadScore = selectedStage === 'lead' ? randomInt(0, 40) :
+                            selectedStage === 'mql' ? randomInt(30, 60) :
+                            selectedStage === 'sql' ? randomInt(50, 80) :
+                            selectedStage === 'opportunity' ? randomInt(60, 90) :
+                            selectedStage === 'customer' ? randomInt(70, 100) :
+                            randomInt(85, 100); // evangelist
 
             const contact = {
                 id: generateId(),
                 client_id: client.id,
-                company_id: company?.id || null,
                 first_name: person.firstName,
                 last_name: person.lastName,
                 email: generateEmail(person.firstName, person.lastName),
                 phone: generatePhone(),
-                mobile_phone: randomBoolean(0.7) ? generatePhone() : null,
-                job_title: randomElement([
-                    'CEO', 'President', 'VP of Sales', 'Marketing Director', 'Operations Manager',
-                    'Owner', 'General Manager', 'Sales Manager', 'Account Executive', 'Director',
-                ]),
+                mobile_phone: randomBoolean(0.8) ? generatePhone() : null, // 80% have mobile
+                job_title: generateJobTitle(client.industry),
                 address: address.street,
                 city: address.city,
                 state: address.state,
                 zip: address.zip,
-                lifecycle_stage: randomElement(lifecycleStages),
+                lifecycle_stage: selectedStage,
                 lead_source: randomElement(contactSources),
-                lead_score: randomInt(0, 100),
-                do_not_contact: randomBoolean(0.05), // 5% do not contact
-                email_opt_out: randomBoolean(0.1), // 10% opted out
-                created_at: pastDate(120),
-                last_activity_date: randomBoolean(0.8) ? pastDate(30) : null,
+                lead_score: leadScore,
+                do_not_contact: randomBoolean(0.02), // 2% do not contact
+                email_opt_out: randomBoolean(0.05), // 5% opted out
+                created_at: pastDate(selectedStage === 'customer' ? 365 : 180),
+                last_activity_date: ['customer', 'opportunity', 'sql', 'evangelist'].includes(selectedStage) 
+                    ? pastDate(30) 
+                    : randomBoolean(0.5) ? pastDate(60) : null,
             };
 
             const { error: contactError } = await supabase
@@ -103,37 +96,22 @@ export async function seedContactsAndCompanies(clients: any[]) {
                 totalContacts++;
             }
 
-            // Add notes for some contacts
-            if (randomBoolean(0.3)) {
+            // Add notes for engaged contacts (40% of all contacts)
+            if (randomBoolean(0.4)) {
                 const note = {
                     id: generateId(),
                     contact_id: contact.id,
-                    note_text: randomElement([
-                        'Interested in our premium package',
-                        'Follow up next week',
-                        'Requested pricing information',
-                        'Very responsive, good lead',
-                        'Budget concerns, need to follow up in Q2',
-                        'Referred by existing customer',
-                        'Attended webinar, showed high interest',
-                    ]),
-                    created_at: pastDate(60),
+                    note_text: generateNote(selectedStage),
+                    created_at: pastDate(30),
                 };
 
                 await supabase.from('contact_notes').insert(note);
             }
 
-            // Add tags for some contacts
-            if (randomBoolean(0.4)) {
-                const tags = randomElement([
-                    ['hot-lead'],
-                    ['vip'],
-                    ['needs-follow-up'],
-                    ['qualified'],
-                    ['decision-maker'],
-                    ['budget-approved'],
-                ]);
-
+            // Add tags based on lifecycle stage (60% of contacts get tags)
+            if (randomBoolean(0.6)) {
+                const tags = generateTags(selectedStage);
+                
                 for (const tag of tags) {
                     await supabase.from('contact_tags').insert({
                         id: generateId(),
@@ -146,6 +124,6 @@ export async function seedContactsAndCompanies(clients: any[]) {
         }
     }
 
-    console.log(`✅ Created ${totalContacts} contacts and ${totalCompanies} companies`);
-    return { totalContacts, totalCompanies };
+    console.log(`✅ Created ${totalContacts} CRM contacts (no companies or deals)`);
+    return { totalContacts };
 }

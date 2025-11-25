@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Mail, FileText, Users, Building2, Gift, Headphones, Phone,
-  BarChart3, Code, Settings as SettingsIcon, ShoppingCart, Globe, Handshake,
+  LayoutDashboard, Mail, FileText, Users, Gift, Phone,
+  BarChart3, Code, Settings as SettingsIcon, ShoppingCart, Globe,
   Activity, ListTodo, Workflow, ChevronRight, ArrowLeft, FormInput, AlertTriangle,
   Gauge, Bug, HelpCircle, BookOpen
 } from "lucide-react";
@@ -61,8 +61,6 @@ const navigationGroups: NavGroup[] = [
     collapsible: true,
     items: [
       { name: "Contacts", href: "/contacts", icon: Users, permissions: ['audiences.view', 'contacts.view'], keywords: ["people", "audiences", "lists"], description: "Manage contacts and audiences" },
-      { name: "Companies", href: "/companies", icon: Building2, permissions: ['audiences.view', 'companies.view'], keywords: ["businesses"], description: "Manage companies" },
-      { name: "Deals", href: "/deals", icon: Handshake, permissions: ['audiences.view', 'deals.view'], keywords: ["sales"], description: "Track deals" },
       { name: "Activities", href: "/activities", icon: Activity, permissions: ['audiences.view', 'activities.view'], keywords: ["timeline"], description: "Activity timeline" },
       { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['audiences.view', 'tasks.view'], keywords: ["todos"], description: "Manage tasks" },
     ]
@@ -82,7 +80,6 @@ const navigationGroups: NavGroup[] = [
     roles: ['call_center', 'admin'],
     items: [
       { name: "Redeem Cards", href: "/call-center/redeem", icon: Gift, roles: ['call_center', 'admin'], permissions: ['calls.confirm_redemption'], keywords: ["redemption", "provision"], description: "Redeem gift cards" },
-      { name: "Agent Dashboard", href: "/agent-dashboard", icon: Headphones, roles: ['call_center', 'admin'], permissions: ['calls.agent_dashboard', 'calls.confirm_redemption'], keywords: ["calls"], description: "Handle calls" },
       { name: "Call Analytics", href: "/call-center", icon: Phone, roles: ['call_center', 'admin'], permissions: ['calls.view', 'calls.manage'], keywords: ["reports"], description: "Call metrics" },
     ]
   },
@@ -108,7 +105,7 @@ const navigationGroups: NavGroup[] = [
     collapsible: true,
     roles: ['agency_owner'],
     items: [
-      { name: "Client Management", href: "/agency-management", icon: Building2, roles: ['agency_owner'], permissions: ['clients.view', 'clients.manage'], keywords: ["clients"], description: "Manage clients" },
+      { name: "Client Management", href: "/agency-management", icon: Users, roles: ['agency_owner'], permissions: ['clients.view', 'clients.manage'], keywords: ["clients"], description: "Manage clients" },
     ]
   },
 ];
