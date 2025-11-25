@@ -1,4 +1,4 @@
-import { LucideIcon, User, Settings, Phone, MessageSquare, Palette, Database, Zap, Code, Users, Shield, CreditCard, Building2 } from "lucide-react";
+import { LucideIcon, User, Settings, Phone, MessageSquare, Palette, Database, Zap, Code, Users, Shield, CreditCard, Building2, Mail } from "lucide-react";
 import { AppRole } from "./roleUtils";
 
 export interface TabConfig {
@@ -82,6 +82,16 @@ export const settingsTabs: TabConfig[] = [
     permissions: ['settings.integrations'],
     requiresClient: true,
     description: 'Automation and webhooks',
+    group: 'integrations'
+  },
+  {
+    id: 'mail-provider',
+    label: 'Mail Provider',
+    icon: Mail,
+    roles: ['admin', 'agency_owner', 'company_owner'],
+    permissions: ['settings.edit'],
+    requiresClient: false,
+    description: 'Configure direct mail fulfillment provider',
     group: 'integrations'
   },
   {
