@@ -3076,16 +3076,17 @@ export type Database = {
       }
       recipients: {
         Row: {
-          address1: string
+          address1: string | null
           address2: string | null
           approval_status: string | null
           approved_at: string | null
           approved_by_user_id: string | null
           approved_call_session_id: string | null
           audience_id: string
-          city: string
+          city: string | null
           company: string | null
           created_at: string | null
+          custom_fields: Json | null
           delivery_status: string | null
           email: string | null
           first_name: string | null
@@ -3099,26 +3100,27 @@ export type Database = {
           redemption_ip: string | null
           redemption_user_agent: string | null
           rejection_reason: string | null
-          state: string
+          state: string | null
           token: string
           validation_details_json: Json | null
           validation_status:
             | Database["public"]["Enums"]["validation_status"]
             | null
-          zip: string
+          zip: string | null
           zip4: string | null
         }
         Insert: {
-          address1: string
+          address1?: string | null
           address2?: string | null
           approval_status?: string | null
           approved_at?: string | null
           approved_by_user_id?: string | null
           approved_call_session_id?: string | null
           audience_id: string
-          city: string
+          city?: string | null
           company?: string | null
           created_at?: string | null
+          custom_fields?: Json | null
           delivery_status?: string | null
           email?: string | null
           first_name?: string | null
@@ -3132,26 +3134,27 @@ export type Database = {
           redemption_ip?: string | null
           redemption_user_agent?: string | null
           rejection_reason?: string | null
-          state: string
+          state?: string | null
           token: string
           validation_details_json?: Json | null
           validation_status?:
             | Database["public"]["Enums"]["validation_status"]
             | null
-          zip: string
+          zip?: string | null
           zip4?: string | null
         }
         Update: {
-          address1?: string
+          address1?: string | null
           address2?: string | null
           approval_status?: string | null
           approved_at?: string | null
           approved_by_user_id?: string | null
           approved_call_session_id?: string | null
           audience_id?: string
-          city?: string
+          city?: string | null
           company?: string | null
           created_at?: string | null
+          custom_fields?: Json | null
           delivery_status?: string | null
           email?: string | null
           first_name?: string | null
@@ -3165,13 +3168,13 @@ export type Database = {
           redemption_ip?: string | null
           redemption_user_agent?: string | null
           rejection_reason?: string | null
-          state?: string
+          state?: string | null
           token?: string
           validation_details_json?: Json | null
           validation_status?:
             | Database["public"]["Enums"]["validation_status"]
             | null
-          zip?: string
+          zip?: string | null
           zip4?: string | null
         }
         Relationships: [

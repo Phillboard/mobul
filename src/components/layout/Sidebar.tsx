@@ -60,7 +60,6 @@ const navigationGroups: NavGroup[] = [
     label: "CRM",
     collapsible: true,
     items: [
-      { name: "Contacts", href: "/contacts", icon: Users, permissions: ['audiences.view', 'contacts.view'], keywords: ["people", "audiences", "lists"], description: "Manage contacts and audiences" },
       { name: "Activities", href: "/activities", icon: Activity, permissions: ['audiences.view', 'activities.view'], keywords: ["timeline"], description: "Activity timeline" },
       { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['audiences.view', 'tasks.view'], keywords: ["todos"], description: "Manage tasks" },
     ]
