@@ -455,8 +455,12 @@ Deno.serve(async (req) => {
           });
         }
 
-        const { data: createdContacts } = await supabase.from('contacts').insert(contacts).select();
-        if (createdContacts) {
+        const { data: createdContacts, error: contactsError } = await supabase.from('contacts').insert(contacts).select();
+        if (contactsError) {
+          console.error('❌ Error creating contacts:', contactsError);
+          continue;
+        }
+        if (createdContacts && createdContacts.length > 0) {
           contactsByClient.set(client.id, createdContacts);
           result.contactsCreated += createdContacts.length;
 
@@ -465,7 +469,7 @@ Deno.serve(async (req) => {
           const lists: any[] = [];
           
           for (const listName of listNames) {
-            const { data: list } = await supabase.from('contact_lists').insert({
+            const { data: list, error: listError } = await supabase.from('contact_lists').insert({
               client_id: client.id,
               name: listName,
               list_type: 'static',
@@ -473,6 +477,11 @@ Deno.serve(async (req) => {
               is_simulated: markAsSimulated,
               simulation_batch_id: batchId,
             }).select().single();
+
+            if (listError) {
+              console.error('❌ Error creating list:', listError);
+              continue;
+            }
 
             if (list) {
               lists.push(list);
@@ -538,8 +547,10 @@ Deno.serve(async (req) => {
             });
           }
 
-          const { data: createdTemplates } = await supabase.from('templates').insert(templates).select();
-          if (createdTemplates) {
+          const { data: createdTemplates, error: templatesError } = await supabase.from('templates').insert(templates).select();
+          if (templatesError) {
+            console.error('❌ Error creating templates:', templatesError);
+          } else if (createdTemplates && createdTemplates.length > 0) {
             templatesByClient.set(client.id, createdTemplates);
             result.templatesCreated += createdTemplates.length;
           }
@@ -562,8 +573,10 @@ Deno.serve(async (req) => {
             });
           }
 
-          const { data: createdLPs } = await supabase.from('landing_pages').insert(landingPages).select();
-          if (createdLPs) {
+          const { data: createdLPs, error: lpsError } = await supabase.from('landing_pages').insert(landingPages).select();
+          if (lpsError) {
+            console.error('❌ Error creating landing pages:', lpsError);
+          } else if (createdLPs && createdLPs.length > 0) {
             landingPagesByClient.set(client.id, createdLPs);
             result.landingPagesCreated += createdLPs.length;
           }
@@ -594,7 +607,7 @@ Deno.serve(async (req) => {
             .replace('{quarter}', quarter.toString());
 
           // Create audience first
-          const { data: audience } = await supabase.from('audiences').insert({
+          const { data: audience, error: audienceError } = await supabase.from('audiences').insert({
             client_id: client.id,
             name: `${campaignName} Audience`,
             source: 'csv',
@@ -605,10 +618,14 @@ Deno.serve(async (req) => {
             simulation_batch_id: batchId,
           }).select().single();
 
+          if (audienceError) {
+            console.error('❌ Error creating audience:', audienceError);
+            continue;
+          }
           if (!audience) continue;
 
           const statusWeights = ['draft', 'ready', 'scheduled', 'in_production', 'completed', 'completed', 'completed'];
-          const { data: campaign } = await supabase.from('campaigns').insert({
+          const { data: campaign, error: campaignError } = await supabase.from('campaigns').insert({
             client_id: client.id,
             name: campaignName,
             audience_id: audience.id,
@@ -623,6 +640,10 @@ Deno.serve(async (req) => {
             simulation_batch_id: batchId,
           }).select().single();
 
+          if (campaignError) {
+            console.error('❌ Error creating campaign:', campaignError);
+            continue;
+          }
           if (!campaign) continue;
           
           if (!campaignsByClient.has(client.id)) {
@@ -712,8 +733,12 @@ Deno.serve(async (req) => {
             });
           }
 
-          const { data: createdRecipients } = await supabase.from('recipients').insert(recipients).select();
-          if (createdRecipients) {
+          const { data: createdRecipients, error: recipientsError } = await supabase.from('recipients').insert(recipients).select();
+          if (recipientsError) {
+            console.error('❌ Error creating recipients:', recipientsError);
+            continue;
+          }
+          if (createdRecipients && createdRecipients.length > 0) {
             recipientsByCampaign.set(campaign.id, createdRecipients);
             result.recipientsCreated += createdRecipients.length;
 
@@ -736,7 +761,7 @@ Deno.serve(async (req) => {
           const numbersCount = applyRandomness(baseNumbers, randomnessFactor);
 
           for (let i = 0; i < numbersCount; i++) {
-            const { data: trackedNumber } = await supabase.from('tracked_phone_numbers').insert({
+            const { data: trackedNumber, error: numberError } = await supabase.from('tracked_phone_numbers').insert({
               campaign_id: campaign.id,
               phone_number: `+1480${Math.floor(Math.random() * 9000000 + 1000000)}`,
               forward_to_number: `+1602${Math.floor(Math.random() * 9000000 + 1000000)}`,
@@ -744,6 +769,11 @@ Deno.serve(async (req) => {
               is_simulated: markAsSimulated,
               simulation_batch_id: batchId,
             }).select().single();
+
+            if (numberError) {
+              console.error('❌ Error creating tracked number:', numberError);
+              continue;
+            }
 
             if (trackedNumber) {
               if (!trackedNumbersByCampaign.has(campaign.id)) {
