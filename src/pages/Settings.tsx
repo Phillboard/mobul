@@ -9,6 +9,7 @@ import { ClientBrandingEditor } from "@/components/settings/ClientBrandingEditor
 import { CRMIntegrationTab } from "@/components/settings/CRMIntegrationTab";
 import { ZapierIntegrationTab } from "@/components/settings/ZapierIntegrationTab";
 import { APISettings } from "@/components/settings/APISettings";
+import { MailProviderSettings } from "@/components/settings/MailProviderSettings";
 import { InviteUserDialog } from "@/components/settings/InviteUserDialog";
 import { PendingInvitations } from "@/components/settings/PendingInvitations";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
@@ -116,6 +117,8 @@ export default function Settings() {
         return <ZapierIntegrationTab />;
       case "api":
         return <APISettings />;
+      case "mail-provider":
+        return <MailProviderSettings />;
       case "users":
         return (
           <div className="space-y-6">
