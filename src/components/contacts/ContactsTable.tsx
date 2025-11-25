@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useCallback } from "react";
+import { useMemo, useEffect, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -31,7 +31,7 @@ export function ContactsTable({ filters }: ContactsTableProps) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
-  // Initialize column visibility from preferences (only once)
+  // Initialize column visibility from preferences (only once on mount or pref change from DB)
   useEffect(() => {
     const allColumns = [
       "customer_code", "name", "email", "phone", "mobile_phone", "company",
@@ -46,6 +46,23 @@ export function ContactsTable({ filters }: ContactsTableProps) {
     
     setColumnVisibility(visibilityState);
   }, [preferences.visible_columns]);
+
+  // Debounce persistence to avoid rapid DB writes
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const visibleColumns = Object.entries(columnVisibility)
+        .filter(([_, isVisible]) => isVisible)
+        .map(([columnId]) => columnId);
+      
+      // Only persist if we have columns and they differ from current preferences
+      if (visibleColumns.length > 0 && 
+          JSON.stringify(visibleColumns.sort()) !== JSON.stringify(preferences.visible_columns.sort())) {
+        updatePreferences({ visible_columns: visibleColumns });
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(handler);
+  }, [columnVisibility, updatePreferences, preferences.visible_columns]);
 
   const columns = useMemo(() => createColumns(() => {}), []);
 
@@ -64,18 +81,6 @@ export function ContactsTable({ filters }: ContactsTableProps) {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
-
-  // Handle column visibility changes with debouncing
-  const handleColumnVisibilityChange = useCallback((columnId: string, isVisible: boolean) => {
-    // Get current visibility from the columnVisibility state
-    const visibleColumns = Object.entries(columnVisibility)
-      .filter(([id, visible]) => id === columnId ? isVisible : visible)
-      .map(([id]) => id);
-    
-    if (visibleColumns.length > 0) {
-      updatePreferences({ visible_columns: visibleColumns });
-    }
-  }, [columnVisibility, updatePreferences]);
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedIds = selectedRows.map(row => row.original.id);
@@ -101,7 +106,7 @@ export function ContactsTable({ filters }: ContactsTableProps) {
           {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
           {selectedIds.length > 0 && ` • ${selectedIds.length} selected`}
         </div>
-        <ColumnSelector table={table} onVisibilityChange={handleColumnVisibilityChange} />
+        <ColumnSelector table={table} />
       </div>
 
       {selectedIds.length > 0 && (
