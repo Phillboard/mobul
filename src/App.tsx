@@ -34,17 +34,13 @@ import GenerateFavicon from "./pages/GenerateFavicon";
 import UserManagement from "./pages/UserManagement";
 import AcceptInvite from "./pages/AcceptInvite";
 import LandingPages from "./pages/LandingPages";
-import SimpleLandingPageEditor from "./pages/SimpleLandingPageEditor";
 import GiftCardReveal from "./pages/GiftCardReveal";
 import EmbedGiftCard from "./pages/EmbedGiftCard";
 import AgencyManagement from "./pages/AgencyManagement";
 import CallCenterDashboard from "./pages/CallCenterDashboard";
 import CallCenterRedemption from "./pages/CallCenterRedemption";
 import ZapierTemplates from "./pages/ZapierTemplates";
-import AIGeneratedLandingPage from "./pages/AIGeneratedLandingPage";
-
 import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
-import AILandingPageEditor from "./pages/AILandingPageEditor";
 import AITemplateEditor from "./pages/AITemplateEditor";
 import Contacts from "./pages/Contacts";
 import ContactDetail from "./pages/ContactDetail";
@@ -73,7 +69,9 @@ import TermsOfService from "./pages/TermsOfService";
 import { CookieConsent } from "./components/CookieConsent";
 import Documentation from "./pages/Documentation";
 import AdminDocumentation from "./pages/AdminDocumentation";
-
+import Dashboard from "./pages/Dashboard";
+import { PlatformDashboard } from "./pages/PlatformDashboard";
+import EnrichData from "./pages/EnrichData";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -104,6 +102,79 @@ const App = () => (
                 <DrPhillipChat />
                 <CookieConsent />
                 <Routes>
+                  <Route path="/accept-invite" element={<AcceptInvite />} />
+                  <Route path="/c/:campaignId/:token" element={<PURLLandingPage />} />
+                  <Route path="/embed/gift-card" element={<EmbedGiftCard />} />
+                  <Route path="/embed/gift-card/:campaignId" element={<EmbedGiftCard />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/f/:formSlug" element={<AceFormPublic />} />
+                  <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/platform" element={<ProtectedRoute requiredPermissions={['admin']}><PlatformDashboard /></ProtectedRoute>} />
+                  <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
+                  <Route path="/campaigns/:id" element={<ProtectedRoute><CampaignDetail /></ProtectedRoute>} />
+                  <Route path="/audiences/:id" element={<ProtectedRoute><AudienceDetail /></ProtectedRoute>} />
+                  <Route path="/recipients/:id" element={<ProtectedRoute><RecipientDetail /></ProtectedRoute>} />
+                  <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
+                  <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                  <Route path="/analytics/campaigns/:id" element={<ProtectedRoute><CampaignAnalytics /></ProtectedRoute>} />
+                  <Route path="/api" element={<ProtectedRoute><API /></ProtectedRoute>} />
+                  <Route path="/api-docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
+                  <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
+                  <Route path="/gift-cards/purchase" element={<ProtectedRoute><PurchaseGiftCards /></ProtectedRoute>} />
+                  <Route path="/gift-cards/marketplace" element={<ProtectedRoute requiredPermissions={['admin']}><AdminGiftCardMarketplace /></ProtectedRoute>} />
+                  <Route path="/agent-dashboard" element={<ProtectedRoute requiredPermissions={['calls.view', 'calls.manage']}><AgentCallDashboard /></ProtectedRoute>} />
+                  <Route path="/call-center" element={<ProtectedRoute requiredPermissions={['calls.view', 'calls.manage']}><CallCenterDashboard /></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                  <Route path="/user-management" element={<ProtectedRoute requiredPermissions={['admin', 'users.manage']}><UserManagement /></ProtectedRoute>} />
+                  <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
+                  <Route path="/landing-pages/new/visual-editor" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
+                  <Route path="/landing-pages/:id/visual-editor" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
+                  <Route path="/landing-pages/:id/edit-grapesjs" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
+                  <Route path="/templates/:id/ai-editor" element={<ProtectedRoute><AITemplateEditor /></ProtectedRoute>} />
+                  <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
+                  <Route path="/call-center/redeem" element={<ProtectedRoute requiredPermissions={['calls.confirm_redemption']}><CallCenterRedemption /></ProtectedRoute>} />
+                  <Route path="/generate-favicon" element={<ProtectedRoute><GenerateFavicon /></ProtectedRoute>} />
+                  <Route path="/agencies" element={<ProtectedRoute requiredPermissions={['admin']}><AgencyManagement /></ProtectedRoute>} />
+                  <Route path="/prototype/:id" element={<ProtectedRoute><CampaignPrototype /></ProtectedRoute>} />
+                  <Route path="/template-builder/:id" element={<ProtectedRoute><GrapesJSTemplateEditor /></ProtectedRoute>} />
+                  <Route path="/zapier" element={<ProtectedRoute><ZapierTemplates /></ProtectedRoute>} />
+                  <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+                  <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetail /></ProtectedRoute>} />
+                  <Route path="/companies" element={<ProtectedRoute><Companies /></ProtectedRoute>} />
+                  <Route path="/companies/:id" element={<ProtectedRoute><CompanyDetail /></ProtectedRoute>} />
+                  <Route path="/deals" element={<ProtectedRoute><Deals /></ProtectedRoute>} />
+                  <Route path="/deals/:id" element={<ProtectedRoute><DealDetail /></ProtectedRoute>} />
+                  <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
+                  <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+                  <Route path="/webinar" element={<ProtectedRoute><Webinar /></ProtectedRoute>} />
+                  <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
+                  <Route path="/ace-forms/:id/builder" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
+                  <Route path="/ace-forms/:id/analytics" element={<ProtectedRoute><AceFormAnalytics /></ProtectedRoute>} />
+                  <Route path="/ace-forms/docs" element={<ProtectedRoute><AceFormsDocumentation /></ProtectedRoute>} />
+                  <Route path="/admin/audit-log" element={<ProtectedRoute requiredPermissions={['admin']}><AdminAuditLog /></ProtectedRoute>} />
+                  <Route path="/monitoring/performance" element={<ProtectedRoute requiredPermissions={['admin']}><PerformanceMonitoring /></ProtectedRoute>} />
+                  <Route path="/monitoring/errors" element={<ProtectedRoute requiredPermissions={['admin']}><ErrorTracking /></ProtectedRoute>} />
+                  <Route path="/monitoring/alerts" element={<ProtectedRoute requiredPermissions={['admin']}><SystemAlerts /></ProtectedRoute>} />
+                  <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
+                  <Route path="/beta" element={<ProtectedRoute><BetaTesting /></ProtectedRoute>} />
+                  <Route path="/launch" element={<ProtectedRoute><LaunchChecklist /></ProtectedRoute>} />
+                  <Route path="/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
+                  <Route path="/docs/:category" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
+                  <Route path="/docs/:category/:slug" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
+                  <Route path="/admin/docs" element={<ProtectedRoute requiredPermissions={['admin']}><AdminDocumentation /></ProtectedRoute>} />
+                  <Route path="/admin/docs/manage" element={<ProtectedRoute requiredPermissions={['admin']}><AdminDocumentation /></ProtectedRoute>} />
+                  <Route path="/enrich-data" element={<ProtectedRoute requiredPermissions={['admin']}><EnrichData /></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </TenantProvider>
+            </AuthProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   </ErrorBoundary>
 );
 
