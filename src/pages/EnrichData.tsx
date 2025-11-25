@@ -41,6 +41,9 @@ export default function EnrichDataPage() {
   const [scope, setScope] = useState<'total' | 'per_agency' | 'per_client'>('per_client');
   const [batches, setBatches] = useState<any[]>([]);
   const [loadingBatches, setLoadingBatches] = useState(false);
+  const [resetConfirmed, setResetConfirmed] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'generate' | 'history' | 'cleanup' | 'reset'>('generate');
   const { toast } = useToast();
 
   const handleTypeToggle = (typeId: string) => {
@@ -193,6 +196,48 @@ export default function EnrichDataPage() {
     }
   };
 
+  const handleResetDatabase = async () => {
+    if (!resetConfirmed) {
+      toast({
+        title: 'Confirmation Required',
+        description: 'Please check the confirmation box first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!confirm('⚠️ FINAL WARNING: This will permanently delete ALL transactional data. This cannot be undone. Continue?')) {
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-demo-database');
+
+      if (error) throw error;
+
+      toast({
+        title: 'Database Reset Complete',
+        description: `Deleted ${data.total_deleted} total records. Your database is now clean.`,
+      });
+
+      setResetConfirmed(false);
+      setResult(null);
+      setBatches([]);
+      setActiveTab('generate');
+      applyPreset('heavy');
+    } catch (error: any) {
+      console.error('Reset error:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to reset database',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -201,8 +246,8 @@ export default function EnrichDataPage() {
           <p className="text-muted-foreground">Generate and manage realistic demo data for testing and training</p>
         </div>
 
-        <Tabs defaultValue="generate" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
             <TabsTrigger value="generate" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
               Generate
@@ -214,6 +259,10 @@ export default function EnrichDataPage() {
             <TabsTrigger value="cleanup" className="flex items-center gap-2">
               <Trash2 className="h-4 w-4" />
               Cleanup
+            </TabsTrigger>
+            <TabsTrigger value="reset" className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              Reset
             </TabsTrigger>
           </TabsList>
 
@@ -456,6 +505,89 @@ export default function EnrichDataPage() {
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reset" className="space-y-6">
+            <Card className="border-destructive border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-5 w-5" />
+                  Nuclear Option: Complete Database Reset
+                </CardTitle>
+                <CardDescription className="text-base">
+                  <strong className="text-destructive">⚠️ DANGER ZONE</strong> - This is a complete database wipe of ALL transactional data.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-destructive/10 p-4 space-y-2">
+                    <h4 className="font-semibold text-sm">What Will Be Deleted:</h4>
+                    <ul className="text-sm space-y-1 list-disc list-inside">
+                      <li>All Contacts, Lists, and Segments</li>
+                      <li>All Campaigns, Templates, and Landing Pages</li>
+                      <li>All Gift Cards, Pools, and Brands</li>
+                      <li>All Call Sessions and Tracking Numbers</li>
+                      <li>All Recipients and Audience Data</li>
+                      <li>All Form Submissions</li>
+                      <li>All CRM Events and Integrations</li>
+                      <li>All Simulation History</li>
+                    </ul>
+                  </div>
+
+                  <div className="rounded-lg bg-primary/10 p-4 space-y-2">
+                    <h4 className="font-semibold text-sm">What Will Be Preserved:</h4>
+                    <ul className="text-sm space-y-1 list-disc list-inside">
+                      <li>Organizations and Clients (MoPads structure)</li>
+                      <li>User Accounts and Roles</li>
+                      <li>Permissions and Access Control</li>
+                      <li>Documentation and Help Content</li>
+                      <li>System Configuration</li>
+                    </ul>
+                  </div>
+
+                  <div className="rounded-lg border-2 border-destructive bg-destructive/5 p-4">
+                    <div className="flex items-start gap-3">
+                      <Checkbox 
+                        id="reset-confirm" 
+                        checked={resetConfirmed}
+                        onCheckedChange={(checked) => setResetConfirmed(checked === true)}
+                      />
+                      <label 
+                        htmlFor="reset-confirm" 
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        I understand this will permanently delete ALL transactional data and cannot be undone. 
+                        I want to start with a completely clean database.
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleResetDatabase}
+                  disabled={!resetConfirmed || isResetting}
+                  variant="destructive"
+                  size="lg"
+                  className="w-full"
+                >
+                  {isResetting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Resetting Database...
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="mr-2 h-4 w-4" />
+                      Reset Database & Start Fresh
+                    </>
+                  )}
+                </Button>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  After reset, you'll be redirected to generate new simulation data
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
