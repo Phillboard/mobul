@@ -145,7 +145,7 @@ export default function AceForms() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => navigate(`/ace-forms/${form.id}/edit`)}
+                      onClick={() => navigate(`/ace-forms/${form.id}/builder`)}
                     >
                       <Edit className="w-4 h-4 mr-1" />
                       Edit
