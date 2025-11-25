@@ -40,6 +40,7 @@ import AITemplateEditor from "./pages/AITemplateEditor";
 import Contacts from "./pages/Contacts";
 import ContactDetail from "./pages/ContactDetail";
 import ContactLists from "./pages/ContactLists";
+import ListDetail from "./pages/contacts/ListDetail";
 import ContactImport from "./pages/ContactImport";
 import Activities from "./pages/Activities";
 import Tasks from "./pages/Tasks";
@@ -150,6 +151,7 @@ const App = () => (
                   <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
                   <Route path="/contacts/:id" element={<ProtectedRoute><ContactDetail /></ProtectedRoute>} />
                   <Route path="/contacts/lists" element={<ProtectedRoute><ContactLists /></ProtectedRoute>} />
+                  <Route path="/contacts/lists/:id" element={<ProtectedRoute><ListDetail /></ProtectedRoute>} />
                   <Route path="/contacts/import" element={<ProtectedRoute><ContactImport /></ProtectedRoute>} />
                   
                   {/* Call Center - Redemption & Fulfillment */}
