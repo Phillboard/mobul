@@ -10,14 +10,12 @@ import { ContactFilters } from "@/components/contacts/ContactFilters";
 import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useHasAnyRole } from "@/hooks/useUserRole";
 import { seedContactsData } from "@/lib/seed-contacts-data";
 import { toast } from "sonner";
 import type { ContactFilters as ContactFiltersType } from "@/types/contacts";
 
 export default function Contacts() {
   const { currentClient } = useTenant();
-  const { hasAnyRole: canSeedData } = useHasAnyRole(['admin', 'agency_owner', 'company_owner']);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<ContactFiltersType>({});
@@ -70,16 +68,14 @@ export default function Contacts() {
             </p>
           </div>
           <div className="flex gap-2">
-            {canSeedData && (
-              <Button 
-                variant="outline" 
-                onClick={handleSeedData}
-                disabled={isSeeding}
-              >
-                <Database className="h-4 w-4 mr-2" />
-                {isSeeding ? "Creating..." : "Seed Demo Data"}
-              </Button>
-            )}
+            <Button 
+              variant="outline" 
+              onClick={handleSeedData}
+              disabled={isSeeding}
+            >
+              <Database className="h-4 w-4 mr-2" />
+              {isSeeding ? "Creating..." : "Seed Demo Data"}
+            </Button>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               New Contact
