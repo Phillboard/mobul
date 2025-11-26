@@ -24,7 +24,6 @@ function AceFormBuilderContent() {
   const { formId } = useParams();
   const navigate = useNavigate();
   const { currentClient } = useTenant();
-  const { data: existingForm, isLoading: isLoadingForm } = useAceForm(formId || "");
   const { createForm, updateForm } = useAceForms(currentClient?.id);
   const [showTemplates, setShowTemplates] = useState(!formId);
   const [showExport, setShowExport] = useState(false);
@@ -33,22 +32,17 @@ function AceFormBuilderContent() {
   const [formName, setFormName] = useState("");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<'form' | 'reveal' | 'analytics'>('form');
-  const [hasInitialized, setHasInitialized] = useState(false);
   const autoSaveTimerRef = useRef<number>();
   const { toast } = useToast();
 
   const { config, setConfig, updateRevealSettings } = useFormBuilder();
 
-  // Load existing form data - only once on mount
+  // Set form name from initial config
   useEffect(() => {
-    if (existingForm && !hasInitialized) {
-      setConfig(existingForm.form_config);
-      setFormName(existingForm.name);
-      setLastSaved(new Date(existingForm.updated_at || existingForm.created_at));
-      setShowTemplates(false);
-      setHasInitialized(true);
+    if (config.settings.title && !formName) {
+      setFormName(config.settings.title);
     }
-  }, [existingForm, hasInitialized, setConfig]);
+  }, [config.settings.title, formName]);
 
   // Auto-save every 3 seconds
   const performAutoSave = useCallback(async () => {
@@ -179,19 +173,12 @@ function AceFormBuilderContent() {
     );
   }
 
-  // Show loading state while fetching existing form
-  if (formId && isLoadingForm) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading form...</p>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  // Don't show templates selector if we have a formId
+  useEffect(() => {
+    if (formId) {
+      setShowTemplates(false);
+    }
+  }, [formId]);
 
   return (
     <Layout>
@@ -338,7 +325,21 @@ function AceFormBuilderContent() {
  */
 export default function AceFormBuilder() {
   const { formId } = useParams();
-  const { data: existingForm } = useAceForm(formId || "");
+  const { data: existingForm, isLoading } = useAceForm(formId || "");
+
+  // Show loading state while fetching existing form
+  if (formId && isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading form...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <FormBuilderProvider initialConfig={existingForm?.form_config}>
