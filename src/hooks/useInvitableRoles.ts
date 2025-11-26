@@ -11,17 +11,23 @@ export interface InvitableRole {
 }
 
 export function useInvitableRoles() {
-  const { data: userRole } = useUserRole();
+  const { data: userRole, isLoading } = useUserRole();
 
   const invitableRoles: InvitableRole[] = [];
 
-  if (!userRole) {
+  if (isLoading) {
     return { invitableRoles, isLoading: true };
   }
 
-  const userRoleConfig = roleRequirements[userRole as AppRole];
+  if (!userRole) {
+    console.warn("useInvitableRoles: User has no role assigned");
+    return { invitableRoles, isLoading: false };
+  }
+
+  const userRoleConfig = roleRequirements[userRole];
   
   if (!userRoleConfig) {
+    console.error("useInvitableRoles: Invalid role configuration for", userRole);
     return { invitableRoles, isLoading: false };
   }
 
