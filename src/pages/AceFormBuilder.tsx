@@ -12,6 +12,7 @@ import { ExportDialog } from "@/components/ace-forms/ExportDialog";
 import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
 import { AIFormGenerator } from "@/components/ace-forms/AIFormGenerator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 /**
@@ -40,6 +41,7 @@ export default function AceFormBuilder() {
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [formName, setFormName] = useState("");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [activeTab, setActiveTab] = useState<'form' | 'reveal'>('form');
   const autoSaveTimerRef = useRef<number>();
   const { toast } = useToast();
 
@@ -54,6 +56,7 @@ export default function AceFormBuilder() {
     deleteField,
     reorderFields,
     updateSettings,
+    updateRevealSettings,
   } = useFormBuilderRHF(existingForm?.form_config);
 
   useEffect(() => {
@@ -229,7 +232,7 @@ export default function AceFormBuilder() {
 
           {/* Actions Bar */}
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-4">
               <input
                 type="text"
                 value={formName}
@@ -237,6 +240,14 @@ export default function AceFormBuilder() {
                 placeholder="Form Name"
                 className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0"
               />
+              
+              {/* Tabs for Form/Reveal */}
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'form' | 'reveal')}>
+                <TabsList>
+                  <TabsTrigger value="form">Form Designer</TabsTrigger>
+                  <TabsTrigger value="reveal">Reveal Designer</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
 
             <div className="flex items-center gap-2">
@@ -297,6 +308,9 @@ export default function AceFormBuilder() {
             onDeleteField={deleteField}
             onReorderFields={reorderFields}
             onUpdateSettings={updateSettings}
+            onUpdateRevealSettings={updateRevealSettings}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
           />
         </div>
       </div>

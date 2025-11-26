@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { ConditionalLogicBuilder } from "./ConditionalLogicBuilder";
 import { SmartFieldSuggestions } from "./SmartFieldSuggestions";
+import { RevealDesigner } from "./RevealDesigner";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const fieldTypes: { type: FieldType; label: string }[] = [
   { type: "gift-card-code", label: "Gift Card Code" },
@@ -33,6 +35,9 @@ interface FormBuilderProps {
   onDeleteField: (id: string) => void;
   onReorderFields: (startIndex: number, endIndex: number) => void;
   onUpdateSettings: (updates: Partial<FormConfig["settings"]>) => void;
+  onUpdateRevealSettings: (updates: Partial<FormConfig["revealSettings"]>) => void;
+  activeTab: 'form' | 'reveal';
+  onTabChange: (tab: 'form' | 'reveal') => void;
 }
 
 export function FormBuilder({
@@ -45,11 +50,37 @@ export function FormBuilder({
   onDeleteField,
   onReorderFields,
   onUpdateSettings,
+  onUpdateRevealSettings,
+  activeTab,
+  onTabChange,
 }: FormBuilderProps) {
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
     onReorderFields(result.source.index, result.destination.index);
   };
+
+  // Show Reveal Designer when on reveal tab
+  if (activeTab === 'reveal') {
+    return (
+      <RevealDesigner
+        revealSettings={config.revealSettings || {
+          animationStyle: 'confetti',
+          showConfetti: true,
+          cardStyle: 'modern',
+          cardGradient: true,
+          showBrandLogo: true,
+          showQRCode: true,
+          showOpenInApp: true,
+          showShareButton: true,
+          showWalletButton: true,
+          showDownloadButton: true,
+          showInstructions: true,
+          revealBackground: 'gradient',
+        }}
+        onUpdate={onUpdateRevealSettings}
+      />
+    );
+  }
 
   return (
     <div className="flex-1 flex overflow-hidden">

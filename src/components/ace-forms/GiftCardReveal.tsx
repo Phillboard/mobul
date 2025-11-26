@@ -178,7 +178,7 @@ ${redemption.redemption_instructions || ''}
               <GiftCardDisplay redemption={redemption} embedMode={embedMode} />
             </motion.div>
 
-            {/* Action Buttons - Smaller in embed mode */}
+            {/* Action Buttons - Now with proper bg */}
             {!embedMode && (
               <motion.div
                 initial={{ y: 30, opacity: 0 }}
@@ -187,30 +187,30 @@ ${redemption.redemption_instructions || ''}
                 className="flex flex-wrap gap-2 justify-center"
               >
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={handleShare}
-                  className="gap-2"
+                  className="gap-2 bg-card"
                 >
                   <Share2 className="w-3 h-3" />
                   Share
                 </Button>
                 
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={handleAddToWallet}
-                  className="gap-2"
+                  className="gap-2 bg-card"
                 >
                   <Smartphone className="w-3 h-3" />
                   Wallet
                 </Button>
                 
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={handleDownload}
-                  className="gap-2"
+                  className="gap-2 bg-card"
                 >
                   <Download className="w-3 h-3" />
                   Download
