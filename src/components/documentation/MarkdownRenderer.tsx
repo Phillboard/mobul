@@ -4,7 +4,8 @@ import rehypeRaw from 'rehype-raw';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from '@/components/ui/button';
-import { Copy, Check } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Copy, Check, Info, AlertTriangle, AlertCircle, Lightbulb } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -22,12 +23,54 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  // Parse callout blocks (> [!NOTE], > [!TIP], etc.)
+  const parseCallouts = (text: string) => {
+    const calloutRegex = /^>\s*\[!(NOTE|TIP|WARNING|CAUTION|INFO)\]\s*\n((?:>\s*.*\n?)*)/gim;
+    return text.replace(calloutRegex, (match, type, content) => {
+      const cleanContent = content.replace(/^>\s*/gm, '').trim();
+      return `<div data-callout="${type.toLowerCase()}">${cleanContent}</div>`;
+    });
+  };
+
+  const processedContent = parseCallouts(content);
+
   return (
     <div className={cn("prose prose-slate dark:prose-invert max-w-none", className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
+          div(props) {
+            const { children, ...rest } = props;
+            const calloutType = (rest as any)['data-callout'];
+            
+            if (calloutType) {
+              const icons = {
+                note: <Info className="h-4 w-4" />,
+                tip: <Lightbulb className="h-4 w-4" />,
+                warning: <AlertTriangle className="h-4 w-4" />,
+                caution: <AlertCircle className="h-4 w-4" />,
+                info: <Info className="h-4 w-4" />,
+              };
+              
+              const variants = {
+                note: 'default',
+                tip: 'default',
+                warning: 'destructive',
+                caution: 'destructive',
+                info: 'default',
+              } as const;
+              
+              return (
+                <Alert variant={variants[calloutType as keyof typeof variants] || 'default'} className="my-4">
+                  {icons[calloutType as keyof typeof icons]}
+                  <AlertDescription>{children}</AlertDescription>
+                </Alert>
+              );
+            }
+            
+            return <div {...rest}>{children}</div>;
+          },
           code(props) {
             const { children, className, ...rest } = props;
             const match = /language-(\w+)/.exec(className || '');
@@ -122,7 +165,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
           },
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );

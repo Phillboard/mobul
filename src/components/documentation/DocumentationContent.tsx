@@ -1,16 +1,23 @@
 import { useParams, Link } from "react-router-dom";
+import { useState } from "react";
 import { useMarkdownDoc } from "@/hooks/useMarkdownDocs";
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import { DocEditorDialog } from "./DocEditorDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FileQuestion, ChevronLeft } from "lucide-react";
+import { FileQuestion, ChevronLeft, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function DocumentationContent() {
   const { category, slug } = useParams<{ category?: string; slug?: string }>();
+  const { hasRole } = useAuth();
+  const [editorOpen, setEditorOpen] = useState(false);
   const { data: page, isLoading, error } = category && slug 
     ? useMarkdownDoc(category, slug)
     : { data: null, isLoading: false, error: null };
+
+  const isAdmin = hasRole("admin");
 
   if (!category || !slug) {
     return (
@@ -97,14 +104,27 @@ export function DocumentationContent() {
   }
 
   return (
-    <div className="flex-1 p-8 overflow-auto">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold mb-2">{page.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            {category?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} / {page.title}
-          </p>
-        </div>
+    <>
+      <div className="flex-1 p-8 overflow-auto">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6 flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{page.title}</h1>
+              <p className="text-sm text-muted-foreground">
+                {category?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} / {page.title}
+              </p>
+            </div>
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditorOpen(true)}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            )}
+          </div>
 
         {page.content ? (
           <div className="prose prose-slate dark:prose-invert max-w-none">
@@ -118,15 +138,27 @@ export function DocumentationContent() {
           </Alert>
         )}
 
-        <div className="mt-8 pt-8 border-t border-border">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/admin/docs">
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Back to Documentation
-            </Link>
-          </Button>
+          <div className="mt-8 pt-8 border-t border-border">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/admin/docs">
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Back to Documentation
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {isAdmin && page && category && slug && (
+        <DocEditorDialog
+          open={editorOpen}
+          onOpenChange={setEditorOpen}
+          category={category}
+          slug={slug}
+          title={page.title}
+          initialContent={page.content}
+        />
+      )}
+    </>
   );
 }
