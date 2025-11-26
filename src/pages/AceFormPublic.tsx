@@ -270,16 +270,10 @@ export default function AceFormPublic() {
               transition={{ duration: 0.4, ease: "easeOut" }}
               className="w-full"
             >
-              {redemption && form.form_config.revealSettings && (
+              {redemption && (
                 <GiftCardReveal 
-                  redemption={redemption} 
-                  embedMode={embedMode}
-                  skipReveal={true}
-                />
-              )}
-              {redemption && !form.form_config.revealSettings && (
-                <GiftCardReveal 
-                  redemption={redemption} 
+                  redemption={redemption}
+                  revealSettings={form.form_config.revealSettings}
                   embedMode={embedMode}
                   skipReveal={true}
                 />
