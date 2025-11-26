@@ -122,16 +122,32 @@ export function GiftCardDisplay({ redemption, embedMode = false }: GiftCardDispl
         </div>
       </div>
 
-      {/* Smart Redeem Button */}
-      <div className={cn("space-y-2", embedMode ? 'mt-3' : 'mt-4')}>
-        <SmartRedeemButton 
-          redemption={redemption} 
-          className="w-full"
+      {/* Action Buttons - Wallet Primary */}
+      <div className={cn("space-y-3", embedMode ? 'mt-3' : 'mt-4')}>
+        {/* PRIMARY - Add to Wallet Button */}
+        <Button
           size={embedMode ? 'default' : 'lg'}
-        />
+          className="w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          onClick={() => {
+            toast({
+              title: "Add to Wallet",
+              description: "Wallet integration coming soon!",
+            });
+          }}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 18V19C21 20.1 20.1 21 19 21H5C3.9 21 3 20.1 3 19V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V6H12C10.9 6 10 6.9 10 8V16C10 17.1 10.9 18 12 18H21ZM12 16H22V8H12V16ZM16 13.5C15.17 13.5 14.5 12.83 14.5 12C14.5 11.17 15.17 10.5 16 10.5C16.83 10.5 17.5 11.17 17.5 12C17.5 12.83 16.83 13.5 16 13.5Z" fill="currentColor"/>
+          </svg>
+          Add to Wallet
+        </Button>
         
-        {/* QR Code Button */}
-        <div className="flex justify-center">
+        {/* SECONDARY - Smart Redeem and QR Code */}
+        <div className="flex gap-2">
+          <SmartRedeemButton 
+            redemption={redemption} 
+            className="flex-1"
+            size="sm"
+          />
           <GiftCardQRCode redemption={redemption} variant="button" />
         </div>
       </div>

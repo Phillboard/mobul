@@ -178,43 +178,46 @@ ${redemption.redemption_instructions || ''}
               <GiftCardDisplay redemption={redemption} embedMode={embedMode} />
             </motion.div>
 
-            {/* Action Buttons - Now with proper bg */}
+            {/* Action Buttons - Wallet Primary */}
             {!embedMode && (
               <motion.div
                 initial={{ y: 30, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex flex-wrap gap-2 justify-center"
+                className="space-y-3"
               >
+                {/* PRIMARY - Add to Wallet (Large) */}
                 <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleShare}
-                  className="gap-2 bg-card"
-                >
-                  <Share2 className="w-3 h-3" />
-                  Share
-                </Button>
-                
-                <Button
-                  variant="secondary"
-                  size="sm"
+                  size="lg"
                   onClick={handleAddToWallet}
-                  className="gap-2 bg-card"
+                  className="w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                 >
-                  <Smartphone className="w-3 h-3" />
-                  Wallet
+                  <Smartphone className="w-5 h-5" />
+                  Add to Wallet
                 </Button>
                 
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleDownload}
-                  className="gap-2 bg-card"
-                >
-                  <Download className="w-3 h-3" />
-                  Download
-                </Button>
+                {/* SECONDARY - Smaller action buttons */}
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleShare}
+                    className="gap-2 bg-card"
+                  >
+                    <Share2 className="w-3 h-3" />
+                    Share
+                  </Button>
+                  
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleDownload}
+                    className="gap-2 bg-card"
+                  >
+                    <Download className="w-3 h-3" />
+                    Download
+                  </Button>
+                </div>
               </motion.div>
             )}
           </motion.div>

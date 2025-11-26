@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { RevealPreview } from "./RevealPreview";
 import { cardStylePresets } from "./CardStylePresets";
 import { Sparkles, Palette, Settings, MessageSquare } from "lucide-react";
@@ -17,9 +18,9 @@ interface RevealDesignerProps {
 
 export function RevealDesigner({ revealSettings, onUpdate }: RevealDesignerProps) {
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* Left Panel - Live Preview */}
-      <div className="flex-1 p-8 overflow-y-auto bg-muted/30">
+    <div className="h-full grid grid-cols-[1fr_320px]">
+      {/* Left Panel - Preview */}
+      <div className="h-full overflow-y-auto p-8 bg-muted/30">
         <div className="max-w-3xl mx-auto space-y-4">
           <div>
             <h3 className="font-semibold text-lg mb-1">Live Preview</h3>
@@ -30,7 +31,8 @@ export function RevealDesigner({ revealSettings, onUpdate }: RevealDesignerProps
       </div>
 
       {/* Right Panel - Settings */}
-      <div className="w-80 border-l bg-muted/50 p-4 overflow-y-auto space-y-6">
+      <ScrollArea className="h-full border-l bg-muted/50">
+        <div className="p-4 space-y-6 pb-24">
         {/* Card Style Presets */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -250,7 +252,8 @@ export function RevealDesigner({ revealSettings, onUpdate }: RevealDesignerProps
             </div>
           )}
         </div>
-      </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 }

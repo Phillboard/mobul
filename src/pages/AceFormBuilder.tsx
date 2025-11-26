@@ -44,6 +44,7 @@ export default function AceFormBuilder() {
   const [formName, setFormName] = useState("");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<'form' | 'reveal' | 'analytics'>('form');
+  const [hasInitialized, setHasInitialized] = useState(false);
   const autoSaveTimerRef = useRef<number>();
   const { toast } = useToast();
 
@@ -67,15 +68,17 @@ export default function AceFormBuilder() {
     canRedo,
   } = useFormBuilderRHF(existingForm?.form_config);
 
+  // Load existing form data - only once on mount
   useEffect(() => {
-    if (existingForm) {
+    if (existingForm && !hasInitialized) {
       console.log('Loading existing form data:', existingForm);
       setConfig(existingForm.form_config);
       setFormName(existingForm.name);
       setLastSaved(new Date(existingForm.updated_at || existingForm.created_at));
-      setShowTemplates(false); // Explicitly hide templates when form loads
+      setShowTemplates(false);
+      setHasInitialized(true);
     }
-  }, [existingForm, setConfig]);
+  }, [existingForm, hasInitialized, setConfig]);
 
   // Auto-save every 3 seconds
   const performAutoSave = useCallback(async () => {
