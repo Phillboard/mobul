@@ -62,7 +62,7 @@ export function SmartRedeemButton({ redemption, className, size = "lg" }: SmartR
   if (!hasAppSupport) {
     return (
       <Button
-        className={className}
+        className={`bg-primary text-primary-foreground hover:bg-primary/90 ${className}`}
         size={size}
         onClick={handleSmartRedeem}
       >
