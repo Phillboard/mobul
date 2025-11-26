@@ -1,0 +1,16 @@
+# Feature Documentation
+
+This folder contains detailed documentation for each major platform feature.
+
+## Contents
+
+- CAMPAIGNS.md - Campaign management
+- GIFT_CARDS.md - Gift card system
+- TEMPLATES.md - Template builder
+- AUDIENCES.md - Audience management
+- LANDING_PAGES.md - Landing page system
+- CALL_TRACKING.md - Call tracking & recording
+- CRM_CONTACTS.md - CRM and contact management
+- ACE_FORMS.md - Form builder
+- ANALYTICS.md - Analytics and reporting
+- INTEGRATIONS.md - External integrations
