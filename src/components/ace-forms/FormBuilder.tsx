@@ -14,6 +14,7 @@ import { RevealDesigner } from "./RevealDesigner";
 import { ValidationRulesEditor } from "./ValidationRulesEditor";
 import { FieldStylingEditor } from "./FieldStylingEditor";
 import { FieldPresets, FIELD_PRESETS, type FieldPreset } from "./FieldPresets";
+import { FormBuilderMobile } from "./FormBuilderMobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const fieldTypes: { type: FieldType; label: string }[] = [
@@ -64,9 +65,12 @@ export function FormBuilder({
   };
 
   return (
-    <div className="flex h-full overflow-hidden">
-      {/* Left Sidebar - Field Library */}
-      <ScrollArea className="w-64 border-r bg-muted/30 p-4">
+    <div className="flex h-full overflow-hidden relative">
+      {/* Mobile Add Field Button */}
+      <FormBuilderMobile onAddField={onAddField} />
+
+      {/* Left Sidebar - Field Library - Hidden on mobile */}
+      <ScrollArea className="hidden lg:block w-64 border-r bg-muted/30 p-4">
         <div className="space-y-6">
           <div>
             <h3 className="font-medium mb-3">Field Types</h3>
@@ -90,7 +94,7 @@ export function FormBuilder({
       </ScrollArea>
 
       {/* Center - Form Canvas */}
-      <ScrollArea className="flex-1 p-6 bg-background">
+      <ScrollArea className="flex-1 p-4 lg:p-6 bg-background">
         {activeTab === "reveal" && onUpdateRevealSettings && config.revealSettings ? (
           <RevealDesigner
             revealSettings={config.revealSettings}
@@ -202,8 +206,8 @@ export function FormBuilder({
         )}
       </ScrollArea>
 
-      {/* Right Sidebar - Properties */}
-      <ScrollArea className="w-80 border-l bg-muted/30 p-4">
+      {/* Right Sidebar - Properties - Hidden on mobile */}
+      <ScrollArea className="hidden lg:block w-80 border-l bg-muted/30 p-4">
         {selectedField ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-4">
