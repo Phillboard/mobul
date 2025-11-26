@@ -4,7 +4,8 @@ import {
   LayoutDashboard, Mail, FileText, Users, Gift, Phone,
   BarChart3, Code, Settings as SettingsIcon, ShoppingCart, Globe,
   Activity, ListTodo, Workflow, ChevronRight, ArrowLeft, FormInput, AlertTriangle,
-  Gauge, Bug, HelpCircle, BookOpen, List, Upload
+  Gauge, Bug, HelpCircle, BookOpen, List, Upload, FolderTree, Database, FileSearch,
+  Rocket, TestTube
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,6 +53,8 @@ const navigationGroups: NavGroup[] = [
       { name: "All Contacts", href: "/contacts", icon: Users, permissions: ['contacts.view'], keywords: ["contacts", "customers", "crm"], description: "Manage customer database" },
       { name: "Lists & Segments", href: "/contacts/lists", icon: List, permissions: ['contacts.view'], keywords: ["lists", "segments", "groups"], description: "Organize and segment contacts" },
       { name: "Import Contacts", href: "/contacts/import", icon: Upload, permissions: ['contacts.create'], keywords: ["import", "csv", "upload"], description: "Import contacts from CSV" },
+      { name: "Activities", href: "/activities", icon: Activity, permissions: ['contacts.view'], keywords: ["activities", "interactions", "timeline", "history"], description: "Track customer interactions" },
+      { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['contacts.view'], keywords: ["tasks", "todos", "follow-ups"], description: "Manage tasks and to-dos" },
     ]
   },
   {
@@ -89,6 +92,26 @@ const navigationGroups: NavGroup[] = [
       { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
       { name: "Integrations", href: "/admin/integrations", icon: Workflow, permissions: ['api.view', 'settings.integrations'], keywords: ["api", "webhooks", "zapier", "automation", "developer"], description: "API & integrations" },
       { name: "Documentation", href: "/admin/docs", icon: BookOpen, keywords: ["docs", "help", "guide", "manual", "support", "faq"], description: "Platform documentation" },
+    ]
+  },
+  {
+    label: "Admin Tools",
+    collapsible: true,
+    roles: ['admin'],
+    items: [
+      { name: "Platform Dashboard", href: "/platform", icon: Gauge, roles: ['admin'], keywords: ["platform", "overview", "stats"], description: "Platform-wide overview" },
+      { name: "Enrich Data", href: "/enrich-data", icon: Database, roles: ['admin'], keywords: ["demo", "simulation", "seed"], description: "Data simulation & seeding" },
+      { name: "Audit Log", href: "/admin/audit-log", icon: FileSearch, roles: ['admin'], keywords: ["audit", "logs", "history"], description: "User management audit trail" },
+      { name: "Site Directory", href: "/admin/site-directory", icon: FolderTree, roles: ['admin'], keywords: ["pages", "routes", "navigation"], description: "All pages directory" },
+    ]
+  },
+  {
+    label: "Beta & Launch",
+    collapsible: true,
+    roles: ['admin'],
+    items: [
+      { name: "Beta Testing", href: "/beta", icon: TestTube, roles: ['admin'], keywords: ["beta", "feedback", "testing"], description: "Beta testing dashboard" },
+      { name: "Launch Checklist", href: "/launch", icon: Rocket, roles: ['admin'], keywords: ["launch", "checklist", "deployment"], description: "Pre-launch checklist" },
     ]
   },
   {
