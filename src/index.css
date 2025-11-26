@@ -7,134 +7,142 @@
 
 @layer base {
   :root {
-    /* Backgrounds - Clean white with warmth */
-    --background: 0 0% 99%;              /* Soft white #FCFCFC */
-    --foreground: 240 8% 20%;            /* Soft charcoal for readability */
+    /* ============================================
+       LIGHT THEME - Modern SaaS Professional
+       ============================================ */
     
-    /* Cards - White with subtle warmth */
+    /* Backgrounds - Clean white */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;           /* Deep blue-gray #0F172A */
+    
+    /* Cards - White with subtle border */
     --card: 0 0% 100%;
-    --card-foreground: 240 8% 20%;
+    --card-foreground: 222 47% 11%;
     
     /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 240 8% 20%;
+    --popover-foreground: 222 47% 11%;
     
-    /* Primary - Soft Sky Blue (calm, professional) */
-    --primary: 205 60% 75%;              /* #8BC9E8 - Soft sky blue */
-    --primary-foreground: 240 8% 20%;
+    /* Primary - Professional Blue (trust, authority) */
+    --primary: 221 83% 53%;              /* #2563EB - Blue 600 */
+    --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Soft Mint (fresh, friendly) */
-    --secondary: 160 50% 80%;            /* #A3D9C9 - Soft mint */
-    --secondary-foreground: 240 8% 20%;
+    /* Secondary - Neutral Gray (subtle, professional) */
+    --secondary: 220 13% 91%;            /* #E2E8F0 - Slate 200 */
+    --secondary-foreground: 222 47% 11%;
     
-    /* Accent - Soft Lavender (creative, modern) */
-    --accent: 270 45% 82%;               /* #D4C5E8 - Soft lavender */
-    --accent-foreground: 240 8% 20%;
+    /* Accent - Modern Purple (creativity, innovation) */
+    --accent: 262 83% 58%;               /* #8B5CF6 - Purple 500 */
+    --accent-foreground: 0 0% 100%;
     
-    /* Success - Soft Mint Green */
-    --success: 160 50% 75%;              /* #9FD9C2 */
-    --success-foreground: 240 8% 20%;
+    /* Success - Green (positive actions) */
+    --success: 142 71% 45%;              /* #16A34A - Green 600 */
+    --success-foreground: 0 0% 100%;
     
-    /* Warning - Soft Peach */
-    --warning: 25 70% 80%;               /* #F5CDA7 */
-    --warning-foreground: 240 8% 20%;
+    /* Warning - Amber (caution) */
+    --warning: 38 92% 50%;               /* #F59E0B - Amber 500 */
+    --warning-foreground: 0 0% 100%;
     
-    /* Destructive - Soft Blush/Rose */
-    --destructive: 350 55% 80%;          /* #F5B3C1 - Soft blush */
-    --destructive-foreground: 240 8% 20%;
+    /* Destructive - Red (errors, delete) */
+    --destructive: 0 84% 60%;            /* #EF4444 - Red 500 */
+    --destructive-foreground: 0 0% 100%;
     
-    /* Muted - Very light pastels */
-    --muted: 220 20% 96%;
-    --muted-foreground: 240 5% 50%;
+    /* Muted - Light gray backgrounds */
+    --muted: 220 13% 96%;                /* #F8FAFC - Slate 50 */
+    --muted-foreground: 215 16% 47%;     /* #64748B - Slate 500 */
     
-    /* Borders - Soft and subtle */
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 205 60% 75%;
+    /* Borders - Subtle gray */
+    --border: 220 13% 91%;               /* #E2E8F0 - Slate 200 */
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
 
     /* Radius - Modern, larger values */
-    --radius: 1rem;
-    --radius-lg: 1.5rem;
-    --radius-xl: 2rem;
+    --radius: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
 
-    /* Sidebar - Glassmorphism with pastel tint */
-    --sidebar-background: 205 30% 98%;     /* Very light blue tint */
-    --sidebar-foreground: 240 8% 20%;
-    --sidebar-primary: 205 60% 75%;
-    --sidebar-primary-foreground: 240 8% 20%;
-    --sidebar-accent: 220 20% 95%;
-    --sidebar-accent-foreground: 240 8% 20%;
-    --sidebar-border: 220 15% 88%;
-    --sidebar-ring: 205 60% 75%;
+    /* Sidebar - Light with subtle tint */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 13% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 221 83% 53%;
 
     /* Builder specific */
-    --builder-sidebar: 240 5% 96%;
-    --builder-canvas: 240 5% 98%;
-    --builder-tool-active: 203 92% 55%;
-    --builder-tool-hover: 203 92% 95%;
+    --builder-sidebar: 220 13% 96%;
+    --builder-canvas: 0 0% 100%;
+    --builder-tool-active: 221 83% 53%;
+    --builder-tool-hover: 221 83% 95%;
   }
 
   .dark {
-    /* Backgrounds - Soft dark blues instead of black */
-    --background: 230 25% 12%;           /* #1A1F2E - Soft navy */
-    --foreground: 0 0% 96%;
+    /* ============================================
+       DARK THEME - Modern SaaS Professional
+       ============================================ */
     
-    /* Cards - Slightly lighter navy */
-    --card: 230 20% 16%;                 /* #24293A */
-    --card-foreground: 0 0% 96%;
+    /* Backgrounds - Deep slate */
+    --background: 222 47% 11%;           /* #0F172A - Slate 900 */
+    --foreground: 210 40% 98%;           /* #F8FAFC - Slate 50 */
+    
+    /* Cards - Slightly lighter slate */
+    --card: 217 33% 17%;                 /* #1E293B - Slate 800 */
+    --card-foreground: 210 40% 98%;
     
     /* Popover */
-    --popover: 230 20% 16%;
-    --popover-foreground: 0 0% 96%;
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
     
-    /* Primary - Soft Blue (still visible in dark) */
-    --primary: 205 65% 65%;              /* #6BADE8 */
-    --primary-foreground: 230 25% 12%;
+    /* Primary - Bright Blue (readable, vibrant) */
+    --primary: 217 91% 60%;              /* #3B82F6 - Blue 500 */
+    --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Soft Mint */
-    --secondary: 160 40% 55%;            /* #52B896 */
-    --secondary-foreground: 0 0% 96%;
+    /* Secondary - Dark Gray (subtle contrast) */
+    --secondary: 215 28% 17%;            /* #1E293B - Slate 800 */
+    --secondary-foreground: 210 40% 98%;
     
-    /* Accent - Soft Lavender */
-    --accent: 270 40% 70%;               /* #B39DD8 */
-    --accent-foreground: 230 25% 12%;
+    /* Accent - Vibrant Purple */
+    --accent: 262 83% 58%;               /* #8B5CF6 - Purple 500 */
+    --accent-foreground: 0 0% 100%;
     
-    /* Success - Soft Mint Green */
-    --success: 160 45% 60%;
-    --success-foreground: 0 0% 96%;
+    /* Success - Green */
+    --success: 142 71% 45%;              /* #16A34A - Green 600 */
+    --success-foreground: 0 0% 100%;
     
-    /* Warning - Soft Peach */
-    --warning: 25 65% 70%;
-    --warning-foreground: 230 25% 12%;
+    /* Warning - Amber */
+    --warning: 38 92% 50%;               /* #F59E0B - Amber 500 */
+    --warning-foreground: 0 0% 100%;
     
-    /* Destructive - Soft Blush */
-    --destructive: 350 50% 70%;
-    --destructive-foreground: 230 25% 12%;
+    /* Destructive - Red */
+    --destructive: 0 84% 60%;            /* #EF4444 - Red 500 */
+    --destructive-foreground: 0 0% 100%;
     
-    /* Muted - Softer dark */
-    --muted: 230 15% 20%;
-    --muted-foreground: 230 10% 65%;
+    /* Muted - Darker slate */
+    --muted: 215 25% 27%;                /* #334155 - Slate 700 */
+    --muted-foreground: 215 20% 65%;     /* #94A3B8 - Slate 400 */
     
-    /* Borders - Soft and subtle */
-    --border: 230 15% 22%;
-    --input: 230 15% 22%;
-    --ring: 205 65% 65%;
+    /* Borders - Subtle slate */
+    --border: 215 25% 27%;               /* #334155 - Slate 700 */
+    --input: 215 25% 27%;
+    --ring: 217 91% 60%;
 
-    /* Sidebar - Soft dark with pastel accents */
-    --sidebar-background: 230 20% 14%;
-    --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 205 65% 65%;
-    --sidebar-primary-foreground: 230 25% 12%;
-    --sidebar-accent: 230 15% 20%;
-    --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 230 15% 18%;
-    --sidebar-ring: 205 65% 65%;
+    /* Sidebar - Dark slate */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 28% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 25% 27%;
+    --sidebar-ring: 217 91% 60%;
 
     /* Builder specific - dark */
-    --builder-sidebar: 240 10% 8%;
-    --builder-canvas: 240 10% 4%;
-    --builder-tool-active: 189 94% 55%;
-    --builder-tool-hover: 240 8% 15%;
+    --builder-sidebar: 222 47% 11%;
+    --builder-canvas: 217 33% 17%;
+    --builder-tool-active: 217 91% 60%;
+    --builder-tool-hover: 215 28% 17%;
   }
 }
 
@@ -209,21 +217,21 @@
     hsl(var(--background));
 }
 
-/* Light theme mesh gradient - clean and subtle */
+/* Light theme mesh gradient - professional and clean */
 .mesh-gradient-light {
   background: 
-    radial-gradient(at 20% 20%, hsl(203, 92%, 55% / 0.05) 0px, transparent 50%),
-    radial-gradient(at 80% 80%, hsl(282, 85%, 60% / 0.05) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, hsl(142, 76%, 52% / 0.03) 0px, transparent 50%),
+    radial-gradient(at 20% 20%, hsl(221, 83%, 53% / 0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 80%, hsl(262, 83%, 58% / 0.06) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, hsl(142, 71%, 45% / 0.04) 0px, transparent 50%),
     hsl(var(--background));
 }
 
 /* Dark theme mesh gradient - deep and rich */
 .mesh-gradient-dark {
   background: 
-    radial-gradient(at 20% 30%, hsl(189, 94%, 60% / 0.08) 0px, transparent 50%),
-    radial-gradient(at 80% 70%, hsl(282, 85%, 70% / 0.08) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, hsl(142, 76%, 52% / 0.05) 0px, transparent 50%),
+    radial-gradient(at 20% 30%, hsl(217, 91%, 60% / 0.12) 0px, transparent 50%),
+    radial-gradient(at 80% 70%, hsl(262, 83%, 58% / 0.10) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, hsl(142, 71%, 45% / 0.08) 0px, transparent 50%),
     hsl(var(--background));
 }
 
