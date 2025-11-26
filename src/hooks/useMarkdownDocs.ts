@@ -62,18 +62,25 @@ export function useMarkdownDoc(category: string, slug: string) {
         const folderName = categoryFolderMap[category];
         const fileName = slugFileMap[slug];
         
+        console.log('Loading doc:', { category, slug, folderName, fileName });
+        
         if (!folderName || !fileName) {
+          console.error('Missing folder or file mapping:', { category, slug, folderName, fileName });
           throw new Error("Documentation page not found");
         }
 
         const path = `/docs/${folderName}/${fileName}.md`;
+        console.log('Fetching from path:', path);
         const response = await fetch(path);
         
+        console.log('Fetch response:', response.status, response.statusText);
+        
         if (!response.ok) {
-          throw new Error("Failed to load documentation");
+          throw new Error(`Failed to load documentation: ${response.status} ${response.statusText}`);
         }
         
         const text = await response.text();
+        console.log('Loaded content length:', text.length);
         setContent(text);
       } catch (error) {
         console.error("Error loading markdown:", error);
