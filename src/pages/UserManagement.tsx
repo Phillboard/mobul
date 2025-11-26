@@ -29,6 +29,8 @@ interface UserWithRole {
   email: string;
   full_name: string;
   roles: string[];
+  organizations: { id: string; name: string }[];
+  clients: { id: string; name: string }[];
 }
 
 export default function UserManagement() {
@@ -53,9 +55,23 @@ export default function UserManagement() {
             .select('role')
             .eq('user_id', profile.id);
 
+          // Get organizations
+          const { data: orgs } = await supabase
+            .from('org_members')
+            .select('organizations(id, name)')
+            .eq('user_id', profile.id);
+
+          // Get clients
+          const { data: clients } = await supabase
+            .from('client_users')
+            .select('clients(id, name)')
+            .eq('user_id', profile.id);
+
           return {
             ...profile,
-            roles: roles?.map(r => r.role) || []
+            roles: roles?.map(r => r.role) || [],
+            organizations: orgs?.map((o: any) => o.organizations).filter(Boolean) || [],
+            clients: clients?.map((c: any) => c.clients).filter(Boolean) || []
           };
         })
       );
@@ -172,6 +188,8 @@ export default function UserManagement() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Roles</TableHead>
+                  <TableHead>Organization</TableHead>
+                  <TableHead>Client</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -193,7 +211,32 @@ export default function UserManagement() {
                             </Badge>
                           );
                         })}
+                        {user.roles.length === 0 && (
+                          <span className="text-sm text-muted-foreground">No role assigned</span>
+                        )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {user.organizations.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                          {user.organizations.map((org) => (
+                            <span key={org.id} className="text-sm">{org.name}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {user.clients.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                          {user.clients.map((client) => (
+                            <span key={client.id} className="text-sm">{client.name}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Dialog>

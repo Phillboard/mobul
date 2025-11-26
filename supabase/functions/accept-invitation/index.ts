@@ -54,6 +54,11 @@ serve(async (req) => {
       throw new Error("Invitation has expired");
     }
 
+    // Validate role exists
+    if (!invitation.role) {
+      throw new Error("Invitation missing role information");
+    }
+
     // Create user account
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: invitation.email,
@@ -72,7 +77,7 @@ serve(async (req) => {
       .update({ full_name: fullName })
       .eq("id", authData.user.id);
 
-    // Assign role
+    // Assign role from invitation.role column
     await supabase
       .from("user_roles")
       .insert({
@@ -80,14 +85,13 @@ serve(async (req) => {
         role: invitation.role,
       });
 
-    // Add to org if specified
+    // Add to org if specified (without role - org_members doesn't have role column)
     if (invitation.org_id) {
       await supabase
         .from("org_members")
         .insert({
           user_id: authData.user.id,
           org_id: invitation.org_id,
-          role: invitation.role,
         });
     }
 
@@ -109,6 +113,8 @@ serve(async (req) => {
         accepted_at: new Date().toISOString(),
       })
       .eq("id", invitation.id);
+
+    console.log(`Invitation accepted for ${invitation.email} with role ${invitation.role}`);
 
     return new Response(
       JSON.stringify({

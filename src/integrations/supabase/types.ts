@@ -4408,6 +4408,7 @@ export type Database = {
           invited_by: string | null
           metadata: Json | null
           org_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
           status: string | null
           token: string
           updated_at: string | null
@@ -4422,6 +4423,7 @@ export type Database = {
           invited_by?: string | null
           metadata?: Json | null
           org_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
           status?: string | null
           token?: string
           updated_at?: string | null
@@ -4436,6 +4438,7 @@ export type Database = {
           invited_by?: string | null
           metadata?: Json | null
           org_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
           status?: string | null
           token?: string
           updated_at?: string | null
