@@ -1,6 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DocumentationLayout } from "@/components/documentation/DocumentationLayout";
 import { DocumentationContent } from "@/components/documentation/DocumentationContent";
 import { AdminDocsList } from "@/components/documentation/AdminDocsList";
 import { AdminDocsAnalytics } from "@/components/documentation/AdminDocsAnalytics";
@@ -21,13 +20,11 @@ export default function Documentation() {
     setSearchParams({ tab });
   };
 
-  // If we have a category and/or slug, show the documentation layout with sidebar
+  // If we have a category and/or slug, show just the content (sidebar handled by main Layout)
   if (category || slug) {
     return (
       <Layout>
-        <DocumentationLayout>
-          <DocumentationContent />
-        </DocumentationLayout>
+        <DocumentationContent />
       </Layout>
     );
   }
