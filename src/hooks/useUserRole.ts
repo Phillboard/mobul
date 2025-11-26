@@ -7,10 +7,43 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AppRole } from "@/lib/roleUtils";
+import { AppRole, roleHierarchy } from "@/lib/roleUtils";
 
 /**
- * Hook to get current user's role
+ * Hook to get all roles for current user
+ * 
+ * @returns Query result with array of roles
+ */
+export function useUserRoles() {
+  return useQuery({
+    queryKey: ["userRoles"],
+    queryFn: async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        return [];
+      }
+
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Error fetching user roles:", error);
+        return [];
+      }
+
+      return (data || []).map(r => r.role as AppRole);
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: false,
+  });
+}
+
+/**
+ * Hook to get current user's highest privilege role
+ * If user has multiple roles, returns the one with highest privilege (lowest hierarchy number)
  * 
  * @returns Query result with role string
  */
@@ -27,18 +60,25 @@ export function useUserRole() {
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
-        .single();
+        .eq("user_id", user.id);
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // No role found
+          // No roles found
           return null;
         }
         throw error;
       }
 
-      return data.role as AppRole;
+      if (!data || data.length === 0) {
+        return null;
+      }
+
+      // If user has multiple roles, return the one with highest privilege (lowest hierarchy number)
+      const roles = data.map(r => r.role as AppRole);
+      const highestPrivilegeRole = roles.sort((a, b) => roleHierarchy[a] - roleHierarchy[b])[0];
+      
+      return highestPrivilegeRole;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: false,
