@@ -1,8 +1,6 @@
-import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useMarkdownDoc } from "@/hooks/useMarkdownDocs";
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import { DocEditorDialog } from "./DocEditorDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileQuestion, ChevronLeft, Pencil } from "lucide-react";
@@ -12,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export function DocumentationContent() {
   const { category, slug } = useParams<{ category?: string; slug?: string }>();
   const { hasRole } = useAuth();
-  const [editorOpen, setEditorOpen] = useState(false);
+  const navigate = useNavigate();
   const { data: page, isLoading, error } = category && slug 
     ? useMarkdownDoc(category, slug)
     : { data: null, isLoading: false, error: null };
@@ -118,7 +116,7 @@ export function DocumentationContent() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setEditorOpen(true)}
+                onClick={() => navigate(`/admin/docs/${category}/${slug}/edit`)}
               >
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit
@@ -148,17 +146,6 @@ export function DocumentationContent() {
           </div>
         </div>
       </div>
-
-      {isAdmin && page && category && slug && (
-        <DocEditorDialog
-          open={editorOpen}
-          onOpenChange={setEditorOpen}
-          category={category}
-          slug={slug}
-          title={page.title}
-          initialContent={page.content}
-        />
-      )}
     </>
   );
 }
