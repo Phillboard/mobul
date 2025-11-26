@@ -7,7 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { DrPhillipChat } from "@/components/DrPhillipChat";
+import { DrPhillipChatWrapper } from "@/components/DrPhillipChatWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
@@ -91,7 +91,7 @@ const App = () => (
                 <ImpersonationBanner />
                 <Toaster />
                 <Sonner />
-                <DrPhillipChat />
+                <DrPhillipChatWrapper />
                 <CookieConsent />
                 <Routes>
                   {/* Public Routes */}
