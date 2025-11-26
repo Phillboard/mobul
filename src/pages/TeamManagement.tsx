@@ -156,23 +156,25 @@ export default function TeamManagement() {
   });
 
   // Fetch pending invitations - typed explicitly to avoid deep type inference
-  const { data: pendingInvites = [] as any[] } = useQuery<any[]>({
+  const pendingInvitesQuery = useQuery({
     queryKey: ["teamInvitations"],
-    queryFn: async () => {
+    queryFn: async (): Promise<any[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      const { data, error } = await supabase
-        .from("user_invitations")
+      const result: any = await (supabase
+        .from("user_invitations") as any)
         .select("id, email, role, created_at, expires_at, invited_by_user_id, status")
         .eq("invited_by_user_id", user.id)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (result.error) throw result.error;
+      return result.data || [];
     },
   });
+  
+  const pendingInvites = pendingInvitesQuery.data || [];
 
   if (userRole !== "agency_owner" && userRole !== "company_owner") {
     return (
