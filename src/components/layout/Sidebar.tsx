@@ -2,10 +2,10 @@ import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Mail, FileText, Users, Gift, Phone,
-  BarChart3, Code, Settings as SettingsIcon, ShoppingCart, Globe,
-  Activity, ListTodo, Workflow, ChevronRight, ArrowLeft, FormInput, AlertTriangle,
-  Gauge, Bug, HelpCircle, BookOpen, List, Upload, FolderTree, Database, FileSearch,
-  Rocket, TestTube
+  ShoppingCart, Globe, Activity, ListTodo, ChevronRight, ArrowLeft, FormInput,
+  Gauge, BookOpen, List, Upload, FolderTree, Database, FileSearch, Rocket, TestTube,
+  Megaphone, Headphones, ClipboardList, Shield, UserCog, ShieldAlert, CheckSquare,
+  PhoneCall, Target, Plug, Settings as SettingsIcon, Package
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sidebar as SidebarRoot, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
-  SidebarHeader, useSidebar
+  SidebarHeader, SidebarFooter, useSidebar
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SidebarSearch } from "./SidebarSearch";
@@ -41,77 +41,53 @@ interface NavGroup {
 
 const navigationGroups: NavGroup[] = [
   {
-    label: "Dashboard",
+    label: "Main",
     items: [
       { name: "Dashboard", href: "/", icon: LayoutDashboard, permissions: ['dashboard.view'], keywords: ["home", "overview"], description: "Main dashboard" },
-    ]
-  },
-  {
-    label: "Contacts",
-    collapsible: true,
-    items: [
-      { name: "All Contacts", href: "/contacts", icon: Users, permissions: ['contacts.view'], keywords: ["contacts", "customers", "crm"], description: "Manage customer database" },
-      { name: "Lists & Segments", href: "/contacts/lists", icon: List, permissions: ['contacts.view'], keywords: ["lists", "segments", "groups"], description: "Organize and segment contacts" },
-      { name: "Import Contacts", href: "/contacts/import", icon: Upload, permissions: ['contacts.create'], keywords: ["import", "csv", "upload"], description: "Import contacts from CSV" },
-      { name: "Activities", href: "/activities", icon: Activity, permissions: ['contacts.view'], keywords: ["activities", "interactions", "timeline", "history"], description: "Track customer interactions" },
-      { name: "Tasks", href: "/tasks", icon: ListTodo, permissions: ['contacts.view'], keywords: ["tasks", "todos", "follow-ups"], description: "Manage tasks and to-dos" },
     ]
   },
   {
     label: "Campaigns",
     collapsible: true,
     items: [
-      { name: "All Campaigns", href: "/campaigns", icon: Mail, permissions: ['campaigns.view'], keywords: ["mail", "postcards", "direct mail"], description: "Manage direct mail campaigns" },
-      { name: "Mail", href: "/mail", icon: FileText, permissions: ['templates.view'], keywords: ["design", "layouts", "postcard designs", "templates"], description: "Direct mail designs" },
+      { name: "All Campaigns", href: "/campaigns", icon: Megaphone, permissions: ['campaigns.view'], keywords: ["mail", "postcards", "direct mail", "marketing"], description: "Manage direct mail campaigns" },
+      { name: "Mail Library", href: "/mail", icon: Mail, permissions: ['templates.view'], keywords: ["design", "layouts", "postcard designs", "templates"], description: "Direct mail designs" },
       { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl", "personalized urls"], description: "Personalized landing pages" },
-      { name: "Forms", href: "/ace-forms", icon: FormInput, permissions: ['campaigns.view'], keywords: ["forms", "lead capture", "redemption"], description: "Lead capture & gift card forms" },
+      { name: "ACE Forms", href: "/ace-forms", icon: FormInput, permissions: ['campaigns.view'], keywords: ["forms", "lead capture", "redemption"], description: "Lead capture & gift card forms" },
     ]
   },
   {
-    label: "Rewards & Fulfillment",
+    label: "Audience",
+    collapsible: true,
+    items: [
+      { name: "Contacts", href: "/contacts", icon: Users, permissions: ['contacts.view'], keywords: ["contacts", "customers", "crm", "people"], description: "Manage customer database" },
+      { name: "Lists & Segments", href: "/contacts/lists", icon: List, permissions: ['contacts.view'], keywords: ["lists", "segments", "groups", "targeting"], description: "Organize and segment contacts" },
+      { name: "Import Contacts", href: "/contacts/import", icon: Upload, permissions: ['contacts.create'], keywords: ["import", "csv", "upload", "bulk"], description: "Import contacts from CSV" },
+    ]
+  },
+  {
+    label: "Rewards",
     collapsible: true,
     items: [
       { name: "Gift Card Inventory", href: "/gift-cards", icon: Gift, permissions: ['gift_cards.manage', 'giftcards.view'], keywords: ["rewards", "inventory", "pools"], description: "Manage gift card inventory" },
-      { name: "Purchase Cards", href: "/purchase-gift-cards", icon: ShoppingCart, permissions: ['gift_cards.purchase', 'giftcards.purchase'], keywords: ["buy", "order"], description: "Purchase gift cards" },
-      { name: "Marketplace", href: "/admin/gift-card-marketplace", icon: Gift, roles: ['admin'], permissions: ['giftcards.admin_view'], keywords: ["admin", "master", "platform"], description: "Platform gift card marketplace" },
+      { name: "Purchase Cards", href: "/purchase-gift-cards", icon: Package, permissions: ['gift_cards.purchase', 'giftcards.purchase'], keywords: ["buy", "order"], description: "Purchase gift cards" },
+      { name: "Marketplace", href: "/admin/gift-card-marketplace", icon: ShoppingCart, roles: ['admin'], permissions: ['giftcards.admin_view'], keywords: ["admin", "master", "platform"], description: "Platform gift card marketplace" },
     ]
   },
   {
     label: "Call Center",
     collapsible: true,
     items: [
-      { name: "Call Tracking", href: "/call-center", icon: Phone, permissions: ['calls.view', 'calls.manage'], keywords: ["calls", "phone", "tracking", "reports"], description: "Call tracking analytics" },
-      { name: "Redemption Center", href: "/call-center/redeem", icon: Phone, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision"], description: "Redeem gift cards for callers" },
-      { name: "System Health", href: "/admin/system-health", icon: Activity, permissions: ['analytics.view'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
+      { name: "Call Tracking", href: "/call-center", icon: PhoneCall, permissions: ['calls.view', 'calls.manage'], keywords: ["calls", "phone", "tracking", "reports"], description: "Call tracking analytics" },
+      { name: "Redemption Center", href: "/call-center/redeem", icon: Target, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision"], description: "Redeem gift cards for callers" },
     ]
   },
   {
-    label: "Administration",
+    label: "Workspace",
     collapsible: true,
     items: [
-      { name: "User Management", href: "/users", icon: Users, permissions: ['users.view', 'users.manage'], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
-      { name: "Integrations", href: "/admin/integrations", icon: Workflow, permissions: ['api.view', 'settings.integrations'], keywords: ["api", "webhooks", "zapier", "automation", "developer"], description: "API & integrations" },
-      { name: "Documentation", href: "/admin/docs", icon: BookOpen, keywords: ["docs", "help", "guide", "manual", "support", "faq"], description: "Platform documentation" },
-    ]
-  },
-  {
-    label: "Admin Tools",
-    collapsible: true,
-    roles: ['admin'],
-    items: [
-      { name: "Platform Dashboard", href: "/platform", icon: Gauge, roles: ['admin'], keywords: ["platform", "overview", "stats"], description: "Platform-wide overview" },
-      { name: "Enrich Data", href: "/enrich-data", icon: Database, roles: ['admin'], keywords: ["demo", "simulation", "seed"], description: "Data simulation & seeding" },
-      { name: "Audit Log", href: "/admin/audit-log", icon: FileSearch, roles: ['admin'], keywords: ["audit", "logs", "history"], description: "User management audit trail" },
-      { name: "Site Directory", href: "/admin/site-directory", icon: FolderTree, roles: ['admin'], keywords: ["pages", "routes", "navigation"], description: "All pages directory" },
-    ]
-  },
-  {
-    label: "Beta & Launch",
-    collapsible: true,
-    roles: ['admin'],
-    items: [
-      { name: "Beta Testing", href: "/beta", icon: TestTube, roles: ['admin'], keywords: ["beta", "feedback", "testing"], description: "Beta testing dashboard" },
-      { name: "Launch Checklist", href: "/launch", icon: Rocket, roles: ['admin'], keywords: ["launch", "checklist", "deployment"], description: "Pre-launch checklist" },
+      { name: "Tasks", href: "/tasks", icon: CheckSquare, keywords: ["tasks", "todos", "follow-ups", "action items"], description: "Manage tasks and to-dos" },
+      { name: "Activities", href: "/activities", icon: Activity, keywords: ["activities", "interactions", "timeline", "history"], description: "Track customer interactions" },
     ]
   },
   {
@@ -120,6 +96,20 @@ const navigationGroups: NavGroup[] = [
     roles: ['agency_owner'],
     items: [
       { name: "Client Management", href: "/agency-management", icon: Users, roles: ['agency_owner'], permissions: ['clients.view', 'clients.manage'], keywords: ["clients", "agencies"], description: "Manage agency clients" },
+    ]
+  },
+  {
+    label: "Admin",
+    collapsible: true,
+    roles: ['admin'],
+    items: [
+      { name: "Platform Overview", href: "/platform", icon: Shield, roles: ['admin'], keywords: ["platform", "overview", "stats"], description: "Platform-wide overview" },
+      { name: "User Management", href: "/users", icon: UserCog, roles: ['admin'], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
+      { name: "System Health", href: "/admin/system-health", icon: Activity, roles: ['admin'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
+      { name: "Data Tools", href: "/enrich-data", icon: Database, roles: ['admin'], keywords: ["demo", "simulation", "seed"], description: "Data simulation & seeding" },
+      { name: "Audit Log", href: "/admin/audit-log", icon: ShieldAlert, roles: ['admin'], keywords: ["audit", "logs", "history"], description: "User management audit trail" },
+      { name: "Site Directory", href: "/admin/site-directory", icon: FileSearch, roles: ['admin'], keywords: ["pages", "routes", "navigation"], description: "All pages directory" },
+      { name: "Beta & Launch", href: "/beta", icon: Rocket, roles: ['admin'], keywords: ["beta", "launch", "testing", "checklist"], description: "Beta testing & launch checklist" },
     ]
   },
 ];
@@ -288,6 +278,35 @@ export function Sidebar() {
           ))
         )}
       </SidebarContent>
+      
+      <SidebarFooter className="border-t border-sidebar-border mt-auto">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink to="/admin/docs" className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent font-medium">
+                <BookOpen className="h-4 w-4" />
+                {!collapsed && <span>Documentation</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink to="/admin/integrations" className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent font-medium">
+                <Plug className="h-4 w-4" />
+                {!collapsed && <span>Integrations</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink to="/settings" className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent font-medium">
+                <SettingsIcon className="h-4 w-4" />
+                {!collapsed && <span>Settings</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </SidebarRoot>
   );
 }
