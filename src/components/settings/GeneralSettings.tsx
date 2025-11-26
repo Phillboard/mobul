@@ -3,12 +3,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
+import { useDrPhillipPreference } from "@/hooks/useDrPhillipPreference";
 
 const INDUSTRIES = [
   { value: "roofing", label: "Roofing" },
@@ -31,6 +33,7 @@ export function GeneralSettings() {
   const { hasPermission } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const { isEnabled: drPhillipEnabled, setIsEnabled: setDrPhillipEnabled } = useDrPhillipPreference();
   const [formData, setFormData] = useState({
     industry: "",
     timezone: "America/New_York",
@@ -150,6 +153,35 @@ export function GeneralSettings() {
               Contact your administrator to request changes to these settings.
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Assistant Preferences</CardTitle>
+          <CardDescription>
+            Customize your AI assistant experience
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-4 w-4" />
+                <Label htmlFor="dr-phillip-toggle" className="font-medium">
+                  Dr. Phillip Chat Assistant
+                </Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Show the AI chat assistant in the bottom right corner
+              </p>
+            </div>
+            <Switch
+              id="dr-phillip-toggle"
+              checked={drPhillipEnabled}
+              onCheckedChange={setDrPhillipEnabled}
+            />
+          </div>
         </CardContent>
       </Card>
     </form>
