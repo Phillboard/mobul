@@ -27,17 +27,6 @@ export default function AceFormBuilder() {
   const { data: existingForm, isLoading: isLoadingForm } = useAceForm(formId || "");
   const { createForm, updateForm } = useAceForms(currentClient?.id);
   const [showTemplates, setShowTemplates] = useState(!formId);
-
-  // Debug logging
-  useEffect(() => {
-    console.log('AceFormBuilder Debug:', {
-      formId,
-      hasExistingForm: !!existingForm,
-      isLoadingForm,
-      showTemplates,
-      formName: existingForm?.name
-    });
-  }, [formId, existingForm, isLoadingForm, showTemplates]);
   const [showExport, setShowExport] = useState(false);
   const [showEmbed, setShowEmbed] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
@@ -71,7 +60,6 @@ export default function AceFormBuilder() {
   // Load existing form data - only once on mount
   useEffect(() => {
     if (existingForm && !hasInitialized) {
-      console.log('Loading existing form data:', existingForm);
       setConfig(existingForm.form_config);
       setFormName(existingForm.name);
       setLastSaved(new Date(existingForm.updated_at || existingForm.created_at));
