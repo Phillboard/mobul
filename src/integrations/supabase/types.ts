@@ -3505,6 +3505,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          is_active: boolean | null
           notification_preferences: Json | null
           phone: string | null
           timezone: string | null
@@ -3514,6 +3515,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          is_active?: boolean | null
           notification_preferences?: Json | null
           phone?: string | null
           timezone?: string | null
@@ -3523,6 +3525,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          is_active?: boolean | null
           notification_preferences?: Json | null
           phone?: string | null
           timezone?: string | null
@@ -4460,6 +4463,51 @@ export type Database = {
           },
         ]
       }
+      user_management_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string | null
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          target_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_management_audit_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_management_audit_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_permissions: {
         Row: {
           created_at: string | null
@@ -4826,6 +4874,31 @@ export type Database = {
         Returns: {
           count: number
           state: string
+        }[]
+      }
+      get_manageable_users_paginated: {
+        Args: {
+          _client_filter?: string
+          _limit?: number
+          _offset?: number
+          _org_filter?: string
+          _requesting_user_id: string
+          _role_filter?: Database["public"]["Enums"]["app_role"]
+          _search?: string
+          _show_inactive?: boolean
+        }
+        Returns: {
+          client_ids: string[]
+          client_names: string[]
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          org_ids: string[]
+          org_names: string[]
+          roles: Database["public"]["Enums"]["app_role"][]
+          total_count: number
         }[]
       }
       get_user_permissions: {
