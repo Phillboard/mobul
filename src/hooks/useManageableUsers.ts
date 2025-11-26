@@ -26,25 +26,54 @@ export function useManageableUsers() {
 
       // Admin and tech_support can see all users
       if (userRole === 'admin' || userRole === 'tech_support') {
-        const { data, error } = await supabase
+        // First get all profiles
+        const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
           .select(`
             id,
             email,
             full_name,
-            created_at,
-            user_roles!inner(role),
-            org_members(
-              organizations(id, name)
-            ),
-            client_users(
-              clients(id, name)
-            )
+            created_at
           `)
           .order("created_at", { ascending: false });
 
-        if (error) throw error;
-        return formatUsers(data);
+        if (profilesError) throw profilesError;
+        if (!profiles) return [];
+
+        // Get user roles for all profiles
+        const { data: userRoles, error: rolesError } = await supabase
+          .from("user_roles")
+          .select("user_id, role")
+          .in("user_id", profiles.map(p => p.id));
+
+        if (rolesError) throw rolesError;
+
+        // Get org memberships
+        const { data: orgMembers, error: orgError } = await supabase
+          .from("org_members")
+          .select("user_id, organizations(id, name)")
+          .in("user_id", profiles.map(p => p.id));
+
+        if (orgError) throw orgError;
+
+        // Get client memberships
+        const { data: clientUsers, error: clientError } = await supabase
+          .from("client_users")
+          .select("user_id, clients(id, name)")
+          .in("user_id", profiles.map(p => p.id));
+
+        if (clientError) throw clientError;
+
+        // Combine the data
+        return profiles.map(profile => ({
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          created_at: profile.created_at,
+          roles: userRoles?.filter(r => r.user_id === profile.id).map(r => ({ role: r.role })) || [],
+          organizations: orgMembers?.filter(om => om.user_id === profile.id).map(om => om.organizations).filter(Boolean) || [],
+          clients: clientUsers?.filter(cu => cu.user_id === profile.id).map(cu => cu.clients).filter(Boolean) || [],
+        }));
       }
 
       // Agency owners can see users in their organizations and their clients
@@ -60,26 +89,48 @@ export function useManageableUsers() {
         const orgIds = userOrgs.map(o => o.org_id);
 
         // Get users in those orgs
-        const { data, error } = await supabase
+        const { data: orgMemberships, error: orgMembersError } = await supabase
+          .from("org_members")
+          .select("user_id, organizations(id, name)")
+          .in("org_id", orgIds);
+
+        if (orgMembersError) throw orgMembersError;
+        if (!orgMemberships) return [];
+
+        const userIds = [...new Set(orgMemberships.map(om => om.user_id))];
+
+        // Get profiles
+        const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
-          .select(`
-            id,
-            email,
-            full_name,
-            created_at,
-            user_roles!inner(role),
-            org_members!inner(
-              organizations(id, name)
-            ),
-            client_users(
-              clients(id, name)
-            )
-          `)
-          .in("org_members.org_id", orgIds)
+          .select("id, email, full_name, created_at")
+          .in("id", userIds)
           .order("created_at", { ascending: false });
 
-        if (error) throw error;
-        return formatUsers(data);
+        if (profilesError) throw profilesError;
+        if (!profiles) return [];
+
+        // Get user roles
+        const { data: userRoles } = await supabase
+          .from("user_roles")
+          .select("user_id, role")
+          .in("user_id", userIds);
+
+        // Get client memberships
+        const { data: clientUsers } = await supabase
+          .from("client_users")
+          .select("user_id, clients(id, name)")
+          .in("user_id", userIds);
+
+        // Combine the data
+        return profiles.map(profile => ({
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          created_at: profile.created_at,
+          roles: userRoles?.filter(r => r.user_id === profile.id).map(r => ({ role: r.role })) || [],
+          organizations: orgMemberships?.filter(om => om.user_id === profile.id).map(om => om.organizations).filter(Boolean) || [],
+          clients: clientUsers?.filter(cu => cu.user_id === profile.id).map(cu => cu.clients).filter(Boolean) || [],
+        }));
       }
 
       // Company owners can see users in their client
@@ -93,66 +144,89 @@ export function useManageableUsers() {
 
         const clientIds = userClients.map(c => c.client_id);
 
-        const { data, error } = await supabase
+        // Get users in those clients
+        const { data: clientMemberships, error: clientMembersError } = await supabase
+          .from("client_users")
+          .select("user_id, clients(id, name)")
+          .in("client_id", clientIds);
+
+        if (clientMembersError) throw clientMembersError;
+        if (!clientMemberships) return [];
+
+        const userIds = [...new Set(clientMemberships.map(cm => cm.user_id))];
+
+        // Get profiles
+        const { data: profiles, error: profilesError } = await supabase
           .from("profiles")
-          .select(`
-            id,
-            email,
-            full_name,
-            created_at,
-            user_roles!inner(role),
-            org_members(
-              organizations(id, name)
-            ),
-            client_users!inner(
-              clients(id, name)
-            )
-          `)
-          .in("client_users.client_id", clientIds)
+          .select("id, email, full_name, created_at")
+          .in("id", userIds)
           .order("created_at", { ascending: false });
 
-        if (error) throw error;
-        return formatUsers(data);
+        if (profilesError) throw profilesError;
+        if (!profiles) return [];
+
+        // Get user roles
+        const { data: userRoles } = await supabase
+          .from("user_roles")
+          .select("user_id, role")
+          .in("user_id", userIds);
+
+        // Get org memberships
+        const { data: orgMembers } = await supabase
+          .from("org_members")
+          .select("user_id, organizations(id, name)")
+          .in("user_id", userIds);
+
+        // Combine the data
+        return profiles.map(profile => ({
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          created_at: profile.created_at,
+          roles: userRoles?.filter(r => r.user_id === profile.id).map(r => ({ role: r.role })) || [],
+          organizations: orgMembers?.filter(om => om.user_id === profile.id).map(om => om.organizations).filter(Boolean) || [],
+          clients: clientMemberships?.filter(cm => cm.user_id === profile.id).map(cm => cm.clients).filter(Boolean) || [],
+        }));
       }
 
       // Others can only see themselves
-      const { data, error } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select(`
-          id,
-          email,
-          full_name,
-          created_at,
-          user_roles!inner(role),
-          org_members(
-            organizations(id, name)
-          ),
-          client_users(
-            clients(id, name)
-          )
-        `)
+        .select("id, email, full_name, created_at")
         .eq("id", user.id)
         .single();
 
-      if (error) throw error;
-      return [formatUser(data)];
+      if (profileError) throw profileError;
+      if (!profile) return [];
+
+      // Get user roles
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .eq("user_id", user.id);
+
+      // Get org memberships
+      const { data: orgMembers } = await supabase
+        .from("org_members")
+        .select("user_id, organizations(id, name)")
+        .eq("user_id", user.id);
+
+      // Get client memberships
+      const { data: clientUsers } = await supabase
+        .from("client_users")
+        .select("user_id, clients(id, name)")
+        .eq("user_id", user.id);
+
+      return [{
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.full_name,
+        created_at: profile.created_at,
+        roles: userRoles?.map(r => ({ role: r.role })) || [],
+        organizations: orgMembers?.map(om => om.organizations).filter(Boolean) || [],
+        clients: clientUsers?.map(cu => cu.clients).filter(Boolean) || [],
+      }];
     },
     enabled: !roleLoading && !!userRole,
   });
-}
-
-function formatUsers(data: any[]): ManageableUser[] {
-  return data.map(formatUser);
-}
-
-function formatUser(user: any): ManageableUser {
-  return {
-    id: user.id,
-    email: user.email,
-    full_name: user.full_name,
-    created_at: user.created_at,
-    roles: user.user_roles || [],
-    organizations: user.org_members?.map((om: any) => om.organizations).filter(Boolean) || [],
-    clients: user.client_users?.map((cu: any) => cu.clients).filter(Boolean) || [],
-  };
 }
