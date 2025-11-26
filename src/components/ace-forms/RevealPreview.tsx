@@ -80,6 +80,7 @@ export function RevealPreview({ revealSettings }: RevealPreviewProps) {
       } as any}>
         <GiftCardDisplay 
           redemption={previewRedemption}
+          revealSettings={revealSettings}
           embedMode={false}
         />
       </div>
