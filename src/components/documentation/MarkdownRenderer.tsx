@@ -1,7 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
     <div className={cn("prose prose-slate dark:prose-invert max-w-none", className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        rehypePlugins={[rehypeRaw]}
         components={{
           code(props) {
             const { children, className, ...rest } = props;
@@ -36,7 +35,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             const inline = !className;
             
             return !inline && match ? (
-              <div className="relative group">
+              <div className="relative group my-4">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -58,7 +57,7 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                 </SyntaxHighlighter>
               </div>
             ) : (
-              <code className={className} {...rest}>
+              <code className={cn("px-1.5 py-0.5 rounded-md bg-muted text-foreground font-mono text-sm", className)} {...rest}>
                 {children}
               </code>
             );
@@ -71,11 +70,55 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                 href={href}
                 target={isExternal ? '_blank' : undefined}
                 rel={isExternal ? 'noopener noreferrer' : undefined}
+                className="text-primary hover:underline"
                 {...rest}
               >
                 {children}
               </a>
             );
+          },
+          p(props) {
+            return <p className="my-4 leading-7" {...props} />;
+          },
+          h2(props) {
+            return <h2 className="mt-10 mb-4 text-2xl font-bold tracking-tight" {...props} />;
+          },
+          h3(props) {
+            return <h3 className="mt-8 mb-3 text-xl font-semibold tracking-tight" {...props} />;
+          },
+          hr() {
+            return <hr className="my-8 border-border" />;
+          },
+          table(props) {
+            return (
+              <div className="my-6 w-full overflow-x-auto">
+                <table className="w-full border-collapse" {...props} />
+              </div>
+            );
+          },
+          thead(props) {
+            return <thead className="bg-muted" {...props} />;
+          },
+          tbody(props) {
+            return <tbody {...props} />;
+          },
+          tr(props) {
+            return <tr className="border-b border-border" {...props} />;
+          },
+          th(props) {
+            return <th className="px-4 py-3 text-left font-semibold text-sm" {...props} />;
+          },
+          td(props) {
+            return <td className="px-4 py-3 text-sm" {...props} />;
+          },
+          ul(props) {
+            return <ul className="my-4 ml-6 list-disc space-y-2" {...props} />;
+          },
+          ol(props) {
+            return <ol className="my-4 ml-6 list-decimal space-y-2" {...props} />;
+          },
+          li(props) {
+            return <li className="leading-7" {...props} />;
           },
         }}
       >

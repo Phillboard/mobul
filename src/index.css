@@ -462,3 +462,91 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================
+   DOCUMENTATION PROSE STYLES
+   ============================================ */
+
+.prose {
+  @apply text-foreground max-w-none;
+}
+
+.prose p {
+  @apply my-4 leading-7;
+}
+
+.prose h1 {
+  @apply mt-12 mb-6 text-3xl font-bold tracking-tight;
+}
+
+.prose h2 {
+  @apply mt-10 mb-4 text-2xl font-bold tracking-tight;
+}
+
+.prose h3 {
+  @apply mt-8 mb-3 text-xl font-semibold tracking-tight;
+}
+
+.prose h4 {
+  @apply mt-6 mb-2 text-lg font-semibold;
+}
+
+.prose hr {
+  @apply my-8 border-border;
+}
+
+.prose table {
+  @apply w-full border-collapse my-6;
+}
+
+.prose thead {
+  @apply bg-muted;
+}
+
+.prose th {
+  @apply border border-border px-4 py-3 text-left font-semibold text-sm;
+}
+
+.prose td {
+  @apply border border-border px-4 py-3 text-sm;
+}
+
+.prose tr {
+  @apply border-b border-border;
+}
+
+.prose ul {
+  @apply my-4 ml-6 list-disc space-y-2;
+}
+
+.prose ol {
+  @apply my-4 ml-6 list-decimal space-y-2;
+}
+
+.prose li {
+  @apply leading-7;
+}
+
+.prose code {
+  @apply px-1.5 py-0.5 rounded-md bg-muted text-foreground font-mono text-sm;
+}
+
+.prose pre {
+  @apply my-4 rounded-lg overflow-x-auto;
+}
+
+.prose blockquote {
+  @apply my-4 pl-4 border-l-4 border-primary/50 italic text-muted-foreground;
+}
+
+.prose a {
+  @apply text-primary hover:underline font-medium;
+}
+
+.prose strong {
+  @apply font-semibold text-foreground;
+}
+
+.prose em {
+  @apply italic;
+}
