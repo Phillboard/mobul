@@ -7,6 +7,8 @@ import { useAceForms, useAceForm } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
 import { Layout } from "@/components/layout/Layout";
 import { FormBuilder } from "@/components/ace-forms/FormBuilder";
+import { RevealDesigner } from "@/components/ace-forms/RevealDesigner";
+import { FormAnalytics } from "@/components/ace-forms/FormAnalytics";
 import { FormTemplateSelector } from "@/components/ace-forms/FormTemplateSelector";
 import { ExportDialog } from "@/components/ace-forms/ExportDialog";
 import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
@@ -41,7 +43,7 @@ export default function AceFormBuilder() {
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [formName, setFormName] = useState("");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<'form' | 'reveal'>('form');
+  const [activeTab, setActiveTab] = useState<'form' | 'reveal' | 'analytics'>('form');
   const autoSaveTimerRef = useRef<number>();
   const { toast } = useToast();
 
@@ -251,11 +253,12 @@ export default function AceFormBuilder() {
                 className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0"
               />
               
-              {/* Tabs for Form/Reveal */}
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'form' | 'reveal')}>
+              {/* Tabs for Form/Reveal/Analytics */}
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'form' | 'reveal' | 'analytics')}>
                 <TabsList>
                   <TabsTrigger value="form">Form Designer</TabsTrigger>
                   <TabsTrigger value="reveal">Reveal Designer</TabsTrigger>
+                  <TabsTrigger value="analytics">Analytics</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -308,7 +311,7 @@ export default function AceFormBuilder() {
 
         {/* Builder */}
         <div className="flex-1 overflow-hidden">
-          {activeTab === 'form' ? (
+          {activeTab === 'form' && (
             <FormBuilder
               config={config}
               selectedFieldId={selectedFieldId}
@@ -322,11 +325,18 @@ export default function AceFormBuilder() {
               onAddFieldPreset={handleAddFieldPreset}
               onDuplicateField={duplicateField}
             />
-          ) : (
-            <div className="h-full p-6">
-              <h2 className="text-xl font-semibold mb-4">Reveal Designer</h2>
-              <p className="text-muted-foreground">Configure how gift cards are revealed to users after form submission.</p>
-              {/* TODO: Add RevealDesigner component here */}
+          )}
+          
+          {activeTab === 'reveal' && (
+            <RevealDesigner
+              revealSettings={config.revealSettings}
+              onUpdate={updateRevealSettings}
+            />
+          )}
+          
+          {activeTab === 'analytics' && formId && (
+            <div className="p-6">
+              <FormAnalytics formId={formId} />
             </div>
           )}
         </div>
