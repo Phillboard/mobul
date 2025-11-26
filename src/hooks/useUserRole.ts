@@ -7,8 +7,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-
-export type UserRole = 'admin' | 'agency_owner' | 'company_owner' | 'call_center' | 'user';
+import { AppRole } from "@/lib/roleUtils";
 
 /**
  * Hook to get current user's role
@@ -33,13 +32,13 @@ export function useUserRole() {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          // No role found, default to 'user'
-          return 'user' as UserRole;
+          // No role found
+          return null;
         }
         throw error;
       }
 
-      return data.role as UserRole;
+      return data.role as AppRole;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: false,
@@ -52,7 +51,7 @@ export function useUserRole() {
  * @param requiredRole - Role to check for
  * @returns Query result with boolean
  */
-export function useHasRole(requiredRole: UserRole) {
+export function useHasRole(requiredRole: AppRole) {
   const { data: userRole, ...rest } = useUserRole();
   
   return {
@@ -68,7 +67,7 @@ export function useHasRole(requiredRole: UserRole) {
  * @param allowedRoles - Array of allowed roles
  * @returns Query result with boolean
  */
-export function useHasAnyRole(allowedRoles: UserRole[]) {
+export function useHasAnyRole(allowedRoles: AppRole[]) {
   const { data: userRole, ...rest } = useUserRole();
   
   return {
