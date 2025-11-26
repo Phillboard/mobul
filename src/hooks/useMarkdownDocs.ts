@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Map URL slugs to file paths
 const categoryFolderMap: Record<string, string> = {
@@ -59,10 +60,25 @@ export function useMarkdownDoc(category: string, slug: string) {
   useEffect(() => {
     async function loadMarkdown() {
       try {
+        // First, try to load from database (edited content)
+        const { data: dbDoc, error: dbError } = await supabase
+          .from("documentation_pages")
+          .select("content, title")
+          .eq("category", category)
+          .eq("slug", slug)
+          .single();
+
+        if (!dbError && dbDoc?.content) {
+          console.log('Loaded from database:', { category, slug });
+          setContent(dbDoc.content);
+          return;
+        }
+
+        // Fall back to file system
         const folderName = categoryFolderMap[category];
         const fileName = slugFileMap[slug];
         
-        console.log('Loading doc:', { category, slug, folderName, fileName });
+        console.log('Loading doc from file:', { category, slug, folderName, fileName });
         
         if (!folderName || !fileName) {
           console.error('Missing folder or file mapping:', { category, slug, folderName, fileName });
