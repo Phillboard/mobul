@@ -1,0 +1,12 @@
+# Developer Guide
+
+This folder contains guides for developers working on the platform.
+
+## Contents
+
+- SETUP.md - Development environment setup
+- CODE_STANDARDS.md - Coding conventions
+- TESTING.md - Testing guidelines
+- EDGE_FUNCTIONS.md - Edge function development
+- DATABASE.md - Database operations
+- DEPLOYMENT.md - Deployment procedures
