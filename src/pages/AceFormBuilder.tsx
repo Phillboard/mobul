@@ -2,11 +2,11 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Save, Eye, Sparkles, ChevronRight, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useFormBuilderRHF } from "@/hooks/useFormBuilderRHF";
 import { useAceForms, useAceForm } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
 import { Layout } from "@/components/layout/Layout";
 import { FormBuilder } from "@/components/ace-forms/FormBuilder";
+import { FormBuilderProvider, useFormBuilder } from "@/contexts/FormBuilderContext";
 import { RevealDesigner } from "@/components/ace-forms/RevealDesigner";
 import { FormAnalytics } from "@/components/ace-forms/FormAnalytics";
 import { FormTemplateSelector } from "@/components/ace-forms/FormTemplateSelector";
@@ -18,9 +18,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 /**
- * Ace Form Builder - Visual form editor
+ * Inner component that uses FormBuilderContext
  */
-export default function AceFormBuilder() {
+function AceFormBuilderContent() {
   const { formId } = useParams();
   const navigate = useNavigate();
   const { currentClient } = useTenant();
@@ -37,25 +37,7 @@ export default function AceFormBuilder() {
   const autoSaveTimerRef = useRef<number>();
   const { toast } = useToast();
 
-  const {
-    config,
-    setConfig,
-    selectedFieldId,
-    setSelectedFieldId,
-    selectedField,
-    addField,
-    addFields,
-    updateField,
-    duplicateField,
-    deleteField,
-    reorderFields,
-    updateSettings,
-    updateRevealSettings,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-  } = useFormBuilderRHF(existingForm?.form_config);
+  const { config, setConfig, updateRevealSettings } = useFormBuilder();
 
   // Load existing form data - only once on mount
   useEffect(() => {
@@ -211,10 +193,6 @@ export default function AceFormBuilder() {
     );
   }
 
-  const handleAddFieldPreset = (preset: any) => {
-    addFields(preset.fields);
-  };
-
   return (
     <Layout>
       <div className="h-[calc(100vh-8rem)] flex flex-col -m-3 md:-m-4">
@@ -302,21 +280,7 @@ export default function AceFormBuilder() {
 
         {/* Builder */}
         <div className="flex-1 overflow-hidden">
-          {activeTab === 'form' && (
-            <FormBuilder
-              config={config}
-              selectedFieldId={selectedFieldId}
-              selectedField={selectedField}
-              onSelectField={setSelectedFieldId}
-              onAddField={addField}
-              onUpdateField={updateField}
-              onDeleteField={deleteField}
-              onReorderFields={reorderFields}
-              onUpdateSettings={updateSettings}
-              onAddFieldPreset={handleAddFieldPreset}
-              onDuplicateField={duplicateField}
-            />
-          )}
+          {activeTab === 'form' && <FormBuilder activeTab={activeTab} />}
           
           {activeTab === 'reveal' && (
             <RevealDesigner
@@ -365,5 +329,20 @@ export default function AceFormBuilder() {
         />
       )}
     </Layout>
+  );
+}
+
+/**
+ * Ace Form Builder - Visual form editor
+ * Wraps the content in FormBuilderProvider for state management
+ */
+export default function AceFormBuilder() {
+  const { formId } = useParams();
+  const { data: existingForm } = useAceForm(formId || "");
+
+  return (
+    <FormBuilderProvider initialConfig={existingForm?.form_config}>
+      <AceFormBuilderContent />
+    </FormBuilderProvider>
   );
 }

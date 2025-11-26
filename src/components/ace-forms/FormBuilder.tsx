@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { FormField, FormConfig, FieldType, FormSettings } from "@/types/aceForms";
+import { FieldType } from "@/types/aceForms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +13,10 @@ import { SmartFieldSuggestions } from "./SmartFieldSuggestions";
 import { RevealDesigner } from "./RevealDesigner";
 import { ValidationRulesEditor } from "./ValidationRulesEditor";
 import { FieldStylingEditor } from "./FieldStylingEditor";
-import { FieldPresets, FIELD_PRESETS, type FieldPreset } from "./FieldPresets";
+import { FieldPresets, type FieldPreset } from "./FieldPresets";
 import { FormBuilderMobile } from "./FormBuilderMobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useFormBuilder } from "@/contexts/FormBuilderContext";
 
 const fieldTypes: { type: FieldType; label: string }[] = [
   { type: "gift-card-code", label: "Gift Card Code" },
@@ -30,44 +31,37 @@ const fieldTypes: { type: FieldType; label: string }[] = [
 ];
 
 interface FormBuilderProps {
-  config: FormConfig;
-  selectedFieldId: string | null;
-  selectedField: FormField | undefined;
-  onAddField: (type: FieldType) => void;
-  onAddFieldPreset: (preset: FieldPreset) => void;
-  onUpdateField: (id: string, updates: Partial<FormField>) => void;
-  onDuplicateField: (id: string) => void;
-  onDeleteField: (id: string) => void;
-  onReorderFields: (startIndex: number, endIndex: number) => void;
-  onSelectField: (id: string | null) => void;
-  onUpdateSettings: (updates: Partial<FormSettings>) => void;
-  onUpdateRevealSettings?: (updates: Partial<FormConfig["revealSettings"]>) => void;
   activeTab?: "form" | "reveal";
 }
 
-export function FormBuilder({
-  config,
-  selectedField,
-  onAddField,
-  onAddFieldPreset,
-  onUpdateField,
-  onDuplicateField,
-  onDeleteField,
-  onReorderFields,
-  onSelectField,
-  onUpdateSettings,
-  onUpdateRevealSettings,
-  activeTab = "form",
-}: FormBuilderProps) {
+export function FormBuilder({ activeTab = "form" }: FormBuilderProps) {
+  const {
+    config,
+    selectedField,
+    addField,
+    addFields,
+    updateField,
+    duplicateField,
+    deleteField,
+    reorderFields,
+    setSelectedFieldId,
+    updateSettings,
+    updateRevealSettings,
+  } = useFormBuilder();
+
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
-    onReorderFields(result.source.index, result.destination.index);
+    reorderFields(result.source.index, result.destination.index);
+  };
+
+  const handleAddFieldPreset = (preset: FieldPreset) => {
+    addFields(preset.fields);
   };
 
   return (
     <div className="flex h-full overflow-hidden relative">
       {/* Mobile Add Field Button */}
-      <FormBuilderMobile onAddField={onAddField} />
+      <FormBuilderMobile onAddField={addField} />
 
       {/* Left Sidebar - Field Library - Hidden on mobile */}
       <ScrollArea className="hidden lg:block w-64 border-r bg-muted/30 p-4">
@@ -80,7 +74,7 @@ export function FormBuilder({
                   key={field.type}
                   variant="outline"
                   className="w-full justify-start"
-                  onClick={() => onAddField(field.type)}
+                  onClick={() => addField(field.type)}
                 >
                   {field.label}
                 </Button>
@@ -89,16 +83,16 @@ export function FormBuilder({
           </div>
 
           {/* Field Presets */}
-          <FieldPresets onAddPreset={(preset) => onAddFieldPreset(preset)} />
+          <FieldPresets onAddPreset={handleAddFieldPreset} />
         </div>
       </ScrollArea>
 
       {/* Center - Form Canvas */}
       <ScrollArea className="flex-1 p-4 lg:p-6 bg-background">
-        {activeTab === "reveal" && onUpdateRevealSettings && config.revealSettings ? (
+        {activeTab === "reveal" && config.revealSettings ? (
           <RevealDesigner
             revealSettings={config.revealSettings}
-            onUpdate={onUpdateRevealSettings}
+            onUpdate={updateRevealSettings}
           />
         ) : (
           <div className="max-w-3xl mx-auto space-y-4">
@@ -124,7 +118,7 @@ export function FormBuilder({
                                 ? "ring-2 ring-primary"
                                 : "hover:border-primary/50"
                             } ${snapshot.isDragging ? "shadow-lg" : ""} transition-all cursor-pointer`}
-                            onClick={() => onSelectField(field.id)}
+                            onClick={() => setSelectedFieldId(field.id)}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-start gap-3">
@@ -166,7 +160,7 @@ export function FormBuilder({
                                     variant="ghost"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onDuplicateField(field.id);
+                                      duplicateField(field.id);
                                     }}
                                     title="Duplicate field"
                                   >
@@ -177,7 +171,7 @@ export function FormBuilder({
                                     variant="ghost"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onDeleteField(field.id);
+                                      deleteField(field.id);
                                     }}
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -215,7 +209,7 @@ export function FormBuilder({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onSelectField(null)}
+                onClick={() => setSelectedFieldId(null)}
               >
                 <Settings className="w-4 h-4" />
               </Button>
@@ -224,7 +218,7 @@ export function FormBuilder({
             {/* Smart Suggestions */}
             <SmartFieldSuggestions
               field={selectedField}
-              onApplySuggestion={(updates) => onUpdateField(selectedField.id, updates)}
+              onApplySuggestion={(updates) => updateField(selectedField.id, updates)}
             />
 
             {/* Basic Properties */}
@@ -237,7 +231,7 @@ export function FormBuilder({
                   <Label className="text-xs">Label</Label>
                   <Input
                     value={selectedField.label}
-                    onChange={(e) => onUpdateField(selectedField.id, { label: e.target.value })}
+                    onChange={(e) => updateField(selectedField.id, { label: e.target.value })}
                   />
                 </div>
 
@@ -246,7 +240,7 @@ export function FormBuilder({
                   <Input
                     value={selectedField.placeholder || ""}
                     onChange={(e) =>
-                      onUpdateField(selectedField.id, { placeholder: e.target.value })
+                      updateField(selectedField.id, { placeholder: e.target.value })
                     }
                   />
                 </div>
@@ -255,7 +249,7 @@ export function FormBuilder({
                   <Label className="text-xs">Help Text</Label>
                   <Input
                     value={selectedField.helpText || ""}
-                    onChange={(e) => onUpdateField(selectedField.id, { helpText: e.target.value })}
+                    onChange={(e) => updateField(selectedField.id, { helpText: e.target.value })}
                   />
                 </div>
 
@@ -264,7 +258,7 @@ export function FormBuilder({
                   <Switch
                     checked={selectedField.required}
                     onCheckedChange={(checked) =>
-                      onUpdateField(selectedField.id, { required: checked })
+                      updateField(selectedField.id, { required: checked })
                     }
                   />
                 </div>
@@ -277,7 +271,7 @@ export function FormBuilder({
                     <Textarea
                       value={selectedField.options?.join("\n") || ""}
                       onChange={(e) =>
-                        onUpdateField(selectedField.id, {
+                        updateField(selectedField.id, {
                           options: e.target.value.split("\n").filter((o) => o.trim()),
                         })
                       }
@@ -291,20 +285,20 @@ export function FormBuilder({
             {/* Validation Rules */}
             <ValidationRulesEditor
               rules={selectedField.validation || []}
-              onUpdate={(rules) => onUpdateField(selectedField.id, { validation: rules })}
+              onUpdate={(rules) => updateField(selectedField.id, { validation: rules })}
             />
 
             {/* Field Styling */}
             <FieldStylingEditor
               styling={selectedField.styling}
-              onUpdate={(styling) => onUpdateField(selectedField.id, { styling })}
+              onUpdate={(styling) => updateField(selectedField.id, { styling })}
             />
 
             {/* Conditional Logic */}
             <ConditionalLogicBuilder
               field={selectedField}
               allFields={config.fields}
-              onUpdate={(conditional) => onUpdateField(selectedField.id, { conditional })}
+              onUpdate={(conditional) => updateField(selectedField.id, { conditional })}
             />
           </div>
         ) : (
@@ -321,7 +315,7 @@ export function FormBuilder({
                   <Label className="text-xs">Form Title</Label>
                   <Input
                     value={config.settings.title}
-                    onChange={(e) => onUpdateSettings({ title: e.target.value })}
+                    onChange={(e) => updateSettings({ title: e.target.value })}
                   />
                 </div>
 
@@ -329,7 +323,7 @@ export function FormBuilder({
                   <Label className="text-xs">Description</Label>
                   <Textarea
                     value={config.settings.description || ""}
-                    onChange={(e) => onUpdateSettings({ description: e.target.value })}
+                    onChange={(e) => updateSettings({ description: e.target.value })}
                   />
                 </div>
 
@@ -337,7 +331,7 @@ export function FormBuilder({
                   <Label className="text-xs">Submit Button Text</Label>
                   <Input
                     value={config.settings.submitButtonText}
-                    onChange={(e) => onUpdateSettings({ submitButtonText: e.target.value })}
+                    onChange={(e) => updateSettings({ submitButtonText: e.target.value })}
                   />
                 </div>
 
@@ -347,12 +341,12 @@ export function FormBuilder({
                     <Input
                       type="color"
                       value={config.settings.primaryColor}
-                      onChange={(e) => onUpdateSettings({ primaryColor: e.target.value })}
+                      onChange={(e) => updateSettings({ primaryColor: e.target.value })}
                       className="w-16 h-9 p-1"
                     />
                     <Input
                       value={config.settings.primaryColor}
-                      onChange={(e) => onUpdateSettings({ primaryColor: e.target.value })}
+                      onChange={(e) => updateSettings({ primaryColor: e.target.value })}
                       placeholder="#6366f1"
                     />
                   </div>
@@ -362,7 +356,7 @@ export function FormBuilder({
                   <Label className="text-xs">Success Message</Label>
                   <Textarea
                     value={config.settings.successMessage || ""}
-                    onChange={(e) => onUpdateSettings({ successMessage: e.target.value })}
+                    onChange={(e) => updateSettings({ successMessage: e.target.value })}
                     placeholder="Thank you for your submission!"
                   />
                 </div>
