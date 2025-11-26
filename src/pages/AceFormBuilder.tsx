@@ -52,11 +52,17 @@ export default function AceFormBuilder() {
     setSelectedFieldId,
     selectedField,
     addField,
+    addFields,
     updateField,
+    duplicateField,
     deleteField,
     reorderFields,
     updateSettings,
     updateRevealSettings,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = useFormBuilderRHF(existingForm?.form_config);
 
   useEffect(() => {
@@ -212,6 +218,10 @@ export default function AceFormBuilder() {
     );
   }
 
+  const handleAddFieldPreset = (preset: any) => {
+    addFields(preset.fields);
+  };
+
   return (
     <Layout>
       <div className="h-[calc(100vh-8rem)] flex flex-col -m-3 md:-m-4">
@@ -219,7 +229,7 @@ export default function AceFormBuilder() {
         <div className="border-b bg-background px-4 py-3 flex flex-col gap-2">
           {/* Breadcrumbs */}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Button 
+            <Button
               variant="link" 
               className="p-0 h-auto font-normal"
               onClick={() => navigate("/ace-forms")}
@@ -298,20 +308,27 @@ export default function AceFormBuilder() {
 
         {/* Builder */}
         <div className="flex-1 overflow-hidden">
-          <FormBuilder
-            config={config}
-            selectedFieldId={selectedFieldId}
-            selectedField={selectedField}
-            onSelectField={setSelectedFieldId}
-            onAddField={addField}
-            onUpdateField={updateField}
-            onDeleteField={deleteField}
-            onReorderFields={reorderFields}
-            onUpdateSettings={updateSettings}
-            onUpdateRevealSettings={updateRevealSettings}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
+          {activeTab === 'form' ? (
+            <FormBuilder
+              config={config}
+              selectedFieldId={selectedFieldId}
+              selectedField={selectedField}
+              onSelectField={setSelectedFieldId}
+              onAddField={addField}
+              onUpdateField={updateField}
+              onDeleteField={deleteField}
+              onReorderFields={reorderFields}
+              onUpdateSettings={updateSettings}
+              onAddFieldPreset={handleAddFieldPreset}
+              onDuplicateField={duplicateField}
+            />
+          ) : (
+            <div className="h-full p-6">
+              <h2 className="text-xl font-semibold mb-4">Reveal Designer</h2>
+              <p className="text-muted-foreground">Configure how gift cards are revealed to users after form submission.</p>
+              {/* TODO: Add RevealDesigner component here */}
+            </div>
+          )}
         </div>
       </div>
 
