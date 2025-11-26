@@ -1,0 +1,11 @@
+# Architecture Documentation
+
+This folder contains technical architecture documentation for the Mobul ACE Platform.
+
+## Contents
+
+- OVERVIEW.md - System architecture overview
+- DATA_MODEL.md - Database schema and relationships
+- PERMISSIONS.md - Role-based access control
+- SECURITY.md - Security best practices
+- TECH_STACK.md - Technology choices and rationale

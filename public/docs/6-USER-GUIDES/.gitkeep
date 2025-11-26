@@ -1,0 +1,11 @@
+# User Guides
+
+This folder contains guides for different user roles.
+
+## Contents
+
+- ADMIN_GUIDE.md - Platform administrators
+- CLIENT_GUIDE.md - Business clients
+- CALL_CENTER_GUIDE.md - Call center agents
+- AGENCY_OWNER_GUIDE.md - Agency owners
+- END_USER_GUIDE.md - Campaign recipients
