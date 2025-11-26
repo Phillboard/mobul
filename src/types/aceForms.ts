@@ -59,9 +59,42 @@ export interface FormSettings {
   showBranding?: boolean;
 }
 
+export interface RevealSettings {
+  // Animation
+  animationStyle: 'fade' | 'slide' | 'confetti' | 'none';
+  showConfetti: boolean;
+  
+  // Card Appearance
+  cardStyle: 'modern' | 'classic' | 'minimal' | 'playful';
+  cardGradient: boolean;
+  customGradientStart?: string;
+  customGradientEnd?: string;
+  showBrandLogo: boolean;
+  
+  // Actions
+  showQRCode: boolean;
+  showOpenInApp: boolean;
+  showShareButton: boolean;
+  showWalletButton: boolean;
+  showDownloadButton: boolean;
+  
+  // Instructions
+  showInstructions: boolean;
+  customInstructions?: string;
+  
+  // Success Message
+  successTitle?: string;
+  successSubtitle?: string;
+  
+  // Background
+  revealBackground: 'gradient' | 'solid' | 'transparent';
+  revealBackgroundColor?: string;
+}
+
 export interface FormConfig {
   fields: FormField[];
   settings: FormSettings;
+  revealSettings?: RevealSettings;
 }
 
 export interface AceForm {
