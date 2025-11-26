@@ -44,7 +44,7 @@ export function GiftCardQRCode({ redemption, variant = "button" }: GiftCardQRCod
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button variant="secondary" size="sm" className="gap-2 bg-card">
           <QrCode className="w-4 h-4" />
           Show QR Code
         </Button>

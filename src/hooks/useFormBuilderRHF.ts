@@ -10,6 +10,7 @@ import { useState } from "react";
 interface FormBuilderFormData {
   fields: FormField[];
   settings: FormConfig["settings"];
+  revealSettings: FormConfig["revealSettings"];
 }
 
 export function useFormBuilderRHF(initialConfig?: FormConfig) {
@@ -20,6 +21,20 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
         title: "New Form",
         submitButtonText: "Submit",
         primaryColor: "#6366f1",
+      },
+      revealSettings: initialConfig?.revealSettings || {
+        animationStyle: 'confetti',
+        showConfetti: true,
+        cardStyle: 'modern',
+        cardGradient: true,
+        showBrandLogo: true,
+        showQRCode: true,
+        showOpenInApp: true,
+        showShareButton: true,
+        showWalletButton: true,
+        showDownloadButton: true,
+        showInstructions: true,
+        revealBackground: 'gradient',
       },
     },
   });
@@ -36,6 +51,7 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
   const config: FormConfig = {
     fields: formData.fields,
     settings: formData.settings,
+    revealSettings: formData.revealSettings,
   };
 
   // Add a new field
@@ -85,10 +101,21 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
     });
   };
 
+  // Update reveal settings
+  const updateRevealSettings = (updates: Partial<FormConfig["revealSettings"]>) => {
+    setValue("revealSettings", {
+      ...formData.revealSettings,
+      ...updates,
+    } as any);
+  };
+
   // Set entire config (for loading saved forms)
   const setConfig = (newConfig: FormConfig) => {
     setValue("fields", newConfig.fields);
     setValue("settings", newConfig.settings);
+    if (newConfig.revealSettings) {
+      setValue("revealSettings", newConfig.revealSettings);
+    }
   };
 
   // Get selected field
@@ -105,6 +132,7 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
     deleteField,
     reorderFields,
     updateSettings,
+    updateRevealSettings,
     // Expose RHF control for advanced usage
     control,
   };

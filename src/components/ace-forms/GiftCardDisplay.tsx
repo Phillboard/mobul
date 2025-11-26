@@ -82,7 +82,7 @@ export function GiftCardDisplay({ redemption, embedMode = false }: GiftCardDispl
               <div className={cn("opacity-75 mb-1", embedMode ? 'text-[10px]' : 'text-xs')}>
                 Gift Card Code
               </div>
-              <div className={cn("font-mono font-semibold break-all", embedMode ? 'text-base' : 'text-lg')}>
+              <div className={cn("font-mono font-semibold whitespace-nowrap overflow-x-auto", embedMode ? 'text-base' : 'text-lg')} style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                 {redemption.card_code}
               </div>
             </div>
@@ -110,12 +110,12 @@ export function GiftCardDisplay({ redemption, embedMode = false }: GiftCardDispl
         {/* Card Details */}
         <div className={cn("mt-3 space-y-1", embedMode ? 'text-xs' : 'text-sm')}>
           {redemption.card_number && (
-            <div className="opacity-75">
+            <div className="opacity-75" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
               Card: {redemption.card_number.replace(/(\d{4})/g, "$1 ").trim()}
             </div>
           )}
           {redemption.expiration_date && (
-            <div className="opacity-75">
+            <div className="opacity-75" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
               Expires: {new Date(redemption.expiration_date).toLocaleDateString()}
             </div>
           )}
