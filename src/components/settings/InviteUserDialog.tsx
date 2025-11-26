@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -20,21 +20,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { UserPlus, Mail } from "lucide-react";
+import { UserPlus, Mail, Info } from "lucide-react";
+import { useInvitableRoles } from "@/hooks/useInvitableRoles";
+import { AppRole } from "@/lib/roleUtils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function InviteUserDialog() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>("");
+  const [role, setRole] = useState<AppRole | "">("");
   const [orgId, setOrgId] = useState<string>("");
   const [clientId, setClientId] = useState<string>("");
   const [message, setMessage] = useState("");
   const queryClient = useQueryClient();
 
+  const { invitableRoles, isLoading: rolesLoading } = useInvitableRoles();
+  
+  const selectedRoleConfig = invitableRoles.find((r) => r.value === role);
+  const showOrgField = selectedRoleConfig?.requiresOrg || false;
+  const showClientField = selectedRoleConfig?.requiresClient || false;
+
+  // Reset org/client when role changes
+  useEffect(() => {
+    if (!showOrgField) setOrgId("");
+    if (!showClientField) setClientId("");
+  }, [role, showOrgField, showClientField]);
+
   // Fetch organizations for selection
   const { data: organizations } = useQuery({
     queryKey: ["organizations"],
+    enabled: showOrgField,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("organizations")
@@ -48,6 +65,7 @@ export function InviteUserDialog() {
   // Fetch clients for selection
   const { data: clients } = useQuery({
     queryKey: ["clients"],
+    enabled: showClientField,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("clients")
@@ -106,6 +124,14 @@ export function InviteUserDialog() {
       toast.error("Please fill in all required fields");
       return;
     }
+    if (showOrgField && !orgId) {
+      toast.error("Organization is required for this role");
+      return;
+    }
+    if (showClientField && !clientId) {
+      toast.error("Client is required for this role");
+      return;
+    }
     inviteMutation.mutate();
   };
 
@@ -117,18 +143,18 @@ export function InviteUserDialog() {
           Invite User
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
             Invite New User
           </DialogTitle>
           <DialogDescription>
-            Send an invitation email to add a new user to your organization
+            Send an invitation email to add a new user to the platform
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="email">Email Address *</Label>
             <Input
@@ -141,51 +167,87 @@ export function InviteUserDialog() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="role">Role *</Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a role..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="org_admin">Organization Admin</SelectItem>
-                <SelectItem value="agency_admin">Agency Admin</SelectItem>
-                <SelectItem value="client_user">Client User</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-3">
+            <Label>Select Role *</Label>
+            {rolesLoading ? (
+              <p className="text-sm text-muted-foreground">Loading roles...</p>
+            ) : invitableRoles.length === 0 ? (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  You don't have permission to invite users
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <RadioGroup value={role} onValueChange={(val) => setRole(val as AppRole)}>
+                {invitableRoles.map((roleOption) => (
+                  <div
+                    key={roleOption.value}
+                    className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors"
+                  >
+                    <RadioGroupItem value={roleOption.value} id={roleOption.value} />
+                    <div className="flex-1 space-y-1">
+                      <Label
+                        htmlFor={roleOption.value}
+                        className="text-base font-medium cursor-pointer"
+                      >
+                        {roleOption.label}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {roleOption.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="organization">Organization (Optional)</Label>
-            <Select value={orgId} onValueChange={setOrgId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select organization..." />
-              </SelectTrigger>
-              <SelectContent>
-                {organizations?.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>
-                    {org.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {selectedRoleConfig && (showOrgField || showClientField) && (
+            <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
+              <p className="text-sm font-medium">Assignment Required</p>
+              
+              {showOrgField && (
+                <div className="space-y-2">
+                  <Label htmlFor="organization">
+                    Organization * <span className="text-muted-foreground text-xs">(Required for this role)</span>
+                  </Label>
+                  <Select value={orgId} onValueChange={setOrgId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organization..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations?.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-          <div className="space-y-2">
-            <Label htmlFor="client">Client (Optional)</Label>
-            <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select client..." />
-              </SelectTrigger>
-              <SelectContent>
-                {clients?.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              {showClientField && (
+                <div className="space-y-2">
+                  <Label htmlFor="client">
+                    Client * <span className="text-muted-foreground text-xs">(Required for this role)</span>
+                  </Label>
+                  <Select value={clientId} onValueChange={setClientId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select client..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients?.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="message">Personal Message (Optional)</Label>
@@ -206,7 +268,7 @@ export function InviteUserDialog() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={inviteMutation.isPending}>
+            <Button type="submit" disabled={inviteMutation.isPending || invitableRoles.length === 0}>
               {inviteMutation.isPending ? "Sending..." : "Send Invitation"}
             </Button>
           </div>
