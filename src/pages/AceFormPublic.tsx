@@ -4,6 +4,7 @@ import { useAceForm } from "@/hooks/useAceForms";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFormSchema } from "@/lib/aceFormValidation";
+import { shouldShowField } from "@/lib/conditionalLogic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,10 +43,14 @@ export default function AceFormPublic() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: schema ? zodResolver(schema) : undefined,
   });
+
+  // Watch all form values for conditional logic
+  const formValues = watch();
 
   const onSubmit = async (data: any) => {
     if (!formIdentifier) return;
@@ -186,12 +191,12 @@ export default function AceFormPublic() {
               {/* Form */}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {form.form_config.fields.map((field) => {
-                  // Check conditional logic
-                  if (field.conditional) {
-                    const dependentField = form.form_config.fields.find(
-                      (f) => f.id === field.conditional?.showIf.fieldId
-                    );
-                    // For now, show all fields (conditional logic evaluation would need form state)
+                  // Evaluate conditional logic
+                  const isVisible = shouldShowField(field, formValues, form.form_config.fields);
+                  
+                  // Hide field if conditional logic says so
+                  if (!isVisible) {
+                    return null;
                   }
 
                   return (
