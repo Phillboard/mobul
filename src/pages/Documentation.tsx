@@ -7,18 +7,30 @@ import { AdminDocsAnalytics } from "@/components/documentation/AdminDocsAnalytic
 import { AdminDocsFeedback } from "@/components/documentation/AdminDocsFeedback";
 import { SeedDocsButton } from "@/components/documentation/SeedDocsButton";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams } from "react-router-dom";
 import { BookOpen, Settings, BarChart3, MessageSquare } from "lucide-react";
 
 export default function Documentation() {
   const { hasRole } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { category, slug } = useParams<{ category?: string; slug?: string }>();
   const activeTab = searchParams.get("tab") || "docs";
   const isAdmin = hasRole("admin");
 
   const setActiveTab = (tab: string) => {
     setSearchParams({ tab });
   };
+
+  // If we have a category and/or slug, show the documentation layout with sidebar
+  if (category || slug) {
+    return (
+      <Layout>
+        <DocumentationLayout>
+          <DocumentationContent />
+        </DocumentationLayout>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
