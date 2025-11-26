@@ -54,9 +54,9 @@ export function ChangeRoleDialog({
     },
   });
 
-  const selectedRoleConfig = roleRequirements[selectedRole];
+  const selectedRoleConfig = selectedRole ? roleRequirements[selectedRole] : null;
   const requiresWarning =
-    selectedRoleConfig.requiresOrg || selectedRoleConfig.requiresClient;
+    selectedRoleConfig?.requiresOrg || selectedRoleConfig?.requiresClient;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -67,7 +67,7 @@ export function ChangeRoleDialog({
 
         <div className="space-y-4 py-4">
           <div className="text-sm text-muted-foreground">
-            Current Role: <span className="font-medium">{roleDisplayNames[currentRole]}</span>
+            Current Role: <span className="font-medium">{currentRole ? roleDisplayNames[currentRole] : 'No role assigned'}</span>
           </div>
 
           <RadioGroup value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>
@@ -87,7 +87,7 @@ export function ChangeRoleDialog({
             </div>
           </RadioGroup>
 
-          {requiresWarning && (
+          {requiresWarning && selectedRoleConfig && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
