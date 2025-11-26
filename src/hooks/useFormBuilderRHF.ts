@@ -5,7 +5,7 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { FormField, FormConfig, FieldType } from "@/types/aceForms";
 import { nanoid } from "nanoid";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useUndo } from "@/hooks/useUndo";
 
 interface FormBuilderFormData {
@@ -176,7 +176,7 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
     setValue("revealSettings", {
       ...formData.revealSettings,
       ...updates,
-    } as any);
+    });
     trackChange();
   };
 
@@ -192,21 +192,22 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
   // Get selected field
   const selectedField = fields.find((f) => f.id === selectedFieldId);
 
-  // Handle undo/redo
+  // Sync history state to RHF when undo/redo changes it
+  useEffect(() => {
+    setValue("fields", historyConfig.fields);
+    setValue("settings", historyConfig.settings);
+    if (historyConfig.revealSettings) {
+      setValue("revealSettings", historyConfig.revealSettings);
+    }
+  }, [historyConfig, setValue]);
+
+  // Handle undo/redo - just trigger the history functions
   const handleUndo = () => {
     undo();
-    const newConfig = historyConfig;
-    setValue("fields", newConfig.fields);
-    setValue("settings", newConfig.settings);
-    setValue("revealSettings", newConfig.revealSettings);
   };
 
   const handleRedo = () => {
     redo();
-    const newConfig = historyConfig;
-    setValue("fields", newConfig.fields);
-    setValue("settings", newConfig.settings);
-    setValue("revealSettings", newConfig.revealSettings);
   };
 
   return {
