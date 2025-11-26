@@ -57,10 +57,8 @@ export default function Documentation() {
             )}
           </TabsList>
 
-          <TabsContent value="docs">
-            <DocumentationLayout>
-              <DocumentationContent />
-            </DocumentationLayout>
+          <TabsContent value="docs" className="mt-0">
+            <DocumentationContent />
           </TabsContent>
 
           {isAdmin && (
