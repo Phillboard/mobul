@@ -14,6 +14,26 @@ interface InvitationRequest {
   message?: string;
 }
 
+const VALID_ROLES = ["admin", "tech_support", "agency_owner", "company_owner", "developer", "call_center"];
+
+const roleRequirements: Record<string, { requiresOrg: boolean; requiresClient: boolean }> = {
+  admin: { requiresOrg: false, requiresClient: false },
+  tech_support: { requiresOrg: false, requiresClient: false },
+  agency_owner: { requiresOrg: true, requiresClient: false },
+  company_owner: { requiresOrg: false, requiresClient: true },
+  developer: { requiresOrg: false, requiresClient: false },
+  call_center: { requiresOrg: false, requiresClient: true },
+};
+
+const roleHierarchy: Record<string, string[]> = {
+  admin: ["admin", "tech_support", "agency_owner", "company_owner", "developer", "call_center"],
+  tech_support: ["agency_owner", "company_owner", "developer", "call_center"],
+  agency_owner: ["company_owner", "call_center"],
+  company_owner: ["call_center"],
+  developer: [],
+  call_center: [],
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -39,6 +59,37 @@ serve(async (req) => {
     // Validate required fields
     if (!email || !role) {
       throw new Error("Email and role are required");
+    }
+
+    // Validate role is a valid app_role
+    if (!VALID_ROLES.includes(role)) {
+      throw new Error(`Invalid role: ${role}`);
+    }
+
+    // Get inviter's role
+    const { data: inviterRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!inviterRole) {
+      throw new Error("Inviter role not found");
+    }
+
+    // Check if inviter can invite this role
+    const canInvite = roleHierarchy[inviterRole.role];
+    if (!canInvite || !canInvite.includes(role)) {
+      throw new Error(`You do not have permission to invite ${role} users`);
+    }
+
+    // Validate org/client requirements
+    const requirements = roleRequirements[role];
+    if (requirements.requiresOrg && !orgId) {
+      throw new Error(`Organization is required for ${role} role`);
+    }
+    if (requirements.requiresClient && !clientId) {
+      throw new Error(`Client is required for ${role} role`);
     }
 
     // Check if user already exists
@@ -71,7 +122,7 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    // Create invitation
+    // Create invitation with role column
     const { data: invitation, error: inviteError } = await supabase
       .from("user_invitations")
       .insert({
@@ -105,8 +156,10 @@ serve(async (req) => {
       orgName = org?.name || "the organization";
     }
 
-    // Send invitation email using Lovable AI
+    // Send invitation email
     const inviteUrl = `${req.headers.get("origin")}/accept-invite?token=${invitation.token}`;
+    
+    const roleDisplay = role.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
     
     const emailHtml = `
       <!DOCTYPE html>
@@ -128,7 +181,7 @@ serve(async (req) => {
             </div>
             <div class="content">
               <p>Hi there,</p>
-              <p><strong>${inviter?.full_name || inviter?.email}</strong> has invited you to join <strong>${orgName}</strong> as a <strong>${role.replace('_', ' ')}</strong>.</p>
+              <p><strong>${inviter?.full_name || inviter?.email}</strong> has invited you to join <strong>${orgName}</strong> as a <strong>${roleDisplay}</strong>.</p>
               ${message ? `<p><em>"${message}"</em></p>` : ''}
               <p>Click the button below to accept your invitation and create your account:</p>
               <center>
@@ -138,14 +191,14 @@ serve(async (req) => {
               <p style="color: #666; font-size: 14px;">If you didn't expect this invitation, you can safely ignore this email.</p>
             </div>
             <div class="footer">
-              <p>© ${new Date().getFullYear()} Direct Mail Platform. All rights reserved.</p>
+              <p>© ${new Date().getFullYear()} Mobul ACE Platform. All rights reserved.</p>
             </div>
           </div>
         </body>
       </html>
     `;
 
-    console.log(`Invitation created for ${email} - Token: ${invitation.token}`);
+    console.log(`Invitation created for ${email} with role ${role} - Token: ${invitation.token}`);
     console.log(`Invite URL: ${inviteUrl}`);
 
     return new Response(
