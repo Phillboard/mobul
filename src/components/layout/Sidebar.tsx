@@ -24,6 +24,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { SidebarSearch } from "./SidebarSearch";
 import { Badge } from "@/components/ui/badge";
 import { useMenuItemCounts } from "@/hooks/useMenuItemCounts";
+import { DocumentationSidebar } from "@/components/documentation/DocumentationSidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Link } from "react-router-dom";
 
 interface NavItem extends SearchableNavItem {
   roles?: AppRole[];
@@ -117,6 +120,7 @@ const navigationGroups: NavGroup[] = [
 export function Sidebar() {
   const location = useLocation();
   const isOnSettingsPage = location.pathname.startsWith('/settings');
+  const isDocsPage = location.pathname.startsWith('/admin/docs');
   const { user, hasAnyPermission, roles } = useAuth();
   const { currentOrg } = useTenant();
   const { open, state } = useSidebar();
@@ -206,6 +210,41 @@ export function Sidebar() {
               ))}
             </SidebarMenu>
           </SidebarGroup>
+        </SidebarContent>
+      </SidebarRoot>
+    );
+  }
+
+  if (isDocsPage) {
+    return (
+      <SidebarRoot collapsible="icon" className={collapsed ? "w-14" : "w-60"}>
+        <SidebarHeader className="border-b border-sidebar-border">
+          <div className="px-4 py-3">
+            {!collapsed ? (
+              <>
+                <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-3">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Main Menu
+                </Link>
+                <h2 className="text-lg font-semibold">Documentation</h2>
+              </>
+            ) : (
+              <Link to="/">
+                <Button variant="ghost" size="icon" title="Back to main menu">
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          {!collapsed && (
+            <ScrollArea className="flex-1">
+              <div className="px-2 py-4">
+                <DocumentationSidebar />
+              </div>
+            </ScrollArea>
+          )}
         </SidebarContent>
       </SidebarRoot>
     );
