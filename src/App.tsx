@@ -45,7 +45,9 @@ import ListDetail from "./pages/contacts/ListDetail";
 import ContactImport from "./pages/ContactImport";
 import Activities from "./pages/Activities";
 import Tasks from "./pages/Tasks";
+import TeamManagement from "./pages/TeamManagement";
 import AdminGiftCardMarketplace from "./pages/AdminGiftCardMarketplace";
+import AdminSiteDirectory from "./pages/AdminSiteDirectory";
 import Webinar from "./pages/Webinar";
 import AceForms from "./pages/AceForms";
 import AceFormBuilder from "./pages/AceFormBuilder";
@@ -158,6 +160,9 @@ const App = () => (
                   <Route path="/contacts/lists" element={<ProtectedRoute><ContactLists /></ProtectedRoute>} />
                   <Route path="/contacts/lists/:id" element={<ProtectedRoute><ListDetail /></ProtectedRoute>} />
                   <Route path="/contacts/import" element={<ProtectedRoute><ContactImport /></ProtectedRoute>} />
+                  <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
+                  <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+                  <Route path="/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
                   
                   {/* Call Center - Redemption & Fulfillment */}
                   <Route path="/call-center" element={<ProtectedRoute requiredPermissions={['calls.view', 'calls.manage']}><CallCenterDashboard /></ProtectedRoute>} />
@@ -193,6 +198,7 @@ const App = () => (
                   <Route path="/agencies" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
                   <Route path="/agency-management" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
                   <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
+                  <Route path="/admin/site-directory" element={<ProtectedRoute requiredRole="admin"><AdminSiteDirectory /></ProtectedRoute>} />
                   <Route path="/enrich-data" element={<ProtectedRoute requiredRole="admin"><EnrichData /></ProtectedRoute>} />
                   <Route path="/beta" element={<ProtectedRoute><BetaTesting /></ProtectedRoute>} />
                   <Route path="/launch" element={<ProtectedRoute><LaunchChecklist /></ProtectedRoute>} />
