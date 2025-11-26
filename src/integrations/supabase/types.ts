@@ -4901,6 +4901,18 @@ export type Database = {
           total_count: number
         }[]
       }
+      get_user_client_ids: {
+        Args: { _user_id: string }
+        Returns: {
+          client_id: string
+        }[]
+      }
+      get_user_org_ids: {
+        Args: { _user_id: string }
+        Returns: {
+          org_id: string
+        }[]
+      }
       get_user_permissions: {
         Args: { _user_id: string }
         Returns: {
@@ -4940,6 +4952,10 @@ export type Database = {
         Returns: boolean
       }
       user_has_org_access: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_is_org_member: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
