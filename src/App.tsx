@@ -179,6 +179,8 @@ const App = () => (
                   <Route path="/admin/system-health" element={<ProtectedRoute><SystemHealth /></ProtectedRoute>} />
                   <Route path="/admin/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
                   <Route path="/admin/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
+                  <Route path="/admin/docs/:category" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
+                  <Route path="/admin/docs/:category/:slug" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                   <Route path="/users" element={<ProtectedRoute requiredPermissions={['users.view', 'users.manage']}><UserManagement /></ProtectedRoute>} />
                   <Route path="/user-management" element={<ProtectedRoute requiredPermissions={['users.manage']}><UserManagement /></ProtectedRoute>} />
                   
