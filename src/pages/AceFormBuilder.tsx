@@ -35,6 +35,7 @@ function AceFormBuilderContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'form' | 'reveal' | 'analytics'>('form');
   const autoSaveTimerRef = useRef<number>();
+  const lastSavedConfigRef = useRef<string>("");
   const { toast } = useToast();
 
   const { config, setConfig, updateRevealSettings } = useFormBuilder();
@@ -46,9 +47,15 @@ function AceFormBuilderContent() {
     }
   }, [config.settings.title, formName]);
 
-  // Auto-save every 3 seconds
+  // Auto-save every 3 seconds - only if config actually changed
   const performAutoSave = useCallback(async () => {
     if (!currentClient || !formId) return;
+
+    // Compare with last saved config using JSON to detect real changes
+    const currentConfigJson = JSON.stringify(config);
+    if (currentConfigJson === lastSavedConfigRef.current) {
+      return; // No changes, skip save
+    }
 
     try {
       setIsSaving(true);
@@ -61,20 +68,18 @@ function AceFormBuilderContent() {
           is_draft: true,
           last_auto_save: new Date().toISOString(),
         },
+        silent: true, // Skip toast for auto-saves
       });
+      lastSavedConfigRef.current = currentConfigJson;
       setLastSaved(new Date());
     } catch (error) {
       console.error('Auto-save failed:', error);
-      toast({
-        title: "Auto-save Failed",
-        description: "Could not save your changes. Please try saving manually.",
-        variant: "destructive",
-      });
     } finally {
       setIsSaving(false);
     }
-  }, [currentClient, formId, formName, config, updateForm, toast]);
+  }, [currentClient, formId, formName, config, updateForm]);
 
+  // Trigger auto-save when config changes
   useEffect(() => {
     // Only auto-save for existing forms
     if (!formId) return;
@@ -84,7 +89,7 @@ function AceFormBuilderContent() {
       clearTimeout(autoSaveTimerRef.current);
     }
 
-    // Set new timer
+    // Set new timer - use JSON comparison inside performAutoSave
     autoSaveTimerRef.current = window.setTimeout(() => {
       performAutoSave();
     }, 3000);
@@ -94,7 +99,7 @@ function AceFormBuilderContent() {
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [formId, config, formName, performAutoSave]);
+  }, [formId, config, formName]); // Keep dependencies, but performAutoSave handles comparison
 
   const handleSave = async () => {
     if (!currentClient) return;
@@ -109,7 +114,9 @@ function AceFormBuilderContent() {
       };
 
       if (formId) {
-        await updateForm.mutateAsync({ id: formId, updates: formData });
+        const result = await updateForm.mutateAsync({ id: formId, updates: formData, silent: false });
+        // Update last saved ref to prevent immediate auto-save
+        lastSavedConfigRef.current = JSON.stringify(config);
         toast({
           title: "✅ Saved",
           description: "Your form has been saved successfully.",

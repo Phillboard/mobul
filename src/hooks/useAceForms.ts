@@ -72,7 +72,7 @@ export function useAceForms(clientId?: string) {
 
   // Update form
   const updateForm = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<AceForm> }) => {
+    mutationFn: async ({ id, updates, silent }: { id: string; updates: Partial<AceForm>; silent?: boolean }) => {
       const { data, error } = await supabase
         .from("ace_forms")
         .update({
@@ -84,14 +84,19 @@ export function useAceForms(clientId?: string) {
         .single();
 
       if (error) throw error;
-      return data;
+      return { data, silent };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ace-forms"] });
-      toast({
-        title: "Form Updated",
-        description: "Your changes have been saved",
-      });
+    onSuccess: (result) => {
+      // Only invalidate the list, not the current form being edited
+      queryClient.invalidateQueries({ queryKey: ["ace-forms"], exact: true });
+      
+      // Skip toast for silent auto-saves
+      if (!result.silent) {
+        toast({
+          title: "Form Updated",
+          description: "Your changes have been saved",
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
