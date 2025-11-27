@@ -3,6 +3,7 @@
  * Standardizes all edge function calls with consistent error handling
  */
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export class EdgeFunctionError extends Error {
   constructor(
@@ -116,7 +117,7 @@ export async function callEdgeFunction<TResponse = any, TBody = any>(
     }
   } catch (error: any) {
     // Log error for debugging
-    console.error(`[API Client] Error calling ${functionName}:`, error);
+    logger.error(`[API Client] Error calling ${functionName}:`, error);
     
     // Re-throw EdgeFunctionError as-is
     if (error instanceof EdgeFunctionError) {
@@ -208,7 +209,7 @@ export async function callPublicEdgeFunction<TResponse = any, TBody = any>(
       );
     }
   } catch (error: any) {
-    console.error(`[API Client] Error calling public ${functionName}:`, error);
+    logger.error(`[API Client] Error calling public ${functionName}:`, error);
     
     if (error instanceof EdgeFunctionError) {
       throw error;

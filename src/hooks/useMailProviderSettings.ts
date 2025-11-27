@@ -64,7 +64,7 @@ export function useMailProviderSettings() {
   // Create or update settings
   const saveMutation = useMutation({
     mutationFn: async (data: Partial<MailProviderSettings>) => {
-      const settingsData: any = {
+      const settingsData: Partial<MailProviderSettings> & { org_id: string | null; client_id: string | null } = {
         provider_type: 'postgrid', // Default if not provided
         ...data,
         org_id: currentOrg?.id || null,
