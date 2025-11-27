@@ -1,17 +1,17 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  useReactTable,
-  SortingState,
-} from "@tanstack/react-table";
+import { useReactTable, SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createAudiencesColumns } from "./audiencesColumns";
 import { basicTableModels } from "@/lib/tableHelpers";
+import { DataTable } from "@/components/ui/data-table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 
 export function AudiencesListTab() {
   const { currentClient } = useTenant();
@@ -19,6 +19,7 @@ export function AudiencesListTab() {
   const [sorting, setSorting] = useState<SortingState>([
     { id: "created_at", desc: true }
   ]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const { data: audiences, isLoading } = useQuery({
     queryKey: ['audiences', currentClient?.id],
@@ -47,8 +48,10 @@ export function AudiencesListTab() {
     columns,
     state: {
       sorting,
+      columnFilters,
     },
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     ...basicTableModels,
   });
 
@@ -90,62 +93,18 @@ export function AudiencesListTab() {
 
   return (
     <Card>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-muted/30 hover:bg-muted/30">
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : (
-                      <div
-                        className={
-                          header.column.getCanSort()
-                            ? "cursor-pointer select-none flex items-center gap-2"
-                            : ""
-                        }
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {typeof header.column.columnDef.header === "function"
-                          ? header.column.columnDef.header(header.getContext())
-                          : header.column.columnDef.header}
-                        {{
-                          asc: " 🔼",
-                          desc: " 🔽",
-                        }[header.column.getIsSorted() as string] ?? null}
-                      </div>
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow 
-                  key={row.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`/audiences/${row.original.id}`)}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {typeof cell.column.columnDef.cell === "function"
-                        ? cell.column.columnDef.cell(cell.getContext())
-                        : cell.renderValue()}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
-                  No audiences found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <CardContent className="space-y-4">
+        <DataTableToolbar
+          table={table}
+          searchKey="name"
+          searchPlaceholder="Search audiences..."
+        >
+          <DataTableViewOptions table={table} />
+        </DataTableToolbar>
+        
+        <DataTable table={table} />
+        
+        <DataTablePagination table={table} />
       </CardContent>
     </Card>
   );
