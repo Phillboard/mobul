@@ -6,9 +6,11 @@ export function useLandingPages(clientId?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: pages, isLoading } = useQuery({
+  const { data: pages = [], isLoading, error: queryError } = useQuery({
     queryKey: ["landing-pages", clientId],
     queryFn: async () => {
+      if (!clientId) return [];
+      
       let query = supabase
         .from("landing_pages")
         .select("*")
@@ -19,10 +21,14 @@ export function useLandingPages(clientId?: string) {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Landing pages error:', error);
+        return []; // Return empty array instead of throwing
+      }
+      return data || [];
     },
     enabled: !!clientId,
+    retry: false, // Don't retry on error
   });
 
   const createPage = useMutation({
