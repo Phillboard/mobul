@@ -1,18 +1,23 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useReactTable, SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTenant } from "@/contexts/TenantContext";
-import { Building2, Plus, Gift } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Building2, Plus } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { createAgencyCompaniesColumns } from "@/components/agency/agencyCompaniesColumns";
+import { basicTableModels } from "@/lib/tableHelpers";
 
 /**
  * AgencyManagement Component
@@ -33,6 +38,10 @@ export default function AgencyManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState("");
   const [newCompanyIndustry, setNewCompanyIndustry] = useState("");
+  
+  // Table state management
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   /**
    * Query: Fetch all companies/clients under this agency
@@ -164,6 +173,22 @@ export default function AgencyManagement() {
     createCompanyMutation.mutate();
   };
 
+  // Table columns configuration
+  const columns = useMemo(() => createAgencyCompaniesColumns(), []);
+
+  // TanStack Table instance
+  const table = useReactTable({
+    data: companies || [],
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    ...basicTableModels,
+  });
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -262,54 +287,18 @@ export default function AgencyManagement() {
             </CardTitle>
             <CardDescription>Companies managed by your agency</CardDescription>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Company Name</TableHead>
-                  <TableHead>Industry</TableHead>
-                  <TableHead>Gift Card Pools</TableHead>
-                  <TableHead>Credits</TableHead>
-                  <TableHead>Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {/* Map through companies and display each row */}
-                {companies?.map((company) => (
-                  <TableRow key={company.id}>
-                    <TableCell className="font-medium">{company.name}</TableCell>
-                    <TableCell>
-                      {/* Display industry as a badge */}
-                      <Badge variant="outline">{company.industry}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {/* Show gift card pool count with icon */}
-                      <div className="flex items-center gap-2">
-                        <Gift className="h-4 w-4 text-muted-foreground" />
-                        {company.gift_card_pools?.[0]?.count || 0}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {/* Format credits with thousand separators */}
-                      {company.credits?.toLocaleString() || 0}
-                    </TableCell>
-                    <TableCell>
-                      {/* Format creation date */}
-                      {new Date(company.created_at || '').toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                
-                {/* Empty state when no companies exist */}
-                {(!companies || companies.length === 0) && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      No companies yet. Create your first company to get started.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+          <CardContent className="space-y-4">
+            <DataTableToolbar
+              table={table}
+              searchKey="name"
+              searchPlaceholder="Search companies..."
+            >
+              <DataTableViewOptions table={table} />
+            </DataTableToolbar>
+            
+            <DataTable table={table} />
+            
+            <DataTablePagination table={table} />
           </CardContent>
         </Card>
       </div>
