@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Layout } from "@/components/layout/Layout";
@@ -6,18 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, Search, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, SortingState, ColumnFiltersState } from "@tanstack/react-table";
+import { DataTable } from "@/components/ui/data-table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { createAuditLogColumns, AuditLogRow } from "@/components/settings/auditLogColumns";
+import { createUploadHistoryColumns, UploadHistoryRow } from "@/components/settings/uploadHistoryColumns";
+import { exportTableToCSV } from "@/lib/tableHelpers";
 
 export default function AdminAuditLog() {
   const [actionFilter, setActionFilter] = useState<string>("all");
@@ -26,6 +25,10 @@ export default function AdminAuditLog() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [auditSorting, setAuditSorting] = useState<SortingState>([]);
+  const [auditColumnFilters, setAuditColumnFilters] = useState<ColumnFiltersState>([]);
+  const [uploadSorting, setUploadSorting] = useState<SortingState>([]);
+  const [uploadColumnFilters, setUploadColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Fetch unique agents for filter
   const { data: agents } = useQuery({
@@ -49,8 +52,7 @@ export default function AdminAuditLog() {
         .from("recipient_audit_log")
         .select(`
           *,
-          recipient:recipients(redemption_code, first_name, last_name, phone),
-          performed_by:auth.users(id)
+          recipient:recipients(redemption_code, first_name, last_name, phone)
         `)
         .order("created_at", { ascending: false })
         .limit(500);
@@ -75,7 +77,7 @@ export default function AdminAuditLog() {
       if (error) throw error;
 
       // Filter by search term and status locally
-      let filteredData = data;
+      let filteredData = data || [];
 
       if (searchTerm) {
         filteredData = filteredData.filter((log: any) => {
@@ -95,7 +97,7 @@ export default function AdminAuditLog() {
         );
       }
 
-      return filteredData;
+      return filteredData as AuditLogRow[];
     },
   });
 
@@ -110,45 +112,56 @@ export default function AdminAuditLog() {
         .limit(50);
 
       if (error) throw error;
-      return data;
+      return data as UploadHistoryRow[];
     },
   });
 
-  const getActionBadge = (action: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      uploaded: "secondary",
-      approved: "default",
-      rejected: "destructive",
-      redeemed: "outline",
-      viewed: "secondary",
-    };
+  const auditColumns = useMemo(() => createAuditLogColumns(), []);
+  const uploadColumns = useMemo(() => createUploadHistoryColumns(), []);
 
-    return <Badge variant={variants[action] || "secondary"}>{action}</Badge>;
-  };
+  const auditTable = useReactTable({
+    data: auditLogs || [],
+    columns: auditColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setAuditSorting,
+    onColumnFiltersChange: setAuditColumnFilters,
+    state: {
+      sorting: auditSorting,
+      columnFilters: auditColumnFilters,
+    },
+  });
 
-  const exportToCSV = () => {
+  const uploadTable = useReactTable({
+    data: uploads || [],
+    columns: uploadColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setUploadSorting,
+    onColumnFiltersChange: setUploadColumnFilters,
+    state: {
+      sorting: uploadSorting,
+      columnFilters: uploadColumnFilters,
+    },
+  });
+
+  const exportAuditToCSV = () => {
     if (!auditLogs) return;
-
-    const headers = ["Timestamp", "Action", "Code", "Customer", "Performed By", "IP Address"];
-    const rows = auditLogs.map((log: any) => [
-      format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss"),
-      log.action,
-      log.recipient?.redemption_code || "N/A",
-      `${log.recipient?.first_name || ""} ${log.recipient?.last_name || ""}`.trim() || "N/A",
-      log.performed_by_user_id || "System",
-      log.ip_address || "N/A",
-    ]);
-
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `audit_log_${format(new Date(), "yyyy-MM-dd")}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    exportTableToCSV(
+      auditLogs,
+      [
+        { header: "Timestamp", accessorKey: "created_at" },
+        { header: "Action", accessorKey: "action" },
+        { header: "Code", accessorKey: "recipient.redemption_code" },
+        { header: "Performed By", accessorKey: "performed_by_user_id" },
+        { header: "IP Address", accessorKey: "ip_address" },
+      ],
+      `audit_log_${format(new Date(), "yyyy-MM-dd")}`
+    );
   };
 
   return (
@@ -298,7 +311,7 @@ export default function AdminAuditLog() {
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh
               </Button>
-              <Button onClick={exportToCSV} variant="outline">
+              <Button onClick={exportAuditToCSV} variant="outline">
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
               </Button>
@@ -313,58 +326,17 @@ export default function AdminAuditLog() {
             <CardDescription>Showing {auditLogs?.length || 0} events</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Performed By</TableHead>
-                    <TableHead>IP Address</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center">
-                        Loading...
-                      </TableCell>
-                    </TableRow>
-                  ) : auditLogs && auditLogs.length > 0 ? (
-                    auditLogs.map((log: any) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="text-sm">
-                          {format(new Date(log.created_at), "MMM dd, yyyy HH:mm:ss")}
-                        </TableCell>
-                        <TableCell>{getActionBadge(log.action)}</TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {log.recipient?.redemption_code || "N/A"}
-                        </TableCell>
-                        <TableCell>
-                          {log.recipient
-                            ? `${log.recipient.first_name || ""} ${log.recipient.last_name || ""}`.trim() || "N/A"
-                            : "N/A"}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {log.performed_by_user_id || "System"}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {log.ip_address || "N/A"}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        No activity found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+            {isLoading ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : (
+              <div className="space-y-4">
+                <DataTableToolbar table={auditTable}>
+                  <DataTableViewOptions table={auditTable} />
+                </DataTableToolbar>
+                <DataTable table={auditTable} />
+                <DataTablePagination table={auditTable} />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -376,47 +348,12 @@ export default function AdminAuditLog() {
               <CardDescription>Recent bulk code uploads</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>File Name</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Success</TableHead>
-                      <TableHead>Duplicates</TableHead>
-                      <TableHead>Errors</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {uploads.map((upload: any) => (
-                      <TableRow key={upload.id}>
-                        <TableCell className="text-sm">
-                          {format(new Date(upload.created_at), "MMM dd, yyyy HH:mm")}
-                        </TableCell>
-                        <TableCell>{upload.file_name}</TableCell>
-                        <TableCell>{upload.total_codes}</TableCell>
-                        <TableCell className="text-green-600">{upload.successful_codes}</TableCell>
-                        <TableCell className="text-yellow-600">{upload.duplicate_codes}</TableCell>
-                        <TableCell className="text-red-600">{upload.error_codes}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              upload.upload_status === "completed"
-                                ? "default"
-                                : upload.upload_status === "failed"
-                                ? "destructive"
-                                : "secondary"
-                            }
-                          >
-                            {upload.upload_status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="space-y-4">
+                <DataTableToolbar table={uploadTable}>
+                  <DataTableViewOptions table={uploadTable} />
+                </DataTableToolbar>
+                <DataTable table={uploadTable} />
+                <DataTablePagination table={uploadTable} />
               </div>
             </CardContent>
           </Card>
