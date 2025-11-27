@@ -10,56 +10,66 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Direct Mail Campaign & Gift Card Management Platform
+Main Business Components:
 
-Core Business Domains:
+1. Gift Card Management System (90/100)
+- Multi-tier provisioning with CSV inventory and API fallback
+- Pool health monitoring with utilization thresholds
+- Automated balance verification scheduling
+- Profit margin calculations for resale
+- Custom redemption workflows for call centers
+- Provider integrations (Tango, Giftbit, Rybbon, Tillo)
 
-## Gift Card Management System
-- Multi-provider gift card provisioning with Tango Card, Giftbit, Rybbon integrations
-- Pool-based inventory tracking with automated balance verification
-- Condition-based reward distribution system
-- Real-time balance reconciliation and inventory alerts
+Key paths:
+- src/components/gift-cards/PoolDetailDialog.tsx
+- supabase/functions/provision-gift-card-from-api/index.ts
+- src/lib/giftCardUtils.ts
 
-Primary Implementation: src/components/campaigns/GiftCardInventoryPanel.tsx
-Importance Score: 90
+2. Campaign Management (85/100)
+- Multi-step approval workflows
+- QR code tracking with recipient mapping 
+- Custom condition builder for reward triggers
+- Geographic performance analytics
+- Call tracking with reward distribution
+- Delivery timeline orchestration
 
-## Campaign Workflow Engine
-- Multi-step campaign creation with automated validation
-- Hierarchical approval system with audit trails
-- Real-time call tracking and ROI calculations
-- QR code-based recipient attribution
+Key paths:
+- src/components/campaigns/CreateCampaignWizard.tsx
+- src/components/campaigns/CallAnalyticsTab.tsx
+- src/lib/campaignUtils.ts
 
-Primary Implementation: src/components/campaigns/CreateCampaignWizard.tsx
-Importance Score: 85
+3. Contact & Audience Management (80/100)
+- Industry-specific lifecycle stages
+- Lead scoring implementation
+- Progressive data enrichment
+- Engagement velocity tracking
+- Multi-format data ingestion
+- Address verification system
 
-## CRM Integration Hub
-- Bi-directional sync with major CRM platforms
-- Contact lifecycle management with scoring
-- Campaign participation tracking
-- Custom field mapping system
+Key paths:
+- src/components/contacts/CustomFieldManager.tsx
+- src/lib/seed-contacts-data.ts
+- src/components/audiences/AudienceImportTab.tsx
 
-Primary Implementation: src/components/settings/CRMIntegrationDialog.tsx 
-Importance Score: 80
-
-## Call Center Operations
-- Real-time gift card redemption workflow
+4. Call Center Operations (85/100)
+- Multi-step verification workflows
+- Script management based on redemption status
+- Real-time inventory validation
+- SMS/Email delivery orchestration
 - Agent performance tracking
 - Call disposition management
-- Automated verification system
 
-Primary Implementation: src/components/call-center/CallCenterRedemptionPanel.tsx
-Importance Score: 85
+Key paths:
+- src/components/call-center/CallCenterRedemptionPanel.tsx
+- src/components/agent/CallDispositionSelector.tsx
+- supabase/functions/handle-incoming-call/index.ts
 
-## AI-Powered Form System
-- Dynamic form generation with conditional logic
-- Smart reveal designer for gift card presentation
-- Brand-specific customization rules
-- Automated form validation
-
-Primary Implementation: src/components/ace-forms/FormBuilder.tsx
-Importance Score: 80
-
-The platform implements sophisticated gift card management and campaign workflows with deep integration capabilities. Core focus on reward distribution, tracking, and multi-channel campaign management.
+Core Business Rules:
+- Gift card pools maintain health states based on configurable thresholds
+- Campaign approval requires multi-stakeholder sign-off
+- Contact enrichment follows industry-specific patterns
+- Reward distribution requires condition completion verification
+- Call center redemptions follow strict verification steps
 
 $END$
 
