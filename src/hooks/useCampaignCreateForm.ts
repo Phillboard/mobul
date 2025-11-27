@@ -100,7 +100,7 @@ export function useCampaignCreateForm({ clientId }: UseCampaignCreateFormProps) 
         // Get contacts from list
         const { data: listMembers, error: membersError } = await supabase
           .from("contact_list_members")
-          .select("contact:contacts(id, first_name, last_name, email, phone, address, city, state, zip)")
+          .select("contact:contacts(id, first_name, last_name, email, phone, address, address2, city, state, zip)")
           .eq("list_id", data.contact_list_id);
 
         if (membersError) throw membersError;
@@ -115,7 +115,8 @@ export function useCampaignCreateForm({ clientId }: UseCampaignCreateFormProps) 
             last_name: member.contact?.last_name,
             email: member.contact?.email,
             phone: member.contact?.phone,
-            address: member.contact?.address,
+            address1: member.contact?.address,
+            address2: member.contact?.address2,
             city: member.contact?.city,
             state: member.contact?.state,
             zip: member.contact?.zip,
