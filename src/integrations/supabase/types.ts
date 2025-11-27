@@ -329,6 +329,51 @@ export type Database = {
           },
         ]
       }
+      agent_performance_metrics: {
+        Row: {
+          agent_user_id: string
+          avg_call_duration_seconds: number | null
+          calls_handled: number
+          created_at: string
+          customer_satisfaction_avg: number | null
+          date: string
+          failed_redemptions: number
+          id: string
+          quality_score: number | null
+          redemptions_count: number
+          successful_redemptions: number
+          updated_at: string
+        }
+        Insert: {
+          agent_user_id: string
+          avg_call_duration_seconds?: number | null
+          calls_handled?: number
+          created_at?: string
+          customer_satisfaction_avg?: number | null
+          date: string
+          failed_redemptions?: number
+          id?: string
+          quality_score?: number | null
+          redemptions_count?: number
+          successful_redemptions?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_user_id?: string
+          avg_call_duration_seconds?: number | null
+          calls_handled?: number
+          created_at?: string
+          customer_satisfaction_avg?: number | null
+          date?: string
+          failed_redemptions?: number
+          id?: string
+          quality_score?: number | null
+          redemptions_count?: number
+          successful_redemptions?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_design_sessions: {
         Row: {
           design_id: string
@@ -658,6 +703,63 @@ export type Database = {
           },
         ]
       }
+      call_center_scripts: {
+        Row: {
+          campaign_id: string | null
+          client_id: string
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          script_content: string
+          script_name: string
+          script_type: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          script_content: string
+          script_name: string
+          script_type: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          script_content?: string
+          script_name?: string
+          script_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_center_scripts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_center_scripts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_conditions_met: {
         Row: {
           call_session_id: string
@@ -728,6 +830,54 @@ export type Database = {
           },
           {
             foreignKeyName: "call_conditions_met_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_dispositions: {
+        Row: {
+          agent_user_id: string
+          call_session_id: string | null
+          created_at: string
+          disposition_type: string
+          follow_up_date: string | null
+          id: string
+          notes: string | null
+          recipient_id: string | null
+        }
+        Insert: {
+          agent_user_id: string
+          call_session_id?: string | null
+          created_at?: string
+          disposition_type: string
+          follow_up_date?: string | null
+          id?: string
+          notes?: string | null
+          recipient_id?: string | null
+        }
+        Update: {
+          agent_user_id?: string
+          call_session_id?: string | null
+          created_at?: string
+          disposition_type?: string
+          follow_up_date?: string | null
+          id?: string
+          notes?: string | null
+          recipient_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_dispositions_call_session_id_fkey"
+            columns: ["call_session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_dispositions_recipient_id_fkey"
             columns: ["recipient_id"]
             isOneToOne: false
             referencedRelation: "recipients"
@@ -3729,6 +3879,47 @@ export type Database = {
           },
         ]
       }
+      recipient_enrichment_log: {
+        Row: {
+          agent_user_id: string
+          created_at: string
+          enrichment_source: string
+          field_updated: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          recipient_id: string
+        }
+        Insert: {
+          agent_user_id: string
+          created_at?: string
+          enrichment_source?: string
+          field_updated: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          recipient_id: string
+        }
+        Update: {
+          agent_user_id?: string
+          created_at?: string
+          enrichment_source?: string
+          field_updated?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipient_enrichment_log_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipients: {
         Row: {
           address1: string | null
@@ -3745,11 +3936,13 @@ export type Database = {
           custom_fields: Json | null
           delivery_status: string | null
           email: string | null
+          enriched_by_user_id: string | null
           first_name: string | null
           geocode_json: Json | null
           gift_card_assigned_id: string | null
           id: string
           is_simulated: boolean | null
+          last_enriched_at: string | null
           last_name: string | null
           phone: string | null
           redemption_code: string | null
@@ -3782,11 +3975,13 @@ export type Database = {
           custom_fields?: Json | null
           delivery_status?: string | null
           email?: string | null
+          enriched_by_user_id?: string | null
           first_name?: string | null
           geocode_json?: Json | null
           gift_card_assigned_id?: string | null
           id?: string
           is_simulated?: boolean | null
+          last_enriched_at?: string | null
           last_name?: string | null
           phone?: string | null
           redemption_code?: string | null
@@ -3819,11 +4014,13 @@ export type Database = {
           custom_fields?: Json | null
           delivery_status?: string | null
           email?: string | null
+          enriched_by_user_id?: string | null
           first_name?: string | null
           geocode_json?: Json | null
           gift_card_assigned_id?: string | null
           id?: string
           is_simulated?: boolean | null
+          last_enriched_at?: string | null
           last_name?: string | null
           phone?: string | null
           redemption_code?: string | null
