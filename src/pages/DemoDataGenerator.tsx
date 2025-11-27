@@ -108,14 +108,17 @@ export default function DemoDataGenerator() {
     setLinkingProgress('Starting...');
 
     try {
-      // Get all campaigns without audiences
-      const { data: campaigns, error: campaignsError } = await supabase
+      // Get all campaigns and filter for those without audiences
+      const { data: allCampaigns, error: campaignsError } = await supabase
         .from('campaigns')
-        .select('id, client_id, name, status')
-        .filter('audience_id', 'is', null)
-        .filter('status', 'neq', 'cancelled');
+        .select('id, client_id, name, status, audience_id');
 
       if (campaignsError) throw campaignsError;
+
+      // Filter in JavaScript for campaigns without audiences
+      const campaigns = (allCampaigns || []).filter(c => 
+        c.audience_id === null && c.status !== 'cancelled'
+      );
 
       if (!campaigns || campaigns.length === 0) {
         toast.info('All campaigns already have audiences!');
