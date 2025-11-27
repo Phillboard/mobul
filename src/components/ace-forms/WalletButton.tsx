@@ -50,30 +50,35 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
   };
 
   return (
-    <Button
-      size={size}
-      onClick={handleAddToWallet}
-      className={cn(
-        "gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700",
-        className
-      )}
-    >
-      {platform === 'ios' ? (
-        <>
-          <Wallet className="w-5 h-5" />
-          Add to Apple Wallet
-        </>
-      ) : platform === 'android' ? (
-        <>
-          <Wallet className="w-5 h-5" />
-          Add to Google Wallet
-        </>
-      ) : (
-        <>
-          <Smartphone className="w-5 h-5" />
-          Add to Wallet
-        </>
-      )}
-    </Button>
+    <div className="space-y-2">
+      <Button
+        size={size}
+        onClick={handleAddToWallet}
+        className={cn(
+          "w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700",
+          className
+        )}
+      >
+        {platform === 'ios' ? (
+          <>
+            <Wallet className="w-5 h-5" />
+            Add to Apple Wallet
+          </>
+        ) : platform === 'android' ? (
+          <>
+            <Wallet className="w-5 h-5" />
+            Add to Google Wallet
+          </>
+        ) : (
+          <>
+            <Smartphone className="w-5 h-5" />
+            Add to Wallet
+          </>
+        )}
+      </Button>
+      <p className="text-xs text-center text-muted-foreground">
+        Save to your phone's wallet app for easy access anytime
+      </p>
+    </div>
   );
 }
