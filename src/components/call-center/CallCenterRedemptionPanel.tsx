@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScriptPanel } from "./ScriptPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -231,8 +232,26 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
 
   const campaign = recipient?.audiences?.campaigns?.[0];
   const activeConditions = campaign?.campaign_conditions?.filter(c => c.is_active) || [];
+  const poolId = campaign?.campaign_reward_configs?.find(
+    c => c.condition_number === parseInt(selectedConditionId)
+  )?.gift_card_pool_id;
 
   return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-1">
+        <ScriptPanel
+          clientId={recipient?.audiences?.id}
+          campaignId={campaign?.id}
+          currentStep={step === 'code' ? 'code-entry' : step === 'contact' ? 'contact-method' : step === 'condition' ? 'condition-selection' : 'complete'}
+          recipientData={{
+            first_name: recipient?.first_name || undefined,
+            last_name: recipient?.last_name || undefined,
+            campaign_name: campaign?.name,
+            gift_card_value: result?.giftCard?.card_value,
+          }}
+        />
+      </div>
+      <div className="lg:col-span-2">
     <div className="space-y-6">
       {/* Progress Indicator */}
       <div className="flex items-center justify-center gap-2">
@@ -579,6 +598,8 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
           </Card>
         </>
       )}
+    </div>
+      </div>
     </div>
   );
 }
