@@ -93,9 +93,12 @@ serve(async (req) => {
       }
     }
 
-    // Check if gift card code is provided
-    const giftCardCode = data.code;
+    // Check if gift card code is provided - find the gift-card-code field dynamically
+    const giftCardField = form.form_config.fields.find((f: any) => f.type === 'gift-card-code');
+    const giftCardCode = giftCardField ? data[giftCardField.id] : null;
+    
     if (!giftCardCode) {
+      console.error('No gift card code provided. Field ID:', giftCardField?.id, 'Data keys:', Object.keys(data));
       return new Response(
         JSON.stringify({ success: false, error: 'Gift card code is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
