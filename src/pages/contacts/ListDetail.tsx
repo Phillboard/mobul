@@ -1,20 +1,19 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useReactTable, SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import { ArrowLeft, Users, Trash2, UserPlus } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useContactList, useListMembers, useRemoveContactFromList, useDeleteContactList } from "@/hooks/useContactLists";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable } from "@/components/ui/data-table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { createListMembersColumns } from "@/components/contacts/listMembersColumns";
+import { basicTableModels } from "@/lib/tableHelpers";
 
 export default function ListDetail() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +22,10 @@ export default function ListDetail() {
   const { data: members = [], isLoading: membersLoading } = useListMembers(id);
   const removeContact = useRemoveContactFromList();
   const deleteList = useDeleteContactList();
+  
+  // Table state
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const handleRemoveContact = (contactId: string) => {
     if (!id) return;
@@ -37,6 +40,24 @@ export default function ListDetail() {
       },
     });
   };
+
+  // Table columns and instance
+  const columns = useMemo(
+    () => createListMembersColumns({ onRemove: handleRemoveContact }),
+    []
+  );
+
+  const table = useReactTable({
+    data: members || [],
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    ...basicTableModels,
+  });
 
   if (listLoading) {
     return (
@@ -147,7 +168,7 @@ export default function ListDetail() {
           <CardHeader>
             <CardTitle>Contacts in List</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {membersLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-12 w-full" />
@@ -159,42 +180,19 @@ export default function ListDetail() {
                 No contacts in this list yet. Add contacts from the main contacts page.
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Added</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {members.map((member: any) => (
-                    <TableRow key={member.id}>
-                      <TableCell className="font-medium">
-                        {member.contacts?.first_name} {member.contacts?.last_name}
-                      </TableCell>
-                      <TableCell>{member.contacts?.email || "—"}</TableCell>
-                      <TableCell>{member.contacts?.phone || "—"}</TableCell>
-                      <TableCell>{member.contacts?.company || "—"}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {new Date(member.added_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveContact(member.contact_id)}
-                        >
-                          Remove
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <>
+                <DataTableToolbar
+                  table={table}
+                  searchKey="name"
+                  searchPlaceholder="Search contacts..."
+                >
+                  <DataTableViewOptions table={table} />
+                </DataTableToolbar>
+                
+                <DataTable table={table} />
+                
+                <DataTablePagination table={table} />
+              </>
             )}
           </CardContent>
         </Card>
