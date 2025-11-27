@@ -63,15 +63,32 @@ export function generateHTMLExport(
         const result = await response.json();
         
         if (result.success) {
-          document.getElementById('result').innerHTML = '<div class="success">${config.settings?.successMessage || 'Success!'}</div>';
+          const resultDiv = document.getElementById('result');
+          if (resultDiv) {
+            resultDiv.innerHTML = '<div class="success">${config.settings?.successMessage || 'Success!'}</div>';
+          }
           if (result.giftCard) {
             window.location.href = result.redemptionUrl;
           }
         } else {
-          document.getElementById('result').innerHTML = '<div class="error">' + result.error + '</div>';
+          const resultDiv = document.getElementById('result');
+          if (resultDiv) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = result.error || 'An error occurred';
+            resultDiv.innerHTML = '';
+            resultDiv.appendChild(errorDiv);
+          }
         }
       } catch (error) {
-        document.getElementById('result').innerHTML = '<div class="error">Submission failed. Please try again.</div>';
+        const resultDiv = document.getElementById('result');
+        if (resultDiv) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'error';
+          errorDiv.textContent = 'Submission failed. Please try again.';
+          resultDiv.innerHTML = '';
+          resultDiv.appendChild(errorDiv);
+        }
       }
     });
   </script>

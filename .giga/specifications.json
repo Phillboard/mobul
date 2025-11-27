@@ -1,0 +1,26 @@
+[
+  {
+    "fileName": "main-overview.mdc",
+    "description": "Complete system overview documenting the core campaign management system, gift card operations, and integration points between major components"
+  },
+  {
+    "fileName": "campaign-condition-system.mdc",
+    "description": "Detailed documentation of the multi-stage reward/action triggering system, including sequential conditions, dependencies, and trigger types"
+  },
+  {
+    "fileName": "gift-card-management.mdc",
+    "description": "Comprehensive documentation of gift card pool management, inventory tracking, provisioning strategies, and distribution logic across multiple providers"
+  },
+  {
+    "fileName": "data-models.mdc",
+    "description": "Detailed documentation of data models and relationships between campaigns, conditions, gift cards, organizations, and users including hierarchical structures"
+  },
+  {
+    "fileName": "reward-distribution-flow.mdc",
+    "description": "Documentation of the reward distribution algorithms, validation workflows, and integration with call center, SMS, and webhook systems"
+  },
+  {
+    "fileName": "permission-inheritance.mdc",
+    "description": "Documentation of the hierarchical permission system including role-based access control, tenant management, and permission inheritance rules"
+  }
+]
