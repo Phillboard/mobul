@@ -124,23 +124,22 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
 
   // Update a field
   const updateField = (fieldId: string, updates: Partial<FormField>) => {
-    const fieldIndex = fields.findIndex((f) => f.id === fieldId);
+    const fieldIndex = formData.fields.findIndex((f) => f.id === fieldId);
     if (fieldIndex !== -1) {
-      update(fieldIndex, { ...fields[fieldIndex], ...updates });
+      update(fieldIndex, { ...formData.fields[fieldIndex], ...updates });
       trackChange();
     }
   };
 
   // Duplicate a field
   const duplicateField = (fieldId: string) => {
-    const field = fields.find((f) => f.id === fieldId);
+    const field = formData.fields.find((f) => f.id === fieldId);
     if (field) {
       const newField = {
         ...field,
         id: nanoid(),
         label: `${field.label} (Copy)`,
       };
-      const fieldIndex = fields.findIndex((f) => f.id === fieldId);
       append(newField);
       setSelectedFieldId(newField.id);
       trackChange();
@@ -149,13 +148,18 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
 
   // Delete a field
   const deleteField = (fieldId: string) => {
-    const fieldIndex = fields.findIndex((f) => f.id === fieldId);
+    console.log('🗑️ Deleting field:', fieldId, 'from', formData.fields.length, 'fields');
+    const fieldIndex = formData.fields.findIndex((f) => f.id === fieldId);
+    console.log('Found at index:', fieldIndex);
     if (fieldIndex !== -1) {
       remove(fieldIndex);
       if (selectedFieldId === fieldId) {
         setSelectedFieldId(null);
       }
       trackChange();
+      console.log('✅ Field deleted');
+    } else {
+      console.log('❌ Field not found in formData.fields');
     }
   };
 
@@ -193,7 +197,7 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
   };
 
   // Get selected field
-  const selectedField = fields.find((f) => f.id === selectedFieldId);
+  const selectedField = formData.fields.find((f) => f.id === selectedFieldId);
 
   // Sync history state to RHF ONLY when undo/redo is triggered
   useEffect(() => {
