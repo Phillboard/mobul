@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
@@ -10,63 +11,75 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DrPhillipChatWrapper } from "@/components/DrPhillipChatWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "next-themes";
+import { Loader2 } from "lucide-react";
+
+// Core pages (loaded immediately)
 import Index from "./pages/Index";
-import Campaigns from "./pages/Campaigns";
-import CampaignCreate from "./pages/CampaignCreate";
-import CampaignDetail from "./pages/CampaignDetail";
-import PURLLandingPage from "./pages/PURLLandingPage";
-import AudienceDetail from "./pages/AudienceDetail";
-import RecipientDetail from "./pages/RecipientDetail";
-  import Mail from "./pages/Mail";
-  import CampaignPrototype from "./pages/CampaignPrototype";
-  import MailDesigner from "./pages/MailDesigner";
-import CampaignAnalytics from "./pages/CampaignAnalytics";
-import APIDocumentation from "./pages/APIDocumentation";
-import GiftCards from "./pages/GiftCards";
-import PurchaseGiftCards from "./pages/PurchaseGiftCards";
-import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import GenerateFavicon from "./pages/GenerateFavicon";
-import UserManagement from "./pages/UserManagement";
-import AcceptInvite from "./pages/AcceptInvite";
-import LandingPages from "./pages/LandingPages";
-import GiftCardReveal from "./pages/GiftCardReveal";
-import EmbedGiftCard from "./pages/EmbedGiftCard";
-import AgencyManagement from "./pages/AgencyManagement";
-import CallCenterRedemption from "./pages/CallCenterRedemption";
-import CallCenterScripts from "./pages/CallCenterScripts";
-import GrapesJSLandingPageEditor from "./pages/GrapesJSLandingPageEditor";
 
-import Contacts from "./pages/Contacts";
-import ContactDetail from "./pages/ContactDetail";
-import ContactLists from "./pages/ContactLists";
-import ListDetail from "./pages/contacts/ListDetail";
-import ContactImport from "./pages/ContactImport";
-import Activities from "./pages/Activities";
-import Tasks from "./pages/Tasks";
-import TeamManagement from "./pages/TeamManagement";
-import AdminGiftCardMarketplace from "./pages/AdminGiftCardMarketplace";
-import AdminSiteDirectory from "./pages/AdminSiteDirectory";
-import Webinar from "./pages/Webinar";
-import AceForms from "./pages/AceForms";
-import AceFormBuilder from "./pages/AceFormBuilder";
-import AceFormPublic from "./pages/AceFormPublic";
-import AceFormAnalytics from "./pages/AceFormAnalytics";
-import AceFormsDocumentation from "./pages/AceFormsDocumentation";
-import AdminAuditLog from "./pages/AdminAuditLog";
-import BetaTesting from "./pages/BetaTesting";
-import LaunchChecklist from "./pages/LaunchChecklist";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import { CookieConsent } from "./components/CookieConsent";
-import Documentation from "./pages/Documentation";
-import Dashboard from "./pages/Dashboard";
-import { PlatformDashboard } from "./pages/PlatformDashboard";
-import EnrichData from "./pages/EnrichData";
-import SystemHealth from "./pages/SystemHealth";
-import Integrations from "./pages/Integrations";
-import DocEditorPage from "./pages/DocEditorPage";
+// Lazy-loaded pages
+const Campaigns = lazy(() => import("./pages/Campaigns"));
+const CampaignCreate = lazy(() => import("./pages/CampaignCreate"));
+const CampaignDetail = lazy(() => import("./pages/CampaignDetail"));
+const PURLLandingPage = lazy(() => import("./pages/PURLLandingPage"));
+const AudienceDetail = lazy(() => import("./pages/AudienceDetail"));
+const RecipientDetail = lazy(() => import("./pages/RecipientDetail"));
+const Mail = lazy(() => import("./pages/Mail"));
+const CampaignPrototype = lazy(() => import("./pages/CampaignPrototype"));
+const MailDesigner = lazy(() => import("./pages/MailDesigner"));
+const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
+const APIDocumentation = lazy(() => import("./pages/APIDocumentation"));
+const GiftCards = lazy(() => import("./pages/GiftCards"));
+const PurchaseGiftCards = lazy(() => import("./pages/PurchaseGiftCards"));
+const Settings = lazy(() => import("./pages/Settings"));
+const GenerateFavicon = lazy(() => import("./pages/GenerateFavicon"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
+const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
+const LandingPages = lazy(() => import("./pages/LandingPages"));
+const GiftCardReveal = lazy(() => import("./pages/GiftCardReveal"));
+const EmbedGiftCard = lazy(() => import("./pages/EmbedGiftCard"));
+const AgencyManagement = lazy(() => import("./pages/AgencyManagement"));
+const CallCenterRedemption = lazy(() => import("./pages/CallCenterRedemption"));
+const CallCenterScripts = lazy(() => import("./pages/CallCenterScripts"));
+const GrapesJSLandingPageEditor = lazy(() => import("./pages/GrapesJSLandingPageEditor"));
+const Contacts = lazy(() => import("./pages/Contacts"));
+const ContactDetail = lazy(() => import("./pages/ContactDetail"));
+const ContactLists = lazy(() => import("./pages/ContactLists"));
+const ListDetail = lazy(() => import("./pages/contacts/ListDetail"));
+const ContactImport = lazy(() => import("./pages/ContactImport"));
+const Activities = lazy(() => import("./pages/Activities"));
+const Tasks = lazy(() => import("./pages/Tasks"));
+const TeamManagement = lazy(() => import("./pages/TeamManagement"));
+const AdminGiftCardMarketplace = lazy(() => import("./pages/AdminGiftCardMarketplace"));
+const AdminSiteDirectory = lazy(() => import("./pages/AdminSiteDirectory"));
+const Webinar = lazy(() => import("./pages/Webinar"));
+const AceForms = lazy(() => import("./pages/AceForms"));
+const AceFormBuilder = lazy(() => import("./pages/AceFormBuilder"));
+const AceFormPublic = lazy(() => import("./pages/AceFormPublic"));
+const AceFormAnalytics = lazy(() => import("./pages/AceFormAnalytics"));
+const AceFormsDocumentation = lazy(() => import("./pages/AceFormsDocumentation"));
+const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
+const BetaTesting = lazy(() => import("./pages/BetaTesting"));
+const LaunchChecklist = lazy(() => import("./pages/LaunchChecklist"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const CookieConsent = lazy(() => import("./components/CookieConsent").then(m => ({ default: m.CookieConsent })));
+const Documentation = lazy(() => import("./pages/Documentation"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const PlatformDashboard = lazy(() => import("./pages/PlatformDashboard").then(m => ({ default: m.PlatformDashboard })));
+const EnrichData = lazy(() => import("./pages/EnrichData"));
+const SystemHealth = lazy(() => import("./pages/SystemHealth"));
+const Integrations = lazy(() => import("./pages/Integrations"));
+const DocEditorPage = lazy(() => import("./pages/DocEditorPage"));
+const MVPVerification = lazy(() => import("./pages/MVPVerification"));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -95,8 +108,11 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <DrPhillipChatWrapper />
-                <CookieConsent />
-                <Routes>
+                <Suspense fallback={null}>
+                  <CookieConsent />
+                </Suspense>
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
                   {/* Public Routes */}
                   <Route path="/accept-invite" element={<AcceptInvite />} />
                   <Route path="/c/:campaignId/:token" element={<PURLLandingPage />} />
@@ -178,6 +194,7 @@ const App = () => (
                   
                   {/* Administration - Consolidated */}
                   <Route path="/admin/system-health" element={<ProtectedRoute><SystemHealth /></ProtectedRoute>} />
+                  <Route path="/admin/mvp-verification" element={<ProtectedRoute requiredRole="admin"><MVPVerification /></ProtectedRoute>} />
                   <Route path="/admin/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
                    <Route path="/admin/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                    <Route path="/admin/docs/:category" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
@@ -209,7 +226,8 @@ const App = () => (
                   
                   {/* 404 */}
                   <Route path="*" element={<NotFound />} />
-                </Routes>
+                  </Routes>
+                </Suspense>
               </TenantProvider>
             </AuthProvider>
           </TooltipProvider>
