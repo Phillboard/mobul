@@ -81,8 +81,7 @@ const navigationGroups: NavGroup[] = [
     label: "Call Center",
     collapsible: true,
     items: [
-      { name: "Call Tracking", href: "/call-center", icon: PhoneCall, permissions: ['calls.view', 'calls.manage'], keywords: ["calls", "phone", "tracking", "reports"], description: "Call tracking analytics" },
-      { name: "Redemption Center", href: "/call-center/redeem", icon: Target, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision"], description: "Redeem gift cards for callers" },
+      { name: "Redemption Center", href: "/call-center", icon: Headphones, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision", "tracking", "calls"], description: "Redeem gift cards and track calls" },
       { name: "Call Scripts", href: "/call-center/scripts", icon: FileText, permissions: ['calls.manage'], keywords: ["scripts", "training", "call flow"], description: "Manage call scripts" },
     ]
   },
