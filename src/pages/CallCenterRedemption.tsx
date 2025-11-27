@@ -3,11 +3,41 @@ import { Layout } from "@/components/layout/Layout";
 import { CallCenterRedemptionPanel } from "@/components/call-center/CallCenterRedemptionPanel";
 import { ScriptPanel } from "@/components/call-center/ScriptPanel";
 import { UnifiedSidebar } from "@/components/call-center/UnifiedSidebar";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+
+type WorkflowStep = "code" | "contact" | "condition" | "complete";
+
+interface RecipientData {
+  first_name?: string;
+  last_name?: string;
+  campaign?: {
+    name?: string;
+  };
+  gift_card_value?: number;
+}
 
 export default function CallCenterRedemption() {
-  const [scriptsCollapsed, setScriptsCollapsed] = useState(false);
+  const [clientId, setClientId] = useState<string | undefined>();
+  const [campaignId, setCampaignId] = useState<string | undefined>();
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>("code");
+  const [recipientData, setRecipientData] = useState<RecipientData | undefined>();
+
+  const handleRecipientLoaded = (data: { 
+    clientId?: string; 
+    campaignId?: string; 
+    recipient: any;
+    step: WorkflowStep 
+  }) => {
+    setClientId(data.clientId);
+    setCampaignId(data.campaignId);
+    setCurrentStep(data.step);
+    setRecipientData({
+      first_name: data.recipient.first_name,
+      last_name: data.recipient.last_name,
+      campaign: data.recipient.audiences?.campaigns?.[0] ? {
+        name: data.recipient.audiences.campaigns[0].name
+      } : undefined,
+    });
+  };
 
   return (
     <Layout>
@@ -17,23 +47,23 @@ export default function CallCenterRedemption() {
           <p className="text-muted-foreground">Redeem gift cards and track customer interactions</p>
         </div>
 
-        <div className="flex gap-4">
-          {/* Collapsible Scripts Panel */}
-          <div className={`transition-all ${scriptsCollapsed ? 'w-14' : 'w-80'}`}>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Workflow Area (3/4 width) */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Scripts Panel */}
             <ScriptPanel
-              currentStep="code"
-              isCollapsed={scriptsCollapsed}
-              onToggleCollapse={() => setScriptsCollapsed(!scriptsCollapsed)}
+              clientId={clientId}
+              campaignId={campaignId}
+              currentStep={currentStep}
+              recipientData={recipientData}
             />
+
+            {/* Redemption Workflow */}
+            <CallCenterRedemptionPanel onRecipientLoaded={handleRecipientLoaded} />
           </div>
 
-          {/* Main Redemption Workflow */}
-          <div className="flex-1 min-w-0">
-            <CallCenterRedemptionPanel />
-          </div>
-
-          {/* Unified Stats & Activity Sidebar */}
-          <div className="w-80 flex-shrink-0">
+          {/* Sidebar (1/4 width) */}
+          <div className="lg:col-span-1">
             <UnifiedSidebar selectedPoolId={null} />
           </div>
         </div>
