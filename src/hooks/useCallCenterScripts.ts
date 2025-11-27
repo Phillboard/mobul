@@ -19,9 +19,62 @@ export interface CallCenterScript {
 export const useCallCenterScripts = (clientId?: string, campaignId?: string) => {
   const queryClient = useQueryClient();
 
+  // Default fallback scripts when no database scripts exist
+  const defaultScripts: CallCenterScript[] = [
+    {
+      id: 'default-greeting',
+      client_id: '',
+      script_name: 'Default Greeting',
+      script_type: 'greeting',
+      script_content: 'Thank you for calling! May I have your confirmation code to look up your gift card?',
+      is_active: true,
+      display_order: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'default-verification',
+      client_id: '',
+      script_name: 'Default Verification',
+      script_type: 'verification',
+      script_content: 'Let me look that up for you... Great! I found your record. Can I verify your name is {{first_name}} {{last_name}}?',
+      is_active: true,
+      display_order: 2,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'default-explanation',
+      client_id: '',
+      script_name: 'Default Gift Card Explanation',
+      script_type: 'explanation',
+      script_content: 'Excellent! You qualify for a gift card as part of the {{campaign_name}} campaign. I just need to confirm a few details to send it to you.',
+      is_active: true,
+      display_order: 3,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'default-closing',
+      client_id: '',
+      script_name: 'Default Closing',
+      script_type: 'closing',
+      script_content: 'Your gift card has been sent! You should receive it shortly. Is there anything else I can help you with today?',
+      is_active: true,
+      display_order: 4,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ];
+
   const { data: scripts, isLoading, error } = useQuery({
     queryKey: ['call-center-scripts', clientId, campaignId],
     queryFn: async () => {
+      // If no clientId, return default scripts
+      if (!clientId) {
+        return defaultScripts;
+      }
+
       let query = supabase
         .from('call_center_scripts')
         .select('*')
@@ -39,9 +92,16 @@ export const useCallCenterScripts = (clientId?: string, campaignId?: string) => 
       const { data, error } = await query;
 
       if (error) throw error;
+      
+      // If no scripts found in database, return defaults
+      if (!data || data.length === 0) {
+        return defaultScripts;
+      }
+      
       return data as CallCenterScript[];
     },
-    enabled: !!clientId,
+    // Always enable the query - it will return defaults if needed
+    enabled: true,
   });
 
   const createScript = useMutation({

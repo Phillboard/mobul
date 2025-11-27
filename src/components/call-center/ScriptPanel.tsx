@@ -13,8 +13,6 @@ interface ScriptPanelProps {
   campaignId?: string;
   currentStep: WorkflowStep;
   recipientData?: RecipientData;
-  isCollapsed?: boolean;
-  onToggleCollapse?: () => void;
 }
 
 interface RecipientData {
@@ -49,8 +47,6 @@ export function ScriptPanel({
   campaignId,
   currentStep,
   recipientData,
-  isCollapsed = false,
-  onToggleCollapse,
 }: ScriptPanelProps) {
   const { scripts, isLoading } = useCallCenterScripts(clientId, campaignId);
   const [expandedScripts, setExpandedScripts] = useState<Set<string>>(new Set());
@@ -91,27 +87,9 @@ export function ScriptPanel({
     relevantScriptTypes.includes(script.script_type)
   );
 
-  if (isCollapsed) {
-    return (
-      <Card className="w-14 flex-shrink-0">
-        <CardContent className="p-2 flex flex-col items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleCollapse}
-            className="h-8 w-8 p-0"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <FileText className="h-4 w-4 text-muted-foreground rotate-90" />
-        </CardContent>
-      </Card>
-    );
-  }
-
   if (isLoading) {
     return (
-      <Card className="w-80 flex-shrink-0">
+      <Card>
         <CardContent className="p-4">
           <div className="text-sm text-muted-foreground">Loading scripts...</div>
         </CardContent>
@@ -121,8 +99,14 @@ export function ScriptPanel({
 
   if (relevantScripts.length === 0) {
     return (
-      <Card className="w-80 flex-shrink-0">
-        <CardContent className="p-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Call Scripts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="text-sm text-muted-foreground">No scripts available for this step</div>
         </CardContent>
       </Card>
@@ -130,24 +114,12 @@ export function ScriptPanel({
   }
 
   return (
-    <Card className="w-80 flex-shrink-0">
+    <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Call Scripts
-          </CardTitle>
-          {onToggleCollapse && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggleCollapse}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <CardTitle className="text-base flex items-center gap-2">
+          <FileText className="h-4 w-4" />
+          Call Scripts
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {relevantScripts.map((script) => {

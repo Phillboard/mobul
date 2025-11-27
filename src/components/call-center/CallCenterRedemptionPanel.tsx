@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScriptPanel } from "./ScriptPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,7 +75,11 @@ interface ProvisionResult {
   giftCard: GiftCardData;
 }
 
-export function CallCenterRedemptionPanel() {
+interface CallCenterRedemptionPanelProps {
+  onRecipientLoaded?: (data: { clientId?: string; campaignId?: string; recipient: RecipientData; step: WorkflowStep }) => void;
+}
+
+export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedemptionPanelProps) {
   const { toast } = useToast();
   
   // Step 1: Code Entry
@@ -121,6 +124,7 @@ export function CallCenterRedemptionPanel() {
             campaigns!inner (
               id,
               name,
+              client_id,
               campaign_conditions (*),
               campaign_reward_configs (*)
             )
@@ -142,6 +146,17 @@ export function CallCenterRedemptionPanel() {
     onSuccess: (data) => {
       setRecipient(data);
       setStep("contact");
+      
+      // Notify parent with recipient data and clientId
+      const campaign = data.audiences?.campaigns?.[0];
+      if (onRecipientLoaded && campaign) {
+        onRecipientLoaded({
+          clientId: (campaign as any).client_id,
+          campaignId: campaign.id,
+          recipient: data,
+          step: "contact"
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -237,21 +252,6 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
   )?.gift_card_pool_id;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-1">
-        <ScriptPanel
-          clientId={recipient?.audiences?.id}
-          campaignId={campaign?.id}
-          currentStep={step}
-          recipientData={{
-            first_name: recipient?.first_name || undefined,
-            last_name: recipient?.last_name || undefined,
-            campaign: campaign ? { name: campaign.name } : undefined,
-            gift_card_value: result?.giftCard?.card_value,
-          }}
-        />
-      </div>
-      <div className="lg:col-span-2">
     <div className="space-y-6">
       {/* Progress Indicator */}
       <div className="flex items-center justify-center gap-2">
@@ -598,8 +598,6 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
           </Card>
         </>
       )}
-    </div>
-      </div>
     </div>
   );
 }
