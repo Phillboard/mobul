@@ -1,71 +1,57 @@
 ---
-description: Provides documentation and rules for campaign condition, reward, and trigger management systems
+description: Specification for analyzing multi-stage campaign conditions, reward triggers, and action sequences
 ---
 
 
 # campaign-condition-system
 
-Campaign Condition Core Components:
+Multi-Stage Condition Engine:
+- Sequential condition evaluation with dependency chains
+- Parallel condition tracking for multiple reward paths
+- Time-based condition triggers with delay support
+- Condition grouping with AND/OR logic
 
-1. Trigger Evaluation Engine (85/100)
-- Sequential condition evaluation pipeline
-- Multi-stage verification gates
-- Dependency graph for nested conditions
-- Status progression tracking (pending → active → completed)
-- Rollback handling for failed conditions
+Reward Trigger System:
+- Multi-type reward provisioning (gift cards, SMS, webhooks)
+- Inventory pool management for reward fulfillment
+- Delivery method selection based on recipient preferences
+- Automated retry logic for failed deliveries
 
-2. Reward Distribution System (90/100)
-- Pool-based reward allocation
-- Inventory verification before trigger
-- Delivery method selection (SMS/email)
-- Multi-attempt delivery with fallbacks
-- Campaign-specific distribution rules
+Action Sequence Handler:
+- Ordered action execution with prerequisite validation
+- Rollback support for failed action chains
+- Event logging for condition completions
+- Integration points for external systems (CRM, SMS, email)
 
-3. Campaign Status Management (80/100)
-- Lifecycle state machine:
-  - draft → pending → active → completed
-  - Parallel condition tracking
-  - Aggregate completion calculation
-  - Real-time status updates
+Core Components:
 
-4. Validation Framework (75/100)
-- Pre-launch validation suite
-- Resource availability checks
-- Recipient verification
-- Pool allocation confirmation
-- Delivery method validation
+1. Condition Evaluator (src/components/conditions/ConditionEngine.tsx)
+Importance Score: 95
+- Complex condition chaining with dependency resolution
+- Real-time condition state monitoring
+- Trigger activation based on completion criteria
+- Support for custom condition types
 
-Core Workflows:
+2. Reward Distribution (src/components/rewards/RewardManager.tsx) 
+Importance Score: 90
+- Multi-channel reward delivery orchestration
+- Pool allocation and inventory tracking
+- Delivery confirmation handling
+- Automated failover between providers
 
-1. Condition Processing:
-```
-Trigger Event → Validation → Dependency Check → Execution → Reward Distribution
-```
+3. Campaign Trigger System (src/components/campaigns/TriggerSystem.tsx)
+Importance Score: 85
+- Event-based trigger activation
+- Condition completion verification
+- Action sequence coordination
+- Real-time trigger status updates
 
-2. Reward Fulfillment:
-```
-Pool Selection → Availability Check → Allocation → Delivery → Confirmation
-```
-
-Key Data Models:
-
-1. Campaign Condition
-- Type: trigger_type
-- Dependencies: [condition_ids]
-- Completion_rules: {rule_set}
-- Reward_config: {reward_settings}
-
-2. Condition Trigger
-- Source: trigger_source
-- Rules: {validation_rules}
-- Actions: [sequential_steps]
-- Fallbacks: {fallback_config}
-
-3. Reward Pool
-- Type: reward_type
-- Allocation: {distribution_rules}
-- Inventory: current_count
-- Thresholds: {min_levels}
+Business Rules:
+- Conditions must complete in defined sequence
+- Rewards locked until all prerequisites met
+- Automatic expiration of incomplete conditions
+- Recipient limitations per campaign
+- Maximum reward values per condition chain
 
 $END$
 
