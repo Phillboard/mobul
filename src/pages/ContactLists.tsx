@@ -1,23 +1,20 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, List, Filter } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
 import { ListBuilder } from "@/components/contacts/ListBuilder";
 import { SegmentBuilder } from "@/components/contacts/SegmentBuilder";
 import { useContactLists } from "@/hooks/useContactLists";
 import { useNavigate } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, SortingState, ColumnFiltersState } from "@tanstack/react-table";
+import { DataTable } from "@/components/ui/data-table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { createContactListColumns, ContactListRow } from "@/components/contacts/contactListColumns";
+import { createSegmentColumns, SegmentRow } from "@/components/contacts/segmentColumns";
 
 export default function ContactLists() {
   const navigate = useNavigate();
@@ -25,6 +22,56 @@ export default function ContactLists() {
   const { data: segments = [] } = useContactLists("dynamic");
   const [listBuilderOpen, setListBuilderOpen] = useState(false);
   const [segmentBuilderOpen, setSegmentBuilderOpen] = useState(false);
+  const [listSorting, setListSorting] = useState<SortingState>([]);
+  const [listColumnFilters, setListColumnFilters] = useState<ColumnFiltersState>([]);
+  const [segmentSorting, setSegmentSorting] = useState<SortingState>([]);
+  const [segmentColumnFilters, setSegmentColumnFilters] = useState<ColumnFiltersState>([]);
+
+  const listColumns = useMemo(
+    () =>
+      createContactListColumns({
+        onView: (id) => navigate(`/contacts/lists/${id}`),
+      }),
+    [navigate]
+  );
+
+  const segmentColumns = useMemo(
+    () =>
+      createSegmentColumns({
+        onView: (id) => navigate(`/contacts/segments/${id}`),
+      }),
+    [navigate]
+  );
+
+  const listsTable = useReactTable({
+    data: staticLists as ContactListRow[],
+    columns: listColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setListSorting,
+    onColumnFiltersChange: setListColumnFilters,
+    state: {
+      sorting: listSorting,
+      columnFilters: listColumnFilters,
+    },
+  });
+
+  const segmentsTable = useReactTable({
+    data: segments as SegmentRow[],
+    columns: segmentColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSegmentSorting,
+    onColumnFiltersChange: setSegmentColumnFilters,
+    state: {
+      sorting: segmentSorting,
+      columnFilters: segmentColumnFilters,
+    },
+  });
 
   return (
     <Layout>
@@ -72,51 +119,17 @@ export default function ContactLists() {
                 }}
               />
             ) : (
-              <Card>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Contacts</TableHead>
-                      <TableHead>Updated</TableHead>
-                      <TableHead className="w-12"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {staticLists.map((list) => (
-                      <TableRow
-                        key={list.id}
-                        className="cursor-pointer"
-                        onClick={() => navigate(`/contacts/lists/${list.id}`)}
-                      >
-                        <TableCell className="font-medium">{list.name}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {list.description || "—"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{list.contact_count || 0}</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(list.updated_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/contacts/lists/${list.id}`);
-                            }}
-                          >
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Card>
+              <div className="space-y-4">
+                <DataTableToolbar
+                  table={listsTable}
+                  searchKey="name"
+                  searchPlaceholder="Search lists..."
+                >
+                  <DataTableViewOptions table={listsTable} />
+                </DataTableToolbar>
+                <DataTable table={listsTable} />
+                <DataTablePagination table={listsTable} />
+              </div>
             )}
           </TabsContent>
 
@@ -140,53 +153,17 @@ export default function ContactLists() {
                 }}
               />
             ) : (
-              <Card>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Contacts</TableHead>
-                      <TableHead>Last Synced</TableHead>
-                      <TableHead className="w-12"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {segments.map((segment) => (
-                      <TableRow
-                        key={segment.id}
-                        className="cursor-pointer"
-                        onClick={() => navigate(`/contacts/segments/${segment.id}`)}
-                      >
-                        <TableCell className="font-medium">{segment.name}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {segment.description || "—"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{segment.contact_count || 0}</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {segment.last_sync_at
-                            ? new Date(segment.last_sync_at).toLocaleDateString()
-                            : "Never"}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/contacts/segments/${segment.id}`);
-                            }}
-                          >
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Card>
+              <div className="space-y-4">
+                <DataTableToolbar
+                  table={segmentsTable}
+                  searchKey="name"
+                  searchPlaceholder="Search segments..."
+                >
+                  <DataTableViewOptions table={segmentsTable} />
+                </DataTableToolbar>
+                <DataTable table={segmentsTable} />
+                <DataTablePagination table={segmentsTable} />
+              </div>
             )}
           </TabsContent>
         </Tabs>
