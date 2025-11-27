@@ -112,8 +112,8 @@ export default function DemoDataGenerator() {
       const { data: campaigns, error: campaignsError } = await supabase
         .from('campaigns')
         .select('id, client_id, name, status')
-        .is('audience_id', null)
-        .neq('status', 'cancelled');
+        .filter('audience_id', 'is', null)
+        .filter('status', 'neq', 'cancelled');
 
       if (campaignsError) throw campaignsError;
 
