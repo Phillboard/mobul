@@ -4,10 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Play, CheckCircle, AlertCircle, Trash2, Database } from "lucide-react";
+import { Loader2, Play, CheckCircle, AlertCircle, Trash2, Database, Link as LinkIcon } from "lucide-react";
 import { DemoDataGenerator, type GenerationProgress } from "@/lib/demo-data-generator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  generateName,
+  generateEmail,
+  generatePhone,
+  generateAddress,
+  generateDemoCode,
+  generateToken,
+  pastDate,
+  randomInt,
+  randomElement,
+} from "@/lib/fake-data-helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -15,7 +26,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function DemoDataGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLinking, setIsLinking] = useState(false);
   const [progress, setProgress] = useState<GenerationProgress[]>([]);
+  const [linkingProgress, setLinkingProgress] = useState<string>('');
   const [dataSize, setDataSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [customCampaigns, setCustomCampaigns] = useState(50);
   const [customRecipients, setCustomRecipients] = useState(50);
@@ -90,6 +103,165 @@ export default function DemoDataGenerator() {
     }
   };
 
+  const handleLinkCampaignsToAudiences = async () => {
+    setIsLinking(true);
+    setLinkingProgress('Starting...');
+
+    try {
+      // Get all campaigns without audiences
+      const { data: campaigns, error: campaignsError } = await supabase
+        .from('campaigns')
+        .select('id, client_id, name, status')
+        .is('audience_id', null)
+        .neq('status', 'cancelled');
+
+      if (campaignsError) throw campaignsError;
+
+      if (!campaigns || campaigns.length === 0) {
+        toast.info('All campaigns already have audiences!');
+        setIsLinking(false);
+        return;
+      }
+
+      setLinkingProgress(`Found ${campaigns.length} campaigns to link...`);
+
+      let completed = 0;
+      for (const campaign of campaigns) {
+        try {
+          // Determine recipient count based on status
+          const recipientCount = campaign.status === 'completed' || campaign.status === 'in_progress'
+            ? randomInt(50, 100)
+            : randomInt(10, 50);
+
+          // Create audience
+          const { data: audience, error: audienceError } = await supabase
+            .from('audiences')
+            .insert({
+              client_id: campaign.client_id,
+              name: `${campaign.name} - Recipients`,
+              source: 'import',
+              status: 'ready',
+              total_count: recipientCount,
+              valid_count: recipientCount,
+            })
+            .select()
+            .single();
+
+          if (audienceError) throw audienceError;
+
+          // Link campaign to audience
+          await supabase
+            .from('campaigns')
+            .update({ audience_id: audience.id })
+            .eq('id', campaign.id);
+
+          // Create recipients in batches
+          const recipients = [];
+          for (let i = 0; i < recipientCount; i++) {
+            const { firstName, lastName } = generateName();
+            const address = generateAddress();
+            
+            recipients.push({
+              audience_id: audience.id,
+              first_name: firstName,
+              last_name: lastName,
+              email: generateEmail(firstName, lastName),
+              phone: generatePhone('555'),
+              address: address.address,
+              address2: address.address2,
+              city: address.city,
+              state: address.state,
+              zip: address.zip,
+              token: generateToken(16),
+              redemption_code: generateDemoCode('DEMO'),
+            });
+          }
+
+          // Insert in batches of 100
+          for (let j = 0; j < recipients.length; j += 100) {
+            const batch = recipients.slice(j, j + 100);
+            await supabase.from('recipients').insert(batch);
+          }
+
+          // For active campaigns, generate events
+          if (campaign.status === 'completed' || campaign.status === 'in_progress') {
+            // Get recipient IDs
+            const { data: createdRecipients } = await supabase
+              .from('recipients')
+              .select('id')
+              .eq('audience_id', audience.id);
+
+            if (createdRecipients && createdRecipients.length > 0) {
+              const events = [];
+              const visitCount = Math.floor(recipientCount * (0.3 + Math.random() * 0.3));
+
+              // PURL visits
+              for (let k = 0; k < visitCount; k++) {
+                events.push({
+                  recipient_id: createdRecipients[k % createdRecipients.length].id,
+                  campaign_id: campaign.id,
+                  event_type: 'purl_visit',
+                  event_data: { 
+                    browser: randomElement(['Chrome', 'Safari', 'Firefox', 'Edge']),
+                    device: randomElement(['desktop', 'mobile', 'tablet'])
+                  },
+                  created_at: pastDate(30).toISOString(),
+                });
+              }
+
+              // QR scans (50% of visits)
+              for (let k = 0; k < Math.floor(visitCount * 0.5); k++) {
+                events.push({
+                  recipient_id: createdRecipients[k % createdRecipients.length].id,
+                  campaign_id: campaign.id,
+                  event_type: 'qr_scan',
+                  event_data: { device: 'mobile' },
+                  created_at: pastDate(25).toISOString(),
+                });
+              }
+
+              // Form submissions (30% of visits)
+              for (let k = 0; k < Math.floor(visitCount * 0.3); k++) {
+                events.push({
+                  recipient_id: createdRecipients[k % createdRecipients.length].id,
+                  campaign_id: campaign.id,
+                  event_type: 'form_submission',
+                  event_data: { form_name: 'Lead Capture' },
+                  created_at: pastDate(20).toISOString(),
+                });
+              }
+
+              // Insert events in batches
+              if (events.length > 0) {
+                for (let j = 0; j < events.length; j += 100) {
+                  const batch = events.slice(j, j + 100);
+                  await supabase.from('events').insert(batch);
+                }
+              }
+            }
+          }
+
+          completed++;
+          setLinkingProgress(`Linked ${completed}/${campaigns.length} campaigns...`);
+
+        } catch (error) {
+          console.error(`Failed to link campaign ${campaign.name}:`, error);
+        }
+      }
+
+      toast.success(`✅ Linked ${completed} campaigns with full analytics data!`);
+      setLinkingProgress('Complete!');
+      
+      // Refresh the page after 2 seconds
+      setTimeout(() => window.location.reload(), 2000);
+
+    } catch (error) {
+      toast.error(`Failed to link campaigns: ${error}`);
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
   const handleCleanup = async () => {
     if (!confirm('This will delete ALL demo data. Are you sure?')) return;
 
@@ -143,6 +315,36 @@ export default function DemoDataGenerator() {
           </TabsList>
 
           <TabsContent value="generate" className="space-y-6">
+            <Alert>
+              <LinkIcon className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <strong>⚠️ Important:</strong> Your campaigns need audiences and recipients to show analytics!
+                  <Button
+                    onClick={handleLinkCampaignsToAudiences}
+                    disabled={isLinking}
+                    size="sm"
+                    className="mt-2 w-full"
+                  >
+                    {isLinking ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {linkingProgress}
+                      </>
+                    ) : (
+                      <>
+                        <LinkIcon className="mr-2 h-4 w-4" />
+                        Link Campaigns to Audiences & Generate Analytics
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    This will add 25-100 recipients per campaign with unique DEMO codes and generate tracking events
+                  </p>
+                </div>
+              </AlertDescription>
+            </Alert>
+
             <Card>
               <CardHeader>
                 <CardTitle>Configuration</CardTitle>
