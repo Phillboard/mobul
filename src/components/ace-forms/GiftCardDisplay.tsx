@@ -164,6 +164,8 @@ export function GiftCardDisplay({ redemption, revealSettings, embedMode = false 
           <GiftCardInstructions
             instructions={redemption.redemption_instructions}
             restrictions={redemption.usage_restrictions}
+            brandName={redemption.brand_name}
+            storeUrl={redemption.store_url}
           />
         </div>
       )}

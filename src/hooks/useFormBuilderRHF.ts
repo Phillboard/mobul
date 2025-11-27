@@ -5,7 +5,7 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { FormField, FormConfig, FieldType } from "@/types/aceForms";
 import { nanoid } from "nanoid";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useUndo } from "@/hooks/useUndo";
 
 interface FormBuilderFormData {
@@ -46,6 +46,9 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
   });
 
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
+  
+  // Track if we're applying undo/redo to prevent circular updates
+  const isUndoRedoRef = useRef(false);
 
   // Undo/Redo system
   const { state: historyConfig, set: setHistory, undo, redo, canUndo, canRedo } = useUndo<FormConfig>({
@@ -192,23 +195,30 @@ export function useFormBuilderRHF(initialConfig?: FormConfig) {
   // Get selected field
   const selectedField = fields.find((f) => f.id === selectedFieldId);
 
-  // Sync history state to RHF when undo/redo changes it
+  // Sync history state to RHF ONLY when undo/redo is triggered
   useEffect(() => {
-    setValue("fields", historyConfig.fields);
-    setValue("settings", historyConfig.settings);
-    if (historyConfig.revealSettings) {
-      setValue("revealSettings", historyConfig.revealSettings);
+    if (isUndoRedoRef.current) {
+      setValue("fields", historyConfig.fields, { shouldValidate: false });
+      setValue("settings", historyConfig.settings, { shouldValidate: false });
+      if (historyConfig.revealSettings) {
+        setValue("revealSettings", historyConfig.revealSettings, { shouldValidate: false });
+      }
+      isUndoRedoRef.current = false; // Reset flag after sync
     }
   }, [historyConfig, setValue]);
 
-  // Handle undo/redo - just trigger the history functions
-  const handleUndo = () => {
+  // Handle undo/redo - set flag and trigger history update
+  const handleUndo = useCallback(() => {
+    if (!canUndo) return;
+    isUndoRedoRef.current = true;
     undo();
-  };
+  }, [undo, canUndo]);
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
+    if (!canRedo) return;
+    isUndoRedoRef.current = true;
     redo();
-  };
+  }, [redo, canRedo]);
 
   return {
     config,

@@ -152,37 +152,53 @@ export function RevealDesigner({ revealSettings, onUpdate }: RevealDesignerProps
         {/* Action Buttons */}
         <div className="space-y-3">
           <h3 className="font-semibold text-sm">Action Buttons</h3>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">QR Code</Label>
-              <Switch
-                checked={revealSettings.showQRCode}
-                onCheckedChange={(checked) => onUpdate({ showQRCode: checked })}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Open in App</Label>
-              <Switch
-                checked={revealSettings.showOpenInApp}
-                onCheckedChange={(checked) => onUpdate({ showOpenInApp: checked })}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Share</Label>
-              <Switch
-                checked={revealSettings.showShareButton}
-                onCheckedChange={(checked) => onUpdate({ showShareButton: checked })}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Wallet</Label>
+          <p className="text-xs text-muted-foreground">Choose which redemption options to show</p>
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <Label className="text-xs font-medium">💳 Digital Wallet</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Apple Wallet on iOS, Google Wallet on Android</p>
+              </div>
               <Switch
                 checked={revealSettings.showWalletButton}
                 onCheckedChange={(checked) => onUpdate({ showWalletButton: checked })}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">Download</Label>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <Label className="text-xs font-medium">📱 Open in Store App</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Direct link to brand's mobile app</p>
+              </div>
+              <Switch
+                checked={revealSettings.showOpenInApp}
+                onCheckedChange={(checked) => onUpdate({ showOpenInApp: checked })}
+              />
+            </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <Label className="text-xs font-medium">📷 QR Code</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Scannable code for in-store use</p>
+              </div>
+              <Switch
+                checked={revealSettings.showQRCode}
+                onCheckedChange={(checked) => onUpdate({ showQRCode: checked })}
+              />
+            </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <Label className="text-xs font-medium">📤 Share Button</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Share via text, email, or social</p>
+              </div>
+              <Switch
+                checked={revealSettings.showShareButton}
+                onCheckedChange={(checked) => onUpdate({ showShareButton: checked })}
+              />
+            </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <Label className="text-xs font-medium">⬇️ Download</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Save card details as image</p>
+              </div>
               <Switch
                 checked={revealSettings.showDownloadButton}
                 onCheckedChange={(checked) => onUpdate({ showDownloadButton: checked })}
