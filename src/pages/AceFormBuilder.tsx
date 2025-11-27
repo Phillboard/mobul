@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Save, Eye, Sparkles, ChevronRight, Code2 } from "lucide-react";
+import { Save, Eye, Sparkles, ChevronRight, Code2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAceForms, useAceForm } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
@@ -13,6 +13,7 @@ import { FormTemplateSelector } from "@/components/ace-forms/FormTemplateSelecto
 import { ExportDialog } from "@/components/ace-forms/ExportDialog";
 import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
 import { AIFormGenerator } from "@/components/ace-forms/AIFormGenerator";
+import { KeyboardShortcutsHelp } from "@/components/ace-forms/KeyboardShortcutsHelp";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,7 @@ function AceFormBuilderContent() {
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [formName, setFormName] = useState("");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'form' | 'reveal' | 'analytics'>('form');
   const autoSaveTimerRef = useRef<number>();
   const { toast } = useToast();
@@ -49,6 +51,7 @@ function AceFormBuilderContent() {
     if (!currentClient || !formId) return;
 
     try {
+      setIsSaving(true);
       await updateForm.mutateAsync({
         id: formId,
         updates: {
@@ -62,8 +65,15 @@ function AceFormBuilderContent() {
       setLastSaved(new Date());
     } catch (error) {
       console.error('Auto-save failed:', error);
+      toast({
+        title: "Auto-save Failed",
+        description: "Could not save your changes. Please try saving manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
-  }, [currentClient, formId, formName, config, updateForm]);
+  }, [currentClient, formId, formName, config, updateForm, toast]);
 
   useEffect(() => {
     // Only auto-save for existing forms
@@ -89,31 +99,58 @@ function AceFormBuilderContent() {
   const handleSave = async () => {
     if (!currentClient) return;
 
-    const formData = {
-      client_id: currentClient.id,
-      name: formName || "Untitled Form",
-      form_config: config,
-      is_draft: false, // Mark as not draft when explicitly saved
-    };
+    setIsSaving(true);
+    try {
+      const formData = {
+        client_id: currentClient.id,
+        name: formName || "Untitled Form",
+        form_config: config,
+        is_draft: false, // Mark as not draft when explicitly saved
+      };
 
-    if (formId) {
-      await updateForm.mutateAsync({ id: formId, updates: formData });
+      if (formId) {
+        await updateForm.mutateAsync({ id: formId, updates: formData });
+        toast({
+          title: "✅ Saved",
+          description: "Your form has been saved successfully.",
+        });
+        setLastSaved(new Date());
+        return formId;
+      } else {
+        const newForm = await createForm.mutateAsync(formData);
+        navigate(`/ace-forms/${newForm.id}/builder`);
+        toast({
+          title: "✅ Form Created",
+          description: "Your form has been created successfully.",
+        });
+        setLastSaved(new Date());
+        return newForm.id;
+      }
+    } catch (error) {
       toast({
-        title: "Form Saved",
-        description: "Your form has been saved successfully.",
+        title: "Save Failed",
+        description: "Could not save your form. Please try again.",
+        variant: "destructive",
       });
-      return formId;
-    } else {
-      const newForm = await createForm.mutateAsync(formData);
-      navigate(`/ace-forms/${newForm.id}/builder`);
-      toast({
-        title: "Form Created",
-        description: "Your form has been created successfully.",
-      });
-      setLastSaved(new Date());
-      return newForm.id;
+      throw error;
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S or Cmd+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave]);
 
   const handleAIGenerated = (name: string, description: string, aiConfig: any) => {
     setFormName(name);
@@ -220,11 +257,19 @@ function AceFormBuilderContent() {
             </div>
 
             <div className="flex items-center gap-2">
-              {lastSaved && (
+              {isSaving ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Saving...</span>
+                </div>
+              ) : lastSaved ? (
                 <span className="text-xs text-muted-foreground">
-                  Last saved: {lastSaved.toLocaleTimeString()}
+                  ✓ Saved {lastSaved.toLocaleTimeString()}
                 </span>
-              )}
+              ) : null}
+              
+              <KeyboardShortcutsHelp />
+              
               <Button variant="outline" size="sm" onClick={() => setShowAIGenerator(true)}>
                 <Sparkles className="w-4 h-4 mr-2" />
                 AI Assistant
@@ -240,7 +285,7 @@ function AceFormBuilderContent() {
                     window.open(`/forms/${id}`, '_blank');
                   }
                 }}
-                disabled={createForm.isPending || updateForm.isPending}
+                disabled={isSaving}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 {!formId ? "Save & Preview" : "Preview"}
@@ -257,9 +302,22 @@ function AceFormBuilderContent() {
                   </Button>
                 </>
               )}
-              <Button size="sm" onClick={handleSave} disabled={createForm.isPending || updateForm.isPending}>
-                <Save className="w-4 h-4 mr-2" />
-                {createForm.isPending || updateForm.isPending ? "Saving..." : "Save"}
+              <Button 
+                size="sm" 
+                onClick={handleSave} 
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save
+                  </>
+                )}
               </Button>
             </div>
           </div>

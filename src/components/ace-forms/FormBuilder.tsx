@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { FieldType } from "@/types/aceForms";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { FieldPresets, type FieldPreset } from "./FieldPresets";
 import { FormBuilderMobile } from "./FormBuilderMobile";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFormBuilder } from "@/contexts/FormBuilderContext";
+import { useToast } from "@/hooks/use-toast";
 
 const fieldTypes: { type: FieldType; label: string }[] = [
   { type: "gift-card-code", label: "Gift Card Code" },
@@ -38,6 +40,7 @@ export function FormBuilder({ activeTab = "form" }: FormBuilderProps) {
   const {
     config,
     selectedField,
+    selectedFieldId,
     addField,
     addFields,
     updateField,
@@ -47,7 +50,12 @@ export function FormBuilder({ activeTab = "form" }: FormBuilderProps) {
     setSelectedFieldId,
     updateSettings,
     updateRevealSettings,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
   } = useFormBuilder();
+  const { toast } = useToast();
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -57,6 +65,47 @@ export function FormBuilder({ activeTab = "form" }: FormBuilderProps) {
   const handleAddFieldPreset = (preset: FieldPreset) => {
     addFields(preset.fields);
   };
+
+  // Keyboard shortcuts for form builder
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Delete key to remove selected field
+      if (e.key === 'Delete' && selectedFieldId && activeTab === 'form') {
+        e.preventDefault();
+        deleteField(selectedFieldId);
+        toast({
+          title: "Field Deleted",
+          description: "The selected field has been removed.",
+        });
+      }
+      
+      // Ctrl+Z or Cmd+Z to undo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey && canUndo) {
+        e.preventDefault();
+        undo();
+        toast({
+          title: "↶ Undone",
+          description: "Your last change has been undone.",
+        });
+      }
+      
+      // Ctrl+Shift+Z or Cmd+Shift+Z or Ctrl+Y to redo
+      if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') || 
+          ((e.ctrlKey || e.metaKey) && e.key === 'y')) {
+        if (canRedo) {
+          e.preventDefault();
+          redo();
+          toast({
+            title: "↷ Redone",
+            description: "Your change has been redone.",
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedFieldId, activeTab, deleteField, undo, redo, canUndo, canRedo, toast]);
 
   return (
     <div className="flex h-full overflow-hidden relative">
