@@ -1,67 +1,68 @@
 ---
-description: Handles reward distribution workflows, validation, and integration with external fulfillment systems
+description: For documenting reward distribution workflows, validation rules, and integration points across call center, SMS, and webhook systems.
 ---
 
 
 # reward-distribution-flow
 
-Core Distribution Components:
+Reward Distribution Core Components:
 
-1. Condition Evaluation Engine
-Path: src/components/campaigns/conditions/ConditionEvaluator.tsx
-- Multi-trigger condition system for reward qualification:
-  - Call duration thresholds
-  - Form completion requirements 
-  - QR code scans
-  - Website visits
-  - CRM status changes
-- Sequential dependency chains between conditions
-- Real-time condition state tracking
+1. Campaign Reward Workflow Engine
+Path: src/components/campaigns/GiftCardInventoryPanel.tsx
+- Multi-stage reward distribution pipeline:
+  - Allocation from reward pools
+  - Real-time inventory validation
+  - Recipient validation checks
+  - Automatic fallback pool selection
+  - Delivery confirmation tracking
 Importance Score: 95
 
-2. Reward Pool Management 
-Path: src/components/gift-cards/PoolManager.tsx
-- Hierarchical pool system:
-  - Master pools (agency level)
-  - Client pools (organization level)
-  - Campaign pools (campaign specific)
-- Automated pool replenishment with configurable thresholds
-- Balance verification scheduling
+2. Call Center Reward Distribution
+Path: src/components/call-center/CallCenterRedemptionPanel.tsx
+- Sequential reward validation workflow:
+  - Code verification
+  - Recipient identity confirmation 
+  - Reward condition validation
+  - SMS/Email delivery orchestration
+  - Real-time inventory checks
 Importance Score: 90
 
-3. Distribution Channel Router
-Path: src/services/reward/ChannelRouter.ts
-- Smart channel selection based on:
-  - Recipient preference
-  - Reward type
-  - Campaign settings
-  - Delivery success rates
-- Fallback chain configuration
-- Channel-specific formatting
+3. Gift Card Pool Management
+Path: supabase/functions/provision-gift-card-from-api/index.ts
+- Automated pool health monitoring:
+  - Low balance thresholds
+  - Utilization tracking
+  - Auto-replenishment triggers
+  - Cross-pool balance transfers
+  - Margin calculations for sales
 Importance Score: 85
 
-4. Fulfillment Integration System
-Path: src/services/providers/
-- Provider adapters for:
-  - Tango Card
-  - Tremendous
-  - Giftbit
-  - Direct SMTP
-  - SMS providers
-- Provider health monitoring
-- Automatic failover handling
-Importance Score: 85
-
-5. Validation Workflow Engine
-Path: src/components/campaigns/ValidationEngine.tsx
-- Pre-distribution validation:
-  - Pool balance verification
-  - Recipient data completeness
-  - Channel availability
-  - Rate limit compliance
-- Post-distribution verification
-- Delivery confirmation tracking
+4. Condition-Based Distribution Rules
+Path: src/components/campaigns/ConditionBuilder.tsx
+- Reward trigger system with:
+  - Multi-condition chaining
+  - Sequential validation
+  - Time-based triggers
+  - CRM event integration
+  - Call center activity triggers
 Importance Score: 80
+
+5. Webhook Reward Integration
+Path: supabase/functions/send-form-notification/index.ts
+- External system reward notifications:
+  - Zapier event triggers
+  - CRM status updates
+  - Custom webhook payloads
+  - Delivery confirmations
+  - Error handling/retry logic
+Importance Score: 75
+
+Key Business Rules:
+- Rewards require multi-stage validation before distribution
+- Pool health determines availability and triggers alerts
+- Conditions must be met sequentially for reward release
+- Real-time inventory validation before commitment
+- Distribution requires delivery confirmation
 
 $END$
 
