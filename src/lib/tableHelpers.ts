@@ -2,6 +2,7 @@
  * TanStack Table Helpers
  * Reusable utilities and configurations for consistent table implementations
  */
+import * as React from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -90,6 +91,32 @@ export function exportTableToCSV<TData>(
   link.download = `${filename}.csv`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Hook for managing table state (sorting, filtering, pagination)
+ */
+export function useTableState() {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  return {
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      pagination,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
+  };
 }
 
 /**

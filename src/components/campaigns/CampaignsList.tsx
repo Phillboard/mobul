@@ -1,31 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { MoreVertical, Mail, Calendar, Users, QrCode, FileCheck, Send, Eye, TrendingUp } from "lucide-react";
+import { Mail } from "lucide-react";
 import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
 import { CampaignProofDialog } from "./CampaignProofDialog";
 import { CampaignCard } from "./CampaignCard";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, SortingState, ColumnFiltersState } from "@tanstack/react-table";
+import { DataTable } from "@/components/ui/data-table";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { createCampaignsColumns, CampaignRow } from "./campaignsColumns";
 
 interface CampaignsListProps {
   clientId: string;
@@ -38,6 +26,8 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
     name: string;
   } | null>(null);
   const [proofCampaignId, setProofCampaignId] = useState<string | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -114,14 +104,40 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
 
           return {
             ...campaign,
-            callsCount: callsCount || 0,
-            rewardsCount: rewardsCount || 0,
+            callSessionCount: callsCount || 0,
+            rewardCount: rewardsCount || 0,
             conversionRate,
           };
         })
       );
 
-      return enrichedCampaigns;
+      return enrichedCampaigns as CampaignRow[];
+    },
+  });
+
+  const columns = useMemo(
+    () =>
+      createCampaignsColumns({
+        onViewDetails: (id) => navigate(`/campaigns/${id}`),
+        onViewAnalytics: (id) => navigate(`/analytics/${id}`),
+        onReviewProof: (id) => setProofCampaignId(id),
+        onSubmitToVendor: (id) => submitToVendorMutation.mutate(id),
+      }),
+    [navigate, submitToVendorMutation]
+  );
+
+  const table = useReactTable({
+    data: campaigns || [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    state: {
+      sorting,
+      columnFilters,
     },
   });
 
@@ -183,154 +199,17 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
           ))}
         </div>
       ) : (
-        <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Campaign Name</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Audience</TableHead>
-            <TableHead>Calls</TableHead>
-            <TableHead>Rewards</TableHead>
-            <TableHead>Conversion</TableHead>
-            <TableHead>Size</TableHead>
-            <TableHead>Mail Date</TableHead>
-            <TableHead>Postage</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-      <TableBody>
-        {campaigns.map((campaign) => (
-          <TableRow key={campaign.id}>
-            <TableCell>
-              <div className="space-y-1">
-                <div className="font-medium">{campaign.name}</div>
-                {campaign.templates && (
-                  <div className="text-xs text-muted-foreground">
-                    Mail Piece: {campaign.templates.name}
-                  </div>
-                )}
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge variant={getStatusColor(campaign.status)}>
-                {getStatusLabel(campaign.status)}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              {campaign.audiences ? (
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    {campaign.audiences.name}
-                    <span className="text-muted-foreground ml-1">
-                      ({campaign.audiences.valid_count})
-                    </span>
-                  </span>
-                </div>
-              ) : (
-                <span className="text-muted-foreground text-sm">No audience</span>
-              )}
-            </TableCell>
-            <TableCell>
-              <div className="text-sm font-medium">{campaign.callsCount}</div>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm font-medium">{campaign.rewardsCount}</div>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm font-medium">
-                {campaign.conversionRate.toFixed(1)}%
-              </div>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm">{campaign.size?.toUpperCase()}</div>
-            </TableCell>
-            <TableCell>
-              {campaign.mail_date ? (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    {format(new Date(campaign.mail_date), "MMM d, yyyy")}
-                  </span>
-                </div>
-              ) : (
-                <span className="text-muted-foreground text-sm">Not set</span>
-              )}
-            </TableCell>
-            <TableCell>
-              <span className="text-sm capitalize">
-                {campaign.postage?.replace("_", " ")}
-              </span>
-            </TableCell>
-            <TableCell>
-              <div className="flex items-center gap-2">
-                {campaign.status === "draft" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setSelectedCampaign({ id: campaign.id, name: campaign.name })
-                    }
-                  >
-                    <QrCode className="h-4 w-4 mr-1" />
-                    Generate QR
-                  </Button>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-background z-50">
-                    <DropdownMenuItem onClick={() => navigate(`/campaigns/${campaign.id}`)}>
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate(`/analytics/${campaign.id}`)}>
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      View Analytics
-                    </DropdownMenuItem>
-                    {(campaign.status === "proofed" || campaign.status === "approved") && (
-                      <>
-                        <DropdownMenuItem onClick={() => setProofCampaignId(campaign.id)}>
-                          <FileCheck className="h-4 w-4 mr-2" />
-                          Review Proof
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-                    {campaign.status === "approved" && (
-                      <>
-                        <DropdownMenuItem
-                          onClick={() => submitToVendorMutation.mutate(campaign.id)}
-                          disabled={submitToVendorMutation.isPending}
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          Submit to Print Vendor
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
-                    )}
-                    <DropdownMenuItem disabled={campaign.status === "approved"}>
-                      Edit Campaign
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      className="text-destructive"
-                      disabled={campaign.status === "approved"}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        <div className="space-y-4">
+          <DataTableToolbar 
+            table={table} 
+            searchKey="name"
+            searchPlaceholder="Search campaigns..."
+          >
+            <DataTableViewOptions table={table} />
+          </DataTableToolbar>
+          <DataTable table={table} />
+          <DataTablePagination table={table} />
+        </div>
       )}
 
     {selectedCampaign && (
