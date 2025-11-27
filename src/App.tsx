@@ -9,7 +9,7 @@ import { TenantProvider } from "@/contexts/TenantContext";
 import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DrPhillipChatWrapper } from "@/components/DrPhillipChatWrapper";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary, CampaignErrorBoundary, GiftCardErrorBoundary, FormBuilderErrorBoundary } from "@/components/ErrorBoundaries";
 import { ThemeProvider } from "next-themes";
 import { Loader2 } from "lucide-react";
 

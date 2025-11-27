@@ -10,8 +10,9 @@ export function generateHTMLExport(
   options: ExportOptions
 ): string {
   const { primaryColor = '#6366f1', customDomain } = options;
-  // Use actual project URL for exports (not env vars which won't work in exported HTML)
-  const apiUrl = customDomain || 'https://arzthloosvnasokxygfo.supabase.co';
+  // Use custom domain or Supabase URL from environment
+  // Note: For exported HTML files, the API URL is embedded and won't update with env changes
+  const apiUrl = customDomain || import.meta.env.VITE_SUPABASE_URL || 'https://arzthloosvnasokxygfo.supabase.co';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -130,7 +131,7 @@ export function generateJavaScriptEmbed(
 ): string {
   const { primaryColor = '#6366f1', customDomain } = options;
   // Use app URL for iframe embeds (frontend route), not Supabase URL
-  const appUrl = customDomain || (typeof window !== 'undefined' ? window.location.origin : '');
+  const appUrl = customDomain || (typeof window !== 'undefined' ? window.location.origin : import.meta.env.VITE_APP_URL || '');
 
   return `<div id="ace-form-${formId}"></div>
 <script>
@@ -151,7 +152,7 @@ export function generateIframeEmbed(
 ): string {
   const { primaryColor = '#6366f1', customDomain } = options;
   // Use app URL for iframe embeds (frontend route), not Supabase URL
-  const appUrl = customDomain || (typeof window !== 'undefined' ? window.location.origin : '');
+  const appUrl = customDomain || (typeof window !== 'undefined' ? window.location.origin : import.meta.env.VITE_APP_URL || '');
 
   return `<iframe 
   src="${appUrl}/forms/${formId}?primaryColor=${encodeURIComponent(primaryColor)}" 

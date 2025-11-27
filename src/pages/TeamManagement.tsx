@@ -11,6 +11,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { UserActionMenu } from "@/components/settings/UserActionMenu";
 import { formatDistanceToNow } from "date-fns";
 import { Users, Mail } from "lucide-react";
+import type { ClientUser } from "@/types/users";
 
 export default function TeamManagement() {
   const { data: userRole } = useUserRole();
@@ -90,7 +91,7 @@ export default function TeamManagement() {
         // Get company owner's clients
         const { data: userClients } = await supabase
           .from("client_users")
-          .select("client_id")
+          .select<"client_id", ClientUser>("client_id")
           .eq("user_id", user.id);
 
         if (!userClients || userClients.length === 0) return [];

@@ -22,8 +22,22 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
   const hasWalletSupport = supportsWallet();
 
   const handleAddToWallet = async () => {
-    // TODO: Implement actual wallet pass generation
-    // For now, show platform-appropriate message
+    /**
+     * FEATURE: Wallet Pass Integration
+     * 
+     * Status: Planned for future release
+     * Dependencies: 
+     *   - supabase/functions/generate-apple-wallet-pass
+     *   - supabase/functions/generate-google-wallet-pass
+     * 
+     * Implementation Plan:
+     * 1. Complete edge functions for pass generation
+     * 2. Configure Apple Developer account for .pkpass signing
+     * 3. Configure Google Wallet API credentials
+     * 4. Test on actual devices
+     * 
+     * For now, users can download gift card details or screenshot
+     */
     
     if (!hasWalletSupport) {
       toast({
@@ -35,18 +49,17 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
 
     toast({
       title: `Add to ${walletName}`,
-      description: `${walletName} integration coming soon! Your gift card will be saved for easy access.`,
+      description: `${walletName} integration is planned for a future release. You can download or screenshot your gift card for now.`,
+      duration: 5000,
     });
 
-    // Future implementation:
-    // const passData = await generateWalletPass(redemption);
-    // if (platform === 'ios') {
-    //   // Download .pkpass file
-    //   window.location.href = passData.appleWalletUrl;
-    // } else {
-    //   // Open Google Wallet with JWT
-    //   window.location.href = passData.googleWalletUrl;
-    // }
+    // Future implementation (when edge functions are complete):
+    // const { data, error } = await supabase.functions.invoke(
+    //   platform === 'ios' ? 'generate-apple-wallet-pass' : 'generate-google-wallet-pass',
+    //   { body: { redemptionId: redemption.id } }
+    // );
+    // if (error) throw error;
+    // window.location.href = data.passUrl;
   };
 
   return (

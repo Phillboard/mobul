@@ -9,6 +9,8 @@ import { mailGrapesJSConfig } from "@/config/grapesjs-mail.config";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, Eye, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { logger } from "@/lib/logger";
+import type { GrapesJSData } from "@/types/grapesjs";
 
 export default function MailDesigner() {
   const { id } = useParams();
@@ -36,7 +38,7 @@ export default function MailDesigner() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async ({ html, css, json_layers }: { html: string; css: string; json_layers: any }) => {
+    mutationFn: async ({ html, css, json_layers }: { html: string; css: string; json_layers: GrapesJSData }) => {
       if (!editorRef.current) return;
 
       // Skip thumbnail generation for now
@@ -99,7 +101,7 @@ export default function MailDesigner() {
       
       await saveMutation.mutateAsync({ html, css, json_layers });
     } catch (error) {
-      console.error("Save error:", error);
+      logger.error("Save error:", error);
     } finally {
       setIsSaving(false);
     }
@@ -122,7 +124,7 @@ export default function MailDesigner() {
           : mailPiece.json_layers;
         editor.loadProjectData(projectData);
       } catch (error) {
-        console.error("Failed to load project data:", error);
+        logger.error("Failed to load project data:", error);
       }
     }
 

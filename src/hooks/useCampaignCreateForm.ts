@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { CampaignFormData } from "@/types/campaigns";
+import { logger } from "@/lib/logger";
 
 interface UseCampaignCreateFormProps {
   clientId: string;
@@ -61,7 +62,7 @@ export function useCampaignCreateForm({ clientId }: UseCampaignCreateFormProps) 
         setCurrentDraftId(result.draft.id);
       }
     } catch (error) {
-      console.error("Failed to save draft:", error);
+      logger.error("Failed to save draft:", error);
     }
   };
 
@@ -188,7 +189,7 @@ export function useCampaignCreateForm({ clientId }: UseCampaignCreateFormProps) 
       navigate(`/campaigns/${campaign.id}`);
     },
     onError: (error) => {
-      console.error("Failed to create campaign:", error);
+      logger.error("Failed to create campaign:", error);
       toast.error("Failed to create campaign. Please try again.");
     },
   });

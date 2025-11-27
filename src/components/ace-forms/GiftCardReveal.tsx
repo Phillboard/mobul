@@ -7,6 +7,7 @@ import { GiftCardRedemption, RevealSettings } from "@/types/aceForms";
 import { Share2, Download, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/lib/logger";
 
 interface GiftCardRevealProps {
   redemption: GiftCardRedemption;
@@ -40,9 +41,11 @@ export function GiftCardReveal({ redemption, revealSettings, embedMode = false, 
       try {
         const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGmi77eefTRAMUKjj8LZjHAU5ktfyzH');
         audio.volume = 0.3;
-        audio.play().catch(() => {});
-      } catch (e) {
-        // Ignore audio errors
+        audio.play().catch((err) => {
+          logger.debug('Audio playback failed (expected if user has not interacted):', err);
+        });
+      } catch (error) {
+        logger.debug('Audio initialization failed:', error);
       }
     }
   }, [revealed, shouldShowConfetti]);
@@ -54,8 +57,9 @@ export function GiftCardReveal({ redemption, revealSettings, embedMode = false, 
           title: `${redemption.brand_name} Gift Card`,
           text: `I just received a $${redemption.card_value} ${redemption.brand_name} gift card!`,
         });
-      } catch (err) {
-        // User cancelled
+      } catch (error) {
+        // User cancelled sharing or browser doesn't support it
+        logger.debug('Share cancelled or not supported:', error);
       }
     } else {
       toast({
