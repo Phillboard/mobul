@@ -1,76 +1,65 @@
 ---
-description: Used for analyzing and documenting data models, entities, and relationships in business systems
+description: Documentation for data models and relationships between key business entities in marketing campaign platform
 ---
 
 
 # data-models
 
-## Core Entity Models
+Core Data Models:
 
-### Organization Model
-- Hierarchical structure with three tiers:
-  - Root organization (ACE Engage)
-  - Agency organizations
+1. Campaign Model
+- Hierarchical structure with parent-child relationships
+- Campaign types: direct mail, digital, hybrid
+- Status progression: draft -> pending -> approved -> active -> completed
+- Tracks budget allocation and spend across channels
+- Links to conditions, gift cards, and target audiences
+
+2. Gift Card Pool Model 
+- Multi-tier pool system:
+  - Master pools (organization level)
+  - Client pools (campaign specific)
+- Tracks balances, usage, and reconciliation status
+- Provider integrations (Tango, Giftbit, Rybbon)
+- Auto-replenishment thresholds and alerts
+
+3. Organization Model
+- Three-level hierarchy:
+  - Platform owner (ACE)
+  - Agency organizations 
   - Client organizations
-- Industry-specific organization profiles
-- Multi-tenant data isolation
-- Brand configuration and style management
+- Industry vertical classification
+- Brand configuration and styling
+- Gift card pool allocations
 
-### Campaign Model
-- Tracks direct mail marketing initiatives
-- Links reward conditions and gift card pools
-- Campaign status progression workflow
-- Delivery tracking integration
+4. Campaign Conditions
+- Multi-trigger condition system
+- Sequential and parallel execution paths
+- Action types:
+  - Gift card distribution
+  - SMS/email notifications
+  - CRM updates
+  - Webhook triggers
+- Status tracking and completion rules
 
-### Gift Card Model
-- Pool-based inventory management 
-- Provider-specific card activation states
-- Balance tracking and reconciliation
-- Distribution channel assignment
+5. User Model
+- Role-based access control
+- Hierarchical permissions inheritance
+- Organization-specific role assignments
+- Action audit logging
+- Session management
 
-### Contact Model 
-- Lifecycle stages with lead scoring
-- Industry-specific profile attributes
-- Campaign participation tracking
-- Engagement metrics calculation
+Key Relationships:
+- Organizations <-> Users (many-to-many with roles)
+- Campaigns <-> Conditions (one-to-many)
+- Conditions <-> Gift Cards (many-to-many)
+- Organizations <-> Gift Card Pools (one-to-many)
 
-### Relationships
-```
-Organization 1:N Campaigns
-Campaign 1:N GiftCardPools
-Campaign 1:N Conditions
-Contact N:M Campaigns
-Organization 1:N Contacts
-```
-
-## Domain-Specific Types
-
-### Campaign Conditions
-- Multiple trigger types:
-  - Call completion
-  - Form submission
-  - QR code scan
-  - PURL visit
-- Sequential and parallel execution
-- Status tracking and validation
-
-### Gift Card Distribution
-- Inventory pool assignments
-- Delivery method selection
-- Provider integration mapping
-- Redemption workflow states
-
-### Organization Settings
-- Industry vertical configuration
-- Brand kit specifications
-- Permission hierarchies
-- Integration preferences
-
-## Data Validation Rules
-- Campaign requirements validation
-- Gift card inventory thresholds
-- Contact data enrichment rules
-- Organization hierarchy constraints
+Importance Scores:
+- Campaign Model: 95/100 (core business entity)
+- Gift Card Pool Model: 90/100 (critical financial tracking)
+- Organization Model: 85/100 (multi-tenant structure)  
+- Campaign Conditions: 85/100 (business rule engine)
+- User Model: 80/100 (access control system)
 
 $END$
 

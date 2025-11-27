@@ -73,6 +73,7 @@ const SystemHealth = lazy(() => import("./pages/SystemHealth"));
 const Integrations = lazy(() => import("./pages/Integrations"));
 const DocEditorPage = lazy(() => import("./pages/DocEditorPage"));
 const MVPVerification = lazy(() => import("./pages/MVPVerification"));
+const DemoDataGenerator = lazy(() => import("./pages/DemoDataGenerator"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -195,6 +196,7 @@ const App = () => (
                   {/* Administration - Consolidated */}
                   <Route path="/admin/system-health" element={<ProtectedRoute><SystemHealth /></ProtectedRoute>} />
                   <Route path="/admin/mvp-verification" element={<ProtectedRoute requiredRole="admin"><MVPVerification /></ProtectedRoute>} />
+                  <Route path="/admin/demo-data" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
                   <Route path="/admin/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
                    <Route path="/admin/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                    <Route path="/admin/docs/:category" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />

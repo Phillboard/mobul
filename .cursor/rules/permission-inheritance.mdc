@@ -1,56 +1,54 @@
 ---
-description: Analyzes hierarchical permission systems, role-based access control, and permission inheritance rules in multi-tenant applications
+description: Defines permission inheritance rules, role hierarchies, and tenant access management for a multi-tenant marketing platform
 ---
 
 
 # permission-inheritance
 
-The hierarchical permission system implements multi-level inheritance across:
+Hierarchical Permission Model:
+- Three-tier organization structure: Agency -> Company -> User
+- Permissions inherit downward through organizational hierarchy
+- Child organizations can restrict but not expand inherited permissions
 
-TENANT HIERARCHY:
-- Agency (Top Level)
-- Organization (Mid Level) 
-- Client (Bottom Level)
+Role-Based Access Control:
+- Primary roles with default permission sets:
+  - agency_owner: Full access across all child organizations
+  - company_owner: Full access within assigned company
+  - campaign_manager: Campaign creation and management 
+  - call_center_agent: Redemption and contact management
+  - tech_support: System configuration and troubleshooting
 
-Each level inherits permissions downward with override capabilities:
-- Agency permissions cascade to organizations
-- Organization permissions cascade to clients
-- Client-level can override inherited permissions
+Permission Categories:
+1. Campaign Management (Importance: 85)
+- View/edit/delete campaigns
+- Approve campaign launches
+- Manage recipient lists
+- Control reward distribution
 
-ROLE CATEGORIES:
-1. Administrative Roles (85/100)
-- agency_owner: Full system access
-- organization_owner: Organization-scoped access
-- client_owner: Client-scoped access
+2. Gift Card Operations (Importance: 90)
+- Pool management permissions
+- Redemption authorization levels
+- Inventory control access
+- Provider configuration rights
 
-2. Operational Roles (75/100)
-- campaign_manager: Campaign creation/editing
-- call_center_agent: Call handling/verification
-- content_creator: Form/template management
+3. Organization Administration (Importance: 80)
+- User management scope
+- Client organization control
+- Role assignment capabilities
+- Billing access levels
 
-PERMISSION INHERITANCE RULES:
-1. Explicit Overrides
-- Lower levels can explicitly override inherited permissions
-- Overrides must be explicitly tracked in permission_overrides table
-- Override history maintained for audit purposes
+Permission Inheritance Rules:
+- Parent organizations can override child permissions
+- Role permissions stack with direct grants
+- Most permissive access level takes precedence
+- Category-based permission grouping
+- Automatic role requirement validation
 
-2. Category-Based Grouping
-- Permissions grouped by functional area:
-  - campaigns
-  - gift_cards
-  - contacts
-  - reporting
-- Categories inherit as complete units
-
-3. Role-Permission Mapping
-- Roles mapped to permission sets
-- Permission sets inherit based on role hierarchy
-- Cross-tenant permission resolution
-
-Core Files:
-src/components/settings/PermissionCategoryManager.tsx
-src/lib/roleRequirements.ts
-src/components/PermissionGate.tsx
+Multi-Tenant Isolation:
+- Cross-organization data access controls
+- Client-specific permission boundaries
+- Resource sharing restrictions
+- Agency-level permission templates
 
 $END$
 

@@ -75,6 +75,7 @@ const routes: RouteInfo[] = [
   { path: "/admin/docs", name: "Documentation", category: "Administration", auth: "protected", description: "Platform documentation viewer" },
   { path: "/admin/system-health", name: "System Health", category: "Administration", auth: "protected", requiredPermissions: ["analytics.view"], description: "System monitoring dashboard" },
   { path: "/admin/mvp-verification", name: "MVP Verification", category: "Administration", auth: "protected", requiredRole: "admin", description: "Verify MVP readiness and seed test data" },
+  { path: "/admin/demo-data", name: "Demo Data Generator", category: "Admin Tools", auth: "protected", requiredRole: "admin", description: "Generate comprehensive demo data for testing (admin only)" },
   
   // Admin Tools
   { path: "/enrich-data", name: "Enrich Data", category: "Admin Tools", auth: "protected", requiredRole: "admin", description: "Data simulation & seeding (admin only)" },

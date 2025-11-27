@@ -1,57 +1,67 @@
 ---
-description: Specifications for reward distribution logic, gift card provisioning, and fulfillment workflows
+description: Handles reward distribution workflows, validation, and integration with external fulfillment systems
 ---
 
 
 # reward-distribution-flow
 
-Core Distribution Logic:
-- Multi-stage reward validation workflow
-- Campaign-specific eligibility checking
-- Pool-based gift card allocation
-- Delivery channel orchestration
+Core Distribution Components:
 
-Key Components:
-
-1. Reward Eligibility Engine (src/components/campaigns/wizard/TrackingRewardsStep.tsx)
-- Campaign condition evaluation
-- Multi-trigger reward qualification
-- Real-time eligibility updates
-- Automatic disqualification handling
+1. Condition Evaluation Engine
+Path: src/components/campaigns/conditions/ConditionEvaluator.tsx
+- Multi-trigger condition system for reward qualification:
+  - Call duration thresholds
+  - Form completion requirements 
+  - QR code scans
+  - Website visits
+  - CRM status changes
+- Sequential dependency chains between conditions
+- Real-time condition state tracking
 Importance Score: 95
 
-2. Gift Card Pool Management
-- Inventory level monitoring with thresholds
-- Automatic replenishment triggers
-- Brand-specific allocation rules
-- Pool health analytics
+2. Reward Pool Management 
+Path: src/components/gift-cards/PoolManager.tsx
+- Hierarchical pool system:
+  - Master pools (agency level)
+  - Client pools (organization level)
+  - Campaign pools (campaign specific)
+- Automated pool replenishment with configurable thresholds
+- Balance verification scheduling
 Importance Score: 90
 
 3. Distribution Channel Router
-- SMS delivery with fallback logic
-- Email fulfillment workflow
-- Call center provisioning
-- Webhook integrations for external systems
+Path: src/services/reward/ChannelRouter.ts
+- Smart channel selection based on:
+  - Recipient preference
+  - Reward type
+  - Campaign settings
+  - Delivery success rates
+- Fallback chain configuration
+- Channel-specific formatting
 Importance Score: 85
 
-4. Reward Status Tracking
-- Stage-based progression monitoring
-- Delivery confirmation handling
-- Failed distribution retry logic
-- Audit trail maintenance
+4. Fulfillment Integration System
+Path: src/services/providers/
+- Provider adapters for:
+  - Tango Card
+  - Tremendous
+  - Giftbit
+  - Direct SMTP
+  - SMS providers
+- Provider health monitoring
+- Automatic failover handling
+Importance Score: 85
+
+5. Validation Workflow Engine
+Path: src/components/campaigns/ValidationEngine.tsx
+- Pre-distribution validation:
+  - Pool balance verification
+  - Recipient data completeness
+  - Channel availability
+  - Rate limit compliance
+- Post-distribution verification
+- Delivery confirmation tracking
 Importance Score: 80
-
-Distribution Workflows:
-1. Campaign Trigger -> Eligibility Check
-2. Pool Selection -> Inventory Verification  
-3. Channel Selection -> Delivery Attempt
-4. Status Update -> Confirmation/Retry
-
-Integration Points:
-- Call center verification system
-- SMS gateway
-- Email delivery service
-- External fulfillment APIs
 
 $END$
 
