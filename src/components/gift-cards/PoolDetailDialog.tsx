@@ -48,6 +48,7 @@ import { PoolStats } from "./PoolStats";
 import { PoolCardsTable } from "./PoolCardsTable";
 import { PoolBalanceHistory } from "./PoolBalanceHistory";
 import { PoolSettings } from "./PoolSettings";
+import { AutoPopulatePoolButton } from "./AutoPopulatePoolButton";
 
 interface PoolDetailDialogProps {
   poolId: string | null;
