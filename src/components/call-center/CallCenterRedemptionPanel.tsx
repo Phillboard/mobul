@@ -242,11 +242,11 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
         <ScriptPanel
           clientId={recipient?.audiences?.id}
           campaignId={campaign?.id}
-          currentStep={step === 'code' ? 'code-entry' : step === 'contact' ? 'contact-method' : step === 'condition' ? 'condition-selection' : 'complete'}
+          currentStep={step}
           recipientData={{
             first_name: recipient?.first_name || undefined,
             last_name: recipient?.last_name || undefined,
-            campaign_name: campaign?.name,
+            campaign: campaign ? { name: campaign.name } : undefined,
             gift_card_value: result?.giftCard?.card_value,
           }}
         />
