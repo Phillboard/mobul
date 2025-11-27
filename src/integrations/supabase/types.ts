@@ -2457,6 +2457,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
+          is_demo_brand: boolean | null
           logo_url: string | null
           provider: string
           redemption_instructions: string | null
@@ -2474,6 +2475,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_demo_brand?: boolean | null
           logo_url?: string | null
           provider?: string
           redemption_instructions?: string | null
@@ -2491,6 +2493,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_demo_brand?: boolean | null
           logo_url?: string | null
           provider?: string
           redemption_instructions?: string | null
