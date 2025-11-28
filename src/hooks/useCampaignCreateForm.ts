@@ -155,22 +155,58 @@ export function useCampaignCreateForm({ clientId }: UseCampaignCreateFormProps) 
 
       if (campaignError) throw campaignError;
 
-      // Create conditions if any
+      // Create conditions and reward configs if any
       if (data.conditions && data.conditions.length > 0) {
-        const conditionsToInsert = data.conditions.map((condition, index) => ({
+        const conditionsToInsert = data.conditions.map((condition: any, index: number) => ({
           campaign_id: campaign.id,
-          condition_number: index + 1,
+          condition_number: condition.condition_number || index + 1,
           condition_name: condition.condition_name,
           trigger_type: condition.trigger_type,
           time_delay_hours: condition.time_delay_hours,
           crm_event_name: condition.crm_event_name,
+          is_active: condition.is_active !== false,
         }));
 
-        const { error: conditionsError } = await supabase
+        const { data: insertedConditions, error: conditionsError } = await supabase
           .from("campaign_conditions")
-          .insert(conditionsToInsert);
+          .insert(conditionsToInsert)
+          .select();
 
         if (conditionsError) throw conditionsError;
+
+        // Create reward configs (link conditions to pools)
+        const rewardConfigsToInsert = data.conditions
+          .filter((c: any) => c.gift_card_pool_id)
+          .map((condition: any, index: number) => {
+            const insertedCondition = insertedConditions?.find(
+              (ic) => ic.condition_number === (condition.condition_number || index + 1)
+            );
+            return {
+              campaign_id: campaign.id,
+              condition_id: insertedCondition?.id,
+              condition_number: condition.condition_number || index + 1,
+              gift_card_pool_id: condition.gift_card_pool_id,
+              sms_template: condition.sms_template || null,
+            };
+          });
+
+        if (rewardConfigsToInsert.length > 0) {
+          const { error: rewardConfigError } = await supabase
+            .from("campaign_reward_configs")
+            .insert(rewardConfigsToInsert);
+
+          if (rewardConfigError) throw rewardConfigError;
+        }
+      }
+
+      // Link forms to campaign if any
+      if ((data as any).selected_form_ids && (data as any).selected_form_ids.length > 0) {
+        const { error: formsError } = await supabase
+          .from("ace_forms")
+          .update({ campaign_id: campaign.id })
+          .in("id", (data as any).selected_form_ids);
+
+        if (formsError) throw formsError;
       }
 
       // Delete draft if exists

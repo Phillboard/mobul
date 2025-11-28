@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { CampaignSetupStep } from "./wizard/CampaignSetupStep";
 import { CodesUploadStep } from "./wizard/CodesUploadStep";
+import { ConditionsStep } from "./wizard/ConditionsStep";
 import { LandingPageSelectionStep } from "./wizard/LandingPageSelectionStep";
+import { FormsSelectionStep } from "./wizard/FormsSelectionStep";
 import { TrackingRewardsStep } from "./wizard/TrackingRewardsStep";
 import { DeliveryFulfillmentStep } from "./wizard/DeliveryFulfillmentStep";
 import { SummaryStep } from "./wizard/SummaryStep";
@@ -45,8 +47,9 @@ export function CreateCampaignWizard({
   const steps = [
     { label: "Setup", description: "Campaign basics" },
     { label: "Codes", description: "Upload codes & contacts" },
+    { label: "Conditions", description: "Set reward triggers" },
     { label: "Landing Page", description: "Select or create page" },
-    { label: "Rewards", description: "Configure rewards" },
+    { label: "Forms", description: "Link forms" },
     { label: "Delivery", description: "Mail settings" },
     { label: "Review", description: "Confirm & create" },
   ];
@@ -156,6 +159,15 @@ export function CreateCampaignWizard({
             )}
 
             {currentStep === 3 && (
+              <ConditionsStep
+                clientId={clientId}
+                initialData={formData}
+                onNext={handleNext}
+                onBack={handleBack}
+              />
+            )}
+
+            {currentStep === 4 && (
               <LandingPageSelectionStep
                 clientId={clientId}
                 campaignId={campaignId}
@@ -165,16 +177,17 @@ export function CreateCampaignWizard({
               />
             )}
 
-            {currentStep === 4 && (
-              <TrackingRewardsStep
+            {currentStep === 5 && (
+              <FormsSelectionStep
                 clientId={clientId}
+                campaignId={campaignId}
                 initialData={formData}
                 onNext={handleNext}
                 onBack={handleBack}
               />
             )}
 
-            {currentStep === 5 && (
+            {currentStep === 6 && (
               <DeliveryFulfillmentStep
                 clientId={clientId}
                 initialData={formData}
@@ -184,7 +197,7 @@ export function CreateCampaignWizard({
               />
             )}
 
-            {currentStep === 6 && (
+            {currentStep === 7 && (
               <SummaryStep
                 formData={formData}
                 clientId={clientId}
