@@ -1,61 +1,59 @@
 ---
-description: Documentation for campaign condition management and reward trigger system implementation
+description: Documentation for multi-stage campaign reward/action triggering system including sequential conditions and dependencies
 ---
 
 
 # campaign-condition-system
 
-The campaign condition system implements multi-stage reward triggering with sequential validation and dependency tracking.
+Campaign Condition Management System
+Importance Score: 90
 
 Core Components:
 
-1. Condition Trigger Engine (src/components/campaigns/ConditionBuilder.tsx)
-Importance Score: 95
-- Sequential condition chaining with dependency validation
-- Support for manual, CRM event, and time-based triggers 
-- Real-time condition evaluation with state tracking
-- Integration with gift card reward pools
-- Dynamic reward allocation based on completion criteria
+1. Condition Trigger Engine
+Path: src/components/campaigns/ConditionTriggerManager.tsx
+- Multi-stage condition evaluation pipeline
+- Sequential dependency tracking between conditions
+- Dynamic reward allocation based on completion state
+- Automated trigger validation for reward distribution
 
-2. Reward Distribution Logic (src/components/campaigns/ConditionTriggers.tsx)
-Importance Score: 90
-- Automated reward triggering based on completed conditions
-- Multi-condition campaign management with sequential validation
-- Gift card pool integration for fulfillment
-- Delivery status tracking across channels
-- Fallback handling for failed reward distribution
+2. Campaign Reward Pool Management 
+Path: src/features/campaigns/RewardPoolController.ts
+- Gift card inventory allocation per condition
+- Pool health monitoring with utilization thresholds
+- Automated replenishment triggers
+- Balance tracking across multiple reward types
 
-Business Rules:
-- Conditions must be completed in defined sequence
-- Previous condition completion required before next activation
-- Real-time validation of reward pool availability
-- Automatic reward distribution on condition completion
-- Support for parallel and sequential condition paths
-- Maximum 5 conditions per campaign sequence
+3. Condition Templates
+Path: src/lib/condition-templates.ts
+- Pre-defined condition chains for common scenarios:
+  - Call Center: Call Duration + Verification
+  - Direct Mail: Delivery + Response
+  - Digital: Form Submit + Email Verify
+- Custom template builder with dependency checks
 
-Condition Types:
-1. Manual Verification
-- Agent approval required
-- Supporting documentation options
-- Notes/reason requirement for rejections
+4. Reward Distribution Rules
+Path: src/features/rewards/DistributionManager.ts
+- Time-window based reward release
+- Multi-channel delivery options (SMS, Email, Physical)
+- Fallback delivery mechanisms
+- Anti-fraud verification steps
 
-2. CRM Event Triggers
-- Lead status changes
-- Opportunity stage advancement
-- Custom field updates
-- Contact property changes
+5. Campaign Progress Tracking
+Path: src/components/campaigns/ProgressTracker.tsx
+- Real-time condition completion monitoring
+- Participant status tracking across conditions
+- Automated condition unlocking based on prerequisites
+- Campaign-level completion analytics
 
-3. Time-Based Triggers
-- Scheduled activation dates
-- Duration-based conditions
-- Cool-down periods between rewards
-- Expiration handling
+6. Trigger Event Processing
+Path: src/lib/trigger-processor.ts
+- Event normalization from multiple sources
+- Condition matching and validation
+- Sequential trigger enforcement
+- Cross-condition dependency validation
 
-4. Call Center Triggers
-- Call outcome based
-- Duration thresholds
-- Agent verification required
-- Disposition code mapping
+The system implements a sophisticated multi-stage campaign management system where rewards and actions are triggered based on completion of sequential conditions with complex dependencies.
 
 $END$
 

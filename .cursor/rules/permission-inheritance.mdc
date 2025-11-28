@@ -1,49 +1,54 @@
 ---
-description: Specification for hierarchical permission inheritance system across tenants, roles and organizations
+description: Documents hierarchical permission and role-based access control for multi-tenant marketing platform
 ---
 
 
 # permission-inheritance
 
-Permission Inheritance System:
+Permission Hierarchy System:
+- Organization-level permissions cascade down to child organizations
+- Parent organization owners automatically inherit admin access to child orgs
+- Agency owners receive full access across all client organizations
+- Client owners restricted to their specific organization scope
 
-1. Hierarchical Role Structure
-- 6 core permission levels with inheritance:
-  - Level 1: Admin (full system access)
-  - Level 2: Tech Support (cross-organization support)
-  - Level 3: Agency Owner (multi-client management)
-  - Level 4: Company Owner (single organization)
-  - Level 5: Developer (API/integration access)
-  - Level 6: Call Center (limited campaign access)
+Role-Based Permission Structure:
+1. Root System Roles:
+- SUPER_ADMIN (100) - Complete platform access
+- AGENCY_OWNER (90) - Cross-organization management
+- CLIENT_OWNER (80) - Single organization scope
+- MANAGER (70) - Department level access
+- AGENT (60) - Limited operational access
 
-2. Multi-tenant Permission Model
-- Organization-level permissions cascade down to users
-- Agency permissions extend across client organizations
-- Client-specific permission overrides at organization level
-- Permission categories with granular access control:
-  - Campaign Management
-  - Gift Card Administration 
-  - Contact Management
-  - Analytics Access
-  - User Management
-  - API Access
+2. Permission Categories:
+- campaigns.manage - Campaign creation and editing
+- campaigns.approve - Multi-step approval workflow
+- contacts.manage - Contact list management
+- giftcards.admin - Gift card pool administration
+- reports.view - Analytics access
 
-3. Permission Override System
-- Higher roles can override lower role permissions
-- Organization-specific permission customization
-- Role-based permission templates
-- Custom permission sets per organization type
-- Category-based permission grouping
+3. Inheritance Rules:
+- Higher roles automatically inherit permissions from lower roles
+- Department managers inherit team member permissions
+- Client owners inherit all org-specific permissions
+- Agency owners inherit permissions across client organizations
 
-4. Client Permission Isolation
-- Strict tenant isolation between organizations
-- Agency-level cross-client access controls
-- Client-specific feature enablement flags
-- Organization type determines base permissions
+4. Special Cases:
+- Tech support role receives temporary elevated access
+- Auditor role gets read-only access across organizations
+- Call center supervisors inherit agent permissions plus approval rights
 
-The system implements a sophisticated permission model combining role hierarchy, tenant isolation, and granular access controls tailored for marketing campaign management and gift card administration.
+Core Components:
+/src/permissions/RoleManager.tsx
+- Manages role hierarchy and inheritance chains
+- Handles permission propagation rules
+- Enforces organizational boundaries
 
-Importance Score: 90/100
+/src/permissions/PermissionValidator.tsx
+- Validates user permissions against required access levels
+- Implements permission checking with inheritance logic
+- Handles multi-organization permission scenarios
+
+Importance Score: 85
 
 $END$
 
