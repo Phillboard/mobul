@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { CampaignCreateForm } from "@/components/campaigns/create/CampaignCreateForm";
+import { CreateCampaignWizard } from "@/components/campaigns/CreateCampaignWizard";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,6 +11,7 @@ import { AlertCircle } from "lucide-react";
 export default function CampaignCreate() {
   const navigate = useNavigate();
   const { currentClient } = useTenant();
+  const [wizardOpen, setWizardOpen] = useState(true);
 
   if (!currentClient) {
     return (
@@ -26,34 +28,18 @@ export default function CampaignCreate() {
     );
   }
 
+  const handleWizardClose = () => {
+    setWizardOpen(false);
+    navigate("/campaigns");
+  };
+
   return (
     <Layout>
-      <div className="container mx-auto py-6 max-w-7xl">
-        {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/campaigns")}
-            className="mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Campaigns
-          </Button>
-
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Create New Campaign
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Get your mail piece in front of the right people
-            </p>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <CampaignCreateForm clientId={currentClient.id} />
-      </div>
+      <CreateCampaignWizard 
+        open={wizardOpen} 
+        onOpenChange={handleWizardClose}
+        clientId={currentClient.id} 
+      />
     </Layout>
   );
 }
