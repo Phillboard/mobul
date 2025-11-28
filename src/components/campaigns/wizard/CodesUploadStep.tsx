@@ -1,11 +1,14 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -17,7 +20,8 @@ import {
   Download,
   Loader2,
   Users,
-  XCircle
+  XCircle,
+  List
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
@@ -62,9 +66,26 @@ export function CodesUploadStep({
   onBack 
 }: CodesUploadStepProps) {
   const { toast } = useToast();
+  const [sourceType, setSourceType] = useState<"csv" | "list">("list");
+  const [selectedListId, setSelectedListId] = useState<string>("");
   const [parsedData, setParsedData] = useState<ParsedRow[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showSkipWarning, setShowSkipWarning] = useState(false);
+
+  // Fetch contact lists
+  const { data: contactLists, isLoading: loadingLists } = useQuery({
+    queryKey: ["contact-lists", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contact_lists")
+        .select("id, name, contact_count, list_type, created_at")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const downloadTemplate = () => {
     const template = "code,first_name,last_name,email,phone,address,city,state,zip\nABC123,John,Doe,john@example.com,555-1234,123 Main St,Boston,MA,02101\nXYZ789,Jane,Smith,jane@example.com,555-5678,456 Oak Ave,Boston,MA,02102";
@@ -240,17 +261,115 @@ export function CodesUploadStep({
   const duplicateCount = parsedData.filter(r => r.status === 'duplicate').length;
   const errorCount = parsedData.filter(r => r.status === 'error').length;
 
+  const handleUseList = () => {
+    if (!selectedListId) {
+      toast({
+        title: "List Required",
+        description: "Please select a contact list",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedList = contactLists?.find(l => l.id === selectedListId);
+    
+    onNext({
+      contact_list_id: selectedListId,
+      codes_uploaded: true,
+      recipient_count: selectedList?.contact_count || 0,
+    });
+  };
+
+  const validCount = parsedData.filter(r => r.status === 'valid').length;
+  const duplicateCount = parsedData.filter(r => r.status === 'duplicate').length;
+  const errorCount = parsedData.filter(r => r.status === 'error').length;
+  const selectedList = contactLists?.find(l => l.id === selectedListId);
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Upload Customer Codes</h2>
+        <h2 className="text-2xl font-bold">Recipients & Codes</h2>
         <p className="text-muted-foreground mt-2">
-          Upload a CSV file with customer codes and contact information
+          Select a contact list or upload a CSV file with customer codes
         </p>
       </div>
 
-      {/* Template Download */}
-      <Card>
+      {/* Source Type Tabs */}
+      <Tabs value={sourceType} onValueChange={(v) => setSourceType(v as "csv" | "list")}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="list">
+            <List className="h-4 w-4 mr-2" />
+            Select List
+          </TabsTrigger>
+          <TabsTrigger value="csv">
+            <Upload className="h-4 w-4 mr-2" />
+            Upload CSV
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="list" className="space-y-4 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Select Contact List</CardTitle>
+              <CardDescription>
+                Choose an existing contact list for this campaign. Codes will be auto-generated.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loadingLists ? (
+                <p className="text-sm text-muted-foreground">Loading contact lists...</p>
+              ) : contactLists && contactLists.length > 0 ? (
+                <>
+                  <div className="space-y-2">
+                    <Label>Contact List</Label>
+                    <Select value={selectedListId} onValueChange={setSelectedListId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a contact list..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contactLists.map((list) => (
+                          <SelectItem key={list.id} value={list.id}>
+                            {list.name} ({list.contact_count || 0} contacts)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedList && (
+                    <Alert>
+                      <CheckCircle className="h-4 w-4" />
+                      <AlertTitle>List Selected</AlertTitle>
+                      <AlertDescription>
+                        <div className="space-y-1 mt-2">
+                          <div><strong>{selectedList.name}</strong></div>
+                          <div className="text-sm">
+                            {selectedList.contact_count || 0} contacts will become campaign recipients
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Unique redemption codes will be automatically generated for each contact
+                          </div>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </>
+              ) : (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    No contact lists found. Create a contact list first or upload a CSV.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="csv" className="space-y-4 mt-6">
+
+          {/* Template Download */}
+          <Card>
         <CardHeader>
           <CardTitle className="text-base">Need a Template?</CardTitle>
           <CardDescription>
@@ -268,8 +387,8 @@ export function CodesUploadStep({
         </CardContent>
       </Card>
 
-      {/* Upload Area */}
-      <Card>
+          {/* Upload Area */}
+          <Card>
         <CardHeader>
           <CardTitle className="text-base">Upload CSV File</CardTitle>
         </CardHeader>
@@ -300,10 +419,10 @@ export function CodesUploadStep({
         </CardContent>
       </Card>
 
-      {/* Validation Summary */}
-      {parsedData.length > 0 && (
-        <>
-          <Card>
+          {/* Validation Summary */}
+          {parsedData.length > 0 && (
+            <>
+              <Card>
             <CardHeader>
               <CardTitle className="text-base">Validation Summary</CardTitle>
             </CardHeader>
@@ -354,8 +473,8 @@ export function CodesUploadStep({
             </CardContent>
           </Card>
 
-          {/* Preview Table */}
-          <Card>
+              {/* Preview Table */}
+              <Card>
             <CardHeader>
               <CardTitle className="text-base">Preview Data</CardTitle>
               <CardDescription>
@@ -413,10 +532,12 @@ export function CodesUploadStep({
                   ... and {parsedData.length - 10} more rows
                 </p>
               )}
-            </CardContent>
-          </Card>
-        </>
-      )}
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Skip Warning */}
       {showSkipWarning && (
@@ -450,7 +571,14 @@ export function CodesUploadStep({
             {showSkipWarning ? "Skip Code Upload (Confirm)" : "Skip for Now"}
           </Button>
 
-          {parsedData.length > 0 && (
+          {sourceType === "list" && selectedListId && (
+            <Button onClick={handleUseList}>
+              <Users className="h-4 w-4 mr-2" />
+              Use {selectedList?.contact_count || 0} Contacts
+            </Button>
+          )}
+
+          {sourceType === "csv" && parsedData.length > 0 && (
             <Button
               onClick={() => importMutation.mutate()}
               disabled={validCount === 0 || importMutation.isPending}
