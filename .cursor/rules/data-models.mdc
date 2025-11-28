@@ -1,59 +1,54 @@
 ---
-description: Analyzes data models and relationships between campaigns, gift cards, organizations, and users in a marketing automation system
+description: For analyzing data models and hierarchical structures between business entities like campaigns, conditions, gift cards and organizations
 ---
 
 
 # data-models
 
-Core Data Model Relationships:
+Core Data Model Hierarchy:
 
-1. Campaign Model
-- Hierarchical structure with campaign -> conditions -> rewards relationship 
-- Complex state machine tracking campaign status:
-  - DRAFT -> PENDING_APPROVAL -> APPROVED -> ACTIVE -> COMPLETED
-  - Rejection paths: PENDING_APPROVAL -> REJECTED, PENDING_CHANGES
-- Tracks delivery timeline and recipient engagement
-Importance Score: 90
+Organization
+- Top level entity representing client organizations
+- Contains multiple sub-clients for agency relationships
+- Associates with gift card pools and campaigns
+- Manages user roles and permissions across hierarchy
 
-2. Gift Card Pool Model
-- Multi-level hierarchy: Brand -> Pool -> Card
-- Pool health tracking with defined thresholds:
-  - HEALTHY: > 25% available cards
-  - WARNING: 10-25% available cards
-  - CRITICAL: < 10% available cards
-- Card states: AVAILABLE, CLAIMED, DELIVERED, REDEEMED, EXPIRED, FAILED
-Importance Score: 85
+Campaign
+- Links to organization and contacts
+- Contains multiple reward conditions
+- Tracks delivery methods and fulfillment status 
+- Manages personalized URLs and redemption codes
 
-3. Organization Model
-- Two-tier structure:
-  - Agency organizations can manage multiple client organizations
-  - Client organizations operate independently
-- Organization-specific configuration:
-  - Branding settings
-  - Pool access permissions
-  - Campaign limits
-Importance Score: 80
+GiftCard
+- Belongs to specific brand pools
+- Tracks status: available, claimed, delivered, redeemed
+- Links to campaigns and redemption conditions
+- Contains delivery and redemption audit history
 
-4. User Model
-- Role-based hierarchy:
-  - agency_owner: Full agency access
-  - company_owner: Single organization access
-  - call_center: Limited campaign interaction
-- Permission inheritance based on organizational structure
-- Cross-organization access rules for agency users
-Importance Score: 75
+Condition
+- Part of campaign reward system
+- Defines triggering rules for gift card distribution
+- Links to specific gift card pools
+- Tracks completion status per recipient
+
+Contact
+- Associated with organizations and campaigns
+- Contains communication preferences and history
+- Tracks engagement across multiple campaigns
+- Manages custom field values and segmentation
 
 Key Relationships:
-- Campaigns belong to single organization but can access multiple gift card pools
-- Users belong to single organization but can have cross-org permissions
-- Gift card pools can be shared across organizations based on agency relationships
-- Conditions link campaigns to specific gift card pools for reward fulfillment
+- Organizations can manage multiple client organizations (hierarchical)
+- Campaigns belong to single organization but can use multiple gift card pools
+- Gift cards are grouped in brand-specific pools with inventory tracking
+- Conditions link campaigns to gift card pools with distribution rules
+- Contacts can participate in multiple campaigns with separate engagement tracking
 
-Notable Model Features:
-- Complex state machines for campaign and gift card lifecycle
-- Multi-tenant data isolation with agency/client hierarchy
-- Pool health monitoring with automated thresholds
-- Role-based access control integrated with organizational structure
+Importance Score: 95
+- Critical for core business operations
+- Enables complex reward distribution workflows
+- Supports multi-tenant architecture
+- Manages hierarchical client relationships
 
 $END$
 

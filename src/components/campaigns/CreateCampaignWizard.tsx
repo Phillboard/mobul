@@ -7,7 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CampaignSetupStep } from "./wizard/CampaignSetupStep";
-import { RecipientsStep } from "./wizard/RecipientsStep";
+import { CodesUploadStep } from "./wizard/CodesUploadStep";
+import { LandingPageSelectionStep } from "./wizard/LandingPageSelectionStep";
 import { TrackingRewardsStep } from "./wizard/TrackingRewardsStep";
 import { DeliveryFulfillmentStep } from "./wizard/DeliveryFulfillmentStep";
 import { SummaryStep } from "./wizard/SummaryStep";
@@ -31,21 +32,21 @@ export function CreateCampaignWizard({
 }: CreateCampaignWizardProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [campaignId, setCampaignId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<CampaignFormData>>({
     name: "",
     size: "4x6",
-    recipient_source: "list",
     postage: "standard",
     mail_date_mode: "asap",
-    lp_mode: "bridge",
     utm_source: "directmail",
     utm_medium: "postcard",
   });
 
   const steps = [
     { label: "Setup", description: "Campaign basics" },
-    { label: "Recipients", description: "Select contacts" },
-    { label: "Tracking", description: "Calls & rewards" },
+    { label: "Codes", description: "Upload codes & contacts" },
+    { label: "Landing Page", description: "Select or create page" },
+    { label: "Rewards", description: "Configure rewards" },
     { label: "Delivery", description: "Mail settings" },
     { label: "Review", description: "Confirm & create" },
   ];
@@ -145,8 +146,9 @@ export function CreateCampaignWizard({
             )}
 
             {currentStep === 2 && (
-              <RecipientsStep
+              <CodesUploadStep
                 clientId={clientId}
+                campaignId={campaignId}
                 initialData={formData}
                 onNext={handleNext}
                 onBack={handleBack}
@@ -154,6 +156,16 @@ export function CreateCampaignWizard({
             )}
 
             {currentStep === 3 && (
+              <LandingPageSelectionStep
+                clientId={clientId}
+                campaignId={campaignId}
+                initialData={formData}
+                onNext={handleNext}
+                onBack={handleBack}
+              />
+            )}
+
+            {currentStep === 4 && (
               <TrackingRewardsStep
                 clientId={clientId}
                 initialData={formData}
@@ -162,21 +174,21 @@ export function CreateCampaignWizard({
               />
             )}
 
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <DeliveryFulfillmentStep
                 clientId={clientId}
                 initialData={formData}
-                recipientCount={0}
+                recipientCount={formData.recipient_count || 0}
                 onNext={handleNext}
                 onBack={handleBack}
               />
             )}
 
-            {currentStep === 5 && (
+            {currentStep === 6 && (
               <SummaryStep
                 formData={formData}
                 clientId={clientId}
-                recipientCount={0}
+                recipientCount={formData.recipient_count || 0}
                 onBack={handleBack}
                 onConfirm={handleClose}
               />

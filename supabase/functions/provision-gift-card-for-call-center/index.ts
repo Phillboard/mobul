@@ -179,58 +179,130 @@ serve(async (req) => {
       });
     }
 
-    // Get the gift card pool from campaign reward configs
-    // If conditionNumber is provided, use that specific pool; otherwise use the first one
+    // Get campaign and check direct reward configuration
     const campaign = recipient.audiences.campaigns[0];
-    if (!campaign || !campaign.campaign_reward_configs || campaign.campaign_reward_configs.length === 0) {
-      throw new Error("No gift card pool configured for this campaign");
+    if (!campaign) {
+      throw new Error("No campaign found for this recipient");
     }
 
+    console.log(`[PROVISION-CC] Campaign: ${campaign.id}, checking reward config`);
+
+    // NEW: Check for direct campaign reward pool (new system)
     let poolId: string | null = null;
-    if (conditionNumber) {
-      const rewardConfig = campaign.campaign_reward_configs.find(
-        (rc: any) => rc.condition_number === conditionNumber
-      );
-      poolId = rewardConfig?.gift_card_pool_id || null;
+    let { data: campaignDetails, error: campaignError } = await supabaseAdmin
+      .from('campaigns')
+      .select('rewards_enabled, reward_pool_id, reward_condition')
+      .eq('id', campaign.id)
+      .single();
+
+    if (campaignError) {
+      console.error("[PROVISION-CC] Error fetching campaign details:", campaignError);
+      throw campaignError;
+    }
+
+    // Use direct reward pool if configured
+    if (campaignDetails.rewards_enabled && campaignDetails.reward_pool_id) {
+      poolId = campaignDetails.reward_pool_id;
+      console.log(`[PROVISION-CC] Using direct reward pool: ${poolId}`);
     } else {
-      poolId = campaign.campaign_reward_configs[0].gift_card_pool_id;
+      // Fallback to legacy campaign_reward_configs (backward compatibility)
+      if (!campaign.campaign_reward_configs || campaign.campaign_reward_configs.length === 0) {
+        throw new Error("No gift card rewards configured for this campaign");
+      }
+
+      if (conditionNumber) {
+        const rewardConfig = campaign.campaign_reward_configs.find(
+          (rc: any) => rc.condition_number === conditionNumber
+        );
+        poolId = rewardConfig?.gift_card_pool_id || null;
+      } else {
+        poolId = campaign.campaign_reward_configs[0].gift_card_pool_id;
+      }
+      console.log(`[PROVISION-CC] Using legacy reward config pool: ${poolId}`);
     }
 
     if (!poolId) {
-      throw new Error(`No gift card pool assigned for condition ${conditionNumber || 'default'}`);
+      throw new Error(`No gift card pool assigned for this campaign`);
     }
 
-    console.log(`[PROVISION-CC] Claiming card from pool: ${poolId} for condition: ${conditionNumber || 'default'}`);
+    console.log(`[PROVISION-CC] Claiming card from pool: ${poolId}`);
 
-    // PRE-CHECK: Verify pool has inventory before claiming
-    const { data: poolCheck, error: poolCheckError } = await supabaseAdmin
-      .from('gift_card_pools')
-      .select('available_cards, pool_name, low_stock_threshold')
-      .eq('id', poolId)
-      .single();
+    // NEW: Use atomic claiming function to prevent race conditions
+    let claimedCard;
+    try {
+      const { data: atomicResult, error: claimError } = await supabaseAdmin
+        .rpc('claim_card_atomic', {
+          p_pool_id: poolId,
+          p_recipient_id: recipient.id,
+          p_campaign_id: campaign.id,
+          p_agent_id: user.id
+        });
 
-    if (poolCheckError) {
-      console.error("[PROVISION-CC] Error checking pool:", poolCheckError);
-      throw poolCheckError;
+      if (claimError) {
+        console.error("[PROVISION-CC] Atomic claim error:", claimError);
+        
+        // Check if it's a pool empty error
+        if (claimError.message?.includes('NO_CARDS_AVAILABLE')) {
+          // Create admin notification
+          try {
+            await supabaseAdmin.rpc('notify_pool_empty', {
+              p_pool_id: poolId,
+              p_campaign_id: campaign.id,
+              p_recipient_id: recipient.id
+            });
+          } catch (notifyErr) {
+            console.error('[PROVISION-CC] Failed to notify:', notifyErr);
+          }
+
+          return new Response(JSON.stringify({ 
+            error: "POOL_EMPTY",
+            message: "The gift card pool is empty. An administrator has been notified."
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400,
+          });
+        }
+
+        throw claimError;
+      }
+
+      if (!atomicResult || atomicResult.length === 0) {
+        throw new Error('No card returned from atomic claim');
+      }
+
+      claimedCard = atomicResult[0];
+      console.log(`[PROVISION-CC] Successfully claimed card: ${claimedCard.card_id}`);
+
+    } catch (claimError) {
+      console.error("[PROVISION-CC] Failed to claim card:", claimError);
+      throw new Error(`Failed to claim gift card: ${claimError.message}`);
     }
 
-    // Critical: Pool empty - alert immediately
+    // Critical: Pool empty - create admin notification and alert
     if (poolCheck.available_cards === 0) {
       console.error(`[PROVISION-CC] Pool ${poolCheck.pool_name} is EMPTY`);
       
-      // Send critical alert (async, don't wait)
-      supabaseAdmin.functions.invoke('send-inventory-alert', {
-        body: {
-          severity: 'critical',
-          poolId,
-          poolName: poolCheck.pool_name,
-          availableCards: 0
+      // Create admin notification using helper function
+      try {
+        const { data: notificationId, error: notifyError } = await supabaseAdmin
+          .rpc('notify_pool_empty', {
+            p_pool_id: poolId,
+            p_campaign_id: campaign.id,
+            p_recipient_id: recipient.id
+          });
+        
+        if (notifyError) {
+          console.error('[PROVISION-CC] Failed to create notification:', notifyError);
+        } else {
+          console.log(`[PROVISION-CC] Created admin notification: ${notificationId}`);
         }
-      }).catch(err => console.error('Failed to send alert:', err));
+      } catch (err) {
+        console.error('[PROVISION-CC] Notification error:', err);
+      }
       
       return new Response(JSON.stringify({ 
         error: "POOL_EMPTY",
-        message: ERROR_MESSAGES.POOL_EMPTY
+        message: "The gift card pool is empty. An administrator has been notified and will replenish the inventory shortly. Please try again later or contact support."
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,

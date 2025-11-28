@@ -10,66 +10,48 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Main Business Components:
+Core Marketing Platform Architecture
 
-1. Gift Card Management System (90/100)
-- Multi-tier provisioning with CSV inventory and API fallback
-- Pool health monitoring with utilization thresholds
-- Automated balance verification scheduling
-- Profit margin calculations for resale
-- Custom redemption workflows for call centers
-- Provider integrations (Tango, Giftbit, Rybbon, Tillo)
+1. Campaign Management System
+- Gift card reward distribution logic integrating call tracking, validation, and delivery
+- Multi-step approval workflows with rejection handling and change requests
+- Complex reward trigger system based on verified phone calls and form submissions
+- Real-time tracking metrics for campaign health and engagement
+- Call analytics with status-based categorization and outcome tracking
 
-Key paths:
-- src/components/gift-cards/PoolDetailDialog.tsx
-- supabase/functions/provision-gift-card-from-api/index.ts
-- src/lib/giftCardUtils.ts
+2. Gift Card Infrastructure
+src/features/gift-cards/lib/utils.ts
+- Pool health monitoring with warning/critical thresholds 
+- Inventory utilization tracking and auto-replenishment
+- Multi-provider integration (Tango, Giftbit, Rybbon)
+- Profit margin calculations and cost basis tracking
+- Brand-specific delivery and redemption rules
 
-2. Campaign Management (85/100)
-- Multi-step approval workflows
-- QR code tracking with recipient mapping 
-- Custom condition builder for reward triggers
-- Geographic performance analytics
-- Call tracking with reward distribution
-- Delivery timeline orchestration
+3. Call Center Operations 
+supabase/functions/provision-gift-card-for-call-center/index.ts
+- Multi-step verification matching callers to mailer codes
+- Sequential reward unlocking based on call outcomes
+- Real-time inventory allocation and tracking
+- Integrated SMS/email delivery systems
+- Performance monitoring with completion rate metrics
 
-Key paths:
-- src/components/campaigns/CreateCampaignWizard.tsx
-- src/components/campaigns/CallAnalyticsTab.tsx
-- src/lib/campaignUtils.ts
+4. AI-Assisted Content Generation
+src/components/DrPhillipChat.tsx
+- Industry-specific direct mail expertise
+- Campaign budget and timeline calculations
+- Template recommendations based on vertical
+- Multi-channel content optimization
+- Real-time style guide extraction
 
-3. Contact & Audience Management (80/100)
-- Industry-specific lifecycle stages
-- Lead scoring implementation
-- Progressive data enrichment
-- Engagement velocity tracking
-- Multi-format data ingestion
-- Address verification system
+5. Business Analytics Engine
+src/pages/CampaignAnalytics.tsx
+- Geographic distribution analysis
+- Multi-channel conversion tracking
+- Timeline-based engagement metrics
+- Call center performance analytics
+- ROI calculations per campaign
 
-Key paths:
-- src/components/contacts/CustomFieldManager.tsx
-- src/lib/seed-contacts-data.ts
-- src/components/audiences/AudienceImportTab.tsx
-
-4. Call Center Operations (85/100)
-- Multi-step verification workflows
-- Script management based on redemption status
-- Real-time inventory validation
-- SMS/Email delivery orchestration
-- Agent performance tracking
-- Call disposition management
-
-Key paths:
-- src/components/call-center/CallCenterRedemptionPanel.tsx
-- src/components/agent/CallDispositionSelector.tsx
-- supabase/functions/handle-incoming-call/index.ts
-
-Core Business Rules:
-- Gift card pools maintain health states based on configurable thresholds
-- Campaign approval requires multi-stakeholder sign-off
-- Contact enrichment follows industry-specific patterns
-- Reward distribution requires condition completion verification
-- Call center redemptions follow strict verification steps
+The platform implements sophisticated workflows around direct mail campaign management, integrating call tracking, gift card rewards, and AI assistance. Core business value centers on the gift card distribution system and campaign analytics engine.
 
 $END$
 

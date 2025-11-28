@@ -1,66 +1,57 @@
 ---
-description: Documentation for gift card pool management, inventory tracking, provisioning strategies, and distribution logic across multiple providers
+description: Use when analyzing gift card provisioning, inventory management, and redemption workflows
 ---
 
 
 # gift-card-management
 
-## Pool Management System
-src/components/gift-cards/PoolDetailDialog.tsx
+Gift Card Pool Management
+- Inventory tracking across multiple providers (Tango, Giftbit, Rybbon)
+- Real-time utilization calculations with three-tier health status
+- Auto-replenishment triggers at configurable thresholds
 Importance Score: 95
 
-Core functionality:
-- Multi-tiered gift card pool management with balance verification workflows
-- Complex inventory tracking with health states (healthy/warning/critical)
-- Pool utilization calculations and threshold management
-- Automated balance verification scheduling system
-- Custom export logic with permission-based data masking
-
-## Pricing Engine
-src/components/gift-cards/EditPoolPricingDialog.tsx
+Provisioning System
+- Multi-step verification before card issuance
+- Client wallet balance validation
+- Campaign condition completion checks
+- Automated delivery channel selection (SMS/Email)
 Importance Score: 90
 
-- Dual pricing model implementation:
-  - Fixed price model
-  - Percentage markup model
-- Automated profit margin calculations
-- Minimum purchase quantity enforcement
-- Pool availability controls for marketplace distribution
-
-## Transaction System
-src/components/gift-cards/PurchasePoolDialog.tsx
+Redemption Workflow
+- Code validation with configurable approval requirements
+- Device-specific redemption handling (mobile deep links, web fallback)
+- Status tracking through claimed/delivered/redeemed states
+- Auto-expiring security tokens for code reveal
 Importance Score: 85
 
-- Real-time balance verification against client credits
-- Multi-step transaction validation workflow:
-  1. Credit balance check
-  2. Pool availability validation  
-  3. Minimum quantity verification
-  4. Automated pool transfer execution
+Pool Financial Management
+- Dual pricing models (fixed price, percentage markup)
+- Real-time profit margin calculations
+- Cost basis tracking for admin transfers
+- Client credit system integration
+Importance Score: 80
 
-## Balance Management
-src/components/gift-cards/BrandPoolsView.tsx
+Balance Verification System
+- Automated balance checks on configurable schedule
+- Provider-specific API integration
+- Permission-based code masking
+- Balance change detection and alerting
 Importance Score: 75
 
-Pool Health States:
-- Healthy: Above warning threshold
-- Warning: Between warning and critical thresholds
-- Critical: Below critical threshold
+Core Business Rules:
+- Gift cards require minimum inventory thresholds
+- Pricing can be fixed or percentage markup
+- Clients need sufficient wallet balance for purchases
+- Codes are masked based on user permissions
+- Balance checks run on defined schedule
+- Pool health affects availability status
 
-Features:
-- Automated threshold monitoring
-- Real-time utilization tracking
-- Low stock alerts
-- Balance aggregation across multiple pools
-
-## Auto-Population System
-src/components/gift-cards/AutoPopulatePoolButton.tsx
-Importance Score: 70
-
-- Batch generation system for test gift cards
-- Pool capacity management and validation
-- Automated balance updates and reconciliation
-- Sequential card number generation with validation rules
+Primary File Paths:
+/components/gift-cards/BrandPoolsView.tsx
+/components/gift-cards/EditPoolPricingDialog.tsx
+/components/gift-cards/PurchasePoolDialog.tsx
+/components/gift-cards/PoolDetailDialog.tsx
 
 $END$
 
