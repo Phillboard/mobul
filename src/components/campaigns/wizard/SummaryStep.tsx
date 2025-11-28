@@ -108,21 +108,44 @@ export function SummaryStep({
         <div>
           <h4 className="font-medium flex items-center gap-2 mb-2">
             <LinkIcon className="h-4 w-4" />
-            Campaign Conditions
+            Reward Conditions
           </h4>
           <div className="space-y-2 text-sm">
             {formData.conditions && formData.conditions.length > 0 ? (
-              formData.conditions.map((condition: any, index: number) => (
-                <div key={index} className="flex justify-between">
-                  <span className="text-muted-foreground">Condition {index + 1}:</span>
-                  <span className="text-right">
-                    {condition.condition_type.replace(/_/g, ' ')} → {condition.trigger_action.replace(/_/g, ' ')}
-                  </span>
+              formData.conditions.filter((c: any) => c.is_active).map((condition: any) => (
+                <div key={condition.id} className="space-y-1 p-3 border rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Condition {condition.condition_number}</span>
+                    <Badge variant="outline">{condition.trigger_type.replace(/_/g, ' ')}</Badge>
+                  </div>
+                  <div className="text-muted-foreground">
+                    {condition.condition_name}
+                  </div>
                 </div>
               ))
             ) : (
               <div className="text-center text-muted-foreground py-2">
                 No conditions configured
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        <div>
+          <h4 className="font-medium flex items-center gap-2 mb-2">
+            <FileText className="h-4 w-4" />
+            Linked Forms
+          </h4>
+          <div className="space-y-2 text-sm">
+            {formData.selected_form_ids && formData.selected_form_ids.length > 0 ? (
+              <div className="text-muted-foreground">
+                {formData.selected_form_ids.length} form{formData.selected_form_ids.length > 1 ? 's' : ''} will be linked to this campaign
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground py-2">
+                No forms linked
               </div>
             )}
           </div>
