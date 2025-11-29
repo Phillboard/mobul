@@ -4,13 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { Loader2, MessageCircle } from "lucide-react";
+import { Loader2, MessageCircle, Clock, Eye } from "lucide-react";
 import { useDrPhillipPreference } from "@/hooks/useDrPhillipPreference";
+import { formatDistanceToNow } from "date-fns";
 
 const INDUSTRIES = [
   { value: "roofing", label: "Roofing" },
@@ -33,7 +35,7 @@ export function GeneralSettings() {
   const { hasPermission } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
-  const { isEnabled: drPhillipEnabled, setIsEnabled: setDrPhillipEnabled } = useDrPhillipPreference();
+  const { isEnabled: drPhillipEnabled, isHidden, hiddenUntil, setIsEnabled: setDrPhillipEnabled, show: showDrPhillip } = useDrPhillipPreference();
   const [formData, setFormData] = useState({
     industry: "",
     timezone: "America/New_York",
@@ -171,6 +173,14 @@ export function GeneralSettings() {
                 <Label htmlFor="dr-phillip-toggle" className="font-medium">
                   Dr. Phillip Chat Assistant
                 </Label>
+                {isHidden && hiddenUntil && (
+                  <Badge variant="secondary" className="text-xs">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {hiddenUntil.getFullYear() === 9999 
+                      ? "Hidden forever" 
+                      : `Hidden until ${formatDistanceToNow(hiddenUntil, { addSuffix: true })}`}
+                  </Badge>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">
                 Show the AI chat assistant in the bottom right corner
@@ -178,10 +188,35 @@ export function GeneralSettings() {
             </div>
             <Switch
               id="dr-phillip-toggle"
-              checked={drPhillipEnabled}
-              onCheckedChange={setDrPhillipEnabled}
+              checked={drPhillipEnabled && !isHidden}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  setDrPhillipEnabled(true);
+                  showDrPhillip();
+                } else {
+                  setDrPhillipEnabled(false);
+                }
+              }}
             />
           </div>
+
+          {/* Show Now button when hidden but enabled */}
+          {isHidden && drPhillipEnabled && (
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <Eye className="h-5 w-5 text-muted-foreground" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Dr. Phillip is temporarily hidden</p>
+                <p className="text-xs text-muted-foreground">
+                  {hiddenUntil?.getFullYear() === 9999 
+                    ? "You chose to hide it permanently" 
+                    : `It will reappear ${formatDistanceToNow(hiddenUntil!, { addSuffix: true })}`}
+                </p>
+              </div>
+              <Button size="sm" variant="outline" onClick={showDrPhillip}>
+                Show Now
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </form>

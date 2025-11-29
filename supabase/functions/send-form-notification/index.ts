@@ -90,9 +90,51 @@ serve(async (req) => {
         </div>
       `;
 
-      // Use Lovable AI to send email (placeholder - would need actual email service)
-      console.log('Would send confirmation email to:', userEmail);
-      console.log('Email content:', emailContent);
+      // Send email via Resend
+      try {
+        const { Resend } = await import('npm:resend@latest');
+        const resendApiKey = Deno.env.get('RESEND_API_KEY');
+        
+        if (!resendApiKey) {
+          console.log('RESEND_API_KEY not configured, skipping email');
+          return new Response(
+            JSON.stringify({ success: true, message: 'Email not sent - provider not configured' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const resend = new Resend(resendApiKey);
+        const fromEmail = Deno.env.get('FROM_EMAIL') || 'noreply@mobulace.com';
+        const fromName = form.clients?.name || 'Mobul ACE';
+
+        const { data: emailResult, error: emailError } = await resend.emails.send({
+          from: `${fromName} <${fromEmail}>`,
+          to: [userEmail],
+          subject: `Thank you for submitting ${form.name}`,
+          html: emailContent,
+        });
+
+        if (emailError) {
+          console.error('Failed to send email:', emailError);
+        } else {
+          console.log('✅ Confirmation email sent successfully:', emailResult);
+          
+          // Log email delivery
+          await supabase.from('email_delivery_logs').insert({
+            recipient_email: userEmail,
+            subject: `Thank you for submitting ${form.name}`,
+            template_name: 'form-submission-confirmation',
+            delivery_status: 'sent',
+            provider_message_id: emailResult?.id,
+            form_id: formId,
+            client_id: form.client_id,
+            metadata_json: { giftCardIncluded: !!giftCardDetails },
+          });
+        }
+      } catch (emailSendError) {
+        console.error('Error sending email:', emailSendError);
+        // Continue even if email fails
+      }
     }
 
     if (type === 'admin_notification') {

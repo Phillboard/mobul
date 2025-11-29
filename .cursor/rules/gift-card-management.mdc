@@ -1,57 +1,64 @@
 ---
-description: Use when analyzing gift card provisioning, inventory management, and redemption workflows
+description: Specifications for gift card management, including inventory tracking, balance verification, and reward delivery workflows
 ---
 
 
 # gift-card-management
 
-Gift Card Pool Management
-- Inventory tracking across multiple providers (Tango, Giftbit, Rybbon)
-- Real-time utilization calculations with three-tier health status
-- Auto-replenishment triggers at configurable thresholds
-Importance Score: 95
-
-Provisioning System
-- Multi-step verification before card issuance
-- Client wallet balance validation
-- Campaign condition completion checks
-- Automated delivery channel selection (SMS/Email)
+## Pool Management System
+src/components/gift-cards/PoolDetailDialog.tsx
 Importance Score: 90
 
-Redemption Workflow
-- Code validation with configurable approval requirements
-- Device-specific redemption handling (mobile deep links, web fallback)
-- Status tracking through claimed/delivered/redeemed states
-- Auto-expiring security tokens for code reveal
+- Hierarchical pool structure with master/client relationships
+- Auto-balance verification system with configurable check frequencies 
+- Historical balance tracking and audit logging
+- Role-based code visibility restrictions
+- Multi-state card status tracking: available, claimed, delivered, failed
+- Pool-specific pricing models with markup calculations
+
+## Inventory Transfer System
+src/components/gift-cards/SellGiftCardsDialog.tsx
 Importance Score: 85
 
-Pool Financial Management
-- Dual pricing models (fixed price, percentage markup)
+- Automated wallet balance verification pre-transfer
 - Real-time profit margin calculations
-- Cost basis tracking for admin transfers
+- Multi-pool transfer orchestration
 - Client credit system integration
+- Transfer audit trail maintenance
+
+## Automated Pool Population
+src/components/gift-cards/AutoPopulatePoolButton.tsx
 Importance Score: 80
 
-Balance Verification System
-- Automated balance checks on configurable schedule
-- Provider-specific API integration
-- Permission-based code masking
-- Balance change detection and alerting
-Importance Score: 75
+- Batch generation of test gift cards
+- Configurable card number generation patterns 
+- Pool capacity management
+- Automated balance statistics updates
+- Health monitoring with low stock alerts
 
-Core Business Rules:
-- Gift cards require minimum inventory thresholds
-- Pricing can be fixed or percentage markup
-- Clients need sufficient wallet balance for purchases
-- Codes are masked based on user permissions
-- Balance checks run on defined schedule
-- Pool health affects availability status
+## Provisioning Workflow
+supabase/functions/provision-gift-card/index.ts
+Importance Score: 95
 
-Primary File Paths:
-/components/gift-cards/BrandPoolsView.tsx
-/components/gift-cards/EditPoolPricingDialog.tsx
-/components/gift-cards/PurchasePoolDialog.tsx
-/components/gift-cards/PoolDetailDialog.tsx
+- Two-tier provisioning system:
+  - Primary: CSV inventory claims
+  - Fallback: API-based provisioning
+- Multi-provider integration (Tango, Giftbit, Rybbon)
+- SMS opt-in verification
+- Real-time pool depletion monitoring
+- Automated delivery method selection
+
+## Balance Verification System
+src/lib/giftCardUtils.ts
+Importance Score: 85
+
+- Scheduled balance verification jobs
+- Provider-specific balance check implementations
+- Threshold-based health status:
+  - Healthy: >25% available
+  - Warning: 10-25% available  
+  - Critical: <10% available
+- Reconciliation reporting for discrepancies
 
 $END$
 

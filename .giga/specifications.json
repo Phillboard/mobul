@@ -1,26 +1,22 @@
 [
   {
     "fileName": "main-overview.mdc",
-    "description": "Complete system overview documenting the core campaign management system, gift card operations, and integration points between major components"
+    "description": "Complete system overview covering the campaign management platform architecture, gift card reward system, and core business workflows"
   },
   {
-    "fileName": "campaign-condition-system.mdc",
-    "description": "Detailed documentation of the multi-stage reward/action triggering system, including sequential conditions, dependencies, and trigger types"
+    "fileName": "campaign-workflow-model.mdc",
+    "description": "Detailed documentation of campaign creation workflow, validation rules, cost calculations, and condition-based reward triggers"
   },
   {
     "fileName": "gift-card-management.mdc",
-    "description": "Comprehensive documentation of gift card pool management, inventory tracking, provisioning strategies, and distribution logic across multiple providers"
+    "description": "Comprehensive documentation of gift card pool management system, including inventory tracking, balance verification, and reward delivery workflows"
   },
   {
-    "fileName": "data-models.mdc",
-    "description": "Detailed documentation of data models and relationships between campaigns, conditions, gift cards, organizations, and users including hierarchical structures"
+    "fileName": "data-models-relationships.mdc",
+    "description": "Complete documentation of data models and relationships between campaigns, gift cards, organizations, users, and recipients"
   },
   {
-    "fileName": "reward-distribution-flow.mdc",
-    "description": "Documentation of the reward distribution algorithms, validation workflows, and integration with call center, SMS, and webhook systems"
-  },
-  {
-    "fileName": "permission-inheritance.mdc",
-    "description": "Documentation of the hierarchical permission system including role-based access control, tenant management, and permission inheritance rules"
+    "fileName": "reward-algorithms.mdc",
+    "description": "Detailed documentation of reward distribution algorithms, condition evaluation logic, and automated trigger systems"
   }
 ]

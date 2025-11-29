@@ -383,7 +383,7 @@ async function updateCRM(
 async function sendEmail(supabase: any, recipientId: string, condition: any, triggerId: string) {
   const { data: recipient } = await supabase
     .from('recipients')
-    .select('email, first_name')
+    .select('email, first_name, campaign_id')
     .eq('id', recipientId)
     .single();
 
@@ -391,6 +391,23 @@ async function sendEmail(supabase: any, recipientId: string, condition: any, tri
     throw new Error('Recipient has no email');
   }
 
-  // TODO: Implement actual email sending
-  console.log('Email would be sent to:', recipient.email);
+  // If gift card is configured, send via gift card email function
+  if (condition.gift_card_pool_id) {
+    const { error } = await supabase.functions.invoke('send-gift-card-email', {
+      body: {
+        recipientId,
+        recipientEmail: recipient.email,
+        recipientName: recipient.first_name,
+        giftCardPoolId: condition.gift_card_pool_id,
+        campaignId: recipient.campaign_id,
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+  } else {
+    // Generic email sending - can be expanded with custom templates
+    console.log('Generic email would be sent to:', recipient.email);
+  }
 }

@@ -257,10 +257,6 @@ export function CodesUploadStep({
     });
   };
 
-  const validCount = parsedData.filter(r => r.status === 'valid').length;
-  const duplicateCount = parsedData.filter(r => r.status === 'duplicate').length;
-  const errorCount = parsedData.filter(r => r.status === 'error').length;
-
   const handleUseList = () => {
     if (!selectedListId) {
       toast({

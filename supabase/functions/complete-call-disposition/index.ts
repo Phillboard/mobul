@@ -42,23 +42,58 @@ Deno.serve(async (req) => {
     if (shouldEvaluateConditions && callSession.recipient_id && callSession.campaign_id) {
       console.log('Evaluating call_completed condition for recipient:', callSession.recipient_id);
 
-      // Invoke evaluate-conditions function
-      const { error: evalError } = await supabase.functions.invoke('evaluate-conditions', {
-        body: {
-          recipientId: callSession.recipient_id,
-          campaignId: callSession.campaign_id,
-          eventType: 'call_completed',
-          metadata: {
+      // VALIDATION: Check SMS opt-in status before proceeding
+      const { data: recipient, error: recipientError } = await supabase
+        .from('recipients')
+        .select('sms_opt_in_status')
+        .eq('id', callSession.recipient_id)
+        .single();
+
+      if (recipientError) {
+        console.error('Error fetching recipient opt-in status:', recipientError);
+      }
+
+      // Only proceed with condition evaluation if recipient has opted in
+      if (recipient?.sms_opt_in_status !== 'opted_in') {
+        console.warn(`Recipient ${callSession.recipient_id} has not opted in (status: ${recipient?.sms_opt_in_status}). Skipping condition evaluation.`);
+        
+        // Create event for audit but don't evaluate conditions
+        await supabase.from('events').insert({
+          campaign_id: callSession.campaign_id,
+          recipient_id: callSession.recipient_id,
+          event_type: 'call_completed_no_optin',
+          source: 'call_center',
+          event_data_json: {
             disposition,
             notes,
             callSessionId,
+            blocked_reason: 'recipient_not_opted_in',
+            opt_in_status: recipient?.sms_opt_in_status || 'unknown',
           },
-        },
-      });
+        });
+      } else {
+        // Recipient has opted in - proceed with condition evaluation
+        console.log('Recipient opted in, evaluating conditions');
+        
+        // Invoke evaluate-conditions function
+        const { error: evalError } = await supabase.functions.invoke('evaluate-conditions', {
+          body: {
+            recipientId: callSession.recipient_id,
+            campaignId: callSession.campaign_id,
+            eventType: 'call_completed',
+            metadata: {
+              disposition,
+              notes,
+              callSessionId,
+              opt_in_verified: true,
+            },
+          },
+        });
 
-      if (evalError) {
-        console.error('Error evaluating conditions:', evalError);
-        // Don't throw - we still want to record the disposition even if condition eval fails
+        if (evalError) {
+          console.error('Error evaluating conditions:', evalError);
+          // Don't throw - we still want to record the disposition even if condition eval fails
+        }
       }
     }
 

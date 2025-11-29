@@ -96,10 +96,20 @@ export type CampaignDraft = Tables<'campaign_drafts'>;
 export type CampaignPrototype = Tables<'campaign_prototypes'>;
 
 /**
+ * Mailing Method
+ * Determines how the campaign's mail fulfillment is handled
+ */
+export type MailingMethod = 'self' | 'ace_fulfillment';
+
+/**
  * Campaign Form Data
  * Shape of data in campaign creation wizard
  */
 export interface CampaignFormData {
+  // Step 0: Mailing Method (NEW)
+  mailing_method?: MailingMethod;
+  design_image_url?: string; // For self-mailers who upload their design
+  
   // Step 1: Setup
   name: string;
   size: MailSize;
@@ -110,6 +120,7 @@ export interface CampaignFormData {
   recipient_source?: 'list' | 'segment';
   tag_filters?: string[];
   audience_id?: string; // DEPRECATED: Legacy audience system
+  recipient_count?: number;
   
   // Step 3: Tracking & Rewards
   enableCallTracking?: boolean;

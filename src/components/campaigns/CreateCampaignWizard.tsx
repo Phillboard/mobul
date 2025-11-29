@@ -1,23 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { MailingMethodStep } from "./wizard/MailingMethodStep";
 import { CampaignSetupStep } from "./wizard/CampaignSetupStep";
 import { CodesUploadStep } from "./wizard/CodesUploadStep";
+import { UploadDesignStep } from "./wizard/UploadDesignStep";
 import { ConditionsStep } from "./wizard/ConditionsStep";
-import { LandingPageSelectionStep } from "./wizard/LandingPageSelectionStep";
-import { FormsSelectionStep } from "./wizard/FormsSelectionStep";
-import { TrackingRewardsStep } from "./wizard/TrackingRewardsStep";
+import { LandingPageFormStep } from "./wizard/LandingPageFormStep";
 import { DeliveryFulfillmentStep } from "./wizard/DeliveryFulfillmentStep";
 import { SummaryStep } from "./wizard/SummaryStep";
 import { StepIndicator } from "./wizard/StepIndicator";
 import { WizardSidebar } from "./wizard/WizardSidebar";
 import { DraftManager } from "./DraftManager";
-import type { CampaignFormData } from "@/types/campaigns";
+import type { CampaignFormData, MailingMethod } from "@/types/campaigns";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,27 +31,44 @@ export function CreateCampaignWizard({
   onOpenChange,
   clientId,
 }: CreateCampaignWizardProps) {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<CampaignFormData>>({
     name: "",
-    size: "4x6",
-    postage: "standard",
-    mail_date_mode: "asap",
+    mailing_method: undefined,
     utm_source: "directmail",
     utm_medium: "postcard",
   });
 
-  const steps = [
-    { label: "Setup", description: "Campaign basics" },
-    { label: "Codes", description: "Upload codes & contacts" },
-    { label: "Conditions", description: "Set reward triggers" },
-    { label: "Landing Page", description: "Select or create page" },
-    { label: "Forms", description: "Link forms" },
-    { label: "Delivery", description: "Mail settings" },
-    { label: "Review", description: "Confirm & create" },
-  ];
+  // Dynamic steps based on mailing method
+  const isSelfMailer = formData.mailing_method === 'self';
+  
+  const steps = useMemo(() => {
+    if (isSelfMailer) {
+      // SIMPLIFIED flow for self-mailers (most common case per Mike's requirements)
+      // They already have their designs, just need codes, conditions, and a page/form
+      return [
+        { label: "Method", description: "How you're mailing" },
+        { label: "Setup", description: "Campaign name" },
+        { label: "Codes", description: "Upload unique codes" },
+        { label: "Conditions", description: "Set reward triggers" },
+        { label: "Page/Form", description: "Landing page or form" },
+        { label: "Review", description: "Confirm & create" },
+      ];
+    }
+    // Full flow for ACE fulfillment (rare case)
+    return [
+      { label: "Method", description: "How you're mailing" },
+      { label: "Setup", description: "Campaign details" },
+      { label: "Design", description: "Upload mail design" },
+      { label: "Codes", description: "Upload unique codes" },
+      { label: "Conditions", description: "Set reward triggers" },
+      { label: "Page/Form", description: "Landing page or form" },
+      { label: "Delivery", description: "Mail settings" },
+      { label: "Review", description: "Confirm & create" },
+    ];
+  }, [isSelfMailer]);
 
   const totalSteps = steps.length;
 
@@ -61,7 +77,7 @@ export function CreateCampaignWizard({
     if (!open || currentStep === totalSteps) return;
 
     const interval = setInterval(() => {
-      if (Object.keys(formData).length > 5) {
+      if (Object.keys(formData).length > 3) {
         saveDraftMutation.mutate();
       }
     }, 30000);
@@ -105,24 +121,176 @@ export function CreateCampaignWizard({
   };
 
   const handleClose = () => {
-    setCurrentStep(1);
+    setCurrentStep(0);
     setCurrentDraftId(null);
     setFormData({
       name: "",
-      size: "4x6",
-      recipient_source: "list",
-      postage: "standard",
-      mail_date_mode: "asap",
-      lp_mode: "bridge",
+      mailing_method: undefined,
       utm_source: "directmail",
       utm_medium: "postcard",
     });
     onOpenChange(false);
   };
 
+  const handleMailingMethodSelect = (method: MailingMethod) => {
+    setFormData({ ...formData, mailing_method: method });
+  };
+
+  const handleMailingMethodNext = () => {
+    setCurrentStep(1);
+  };
+
+  // Calculate which logical step we're on based on mailing method
+  const renderStep = () => {
+    // Step 0: Always mailing method
+    if (currentStep === 0) {
+      return (
+        <MailingMethodStep
+          selectedMethod={formData.mailing_method || null}
+          onSelect={handleMailingMethodSelect}
+          onNext={handleMailingMethodNext}
+          onCancel={handleClose}
+        />
+      );
+    }
+
+    if (isSelfMailer) {
+      // Self-mailer flow: Method → Setup → Codes → Conditions → Page/Form → Review
+      switch (currentStep) {
+        case 1:
+          return (
+            <CampaignSetupStep
+              clientId={clientId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+              mailingMethod={formData.mailing_method}
+            />
+          );
+        case 2:
+          return (
+            <CodesUploadStep
+              clientId={clientId}
+              campaignId={campaignId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
+        case 3:
+          return (
+            <ConditionsStep
+              clientId={clientId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
+        case 4:
+          return (
+            <LandingPageFormStep
+              clientId={clientId}
+              campaignId={campaignId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+              designImageUrl={(formData as any).design_image_url}
+            />
+          );
+        case 5:
+          return (
+            <SummaryStep
+              formData={formData}
+              clientId={clientId}
+              recipientCount={formData.recipient_count || 0}
+              onBack={handleBack}
+              onConfirm={handleClose}
+            />
+          );
+        default:
+          return null;
+      }
+    } else {
+      // ACE fulfillment flow: Method → Setup → Design → Codes → Conditions → Page/Form → Delivery → Review
+      switch (currentStep) {
+        case 1:
+          return (
+            <CampaignSetupStep
+              clientId={clientId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+              mailingMethod={formData.mailing_method}
+            />
+          );
+        case 2:
+          return (
+            <UploadDesignStep
+              clientId={clientId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
+        case 3:
+          return (
+            <CodesUploadStep
+              clientId={clientId}
+              campaignId={campaignId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
+        case 4:
+          return (
+            <ConditionsStep
+              clientId={clientId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
+        case 5:
+          return (
+            <LandingPageFormStep
+              clientId={clientId}
+              campaignId={campaignId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+              designImageUrl={(formData as any).design_image_url}
+            />
+          );
+        case 6:
+          return (
+            <DeliveryFulfillmentStep
+              clientId={clientId}
+              initialData={formData}
+              recipientCount={formData.recipient_count || 0}
+              onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
+        case 7:
+          return (
+            <SummaryStep
+              formData={formData}
+              clientId={clientId}
+              recipientCount={formData.recipient_count || 0}
+              onBack={handleBack}
+              onConfirm={handleClose}
+            />
+          );
+        default:
+          return null;
+      }
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Create Campaign</DialogTitle>
         </DialogHeader>
@@ -130,82 +298,16 @@ export function CreateCampaignWizard({
         <StepIndicator currentStep={currentStep} steps={steps} />
 
         <div className="flex gap-6 flex-1 overflow-hidden">
-          <div className="hidden lg:block w-64 flex-shrink-0">
+          <div className="hidden lg:block w-56 flex-shrink-0">
             <WizardSidebar
               formData={formData}
-              recipientCount={0}
+              recipientCount={formData.recipient_count || 0}
               clientId={clientId}
             />
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2">
-            {currentStep === 1 && (
-              <CampaignSetupStep
-                clientId={clientId}
-                initialData={formData}
-                onNext={handleNext}
-                onCancel={handleClose}
-              />
-            )}
-
-            {currentStep === 2 && (
-              <CodesUploadStep
-                clientId={clientId}
-                campaignId={campaignId}
-                initialData={formData}
-                onNext={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 3 && (
-              <ConditionsStep
-                clientId={clientId}
-                initialData={formData}
-                onNext={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 4 && (
-              <LandingPageSelectionStep
-                clientId={clientId}
-                campaignId={campaignId}
-                initialData={formData}
-                onNext={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 5 && (
-              <FormsSelectionStep
-                clientId={clientId}
-                campaignId={campaignId}
-                initialData={formData}
-                onNext={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 6 && (
-              <DeliveryFulfillmentStep
-                clientId={clientId}
-                initialData={formData}
-                recipientCount={formData.recipient_count || 0}
-                onNext={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 7 && (
-              <SummaryStep
-                formData={formData}
-                clientId={clientId}
-                recipientCount={formData.recipient_count || 0}
-                onBack={handleBack}
-                onConfirm={handleClose}
-              />
-            )}
+            {renderStep()}
           </div>
         </div>
 

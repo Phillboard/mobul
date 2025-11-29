@@ -13,7 +13,7 @@ interface ClientMarketplaceProps {
 }
 
 export function ClientMarketplace({ clientId }: ClientMarketplaceProps) {
-  const [selectedPool, setSelectedPool] = useState<any>(null);
+  const navigate = useNavigate();
 
   const { data: availablePools, isLoading } = useQuery({
     queryKey: ["marketplace-pools", clientId],
@@ -177,7 +177,7 @@ export function ClientMarketplace({ clientId }: ClientMarketplaceProps) {
 
                       <Button
                         className="w-full"
-                        onClick={() => setSelectedPool(pool)}
+                        onClick={() => navigate(`/gift-cards/purchase/${pool.id}`)}
                         disabled={(client?.credits || 0) < (pool.sale_price_per_card || pool.card_value)}
                       >
                         <ShoppingCart className="h-4 w-4 mr-2" />
@@ -224,16 +224,6 @@ export function ClientMarketplace({ clientId }: ClientMarketplaceProps) {
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {selectedPool && (
-        <PurchasePoolDialog
-          open={!!selectedPool}
-          onOpenChange={(open) => !open && setSelectedPool(null)}
-          pool={selectedPool}
-          clientId={clientId}
-          clientBalance={client?.credits || 0}
-        />
       )}
     </div>
   );
