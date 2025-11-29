@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MessageCircle, X, Send, Calculator, Plus, HelpCircle, Headphones, History, Trash2, Clock, EyeOff, Settings } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useDrPhillipPreference, type HideDuration } from "@/hooks/useDrPhillipPreference";

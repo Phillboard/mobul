@@ -16,7 +16,7 @@ import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 import { createAuditLogColumns, AuditLogRow } from "@/components/settings/auditLogColumns";
 import { createUploadHistoryColumns, UploadHistoryRow } from "@/components/settings/uploadHistoryColumns";
-import { exportTableToCSV } from "@/lib/tableHelpers";
+import { exportTableToCSV } from '@/lib/utils/tableHelpers";
 
 export default function AdminAuditLog() {
   const [actionFilter, setActionFilter] = useState<string>("all");

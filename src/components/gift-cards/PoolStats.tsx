@@ -18,7 +18,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { formatCurrency } from '@/lib/utils/currencyUtils";
 import { PoolStats as PoolStatsType } from "@/types/giftCards";
 
 interface PoolStatsProps {

@@ -4,9 +4,9 @@
  */
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, DATE_FORMATS } from "@/lib/dateUtils";
-import { formatCurrency } from "@/lib/currencyUtils";
-import { maskCardCode } from "@/lib/giftCardUtils";
+import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
+import { formatCurrency } from '@/lib/utils/currencyUtils";
+import { maskCardCode } from '@/lib/campaign/giftCardUtils";
 
 export interface BalanceHistoryRow {
   id: string;

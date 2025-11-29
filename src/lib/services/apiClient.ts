@@ -3,7 +3,7 @@
  * Standardizes all edge function calls with consistent error handling
  */
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/services/logger';
 
 export class EdgeFunctionError extends Error {
   constructor(

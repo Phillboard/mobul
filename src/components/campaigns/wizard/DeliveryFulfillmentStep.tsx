@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { CalendarIcon, Package, DollarSign, Truck } from "lucide-react";
 import { format, addDays } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 import { useCampaignCostEstimate } from "@/hooks/useCampaignCostEstimate";
 import type { CampaignFormData } from "@/types/campaigns";
 

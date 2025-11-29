@@ -7,7 +7,7 @@ import { GiftCardRedemption, RevealSettings } from "@/types/aceForms";
 import { Share2, Download, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { logger } from "@/lib/logger";
+import { logger } from '@/lib/services/logger";
 
 interface GiftCardRevealProps {
   redemption: GiftCardRedemption;

@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, Image, X, Sparkles, ArrowRight, Info } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { CampaignFormData } from "@/types/campaigns";

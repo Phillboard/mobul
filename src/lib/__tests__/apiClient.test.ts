@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { callEdgeFunction, callPublicEdgeFunction, EdgeFunctionError } from '../apiClient';
+import { callEdgeFunction, callPublicEdgeFunction, EdgeFunctionError } from '../services/apiClient';
 import { supabase } from '@/integrations/supabase/client';
 
 // Mock Supabase

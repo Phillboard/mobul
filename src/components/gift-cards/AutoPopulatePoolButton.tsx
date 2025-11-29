@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { generateGiftCardCode, generatePIN } from "@/lib/fake-data-helpers";
+import { generateGiftCardCode, generatePIN } from '@/lib/demo/fake-data-helpers";
 
 interface AutoPopulatePoolButtonProps {
   poolId: string;

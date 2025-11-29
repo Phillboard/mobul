@@ -27,7 +27,7 @@ import {
 import { useState } from "react";
 import { BalanceHistoryWithCard } from "@/types/giftCards";
 import { createPoolBalanceHistoryColumns } from "./poolBalanceHistoryColumns";
-import { basicTableModels } from "@/lib/tableHelpers";
+import { basicTableModels } from '@/lib/utils/tableHelpers";
 
 interface PoolBalanceHistoryProps {
   history: BalanceHistoryWithCard[];

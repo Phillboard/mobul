@@ -12,7 +12,7 @@
  * - invalid_response: Orange (with warning)
  */
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 import { Check, X, AlertTriangle, Clock, Circle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { OptInStatus } from "@/hooks/useOptInStatus";

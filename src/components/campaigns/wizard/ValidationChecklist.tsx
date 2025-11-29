@@ -1,6 +1,6 @@
 import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 
 interface ValidationCheck {
   label: string;

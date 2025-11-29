@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useGiftCards } from "@/hooks/useGiftCards";
 import { useGiftCardPools } from "@/hooks/useGiftCardPools";
 import { createGiftCardInventoryColumns } from "./giftCardInventoryColumns";
-import { basicTableModels } from "@/lib/tableHelpers";
+import { basicTableModels } from '@/lib/utils/tableHelpers";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 

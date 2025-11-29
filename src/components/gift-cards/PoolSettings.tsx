@@ -36,7 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Edit2, X, Check } from "lucide-react";
 import { GiftCardPool } from "@/types/giftCards";
-import { formatCheckFrequency } from "@/lib/giftCardUtils";
+import { formatCheckFrequency } from '@/lib/campaign/giftCardUtils";
 
 interface PoolSettingsProps {
   pool: GiftCardPool;

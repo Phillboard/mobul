@@ -1,7 +1,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 
 /**
  * ThemeToggle Component

@@ -21,8 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createCallLogColumns, CallSessionRow } from "./callLogColumns";
-import { exportTableToCSV } from "@/lib/tableHelpers";
-import { formatDate, DATE_FORMATS } from "@/lib/dateUtils";
+import { exportTableToCSV } from '@/lib/utils/tableHelpers";
+import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
 
 interface CallLogTableProps {
   campaignId: string;

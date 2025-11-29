@@ -25,7 +25,7 @@ import {
 import { toast } from "sonner";
 import { MailOpen } from "lucide-react";
 import { createPendingInvitationsColumns } from "./pendingInvitationsColumns";
-import { basicTableModels } from "@/lib/tableHelpers";
+import { basicTableModels } from '@/lib/utils/tableHelpers";
 
 export function PendingInvitations() {
   const queryClient = useQueryClient();

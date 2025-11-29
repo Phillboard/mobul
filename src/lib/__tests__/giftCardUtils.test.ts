@@ -10,7 +10,7 @@ import {
   validatePoolQuantity,
   isPoolLowStock,
   formatCheckFrequency,
-} from '../giftCardUtils';
+} from '../campaign/giftCardUtils';
 
 describe('maskCardCode', () => {
   it('should mask long codes showing only last 4 digits', () => {

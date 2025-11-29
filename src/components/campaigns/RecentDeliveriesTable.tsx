@@ -20,7 +20,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createRewardDeliveriesColumns, RewardDeliveryRow } from "./rewardDeliveriesColumns";
-import { basicTableModels } from "@/lib/tableHelpers";
+import { basicTableModels } from '@/lib/utils/tableHelpers";
 
 interface RecentDeliveriesTableProps {
   campaignId: string;

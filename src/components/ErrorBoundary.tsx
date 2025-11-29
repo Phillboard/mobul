@@ -8,7 +8,7 @@ import React, { Component, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/services/logger';
 
 interface Props {
   children: ReactNode;

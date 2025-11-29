@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Upload, DollarSign, Package, TrendingUp, ShoppingCart } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from '@/lib/utils/utils';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BrandPoolsView } from "@/components/gift-cards/BrandPoolsView";

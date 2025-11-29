@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { RevealPreview } from "./RevealPreview";
 import { cardStylePresets } from "./CardStylePresets";
 import { Sparkles, Palette, Settings, MessageSquare } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 
 interface RevealDesignerProps {
   revealSettings: RevealSettings;

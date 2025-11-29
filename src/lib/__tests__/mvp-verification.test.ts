@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MVPVerification, type VerificationResult } from '../mvp-verification';
+import { MVPVerification, type VerificationResult } from '../system/mvp-verification';
 import { supabase } from '@/integrations/supabase/client';
 
 // Mock Supabase client

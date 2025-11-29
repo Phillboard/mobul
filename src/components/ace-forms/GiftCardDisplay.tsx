@@ -7,7 +7,7 @@ import { GiftCardQRCode } from "./GiftCardQRCode";
 import { SmartRedeemButton } from "./SmartRedeemButton";
 import { WalletButton } from "./WalletButton";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 
 interface GiftCardDisplayProps {
   redemption: GiftCardRedemption;

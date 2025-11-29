@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Monitor, Smartphone } from "lucide-react";
 import { FormConfig } from "@/types/aceForms";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 
 interface FormPreviewProps {
   open: boolean;

@@ -24,7 +24,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { UserPlus, Mail, Info } from "lucide-react";
 import { useInvitableRoles } from "@/hooks/useInvitableRoles";
-import { AppRole } from "@/lib/roleUtils";
+import { AppRole } from '@/lib/auth/roleUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function InviteUserDialog() {
