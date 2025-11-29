@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { createAuditLogsColumns } from "./auditLogsColumns";
-import { basicTableModels } from "@/lib/tableHelpers";
+import { basicTableModels } from '@/lib/utils/tableHelpers";
 
 interface AuditLog {
   id: string;

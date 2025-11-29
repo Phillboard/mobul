@@ -10,7 +10,7 @@ import { ContactFilters } from "@/components/contacts/ContactFilters";
 import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { seedContactsData } from "@/lib/seed-contacts-data";
+import { seedContactsData } from '@/lib/demo/seed-contacts-data";
 import { toast } from "sonner";
 import type { ContactFilters as ContactFiltersType } from "@/types/contacts";
 

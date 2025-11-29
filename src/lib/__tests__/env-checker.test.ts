@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkEnvironmentVariables, isMVPReady, generateEnvTemplate } from '../env-checker';
+import { checkEnvironmentVariables, isMVPReady, generateEnvTemplate } from '../system/env-checker';
 
 // Mock import.meta.env
 const mockEnv = {};

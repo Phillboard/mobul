@@ -11,7 +11,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, Truck, Check, Mail, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 
 export type MailingMethod = 'self' | 'ace_fulfillment';
 

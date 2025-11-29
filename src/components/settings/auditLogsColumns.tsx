@@ -4,7 +4,7 @@
  */
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, DATE_FORMATS } from "@/lib/dateUtils";
+import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
 
 export interface AuditLogRow {
   id: string;

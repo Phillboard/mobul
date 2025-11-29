@@ -4,8 +4,8 @@
  */
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, DATE_FORMATS } from "@/lib/dateUtils";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
+import { formatCurrency } from '@/lib/utils/currencyUtils";
 
 export interface DeliveryHistoryRow {
   id: string;

@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, Mail, Users, FileText, MoreHorizontal, Globe, Settings, Gift, TrendingUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import {

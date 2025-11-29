@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Send, Image as ImageIcon, Globe, Smartphone, Monitor, Tablet } from "lucide-react";
-import { generateLandingPage, analyzePosterCardImage, analyzeWebsite } from "@/lib/ai-page-generator";
+import { generateLandingPage, analyzePosterCardImage, analyzeWebsite } from '@/lib/web/ai-page-generator";
 import { toast } from "sonner";
 
 export default function AILandingPageBuilder() {

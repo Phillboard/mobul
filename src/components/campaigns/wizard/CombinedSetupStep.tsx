@@ -44,7 +44,7 @@ import {
   Info
 } from "lucide-react";
 import { format, addDays } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 import { useToast } from "@/hooks/use-toast";
 import type { CampaignFormData, MailingMethod } from "@/types/campaigns";
 

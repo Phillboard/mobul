@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { formatCurrency, calculateMarkup, calculateProfit } from '../currencyUtils';
+import { formatCurrency, calculateMarkup, calculateProfit } from '../utils/currencyUtils';
 
 describe('currencyUtils', () => {
   describe('formatCurrency', () => {

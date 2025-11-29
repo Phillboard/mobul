@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getContextualTemplates } from "@/lib/aceFormTemplates";
+import { getContextualTemplates } from '@/lib/templates/aceFormTemplates";
 import { FormTemplate } from "@/types/aceForms";
 import { useFormContext } from "@/hooks/useFormContext";
 

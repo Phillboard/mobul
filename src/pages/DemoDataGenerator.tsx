@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Play, CheckCircle, AlertCircle, Trash2, Database, Link as LinkIcon } from "lucide-react";
-import { DemoDataGenerator, type GenerationProgress } from "@/lib/demo-data-generator";
+import { DemoDataGenerator, type GenerationProgress } from '@/lib/demo/demo-data-generator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -18,7 +18,7 @@ import {
   pastDate,
   randomInt,
   randomElement,
-} from "@/lib/fake-data-helpers";
+} from '@/lib/demo/fake-data-helpers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";

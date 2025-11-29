@@ -1,6 +1,6 @@
 import { GiftCardRedemption, RevealSettings } from "@/types/aceForms";
 import { GiftCardDisplay } from "./GiftCardDisplay";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 
 interface RevealPreviewProps {
   revealSettings: RevealSettings;

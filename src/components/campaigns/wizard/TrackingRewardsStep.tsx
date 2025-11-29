@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Phone, Gift, AlertCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import { useTrackedNumbers } from "@/hooks/useCallTracking";
 import { useGiftCardPools } from "@/hooks/useGiftCardPools";
-import { validatePoolInventory } from "@/lib/campaignValidation";
+import { validatePoolInventory } from '@/lib/validation/campaignValidation";
 import type { CampaignFormData, LandingPageMode } from "@/types/campaigns";
 
 const trackingRewardsSchema = z.object({

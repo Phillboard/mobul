@@ -8,7 +8,7 @@ import { PendingInvitations } from "@/components/settings/PendingInvitations";
 import { UserFilters } from "@/components/settings/UserFilters";
 import { useManageableUsersPaginated } from "@/hooks/useManageableUsersPaginated";
 import { UserCog, Search } from "lucide-react";
-import { AppRole } from "@/lib/roleUtils";
+import { AppRole } from '@/lib/auth/roleUtils";
 import {
   useReactTable,
   getCoreRowModel,

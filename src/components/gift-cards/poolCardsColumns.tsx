@@ -6,9 +6,9 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
-import { formatCurrency } from "@/lib/currencyUtils";
-import { maskCardCode, getStatusBadgeVariant } from "@/lib/giftCardUtils";
-import { formatDate, DATE_FORMATS } from "@/lib/dateUtils";
+import { formatCurrency } from '@/lib/utils/currencyUtils";
+import { maskCardCode, getStatusBadgeVariant } from '@/lib/campaign/giftCardUtils";
+import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
 import { GiftCard } from "@/types/giftCards";
 
 export interface PoolCardRow extends GiftCard {

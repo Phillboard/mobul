@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Gift, Check } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 
 type GiftCardBrand = Tables<"gift_card_brands">;
 

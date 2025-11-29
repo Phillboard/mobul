@@ -6,8 +6,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
-import { formatDate, DATE_FORMATS } from "@/lib/dateUtils";
-import { getStatusBadgeVariant, maskCardCode } from "@/lib/giftCardUtils";
+import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
+import { getStatusBadgeVariant, maskCardCode } from '@/lib/campaign/giftCardUtils";
 
 export interface GiftCardInventoryRow {
   id: string;

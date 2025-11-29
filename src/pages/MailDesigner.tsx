@@ -9,7 +9,7 @@ import { mailGrapesJSConfig } from "@/config/grapesjs-mail.config";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, Eye, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { logger } from "@/lib/logger";
+import { logger } from '@/lib/services/logger";
 import type { GrapesJSData } from "@/types/grapesjs";
 
 export default function MailDesigner() {

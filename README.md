@@ -82,21 +82,35 @@ All documentation is located in `public/docs/`:
 
 ---
 
-## 🗃️ SQL Utility Scripts
+## 🗃️ Scripts and Utilities
 
-SQL scripts are located in `scripts/sql/`:
+### SQL Scripts (`scripts/sql/`)
 
-```
-scripts/sql/
-├── cleanup-demo-data.sql         # Remove all demo data
-├── fix-campaign-audience-links.sql   # Fix campaign-audience relationships
-├── populate-gift-card-pools.sql  # Add test cards to pools
-├── seed-complete-analytics-data.sql  # Generate analytics data
-├── seed-comprehensive-demo-data.sql  # Full demo data setup
-├── seed-default-message-templates.sql # Default SMS/email templates
-├── seed-mvp-test-data.sql        # Basic test data
-└── verify-mvp-database.sql       # Verify database setup
-```
+SQL scripts for database operations, testing, and maintenance. Run via Supabase SQL Editor.
+
+**Setup Scripts:**
+- `seed-mvp-test-data.sql` - Basic test data for development
+- `seed-comprehensive-demo-data.sql` - Complete demo environment
+- `seed-complete-analytics-data.sql` - Analytics and tracking data
+- `seed-default-message-templates.sql` - Default SMS/email templates
+- `populate-gift-card-pools.sql` - Test gift card inventory
+
+**Maintenance Scripts:**
+- `cleanup-demo-data.sql` - Remove all demo data
+- `fix-campaign-audience-links.sql` - Repair campaign relationships
+- `verify-mvp-database.sql` - Database health check
+
+See [scripts/sql/README.md](scripts/sql/README.md) for detailed documentation.
+
+### Seed Data Scripts (`scripts/seed-data/`)
+
+TypeScript modules for programmatic data generation:
+- `contacts.ts` - Contact data generation
+- `organizations.ts` - Organization hierarchies
+- `helpers.ts` - Shared utilities
+- `quick-enrich.ts` - Enrichment data
+
+Used by admin tools at `/admin/demo-data`. See [scripts/seed-data/README.md](scripts/seed-data/README.md).
 
 ---
 
@@ -189,8 +203,9 @@ npm run preview      # Preview production build
 ```
 mobul/
 ├── README.md              # This file (only .md at root)
+├── Knowledgebase/         # Project documentation and reference materials
 ├── public/
-│   └── docs/              # All documentation
+│   └── docs/              # All documentation (served to app)
 │       ├── 1-GETTING-STARTED/
 │       ├── 2-ARCHITECTURE/
 │       ├── 3-FEATURES/
@@ -198,17 +213,30 @@ mobul/
 │       ├── 5-API-REFERENCE/
 │       └── 6-USER-GUIDES/
 ├── scripts/
-│   └── sql/               # SQL utility scripts
+│   ├── sql/               # SQL utility scripts for database operations
+│   └── seed-data/         # TypeScript seed data generation scripts
 ├── src/
 │   ├── components/        # React components
 │   ├── pages/             # Route components  
 │   ├── hooks/             # Custom React hooks
-│   ├── lib/               # Utilities and helpers
+│   ├── lib/               # Organized utilities and helpers
+│   │   ├── auth/          # Authentication & authorization
+│   │   ├── campaign/      # Campaign-specific utilities
+│   │   ├── config/        # Configuration & constants
+│   │   ├── demo/          # Demo & test data generation
+│   │   ├── export/        # Export functionality
+│   │   ├── services/      # External services (API, email, logging)
+│   │   ├── system/        # System utilities (env, verification, error handling)
+│   │   ├── templates/     # Template definitions
+│   │   ├── utils/         # General utilities (currency, dates, tables)
+│   │   ├── validation/    # Validation logic & schemas
+│   │   ├── web/           # Web-specific (deep links, wallet, AI)
+│   │   └── __tests__/     # Unit tests
 │   ├── types/             # TypeScript definitions
 │   └── integrations/      # External service clients
 └── supabase/
     ├── functions/         # 66 Edge functions
-    └── migrations/        # Database migrations
+    └── migrations/        # Database migrations (106 files)
 ```
 
 ---

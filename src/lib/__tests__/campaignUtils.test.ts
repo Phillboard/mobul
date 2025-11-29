@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { getCampaignStatusColor, canEditCampaign, calculateCampaignProgress } from '../campaignUtils';
+import { getCampaignStatusColor, canEditCampaign, calculateCampaignProgress } from '../campaign/campaignUtils';
 
 describe('campaignUtils', () => {
   describe('getCampaignStatusColor', () => {

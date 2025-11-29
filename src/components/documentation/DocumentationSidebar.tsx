@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown, FileText } from "lucide-react";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 
 const docsStructure = [
   {

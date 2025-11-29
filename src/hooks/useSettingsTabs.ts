@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
-import { settingsTabs, TabConfig } from "@/lib/settingsConfig";
+import { settingsTabs, TabConfig } from '@/lib/config/settingsConfig";
 
 export function useSettingsTabs() {
   const { roles, hasAnyPermission } = useAuth();

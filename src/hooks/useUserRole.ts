@@ -7,7 +7,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AppRole, roleHierarchy } from "@/lib/roleUtils";
+import { AppRole, roleHierarchy } from '@/lib/auth/roleUtils";
 
 /**
  * Hook to get all roles for current user

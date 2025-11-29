@@ -1,4 +1,4 @@
-import { AppRole } from "@/lib/roleUtils";
+import { AppRole } from '@/lib/auth/roleUtils";
 import {
   Select,
   SelectContent,

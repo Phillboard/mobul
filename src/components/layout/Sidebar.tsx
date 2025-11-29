@@ -10,10 +10,10 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
-import { settingsTabs } from "@/lib/settingsConfig";
+import { settingsTabs } from '@/lib/config/settingsConfig";
 import { useSettingsTabs } from "@/hooks/useSettingsTabs";
 import { useMenuSearch, SearchableNavItem } from "@/hooks/useMenuSearch";
-import { AppRole } from "@/lib/roleUtils";
+import { AppRole } from '@/lib/auth/roleUtils";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar as SidebarRoot, SidebarContent, SidebarGroup, SidebarGroupContent,

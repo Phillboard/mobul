@@ -35,7 +35,7 @@ import {
   X,
   ArrowRight
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils/utils';
 import { useToast } from "@/hooks/use-toast";
 import type { CampaignFormData, MailingMethod } from "@/types/campaigns";
 

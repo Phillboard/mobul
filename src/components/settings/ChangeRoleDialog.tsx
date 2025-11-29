@@ -7,8 +7,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { AppRole, roleDisplayNames } from "@/lib/roleUtils";
-import { roleRequirements } from "@/lib/roleRequirements";
+import { AppRole, roleDisplayNames } from '@/lib/auth/roleUtils";
+import { roleRequirements } from '@/lib/auth/roleRequirements";
 import { AlertCircle } from "lucide-react";
 
 interface ChangeRoleDialogProps {

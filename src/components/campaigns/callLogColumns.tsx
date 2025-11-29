@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { CallRecordingPlayer } from "./CallRecordingPlayer";
-import { formatRelative, formatDate, DATE_FORMATS } from "@/lib/dateUtils";
+import { formatRelative, formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
 
 export interface CallSessionRow {
   id: string;
