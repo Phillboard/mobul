@@ -1,11 +1,11 @@
-# Customer Code Enrichment - Complete User Guide
+# Customer Code Enrichment Guide
 
 **For:** Users who have already sent direct mail with unique codes  
 **Goal:** Upload codes, capture customer data, enrich contacts, export enriched data
 
 ---
 
-## 🎯 What This System Does
+## What This System Does
 
 When customers receive your mail and visit your landing page:
 1. They enter their unique code (from the postcard)
@@ -17,20 +17,20 @@ When customers receive your mail and visit your landing page:
 
 ---
 
-## 📋 Prerequisites Checklist
+## Prerequisites Checklist
 
 Before starting, ensure you have:
-- ✅ Brand new account created on the platform
-- ✅ Mail already physically sent to customers
-- ✅ CSV file with your customer codes ready
-- ✅ Landing page or form ready for customers
-- ✅ Gift card pool set up (if offering rewards)
+- Brand new account created on the platform
+- Mail already physically sent to customers
+- CSV file with your customer codes ready
+- Landing page or form ready for customers
+- Gift card pool set up (if offering rewards)
 
 ---
 
-## 🚀 Complete Step-by-Step Guide
+## Complete Step-by-Step Guide
 
-### **Step 1: Log In & Initial Setup** (5 minutes)
+### Step 1: Log In & Initial Setup (5 minutes)
 
 1. **Log in** to your account at your platform URL
 2. **Select your client** from the dropdown (top navigation)
@@ -38,7 +38,7 @@ Before starting, ensure you have:
 
 ---
 
-### **Step 2: Upload Customer Codes** (10 minutes)
+### Step 2: Upload Customer Codes (10 minutes)
 
 **Current Method (Manual Import):**
 1. Go to: **Contacts** → **Import Contacts**
@@ -59,9 +59,9 @@ Before starting, ensure you have:
    - Phone → phone
 
 6. Choose import option:
-   - ☑️ **"Match existing contacts by email"** (if you have existing contacts)
-   - ☑️ **"Create new contacts for all"** (if these are new)
-   - ☑️ **"Mixed: Match existing, create new for unmatched"** (recommended)
+   - **"Match existing contacts by email"** (if you have existing contacts)
+   - **"Create new contacts for all"** (if these are new)
+   - **"Mixed: Match existing, create new for unmatched"** (recommended)
 
 7. Review preview:
    - See how many contacts will be matched
@@ -79,7 +79,7 @@ Before starting, ensure you have:
 
 ---
 
-### **Step 3: Create Landing Page** (15 minutes)
+### Step 3: Create Landing Page (15 minutes)
 
 **Option A: Use Existing Landing Page Editor**
 1. Go to: **Landing Pages** → **New Landing Page**
@@ -106,7 +106,7 @@ Before starting, ensure you have:
 
 ---
 
-### **Step 4: Create Campaign** (10 minutes)
+### Step 4: Create Campaign (10 minutes)
 
 1. Go to: **Campaigns** → **New Campaign**
 
@@ -136,7 +136,7 @@ Before starting, ensure you have:
 
 ---
 
-### **Step 5: Share Landing Page with Customers** (Ongoing)
+### Step 5: Share Landing Page with Customers (Ongoing)
 
 **On Your Mail Piece:**
 - Include QR code pointing to landing page
@@ -150,7 +150,7 @@ Before starting, ensure you have:
 
 ---
 
-### **Step 6: Monitor Customer Activity** (Real-time)
+### Step 6: Monitor Customer Activity (Real-time)
 
 **View Campaign Dashboard:**
 1. Go to: **Campaigns** → Click your campaign name
@@ -173,7 +173,7 @@ Before starting, ensure you have:
 
 ---
 
-### **Step 7: Verify Data Enrichment** (5 minutes)
+### Step 7: Verify Data Enrichment (5 minutes)
 
 **Example: Customer "John Doe" submits form**
 
@@ -200,15 +200,9 @@ Gift Card Claimed: $25 Amazon          ← NEW!
 Last Activity: Today 2:34 PM           ← UPDATED!
 ```
 
-**Check Contact Detail Page:**
-- All new fields visible
-- Enrichment timestamp shown
-- Source campaign tracked
-- Gift card status displayed
-
 ---
 
-### **Step 8: Export Enriched Data** (5 minutes)
+### Step 8: Export Enriched Data (5 minutes)
 
 **Export Options:**
 
@@ -217,16 +211,16 @@ Last Activity: Today 2:34 PM           ← UPDATED!
 2. Click **"Export"** button
 
 3. **Choose Export Type:**
-   - ☑️ **"Only Enriched Contacts"** (recommended)
-   - ☐ "All Contacts"
-   - ☐ "Contacts from Specific Campaign"
+   - **"Only Enriched Contacts"** (recommended)
+   - "All Contacts"
+   - "Contacts from Specific Campaign"
 
 4. **Select Fields to Include:**
-   - ☑️ Standard fields (name, email, phone)
-   - ☑️ Custom form data (company size, interests, etc.)
-   - ☑️ Enrichment timestamps
-   - ☑️ Campaign interaction history
-   - ☑️ Gift card redemption status
+   - Standard fields (name, email, phone)
+   - Custom form data (company size, interests, etc.)
+   - Enrichment timestamps
+   - Campaign interaction history
+   - Gift card redemption status
 
 5. **Choose Format:**
    - **CSV** - For Excel/Google Sheets
@@ -245,7 +239,7 @@ John, Doe, john@example.com, +15551234567, 50-100 employees, Construction, Roof 
 
 ---
 
-### **Step 9: API Access for Real-Time Sync** (5 minutes)
+### Step 9: API Access for Real-Time Sync (5 minutes)
 
 **Get API Key:**
 1. Go to: **Settings** → **API & Integrations**
@@ -283,31 +277,9 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
 }
 ```
 
-**Integrate with Your CRM:**
-- Use API to fetch enriched data daily
-- Auto-sync to Salesforce/HubSpot/etc.
-- Keep your CRM up-to-date automatically
-
 ---
 
-## 🧪 Testing Checklist
-
-**Test the complete workflow:**
-
-- [ ] ✅ Uploaded CSV with codes
-- [ ] ✅ Codes appeared on contacts
-- [ ] ✅ Created landing page with form
-- [ ] ✅ Created campaign linking everything
-- [ ] ✅ Tested as customer (entered code, filled form)
-- [ ] ✅ Saw form data appear on contact
-- [ ] ✅ Exported enriched data
-- [ ] ✅ Verified export includes new fields
-- [ ] ✅ Tested API endpoint
-- [ ] ✅ Received gift card (if configured)
-
----
-
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Issue: "Code not recognized"
 **Solutions:**
@@ -339,31 +311,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
 
 ---
 
-## 📊 Expected Results
-
-### After 10 Customers Redeem:
-
-**Contact Enrichment:**
-- 10 contacts with new data fields
-- Enrichment timestamps recorded
-- Source campaign tracked
-- Gift cards distributed (if applicable)
-
-**Export Data:**
-```
-Before: Name, Email, Phone (3 fields)
-After:  Name, Email, Phone + 5-10 enriched fields
-```
-
-**Data Quality:**
-- 100% accuracy (customer-provided)
-- Real-time updates
-- Audit trail maintained
-- API-accessible
-
----
-
-## 💡 Best Practices
+## Best Practices
 
 ### For Best Results:
 
@@ -388,65 +336,4 @@ After:  Name, Email, Phone + 5-10 enriched fields
    - Handle duplicates gracefully
    - Keep codes secure
    - Archive old campaigns
-
----
-
-## 🎯 Success Metrics
-
-**You'll know it's working when:**
-- ✅ Customers can redeem codes easily
-- ✅ Form data appears on contact records
-- ✅ Exports include enriched data
-- ✅ API returns updated information
-- ✅ Gift cards distribute automatically
-- ✅ Dashboard shows engagement metrics
-
----
-
-## 📞 Need Help?
-
-**Common Questions:**
-1. How do I create custom form fields?
-   - Go to Contacts → Custom Fields → Add Field
-
-2. Can I use multiple campaigns with the same codes?
-   - No, codes are unique per campaign
-
-3. How long is data retained?
-   - Forever, unless you delete it manually
-
-4. Can customers update their data?
-   - Yes, they can resubmit with same code
-
-5. Is there a limit on enrichment fields?
-   - No limit, add as many form fields as needed
-
----
-
-## 🚀 Next Steps
-
-**After successful enrichment:**
-1. Export your enriched data
-2. Import to your CRM
-3. Use for targeted follow-up
-4. Run more campaigns
-5. Repeat and refine!
-
-**Advanced Usage:**
-- Set up API integration for real-time sync
-- Create automated workflows
-- Build custom dashboards
-- Implement predictive scoring
-
----
-
-**Your enriched contact data is now your competitive advantage!** 🎉
-
-Use it wisely for better targeting, personalization, and conversion rates.
-
----
-
-*Last Updated: November 27, 2025*  
-*Version: 1.0*  
-*Status: Production Ready*
 

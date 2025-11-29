@@ -47,23 +47,56 @@ npm run dev
 ### First Time Setup:
 1. Visit `/admin/mvp-verification` to check system health
 2. Use `/admin/demo-data` to generate test data
-3. Follow `MVP_SETUP_GUIDE.md` for detailed setup
+3. See [MVP Setup Guide](public/docs/1-GETTING-STARTED/MVP_SETUP.md) for detailed setup
 
 ---
 
 ## 📚 Documentation
 
-### Essential Guides:
-- **[MVP Setup Guide](MVP_SETUP_GUIDE.md)** - Complete setup walkthrough
-- **[Campaign Testing](CAMPAIGN_TESTING_GUIDE.md)** - Test campaign workflows
-- **[Demo Data Guide](DEMO_DATA_GUIDE.md)** - Generate test data
-- **[Customer Enrichment](CUSTOMER_CODE_ENRICHMENT_GUIDE.md)** - Code enrichment workflow
-- **[Project Status](PROJECT_STATUS_REPORT.md)** - Current project state
+All documentation is located in `public/docs/`:
 
-### Technical Documentation:
-- **[Code Review](CODEBASE_REVIEW_REPORT.md)** - Code quality analysis
-- **[Security Review](RLS_SECURITY_REVIEW.md)** - Security audit
-- **[Path to 10/10](PATH_TO_10_ACHIEVEMENT_SUMMARY.md)** - Improvement roadmap
+### Getting Started:
+- **[Quick Start](public/docs/1-GETTING-STARTED/QUICKSTART.md)** - Platform quick start
+- **[MVP Setup](public/docs/1-GETTING-STARTED/MVP_SETUP.md)** - Development environment setup
+- **[First Campaign](public/docs/1-GETTING-STARTED/FIRST_CAMPAIGN.md)** - Create your first campaign
+- **[Terminology](public/docs/1-GETTING-STARTED/TERMINOLOGY.md)** - Platform terms and concepts
+
+### Features:
+- **[Campaigns](public/docs/3-FEATURES/CAMPAIGNS.md)** - Campaign management
+- **[Gift Cards](public/docs/3-FEATURES/GIFT_CARDS.md)** - Gift card system
+- **[Code Enrichment](public/docs/3-FEATURES/CODE_ENRICHMENT.md)** - Customer data enrichment
+- **[Landing Pages](public/docs/3-FEATURES/LANDING_PAGES.md)** - AI page builder
+- **[Analytics](public/docs/3-FEATURES/ANALYTICS.md)** - Reporting & dashboards
+
+### Developer Guide:
+- **[Setup](public/docs/4-DEVELOPER-GUIDE/SETUP.md)** - Development setup
+- **[Testing](public/docs/4-DEVELOPER-GUIDE/TESTING.md)** - MVP testing guide
+- **[Testing Campaigns](public/docs/4-DEVELOPER-GUIDE/TESTING_CAMPAIGNS.md)** - Campaign workflow testing
+- **[Demo Data](public/docs/4-DEVELOPER-GUIDE/DEMO_DATA.md)** - Generate test data
+- **[Deployment](public/docs/4-DEVELOPER-GUIDE/DEPLOYMENT.md)** - Production deployment
+- **[Email Setup](public/docs/4-DEVELOPER-GUIDE/EMAIL_SETUP.md)** - Resend email setup
+
+### User Guides:
+- **[Admin Guide](public/docs/6-USER-GUIDES/ADMIN_GUIDE.md)** - Platform administration
+- **[Call Center Guide](public/docs/6-USER-GUIDES/CALL_CENTER_GUIDE.md)** - Call center operations
+
+---
+
+## 🗃️ SQL Utility Scripts
+
+SQL scripts are located in `scripts/sql/`:
+
+```
+scripts/sql/
+├── cleanup-demo-data.sql         # Remove all demo data
+├── fix-campaign-audience-links.sql   # Fix campaign-audience relationships
+├── populate-gift-card-pools.sql  # Add test cards to pools
+├── seed-complete-analytics-data.sql  # Generate analytics data
+├── seed-comprehensive-demo-data.sql  # Full demo data setup
+├── seed-default-message-templates.sql # Default SMS/email templates
+├── seed-mvp-test-data.sql        # Basic test data
+└── verify-mvp-database.sql       # Verify database setup
+```
 
 ---
 
@@ -121,7 +154,7 @@ Full contact management:
 - Custom fields
 - **Data enrichment from form submissions**
 
-### 4. AI Landing Page Builder 🆕
+### 4. AI Landing Page Builder
 Generate landing pages with AI:
 - Upload postcard image for style extraction
 - Analyze website URLs for branding
@@ -151,20 +184,31 @@ npm test             # Run test suite
 npm run preview      # Preview production build
 ```
 
-### Key Directories:
+### Project Structure:
 
 ```
-src/
-├── components/      # React components
-├── pages/          # Route components  
-├── hooks/          # Custom React hooks
-├── lib/            # Utilities and helpers
-├── types/          # TypeScript definitions
-└── integrations/   # External service clients
-
-supabase/
-├── functions/      # 66 Edge functions
-└── migrations/     # 96 Database migrations
+mobul/
+├── README.md              # This file (only .md at root)
+├── public/
+│   └── docs/              # All documentation
+│       ├── 1-GETTING-STARTED/
+│       ├── 2-ARCHITECTURE/
+│       ├── 3-FEATURES/
+│       ├── 4-DEVELOPER-GUIDE/
+│       ├── 5-API-REFERENCE/
+│       └── 6-USER-GUIDES/
+├── scripts/
+│   └── sql/               # SQL utility scripts
+├── src/
+│   ├── components/        # React components
+│   ├── pages/             # Route components  
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # Utilities and helpers
+│   ├── types/             # TypeScript definitions
+│   └── integrations/      # External service clients
+└── supabase/
+    ├── functions/         # 66 Edge functions
+    └── migrations/        # Database migrations
 ```
 
 ---
@@ -179,7 +223,7 @@ supabase/
 
 ### Manual Testing:
 - Use `/admin/mvp-verification` for system checks
-- Follow `CAMPAIGN_TESTING_GUIDE.md`
+- Follow [Testing Campaigns Guide](public/docs/4-DEVELOPER-GUIDE/TESTING_CAMPAIGNS.md)
 - Test with demo accounts
 
 ### Automated Testing:
@@ -232,10 +276,7 @@ npm run build
 # Deploy dist/ to Vercel, Netlify, or your host
 ```
 
-### CI/CD:
-- GitHub Actions workflows configured
-- Automatic testing on PR
-- Automated deployment to staging
+See [Deployment Guide](public/docs/4-DEVELOPER-GUIDE/DEPLOYMENT.md) for detailed instructions.
 
 ---
 
@@ -248,7 +289,7 @@ npm run build
 4. Customers visit page → Fill form → Get gift card
 5. Export enriched contact data
 
-**Guide:** See `CUSTOMER_CODE_ENRICHMENT_GUIDE.md`
+**Guide:** See [Code Enrichment](public/docs/3-FEATURES/CODE_ENRICHMENT.md)
 
 ### For Creating New Campaigns:
 1. Create campaign via wizard
@@ -257,7 +298,7 @@ npm run build
 4. Set up gift card rewards
 5. Launch and track
 
-**Guide:** See `CAMPAIGN_TESTING_GUIDE.md`
+**Guide:** See [Testing Campaigns](public/docs/4-DEVELOPER-GUIDE/TESTING_CAMPAIGNS.md)
 
 ---
 
@@ -281,7 +322,7 @@ npm run build       # Verify builds
 
 ### Getting Help:
 - Check `/admin/mvp-verification` for system status
-- Review documentation in `/docs`
+- Review documentation in `public/docs/`
 - Use in-app help (Dr. Phillip chat)
 
 ### Known Limitations:
@@ -315,17 +356,6 @@ npm run build       # Verify builds
 
 ---
 
-## 🏆 Achievements
-
-Built in collaboration with AI:
-- From concept to production in record time
-- 9/10 quality score achieved
-- Comprehensive feature set
-- Production-grade security
-- Excellent performance
-
----
-
 ## 📄 License
 
 Copyright © 2025 ACE Engage Platform
@@ -334,4 +364,4 @@ Copyright © 2025 ACE Engage Platform
 
 **Ready to transform direct mail marketing!** 🚀
 
-For detailed setup and usage, see the documentation guides linked above.
+For detailed setup and usage, see the documentation in `public/docs/`.

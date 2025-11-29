@@ -290,7 +290,7 @@ async function sendGiftCard(
 async function sendSMS(supabase: any, recipientId: string, condition: any, triggerId: string) {
   const { data: recipient } = await supabase
     .from('recipients')
-    .select('phone, first_name')
+    .select('phone, first_name, campaign_id')
     .eq('id', recipientId)
     .single();
 
@@ -300,8 +300,97 @@ async function sendSMS(supabase: any, recipientId: string, condition: any, trigg
 
   const message = condition.sms_template || 'Thank you for your response!';
   
-  // TODO: Implement actual SMS sending
-  console.log('SMS would be sent to:', recipient.phone, 'Message:', message);
+  // Format phone number for Twilio (E.164 format)
+  const formattedPhone = recipient.phone.startsWith('+') 
+    ? recipient.phone 
+    : `+1${recipient.phone.replace(/\D/g, '')}`;
+
+  // Get Twilio credentials
+  const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
+
+  if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
+    throw new Error('Twilio credentials not configured');
+  }
+
+  // Log SMS attempt to sms_delivery_log
+  const { data: logEntry, error: logError } = await supabase
+    .from('sms_delivery_log')
+    .insert({
+      recipient_id: recipientId,
+      campaign_id: recipient.campaign_id,
+      phone_number: formattedPhone,
+      message_body: message,
+      delivery_status: 'pending',
+      retry_count: 0,
+    })
+    .select()
+    .single();
+
+  if (logError) {
+    console.error('Failed to create SMS delivery log:', logError);
+  }
+
+  // Send SMS via Twilio API
+  const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+  const auth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+
+  const twilioResponse = await fetch(twilioUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${auth}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+      To: formattedPhone,
+      From: twilioPhoneNumber,
+      Body: message,
+    }),
+  });
+
+  const twilioData = await twilioResponse.json();
+
+  if (!twilioResponse.ok) {
+    console.error('Twilio error:', twilioData);
+    
+    // Update SMS delivery log with failure
+    if (logEntry) {
+      await supabase
+        .from('sms_delivery_log')
+        .update({
+          delivery_status: 'failed',
+          error_message: twilioData.message || 'Unknown Twilio error',
+          last_retry_at: new Date().toISOString(),
+        })
+        .eq('id', logEntry.id);
+    }
+
+    throw new Error(`Twilio API error: ${twilioData.message}`);
+  }
+
+  console.log('SMS sent successfully:', twilioData.sid);
+
+  // Update SMS delivery log with success
+  if (logEntry) {
+    await supabase
+      .from('sms_delivery_log')
+      .update({
+        delivery_status: 'sent',
+        twilio_message_sid: twilioData.sid,
+        delivered_at: new Date().toISOString(),
+      })
+      .eq('id', logEntry.id);
+  }
+
+  // Update trigger with SMS info
+  await supabase
+    .from('condition_triggers')
+    .update({ 
+      sms_message_sid: twilioData.sid,
+      metadata_json: { sms_sent: true, phone: formattedPhone }
+    })
+    .eq('id', triggerId);
 }
 
 async function triggerWebhook(

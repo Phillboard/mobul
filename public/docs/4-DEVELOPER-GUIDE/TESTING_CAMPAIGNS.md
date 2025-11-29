@@ -4,10 +4,10 @@ This guide walks you through testing the complete campaign workflow from creatio
 
 ## Prerequisites
 
-✅ Run MVP Verification first: `/admin/mvp-verification`
-✅ Test data seeded successfully
-✅ Twilio configured for SMS
-✅ User assigned to test client
+- Run MVP Verification first: `/admin/mvp-verification`
+- Test data seeded successfully
+- Twilio configured for SMS
+- User assigned to test client
 
 ---
 
@@ -34,8 +34,8 @@ Click **Next** →
 - Contact List: `Test Contact List`
 
 The wizard should show:
-- ✅ 10 contacts selected
-- ✅ Preview of first few contacts
+- 10 contacts selected
+- Preview of first few contacts
 
 Click **Next** →
 
@@ -66,13 +66,13 @@ Review all settings and click **Create Campaign**
 
 ### Expected Results:
 
-✅ Success message displayed
-✅ Redirected to campaign detail page
-✅ Campaign status is `draft`
-✅ Audience created with 10 recipients
-✅ Each recipient has unique token
-✅ Condition configured
-✅ Reward config linked to pool
+- Success message displayed
+- Redirected to campaign detail page
+- Campaign status is `draft`
+- Audience created with 10 recipients
+- Each recipient has unique token
+- Condition configured
+- Reward config linked to pool
 
 ### Verification Queries:
 
@@ -132,11 +132,11 @@ LIMIT 1;
 
 ### Expected Results:
 
-✅ Gift card provisioned message
-✅ Card details displayed (code, number, PIN)
-✅ SMS sent to recipient phone
-✅ Gift card status changed to `claimed`
-✅ Delivery record created
+- Gift card provisioned message
+- Card details displayed (code, number, PIN)
+- SMS sent to recipient phone
+- Gift card status changed to `claimed`
+- Delivery record created
 
 ### Method B: Via Edge Function (Direct API)
 
@@ -172,14 +172,6 @@ const { data, error } = await supabase.functions.invoke('evaluate-conditions', {
 console.log('Result:', data, error);
 ```
 
-### Expected Results:
-
-✅ Function returns success
-✅ Gift card claimed from pool
-✅ Delivery record created
-✅ SMS sent (if Twilio configured)
-✅ Condition status marked as `completed`
-
 ### Verification Queries:
 
 ```sql
@@ -204,16 +196,6 @@ FROM gift_card_deliveries gcd
 JOIN recipients r ON gcd.recipient_id = r.id
 ORDER BY gcd.created_at DESC
 LIMIT 1;
-
--- Check condition status
-SELECT * FROM recipient_condition_status
-WHERE recipient_id = '<RECIPIENT_ID>'
-ORDER BY completed_at DESC;
-
--- Check trigger log
-SELECT * FROM condition_triggers
-WHERE recipient_id = '<RECIPIENT_ID>'
-ORDER BY created_at DESC;
 ```
 
 ---
@@ -240,10 +222,10 @@ console.log('SMS Result:', data, error);
 
 ### Expected Results:
 
-✅ SMS sent successfully
-✅ Twilio SID returned
-✅ Delivery status updated to `sent`
-✅ Recipient receives SMS with card details
+- SMS sent successfully
+- Twilio SID returned
+- Delivery status updated to `sent`
+- Recipient receives SMS with card details
 
 ### Twilio Console Verification:
 
@@ -280,11 +262,11 @@ LIMIT 1;
 
 ### Expected Results:
 
-✅ Page loads successfully
-✅ Personalized greeting with recipient name
-✅ Landing page content displays
-✅ PURL visit tracked in database
-✅ Forms (if present) are functional
+- Page loads successfully
+- Personalized greeting with recipient name
+- Landing page content displays
+- PURL visit tracked in database
+- Forms (if present) are functional
 
 ### Verification Queries:
 
@@ -294,11 +276,6 @@ SELECT * FROM events
 WHERE event_type = 'purl_visit'
 AND recipient_id = '<RECIPIENT_ID>'
 ORDER BY created_at DESC;
-
--- Or check tracking table if you have one
-SELECT * FROM purl_visits
-WHERE recipient_id = '<RECIPIENT_ID>'
-ORDER BY visited_at DESC;
 ```
 
 ---
@@ -328,11 +305,11 @@ LIMIT 1;
 
 ### Expected Results:
 
-✅ Page loads successfully
-✅ Card code visible
-✅ Card value displayed
-✅ Brand logo shown (if available)
-✅ "Add to Wallet" buttons present (Apple/Google)
+- Page loads successfully
+- Card code visible
+- Card value displayed
+- Brand logo shown (if available)
+- "Add to Wallet" buttons present (Apple/Google)
 
 ---
 
@@ -416,17 +393,11 @@ All queries should complete in < 100ms for test data sets.
 
 ## Next Steps After Successful Testing
 
-1. ✅ Scale test with larger contact lists (100+)
-2. ✅ Test concurrent gift card provisioning
-3. ✅ Load test PURL pages
-4. ✅ Test edge cases (empty pool, invalid tokens)
-5. ✅ Configure production Twilio credentials
-6. ✅ Set up monitoring and alerts
-7. ✅ Document production deployment checklist
-
----
-
-**Testing Checklist Complete!** 🎉
-
-Your MVP is ready for production when all tests pass.
+1. Scale test with larger contact lists (100+)
+2. Test concurrent gift card provisioning
+3. Load test PURL pages
+4. Test edge cases (empty pool, invalid tokens)
+5. Configure production Twilio credentials
+6. Set up monitoring and alerts
+7. Document production deployment checklist
 
