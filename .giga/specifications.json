@@ -1,22 +1,22 @@
 [
   {
     "fileName": "main-overview.mdc",
-    "description": "Complete system overview covering the campaign management platform architecture, gift card reward system, and core business workflows"
+    "description": "Complete system overview covering the campaign management platform architecture, gift card distribution system, and key business workflows"
   },
   {
     "fileName": "campaign-workflow-model.mdc",
-    "description": "Detailed documentation of campaign creation workflow, validation rules, cost calculations, and condition-based reward triggers"
+    "description": "Detailed documentation of the campaign creation workflow, approval processes, and condition management system including data models and state transitions"
   },
   {
     "fileName": "gift-card-management.mdc",
-    "description": "Comprehensive documentation of gift card pool management system, including inventory tracking, balance verification, and reward delivery workflows"
+    "description": "Comprehensive documentation of the gift card pool system, including inventory management algorithms, provisioning logic, and reconciliation processes"
+  },
+  {
+    "fileName": "redemption-workflow.mdc",
+    "description": "End-to-end documentation of the gift card redemption workflow including verification steps, opt-in processes, and delivery mechanisms"
   },
   {
     "fileName": "data-models-relationships.mdc",
-    "description": "Complete documentation of data models and relationships between campaigns, gift cards, organizations, users, and recipients"
-  },
-  {
-    "fileName": "reward-algorithms.mdc",
-    "description": "Detailed documentation of reward distribution algorithms, condition evaluation logic, and automated trigger systems"
+    "description": "Core data models and their relationships covering campaigns, gift cards, contacts, organizations, and role-based permissions"
   }
 ]
