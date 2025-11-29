@@ -1,0 +1,82 @@
+---
+description: Rules and specifications for implementing gift card redemption workflows including verification, opt-in, and delivery processes
+---
+
+
+# redemption-workflow
+
+## Core Redemption Flow
+Path: src/components/call-center/CallCenterRedemptionPanel.tsx
+Importance Score: 95
+
+Multi-stage redemption process:
+1. Code Validation
+- Checks recipient code against campaign database
+- Validates campaign-specific redemption rules
+- Confirms code hasn't been previously redeemed
+
+2. SMS Opt-in Verification
+- Sends opt-in request via SMS
+- Tracks 5 status states: not_sent, pending, opted_in, opted_out, invalid
+- Manages opt-in expiration with 24-hour timeout
+- Handles retry logic with maximum 3 attempts
+
+3. Contact Method Selection
+- Validates phone/email format
+- Handles DNC (Do Not Contact) list checking
+- Manages carrier validation for SMS delivery
+
+4. Condition Verification
+- Campaign-specific completion requirements
+- Multi-condition support (call completion, form submission)
+- Real-time condition status tracking
+
+5. Card Delivery
+- Pool-based card allocation
+- Delivery method routing (SMS/email)
+- Fallback handling for failed deliveries
+- Digital wallet pass generation
+
+## Gift Card Display System
+Path: src/components/ace-forms/GiftCardDisplay.tsx
+Importance Score: 85
+
+- Animated card reveal on successful redemption
+- Digital wallet integration (Apple/Google)
+- QR code generation for in-store redemption
+- Brand-specific deep linking
+- Balance display masking for security
+
+## Opt-in Management
+Path: src/components/call-center/OptInStatusIndicator.tsx
+Importance Score: 80
+
+- Real-time opt-in status monitoring
+- Response validation with keyword matching
+- Status transition management
+- Compliance tracking for opt-in requirements
+- Auto-retry scheduling for failed attempts
+
+## Script Management
+Path: src/components/call-center/ScriptPanel.tsx
+Importance Score: 75
+
+- Dynamic script selection based on workflow stage
+- Customer data interpolation
+- Compliance text requirements
+- Version control for approved scripts
+- Language variants for multi-lingual support
+
+## Form Conditional Logic
+Path: src/components/ace-forms/ConditionalLogicBuilder.tsx
+Importance Score: 70
+
+- Dynamic field visibility rules
+- Multi-condition evaluation
+- Required field validation
+- Campaign-specific form customization
+- Response tracking for completion status
+
+$END$
+
+ If you're using this file in context, clearly say in italics in one small line that "Context added by Giga redemption-workflow" along with specifying exactly what information was used from this file in a human-friendly way, instead of using kebab-case use normal sentence case.
