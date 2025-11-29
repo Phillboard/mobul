@@ -10,56 +10,57 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-CAMPAIGN MANAGEMENT SYSTEM
+Direct Mail Marketing Platform Architecture
 
-Core Business Components:
+Core Business Domains:
 
-1. Campaign Creation and Management (Importance: 95)
-- Four-stage campaign workflow:
-  - Mailing method selection (self/ACE fulfillment)
-  - Combined setup (codes, conditions, delivery)
-  - Design integration
-  - Review/validation
-- Multi-condition reward triggers with validation
-- Integrated QR code and PURL tracking
-- Cost calculation system for print, postage, and rewards
+1. Campaign Management (Importance: 95)
+- Multi-step campaign creation workflow with mailer/ACE fulfillment paths
+- Condition-based reward triggering system 
+- Cost calculation combining print, postage, and gift card expenses
+- Campaign validation with inventory and budget checks
 
 2. Gift Card Operations (Importance: 90)
-- Pool-based inventory management with health monitoring
-- Multi-provider provisioning (CSV inventory, API fallback)
-- Real-time balance validation and reconciliation
-- Custom pricing models with profit calculations
-- Digital wallet pass generation (Apple/Google)
+- Dual-mode card provisioning (CSV pools and API providers)
+- Real-time balance verification and threshold monitoring
+- Automated pool health assessment with three-tier status
+- Client wallet and purchase management
 
 3. Call Center Integration (Importance: 85)
-- Real-time opt-in status verification
-- Script generation based on campaign stage
-- Gift card redemption workflow management
-- Call disposition tracking and reward triggering
-- Verification rules for recipient validation
+- SMS opt-in verification workflow
+- Call outcome tracking with disposition codes
+- Real-time condition monitoring for rewards
+- Agent-assisted code redemption process
 
-4. Analytics and Tracking (Importance: 80)
-- Campaign performance metrics with geographic distribution
-- Conversion tracking across channels (mail, QR, form)
-- IMB (Intelligent Mail Barcode) delivery tracking
-- Timeline-based analysis with campaign milestones
-- Real-time condition completion monitoring
+4. Form & Landing Page System (Importance: 80)
+- AI-powered form generation with industry context
+- Progressive reward reveal mechanics
+- Dynamic content based on recipient status
+- Multi-channel tracking (QR, PURL, IMB)
 
-5. Client/Agency Management (Importance: 75)
-- Multi-tenant organization hierarchy
-- Role-based access control with inheritance
-- Client-specific branding and configuration
-- Custom pricing rules and pool allocation
-- Cross-organization user management
+Key Integration Points:
 
-Core Business Workflows:
-- Campaign lifecycle management from creation to completion
-- Gift card distribution with multi-channel delivery
-- Call center verification and reward fulfillment
-- Performance tracking and analytics
-- Multi-level client organization management
+1. Reward Distribution Hub (supabase/functions/provision-gift-card-from-api)
+- Unified interface for multiple gift card providers
+- Atomic claiming with inventory management
+- Status tracking and balance verification
 
-The system implements a comprehensive direct mail campaign platform with integrated gift card rewards, focusing heavily on tracking, verification, and multi-channel delivery mechanisms.
+2. Condition Evaluation Engine (src/lib/campaign/campaignUtils.ts)
+- Sequential condition processing
+- Multi-trigger support (calls, forms, time delays)
+- Reward qualification tracking
+
+3. Cost Calculation System (src/components/campaigns/wizard/SummaryStep.tsx)
+- Print cost models by size/class
+- Redemption rate predictions
+- Service fee calculations
+- Margin analysis
+
+Organization Model:
+- Multi-tenant hierarchy (Platform -> Agency -> Organization -> Client)
+- Industry-specific vertical support (roofing, REI, auto services)
+- Role-based access with inheritance
+- Client wallet and pool management
 
 $END$
 
