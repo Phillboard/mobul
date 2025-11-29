@@ -204,5 +204,5 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 
 SELECT '✅ Test data seeded successfully' as status;
-SELECT 'Run verify-mvp-database.sql to check results' as next_step;
+SELECT 'Run scripts/sql/verify-mvp-database.sql to check results' as next_step;
 

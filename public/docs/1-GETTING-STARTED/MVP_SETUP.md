@@ -4,7 +4,7 @@
 
 Follow these steps to get your ACE Engage platform ready for running campaigns with gift card rewards.
 
-### ✅ Prerequisites
+### Prerequisites
 
 - [ ] Node.js 18+ installed
 - [ ] Supabase project created
@@ -61,21 +61,21 @@ Or via Supabase Dashboard:
 Run the seed script to create test organizations, clients, and gift cards:
 
 1. Open Supabase SQL Editor
-2. Run the contents of: `seed-mvp-test-data.sql`
+2. Run the contents of: `scripts/sql/seed-mvp-test-data.sql`
 
 This will create:
-- ✅ Gift card brands (Amazon, Starbucks, etc.)
-- ✅ Test organization & client
-- ✅ Test gift card pool with 20 cards
-- ✅ Test contact list with 10 contacts
-- ✅ Test template
+- Gift card brands (Amazon, Starbucks, etc.)
+- Test organization & client
+- Test gift card pool with 20 cards
+- Test contact list with 10 contacts
+- Test template
 
 ### 2.3 Verify Database
 
 Run the verification script:
 
 1. Open Supabase SQL Editor
-2. Run: `verify-mvp-database.sql`
+2. Run: `scripts/sql/verify-mvp-database.sql`
 3. Check that all tables exist and have data
 
 ---
@@ -163,11 +163,11 @@ Go to: **/campaigns/new**
 ### 6.3 Verify Campaign Created
 
 Check that:
-- ✅ Campaign appears in campaigns list
-- ✅ Status is "draft"
-- ✅ Recipients were generated
-- ✅ Condition is configured
-- ✅ Reward config is linked
+- Campaign appears in campaigns list
+- Status is "draft"
+- Recipients were generated
+- Condition is configured
+- Reward config is linked
 
 ---
 
@@ -199,39 +199,10 @@ const { data, error } = await supabase.functions.invoke('evaluate-conditions', {
 ### 7.2 Verify Gift Card Delivery
 
 Check:
-- ✅ Gift card status changed from 'available' to 'claimed'
-- ✅ Delivery record created in `gift_card_deliveries`
-- ✅ SMS sent to recipient phone number
-- ✅ Recipient can view card via PURL
-
----
-
-## Step 8: Test PURL Landing Page
-
-### 8.1 Get Recipient Token
-
-Query database for a test recipient:
-
-```sql
-SELECT token, first_name, last_name
-FROM recipients
-WHERE audience_id IN (
-  SELECT audience_id FROM campaigns WHERE name = 'Test Campaign'
-)
-LIMIT 1;
-```
-
-### 8.2 Visit PURL
-
-Navigate to:
-```
-http://localhost:8081/c/<CAMPAIGN_ID>/<TOKEN>
-```
-
-Verify:
-- ✅ Page loads with personalized content
-- ✅ PURL visit is tracked
-- ✅ Form submissions (if any) trigger conditions
+- Gift card status changed from 'available' to 'claimed'
+- Delivery record created in `gift_card_deliveries`
+- SMS sent to recipient phone number
+- Recipient can view card via PURL
 
 ---
 
@@ -247,7 +218,7 @@ npx supabase db reset
 
 ### Issue: No gift cards available
 
-**Solution:** Run seed script `seed-mvp-test-data.sql`
+**Solution:** Run seed script `scripts/sql/seed-mvp-test-data.sql`
 
 ### Issue: SMS not sending
 
@@ -285,14 +256,14 @@ npx supabase functions deploy
 
 Your MVP is ready when:
 
-✅ All database tables exist with test data
-✅ Environment variables configured
-✅ Gift card pool has available cards
-✅ Can create campaign through wizard
-✅ Conditions trigger gift card provisioning
-✅ SMS delivery works
-✅ PURL pages load correctly
-✅ Recipients can view gift cards
+- All database tables exist with test data
+- Environment variables configured
+- Gift card pool has available cards
+- Can create campaign through wizard
+- Conditions trigger gift card provisioning
+- SMS delivery works
+- PURL pages load correctly
+- Recipients can view gift cards
 
 ---
 
@@ -306,15 +277,6 @@ Once MVP is working:
 4. **Set Up Call Tracking:** Configure Twilio webhooks
 5. **Test Full Workflow:** End-to-end campaign
 6. **Configure Production:** Update environment for prod
-
----
-
-## Support
-
-- **Documentation:** http://localhost:8081/docs
-- **API Reference:** http://localhost:8081/api-docs
-- **System Health:** http://localhost:8081/admin/system-health
-- **MVP Verification:** http://localhost:8081/admin/mvp-verification
 
 ---
 
@@ -341,9 +303,4 @@ Once MVP is working:
 - `claim-and-provision-card` - Get card from pool
 - `send-gift-card-sms` - Send via Twilio
 - `handle-purl` - Track PURL visits
-
----
-
-**Last Updated:** November 2025
-**Version:** 1.0.0
 

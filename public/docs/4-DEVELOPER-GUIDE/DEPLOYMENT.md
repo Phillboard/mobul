@@ -1,6 +1,6 @@
 # MVP Production Deployment Guide
 
-## 🚀 Deployment Steps
+## Deployment Steps
 
 ### Step 1: Deploy Edge Functions (5 minutes)
 
@@ -112,12 +112,6 @@ Test the new gift card pages:
 ### Step 6: Fix Data Issues (5 minutes)
 
 #### Link Campaigns to Audiences:
-```bash
-# Option A: Use UI
-# Navigate to /admin/data-simulation
-# Click "Link Campaigns to Audiences" button
-
-# Option B: Run SQL
 ```sql
 UPDATE campaigns c
 SET audience_id = (
@@ -130,14 +124,9 @@ WHERE audience_id IS NULL;
 ```
 
 #### Populate Gift Card Pools:
-```bash
-# Option A: Navigate to /admin/data-simulation
-# Use "Generate Demo Data" feature
-
-# Option B: Upload cards manually
-# Navigate to /gift-cards/purchase
-# Upload CSV with gift cards
-```
+- Navigate to /admin/data-simulation
+- Use "Generate Demo Data" feature
+- Or upload cards manually via CSV
 
 ### Step 7: Run MVP Verification (5 minutes)
 
@@ -150,16 +139,16 @@ WHERE audience_id IS NULL;
 
 ---
 
-## ✅ Deployment Checklist
+## Deployment Checklist
 
 ### Pre-Deployment
-- [x] All code changes committed
-- [x] Email templates created
-- [x] Email edge function created
-- [x] Database migration created
-- [x] New pages created
-- [x] Routes updated
-- [x] Navigation updated
+- [ ] All code changes committed
+- [ ] Email templates created
+- [ ] Email edge function created
+- [ ] Database migration created
+- [ ] New pages created
+- [ ] Routes updated
+- [ ] Navigation updated
 
 ### Deployment
 - [ ] Edge functions deployed
@@ -190,7 +179,7 @@ WHERE audience_id IS NULL;
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Email Not Sending
 1. Check `RESEND_API_KEY` is set correctly
@@ -211,57 +200,13 @@ WHERE audience_id IS NULL;
 
 ---
 
-## 📊 Success Metrics
+## Success Metrics
 
 After deployment, verify:
-- ✅ Email delivery rate > 95%
-- ✅ Page load time < 2 seconds
-- ✅ Zero console errors
-- ✅ All gift card workflows functional
-- ✅ Campaign analytics displaying
-- ✅ Pool inventory accurate
-
----
-
-## 🎉 Post-Deployment
-
-### Monitor
-1. Check Resend dashboard for email delivery stats
-2. Monitor `email_delivery_logs` table
-3. Watch for user feedback
-4. Check error logs in Supabase
-
-### Optimize
-1. Adjust email templates based on feedback
-2. Optimize page performance if needed
-3. Add more test data as required
-4. Update documentation with learnings
-
----
-
-## 📝 Notes
-
-**Email Provider Options:**
-- Resend (recommended) - Simple, modern, great DX
-- SendGrid - Enterprise, more features
-- AWS SES - Cheapest, more complex
-- Mailgun - Good middle ground
-
-**Cost Estimates:**
-- Resend: Free for 3,000 emails/month, then $20/month for 50k
-- SendGrid: Free for 100 emails/day, then paid plans
-- AWS SES: $0.10 per 1,000 emails
-
-**Resend Benefits:**
-- Simple API
-- Great documentation
-- Built for developers
-- Excellent deliverability
-- Real-time webhooks
-- Email testing in development
-
----
-
-*Generated: MVP Production Deployment Guide*
-*Context improved by Giga AI - Uses reward distribution flow documentation*
+- Email delivery rate > 95%
+- Page load time < 2 seconds
+- Zero console errors
+- All gift card workflows functional
+- Campaign analytics displaying
+- Pool inventory accurate
 
