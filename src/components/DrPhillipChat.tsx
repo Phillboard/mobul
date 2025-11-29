@@ -2,11 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, X, Send, Calculator, Plus, HelpCircle, Headphones, History, Trash2 } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { MessageCircle, X, Send, Calculator, Plus, HelpCircle, Headphones, History, Trash2, Clock, EyeOff, Settings } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useDrPhillipPreference, type HideDuration } from "@/hooks/useDrPhillipPreference";
+import { useNavigate } from "react-router-dom";
 
 type Message = {
   role: "user" | "assistant";
@@ -33,6 +43,8 @@ type DrPhillipChatRow = {
 };
 
 export function DrPhillipChat() {
+  const navigate = useNavigate();
+  const { isEnabled, isHidden, hideFor } = useDrPhillipPreference();
   const [isOpen, setIsOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -43,6 +55,29 @@ export function DrPhillipChat() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Don't render if disabled or hidden
+  if (!isEnabled || isHidden) {
+    return null;
+  }
+
+  const handleHide = (duration: HideDuration) => {
+    hideFor(duration);
+    setIsOpen(false);
+    const durationText = {
+      "1hour": "1 hour",
+      "1day": "1 day",
+      "1week": "1 week",
+      "forever": "permanently",
+    }[duration];
+    toast.info(`Dr. Phillip hidden for ${durationText}`, {
+      description: "You can reactivate in Settings → General → Chat Assistant",
+      action: {
+        label: "Settings",
+        onClick: () => navigate("/settings/general"),
+      },
+    });
+  };
 
   // Load chat sessions from database
   useEffect(() => {
@@ -388,14 +423,49 @@ export function DrPhillipChat() {
             >
               <History className="h-5 w-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-white/10"
-            >
-              <X className="h-5 w-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white hover:bg-white/10"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => setIsOpen(false)}>
+                  <X className="h-4 w-4 mr-2" />
+                  Close Chat
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground font-normal">
+                  <EyeOff className="h-4 w-4" />
+                  Hide Dr. Phillip
+                </DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleHide("1hour")}>
+                  <Clock className="h-4 w-4 mr-2" />
+                  Hide for 1 hour
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleHide("1day")}>
+                  <Clock className="h-4 w-4 mr-2" />
+                  Hide for 1 day
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleHide("1week")}>
+                  <Clock className="h-4 w-4 mr-2" />
+                  Hide for 1 week
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleHide("forever")} className="text-destructive">
+                  <EyeOff className="h-4 w-4 mr-2" />
+                  Hide forever
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/settings/general")}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

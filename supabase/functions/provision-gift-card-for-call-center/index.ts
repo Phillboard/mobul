@@ -114,6 +114,46 @@ serve(async (req) => {
 
     console.log(`[PROVISION-CC] Found recipient: ${recipient.id}, status: ${recipient.approval_status}`);
 
+    // VALIDATION: Check SMS opt-in status
+    const smsOptInStatus = recipient.sms_opt_in_status;
+    console.log(`[PROVISION-CC] SMS opt-in status: ${smsOptInStatus}`);
+
+    // Block provisioning if recipient has not opted in (unless status is not_sent which means opt-in wasn't required)
+    if (smsOptInStatus && smsOptInStatus !== 'opted_in' && smsOptInStatus !== 'not_sent') {
+      if (smsOptInStatus === 'opted_out') {
+        console.warn(`[PROVISION-CC] Recipient ${recipient.id} opted out, blocking provisioning`);
+        return new Response(JSON.stringify({ 
+          error: "OPT_OUT",
+          message: "This customer has opted out of marketing messages and cannot receive a gift card."
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+      
+      if (smsOptInStatus === 'pending') {
+        console.warn(`[PROVISION-CC] Recipient ${recipient.id} opt-in pending, blocking provisioning`);
+        return new Response(JSON.stringify({ 
+          error: "OPT_IN_PENDING",
+          message: "Customer has not yet confirmed opt-in. Please wait for them to reply YES to the opt-in SMS."
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+
+      if (smsOptInStatus === 'invalid_response') {
+        console.warn(`[PROVISION-CC] Recipient ${recipient.id} invalid opt-in response`);
+        return new Response(JSON.stringify({ 
+          error: "OPT_IN_INVALID",
+          message: "Customer did not respond correctly to opt-in. Ask them to reply YES to continue."
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        });
+      }
+    }
+
     // Check if already redeemed
     if (recipient.approval_status === "redeemed" && recipient.gift_card_assigned_id) {
       console.log("[PROVISION-CC] Code already redeemed, returning existing card");
@@ -488,8 +528,35 @@ serve(async (req) => {
             }
           }
         } else if (deliveryEmail) {
-          // TODO: Implement email delivery
-          console.log(`[PROVISION-CC] Email delivery to ${deliveryEmail} - not yet implemented`);
+          console.log(`[PROVISION-CC] Sending email to ${deliveryEmail}`);
+          
+          try {
+            const { error: emailError } = await supabaseAdmin.functions.invoke('send-gift-card-email', {
+              body: {
+                giftCardId: giftCard.id,
+                recipientEmail: deliveryEmail,
+                recipientName: recipient.first_name || recipientData.name,
+                giftCardCode: giftCard.card_code,
+                giftCardValue: value,
+                brandName: brand?.brand_name,
+                brandLogoUrl: brand?.logo_url,
+                redemptionInstructions: brand?.redemption_instructions,
+                balanceCheckUrl: brand?.balance_check_url,
+                recipientId: recipient.id,
+                campaignId: campaign.id,
+              },
+            });
+
+            if (emailError) {
+              console.error('[PROVISION-CC] Email delivery error:', emailError);
+              // Don't fail the whole request if email fails, just log it
+            } else {
+              console.log('[PROVISION-CC] Email sent successfully');
+            }
+          } catch (emailErr) {
+            console.error('[PROVISION-CC] Email delivery exception:', emailErr);
+            // Continue even if email fails
+          }
         }
       } catch (deliveryError) {
         console.error("[PROVISION-CC] Delivery error:", deliveryError);

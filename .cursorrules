@@ -10,48 +10,56 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Core Marketing Platform Architecture
+Direct Mail Marketing Platform with Integrated Reward Management
 
-1. Campaign Management System
-- Gift card reward distribution logic integrating call tracking, validation, and delivery
-- Multi-step approval workflows with rejection handling and change requests
-- Complex reward trigger system based on verified phone calls and form submissions
-- Real-time tracking metrics for campaign health and engagement
-- Call analytics with status-based categorization and outcome tracking
+Core Business Domains:
 
-2. Gift Card Infrastructure
-src/features/gift-cards/lib/utils.ts
-- Pool health monitoring with warning/critical thresholds 
-- Inventory utilization tracking and auto-replenishment
-- Multi-provider integration (Tango, Giftbit, Rybbon)
-- Profit margin calculations and cost basis tracking
-- Brand-specific delivery and redemption rules
+1. Campaign Management Core (90/100)
+src/components/campaigns/wizard/CombinedSetupStep.tsx
+- Multi-path campaign workflow (self-mailer vs ACE fulfillment)
+- Gift card pool allocation with validation 
+- Recipient code generation and deduplication
+- SMS template management with condition triggers
 
-3. Call Center Operations 
-supabase/functions/provision-gift-card-for-call-center/index.ts
-- Multi-step verification matching callers to mailer codes
-- Sequential reward unlocking based on call outcomes
-- Real-time inventory allocation and tracking
-- Integrated SMS/email delivery systems
-- Performance monitoring with completion rate metrics
+2. Gift Card Distribution System (85/100) 
+src/components/call-center/CallCenterRedemptionPanel.tsx
+- Five-stage redemption workflow:
+  * Code verification
+  * SMS opt-in validation 
+  * Contact method selection
+  * Condition validation
+  * Card provisioning
+- Real-time inventory management
+- Automated balance monitoring
 
-4. AI-Assisted Content Generation
-src/components/DrPhillipChat.tsx
-- Industry-specific direct mail expertise
-- Campaign budget and timeline calculations
-- Template recommendations based on vertical
-- Multi-channel content optimization
-- Real-time style guide extraction
+3. Call Center Operations (80/100)
+src/components/agent/ConditionTriggers.tsx
+- Campaign-specific reward trigger logic
+- Call outcome categorization
+- Automated reward delivery rules
+- Script management with dynamic selection
 
-5. Business Analytics Engine
-src/pages/CampaignAnalytics.tsx
-- Geographic distribution analysis
-- Multi-channel conversion tracking
-- Timeline-based engagement metrics
-- Call center performance analytics
-- ROI calculations per campaign
+4. Form Builder Platform (85/100)
+src/pages/AceFormBuilder.tsx
+- Industry-specific form templates
+- Gift card integration points
+- Auto-save with conflict prevention  
+- AI-assisted form generation
 
-The platform implements sophisticated workflows around direct mail campaign management, integrating call tracking, gift card rewards, and AI assistance. Core business value centers on the gift card distribution system and campaign analytics engine.
+5. Multi-tenant Architecture (75/100)
+src/contexts/TenantContext.tsx
+- Organization hierarchy (admin/agency/client)
+- Role-based access control
+- Client isolation and resource management
+- Cross-client operations control
+
+Integration Points:
+- Gift card provider APIs for real-time provisioning
+- Mail provider integration for delivery tracking
+- SMS gateway for opt-in management
+- Call tracking system for redemption validation
+
+The platform implements sophisticated workflows for direct mail campaign management with integrated reward distribution. Core focus on gift card inventory management, multi-channel reward delivery, and call center operations.
 
 $END$
 

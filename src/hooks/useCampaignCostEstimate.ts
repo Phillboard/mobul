@@ -1,4 +1,13 @@
+/**
+ * useCampaignCostEstimate - Calculate print/postage costs for campaigns
+ * 
+ * Updated to support mailing method:
+ * - Self-mailers: No print/postage costs (they handle their own)
+ * - ACE fulfillment: Full print + postage costs
+ */
+
 import { useMemo } from "react";
+import type { MailingMethod } from "@/types/campaigns";
 
 interface CostBreakdown {
   printing: number;
@@ -13,6 +22,7 @@ interface CostEstimateParams {
   size?: string;
   postage?: string;
   recipientCount: number;
+  mailingMethod?: MailingMethod;
 }
 
 const PRINTING_COSTS: Record<string, number> = {
@@ -28,8 +38,19 @@ const POSTAGE_COSTS: Record<string, number> = {
   "standard": 0.48,
 };
 
-export function useCampaignCostEstimate({ size, postage, recipientCount }: CostEstimateParams): CostBreakdown | null {
+export function useCampaignCostEstimate({ 
+  size, 
+  postage, 
+  recipientCount,
+  mailingMethod 
+}: CostEstimateParams): CostBreakdown | null {
   return useMemo(() => {
+    // Self-mailers don't get print costs - they handle their own mailing
+    if (mailingMethod === 'self') {
+      return null;
+    }
+
+    // For ACE fulfillment, calculate print + postage costs
     if (!size || !postage || recipientCount === 0) return null;
 
     const printingCost = (PRINTING_COSTS[size] || 0.35) * recipientCount;
@@ -40,9 +61,18 @@ export function useCampaignCostEstimate({ size, postage, recipientCount }: CostE
       printing: printingCost,
       postage: postageCost,
       total: totalCost,
-      formattedPrinting: `$${printingCost.toFixed(2)}`,
-      formattedPostage: `$${postageCost.toFixed(2)}`,
-      formattedTotal: `$${totalCost.toFixed(2)}`,
+      formattedPrinting: formatCurrency(printingCost),
+      formattedPostage: formatCurrency(postageCost),
+      formattedTotal: formatCurrency(totalCost),
     };
-  }, [size, postage, recipientCount]);
+  }, [size, postage, recipientCount, mailingMethod]);
+}
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 }

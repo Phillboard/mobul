@@ -74,6 +74,11 @@ const Integrations = lazy(() => import("./pages/Integrations"));
 const DocEditorPage = lazy(() => import("./pages/DocEditorPage"));
 const MVPVerification = lazy(() => import("./pages/MVPVerification"));
 const DemoDataGenerator = lazy(() => import("./pages/DemoDataGenerator"));
+const DataSimulation = lazy(() => import("./pages/DataSimulation"));
+const PoolDetail = lazy(() => import("./pages/PoolDetail"));
+const PurchaseGiftCard = lazy(() => import("./pages/PurchaseGiftCard"));
+const RecordPurchase = lazy(() => import("./pages/RecordPurchase"));
+const EditPoolPricing = lazy(() => import("./pages/EditPoolPricing"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -167,9 +172,13 @@ const App = () => (
                   
                   {/* Gift Cards */}
                   <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
+                  <Route path="/gift-cards/pools/:poolId" element={<ProtectedRoute><PoolDetail /></ProtectedRoute>} />
+                  <Route path="/gift-cards/purchase/:poolId" element={<ProtectedRoute><PurchaseGiftCard /></ProtectedRoute>} />
                   <Route path="/gift-cards/purchase" element={<ProtectedRoute><PurchaseGiftCards /></ProtectedRoute>} />
                   <Route path="/gift-cards/marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
                   <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
+                  <Route path="/admin/gift-cards/record-purchase" element={<ProtectedRoute requiredRole="admin"><RecordPurchase /></ProtectedRoute>} />
+                  <Route path="/admin/gift-cards/pools/:poolId/pricing" element={<ProtectedRoute requiredRole="admin"><EditPoolPricing /></ProtectedRoute>} />
                   <Route path="/purchase-gift-cards" element={<ProtectedRoute><PurchaseGiftCards /></ProtectedRoute>} />
                   
                   {/* Contacts System */}
@@ -197,6 +206,7 @@ const App = () => (
                   <Route path="/admin/system-health" element={<ProtectedRoute><SystemHealth /></ProtectedRoute>} />
                   <Route path="/admin/mvp-verification" element={<ProtectedRoute requiredRole="admin"><MVPVerification /></ProtectedRoute>} />
                   <Route path="/admin/demo-data" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
+                  <Route path="/admin/data-simulation" element={<ProtectedRoute requiredRole="admin"><DataSimulation /></ProtectedRoute>} />
                   <Route path="/admin/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
                    <Route path="/admin/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                    <Route path="/admin/docs/:category" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />

@@ -1,3 +1,10 @@
+/**
+ * CampaignSetupStep - Campaign basics
+ * 
+ * For self-mailers: Just campaign name (they handle their own design)
+ * For ACE fulfillment: Campaign name + template selection + mail size
+ */
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,29 +15,35 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText } from "lucide-react";
-import type { CampaignFormData } from "@/types/campaigns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FileText, Info, ArrowRight } from "lucide-react";
+import type { CampaignFormData, MailingMethod } from "@/types/campaigns";
 
-const setupSchema = z.object({
+// Schema for self-mailers (just name)
+const selfMailerSchema = z.object({
   name: z.string().min(1, "Campaign name is required").max(100),
-  template_id: z.string().nullable(),
-  size: z.enum(["4x6", "6x9", "6x11", "letter", "trifold"], {
-    required_error: "Mail size is required",
-  }),
 });
 
-type SetupFormData = z.infer<typeof setupSchema>;
+// Schema for ACE fulfillment (name + template + size)
+const aceSchema = z.object({
+  name: z.string().min(1, "Campaign name is required").max(100),
+  template_id: z.string().nullable(),
+  size: z.enum(["4x6", "6x9", "6x11", "letter", "trifold"]),
+});
 
 interface CampaignSetupStepProps {
   clientId: string;
   initialData: Partial<CampaignFormData>;
   onNext: (data: Partial<CampaignFormData>) => void;
-  onCancel: () => void;
+  onBack: () => void;
+  mailingMethod?: MailingMethod;
 }
 
-export function CampaignSetupStep({ clientId, initialData, onNext, onCancel }: CampaignSetupStepProps) {
-  const form = useForm<SetupFormData>({
-    resolver: zodResolver(setupSchema),
+export function CampaignSetupStep({ clientId, initialData, onNext, onBack, mailingMethod }: CampaignSetupStepProps) {
+  const isSelfMailer = mailingMethod === 'self';
+  
+  const form = useForm({
+    resolver: zodResolver(isSelfMailer ? selfMailerSchema : aceSchema),
     defaultValues: {
       name: initialData.name || "",
       template_id: initialData.template_id || null,
@@ -39,7 +52,7 @@ export function CampaignSetupStep({ clientId, initialData, onNext, onCancel }: C
   });
 
   const { data: templates } = useQuery({
-    queryKey: ["mail", clientId],
+    queryKey: ["templates", clientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("templates")
@@ -50,21 +63,80 @@ export function CampaignSetupStep({ clientId, initialData, onNext, onCancel }: C
       if (error) throw error;
       return data;
     },
+    enabled: !isSelfMailer, // Only fetch templates for ACE fulfillment
   });
 
   const selectedTemplateId = form.watch("template_id");
   const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
 
-  const onSubmit = (data: SetupFormData) => {
+  const onSubmit = (data: any) => {
     onNext(data);
   };
 
+  // Simple form for self-mailers
+  if (isSelfMailer) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">Name Your Campaign</h2>
+          <p className="text-muted-foreground mt-2">
+            Choose a name that helps you identify this campaign
+          </p>
+        </div>
+
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Since you're handling your own mail, we just need your campaign name and unique codes.
+          </AlertDescription>
+        </Alert>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Campaign Name</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g., Spring 2025 Auto Warranty Promo" 
+                      className="text-lg"
+                      autoFocus
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    This is for your reference - customers won't see it
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-between gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={onBack}>
+                Back
+              </Button>
+              <Button type="submit">
+                Next: Upload Codes
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    );
+  }
+
+  // Full form for ACE fulfillment
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Campaign Setup</h2>
         <p className="text-muted-foreground mt-2">
-          Start by naming your campaign and selecting a mail piece
+          Name your campaign and select a mail piece design
         </p>
       </div>
 
@@ -92,7 +164,7 @@ export function CampaignSetupStep({ clientId, initialData, onNext, onCancel }: C
             name="template_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Mail Piece (Optional)</FormLabel>
+                <FormLabel>Mail Piece Template (Optional)</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(value === "none" ? null : value)}
                   value={field.value || "none"}
@@ -183,11 +255,14 @@ export function CampaignSetupStep({ clientId, initialData, onNext, onCancel }: C
             )}
           />
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
+          <div className="flex justify-between gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={onBack}>
+              Back
             </Button>
-            <Button type="submit">Next: Select Audience</Button>
+            <Button type="submit">
+              Next: Upload Design
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
           </div>
         </form>
       </Form>

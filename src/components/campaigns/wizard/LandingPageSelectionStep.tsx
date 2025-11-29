@@ -37,6 +37,7 @@ export function LandingPageSelectionStep({
   const [selectedLandingPageId, setSelectedLandingPageId] = useState<string>(
     initialData.landing_page_id || ""
   );
+  const [showSkipWarning, setShowSkipWarning] = useState(false);
 
   const { data: landingPages, isLoading } = useQuery({
     queryKey: ["landing-pages", clientId],
@@ -85,6 +86,18 @@ export function LandingPageSelectionStep({
 
     onNext({
       landing_page_id: selectedLandingPageId
+    });
+  };
+
+  const handleSkip = () => {
+    if (!showSkipWarning) {
+      setShowSkipWarning(true);
+      return;
+    }
+
+    // User confirmed skip
+    onNext({
+      landing_page_id: undefined
     });
   };
 
@@ -210,12 +223,28 @@ export function LandingPageSelectionStep({
       </Card>
 
       {/* Validation Error */}
-      {!canProceed && (
+      {!canProceed && !showSkipWarning && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Landing Page Optional</AlertTitle>
+          <AlertDescription>
+            You can select a landing page now or skip this step and configure it later.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Skip Warning */}
+      {showSkipWarning && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Landing Page Required</AlertTitle>
-          <AlertDescription>
-            You must select or create a landing page before proceeding to the next step.
+          <AlertTitle>Skip Landing Page?</AlertTitle>
+          <AlertDescription className="space-y-2">
+            <p>
+              Skipping the landing page means customers won't have a web page to redeem their codes or engage with your campaign.
+            </p>
+            <p className="font-semibold">
+              You can add a landing page later. Click "Skip for Now" again to confirm.
+            </p>
           </AlertDescription>
         </Alert>
       )}
@@ -243,12 +272,23 @@ export function LandingPageSelectionStep({
           Back
         </Button>
 
-        <Button
-          onClick={handleNext}
-          disabled={!canProceed}
-        >
-          Next: Configure Rewards
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            type="button" 
+            variant="ghost" 
+            onClick={handleSkip}
+            className={showSkipWarning ? "border-2 border-destructive" : ""}
+          >
+            {showSkipWarning ? "Skip for Now (Confirm)" : "Skip for Now"}
+          </Button>
+
+          <Button
+            onClick={handleNext}
+            disabled={!canProceed}
+          >
+            Next: Link Forms
+          </Button>
+        </div>
       </div>
     </div>
   );

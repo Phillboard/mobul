@@ -7,23 +7,21 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/lib/utils";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BrandPoolsView } from "@/components/gift-cards/BrandPoolsView";
 import { CreatePoolDialogV2 } from "@/components/gift-cards/CreatePoolDialogV2";
 import { SellGiftCardsDialog } from "@/components/gift-cards/SellGiftCardsDialog";
 import { useGiftCardBrands } from "@/hooks/useGiftCardBrands";
-import { RecordPurchaseDialog } from "@/components/gift-cards/RecordPurchaseDialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
 import { AdminUploadDialog } from "@/components/gift-cards/AdminUploadDialog";
-import { EditPoolPricingDialog } from "@/components/gift-cards/EditPoolPricingDialog";
 
 export default function AdminGiftCardMarketplace() {
+  const navigate = useNavigate();
   const [createPoolOpen, setCreatePoolOpen] = useState(false);
   const [sellCardsOpen, setSellCardsOpen] = useState(false);
   const [uploadPoolId, setUploadPoolId] = useState<string | null>(null);
-  const [recordPurchaseOpen, setRecordPurchaseOpen] = useState(false);
-  const [pricingPool, setPricingPool] = useState<any>(null);
 
   const { data: brands } = useGiftCardBrands();
 
@@ -101,7 +99,7 @@ export default function AdminGiftCardMarketplace() {
   };
 
   const handlePricingClick = (pool: any) => {
-    setPricingPool(pool);
+    navigate(`/admin/gift-cards/pools/${pool.id}/pricing`);
   };
 
   return (
@@ -113,7 +111,7 @@ export default function AdminGiftCardMarketplace() {
             <p className="text-muted-foreground">Manage master inventory and sell to clients</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setRecordPurchaseOpen(true)}>
+            <Button variant="outline" onClick={() => navigate('/admin/gift-cards/record-purchase')}>
               <Package className="h-4 w-4 mr-2" />
               Record Purchase
             </Button>
@@ -332,18 +330,6 @@ export default function AdminGiftCardMarketplace() {
           />
         )}
 
-        <RecordPurchaseDialog
-          open={recordPurchaseOpen}
-          onOpenChange={setRecordPurchaseOpen}
-        />
-
-        {pricingPool && (
-          <EditPoolPricingDialog
-            open={!!pricingPool}
-            onOpenChange={(open) => !open && setPricingPool(null)}
-            pool={pricingPool}
-          />
-        )}
       </div>
     </Layout>
   );

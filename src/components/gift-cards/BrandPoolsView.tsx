@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -6,7 +5,7 @@ import { Gift, Plus, Upload, Eye, AlertCircle, DollarSign } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
-import { PoolDetailDialog } from "./PoolDetailDialog";
+import { useNavigate } from "react-router-dom";
 
 type GiftCardPool = Tables<"gift_card_pools">;
 type GiftCardBrand = Tables<"gift_card_brands">;
@@ -20,7 +19,7 @@ interface BrandPoolsViewProps {
 }
 
 export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards, onEditPricing }: BrandPoolsViewProps) {
-  const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
+  const navigate = useNavigate();
   
   // Group pools by brand
   const poolsByBrand = pools.reduce((acc, pool) => {
@@ -189,7 +188,7 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards, onE
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => onEditPricing(pool)}
+                            onClick={() => navigate(`/admin/gift-cards/pools/${pool.id}/pricing`)}
                           >
                             <DollarSign className="h-3 w-3 mr-2" />
                             Pricing
@@ -198,7 +197,7 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards, onE
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => setSelectedPoolId(pool.id)}
+                          onClick={() => navigate(`/gift-cards/pools/${pool.id}`)}
                         >
                           <Eye className="h-3 w-3 mr-2" />
                           View Details
@@ -212,12 +211,6 @@ export function BrandPoolsView({ pools, brands, onCreatePool, onUploadCards, onE
           </Card>
         );
       })}
-
-      <PoolDetailDialog
-        poolId={selectedPoolId}
-        open={!!selectedPoolId}
-        onOpenChange={(open) => !open && setSelectedPoolId(null)}
-      />
     </div>
   );
 }
