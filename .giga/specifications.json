@@ -1,0 +1,22 @@
+[
+  {
+    "fileName": "main-overview.mdc",
+    "description": "Complete system overview covering the campaign management platform architecture, gift card reward system, and multi-tenant organization structure"
+  },
+  {
+    "fileName": "gift-card-provisioning-system.mdc",
+    "description": "Detailed documentation of the gift card provisioning algorithms, pool management logic, and balance verification systems including inventory thresholds and automated triggers"
+  },
+  {
+    "fileName": "campaign-condition-model.mdc",
+    "description": "Comprehensive documentation of campaign condition data models, trigger evaluation algorithms, and reward distribution logic including time-based delays and multi-step verification"
+  },
+  {
+    "fileName": "organization-hierarchy.mdc",
+    "description": "Documentation of the multi-tenant data model including organization relationships, role-based permissions, and client-agency hierarchies with inheritance rules"
+  },
+  {
+    "fileName": "reward-fulfillment-flow.mdc",
+    "description": "End-to-end documentation of the reward fulfillment process including SMS opt-in requirements, call center integration, and multi-channel verification workflows"
+  }
+]
