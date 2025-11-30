@@ -236,26 +236,6 @@ export function CodesUploadStep({
     onNext({
       codes_uploaded: false,
       requires_codes: false, // Mark as test campaign
-      recipient_count: 0
-    });
-  };
-
-  const handleSkip = () => {
-    if (!showSkipWarning) {
-      setShowSkipWarning(true);
-      return;
-    }
-
-    // User confirmed skip
-    toast({
-      title: "Skipped Code Upload",
-      description: "This campaign will be marked for testing only.",
-      variant: "default",
-    });
-
-    onNext({
-      codes_uploaded: false,
-      requires_codes: false, // Mark as test campaign
       recipient_count: initialData.recipient_count || 0
     });
   };

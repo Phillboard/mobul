@@ -313,7 +313,9 @@ export function SummaryStep({
                         <div className="text-sm text-muted-foreground mt-1">{contactList.description || "Contact list"}</div>
                         <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                           <span>Type: {contactList.list_type || 'Standard'}</span>
+                        {contactList?.created_at && (
                           <span>Created: {format(new Date(contactList.created_at), 'PP')}</span>
+                        )}
                         </div>
                       </div>
                       <Badge variant="default" className="shrink-0">

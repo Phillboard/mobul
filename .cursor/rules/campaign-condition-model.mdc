@@ -1,76 +1,58 @@
 ---
-description: Documents business logic for campaign reward conditions, triggers, and reward distribution models
+description: Documents campaign condition business logic for marketing reward campaigns including triggers, verification and fulfillment workflows
 ---
 
 
 # campaign-condition-model
 
-Core Condition Model Components:
+Campaign Condition Core Components:
 
-1. Reward Trigger System
-Path: src/components/campaigns/ConditionsStep.tsx
-Importance: 95/100
+1. Condition Builder System
+Path: src/components/campaigns/ConditionBuilder.tsx
+Importance Score: 95
 
-- Hierarchical condition tree structure supporting:
-  - Manual agent verification
-  - Call completion triggers
-  - Form submission events
-  - Time-based delays
-  - Multi-step verification chains
+Implements multi-step condition model for campaign rewards:
+- Sequential condition chains (up to 3 conditions per campaign)
+- Trigger types: manual_agent, crm_event, time_delay, mail_delivered, call_completed
+- Cross-condition dependencies with reward chaining
+- Real-time condition validation and reward inventory checks
 
-2. Reward Distribution Logic
-Path: src/lib/campaign/rewardDistribution.ts
-Importance: 90/100
+2. Reward Distribution Engine 
+Path: src/components/campaigns/wizard/ConditionsStep.tsx
+Importance Score: 90
 
-- Staged reward delivery workflow:
-  1. Condition evaluation
-  2. SMS opt-in verification 
-  3. Pool inventory check
-  4. Reward code reservation
-  5. Delivery method selection
-  6. Distribution tracking
+Core distribution logic:
+- Conditional reward allocation based on completion status
+- Multi-step verification requirements before reward release
+- Time-based delays with configurable waiting periods
+- Integration with gift card pools and inventory management
 
-3. Campaign Condition Models
-Path: src/types/campaignConditions.ts
-Importance: 85/100
+3. Condition Evaluation Pipeline
+Path: supabase/functions/complete-condition/index.ts
+Importance Score: 85
 
-```typescript
-interface CampaignCondition {
-  type: 'manual_agent' | 'call_completion' | 'form_submit' | 'time_delay'
-  verification_required: boolean
-  delay_minutes?: number
-  dependent_conditions?: string[]
-  reward_pool_id?: string
-}
-```
+Handles condition completion workflow:
+- Status transitions: pending -> in_progress -> completed/failed
+- Automated evaluation of time-based and system triggers
+- Manual agent verification for specific condition types
+- Multi-step reward fulfillment after condition completion
 
-4. Verification Chain Logic
-Path: src/lib/campaign/verificationChain.ts
-Importance: 80/100
+4. Gift Card Pool Integration
+Path: src/lib/campaign/giftCardUtils.ts
+Importance Score: 80
 
-- Sequential condition validation:
-  - Parent condition completion checks
-  - Time delay enforcement
-  - SMS opt-in status verification
-  - Agent approval requirements
-  - Auto-approval rules
+Pool management logic:
+- Real-time inventory validation against campaign conditions
+- Automated pool selection based on condition requirements
+- Low inventory alerts with configurable thresholds
+- Reward reservation system during condition completion
 
-5. Reward Status Tracking
-Path: src/components/campaigns/RewardStatus.tsx
-Importance: 75/100
-
-- Condition completion tracking
-- Real-time reward status updates
-- Distribution failure handling
-- Retry logic for failed deliveries
-- Audit trail maintenance
-
-Core Business Rules:
-- Conditions must complete in defined sequence
-- Time delays enforce minimum waiting periods
-- SMS opt-in required before reward distribution
-- Agent verification overrides automated triggers
-- Pool inventory verified before reward commitment
+Critical Business Rules:
+- Sequential conditions must be completed in order
+- Time delays require minimum 24hr waiting period
+- Manual agent conditions require dual verification
+- Gift card inventory must be verified before condition creation
+- Failed conditions void subsequent reward chain
 
 $END$
 

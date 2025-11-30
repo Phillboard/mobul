@@ -10,57 +10,45 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Direct Mail Marketing Platform Architecture
+Campaign Management Platform Business Logic
 
-Core Business Domains:
+Core Business Components:
 
-1. Campaign Management (Importance: 95)
-- Multi-step campaign creation workflow with mailer/ACE fulfillment paths
-- Condition-based reward triggering system 
-- Cost calculation combining print, postage, and gift card expenses
-- Campaign validation with inventory and budget checks
+Campaign Wizard System (src/components/campaigns/wizard/)
+- Multi-step campaign creation workflow combining fulfillment, rewards, tracking
+- Code generation and validation for direct mail pieces
+- Gift card pool inventory verification against recipient counts
+- Reward triggering logic with form/call/code redemption modes
+Importance Score: 85
 
-2. Gift Card Operations (Importance: 90)
-- Dual-mode card provisioning (CSV pools and API providers)
-- Real-time balance verification and threshold monitoring
-- Automated pool health assessment with three-tier status
-- Client wallet and purchase management
+Gift Card Management (src/lib/campaign/giftCardUtils.ts)
+- Pool utilization tracking and inventory alerts
+- Dynamic pricing model with markup/fixed price options
+- Automated balance verification scheduling
+- Multi-tier card provisioning workflow
+Importance Score: 90
 
-3. Call Center Integration (Importance: 85)
+Reward Fulfillment Logic (supabase/functions/provision-gift-card/)
+- Waterfall provisioning system (CSV → API → Buffer pools)
+- Credit deduction with atomic operations 
+- Campaign condition evaluation and validation
 - SMS opt-in verification workflow
-- Call outcome tracking with disposition codes
-- Real-time condition monitoring for rewards
-- Agent-assisted code redemption process
+Importance Score: 95
 
-4. Form & Landing Page System (Importance: 80)
-- AI-powered form generation with industry context
-- Progressive reward reveal mechanics
-- Dynamic content based on recipient status
-- Multi-channel tracking (QR, PURL, IMB)
+Business Organization Model (src/contexts/TenantContext.tsx)
+- Hierarchical structure: Platform → Agency → Client
+- Role-based permissions with inheritance
+- Credit allocation system with one-way flow
+- Client-specific branding and settings
+Importance Score: 80
 
-Key Integration Points:
+Core Integration Points:
+- CRM webhook processing for reward triggers
+- Call center redemption workflow
+- Mail tracking status management
+- Multi-provider gift card APIs
 
-1. Reward Distribution Hub (supabase/functions/provision-gift-card-from-api)
-- Unified interface for multiple gift card providers
-- Atomic claiming with inventory management
-- Status tracking and balance verification
-
-2. Condition Evaluation Engine (src/lib/campaign/campaignUtils.ts)
-- Sequential condition processing
-- Multi-trigger support (calls, forms, time delays)
-- Reward qualification tracking
-
-3. Cost Calculation System (src/components/campaigns/wizard/SummaryStep.tsx)
-- Print cost models by size/class
-- Redemption rate predictions
-- Service fee calculations
-- Margin analysis
-
-Organization Model:
-- Multi-tenant hierarchy (Platform -> Agency -> Organization -> Client)
-- Industry-specific vertical support (roofing, REI, auto services)
-- Role-based access with inheritance
-- Client wallet and pool management
+The system implements sophisticated campaign management with integrated reward fulfillment, focusing on direct mail campaigns with digital reward delivery. The most unique aspects are the gift card provisioning system and multi-tenant credit management.
 
 $END$
 
