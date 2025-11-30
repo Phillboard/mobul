@@ -97,7 +97,16 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
     queryFn: async () => {
       const { data, error } = await supabase
         .from("gift_card_pools")
-        .select("id, pool_name, card_value, available_cards, total_cards")
+        .select(`
+          id, 
+          pool_name, 
+          card_value, 
+          available_cards, 
+          total_cards,
+          gift_card_brands (
+            brand_name
+          )
+        `)
         .eq("client_id", clientId)
         .order("pool_name");
 
@@ -168,8 +177,8 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
     const missingPools = activeConditions.filter((c) => !c.gift_card_pool_id);
     if (missingPools.length > 0) {
       toast({
-        title: "Validation Error",
-        description: "Please select a gift card pool for all active conditions.",
+        title: "Gift Card Required",
+        description: "Please select a gift card reward for all active conditions.",
         variant: "destructive",
       });
       return;
@@ -178,7 +187,7 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
     const missingNames = activeConditions.filter((c) => !c.condition_name.trim());
     if (missingNames.length > 0) {
       toast({
-        title: "Validation Error",
+        title: "Condition Name Required",
         description: "Please provide a name for all active conditions.",
         variant: "destructive",
       });
@@ -190,6 +199,18 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
 
   const getPoolById = (poolId: string) => {
     return giftCardPools?.find((p) => p.id === poolId);
+  };
+
+  const getPoolStatus = (availableCards: number) => {
+    if (availableCards === 0) return { label: 'empty', color: 'text-red-600' };
+    if (availableCards <= 20) return { label: 'low stock', color: 'text-yellow-600' };
+    return { label: 'active', color: 'text-green-600' };
+  };
+
+  const formatPoolDisplay = (pool: any) => {
+    const brandName = pool.gift_card_brands?.brand_name || pool.pool_name;
+    const status = getPoolStatus(pool.available_cards);
+    return `${brandName} | $${pool.card_value} (${status.label})`;
   };
 
   const validatePoolInventory = (poolId: string) => {
@@ -333,7 +354,7 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
 
                           {/* Gift Card Pool */}
                           <div className="space-y-2">
-                            <Label>Gift Card Pool *</Label>
+                            <Label>Gift Card Reward *</Label>
                             <Select
                               value={condition.gift_card_pool_id}
                               onValueChange={(value) =>
@@ -341,22 +362,22 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
                               }
                             >
                               <SelectTrigger>
-                                <SelectValue placeholder="Select a gift card pool..." />
+                                <SelectValue placeholder="Select a gift card..." />
                               </SelectTrigger>
                               <SelectContent>
                                 {isLoading ? (
                                   <SelectItem value="loading" disabled>
-                                    Loading pools...
+                                    Loading gift cards...
                                   </SelectItem>
                                 ) : giftCardPools && giftCardPools.length > 0 ? (
                                   giftCardPools.map((pool) => (
                                     <SelectItem key={pool.id} value={pool.id}>
-                                      {pool.pool_name} - ${pool.card_value} ({pool.available_cards} available)
+                                      {formatPoolDisplay(pool)}
                                     </SelectItem>
                                   ))
                                 ) : (
                                   <SelectItem value="none" disabled>
-                                    No pools available - create one first
+                                    No gift cards available - create one first
                                   </SelectItem>
                                 )}
                               </SelectContent>

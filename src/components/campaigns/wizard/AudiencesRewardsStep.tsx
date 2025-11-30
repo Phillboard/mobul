@@ -25,7 +25,10 @@ import {
   Upload,
   HelpCircle,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  BarChart3,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,6 +63,16 @@ export function AudiencesRewardsStep({
   const [selectedConditions, setSelectedConditions] = useState<any[]>(
     initialData.conditions || []
   );
+  const [showTracking, setShowTracking] = useState(false);
+
+  // Tracking settings state
+  const [trackingSettings, setTrackingSettings] = useState({
+    lp_mode: initialData.lp_mode || 'purl',
+    base_lp_url: initialData.base_lp_url || '',
+    utm_source: initialData.utm_source || 'directmail',
+    utm_medium: initialData.utm_medium || 'postcard',
+    utm_campaign: initialData.utm_campaign || initialData.name || '',
+  });
 
   // Fetch contact lists
   const { data: contactLists, isLoading: loadingLists } = useQuery({
@@ -81,7 +94,18 @@ export function AudiencesRewardsStep({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("gift_card_pools")
-        .select("*")
+        .select(`
+          id,
+          pool_name,
+          card_value,
+          available_cards,
+          total_cards,
+          is_active,
+          created_at,
+          gift_card_brands (
+            brand_name
+          )
+        `)
         .eq("client_id", clientId)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
@@ -91,6 +115,18 @@ export function AudiencesRewardsStep({
   });
 
   const selectedList = contactLists?.find((l) => l.id === selectedListId);
+
+  const getPoolStatus = (availableCards: number) => {
+    if (availableCards === 0) return { label: 'empty', color: 'text-red-600' };
+    if (availableCards <= 20) return { label: 'low stock', color: 'text-yellow-600' };
+    return { label: 'active', color: 'text-green-600' };
+  };
+
+  const formatPoolDisplay = (pool: any) => {
+    const brandName = pool.gift_card_brands?.brand_name || pool.pool_name;
+    const status = getPoolStatus(pool.available_cards);
+    return `${brandName} | $${pool.card_value} (${status.label})`;
+  };
 
   const handleNext = () => {
     if (!selectedListId) {
@@ -102,12 +138,36 @@ export function AudiencesRewardsStep({
       return;
     }
 
+    // Validate conditions if any exist
+    if (selectedConditions.length > 0) {
+      const missingNames = selectedConditions.filter((c) => !c.condition_name.trim());
+      if (missingNames.length > 0) {
+        toast({
+          title: "Condition Name Required",
+          description: "Please provide a name for all reward conditions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const missingPools = selectedConditions.filter((c) => !c.gift_card_pool_id);
+      if (missingPools.length > 0) {
+        toast({
+          title: "Gift Card Required",
+          description: "Please select a gift card reward for all conditions",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     onNext({
       contact_list_id: selectedListId,
       recipient_count: selectedList?.contact_count || 0,
       conditions: selectedConditions.length > 0 ? selectedConditions : undefined,
       audience_selection_complete: true,
       selected_audience_type: 'list',
+      ...trackingSettings,
     });
   };
 
@@ -348,29 +408,42 @@ export function AudiencesRewardsStep({
                         )}
                       </div>
                       
-                      {/* Gift Card Pool Selection */}
-                      {giftCardPools && giftCardPools.length > 0 && (
-                        <div className="space-y-2">
-                          <Label className="text-xs">Gift Card Pool</Label>
-                          <Select
-                            value={condition.gift_card_pool_id}
-                            onValueChange={(value) =>
-                              updateCondition(index, { gift_card_pool_id: value })
-                            }
-                          >
-                            <SelectTrigger className="text-sm">
-                              <SelectValue placeholder="Select pool..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {giftCardPools.map((pool) => (
+                      {/* Gift Card Pool Selection - Always show */}
+                      <div className="space-y-2">
+                        <Label className="text-xs">Gift Card Reward *</Label>
+                        <Select
+                          value={condition.gift_card_pool_id}
+                          onValueChange={(value) =>
+                            updateCondition(index, { gift_card_pool_id: value })
+                          }
+                        >
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Select gift card..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {!giftCardPools ? (
+                              <SelectItem value="loading" disabled>
+                                Loading gift cards...
+                              </SelectItem>
+                            ) : giftCardPools.length > 0 ? (
+                              giftCardPools.map((pool) => (
                                 <SelectItem key={pool.id} value={pool.id}>
-                                  {pool.pool_name} - ${pool.card_value}
+                                  {formatPoolDisplay(pool)}
                                 </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
+                              ))
+                            ) : (
+                              <SelectItem value="none" disabled>
+                                No gift cards available - create one first
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {!giftCardPools || giftCardPools.length === 0 ? (
+                          <p className="text-xs text-destructive">
+                            Please create a gift card pool in Settings before adding rewards
+                          </p>
+                        ) : null}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -408,6 +481,102 @@ export function AudiencesRewardsStep({
           </CardContent>
         </Card>
       </div>
+
+      {/* Tracking & Analytics Settings */}
+      <Card className="border-2">
+        <CardHeader className="cursor-pointer" onClick={() => setShowTracking(!showTracking)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base">Tracking & Analytics Settings</CardTitle>
+            </div>
+            {showTracking ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </div>
+          <CardDescription>
+            Configure PURLs, QR codes, and UTM parameters for tracking campaign performance
+          </CardDescription>
+        </CardHeader>
+        {showTracking && (
+          <CardContent className="space-y-4">
+            <Alert>
+              <BarChart3 className="h-4 w-4" />
+              <AlertDescription>
+                <strong>How tracking works:</strong> Each recipient gets a unique code that's embedded in their personalized landing page URL (PURL) and QR code. This lets you track who visits, submits forms, and redeems rewards.
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="lp-mode">Landing Page Mode</Label>
+                <Select
+                  value={trackingSettings.lp_mode}
+                  onValueChange={(value) => setTrackingSettings({ ...trackingSettings, lp_mode: value })}
+                >
+                  <SelectTrigger id="lp-mode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="purl">PURL (Personalized URL)</SelectItem>
+                    <SelectItem value="bridge">Bridge Page</SelectItem>
+                    <SelectItem value="redirect">Direct Redirect</SelectItem>
+                    <SelectItem value="none">No Landing Page</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  How visitors are directed from their unique code
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="base-url">Base Landing Page URL</Label>
+                <Input
+                  id="base-url"
+                  type="url"
+                  placeholder="https://yoursite.com/offer"
+                  value={trackingSettings.base_lp_url}
+                  onChange={(e) => setTrackingSettings({ ...trackingSettings, base_lp_url: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  The URL where visitors will land (code appended automatically)
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">UTM Parameters (for Google Analytics)</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="utm-source" className="text-xs">Source</Label>
+                  <Input
+                    id="utm-source"
+                    placeholder="directmail"
+                    value={trackingSettings.utm_source}
+                    onChange={(e) => setTrackingSettings({ ...trackingSettings, utm_source: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="utm-medium" className="text-xs">Medium</Label>
+                  <Input
+                    id="utm-medium"
+                    placeholder="postcard"
+                    value={trackingSettings.utm_medium}
+                    onChange={(e) => setTrackingSettings({ ...trackingSettings, utm_medium: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="utm-campaign" className="text-xs">Campaign</Label>
+                  <Input
+                    id="utm-campaign"
+                    placeholder="Campaign name"
+                    value={trackingSettings.utm_campaign}
+                    onChange={(e) => setTrackingSettings({ ...trackingSettings, utm_campaign: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
 
       {/* Actions */}
       <div className="flex justify-between pt-4">
