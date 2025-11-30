@@ -8,6 +8,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Upload, 
   FileText, 
@@ -18,7 +21,10 @@ import {
   Loader2,
   Users,
   XCircle,
-  ArrowRight
+  ArrowRight,
+  BarChart3,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
@@ -66,6 +72,16 @@ export function CodesUploadStep({
   const [parsedData, setParsedData] = useState<ParsedRow[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showSkipWarning, setShowSkipWarning] = useState(false);
+  const [showTracking, setShowTracking] = useState(false);
+  
+  // Tracking settings state
+  const [trackingSettings, setTrackingSettings] = useState({
+    lp_mode: initialData.lp_mode || 'purl',
+    base_lp_url: initialData.base_lp_url || '',
+    utm_source: initialData.utm_source || 'directmail',
+    utm_medium: initialData.utm_medium || 'postcard',
+    utm_campaign: initialData.utm_campaign || initialData.name || '',
+  });
 
   // Check if audience was selected in previous step
   const hasAudienceSelected = initialData.contact_list_id || initialData.audience_selection_complete;
@@ -249,23 +265,127 @@ export function CodesUploadStep({
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold">Codes Auto-Generated</h2>
+          <h2 className="text-2xl font-bold">Unique Codes & Tracking</h2>
           <p className="text-muted-foreground mt-2">
-            Unique codes will be automatically generated for your selected audience
+            Configure tracking for campaign responses and performance analytics
           </p>
         </div>
 
+        {/* Tracking & Analytics Settings */}
+        <Card>
+          <CardHeader className="cursor-pointer" onClick={() => setShowTracking(!showTracking)}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                <CardTitle className="text-base">Tracking & Analytics Settings</CardTitle>
+              </div>
+              {showTracking ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+            </div>
+            <CardDescription>
+              Configure PURLs, QR codes, and UTM parameters for tracking campaign performance
+            </CardDescription>
+          </CardHeader>
+          {showTracking && (
+            <CardContent className="space-y-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>How tracking works:</strong> Each recipient gets a unique code that's embedded in their personalized landing page URL (PURL) and QR code. This lets you track who visits, submits forms, and redeems rewards.
+                </AlertDescription>
+              </Alert>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="lp-mode">Landing Page Mode</Label>
+                  <Select
+                    value={trackingSettings.lp_mode}
+                    onValueChange={(value) => setTrackingSettings({ ...trackingSettings, lp_mode: value })}
+                  >
+                    <SelectTrigger id="lp-mode">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="purl">PURL (Personalized URL)</SelectItem>
+                      <SelectItem value="bridge">Bridge Page</SelectItem>
+                      <SelectItem value="redirect">Direct Redirect</SelectItem>
+                      <SelectItem value="none">No Landing Page</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    How visitors are directed from their unique code
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="base-url">Base Landing Page URL</Label>
+                  <Input
+                    id="base-url"
+                    type="url"
+                    placeholder="https://yoursite.com/offer"
+                    value={trackingSettings.base_lp_url}
+                    onChange={(e) => setTrackingSettings({ ...trackingSettings, base_lp_url: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The URL where visitors will land (code appended automatically)
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">UTM Parameters (for Google Analytics)</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="utm-source" className="text-xs">Source</Label>
+                    <Input
+                      id="utm-source"
+                      placeholder="directmail"
+                      value={trackingSettings.utm_source}
+                      onChange={(e) => setTrackingSettings({ ...trackingSettings, utm_source: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="utm-medium" className="text-xs">Medium</Label>
+                    <Input
+                      id="utm-medium"
+                      placeholder="postcard"
+                      value={trackingSettings.utm_medium}
+                      onChange={(e) => setTrackingSettings({ ...trackingSettings, utm_medium: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="utm-campaign" className="text-xs">Campaign</Label>
+                    <Input
+                      id="utm-campaign"
+                      placeholder="Campaign name"
+                      value={trackingSettings.utm_campaign}
+                      onChange={(e) => setTrackingSettings({ ...trackingSettings, utm_campaign: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+
         <Alert className="border-primary/50 bg-primary/5">
           <CheckCircle className="h-4 w-4 text-primary" />
-          <AlertTitle>Audience Selected</AlertTitle>
+          <AlertTitle>Codes Will Be Auto-Generated</AlertTitle>
           <AlertDescription>
             <div className="space-y-2 mt-2">
-              <p>You selected a contact list in the previous step.</p>
-              <p className="font-semibold">
-                {initialData.recipient_count || 0} unique redemption codes will be auto-generated when you create the campaign.
+              <p>
+                <strong>{initialData.recipient_count || 0} unique tracking codes</strong> will be automatically generated when you create this campaign.
               </p>
               <p className="text-sm text-muted-foreground mt-3">
-                Each contact will receive a unique code that can be tracked through QR codes, PURLs, and the call center system.
+                <strong>How codes work:</strong> Each contact in your list will receive a unique code. This code is used AFTER mailing to:
+              </p>
+              <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1 mt-2">
+                <li>Track QR code scans and PURL visits</li>
+                <li>Identify callers in your call center system</li>
+                <li>Monitor form submissions and reward redemptions</li>
+                <li>Generate detailed analytics and attribution reports</li>
+              </ul>
+              <p className="text-sm font-semibold mt-3">
+                Note: These codes are for tracking responses, not for the mailing itself. Your contacts will be mailed from the audience you selected.
               </p>
             </div>
           </AlertDescription>
@@ -275,7 +395,11 @@ export function CodesUploadStep({
           <Button type="button" variant="outline" onClick={onBack}>
             Back
           </Button>
-          <Button onClick={() => onNext({ codes_uploaded: true, recipient_count: initialData.recipient_count || 0 })}>
+          <Button onClick={() => onNext({ 
+            codes_uploaded: true, 
+            recipient_count: initialData.recipient_count || 0,
+            ...trackingSettings 
+          })}>
             <Users className="h-4 w-4 mr-2" />
             Continue
             <ArrowRight className="h-4 w-4 ml-2" />
@@ -288,11 +412,114 @@ export function CodesUploadStep({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Upload Unique Codes</h2>
+        <h2 className="text-2xl font-bold">Unique Codes & Tracking</h2>
         <p className="text-muted-foreground mt-2">
-          Upload a CSV file with unique codes and customer information
+          Configure tracking for campaign responses and performance analytics
         </p>
       </div>
+
+      {/* Tracking & Analytics Settings */}
+      <Card>
+        <CardHeader className="cursor-pointer" onClick={() => setShowTracking(!showTracking)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              <CardTitle className="text-base">Tracking & Analytics Settings</CardTitle>
+            </div>
+            {showTracking ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </div>
+          <CardDescription>
+            Configure PURLs, QR codes, and UTM parameters for tracking campaign performance
+          </CardDescription>
+        </CardHeader>
+        {showTracking && (
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>How tracking works:</strong> Each recipient gets a unique code that's embedded in their personalized landing page URL (PURL) and QR code. This lets you track who visits, submits forms, and redeems rewards.
+              </AlertDescription>
+            </Alert>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="lp-mode">Landing Page Mode</Label>
+                <Select
+                  value={trackingSettings.lp_mode}
+                  onValueChange={(value) => setTrackingSettings({ ...trackingSettings, lp_mode: value })}
+                >
+                  <SelectTrigger id="lp-mode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="purl">PURL (Personalized URL)</SelectItem>
+                    <SelectItem value="bridge">Bridge Page</SelectItem>
+                    <SelectItem value="redirect">Direct Redirect</SelectItem>
+                    <SelectItem value="none">No Landing Page</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  How visitors are directed from their unique code
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="base-url">Base Landing Page URL</Label>
+                <Input
+                  id="base-url"
+                  type="url"
+                  placeholder="https://yoursite.com/offer"
+                  value={trackingSettings.base_lp_url}
+                  onChange={(e) => setTrackingSettings({ ...trackingSettings, base_lp_url: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  The URL where visitors will land (code appended automatically)
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">UTM Parameters (for Google Analytics)</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="utm-source" className="text-xs">Source</Label>
+                  <Input
+                    id="utm-source"
+                    placeholder="directmail"
+                    value={trackingSettings.utm_source}
+                    onChange={(e) => setTrackingSettings({ ...trackingSettings, utm_source: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="utm-medium" className="text-xs">Medium</Label>
+                  <Input
+                    id="utm-medium"
+                    placeholder="postcard"
+                    value={trackingSettings.utm_medium}
+                    onChange={(e) => setTrackingSettings({ ...trackingSettings, utm_medium: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="utm-campaign" className="text-xs">Campaign</Label>
+                  <Input
+                    id="utm-campaign"
+                    placeholder="Campaign name"
+                    value={trackingSettings.utm_campaign}
+                    onChange={(e) => setTrackingSettings({ ...trackingSettings, utm_campaign: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          <strong>About Unique Codes:</strong> These codes are used for tracking responses after mailing, not for the mailing itself. Upload a CSV if you've already generated codes, otherwise codes will be auto-generated for your contact list.
+        </AlertDescription>
+      </Alert>
 
       {/* Template Download */}
       <Card>

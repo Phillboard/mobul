@@ -19,6 +19,7 @@ interface CampaignFormData {
   audience_id?: string; // Legacy
   conditions?: any[];
   lp_mode?: string;
+  mailing_method?: 'self' | 'ace_fulfillment';
 }
 
 export function useCampaignValidation(formData: CampaignFormData, clientId: string): ValidationResult {
@@ -84,6 +85,7 @@ export function useCampaignValidation(formData: CampaignFormData, clientId: stri
 
   return useMemo(() => {
     const checks = [];
+    const isSelfMailer = formData.mailing_method === 'self';
 
     // Check 1: Campaign name
     if (formData.name && formData.name.length > 0) {
@@ -99,11 +101,11 @@ export function useCampaignValidation(formData: CampaignFormData, clientId: stri
       checks.push({ label: 'No mail piece selected', status: 'warning' as const, message: 'Can design later' });
     }
 
-    // Check 3: Mail size
+    // Check 3: Mail size (optional for self-mailers, required for ACE fulfillment)
     if (formData.size) {
       checks.push({ label: 'Mail size configured', status: 'success' as const });
-    } else {
-      checks.push({ label: 'Mail size missing', status: 'error' as const, message: 'Required' });
+    } else if (!isSelfMailer) {
+      checks.push({ label: 'Mail size missing', status: 'error' as const, message: 'Required for ACE fulfillment' });
     }
 
     // Check 4: Recipients (List/Segment or legacy Audience)
@@ -116,21 +118,7 @@ export function useCampaignValidation(formData: CampaignFormData, clientId: stri
       checks.push({ label: 'No recipients selected', status: 'error' as const, message: 'Required' });
     }
 
-    // Check 5: Gift card inventory
-    if (listOrAudienceId && contactList && pools) {
-      const hasEnoughInventory = pools.every(pool => pool.available_cards >= contactList.count);
-      if (hasEnoughInventory) {
-        checks.push({ label: 'Gift card inventory sufficient', status: 'success' as const });
-      } else {
-        checks.push({ 
-          label: 'Low gift card inventory', 
-          status: 'warning' as const, 
-          message: 'Some pools may run out' 
-        });
-      }
-    }
-
-    // Check 6: Conditions
+    // Check 5: Conditions (required - must have at least one)
     if (formData.conditions && formData.conditions.length > 0) {
       checks.push({ 
         label: `${formData.conditions.length} condition(s) configured`, 
@@ -138,27 +126,33 @@ export function useCampaignValidation(formData: CampaignFormData, clientId: stri
       });
     } else {
       checks.push({ 
-        label: 'No conditions configured', 
-        status: 'warning' as const, 
-        message: 'Optional but recommended' 
+        label: 'No reward conditions configured', 
+        status: 'error' as const, 
+        message: 'At least one condition with gift card required' 
       });
     }
 
-    // Check 7: PURL settings
+    // Check 6: PURL settings
     if (formData.lp_mode) {
-      checks.push({ label: 'PURL settings configured', status: 'success' as const });
+      checks.push({ label: 'Tracking settings configured', status: 'success' as const });
     } else {
       checks.push({ label: 'PURL settings missing', status: 'warning' as const });
     }
 
-    // Check 8: Mail provider
+    // Check 7: Mail provider (required for ACE fulfillment, optional for self-mailers)
     if (mailProvider && (mailProvider.postgrid_enabled || mailProvider.custom_enabled)) {
       checks.push({ label: 'Mail provider configured', status: 'success' as const });
-    } else {
+    } else if (!isSelfMailer) {
       checks.push({ 
         label: 'Mail provider not configured', 
         status: 'error' as const, 
-        message: 'Configure in Settings' 
+        message: 'Required for ACE fulfillment - Configure in Settings' 
+      });
+    } else {
+      checks.push({ 
+        label: 'Mail provider not configured', 
+        status: 'warning' as const, 
+        message: 'Optional for self-mailers (used for analytics only)' 
       });
     }
 
