@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { MailingMethodStep } from "./wizard/MailingMethodStep";
 import { CampaignSetupStep } from "./wizard/CampaignSetupStep";
+import { AudiencesStep } from "./wizard/AudiencesStep";
 import { CodesUploadStep } from "./wizard/CodesUploadStep";
 import { UploadDesignStep } from "./wizard/UploadDesignStep";
 import { ConditionsStep } from "./wizard/ConditionsStep";
@@ -47,24 +48,24 @@ export function CreateCampaignWizard({
   const steps = useMemo(() => {
     if (isSelfMailer) {
       // SIMPLIFIED flow for self-mailers (most common case per Mike's requirements)
-      // They already have their designs, just need codes, conditions, and a page/form
+      // Method → Setup → Audiences → Codes & Conditions → Review
       return [
         { label: "Method", description: "How you're mailing" },
         { label: "Setup", description: "Campaign name" },
-        { label: "Codes", description: "Upload unique codes" },
-        { label: "Conditions", description: "Set reward triggers" },
-        { label: "Page/Form", description: "Landing page or form" },
+        { label: "Audiences", description: "Select recipients" },
+        { label: "Codes & Setup", description: "Codes, conditions, page" },
         { label: "Review", description: "Confirm & create" },
       ];
     }
     // Full flow for ACE fulfillment (rare case)
+    // Method → Setup → Audiences → Design → Codes → Conditions → Delivery → Review
     return [
       { label: "Method", description: "How you're mailing" },
       { label: "Setup", description: "Campaign details" },
+      { label: "Audiences", description: "Select recipients" },
       { label: "Design", description: "Upload mail design" },
       { label: "Codes", description: "Upload unique codes" },
-      { label: "Conditions", description: "Set reward triggers" },
-      { label: "Page/Form", description: "Landing page or form" },
+      { label: "Conditions", description: "Rewards & page" },
       { label: "Delivery", description: "Mail settings" },
       { label: "Review", description: "Confirm & create" },
     ];
@@ -140,6 +141,13 @@ export function CreateCampaignWizard({
     setCurrentStep(1);
   };
 
+  const handleStepClick = (targetStep: number) => {
+    // Only allow going back to completed steps
+    if (targetStep < currentStep) {
+      setCurrentStep(targetStep);
+    }
+  };
+
   // Calculate which logical step we're on based on mailing method
   const renderStep = () => {
     // Step 0: Always mailing method
@@ -155,7 +163,7 @@ export function CreateCampaignWizard({
     }
 
     if (isSelfMailer) {
-      // Self-mailer flow: Method → Setup → Codes → Conditions → Page/Form → Review
+      // Self-mailer flow: Method → Setup → Audiences → Codes & Conditions → Review
       switch (currentStep) {
         case 1:
           return (
@@ -169,6 +177,15 @@ export function CreateCampaignWizard({
           );
         case 2:
           return (
+            <AudiencesStep
+              clientId={clientId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
+        case 3:
+          return (
             <CodesUploadStep
               clientId={clientId}
               campaignId={campaignId}
@@ -177,24 +194,13 @@ export function CreateCampaignWizard({
               onBack={handleBack}
             />
           );
-        case 3:
+        case 4:
           return (
             <ConditionsStep
               clientId={clientId}
               initialData={formData}
               onNext={handleNext}
               onBack={handleBack}
-            />
-          );
-        case 4:
-          return (
-            <LandingPageFormStep
-              clientId={clientId}
-              campaignId={campaignId}
-              initialData={formData}
-              onNext={handleNext}
-              onBack={handleBack}
-              designImageUrl={(formData as any).design_image_url}
             />
           );
         case 5:
@@ -211,7 +217,7 @@ export function CreateCampaignWizard({
           return null;
       }
     } else {
-      // ACE fulfillment flow: Method → Setup → Design → Codes → Conditions → Page/Form → Delivery → Review
+      // ACE fulfillment flow: Method → Setup → Audiences → Design → Codes → Conditions → Delivery → Review
       switch (currentStep) {
         case 1:
           return (
@@ -225,7 +231,7 @@ export function CreateCampaignWizard({
           );
         case 2:
           return (
-            <UploadDesignStep
+            <AudiencesStep
               clientId={clientId}
               initialData={formData}
               onNext={handleNext}
@@ -233,6 +239,15 @@ export function CreateCampaignWizard({
             />
           );
         case 3:
+          return (
+            <UploadDesignStep
+              clientId={clientId}
+              initialData={formData}
+              onNext={handleNext}
+              onBack={handleBack}
+            />
+          );
+        case 4:
           return (
             <CodesUploadStep
               clientId={clientId}
@@ -242,7 +257,7 @@ export function CreateCampaignWizard({
               onBack={handleBack}
             />
           );
-        case 4:
+        case 5:
           return (
             <ConditionsStep
               clientId={clientId}
@@ -251,7 +266,7 @@ export function CreateCampaignWizard({
               onBack={handleBack}
             />
           );
-        case 5:
+        case 6:
           return (
             <LandingPageFormStep
               clientId={clientId}
@@ -262,7 +277,7 @@ export function CreateCampaignWizard({
               designImageUrl={(formData as any).design_image_url}
             />
           );
-        case 6:
+        case 7:
           return (
             <DeliveryFulfillmentStep
               clientId={clientId}
@@ -272,7 +287,7 @@ export function CreateCampaignWizard({
               onBack={handleBack}
             />
           );
-        case 7:
+        case 8:
           return (
             <SummaryStep
               formData={formData}
@@ -295,7 +310,11 @@ export function CreateCampaignWizard({
           <DialogTitle>Create Campaign</DialogTitle>
         </DialogHeader>
 
-        <StepIndicator currentStep={currentStep} steps={steps} />
+        <StepIndicator 
+          currentStep={currentStep} 
+          steps={steps}
+          onStepClick={handleStepClick}
+        />
 
         <div className="flex gap-6 flex-1 overflow-hidden">
           <div className="hidden lg:block w-56 flex-shrink-0">

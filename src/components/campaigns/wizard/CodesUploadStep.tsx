@@ -6,9 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -21,7 +18,7 @@ import {
   Loader2,
   Users,
   XCircle,
-  List
+  ArrowRight
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
@@ -66,26 +63,12 @@ export function CodesUploadStep({
   onBack 
 }: CodesUploadStepProps) {
   const { toast } = useToast();
-  const [sourceType, setSourceType] = useState<"csv" | "list">("list");
-  const [selectedListId, setSelectedListId] = useState<string>("");
   const [parsedData, setParsedData] = useState<ParsedRow[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showSkipWarning, setShowSkipWarning] = useState(false);
 
-  // Fetch contact lists
-  const { data: contactLists, isLoading: loadingLists } = useQuery({
-    queryKey: ["contact-lists", clientId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contact_lists")
-        .select("id, name, contact_count, list_type, created_at")
-        .eq("client_id", clientId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
+  // Check if audience was selected in previous step
+  const hasAudienceSelected = initialData.contact_list_id || initialData.audience_selection_complete;
 
   const downloadTemplate = () => {
     const template = "code,first_name,last_name,email,phone,address,city,state,zip\nABC123,John,Doe,john@example.com,555-1234,123 Main St,Boston,MA,02101\nXYZ789,Jane,Smith,jane@example.com,555-5678,456 Oak Ave,Boston,MA,02102";
@@ -257,115 +240,82 @@ export function CodesUploadStep({
     });
   };
 
-  const handleUseList = () => {
-    if (!selectedListId) {
-      toast({
-        title: "List Required",
-        description: "Please select a contact list",
-        variant: "destructive",
-      });
+  const handleSkip = () => {
+    if (!showSkipWarning) {
+      setShowSkipWarning(true);
       return;
     }
 
-    const selectedList = contactLists?.find(l => l.id === selectedListId);
-    
+    // User confirmed skip
+    toast({
+      title: "Skipped Code Upload",
+      description: "This campaign will be marked for testing only.",
+      variant: "default",
+    });
+
     onNext({
-      contact_list_id: selectedListId,
-      codes_uploaded: true,
-      recipient_count: selectedList?.contact_count || 0,
+      codes_uploaded: false,
+      requires_codes: false, // Mark as test campaign
+      recipient_count: initialData.recipient_count || 0
     });
   };
 
   const validCount = parsedData.filter(r => r.status === 'valid').length;
   const duplicateCount = parsedData.filter(r => r.status === 'duplicate').length;
   const errorCount = parsedData.filter(r => r.status === 'error').length;
-  const selectedList = contactLists?.find(l => l.id === selectedListId);
+
+  // If audience was selected in previous step, auto-proceed
+  if (hasAudienceSelected && initialData.contact_list_id) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">Codes Auto-Generated</h2>
+          <p className="text-muted-foreground mt-2">
+            Unique codes will be automatically generated for your selected audience
+          </p>
+        </div>
+
+        <Alert className="border-primary/50 bg-primary/5">
+          <CheckCircle className="h-4 w-4 text-primary" />
+          <AlertTitle>Audience Selected</AlertTitle>
+          <AlertDescription>
+            <div className="space-y-2 mt-2">
+              <p>You selected a contact list in the previous step.</p>
+              <p className="font-semibold">
+                {initialData.recipient_count || 0} unique redemption codes will be auto-generated when you create the campaign.
+              </p>
+              <p className="text-sm text-muted-foreground mt-3">
+                Each contact will receive a unique code that can be tracked through QR codes, PURLs, and the call center system.
+              </p>
+            </div>
+          </AlertDescription>
+        </Alert>
+
+        <div className="flex justify-between gap-2 pt-4">
+          <Button type="button" variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button onClick={() => onNext({ codes_uploaded: true, recipient_count: initialData.recipient_count || 0 })}>
+            <Users className="h-4 w-4 mr-2" />
+            Continue
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Recipients & Codes</h2>
+        <h2 className="text-2xl font-bold">Upload Unique Codes</h2>
         <p className="text-muted-foreground mt-2">
-          Select a contact list or upload a CSV file with customer codes
+          Upload a CSV file with unique codes and customer information
         </p>
       </div>
 
-      {/* Source Type Tabs */}
-      <Tabs value={sourceType} onValueChange={(v) => setSourceType(v as "csv" | "list")}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="list">
-            <List className="h-4 w-4 mr-2" />
-            Select List
-          </TabsTrigger>
-          <TabsTrigger value="csv">
-            <Upload className="h-4 w-4 mr-2" />
-            Upload CSV
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="list" className="space-y-4 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Select Contact List</CardTitle>
-              <CardDescription>
-                Choose an existing contact list for this campaign. Codes will be auto-generated.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {loadingLists ? (
-                <p className="text-sm text-muted-foreground">Loading contact lists...</p>
-              ) : contactLists && contactLists.length > 0 ? (
-                <>
-                  <div className="space-y-2">
-                    <Label>Contact List</Label>
-                    <Select value={selectedListId} onValueChange={setSelectedListId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a contact list..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {contactLists.map((list) => (
-                          <SelectItem key={list.id} value={list.id}>
-                            {list.name} ({list.contact_count || 0} contacts)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {selectedList && (
-                    <Alert>
-                      <CheckCircle className="h-4 w-4" />
-                      <AlertTitle>List Selected</AlertTitle>
-                      <AlertDescription>
-                        <div className="space-y-1 mt-2">
-                          <div><strong>{selectedList.name}</strong></div>
-                          <div className="text-sm">
-                            {selectedList.contact_count || 0} contacts will become campaign recipients
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Unique redemption codes will be automatically generated for each contact
-                          </div>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </>
-              ) : (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    No contact lists found. Create a contact list first or upload a CSV.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="csv" className="space-y-4 mt-6">
-
-          {/* Template Download */}
-          <Card>
+      {/* Template Download */}
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">Need a Template?</CardTitle>
           <CardDescription>
@@ -383,8 +333,8 @@ export function CodesUploadStep({
         </CardContent>
       </Card>
 
-          {/* Upload Area */}
-          <Card>
+      {/* Upload Area */}
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">Upload CSV File</CardTitle>
         </CardHeader>
@@ -415,10 +365,10 @@ export function CodesUploadStep({
         </CardContent>
       </Card>
 
-          {/* Validation Summary */}
-          {parsedData.length > 0 && (
-            <>
-              <Card>
+      {/* Validation Summary */}
+      {parsedData.length > 0 && (
+        <>
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">Validation Summary</CardTitle>
             </CardHeader>
@@ -469,8 +419,8 @@ export function CodesUploadStep({
             </CardContent>
           </Card>
 
-              {/* Preview Table */}
-              <Card>
+          {/* Preview Table */}
+          <Card>
             <CardHeader>
               <CardTitle className="text-base">Preview Data</CardTitle>
               <CardDescription>
@@ -528,12 +478,10 @@ export function CodesUploadStep({
                   ... and {parsedData.length - 10} more rows
                 </p>
               )}
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       {/* Skip Warning */}
       {showSkipWarning && (
@@ -567,14 +515,7 @@ export function CodesUploadStep({
             {showSkipWarning ? "Skip Code Upload (Confirm)" : "Skip for Now"}
           </Button>
 
-          {sourceType === "list" && selectedListId && (
-            <Button onClick={handleUseList}>
-              <Users className="h-4 w-4 mr-2" />
-              Use {selectedList?.contact_count || 0} Contacts
-            </Button>
-          )}
-
-          {sourceType === "csv" && parsedData.length > 0 && (
+          {parsedData.length > 0 && (
             <Button
               onClick={() => importMutation.mutate()}
               disabled={validCount === 0 || importMutation.isPending}
