@@ -183,7 +183,7 @@ export function PendingInvitations() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground'>
                   No pending invitations
                 </TableCell>
               </TableRow>

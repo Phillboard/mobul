@@ -13,7 +13,7 @@ import { ChangeRoleDialog } from "./ChangeRoleDialog";
 import { AssignOrganizationDialog } from "./AssignOrganizationDialog";
 import { AssignClientDialog } from "./AssignClientDialog";
 import { DeactivateUserDialog } from "./DeactivateUserDialog";
-import { AppRole } from '@/lib/auth/roleUtils";
+import { AppRole } from '@/lib/auth/roleUtils';
 
 interface UserActionMenuProps {
   user: {

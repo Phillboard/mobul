@@ -1,5 +1,5 @@
 import { useUserRole } from "./useUserRole";
-import { AppRole, roleDisplayNames } from '@/lib/auth/roleUtils";
+import { AppRole, roleDisplayNames } from '@/lib/auth/roleUtils';
 import { roleRequirements } from '@/lib/auth/roleRequirements";
 
 export interface InvitableRole {
@@ -27,7 +27,7 @@ export function useInvitableRoles() {
   const userRoleConfig = roleRequirements[userRole];
   
   if (!userRoleConfig) {
-    console.error("useInvitableRoles: Invalid role configuration for", userRole);
+    console.error("useInvitableRoles: Invalid role configuration for', userRole);
     return { invitableRoles, isLoading: false };
   }
 

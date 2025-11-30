@@ -26,14 +26,12 @@ const PURLLandingPage = lazy(() => import("./pages/PURLLandingPage"));
 const AudienceDetail = lazy(() => import("./pages/AudienceDetail"));
 const RecipientDetail = lazy(() => import("./pages/RecipientDetail"));
 const Mail = lazy(() => import("./pages/Mail"));
-const CampaignPrototype = lazy(() => import("./pages/CampaignPrototype"));
 const MailDesigner = lazy(() => import("./pages/MailDesigner"));
 const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
 const APIDocumentation = lazy(() => import("./pages/APIDocumentation"));
 const GiftCards = lazy(() => import("./pages/GiftCards"));
 const PurchaseGiftCards = lazy(() => import("./pages/PurchaseGiftCards"));
 const Settings = lazy(() => import("./pages/Settings"));
-const GenerateFavicon = lazy(() => import("./pages/GenerateFavicon"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const LandingPages = lazy(() => import("./pages/LandingPages"));
@@ -53,32 +51,26 @@ const Tasks = lazy(() => import("./pages/Tasks"));
 const TeamManagement = lazy(() => import("./pages/TeamManagement"));
 const AdminGiftCardMarketplace = lazy(() => import("./pages/AdminGiftCardMarketplace"));
 const AdminSiteDirectory = lazy(() => import("./pages/AdminSiteDirectory"));
-const Webinar = lazy(() => import("./pages/Webinar"));
 const AceForms = lazy(() => import("./pages/AceForms"));
 const AceFormBuilder = lazy(() => import("./pages/AceFormBuilder"));
 const AceFormPublic = lazy(() => import("./pages/AceFormPublic"));
 const AceFormAnalytics = lazy(() => import("./pages/AceFormAnalytics"));
 const AceFormsDocumentation = lazy(() => import("./pages/AceFormsDocumentation"));
 const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
-const BetaTesting = lazy(() => import("./pages/BetaTesting"));
-const LaunchChecklist = lazy(() => import("./pages/LaunchChecklist"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CookieConsent = lazy(() => import("./components/CookieConsent").then(m => ({ default: m.CookieConsent })));
 const Documentation = lazy(() => import("./pages/Documentation"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const PlatformDashboard = lazy(() => import("./pages/PlatformDashboard").then(m => ({ default: m.PlatformDashboard })));
-const EnrichData = lazy(() => import("./pages/EnrichData"));
 const SystemHealth = lazy(() => import("./pages/SystemHealth"));
 const Integrations = lazy(() => import("./pages/Integrations"));
 const DocEditorPage = lazy(() => import("./pages/DocEditorPage"));
-const MVPVerification = lazy(() => import("./pages/MVPVerification"));
-const DemoDataGenerator = lazy(() => import("./pages/DemoDataGenerator"));
-const DataSimulation = lazy(() => import("./pages/DataSimulation"));
 const PoolDetail = lazy(() => import("./pages/PoolDetail"));
 const PurchaseGiftCard = lazy(() => import("./pages/PurchaseGiftCard"));
 const RecordPurchase = lazy(() => import("./pages/RecordPurchase"));
 const EditPoolPricing = lazy(() => import("./pages/EditPoolPricing"));
+const AdminDemoDataGenerator = lazy(() => import("./pages/AdminDemoDataGenerator"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -157,7 +149,6 @@ const App = () => (
                   <Route path="/audiences/:id" element={<ProtectedRoute><AudienceDetail /></ProtectedRoute>} />
                   <Route path="/recipients/:id" element={<ProtectedRoute><RecipientDetail /></ProtectedRoute>} />
                   <Route path="/analytics/campaigns/:id" element={<ProtectedRoute><CampaignAnalytics /></ProtectedRoute>} />
-                  <Route path="/prototype/:id" element={<ProtectedRoute><CampaignPrototype /></ProtectedRoute>} />
                   
                   {/* Mail & Landing Pages */}
                   <Route path="/mail" element={<ProtectedRoute><Mail /></ProtectedRoute>} />
@@ -204,9 +195,7 @@ const App = () => (
                   
                   {/* Administration - Consolidated */}
                   <Route path="/admin/system-health" element={<ProtectedRoute><SystemHealth /></ProtectedRoute>} />
-                  <Route path="/admin/mvp-verification" element={<ProtectedRoute requiredRole="admin"><MVPVerification /></ProtectedRoute>} />
-                  <Route path="/admin/demo-data" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
-                  <Route path="/admin/data-simulation" element={<ProtectedRoute requiredRole="admin"><DataSimulation /></ProtectedRoute>} />
+                  <Route path="/admin/demo-data-generator" element={<ProtectedRoute requiredRole="admin"><AdminDemoDataGenerator /></ProtectedRoute>} />
                   <Route path="/admin/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
                    <Route path="/admin/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                    <Route path="/admin/docs/:category" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
@@ -223,8 +212,6 @@ const App = () => (
                   {/* Settings & Utilities */}
                   <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                   <Route path="/settings/:tab" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                  <Route path="/webinar" element={<ProtectedRoute><Webinar /></ProtectedRoute>} />
-                  <Route path="/generate-favicon" element={<ProtectedRoute><GenerateFavicon /></ProtectedRoute>} />
                   <Route path="/api-docs" element={<ProtectedRoute><APIDocumentation /></ProtectedRoute>} />
                   
                   {/* Admin Routes */}
@@ -232,9 +219,6 @@ const App = () => (
                   <Route path="/agency-management" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
                   <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
                   <Route path="/admin/site-directory" element={<ProtectedRoute requiredRole="admin"><AdminSiteDirectory /></ProtectedRoute>} />
-                  <Route path="/enrich-data" element={<ProtectedRoute requiredRole="admin"><EnrichData /></ProtectedRoute>} />
-                  <Route path="/beta" element={<ProtectedRoute><BetaTesting /></ProtectedRoute>} />
-                  <Route path="/launch" element={<ProtectedRoute><LaunchChecklist /></ProtectedRoute>} />
                   
                   {/* 404 */}
                   <Route path="*" element={<NotFound />} />

@@ -139,7 +139,7 @@ export const userManagementColumns: ColumnDef<PaginatedUser>[] = [
     },
   },
   {
-    id: "actions",
+    id: "actions',
     cell: ({ row }) => {
       const user = row.original;
       

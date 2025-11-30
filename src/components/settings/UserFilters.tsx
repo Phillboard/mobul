@@ -143,7 +143,7 @@ export function UserFilters({
           checked={showInactive}
           onCheckedChange={onShowInactiveChange}
         />
-        <Label htmlFor="show-inactive" className="cursor-pointer">
+        <Label htmlFor="show-inactive" className="cursor-pointer'>
           Show inactive
         </Label>
       </div>

@@ -348,7 +348,7 @@ export default function AdminAuditLog() {
               <CardDescription>Recent bulk code uploads</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-4'>
                 <DataTableToolbar table={uploadTable}>
                   <DataTableViewOptions table={uploadTable} />
                 </DataTableToolbar>

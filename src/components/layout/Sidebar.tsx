@@ -10,10 +10,10 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
-import { settingsTabs } from '@/lib/config/settingsConfig";
+import { settingsTabs } from '@/lib/config/settingsConfig';
 import { useSettingsTabs } from "@/hooks/useSettingsTabs";
 import { useMenuSearch, SearchableNavItem } from "@/hooks/useMenuSearch";
-import { AppRole } from '@/lib/auth/roleUtils";
+import { AppRole } from '@/lib/auth/roleUtils';
 import { Button } from "@/components/ui/button";
 import {
   Sidebar as SidebarRoot, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -109,11 +109,9 @@ const navigationGroups: NavGroup[] = [
       { name: "Platform Overview", href: "/platform", icon: Shield, roles: ['admin'], keywords: ["platform", "overview", "stats"], description: "Platform-wide overview" },
       { name: "User Management", href: "/users", icon: UserCog, roles: ['admin'], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
       { name: "System Health", href: "/admin/system-health", icon: Activity, roles: ['admin'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
-      { name: "Data Simulation", href: "/admin/data-simulation", icon: Database, roles: ['admin'], keywords: ["demo", "simulation", "seed", "testing", "investor"], description: "Generate realistic demo data" },
-      { name: "Data Tools", href: "/enrich-data", icon: Database, roles: ['admin'], keywords: ["enrich", "append"], description: "Data enrichment tools" },
+      { name: "Demo Data Generator", href: "/admin/demo-data-generator", icon: Database, roles: ['admin'], keywords: ["demo", "test", "simulation", "seed", "generate"], description: "Generate test data for clients" },
       { name: "Audit Log", href: "/admin/audit-log", icon: ShieldAlert, roles: ['admin'], keywords: ["audit", "logs", "history"], description: "User management audit trail" },
       { name: "Site Directory", href: "/admin/site-directory", icon: FileSearch, roles: ['admin'], keywords: ["pages", "routes", "navigation"], description: "All pages directory" },
-      { name: "Beta & Launch", href: "/beta", icon: Rocket, roles: ['admin'], keywords: ["beta", "launch", "testing", "checklist"], description: "Beta testing & launch checklist" },
     ]
   },
 ];

@@ -96,7 +96,7 @@ export function RecentDeliveriesTable({ deliveries }: RecentDeliveriesTableProps
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground'>
                     No deliveries yet
                   </TableCell>
                 </TableRow>

@@ -41,7 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw, Download } from "lucide-react";
 import { useState } from "react";
-import { formatCurrency } from '@/lib/utils/currencyUtils";
+import { formatCurrency } from '@/lib/utils/currencyUtils';
 import { calculatePoolStats } from '@/lib/campaign/giftCardUtils";
 import { useToast } from "@/hooks/use-toast";
 import { PoolStats } from "./PoolStats";
@@ -71,7 +71,7 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
       const { data: userRole } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
+        .eq("user_id', user.id)
         .single();
       
       return { ...user, role: userRole?.role };

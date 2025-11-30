@@ -4,7 +4,7 @@
  */
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
+import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils';
 import { formatCurrency } from '@/lib/utils/currencyUtils";
 
 export interface DeliveryHistoryRow {
@@ -128,7 +128,7 @@ export function createDeliveryHistoryColumns(): ColumnDef<DeliveryHistoryRow>[] 
       accessorKey: "delivery_status",
       header: "Status",
       cell: ({ row }) => getDeliveryStatusBadge(row.getValue("delivery_status")),
-      filterFn: "equals",
+      filterFn: "equals',
     },
   ];
 }

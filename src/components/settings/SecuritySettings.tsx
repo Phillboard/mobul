@@ -42,7 +42,7 @@ export function SecuritySettings() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "created_at', desc: true }]);
 
   const isAdmin = roles.some(r => r.role === 'admin');
   const isTechSupport = roles.some(r => r.role === 'tech_support');

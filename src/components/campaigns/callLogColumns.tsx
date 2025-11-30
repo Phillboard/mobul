@@ -144,7 +144,7 @@ export function createCallLogColumns(
       header: "Recording",
       cell: ({ row }) => {
         if (!row.original.recording_url || !row.original.recording_sid) {
-          return <span className="text-muted-foreground text-sm">No recording</span>;
+          return <span className="text-muted-foreground text-sm'>No recording</span>;
         }
         
         return (

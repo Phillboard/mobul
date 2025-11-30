@@ -97,7 +97,7 @@ export function GiftCardInventory({ clientId }: GiftCardInventoryProps) {
 
       {selectedPoolId && (
         <Card>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4'>
             <DataTable table={table} />
             <DataTablePagination table={table} />
           </CardContent>

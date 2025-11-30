@@ -102,7 +102,7 @@ export function createAudiencesColumns(
       cell: ({ row }) => (
         <Button
           variant="ghost"
-          size="sm"
+          size="sm'
           onClick={(e) => {
             e.stopPropagation();
             onViewAudience(row.original.id);

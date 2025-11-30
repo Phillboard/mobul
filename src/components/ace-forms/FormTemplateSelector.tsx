@@ -41,7 +41,7 @@ export function FormTemplateSelector({ onSelect, onCancel }: FormTemplateSelecto
             <CardDescription className="text-sm">Build from scratch with full control</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button size="sm" className="w-full" variant="outline">Start Blank</Button>
+            <Button size="sm" className="w-full" variant="outline'>Start Blank</Button>
           </CardContent>
         </Card>
       </div>

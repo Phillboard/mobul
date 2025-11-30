@@ -410,7 +410,7 @@ export function CreateMailDialog({
                     Cancel
                   </Button>
                   <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Creating..." : "Create Mail Piece"}
+                    {createMutation.isPending ? "Creating..." : "Create Mail Piece'}
                   </Button>
                 </DialogFooter>
               </form>
