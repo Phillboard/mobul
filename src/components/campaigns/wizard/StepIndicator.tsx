@@ -4,26 +4,34 @@ import { cn } from '@/lib/utils/utils';
 interface StepIndicatorProps {
   currentStep: number;
   steps: { label: string; description: string }[];
+  onStepClick?: (step: number) => void;
 }
 
-export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
+export function StepIndicator({ currentStep, steps, onStepClick }: StepIndicatorProps) {
   return (
     <div className="flex items-center justify-between w-full mb-8">
       {steps.map((step, index) => {
         const stepNumber = index + 1;
-        const isCompleted = stepNumber < currentStep;
-        const isCurrent = stepNumber === currentStep;
-        const isUpcoming = stepNumber > currentStep;
+        // Fix: Use index directly instead of stepNumber for comparison
+        const isCompleted = index < currentStep;
+        const isCurrent = index === currentStep;
+        const isUpcoming = index > currentStep;
+        const isClickable = (isCompleted || isCurrent) && onStepClick;
 
         return (
           <div key={index} className="flex items-center flex-1">
             <div className="flex flex-col items-center flex-1">
-              <div
+              <button
+                type="button"
+                onClick={() => isClickable && onStepClick(index)}
+                disabled={!isClickable}
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all",
                   isCompleted && "bg-primary text-primary-foreground",
                   isCurrent && "bg-primary text-primary-foreground ring-4 ring-primary/20",
-                  isUpcoming && "bg-muted text-muted-foreground"
+                  isUpcoming && "bg-muted text-muted-foreground",
+                  isClickable && "cursor-pointer hover:ring-4 hover:ring-primary/10",
+                  !isClickable && "cursor-not-allowed"
                 )}
               >
                 {isCompleted ? (
@@ -31,7 +39,7 @@ export function StepIndicator({ currentStep, steps }: StepIndicatorProps) {
                 ) : (
                   <span>{stepNumber}</span>
                 )}
-              </div>
+              </button>
               <div className="mt-2 text-center">
                 <div
                   className={cn(

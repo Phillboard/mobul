@@ -104,9 +104,17 @@ export type MailingMethod = 'self' | 'ace_fulfillment';
 /**
  * Campaign Form Data
  * Shape of data in campaign creation wizard
+ * 
+ * New Step Order:
+ * Step 0: Mailing Method
+ * Step 1: Setup (name, template, size)
+ * Step 2: Audiences/Contacts (NEW dedicated step)
+ * Step 3: Design/Codes/Conditions
+ * Step 4: Delivery (ACE only)
+ * Step 5: Review
  */
 export interface CampaignFormData {
-  // Step 0: Mailing Method (NEW)
+  // Step 0: Mailing Method
   mailing_method?: MailingMethod;
   design_image_url?: string; // For self-mailers who upload their design
   
@@ -115,14 +123,21 @@ export interface CampaignFormData {
   size: MailSize;
   template_id?: string | null;
   
-  // Step 2: Recipients (Contacts/Lists/Segments)
+  // Step 2: Audiences/Contacts (NEW dedicated step)
   contact_list_id?: string;
   recipient_source?: 'list' | 'segment';
   tag_filters?: string[];
   audience_id?: string; // DEPRECATED: Legacy audience system
   recipient_count?: number;
+  audience_selection_complete?: boolean; // NEW: Track if audience step completed
+  selected_audience_type?: 'list' | 'segment' | 'csv'; // NEW: Track selection method
   
-  // Step 3: Tracking & Rewards
+  // Step 3: Codes & Conditions
+  codes_uploaded?: boolean;
+  requires_codes?: boolean; // For test campaigns
+  selected_form_ids?: string[]; // ACE Forms selected
+  
+  // Step 3/4: Tracking & Rewards
   enableCallTracking?: boolean;
   trackedNumberId?: string;
   lp_mode?: LandingPageMode;
@@ -134,13 +149,13 @@ export interface CampaignFormData {
   condition1PoolId?: string;
   condition1SmsTemplate?: string;
   
-  // Step 4: Delivery
+  // Step 4/5: Delivery (ACE fulfillment only)
   postage?: PostageClass;
   mail_date_mode?: 'asap' | 'scheduled';
   mail_date?: Date | null;
   vendor?: string;
   
-  // Legacy fields for conditions
+  // Conditions and rewards
   conditions?: Partial<CampaignCondition>[];
   reward_configs?: Partial<CampaignRewardConfig>[];
 }
