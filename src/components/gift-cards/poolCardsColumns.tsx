@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { formatCurrency } from '@/lib/utils/currencyUtils';
 import { maskCardCode, getStatusBadgeVariant } from '@/lib/campaign/giftCardUtils';
-import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
+import { formatDate, DATE_FORMATS } from "@/lib/utils/dateUtils";
 import { GiftCard } from "@/types/giftCards";
 
 export interface PoolCardRow extends GiftCard {
@@ -103,7 +103,7 @@ export function createPoolCardsColumns(
               {isRevealed ? (
                 <EyeOff className="h-5 w-5" />
               ) : (
-                <Eye className="h-5 w-5' />
+                <Eye className="h-5 w-5" />
               )}
             </Button>
           </div>

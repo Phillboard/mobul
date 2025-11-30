@@ -24,7 +24,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { UserPlus, Mail, Info } from "lucide-react";
 import { useInvitableRoles } from "@/hooks/useInvitableRoles";
-import { AppRole } from '@/lib/auth/roleUtils";
+import { AppRole } from "@/lib/auth/roleUtils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function InviteUserDialog() {
@@ -173,7 +173,7 @@ export function InviteUserDialog() {
               <p className="text-sm text-muted-foreground">Loading roles...</p>
             ) : invitableRoles.length === 0 ? (
               <Alert>
-                <Info className="h-4 w-4' />
+                <Info className="h-4 w-4" />
                 <AlertDescription>
                   You don't have permission to invite users
                 </AlertDescription>

@@ -27,7 +27,7 @@ import {
 import { useState } from "react";
 import { BalanceHistoryWithCard } from "@/types/giftCards";
 import { createPoolBalanceHistoryColumns } from "./poolBalanceHistoryColumns";
-import { basicTableModels } from '@/lib/utils/tableHelpers";
+import { basicTableModels } from "@/lib/utils/tableHelpers";
 
 interface PoolBalanceHistoryProps {
   history: BalanceHistoryWithCard[];
@@ -91,7 +91,7 @@ export function PoolBalanceHistory({ history }: PoolBalanceHistoryProps) {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="text-center py-12 text-muted-foreground text-base'>
+              <TableCell colSpan={columns.length} className="text-center py-12 text-muted-foreground text-base">
                 No balance checks yet
               </TableCell>
             </TableRow>

@@ -31,7 +31,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { starterMailPieces, type StarterMailPiece } from '@/lib/templates/starterMailPieces";
+import { starterMailPieces, type StarterMailPiece } from "@/lib/templates/starterMailPieces";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MailPreviewRenderer } from "./MailPreviewRenderer";
@@ -410,7 +410,7 @@ export function CreateMailDialog({
                     Cancel
                   </Button>
                   <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Creating..." : "Create Mail Piece'}
+                      {createMutation.isPending ? "Creating..." : "Create Mail Piece"}
                   </Button>
                 </DialogFooter>
               </form>

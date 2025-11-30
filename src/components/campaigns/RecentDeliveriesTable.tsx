@@ -20,7 +20,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createRewardDeliveriesColumns, RewardDeliveryRow } from "./rewardDeliveriesColumns";
-import { basicTableModels } from '@/lib/utils/tableHelpers";
+import { basicTableModels } from "@/lib/utils/tableHelpers";
 
 interface RecentDeliveriesTableProps {
   campaignId: string;
@@ -96,7 +96,7 @@ export function RecentDeliveriesTable({ deliveries }: RecentDeliveriesTableProps
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground'>
+                  <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
                     No deliveries yet
                   </TableCell>
                 </TableRow>

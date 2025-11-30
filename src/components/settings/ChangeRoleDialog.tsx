@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { AppRole, roleDisplayNames } from '@/lib/auth/roleUtils';
-import { roleRequirements } from '@/lib/auth/roleRequirements";
+import { roleRequirements } from "@/lib/auth/roleRequirements";
 import { AlertCircle } from "lucide-react";
 
 interface ChangeRoleDialogProps {
@@ -67,7 +67,7 @@ export function ChangeRoleDialog({
 
         <div className="space-y-4 py-4">
           <div className="text-sm text-muted-foreground">
-            Current Role: <span className="font-medium'>{currentRole ? roleDisplayNames[currentRole] : 'No role assigned'}</span>
+            Current Role: <span className="font-medium">{currentRole ? roleDisplayNames[currentRole] : 'No role assigned'}</span>
           </div>
 
           <RadioGroup value={selectedRole} onValueChange={(v) => setSelectedRole(v as AppRole)}>

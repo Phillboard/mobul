@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useGiftCardDeliveries } from "@/hooks/useGiftCards";
 import { createDeliveryHistoryColumns } from "./deliveryHistoryColumns";
-import { basicTableModels } from '@/lib/utils/tableHelpers";
+import { basicTableModels } from "@/lib/utils/tableHelpers";
 
 interface DeliveryHistoryProps {
   campaignId?: string;
@@ -90,7 +90,7 @@ export function DeliveryHistory({ campaignId }: DeliveryHistoryProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground'>
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
                   No deliveries found
                 </TableCell>
               </TableRow>

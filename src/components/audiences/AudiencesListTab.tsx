@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Users, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createAudiencesColumns } from "./audiencesColumns";
-import { basicTableModels } from '@/lib/utils/tableHelpers";
+import { basicTableModels } from "@/lib/utils/tableHelpers";
 import { DataTable } from "@/components/ui/data-table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";

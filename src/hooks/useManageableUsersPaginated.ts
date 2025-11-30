@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AppRole } from '@/lib/auth/roleUtils";
+import { AppRole } from "@/lib/auth/roleUtils";
 
 export interface PaginatedUser {
   id: string;
@@ -77,7 +77,7 @@ export function useManageableUsersPaginated({
       );
 
       if (error) {
-        console.error("Error fetching paginated users:', error);
+          console.error("Error fetching paginated users:", error);
         throw error;
       }
 

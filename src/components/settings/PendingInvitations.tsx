@@ -25,7 +25,7 @@ import {
 import { toast } from "sonner";
 import { MailOpen } from "lucide-react";
 import { createPendingInvitationsColumns } from "./pendingInvitationsColumns";
-import { basicTableModels } from '@/lib/utils/tableHelpers";
+import { basicTableModels } from "@/lib/utils/tableHelpers";
 
 export function PendingInvitations() {
   const queryClient = useQueryClient();
@@ -183,7 +183,7 @@ export function PendingInvitations() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground'>
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
                   No pending invitations
                 </TableCell>
               </TableRow>

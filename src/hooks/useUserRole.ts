@@ -7,7 +7,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AppRole, roleHierarchy } from '@/lib/auth/roleUtils";
+import { AppRole, roleHierarchy } from "@/lib/auth/roleUtils";
 
 /**
  * Hook to get all roles for current user
@@ -30,7 +30,7 @@ export function useUserRoles() {
         .eq("user_id", user.id);
 
       if (error) {
-        console.error("Error fetching user roles:', error);
+          console.error("Error fetching user roles:", error);
         return [];
       }
 

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getContextualTemplates } from '@/lib/templates/aceFormTemplates";
+import { getContextualTemplates } from "@/lib/templates/aceFormTemplates";
 import { FormTemplate } from "@/types/aceForms";
 import { useFormContext } from "@/hooks/useFormContext";
 
@@ -41,7 +41,7 @@ export function FormTemplateSelector({ onSelect, onCancel }: FormTemplateSelecto
             <CardDescription className="text-sm">Build from scratch with full control</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button size="sm" className="w-full" variant="outline'>Start Blank</Button>
+            <Button size="sm" className="w-full" variant="outline">Start Blank</Button>
           </CardContent>
         </Card>
       </div>

@@ -42,7 +42,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw, Download } from "lucide-react";
 import { useState } from "react";
 import { formatCurrency } from '@/lib/utils/currencyUtils';
-import { calculatePoolStats } from '@/lib/campaign/giftCardUtils";
+import { calculatePoolStats } from "@/lib/campaign/giftCardUtils";
 import { useToast } from "@/hooks/use-toast";
 import { PoolStats } from "./PoolStats";
 import { PoolCardsTable } from "./PoolCardsTable";

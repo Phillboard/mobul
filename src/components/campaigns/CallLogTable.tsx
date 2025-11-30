@@ -22,7 +22,7 @@ import { Search, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createCallLogColumns, CallSessionRow } from "./callLogColumns";
 import { exportTableToCSV } from '@/lib/utils/tableHelpers';
-import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
+import { formatDate, DATE_FORMATS } from "@/lib/utils/dateUtils";
 
 interface CallLogTableProps {
   campaignId: string;
@@ -208,7 +208,7 @@ export function CallLogTable({ campaignId }: CallLogTableProps) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center'>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
                       No calls found
                     </TableCell>
                   </TableRow>
