@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,19 +9,25 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useMailProviderSettings, MailProviderSettings as MailProviderSettingsType } from "@/hooks/useMailProviderSettings";
+import { useMailProviderSettings, MailProviderSettings as MailProviderSettingsType, SettingsLevel } from "@/hooks/useMailProviderSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTenant } from "@/contexts/TenantContext";
-import { Mail, Webhook, Shield, Settings2, Info } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Mail, Webhook, Shield, Settings2, Info, Building2, Users } from "lucide-react";
 
 export function MailProviderSettings() {
   const { settings, isLoading, saveSettings, isSaving } = useMailProviderSettings();
   const { hasRole } = useAuth();
-  const { currentClient, currentOrg } = useTenant();
+  const { currentClient, currentOrg, organizations, clients } = useTenant();
 
   const isAgency = hasRole('agency_owner');
   const isAdmin = hasRole('admin');
   const isDirectClient = currentClient && !currentClient.org_id;
+
+  // Admin-specific state
+  const [settingsLevel, setSettingsLevel] = useState<SettingsLevel>('organization');
+  const [selectedOrgId, setSelectedOrgId] = useState<string>('');
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
 
   const [formData, setFormData] = useState<Partial<MailProviderSettingsType>>({
     provider_type: 'postgrid',
@@ -32,6 +39,55 @@ export function MailProviderSettings() {
     custom_auth_type: 'api_key',
   });
 
+  // Fetch all organizations for admin (if needed)
+  const { data: allOrganizations } = useQuery({
+    queryKey: ['all-organizations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name, type')
+        .order('name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin && organizations.length === 0,
+  });
+
+  // Fetch all clients for the selected org (if admin and client level selected)
+  const { data: allClients } = useQuery({
+    queryKey: ['all-clients', selectedOrgId],
+    queryFn: async () => {
+      const query = supabase
+        .from('clients')
+        .select('id, name, org_id')
+        .order('name');
+      
+      if (selectedOrgId) {
+        query.eq('org_id', selectedOrgId);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin && settingsLevel === 'client',
+  });
+
+  // Initialize selected IDs from current context
+  useEffect(() => {
+    if (isAdmin) {
+      if (settings?.org_id) {
+        setSettingsLevel('organization');
+        setSelectedOrgId(settings.org_id);
+      } else if (settings?.client_id) {
+        setSettingsLevel('client');
+        setSelectedClientId(settings.client_id);
+      } else if (currentOrg?.id) {
+        setSelectedOrgId(currentOrg.id);
+      }
+    }
+  }, [settings, currentOrg, isAdmin]);
+
   useEffect(() => {
     if (settings) {
       setFormData(settings);
@@ -40,7 +96,34 @@ export function MailProviderSettings() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    saveSettings(formData);
+    
+    // Validate level-specific requirements
+    if (isAdmin) {
+      if (settingsLevel === 'organization' && !selectedOrgId) {
+        alert('Please select an organization');
+        return;
+      }
+      if (settingsLevel === 'client' && !selectedClientId) {
+        alert('Please select a client');
+        return;
+      }
+      
+      saveSettings({
+        data: formData,
+        level: settingsLevel,
+        targetOrgId: selectedOrgId,
+        targetClientId: selectedClientId,
+      });
+    } else {
+      // For non-admins, auto-detect level
+      const level: SettingsLevel = currentClient?.id ? 'client' : 'organization';
+      saveSettings({
+        data: formData,
+        level,
+        targetOrgId: currentOrg?.id,
+        targetClientId: currentClient?.id,
+      });
+    }
   };
 
   if (isLoading) {
@@ -68,6 +151,120 @@ export function MailProviderSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Admin Level Selector */}
+          {isAdmin && (
+            <>
+              <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <Settings2 className="h-4 w-4" />
+                  Settings Level
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Choose whether these settings apply to an entire organization (agency) or a specific client.
+                </p>
+                
+                <div className="space-y-4">
+                  <RadioGroup
+                    value={settingsLevel}
+                    onValueChange={(value: SettingsLevel) => {
+                      setSettingsLevel(value);
+                      // Reset selections when changing level
+                      if (value === 'organization') {
+                        setSelectedClientId('');
+                      }
+                    }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="organization" id="level-org" />
+                      <Label htmlFor="level-org" className="font-normal cursor-pointer flex items-center gap-2">
+                        <Building2 className="h-4 w-4" />
+                        Organization (Agency) Level
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="client" id="level-client" />
+                      <Label htmlFor="level-client" className="font-normal cursor-pointer flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Client Level
+                      </Label>
+                    </div>
+                  </RadioGroup>
+
+                  {/* Organization Selector */}
+                  {settingsLevel === 'organization' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="select-org">Select Organization</Label>
+                      <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
+                        <SelectTrigger id="select-org">
+                          <SelectValue placeholder="Choose an organization..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(allOrganizations || organizations).map((org) => (
+                            <SelectItem key={org.id} value={org.id}>
+                              {org.name} {org.type === 'agency' ? '(Agency)' : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedOrgId && (
+                        <p className="text-xs text-muted-foreground">
+                          Settings will apply to all clients under this organization unless they have their own client-level settings.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Client Selector */}
+                  {settingsLevel === 'client' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="select-org-for-client">Organization (Optional)</Label>
+                        <Select value={selectedOrgId} onValueChange={(value) => {
+                          setSelectedOrgId(value);
+                          setSelectedClientId(''); // Reset client selection
+                        }}>
+                          <SelectTrigger id="select-org-for-client">
+                            <SelectValue placeholder="Filter by organization..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">All Organizations</SelectItem>
+                            {(allOrganizations || organizations).map((org) => (
+                              <SelectItem key={org.id} value={org.id}>
+                                {org.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="select-client">Select Client</Label>
+                        <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                          <SelectTrigger id="select-client">
+                            <SelectValue placeholder="Choose a client..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(allClients || clients).map((client) => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {selectedClientId && (
+                          <p className="text-xs text-muted-foreground">
+                            Settings will apply only to this specific client and override organization-level settings.
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+              <Separator />
+            </>
+          )}
+
           {/* Agency Controls */}
           {(isAgency || isAdmin) && !currentClient && (
             <>

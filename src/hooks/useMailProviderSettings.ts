@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTenant } from "@/contexts/TenantContext";
 
+export type SettingsLevel = 'organization' | 'client';
+
 export interface MailProviderSettings {
   id?: string;
   org_id?: string | null;
@@ -21,6 +23,13 @@ export interface MailProviderSettings {
   allow_clients_custom?: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface SaveSettingsParams {
+  data: Partial<MailProviderSettings>;
+  level: SettingsLevel;
+  targetOrgId?: string;
+  targetClientId?: string;
 }
 
 export function useMailProviderSettings() {
@@ -63,35 +72,82 @@ export function useMailProviderSettings() {
 
   // Create or update settings
   const saveMutation = useMutation({
-    mutationFn: async (data: Partial<MailProviderSettings>) => {
-      const settingsData: Partial<MailProviderSettings> & { org_id: string | null; client_id: string | null } = {
-        provider_type: 'postgrid', // Default if not provided
-        ...data,
-        org_id: currentOrg?.id || null,
-        client_id: currentClient?.id || null,
-      };
+    mutationFn: async (params: SaveSettingsParams) => {
+      const { data, level, targetOrgId, targetClientId } = params;
+      
+      // Validate that we have the required ID based on level
+      if (level === 'organization') {
+        const orgId = targetOrgId || currentOrg?.id;
+        if (!orgId) {
+          throw new Error('Organization ID is required for organization-level settings');
+        }
+        
+        const settingsData: Partial<MailProviderSettings> & { org_id: string; client_id: null } = {
+          provider_type: 'postgrid', // Default if not provided
+          ...data,
+          org_id: orgId,
+          client_id: null,
+        };
 
-      if (settings?.id) {
-        // Update existing
-        const { data: updated, error } = await supabase
-          .from("mail_provider_settings")
-          .update(settingsData)
-          .eq("id", settings.id)
-          .select()
-          .single();
+        if (settings?.id && settings.org_id === orgId) {
+          // Update existing org-level settings
+          const { data: updated, error } = await supabase
+            .from("mail_provider_settings")
+            .update(settingsData)
+            .eq("id", settings.id)
+            .select()
+            .single();
 
-        if (error) throw error;
-        return updated as MailProviderSettings;
+          if (error) throw error;
+          return updated as MailProviderSettings;
+        } else {
+          // Create new org-level settings
+          const { data: created, error } = await supabase
+            .from("mail_provider_settings")
+            .insert([settingsData])
+            .select()
+            .single();
+
+          if (error) throw error;
+          return created as MailProviderSettings;
+        }
+      } else if (level === 'client') {
+        const clientId = targetClientId || currentClient?.id;
+        if (!clientId) {
+          throw new Error('Client ID is required for client-level settings');
+        }
+        
+        const settingsData: Partial<MailProviderSettings> & { org_id: null; client_id: string } = {
+          provider_type: 'postgrid', // Default if not provided
+          ...data,
+          org_id: null,
+          client_id: clientId,
+        };
+
+        if (settings?.id && settings.client_id === clientId) {
+          // Update existing client-level settings
+          const { data: updated, error } = await supabase
+            .from("mail_provider_settings")
+            .update(settingsData)
+            .eq("id", settings.id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return updated as MailProviderSettings;
+        } else {
+          // Create new client-level settings
+          const { data: created, error } = await supabase
+            .from("mail_provider_settings")
+            .insert([settingsData])
+            .select()
+            .single();
+
+          if (error) throw error;
+          return created as MailProviderSettings;
+        }
       } else {
-        // Create new
-        const { data: created, error } = await supabase
-          .from("mail_provider_settings")
-          .insert([settingsData])
-          .select()
-          .single();
-
-        if (error) throw error;
-        return created as MailProviderSettings;
+        throw new Error('Invalid settings level');
       }
     },
     onSuccess: () => {

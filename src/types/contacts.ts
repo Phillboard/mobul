@@ -26,7 +26,7 @@ export interface ContactListWithCount extends ContactList {
 }
 
 export interface ContactFormData {
-  customer_code?: string;
+  customer_code: string; // Required unique code (also referred to as unique_code)
   first_name?: string;
   last_name?: string;
   email?: string;
