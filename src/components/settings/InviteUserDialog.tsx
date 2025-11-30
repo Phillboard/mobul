@@ -173,7 +173,7 @@ export function InviteUserDialog() {
               <p className="text-sm text-muted-foreground">Loading roles...</p>
             ) : invitableRoles.length === 0 ? (
               <Alert>
-                <Info className="h-4 w-4" />
+                <Info className="h-4 w-4' />
                 <AlertDescription>
                   You don't have permission to invite users
                 </AlertDescription>

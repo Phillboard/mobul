@@ -17,7 +17,7 @@ import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 import { createAgencyCompaniesColumns } from "@/components/agency/agencyCompaniesColumns";
-import { basicTableModels } from '@/lib/utils/tableHelpers";
+import { basicTableModels } from '@/lib/utils/tableHelpers';
 
 /**
  * AgencyManagement Component

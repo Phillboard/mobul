@@ -75,7 +75,7 @@ export function createAuditLogsColumns(): ColumnDef<AuditLogRow>[] {
           </Badge>
         );
       },
-      filterFn: "equals",
+      filterFn: "equals',
     },
   ];
 }

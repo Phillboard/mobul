@@ -76,7 +76,7 @@ export default function ListDetail() {
         <div className="p-6">
           <div className="text-center">
             <h2 className="text-2xl font-bold">List not found</h2>
-            <p className="text-muted-foreground mt-2">The list you're looking for doesn't exist.</p>
+            <p className="text-muted-foreground mt-2'>The list you're looking for doesn't exist.</p>
             <Button onClick={() => navigate("/contacts/lists")} className="mt-4">
               Back to Lists
             </Button>

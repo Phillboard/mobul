@@ -90,7 +90,7 @@ export function DeliveryHistory({ campaignId }: DeliveryHistoryProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={columns.length} className="text-center py-8 text-muted-foreground'>
                   No deliveries found
                 </TableCell>
               </TableRow>

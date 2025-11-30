@@ -46,7 +46,6 @@ const routes: RouteInfo[] = [
   { path: "/campaigns/new", name: "Create Campaign", category: "Campaigns", auth: "protected", description: "Campaign creation wizard" },
   { path: "/campaigns/:id", name: "Campaign Detail", category: "Campaigns", auth: "protected", requiredPermissions: ["campaigns.view"], description: "Campaign details page" },
   { path: "/analytics/campaigns/:id", name: "Campaign Analytics", category: "Campaigns", auth: "protected", description: "Campaign performance metrics" },
-  { path: "/prototype/:id", name: "Campaign Prototype", category: "Campaigns", auth: "protected", description: "Campaign prototype testing" },
   
   // Mail & Landing Pages
   { path: "/mail", name: "Mail Library", category: "Campaigns", auth: "protected", requiredPermissions: ["templates.view"], description: "Direct mail template library" },
@@ -74,11 +73,9 @@ const routes: RouteInfo[] = [
   { path: "/admin/integrations", name: "Integrations", category: "Administration", auth: "protected", requiredPermissions: ["api.view"], description: "API & webhook management" },
   { path: "/admin/docs", name: "Documentation", category: "Administration", auth: "protected", description: "Platform documentation viewer" },
   { path: "/admin/system-health", name: "System Health", category: "Administration", auth: "protected", requiredPermissions: ["analytics.view"], description: "System monitoring dashboard" },
-  { path: "/admin/mvp-verification", name: "MVP Verification", category: "Administration", auth: "protected", requiredRole: "admin", description: "Verify MVP readiness and seed test data" },
-  { path: "/admin/demo-data", name: "Demo Data Generator", category: "Admin Tools", auth: "protected", requiredRole: "admin", description: "Generate comprehensive demo data for testing (admin only)" },
+  { path: "/admin/demo-data-generator", name: "Demo Data Generator", category: "Administration", auth: "protected", requiredRole: "admin", description: "Generate realistic test data for clients" },
   
   // Admin Tools
-  { path: "/enrich-data", name: "Enrich Data", category: "Admin Tools", auth: "protected", requiredRole: "admin", description: "Data simulation & seeding (admin only)" },
   { path: "/admin/audit-log", name: "Audit Log", category: "Admin Tools", auth: "protected", requiredRole: "admin", description: "User management audit trail (admin only)" },
   { path: "/admin/site-directory", name: "Site Directory", category: "Admin Tools", auth: "protected", requiredRole: "admin", description: "All pages directory (you are here!)" },
   
@@ -88,11 +85,6 @@ const routes: RouteInfo[] = [
   // Settings
   { path: "/settings", name: "Settings", category: "Settings", auth: "protected", description: "Account settings" },
   { path: "/settings/:tab", name: "Settings Tab", category: "Settings", auth: "protected", description: "Specific settings tab" },
-  
-  // Beta & Development
-  { path: "/beta", name: "Beta Testing", category: "Development", auth: "protected", description: "Beta feedback dashboard" },
-  { path: "/launch", name: "Launch Checklist", category: "Development", auth: "protected", description: "Pre-launch checklist" },
-  { path: "/webinar", name: "Webinar", category: "Development", auth: "protected", description: "Webinar page" },
 ];
 
 export default function AdminSiteDirectory() {

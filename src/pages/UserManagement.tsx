@@ -202,7 +202,7 @@ export default function UserManagement() {
                     </span>
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="sm'
                       onClick={() =>
                         setPage((p) => Math.min(data.totalPages, p + 1))
                       }

@@ -213,11 +213,11 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       setStep("optin");
       
       // Notify parent with recipient data and clientId
-      const campaign = data.audiences?.campaigns?.[0];
-      if (onRecipientLoaded && campaign) {
+      const recipientCampaign = data.audiences?.campaigns?.[0];
+      if (onRecipientLoaded && recipientCampaign) {
         onRecipientLoaded({
-          clientId: (campaign as any).client_id,
-          campaignId: campaign.id,
+          clientId: (recipientCampaign as any).client_id,
+          campaignId: recipientCampaign.id,
           recipient: data,
           step: "optin"
         });
@@ -312,7 +312,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
     });
   };
 
-  const campaign = recipient?.audiences?.campaigns?.[0];
+  // campaign is already declared at line 113, so we just use it here
   const activeConditions = campaign?.campaign_conditions?.filter(c => c.is_active) || [];
   const poolId = campaign?.campaign_reward_configs?.find(
     c => c.condition_number === parseInt(selectedConditionId)

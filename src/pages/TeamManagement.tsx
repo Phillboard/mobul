@@ -11,7 +11,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { UserActionMenu } from "@/components/settings/UserActionMenu";
 import { formatDistanceToNow } from "date-fns";
 import { Users, Mail } from "lucide-react";
-import type { ClientUser } from "@/types/users";
+import type { ClientUser } from "@/types/users';
 
 export default function TeamManagement() {
   const { data: userRole } = useUserRole();

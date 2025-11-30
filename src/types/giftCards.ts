@@ -4,9 +4,12 @@
  * Centralized TypeScript types for the gift card management system.
  * These types extend the auto-generated Supabase types with composite
  * types and helper interfaces used throughout the application.
+ * 
+ * Note: For credit-based system types, see creditAccounts.ts
  */
 
 import { Tables } from "@/integrations/supabase/types";
+import type { CreditAccount, GiftCardRedemption } from "./creditAccounts";
 
 // ============================================================================
 // Base Types (from Supabase)
@@ -32,7 +35,7 @@ export type GiftCardStatus = 'available' | 'claimed' | 'delivered' | 'failed';
 /**
  * Pool type classification
  */
-export type PoolType = 'master' | 'client';
+export type PoolType = 'master' | 'client' | 'csv' | 'buffer' | 'api_config';
 
 /**
  * Methods for purchasing/provisioning cards into pools
@@ -209,4 +212,27 @@ export interface PoolSettingsFormData {
   autoBalanceCheck: boolean;
   balanceCheckFrequencyHours: number;
   lowStockThreshold: number;
+}
+
+// ============================================================================
+// Credit System Integration
+// ============================================================================
+
+/**
+ * Pool with credit account information (for new system)
+ */
+export interface GiftCardPoolWithCredit extends GiftCardPool {
+  credit_account?: CreditAccount;
+  cost_per_card?: number;
+  pool_type?: 'csv' | 'buffer' | 'api_config';
+}
+
+/**
+ * Enhanced pool stats with credit tracking
+ */
+export interface EnhancedPoolStats extends PoolStats {
+  costBasis?: number;
+  estimatedValue?: number;
+  poolType?: 'csv' | 'buffer' | 'api_config';
+  healthStatus?: 'healthy' | 'low' | 'empty';
 }

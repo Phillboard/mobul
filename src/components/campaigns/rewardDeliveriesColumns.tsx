@@ -4,7 +4,7 @@
  */
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { formatRelative, formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
+import { formatRelative, formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils';
 import { formatCurrency } from '@/lib/utils/currencyUtils";
 
 export interface RewardDeliveryRow {
@@ -116,7 +116,7 @@ export function createRewardDeliveriesColumns(): ColumnDef<RewardDeliveryRow>[] 
           </span>
         );
       },
-      sortingFn: "datetime",
+      sortingFn: "datetime',
     },
   ];
 }

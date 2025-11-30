@@ -91,7 +91,7 @@ export function PoolBalanceHistory({ history }: PoolBalanceHistoryProps) {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="text-center py-12 text-muted-foreground text-base">
+              <TableCell colSpan={columns.length} className="text-center py-12 text-muted-foreground text-base'>
                 No balance checks yet
               </TableCell>
             </TableRow>

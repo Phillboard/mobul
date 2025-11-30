@@ -6,8 +6,8 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
-import { formatCurrency } from '@/lib/utils/currencyUtils";
-import { maskCardCode, getStatusBadgeVariant } from '@/lib/campaign/giftCardUtils";
+import { formatCurrency } from '@/lib/utils/currencyUtils';
+import { maskCardCode, getStatusBadgeVariant } from '@/lib/campaign/giftCardUtils';
 import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
 import { GiftCard } from "@/types/giftCards";
 
@@ -103,7 +103,7 @@ export function createPoolCardsColumns(
               {isRevealed ? (
                 <EyeOff className="h-5 w-5" />
               ) : (
-                <Eye className="h-5 w-5" />
+                <Eye className="h-5 w-5' />
               )}
             </Button>
           </div>

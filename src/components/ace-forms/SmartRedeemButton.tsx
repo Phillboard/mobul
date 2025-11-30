@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { GiftCardRedemption } from "@/types/aceForms";
-import { getBrandLinks, detectPlatform, attemptDeepLink } from '@/lib/web/brandDeepLinks";
+import { getBrandLinks, detectPlatform, attemptDeepLink } from '@/lib/web/brandDeepLinks';
 
 interface SmartRedeemButtonProps {
   redemption: GiftCardRedemption;

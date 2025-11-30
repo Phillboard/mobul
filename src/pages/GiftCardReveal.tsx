@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, Printer, Download, Copy } from "lucide-react";
+import { CheckCircle2, Printer, Download, Copy, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -17,45 +17,69 @@ export default function GiftCardReveal() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["redemption", redemptionToken],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch redemption record (NEW SYSTEM)
+      const { data: redemptionData, error: redemptionError } = await supabase
         .from("gift_card_redemptions")
         .select(`
           *,
-          recipient:recipients(*),
-          delivery:gift_card_deliveries(
+          gift_card:gift_cards(
             *,
-            gift_card:gift_cards(
-              *,
-              pool:gift_card_pools(*)
-            )
+            pool:gift_card_pools(*)
           ),
-          campaign:campaigns(*)
+          brand:gift_card_brands(*),
+          campaign:campaigns(*),
+          recipient:recipients(*)
         `)
-        .eq("id", redemptionToken)
+        .eq("redemption_code", redemptionToken)
         .single();
 
-      if (error) throw error;
+      if (redemptionError) {
+        // If not found in new system, try legacy system for backwards compatibility
+        const { data: legacyData, error: legacyError } = await supabase
+          .from("gift_card_redemptions_legacy")
+          .select(`
+            *,
+            recipient:recipients(*),
+            delivery:gift_card_deliveries(
+              *,
+              gift_card:gift_cards(
+                *,
+                pool:gift_card_pools(*)
+              )
+            ),
+            campaign:campaigns(*)
+          `)
+          .eq("id", redemptionToken)
+          .single();
 
-      // Mark as viewed if not admin
-      if (data.redemption_status !== "viewed" && !hasRole("admin")) {
+        if (legacyError) throw new Error("Redemption code not found");
+        return legacyData;
+      }
+
+      // Mark as delivered if still provisioned
+      if (redemptionData.status === "provisioned") {
         await supabase
           .from("gift_card_redemptions")
           .update({
-            redemption_status: "viewed",
-            viewed_at: new Date().toISOString(),
+            status: "delivered",
+            delivered_at: new Date().toISOString(),
           })
-          .eq("id", redemptionToken);
+          .eq("id", redemptionData.id);
 
         // Log event
         await supabase.from("events").insert({
-          campaign_id: data.campaign_id,
-          recipient_id: data.recipient_id,
+          campaign_id: redemptionData.campaign_id,
+          recipient_id: redemptionData.recipient_id,
           event_type: "gift_card_viewed",
           source: "landing_page",
+          metadata: {
+            redemption_id: redemptionData.id,
+            source: redemptionData.provisioning_source
+          }
         });
       }
 
-      return data;
+      return redemptionData;
     },
   });
 
@@ -93,8 +117,42 @@ export default function GiftCardReveal() {
     );
   }
 
-  const giftCard = data.delivery?.gift_card;
+  const giftCard = data.gift_card;
   const pool = giftCard?.pool;
+  const brand = data.brand;
+
+  // Handle redemption failures
+  if (data.status === "failed") {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-red-200">
+          <CardHeader>
+            <div className="flex justify-center mb-4">
+              <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertCircle className="h-10 w-10 text-red-600" />
+              </div>
+            </div>
+            <CardTitle className="text-center">Redemption Failed</CardTitle>
+            <CardDescription className="text-center">
+              We were unable to provision your gift card. This could be due to:
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+              <li>Campaign budget exhausted</li>
+              <li>Insufficient credit</li>
+              <li>System maintenance</li>
+            </ul>
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertDescription>
+                Please contact campaign support. Your redemption code: <strong>{data.redemption_code}</strong>
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!giftCard || !pool) {
     return (
@@ -129,9 +187,14 @@ export default function GiftCardReveal() {
           <div>
             <CardTitle className="text-3xl">Congratulations!</CardTitle>
             <CardDescription className="text-lg mt-2">
-              Your ${pool.card_value} {pool.provider} Gift Card
+              Your ${data.denomination} {brand?.brand_name || pool.provider} Gift Card
             </CardDescription>
           </div>
+          {data.provisioning_source && (
+            <div className="text-xs text-muted-foreground">
+              Provisioned via {data.provisioning_source === "csv" ? "Inventory" : "API"}
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -139,9 +202,9 @@ export default function GiftCardReveal() {
           <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-xl p-8 text-white shadow-xl">
             <div className="text-center space-y-4">
               <div className="text-sm opacity-90 uppercase tracking-wide">
-                {pool.provider} Gift Card
+                {brand?.brand_name || pool.provider} Gift Card
               </div>
-              <div className="text-6xl font-bold">${pool.card_value}</div>
+              <div className="text-6xl font-bold">${data.denomination}</div>
 
               {giftCard.card_code && (
                 <div className="mt-6 bg-white/20 backdrop-blur rounded-lg p-4">
@@ -184,7 +247,7 @@ export default function GiftCardReveal() {
                 <p className="font-semibold text-base">How to use your gift card:</p>
                 <ol className="list-decimal list-inside space-y-2 text-sm">
                   <li>Save or screenshot this page for your records</li>
-                  <li>Visit {pool.provider} website or store</li>
+                  <li>Visit {brand?.brand_name || pool.provider} website or store</li>
                   <li>Enter the code above at checkout</li>
                   {giftCard.expiration_date && (
                     <li className="text-orange-600 dark:text-orange-400 font-medium">
@@ -192,6 +255,11 @@ export default function GiftCardReveal() {
                     </li>
                   )}
                 </ol>
+                {data.profit && hasRole("admin") && (
+                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
+                    <strong>Admin Info:</strong> Cost: ${data.cost_basis} | Charged: ${data.amount_charged} | Profit: ${data.profit.toFixed(2)}
+                  </div>
+                )}
               </div>
             </AlertDescription>
           </Alert>
