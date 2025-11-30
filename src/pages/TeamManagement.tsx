@@ -6,12 +6,12 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { InviteUserDialog } from "@/components/settings/InviteUserDialog";
-import { roleDisplayNames, roleColors } from '@/lib/auth/roleUtils";
+import { roleDisplayNames, roleColors } from "@/lib/auth/roleUtils";
 import { useUserRole } from "@/hooks/useUserRole";
 import { UserActionMenu } from "@/components/settings/UserActionMenu";
 import { formatDistanceToNow } from "date-fns";
 import { Users, Mail } from "lucide-react";
-import type { ClientUser } from "@/types/users';
+import type { ClientUser } from "@/types/users";
 
 export default function TeamManagement() {
   const { data: userRole } = useUserRole();

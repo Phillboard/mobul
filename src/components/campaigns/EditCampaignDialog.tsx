@@ -17,7 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, CheckCircle, Lock, Save, History } from "lucide-react";
-import { canEditCampaignField } from '@/lib/validation/campaignValidation";
+import { canEditCampaignField } from "@/lib/validation/campaignValidation";
 
 interface EditCampaignDialogProps {
   campaignId: string;

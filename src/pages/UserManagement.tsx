@@ -8,7 +8,7 @@ import { PendingInvitations } from "@/components/settings/PendingInvitations";
 import { UserFilters } from "@/components/settings/UserFilters";
 import { useManageableUsersPaginated } from "@/hooks/useManageableUsersPaginated";
 import { UserCog, Search } from "lucide-react";
-import { AppRole } from '@/lib/auth/roleUtils";
+import { AppRole } from "@/lib/auth/roleUtils";
 import {
   useReactTable,
   getCoreRowModel,
@@ -202,7 +202,7 @@ export default function UserManagement() {
                     </span>
                     <Button
                       variant="outline"
-                      size="sm'
+                      size="sm"
                       onClick={() =>
                         setPage((p) => Math.min(data.totalPages, p + 1))
                       }

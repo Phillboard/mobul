@@ -4,7 +4,7 @@
  */
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
+import { formatDate, DATE_FORMATS } from "@/lib/utils/dateUtils";
 
 export interface AuditLogRow {
   id: string;
@@ -75,7 +75,7 @@ export function createAuditLogsColumns(): ColumnDef<AuditLogRow>[] {
           </Badge>
         );
       },
-      filterFn: "equals',
+        filterFn: "equals",
     },
   ];
 }

@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { PaginatedUser } from "@/hooks/useManageableUsersPaginated";
 import { Badge } from "@/components/ui/badge";
-import { roleDisplayNames, roleColors } from '@/lib/auth/roleUtils";
+import { roleDisplayNames, roleColors } from "@/lib/auth/roleUtils";
 import { formatDistanceToNow } from "date-fns";
 import { UserActionMenu } from "./UserActionMenu";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -139,7 +139,7 @@ export const userManagementColumns: ColumnDef<PaginatedUser>[] = [
     },
   },
   {
-    id: "actions',
+      id: "actions",
     cell: ({ row }) => {
       const user = row.original;
       

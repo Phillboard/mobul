@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils';
-import { getStatusBadgeVariant, maskCardCode } from '@/lib/campaign/giftCardUtils";
+import { getStatusBadgeVariant, maskCardCode } from "@/lib/campaign/giftCardUtils";
 
 export interface GiftCardInventoryRow {
   id: string;
@@ -104,7 +104,7 @@ export function createGiftCardInventoryColumns(
         const date = row.getValue("expiration_date") as string | null;
         return date ? formatDate(date, DATE_FORMATS.SHORT) : "—";
       },
-      sortingFn: "datetime',
+        sortingFn: "datetime",
     },
   ];
 }

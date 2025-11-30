@@ -36,7 +36,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Edit2, X, Check } from "lucide-react";
 import { GiftCardPool } from "@/types/giftCards";
-import { formatCheckFrequency } from '@/lib/campaign/giftCardUtils";
+import { formatCheckFrequency } from "@/lib/campaign/giftCardUtils";
 
 interface PoolSettingsProps {
   pool: GiftCardPool;
@@ -153,7 +153,7 @@ export function PoolSettings({ pool, isAdmin, onUpdate }: PoolSettingsProps) {
                 onClick={handleSave}
                 disabled={updateSettings.isPending}
               >
-                <Check className="h-4 w-4 mr-2' />
+                <Check className="h-4 w-4 mr-2" />
                 {updateSettings.isPending ? 'Saving...' : 'Save'}
               </Button>
             </div>

@@ -5,7 +5,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDate, DATE_FORMATS } from '@/lib/utils/dateUtils";
+import { formatDate, DATE_FORMATS } from "@/lib/utils/dateUtils";
 
 export interface AudienceRow {
   id: string;
@@ -102,7 +102,7 @@ export function createAudiencesColumns(
       cell: ({ row }) => (
         <Button
           variant="ghost"
-          size="sm'
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
             onViewAudience(row.original.id);

@@ -18,7 +18,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCurrency } from '@/lib/utils/currencyUtils";
+import { formatCurrency } from "@/lib/utils/currencyUtils";
 import { PoolStats as PoolStatsType } from "@/types/giftCards";
 
 interface PoolStatsProps {
@@ -91,7 +91,7 @@ export function PoolStats({ stats }: PoolStatsProps) {
         </div>
         <Card className="border shadow-sm hover:shadow-md transition-all">
           <CardContent className="p-4 flex items-center justify-center">
-            <div className="text-3xl font-bold text-primary'>
+            <div className="text-3xl font-bold text-primary">
               {stats.utilizationPercent.toFixed(0)}%
             </div>
           </CardContent>

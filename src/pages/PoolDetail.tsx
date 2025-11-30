@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RefreshCw, Download, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { formatCurrency } from '@/lib/utils/currencyUtils';
-import { calculatePoolStats } from '@/lib/campaign/giftCardUtils";
+import { calculatePoolStats } from "@/lib/campaign/giftCardUtils";
 import { useToast } from "@/hooks/use-toast";
 import { PoolStats } from "@/components/gift-cards/PoolStats";
 import { PoolCardsTable } from "@/components/gift-cards/PoolCardsTable";
@@ -42,7 +42,7 @@ export default function PoolDetail() {
       const { data: userRole } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id', user.id)
+          .eq("user_id", user.id)
         .single();
       
       return { ...user, role: userRole?.role };
