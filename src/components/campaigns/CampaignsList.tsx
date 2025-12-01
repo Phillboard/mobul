@@ -30,7 +30,7 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
   const [deleteCampaignId, setDeleteCampaignId] = useState<string | null>(null);
   const [editCampaignId, setEditCampaignId] = useState<string | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFiltersState] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
