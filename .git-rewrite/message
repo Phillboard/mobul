@@ -1,5 +1,0 @@
-Fix deep type error
-
-Adjust TeamManagement.tsx to explicitly type the pendingInvites query results, preventing excessive deep type inference. Added any[] fallback for pendingInvites and typed query to avoid TS2589.
-
-X-Lovable-Edit-ID: edt-3c293a23-412f-4189-ab4f-d7aff49b491e
