@@ -83,3 +83,21 @@ verify_jwt = true
 
 [functions.seed-documentation]
 verify_jwt = true
+
+[functions.save-campaign-draft]
+verify_jwt = true
+
+[functions.initialize-default-pipeline]
+verify_jwt = true
+
+[functions.save-campaign-version]
+verify_jwt = true
+
+[functions.purchase-gift-cards]
+verify_jwt = false
+
+[functions.release-twilio-number]
+verify_jwt = false
+
+[functions.retry-failed-sms]
+verify_jwt = false
