@@ -71,7 +71,7 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
       const { data: userRole } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id', user.id)
+        .eq("user_id", user.id)
         .single();
       
       return { ...user, role: userRole?.role };
