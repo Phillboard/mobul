@@ -34,7 +34,6 @@ import type { CampaignFormData, MailingMethod } from "@/types/campaigns";
 import { useMutation } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 interface CreateCampaignWizardProps {
   open: boolean;

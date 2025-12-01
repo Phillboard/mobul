@@ -24,7 +24,7 @@ interface GeographicMetrics {
 }
 
 export function useEnhancedCampaignAnalytics(campaignId: string) {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['enhanced-campaign-analytics', campaignId],
     queryFn: async () => {
       // Fetch campaign with all related data
@@ -152,10 +152,7 @@ export function useEnhancedCampaignAnalytics(campaignId: string) {
     enabled: !!campaignId,
   });
 
-  return {
-    data,
-    isLoading,
-  };
+  return query;
 }
 
 export function useCampaignComparison(campaignIds: string[]) {

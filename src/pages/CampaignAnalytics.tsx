@@ -1,19 +1,24 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, Download, TrendingUp, Users, MousePointerClick, FileText, Calendar } from "lucide-react";
+import { AlertCircle, ArrowLeft, Download, TrendingUp, Users, MousePointerClick, FileText, Calendar, DollarSign, BarChart3, Globe } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { format, differenceInDays } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CampaignROICalculator } from "@/components/analytics/CampaignROICalculator";
+import { ConversionFunnelVisualization } from "@/components/analytics/ConversionFunnelVisualization";
 
 export default function CampaignAnalytics() {
   const { campaignId } = useParams();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("overview");
 
   const { data: campaign, isLoading: campaignLoading } = useQuery({
     queryKey: ['campaign', campaignId],
@@ -258,110 +263,144 @@ export default function CampaignAnalytics() {
           </Card>
         </div>
 
-        {/* Timeline Chart */}
-        {timelineData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Delivery Timeline</CardTitle>
-              <CardDescription>Days since mail date</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={timelineData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="day" label={{ value: 'Days Since Mailing', position: 'insideBottom', offset: -5 }} />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="delivered" stroke="#10b981" name="Delivered" />
-                  <Line type="monotone" dataKey="scanned" stroke="#3b82f6" name="QR Scans" />
-                  <Line type="monotone" dataKey="forms" stroke="#8b5cf6" name="Forms" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
+        {/* Tabbed Analytics Sections */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+            <TabsTrigger value="overview" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="funnel" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Funnel
+            </TabsTrigger>
+            <TabsTrigger value="roi" className="gap-2">
+              <DollarSign className="h-4 w-4" />
+              ROI
+            </TabsTrigger>
+            <TabsTrigger value="recipients" className="gap-2">
+              <Users className="h-4 w-4" />
+              Recipients
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Geographic Performance */}
-        {geoChartData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Geographic Performance</CardTitle>
-              <CardDescription>Top 10 states by QR scans</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={geoChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="state" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="scans" fill="#3b82f6" name="QR Scans" />
-                  <Bar dataKey="forms" fill="#8b5cf6" name="Forms" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Recipient Detail Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recipient Details</CardTitle>
-            <CardDescription>Individual recipient performance</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Delivered</TableHead>
-                  <TableHead>QR Scanned</TableHead>
-                  <TableHead>Form Submitted</TableHead>
-                  <TableHead>Last Event</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recipientDetails.slice(0, 50).map(recipient => (
-                  <TableRow key={recipient.id}>
-                    <TableCell className="font-medium">{recipient.name}</TableCell>
-                    <TableCell>{recipient.address}</TableCell>
-                    <TableCell>
-                      {recipient.deliveredDate ? format(new Date(recipient.deliveredDate), 'MM/dd/yyyy') : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={recipient.scanned ? 'default' : 'secondary'}>
-                        {recipient.scanned ? 'Yes' : 'No'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={recipient.formSubmitted ? 'default' : 'secondary'}>
-                        {recipient.formSubmitted ? 'Yes' : 'No'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {recipient.lastEvent ? (
-                        <div>
-                          <div className="capitalize">{recipient.lastEvent.replace(/_/g, ' ')}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {recipient.lastEventDate && format(new Date(recipient.lastEventDate), 'MM/dd HH:mm')}
-                          </div>
-                        </div>
-                      ) : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {recipientDetails.length > 50 && (
-              <div className="text-sm text-muted-foreground text-center mt-4">
-                Showing first 50 of {recipientDetails.length} recipients. Export CSV for full data.
-              </div>
+          <TabsContent value="overview" className="space-y-6">
+            {/* Timeline Chart */}
+            {timelineData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Delivery Timeline</CardTitle>
+                  <CardDescription>Days since mail date</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={timelineData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="day" label={{ value: 'Days Since Mailing', position: 'insideBottom', offset: -5 }} />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="delivered" stroke="#10b981" name="Delivered" />
+                      <Line type="monotone" dataKey="scanned" stroke="#3b82f6" name="QR Scans" />
+                      <Line type="monotone" dataKey="forms" stroke="#8b5cf6" name="Forms" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
+
+            {/* Geographic Performance */}
+            {geoChartData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Geographic Performance</CardTitle>
+                  <CardDescription>Top 10 states by QR scans</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={geoChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="state" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="scans" fill="#3b82f6" name="QR Scans" />
+                      <Bar dataKey="forms" fill="#8b5cf6" name="Forms" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="funnel">
+            <ConversionFunnelVisualization campaignId={campaignId!} />
+          </TabsContent>
+
+          <TabsContent value="roi">
+            <CampaignROICalculator campaignId={campaignId!} />
+          </TabsContent>
+
+          <TabsContent value="recipients">
+            {/* Recipient Detail Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recipient Details</CardTitle>
+                <CardDescription>Individual recipient performance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Address</TableHead>
+                      <TableHead>Delivered</TableHead>
+                      <TableHead>QR Scanned</TableHead>
+                      <TableHead>Form Submitted</TableHead>
+                      <TableHead>Last Event</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recipientDetails.slice(0, 50).map(recipient => (
+                      <TableRow key={recipient.id}>
+                        <TableCell className="font-medium">{recipient.name}</TableCell>
+                        <TableCell>{recipient.address}</TableCell>
+                        <TableCell>
+                          {recipient.deliveredDate ? format(new Date(recipient.deliveredDate), 'MM/dd/yyyy') : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={recipient.scanned ? 'default' : 'secondary'}>
+                            {recipient.scanned ? 'Yes' : 'No'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={recipient.formSubmitted ? 'default' : 'secondary'}>
+                            {recipient.formSubmitted ? 'Yes' : 'No'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {recipient.lastEvent ? (
+                            <div>
+                              <div className="capitalize">{recipient.lastEvent.replace(/_/g, ' ')}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {recipient.lastEventDate && format(new Date(recipient.lastEventDate), 'MM/dd HH:mm')}
+                              </div>
+                            </div>
+                          ) : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {recipientDetails.length > 50 && (
+                  <div className="text-sm text-muted-foreground text-center mt-4">
+                    Showing first 50 of {recipientDetails.length} recipients. Export CSV for full data.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
