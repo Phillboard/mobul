@@ -1,6 +1,11 @@
-tree 7c43a5e36b0de239d3b511491cfd8fcc4cf0fe46
-parent 88597d93d08b62994f751fba6311ce18d77c9f81
-author MobileInspirations <140738505+MobileInspirations@users.noreply.github.com> 1764023360 -0500
-committer MobileInspirations <140738505+MobileInspirations@users.noreply.github.com> 1764023360 -0500
+tree c2fa914ff95fb4d2bf4fb1c4c1239d095e27ce5c
+parent 894efc7ea59ffbf8a9475dcd23a6eb1fe02b895f
+parent 66f1c091f04eeccdbab2eef5a0c20017fd163d9f
+author gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1764172422 +0000
+committer gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1764172422 +0000
 
-demo data
+Fix deep type error
+
+Adjust TeamManagement.tsx to explicitly type the pendingInvites query results, preventing excessive deep type inference. Added any[] fallback for pendingInvites and typed query to avoid TS2589.
+
+X-Lovable-Edit-ID: edt-3c293a23-412f-4189-ab4f-d7aff49b491e
