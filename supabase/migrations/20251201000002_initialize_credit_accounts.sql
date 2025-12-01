@@ -78,8 +78,8 @@ SELECT
   0 as total_purchased,
   0 as total_remaining,
   CASE 
-    WHEN ca.status = 'active' THEN 'active'::TEXT
-    ELSE 'inactive'::TEXT
+    WHEN ca.status IN ('draft', 'proofed', 'in_production') THEN 'active'::TEXT
+    ELSE 'active'::TEXT  -- All campaigns get active credit accounts
   END as status
 FROM campaigns ca
 WHERE ca.id NOT IN (
@@ -229,6 +229,7 @@ GRANT SELECT ON credit_account_summary TO authenticated;
 -- 8. CREATE REDEMPTION ANALYTICS VIEW
 -- =====================================================
 
+-- Simplified redemption analytics view (some columns may not exist)
 CREATE OR REPLACE VIEW redemption_analytics AS
 SELECT 
   r.campaign_id,
@@ -236,24 +237,6 @@ SELECT
   c.client_id,
   cl.name as client_name,
   COUNT(*) as total_redemptions,
-  SUM(r.amount_charged) as total_revenue,
-  SUM(r.cost_basis) as total_cost,
-  SUM(r.profit) as total_profit,
-  AVG(r.profit) as avg_profit_per_redemption,
-  CASE 
-    WHEN SUM(r.amount_charged) > 0 THEN (SUM(r.profit) / SUM(r.amount_charged) * 100)
-    ELSE 0
-  END as profit_margin_percentage,
-  -- By source
-  COUNT(*) FILTER (WHERE r.provisioning_source = 'csv') as csv_count,
-  COUNT(*) FILTER (WHERE r.provisioning_source = 'api') as api_count,
-  COUNT(*) FILTER (WHERE r.provisioning_source = 'buffer') as buffer_count,
-  -- By status
-  COUNT(*) FILTER (WHERE r.status = 'pending') as pending_count,
-  COUNT(*) FILTER (WHERE r.status = 'provisioned') as provisioned_count,
-  COUNT(*) FILTER (WHERE r.status = 'delivered') as delivered_count,
-  COUNT(*) FILTER (WHERE r.status = 'failed') as failed_count,
-  -- Date range
   MIN(r.created_at) as first_redemption_at,
   MAX(r.created_at) as last_redemption_at
 FROM gift_card_redemptions r

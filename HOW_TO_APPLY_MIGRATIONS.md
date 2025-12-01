@@ -9,7 +9,7 @@ I've created a single SQL file that contains ALL 6 migrations: **`apply-gift-car
 1. **Open the file** `apply-gift-card-migrations.sql` in this project
 2. **Copy everything** (press Ctrl+A then Ctrl+C)
 3. **Go to Supabase SQL Editor**:
-   - URL: https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql/new
+   - URL: https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql/new
    - (Or have someone with access do this)
 4. **Paste** the SQL (Ctrl+V)
 5. **Click "Run"** (the green button)

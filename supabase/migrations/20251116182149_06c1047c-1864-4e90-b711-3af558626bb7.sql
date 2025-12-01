@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS user_invitations (
   org_id UUID REFERENCES organizations(id),
   client_id UUID REFERENCES clients(id),
   role app_role NOT NULL,
-  token TEXT UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(32), 'base64'),
+  token TEXT UNIQUE NOT NULL DEFAULT encode(extensions.gen_random_bytes(32), 'base64'),
   expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '7 days'),
   accepted_at TIMESTAMPTZ,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'expired', 'revoked')),
@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS user_invitations (
 -- Enable RLS
 ALTER TABLE user_invitations ENABLE ROW LEVEL SECURITY;
 
--- Policies for invitations
+-- Policies for invitations (drop if exists for idempotency)
+DROP POLICY IF EXISTS "Admins can view invitations" ON user_invitations;
 CREATE POLICY "Admins can view invitations"
 ON user_invitations FOR SELECT
 TO authenticated
@@ -28,6 +29,7 @@ USING (
   has_role(auth.uid(), 'agency_admin')
 );
 
+DROP POLICY IF EXISTS "Admins can create invitations" ON user_invitations;
 CREATE POLICY "Admins can create invitations"
 ON user_invitations FOR INSERT
 TO authenticated
@@ -37,6 +39,7 @@ WITH CHECK (
   has_role(auth.uid(), 'agency_admin')
 );
 
+DROP POLICY IF EXISTS "Admins can update invitations" ON user_invitations;
 CREATE POLICY "Admins can update invitations"
 ON user_invitations FOR UPDATE
 TO authenticated
@@ -46,15 +49,16 @@ USING (
   has_role(auth.uid(), 'agency_admin')
 );
 
+DROP POLICY IF EXISTS "Public can view own invitation by token" ON user_invitations;
 CREATE POLICY "Public can view own invitation by token"
 ON user_invitations FOR SELECT
 TO anon
 USING (true);
 
--- Create index for token lookups
-CREATE INDEX idx_user_invitations_token ON user_invitations(token);
-CREATE INDEX idx_user_invitations_status ON user_invitations(status);
-CREATE INDEX idx_user_invitations_email ON user_invitations(email);
+-- Create index for token lookups (IF NOT EXISTS)
+CREATE INDEX IF NOT EXISTS idx_user_invitations_token ON user_invitations(token);
+CREATE INDEX IF NOT EXISTS idx_user_invitations_status ON user_invitations(status);
+CREATE INDEX IF NOT EXISTS idx_user_invitations_email ON user_invitations(email);
 
 -- Function to automatically expire old invitations
 CREATE OR REPLACE FUNCTION expire_old_invitations()

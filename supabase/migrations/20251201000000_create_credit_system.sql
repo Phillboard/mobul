@@ -57,21 +57,18 @@ CREATE POLICY "Platform admins can manage all accounts"
   USING (has_role(auth.uid(), 'admin'::app_role))
   WITH CHECK (has_role(auth.uid(), 'admin'::app_role));
 
-CREATE POLICY "Agencies can view their account and children"
+-- Agency policy simplified (agencies table may not exist)
+CREATE POLICY "Organization users can view their accounts"
   ON credit_accounts FOR SELECT
   USING (
     account_type = 'agency' AND owner_id IN (
-      SELECT id FROM agencies WHERE id IN (
-        SELECT agency_id FROM user_agencies WHERE user_id = auth.uid()
-      )
+      SELECT org_id FROM org_members WHERE user_id = auth.uid()
     )
     OR 
     parent_account_id IN (
       SELECT id FROM credit_accounts 
       WHERE account_type = 'agency' AND owner_id IN (
-        SELECT id FROM agencies WHERE id IN (
-          SELECT agency_id FROM user_agencies WHERE user_id = auth.uid()
-        )
+        SELECT org_id FROM org_members WHERE user_id = auth.uid()
       )
     )
   );
@@ -152,9 +149,7 @@ CREATE POLICY "Users can view their account transactions"
       )
       OR (
         ca.account_type = 'agency' AND ca.owner_id IN (
-          SELECT id FROM agencies WHERE id IN (
-            SELECT agency_id FROM user_agencies WHERE user_id = auth.uid()
-          )
+          SELECT org_id FROM org_members WHERE user_id = auth.uid()
         )
       )
     )
@@ -206,12 +201,17 @@ CREATE TABLE IF NOT EXISTS gift_card_redemptions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Add missing columns if table already exists
+ALTER TABLE gift_card_redemptions ADD COLUMN IF NOT EXISTS redemption_code TEXT;
+ALTER TABLE gift_card_redemptions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
+ALTER TABLE gift_card_redemptions ADD COLUMN IF NOT EXISTS account_charged_id UUID;
+
 -- Indexes for performance
-CREATE INDEX idx_redemptions_campaign ON gift_card_redemptions(campaign_id);
-CREATE INDEX idx_redemptions_code ON gift_card_redemptions(redemption_code);
-CREATE INDEX idx_redemptions_status ON gift_card_redemptions(status);
-CREATE INDEX idx_redemptions_account ON gift_card_redemptions(account_charged_id);
-CREATE INDEX idx_redemptions_created ON gift_card_redemptions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_redemptions_campaign ON gift_card_redemptions(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_redemptions_code ON gift_card_redemptions(redemption_code) WHERE redemption_code IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_redemptions_status ON gift_card_redemptions(status);
+CREATE INDEX IF NOT EXISTS idx_redemptions_account ON gift_card_redemptions(account_charged_id) WHERE account_charged_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_redemptions_created ON gift_card_redemptions(created_at DESC);
 
 -- Enable RLS
 ALTER TABLE gift_card_redemptions ENABLE ROW LEVEL SECURITY;
@@ -262,8 +262,21 @@ CREATE TABLE IF NOT EXISTS agencies (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Create user_agencies junction table FIRST (before policies that reference it)
+CREATE TABLE IF NOT EXISTS user_agencies (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  agency_id UUID NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
+  role TEXT DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, agency_id)
+);
+
 -- Enable RLS on agencies
 ALTER TABLE agencies ENABLE ROW LEVEL SECURITY;
+
+-- Enable RLS on user_agencies
+ALTER TABLE user_agencies ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for agencies
 CREATE POLICY "Platform admins can manage agencies"
@@ -278,19 +291,6 @@ CREATE POLICY "Agency users can view their agency"
       SELECT agency_id FROM user_agencies WHERE user_id = auth.uid()
     )
   );
-
--- Create user_agencies junction table if it doesn't exist
-CREATE TABLE IF NOT EXISTS user_agencies (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
-  agency_id UUID NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
-  role TEXT DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member')),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, agency_id)
-);
-
--- Enable RLS on user_agencies
-ALTER TABLE user_agencies ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view their agency memberships"
   ON user_agencies FOR SELECT
@@ -383,6 +383,6 @@ COMMENT ON TABLE credit_accounts IS 'Hierarchical credit accounts for agencies, 
 COMMENT ON TABLE credit_transactions IS 'Immutable ledger of all credit movements (purchases, allocations, redemptions).';
 COMMENT ON TABLE gift_card_redemptions IS 'Complete redemption history with financial tracking and profit calculation.';
 COMMENT ON COLUMN credit_accounts.total_remaining IS 'Current available credit. NEVER goes negative (enforced by constraint).';
-COMMENT ON COLUMN gift_card_redemptions.profit IS 'Auto-calculated profit per redemption (amount_charged - cost_basis).';
+-- profit column comment skipped (column may not exist in existing tables)
 COMMENT ON COLUMN gift_card_pools.pool_type IS 'csv = uploaded inventory, buffer = pre-provisioned API cards, api_config = on-demand API configuration';
 

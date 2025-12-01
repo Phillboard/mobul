@@ -104,7 +104,7 @@ Successfully implemented all features from the plan to fix gift card loading err
 ### Step 1: Apply Database Migrations
 
 **Option A: Supabase Dashboard (Recommended)**
-1. Go to: https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql
+1. Go to: https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql
 2. Copy and paste each migration file contents in order:
    - `supabase/migrations/20251201000004_add_gift_card_assignment_tracking.sql`
    - `supabase/migrations/20251201000005_create_recipient_gift_cards_junction.sql`

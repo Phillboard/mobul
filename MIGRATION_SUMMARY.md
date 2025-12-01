@@ -239,10 +239,10 @@ TypeScript Migrations:              2
 - **Helper Script:** `scripts/run-all-migrations.ps1`
 
 ### Supabase Dashboard
-- **Project:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo
-- **SQL Editor:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql/new
-- **Database Logs:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo/logs/postgres-logs
-- **Settings:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo/settings/general
+- **Project:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu
+- **SQL Editor:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql/new
+- **Database Logs:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/logs/postgres-logs
+- **Settings:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/settings/general
 
 ### Migration Files
 - **Schema:** `supabase/migrations/` (127 files)

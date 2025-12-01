@@ -26,7 +26,7 @@ To fix the "Failed to load gift card options" error, you need to apply the datab
 
 1. Open the file **`apply-gift-card-migrations.sql`** in this project
 2. Copy ALL contents (Ctrl+A, Ctrl+C)
-3. Go to: https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql/new
+3. Go to: https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql/new
 4. Paste the SQL
 5. Click "Run"
 

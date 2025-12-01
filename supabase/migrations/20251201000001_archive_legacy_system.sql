@@ -84,11 +84,11 @@ CREATE TABLE IF NOT EXISTS gift_card_pools (
 );
 
 -- Indexes
-CREATE INDEX idx_gift_card_pools_brand ON gift_card_pools(brand_id, card_value);
-CREATE INDEX idx_gift_card_pools_client ON gift_card_pools(client_id) WHERE client_id IS NOT NULL;
-CREATE INDEX idx_gift_card_pools_type ON gift_card_pools(pool_type, brand_id, card_value);
-CREATE INDEX idx_gift_card_pools_active ON gift_card_pools(is_active) WHERE is_active = true;
-CREATE INDEX idx_gift_card_pools_master ON gift_card_pools(is_master_pool) WHERE is_master_pool = true;
+CREATE INDEX IF NOT EXISTS idx_gift_card_pools_brand ON gift_card_pools(brand_id, card_value);
+CREATE INDEX IF NOT EXISTS idx_gift_card_pools_client ON gift_card_pools(client_id) WHERE client_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_gift_card_pools_type ON gift_card_pools(pool_type, brand_id, card_value);
+CREATE INDEX IF NOT EXISTS idx_gift_card_pools_active ON gift_card_pools(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_gift_card_pools_master ON gift_card_pools(is_master_pool) WHERE is_master_pool = true;
 
 -- Enable RLS
 ALTER TABLE gift_card_pools ENABLE ROW LEVEL SECURITY;
@@ -108,7 +108,7 @@ CREATE POLICY "Admins can manage pools"
   ON gift_card_pools FOR ALL
   USING (
     user_can_access_client(auth.uid(), client_id) AND 
-    (has_role(auth.uid(), 'org_admin') OR has_role(auth.uid(), 'agency_admin'))
+    (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'agency_owner') OR has_role(auth.uid(), 'company_owner'))
   );
 
 CREATE POLICY "Admins can manage master pools"
@@ -165,10 +165,10 @@ CREATE TABLE IF NOT EXISTS gift_cards (
 );
 
 -- Indexes
-CREATE INDEX idx_gift_cards_pool ON gift_cards(pool_id, status);
-CREATE INDEX idx_gift_cards_status ON gift_cards(status) WHERE status = 'available';
-CREATE INDEX idx_gift_cards_code ON gift_cards(card_code);
-CREATE INDEX idx_gift_cards_recipient ON gift_cards(claimed_by_recipient_id) WHERE claimed_by_recipient_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_gift_cards_pool ON gift_cards(pool_id, status);
+CREATE INDEX IF NOT EXISTS idx_gift_cards_status ON gift_cards(status) WHERE status = 'available';
+CREATE INDEX IF NOT EXISTS idx_gift_cards_code ON gift_cards(card_code);
+CREATE INDEX IF NOT EXISTS idx_gift_cards_recipient ON gift_cards(claimed_by_recipient_id) WHERE claimed_by_recipient_id IS NOT NULL;
 
 -- Enable RLS
 ALTER TABLE gift_cards ENABLE ROW LEVEL SECURITY;
@@ -191,13 +191,17 @@ CREATE POLICY "Admins can manage gift cards"
       SELECT 1 FROM gift_card_pools gcp
       WHERE gcp.id = gift_cards.pool_id
         AND user_can_access_client(auth.uid(), gcp.client_id)
-        AND (has_role(auth.uid(), 'org_admin') OR has_role(auth.uid(), 'agency_admin'))
+        AND (has_role(auth.uid(), 'admin') OR has_role(auth.uid(), 'agency_owner') OR has_role(auth.uid(), 'company_owner'))
     )
   );
 
 -- =====================================================
 -- RECREATE CLAIM FUNCTION FOR NEW TABLE
 -- =====================================================
+
+-- Drop existing function to allow signature change
+DROP FUNCTION IF EXISTS public.claim_available_card(UUID, UUID, UUID);
+DROP FUNCTION IF EXISTS public.claim_available_card(UUID, UUID);
 
 CREATE OR REPLACE FUNCTION public.claim_available_card(
   p_pool_id UUID,
@@ -280,9 +284,9 @@ CREATE TABLE IF NOT EXISTS system_alerts (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_system_alerts_severity ON system_alerts(severity, created_at DESC);
-CREATE INDEX idx_system_alerts_type ON system_alerts(alert_type);
-CREATE INDEX idx_system_alerts_unresolved ON system_alerts(resolved_at) WHERE resolved_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_system_alerts_severity ON system_alerts(severity, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_system_alerts_type ON system_alerts(alert_type);
+CREATE INDEX IF NOT EXISTS idx_system_alerts_unresolved ON system_alerts(resolved_at) WHERE resolved_at IS NULL;
 
 -- Enable RLS
 ALTER TABLE system_alerts ENABLE ROW LEVEL SECURITY;

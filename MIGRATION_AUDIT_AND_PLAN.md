@@ -145,7 +145,7 @@ We have **3 methods** to apply migrations. Choose ONE based on your preference:
 
 1. **Navigate to SQL Editor**
    ```
-   https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql/new
+   https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql/new
    ```
 
 2. **Apply Migrations One by One**
@@ -645,9 +645,9 @@ npm run migrate:gift-cards -- --apply
 
 ## 📞 Support & Resources
 
-- **Supabase Dashboard:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo
-- **SQL Editor:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql/new
-- **Database Logs:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo/logs/postgres-logs
+- **Supabase Dashboard:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu
+- **SQL Editor:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql/new
+- **Database Logs:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/logs/postgres-logs
 - **Documentation:** `/public/docs/` in this repository
 
 ---

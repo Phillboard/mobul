@@ -11,7 +11,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Configuration
-$PROJECT_REF = "arzthloosvnasokxygfo"
+$PROJECT_REF = "uibvxhwhkatjcwghnzpu"
 $MIGRATION_DIR = "supabase/migrations"
 $SCRIPT_DIR = "scripts/sql"
 

@@ -72,7 +72,7 @@ const PoolDetail = lazy(() => import("./pages/PoolDetail"));
 const PurchaseGiftCard = lazy(() => import("./pages/PurchaseGiftCard"));
 const RecordPurchase = lazy(() => import("./pages/RecordPurchase"));
 const EditPoolPricing = lazy(() => import("./pages/EditPoolPricing"));
-const AdminDemoDataGenerator = lazy(() => import("./pages/AdminDemoDataGenerator"));
+const DemoDataGenerator = lazy(() => import("./pages/admin/DemoDataGenerator"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -226,6 +226,7 @@ const App = () => (
                   <Route path="/agency-management" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
                   <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
                   <Route path="/admin/site-directory" element={<ProtectedRoute requiredRole="admin"><AdminSiteDirectory /></ProtectedRoute>} />
+                  <Route path="/admin/demo-data" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
                   
                   {/* 404 */}
                   <Route path="*" element={<NotFound />} />

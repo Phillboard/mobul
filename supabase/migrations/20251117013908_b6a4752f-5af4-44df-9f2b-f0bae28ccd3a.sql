@@ -12,7 +12,7 @@ DECLARE
   done BOOLEAN := FALSE;
 BEGIN
   WHILE NOT done LOOP
-    token := encode(gen_random_bytes(9), 'base64');
+    token := encode(extensions.gen_random_bytes(9), 'base64');
     token := REPLACE(token, '/', '');
     token := REPLACE(token, '+', '');
     token := REPLACE(token, '=', '');

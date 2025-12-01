@@ -42,6 +42,7 @@ ALTER COLUMN customer_code SET NOT NULL;
 DO $$
 DECLARE
   duplicate_count integer;
+  rec RECORD;
 BEGIN
   SELECT COUNT(*) INTO duplicate_count
   FROM (

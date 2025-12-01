@@ -144,14 +144,14 @@ async function main() {
   console.log('   must be applied through one of these methods:');
   console.log('\n   METHOD 1: Supabase Dashboard (Recommended)');
   console.log('   -----------------------------------------');
-  console.log('   1. Go to: https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql');
+  console.log('   1. Go to: https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql');
   console.log('   2. Copy and paste the contents of each migration file');
   console.log('   3. Click "Run" for each migration\n');
   console.log('   Migration files are located in: supabase/migrations/\n');
   
   console.log('   METHOD 2: Supabase CLI');
   console.log('   ----------------------');
-  console.log('   1. Link your project: npx supabase link --project-ref arzthloosvnasokxygfo');
+  console.log('   1. Link your project: npx supabase link --project-ref uibvxhwhkatjcwghnzpu');
   console.log('   2. Push migrations: npx supabase db push\n');
   
   console.log('   METHOD 3: Database Connection String');

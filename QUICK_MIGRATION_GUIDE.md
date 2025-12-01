@@ -23,7 +23,7 @@ npx supabase migration list
 ```
 
 ### Data Scripts (Run in Supabase SQL Editor)
-1. Go to: https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql/new
+1. Go to: https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql/new
 2. Run in order:
    - `scripts/sql/seed-default-message-templates.sql`
    - `scripts/sql/seed-mvp-test-data.sql`
@@ -147,9 +147,9 @@ WHERE routine_name IN (
 ## 📞 Help & Resources
 
 - **Full Guide:** `MIGRATION_AUDIT_AND_PLAN.md`
-- **Supabase Dashboard:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo
-- **SQL Editor:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql/new
-- **Database Logs:** https://supabase.com/dashboard/project/arzthloosvnasokxygfo/logs/postgres-logs
+- **Supabase Dashboard:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu
+- **SQL Editor:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql/new
+- **Database Logs:** https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/logs/postgres-logs
 
 ---
 

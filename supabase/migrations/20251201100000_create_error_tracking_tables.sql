@@ -39,22 +39,33 @@ CREATE TABLE IF NOT EXISTS system_alerts (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Indexes for performance
-CREATE INDEX idx_error_logs_severity_occurred ON error_logs(severity, occurred_at DESC);
-CREATE INDEX idx_error_logs_category_occurred ON error_logs(category, occurred_at DESC);
-CREATE INDEX idx_error_logs_client_occurred ON error_logs(client_id, occurred_at DESC) WHERE client_id IS NOT NULL;
-CREATE INDEX idx_error_logs_user_occurred ON error_logs(user_id, occurred_at DESC) WHERE user_id IS NOT NULL;
-CREATE INDEX idx_error_logs_unresolved ON error_logs(occurred_at DESC) WHERE resolved = FALSE;
+-- Add missing columns if table already exists
+ALTER TABLE error_logs ADD COLUMN IF NOT EXISTS severity TEXT;
+ALTER TABLE error_logs ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE error_logs ADD COLUMN IF NOT EXISTS occurred_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE error_logs ADD COLUMN IF NOT EXISTS resolved BOOLEAN DEFAULT FALSE;
 
-CREATE INDEX idx_system_alerts_unread ON system_alerts(created_at DESC) WHERE is_read = FALSE;
-CREATE INDEX idx_system_alerts_undismissed ON system_alerts(created_at DESC) WHERE dismissed = FALSE;
-CREATE INDEX idx_system_alerts_severity ON system_alerts(severity, created_at DESC);
+-- Indexes for performance (with IF NOT EXISTS)
+CREATE INDEX IF NOT EXISTS idx_error_logs_severity_occurred ON error_logs(severity, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_error_logs_category_occurred ON error_logs(category, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_error_logs_client_occurred ON error_logs(client_id, occurred_at DESC) WHERE client_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_error_logs_user_occurred ON error_logs(user_id, occurred_at DESC) WHERE user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_error_logs_unresolved ON error_logs(occurred_at DESC) WHERE resolved = FALSE;
+
+-- Add missing columns to system_alerts if table already exists
+ALTER TABLE system_alerts ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE;
+ALTER TABLE system_alerts ADD COLUMN IF NOT EXISTS dismissed BOOLEAN DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_system_alerts_unread ON system_alerts(created_at DESC) WHERE is_read = FALSE;
+CREATE INDEX IF NOT EXISTS idx_system_alerts_undismissed ON system_alerts(created_at DESC) WHERE dismissed = FALSE;
+CREATE INDEX IF NOT EXISTS idx_system_alerts_severity ON system_alerts(severity, created_at DESC);
 
 -- RLS Policies
 ALTER TABLE error_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE system_alerts ENABLE ROW LEVEL SECURITY;
 
--- Admins can see all errors
+-- Admins can see all errors (drop first for idempotency)
+DROP POLICY IF EXISTS "Admins can view all error logs" ON error_logs;
 CREATE POLICY "Admins can view all error logs"
   ON error_logs FOR SELECT
   USING (
@@ -66,11 +77,13 @@ CREATE POLICY "Admins can view all error logs"
   );
 
 -- Users can see errors for their own actions
+DROP POLICY IF EXISTS "Users can view their own error logs" ON error_logs;
 CREATE POLICY "Users can view their own error logs"
   ON error_logs FOR SELECT
   USING (user_id = auth.uid());
 
 -- Users can see errors for their client
+DROP POLICY IF EXISTS "Users can view client error logs" ON error_logs;
 CREATE POLICY "Users can view client error logs"
   ON error_logs FOR SELECT
   USING (
@@ -80,11 +93,13 @@ CREATE POLICY "Users can view client error logs"
   );
 
 -- Service role can insert errors
+DROP POLICY IF EXISTS "Service role can insert error logs" ON error_logs;
 CREATE POLICY "Service role can insert error logs"
   ON error_logs FOR INSERT
   WITH CHECK (auth.role() = 'service_role');
 
 -- Admins can update/resolve errors
+DROP POLICY IF EXISTS "Admins can update error logs" ON error_logs;
 CREATE POLICY "Admins can update error logs"
   ON error_logs FOR UPDATE
   USING (
@@ -96,6 +111,7 @@ CREATE POLICY "Admins can update error logs"
   );
 
 -- System alerts policies
+DROP POLICY IF EXISTS "Admins can view all alerts" ON system_alerts;
 CREATE POLICY "Admins can view all alerts"
   ON system_alerts FOR SELECT
   USING (
@@ -106,10 +122,12 @@ CREATE POLICY "Admins can view all alerts"
     )
   );
 
+DROP POLICY IF EXISTS "Service role can insert alerts" ON system_alerts;
 CREATE POLICY "Service role can insert alerts"
   ON system_alerts FOR INSERT
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Users can mark alerts as read" ON system_alerts;
 CREATE POLICY "Users can mark alerts as read"
   ON system_alerts FOR UPDATE
   USING (

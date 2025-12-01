@@ -70,9 +70,8 @@ CREATE POLICY "client_view_own" ON recipient_gift_cards
   USING (
     EXISTS (
       SELECT 1 FROM campaigns c
-      INNER JOIN user_clients uc ON uc.client_id = c.client_id
-      WHERE uc.user_id = auth.uid()
-        AND c.id = recipient_gift_cards.campaign_id
+      WHERE c.id = recipient_gift_cards.campaign_id
+        AND user_can_access_client(auth.uid(), c.client_id)
     )
   );
 

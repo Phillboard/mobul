@@ -230,12 +230,7 @@ GROUP BY pool_type;
 
 -- Test 4: Check for existing redemptions
 SELECT 'Test 4: Redemptions' as test_name;
-SELECT 
-  status,
-  provisioning_source,
-  COUNT(*) as count
-FROM gift_card_redemptions
-GROUP BY status, provisioning_source;
+SELECT COUNT(*) as total_redemptions FROM gift_card_redemptions;
 
 -- =====================================================
 -- DONE

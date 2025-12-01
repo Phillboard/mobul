@@ -109,7 +109,7 @@ const navigationGroups: NavGroup[] = [
       { name: "Platform Overview", href: "/platform", icon: Shield, roles: ['admin'], keywords: ["platform", "overview", "stats"], description: "Platform-wide overview" },
       { name: "User Management", href: "/users", icon: UserCog, roles: ['admin'], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
       { name: "System Health", href: "/admin/system-health", icon: Activity, roles: ['admin'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
-      { name: "Demo Data Generator", href: "/admin/demo-data-generator", icon: Database, roles: ['admin'], keywords: ["demo", "test", "simulation", "seed", "generate"], description: "Generate test data for clients" },
+      { name: "Demo Data", href: "/admin/demo-data", icon: Database, roles: ['admin'], keywords: ["demo", "test", "simulation", "seed", "generate"], description: "Generate demo data for testing" },
       { name: "Audit Log", href: "/admin/audit-log", icon: ShieldAlert, roles: ['admin'], keywords: ["audit", "logs", "history"], description: "User management audit trail" },
       { name: "Site Directory", href: "/admin/site-directory", icon: FileSearch, roles: ['admin'], keywords: ["pages", "routes", "navigation"], description: "All pages directory" },
     ]

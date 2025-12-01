@@ -46,7 +46,7 @@ console.log('\n🎯 SOLUTION 1: Copy-Paste (EASIEST)\n');
 console.log('1. Open: apply-gift-card-migrations.sql');
 console.log('2. Copy all contents (Ctrl+A, Ctrl+C)');
 console.log('3. Have someone with Supabase access paste it here:');
-console.log(`   https://supabase.com/dashboard/project/arzthloosvnasokxygfo/sql/new\n`);
+console.log(`   https://supabase.com/dashboard/project/uibvxhwhkatjcwghnzpu/sql/new\n`);
 console.log('4. Click "Run"\n');
 
 console.log('═'.repeat(60));

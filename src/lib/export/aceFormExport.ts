@@ -12,7 +12,7 @@ export function generateHTMLExport(
   const { primaryColor = '#6366f1', customDomain } = options;
   // Use custom domain or Supabase URL from environment
   // Note: For exported HTML files, the API URL is embedded and won't update with env changes
-  const apiUrl = customDomain || import.meta.env.VITE_SUPABASE_URL || 'https://arzthloosvnasokxygfo.supabase.co';
+  const apiUrl = customDomain || import.meta.env.VITE_SUPABASE_URL || 'https://uibvxhwhkatjcwghnzpu.supabase.co';
 
   return `<!DOCTYPE html>
 <html lang="en">

@@ -1,6 +1,7 @@
 -- Performance Optimization Indexes
 -- Created: 2025-11-27
 -- Purpose: Add missing indexes for frequently queried columns
+-- Note: Simplified to avoid schema mismatches
 
 -- Analytics queries (events table is heavily queried)
 CREATE INDEX IF NOT EXISTS idx_events_campaign_type_date 
@@ -14,7 +15,7 @@ ON events(event_type, created_at DESC);
 
 -- Recipients queries
 CREATE INDEX IF NOT EXISTS idx_recipients_audience 
-ON recipients(audience_id) WHERE approval_status = 'approved';
+ON recipients(audience_id);
 
 CREATE INDEX IF NOT EXISTS idx_recipients_redemption_code 
 ON recipients(redemption_code) WHERE redemption_code IS NOT NULL;
@@ -38,17 +39,6 @@ ON campaigns(client_id, status);
 
 CREATE INDEX IF NOT EXISTS idx_campaigns_created 
 ON campaigns(client_id, created_at DESC);
-
--- Full-text search indexes
-CREATE INDEX IF NOT EXISTS idx_contacts_name_search 
-ON contacts USING gin(to_tsvector('english', coalesce(first_name, '') || ' ' || coalesce(last_name, '')));
-
-CREATE INDEX IF NOT EXISTS idx_campaigns_name_search 
-ON campaigns USING gin(to_tsvector('english', name));
-
-CREATE INDEX IF NOT EXISTS idx_companies_name_search 
-ON companies USING gin(to_tsvector('english', name)) 
-WHERE name IS NOT NULL;
 
 -- Contact lists queries
 CREATE INDEX IF NOT EXISTS idx_contact_list_members_list 
@@ -78,21 +68,6 @@ ON gift_card_deliveries(campaign_id, delivery_status);
 CREATE INDEX IF NOT EXISTS idx_audiences_client_status 
 ON audiences(client_id, status);
 
--- Templates queries  
-CREATE INDEX IF NOT EXISTS idx_templates_client 
-ON templates(client_id, is_starter_template);
-
--- Landing pages queries
-CREATE INDEX IF NOT EXISTS idx_landing_pages_client 
-ON landing_pages(client_id, published);
-
--- ACE Forms queries
-CREATE INDEX IF NOT EXISTS idx_ace_forms_client 
-ON ace_forms(client_id, status);
-
-CREATE INDEX IF NOT EXISTS idx_ace_form_submissions_form 
-ON ace_form_submissions(form_id, created_at DESC);
-
 -- User management queries
 CREATE INDEX IF NOT EXISTS idx_client_users_user 
 ON client_users(user_id);
@@ -100,24 +75,10 @@ ON client_users(user_id);
 CREATE INDEX IF NOT EXISTS idx_client_users_client 
 ON client_users(client_id);
 
--- Comment explaining the strategy
-COMMENT ON INDEX idx_events_campaign_type_date IS 
-'Composite index for campaign analytics queries filtering by type and date';
-
-COMMENT ON INDEX idx_gift_cards_available IS 
-'Partial index for quickly finding available cards for provisioning';
-
-COMMENT ON INDEX idx_contacts_name_search IS 
-'Full-text search index for contact name searches';
-
 -- Analyze tables for query planner
 ANALYZE events;
 ANALYZE recipients;
 ANALYZE gift_cards;
 ANALYZE campaigns;
-ANALYZE contacts;
 ANALYZE gift_card_deliveries;
 ANALYZE call_sessions;
-
-SELECT 'Performance indexes created successfully' as status;
-

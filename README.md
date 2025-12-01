@@ -1,5 +1,8 @@
 # ACE Engage - Direct Mail Marketing Platform
 
+> **🔄 MIGRATION NOTICE:** This project has been configured for a new Supabase account.  
+> **New to this project?** See [MIGRATION_COMPLETE.md](MIGRATION_COMPLETE.md) for setup instructions.
+
 **Version:** 1.0.0  
 **Status:** 🚀 Production Ready (9/10 Quality)  
 **Tech Stack:** React 18 + TypeScript + Supabase + Shadcn UI

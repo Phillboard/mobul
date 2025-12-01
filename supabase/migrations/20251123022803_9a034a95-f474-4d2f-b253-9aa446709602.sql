@@ -114,7 +114,7 @@ DECLARE
 BEGIN
   WHILE NOT done LOOP
     -- Generate 8 character alphanumeric code
-    code := upper(substring(encode(gen_random_bytes(6), 'base64') from 1 for 8));
+    code := upper(substring(encode(extensions.gen_random_bytes(6), 'base64') from 1 for 8));
     code := REPLACE(code, '/', '');
     code := REPLACE(code, '+', '');
     code := REPLACE(code, '=', '');

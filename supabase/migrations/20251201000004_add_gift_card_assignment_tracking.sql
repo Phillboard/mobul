@@ -14,9 +14,9 @@ CREATE INDEX IF NOT EXISTS idx_gift_cards_assignment_lookup
   ON gift_cards(assigned_to_recipient_id, assignment_condition_id)
   WHERE assigned_to_recipient_id IS NOT NULL;
 
--- Create index for brand/value availability queries
-CREATE INDEX IF NOT EXISTS idx_gift_cards_brand_value_available 
-  ON gift_cards(brand_id, card_value, status, pool_id)
+-- Create index for brand availability queries (card_value is on pool, not cards)
+CREATE INDEX IF NOT EXISTS idx_gift_cards_brand_available 
+  ON gift_cards(brand_id, status, pool_id)
   WHERE status = 'available';
 
 -- Add comment explaining the assignment tracking

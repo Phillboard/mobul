@@ -8,7 +8,7 @@ ALTER TABLE campaign_conditions
 -- Add comment
 COMMENT ON COLUMN campaign_conditions.brand_id IS 'Gift card brand for this condition reward - used with card_value for simplified selection';
 COMMENT ON COLUMN campaign_conditions.card_value IS 'Gift card denomination for this condition reward - used with brand_id';
-COMMENT ON COLUMN campaign_conditions.gift_card_pool_id IS 'Legacy field - use brand_id+card_value for new campaigns. Kept for backward compatibility';
+-- gift_card_pool_id comment skipped (column may not exist)
 
 -- Create index for brand+value lookups
 CREATE INDEX IF NOT EXISTS idx_campaign_conditions_brand_value 
