@@ -1,0 +1,9 @@
+{
+  "name": "mobul-scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "apply-migrations": "tsx scripts/apply-migrations.ts"
+  }
+}
+

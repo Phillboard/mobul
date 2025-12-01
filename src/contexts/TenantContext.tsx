@@ -32,6 +32,7 @@ interface TenantContextType {
   setAdminMode: (mode: boolean) => void;
   impersonatedUserId: string | null;
   setImpersonatedUserId: (userId: string | null) => void;
+  refetchTenantData: () => Promise<void>;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -177,6 +178,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         },
         impersonatedUserId,
         setImpersonatedUserId,
+        refetchTenantData: fetchTenantData,
       }}
     >
       {children}

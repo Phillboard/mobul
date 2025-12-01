@@ -18,7 +18,9 @@ const DEFAULT_REDEMPTION_RATE = 5;
 
 interface Condition {
   id: string;
-  gift_card_pool_id?: string;
+  gift_card_pool_id?: string; // Legacy
+  brand_id?: string; // New system
+  card_value?: number; // New system
   is_active?: boolean;
 }
 
@@ -56,13 +58,21 @@ export function useGiftCardCostEstimate({
   redemptionFeePercentage,
   clientId,
 }: GiftCardCostParams) {
-  // Get unique pool IDs from active conditions
+  // Get unique pool IDs from active conditions (legacy support)
   const activePoolIds = conditions
     .filter(c => c.is_active !== false && c.gift_card_pool_id)
     .map(c => c.gift_card_pool_id!)
     .filter((id, index, arr) => arr.indexOf(id) === index);
+  
+  // Get brand_id + card_value combinations from active conditions (new system)
+  const activeBrandValues = conditions
+    .filter(c => c.is_active !== false && c.brand_id && c.card_value)
+    .map(c => ({ brand_id: c.brand_id!, card_value: c.card_value! }));
+  
+  // Check if we have any gift card data at all
+  const hasGiftCardData = activePoolIds.length > 0 || activeBrandValues.length > 0;
 
-  // Fetch pool details
+  // Fetch pool details (for legacy conditions)
   const { data: pools, isLoading: loadingPools } = useQuery({
     queryKey: ["gift-card-pools-cost", activePoolIds],
     queryFn: async () => {
@@ -122,7 +132,7 @@ export function useGiftCardCostEstimate({
   // Calculate costs
   const isLoading = loadingPools || (clientId && !redemptionFeePercentage && loadingFee);
 
-  if (isLoading || !pools || pools.length === 0 || recipientCount === 0) {
+  if (isLoading || recipientCount === 0 || !hasGiftCardData) {
     return {
       data: null,
       isLoading,
@@ -135,9 +145,21 @@ export function useGiftCardCostEstimate({
   // Calculate estimated redemptions based on redemption rate (default 5%)
   const estimatedRedemptions = Math.ceil(recipientCount * (redemptionRatePercentage / 100));
 
-  // Calculate total card value across all pools (average if multiple)
-  const totalCardValue = pools.reduce((sum, pool) => sum + (pool.card_value || 0), 0);
-  const avgCardValue = totalCardValue / pools.length;
+  // Calculate card values from BOTH new system (brand_id + card_value) AND legacy (pools)
+  const newSystemValues = activeBrandValues.map(bv => bv.card_value);
+  const legacyValues = pools?.map(pool => pool.card_value || 0) || [];
+  const allCardValues = [...newSystemValues, ...legacyValues];
+  
+  if (allCardValues.length === 0) {
+    return {
+      data: null,
+      isLoading: false,
+    };
+  }
+
+  // Calculate average card value across all conditions
+  const totalCardValue = allCardValues.reduce((sum, value) => sum + value, 0);
+  const avgCardValue = totalCardValue / allCardValues.length;
 
   // Calculate costs based on estimated redemptions
   const baseCardCost = avgCardValue * estimatedRedemptions;
@@ -155,12 +177,22 @@ export function useGiftCardCostEstimate({
     formattedBaseCardCost: formatCurrency(baseCardCost),
     formattedRedemptionFee: formatCurrency(redemptionFee),
     formattedTotalCost: formatCurrency(totalCost),
-    poolDetails: pools.map(pool => ({
-      poolId: pool.id,
-      poolName: pool.pool_name,
-      cardValue: pool.card_value,
-      provider: pool.provider || "Unknown",
-    })),
+    poolDetails: [
+      // New system details
+      ...activeBrandValues.map((bv, idx) => ({
+        poolId: `brand-${bv.brand_id}-${bv.card_value}`,
+        poolName: `Brand Card $${bv.card_value}`,
+        cardValue: bv.card_value,
+        provider: "Gift Card",
+      })),
+      // Legacy pool details
+      ...(pools?.map(pool => ({
+        poolId: pool.id,
+        poolName: pool.pool_name,
+        cardValue: pool.card_value,
+        provider: pool.provider || "Unknown",
+      })) || [])
+    ],
   };
 
   return {

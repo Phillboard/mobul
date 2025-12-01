@@ -31,12 +31,13 @@ const TIMEZONES = [
 ];
 
 export function GeneralSettings() {
-  const { currentClient } = useTenant();
+  const { currentClient, refetchTenantData } = useTenant();
   const { hasPermission } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const { isEnabled: drPhillipEnabled, isHidden, hiddenUntil, setIsEnabled: setDrPhillipEnabled, show: showDrPhillip } = useDrPhillipPreference();
   const [formData, setFormData] = useState({
+    name: "",
     industry: "",
     timezone: "America/New_York",
   });
@@ -44,6 +45,7 @@ export function GeneralSettings() {
   useEffect(() => {
     if (currentClient) {
       setFormData({
+        name: currentClient.name || "",
         industry: currentClient.industry || "",
         timezone: currentClient.timezone || "America/New_York",
       });
@@ -62,6 +64,7 @@ export function GeneralSettings() {
       const { error } = await supabase
         .from("clients")
         .update({
+          name: formData.name,
           industry: formData.industry as any,
           timezone: formData.timezone,
         })
@@ -69,12 +72,13 @@ export function GeneralSettings() {
 
       if (error) throw error;
 
+      // Refetch tenant data to update all components with the new name
+      await refetchTenantData();
+
       toast({
         title: "Settings Saved",
         description: "General settings have been updated successfully",
       });
-      
-      window.location.reload();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -97,8 +101,14 @@ export function GeneralSettings() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Organization Name</Label>
-            <Input value={currentClient?.name || ""} disabled />
+            <Label htmlFor="organization-name">Organization Name</Label>
+            <Input 
+              id="organization-name"
+              value={formData.name} 
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              disabled={!canEdit}
+              placeholder="Enter organization name"
+            />
           </div>
 
           <div className="space-y-2">

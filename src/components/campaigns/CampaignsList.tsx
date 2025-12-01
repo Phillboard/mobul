@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Mail } from "lucide-react";
 import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
 import { CampaignProofDialog } from "./CampaignProofDialog";
+import { DeleteCampaignDialog } from "./DeleteCampaignDialog";
 import { CampaignCard } from "./CampaignCard";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -26,8 +27,10 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
     name: string;
   } | null>(null);
   const [proofCampaignId, setProofCampaignId] = useState<string | null>(null);
+  const [deleteCampaignId, setDeleteCampaignId] = useState<string | null>(null);
+  const [editCampaignId, setEditCampaignId] = useState<string | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFiltersState] = useState<ColumnFiltersState>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -51,6 +54,97 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
     onError: (error: Error) => {
       toast({
         title: "Submission Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const duplicateCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      // Get original campaign
+      const { data: original, error: fetchError } = await supabase
+        .from("campaigns")
+        .select("*")
+        .eq("id", campaignId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      // Create copy with new name
+      const { data: newCampaign, error: createError } = await supabase
+        .from("campaigns")
+        .insert({
+          ...original,
+          id: undefined,
+          name: `${original.name} (Copy)`,
+          status: 'draft',
+          audience_id: null, // Don't copy audience
+          created_at: undefined,
+          updated_at: undefined,
+        })
+        .select()
+        .single();
+      
+      if (createError) throw createError;
+      
+      // Copy conditions if any
+      const { data: conditions } = await supabase
+        .from("campaign_conditions")
+        .select("*")
+        .eq("campaign_id", campaignId);
+      
+      if (conditions && conditions.length > 0) {
+        const newConditions = conditions.map(c => ({
+          ...c,
+          id: undefined,
+          campaign_id: newCampaign.id,
+          created_at: undefined,
+        }));
+        
+        await supabase.from("campaign_conditions").insert(newConditions);
+      }
+      
+      return newCampaign;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns", clientId] });
+      toast({
+        title: "Campaign Duplicated",
+        description: `Created "${data.name}". You can now edit and configure it.`,
+      });
+      navigate(`/campaigns/${data.id}`);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Duplication Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      const { error } = await supabase
+        .from("campaigns")
+        .delete()
+        .eq("id", campaignId);
+      
+      if (error) throw error;
+      return campaignId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns", clientId] });
+      toast({
+        title: "Campaign Deleted",
+        description: "Campaign has been permanently deleted.",
+      });
+      setDeleteCampaignId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Deletion Failed",
         description: error.message,
         variant: "destructive",
       });
@@ -122,6 +216,9 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
         onViewAnalytics: (id) => navigate(`/analytics/${id}`),
         onReviewProof: (id) => setProofCampaignId(id),
         onSubmitToVendor: (id) => submitToVendorMutation.mutate(id),
+        onEdit: (id) => setEditCampaignId(id),
+        onDuplicate: (id) => duplicateCampaignMutation.mutate(id),
+        onDelete: (id) => setDeleteCampaignId(id),
       }),
     [navigate, submitToVendorMutation]
   );
@@ -190,9 +287,9 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
               onViewAnalytics={() => navigate(`/analytics/${campaign.id}`)}
               onReviewProof={() => setProofCampaignId(campaign.id)}
               onSubmitToVendor={() => submitToVendorMutation.mutate(campaign.id)}
-              onEdit={() => {}}
-              onDuplicate={() => {}}
-              onDelete={() => {}}
+              onEdit={() => setEditCampaignId(campaign.id)}
+              onDuplicate={() => duplicateCampaignMutation.mutate(campaign.id)}
+              onDelete={() => setDeleteCampaignId(campaign.id)}
               getStatusColor={getStatusColor}
               getStatusLabel={getStatusLabel}
             />
@@ -226,6 +323,15 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
         open={!!proofCampaignId}
         onOpenChange={(open) => !open && setProofCampaignId(null)}
         campaignId={proofCampaignId}
+      />
+    )}
+    
+    {deleteCampaignId && (
+      <DeleteCampaignDialog
+        open={!!deleteCampaignId}
+        onOpenChange={(open) => !open && setDeleteCampaignId(null)}
+        campaignId={deleteCampaignId}
+        onConfirm={() => deleteCampaignMutation.mutate(deleteCampaignId)}
       />
     )}
     </>

@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, BarChart3, FileText, Send } from "lucide-react";
+import { MoreHorizontal, Eye, BarChart3, FileText, Send, Edit, Copy, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 export type CampaignRow = {
@@ -32,6 +32,9 @@ interface CampaignsColumnsOptions {
   onViewAnalytics: (id: string) => void;
   onReviewProof: (id: string) => void;
   onSubmitToVendor: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export function createCampaignsColumns(
@@ -185,6 +188,23 @@ export function createCampaignsColumns(
               <DropdownMenuItem onClick={() => options.onSubmitToVendor(campaign.id)}>
                 <Send className="mr-2 h-4 w-4" />
                 Submit to Vendor
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => options.onEdit(campaign.id)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => options.onDuplicate(campaign.id)}>
+                <Copy className="mr-2 h-4 w-4" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => options.onDelete(campaign.id)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

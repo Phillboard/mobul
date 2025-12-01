@@ -39,11 +39,18 @@ export function useSimplifiedGiftCardSelection(clientId: string) {
           p_client_id: clientId
         });
 
-      if (error) throw error;
+      if (error) {
+        // Provide helpful error message if function doesn't exist
+        if (error.message && error.message.includes('does not exist')) {
+          throw new Error('Gift card system setup incomplete. Please contact your administrator to apply the required database updates (migrations 20251201000004-20251201000009).');
+        }
+        throw error;
+      }
       
       return data as BrandDenomination[];
     },
     enabled: !!clientId,
+    retry: 1, // Only retry once for missing functions
   });
 
   // Group by brand for easier UI rendering

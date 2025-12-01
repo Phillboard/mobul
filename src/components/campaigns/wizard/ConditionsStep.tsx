@@ -23,6 +23,7 @@ import { Plus, Trash2, GripVertical, AlertCircle, CheckCircle, AlertTriangle, Gi
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useToast } from "@/hooks/use-toast";
 import type { CampaignFormData } from "@/types/campaigns";
+import { SimpleBrandDenominationSelector } from "@/components/gift-cards/SimpleBrandDenominationSelector";
 
 // Predefined trigger types - per Mike's requirements
 const TRIGGER_TYPES = [
@@ -55,7 +56,10 @@ interface Condition {
   condition_number: number;
   condition_name: string;
   trigger_type: TriggerType;
-  gift_card_pool_id: string;
+  gift_card_pool_id?: string; // Legacy support
+  brand_id?: string; // New system
+  card_value?: number; // New system
+  brand_name?: string; // New system
   sms_template: string;
   is_active: boolean;
 }
@@ -84,18 +88,18 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
         condition_number: 1,
         condition_name: "Listened to sales call",
         trigger_type: "manual_agent" as TriggerType,
-        gift_card_pool_id: "",
         sms_template: "Hi {first_name}! Thanks for your time. Here's your ${value} {provider} gift card: {link}",
         is_active: true,
       },
     ];
   });
 
-  // Fetch gift card pools
+  // Fetch gift card pools - NOT NEEDED with new SimpleBrandDenominationSelector
+  // Keeping for legacy conditions that still use pool_id
   const { data: giftCardPools, isLoading } = useQuery({
     queryKey: ["gift-card-pools", clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from("gift_card_pools")
         .select(`
           id, 
@@ -113,6 +117,7 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
       if (error) throw error;
       return data;
     },
+    enabled: false, // Only enable if we have legacy conditions
   });
 
   const handleAddCondition = () => {
@@ -121,7 +126,6 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
       condition_number: conditions.length + 1,
       condition_name: `Condition ${conditions.length + 1}`,
       trigger_type: "manual_agent",
-      gift_card_pool_id: "",
       sms_template: "Hi {first_name}! Your ${value} {provider} gift card: {link}",
       is_active: true,
     };
@@ -174,8 +178,9 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
       return;
     }
 
-    const missingPools = activeConditions.filter((c) => !c.gift_card_pool_id);
-    if (missingPools.length > 0) {
+    // Check for missing gift cards (brand_id + card_value OR legacy pool_id)
+    const missingGiftCards = activeConditions.filter((c) => !c.brand_id && !c.card_value && !c.gift_card_pool_id);
+    if (missingGiftCards.length > 0) {
       toast({
         title: "Gift Card Required",
         description: "Please select a gift card reward for all active conditions.",
@@ -195,44 +200,6 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
     }
 
     onNext({ conditions } as any);
-  };
-
-  const getPoolById = (poolId: string) => {
-    return giftCardPools?.find((p) => p.id === poolId);
-  };
-
-  const getPoolStatus = (availableCards: number) => {
-    if (availableCards === 0) return { label: 'empty', color: 'text-red-600' };
-    if (availableCards <= 20) return { label: 'low stock', color: 'text-yellow-600' };
-    return { label: 'active', color: 'text-green-600' };
-  };
-
-  const formatPoolDisplay = (pool: any) => {
-    const brandName = pool.gift_card_brands?.brand_name || pool.pool_name;
-    const status = getPoolStatus(pool.available_cards);
-    return `${brandName} | $${pool.card_value} (${status.label})`;
-  };
-
-  const validatePoolInventory = (poolId: string) => {
-    const pool = getPoolById(poolId);
-    if (!pool) return null;
-
-    if (pool.available_cards === 0) {
-      return { type: "error" as const, message: "Pool is empty" };
-    }
-    if (pool.available_cards < recipientCount) {
-      return {
-        type: "error" as const,
-        message: `Only ${pool.available_cards} cards available, need ${recipientCount}`,
-      };
-    }
-    if (pool.available_cards < recipientCount * 1.1) {
-      return {
-        type: "warning" as const,
-        message: `Low buffer: Only ${pool.available_cards - recipientCount} extra cards`,
-      };
-    }
-    return { type: "success" as const, message: `${pool.available_cards} cards available` };
   };
 
   return (
@@ -257,11 +224,6 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
           {(provided) => (
             <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
               {conditions.map((condition, index) => {
-                const pool = getPoolById(condition.gift_card_pool_id);
-                const validation = condition.gift_card_pool_id
-                  ? validatePoolInventory(condition.gift_card_pool_id)
-                  : null;
-
                 return (
                   <Draggable key={condition.id} draggableId={condition.id} index={index}>
                     {(provided, snapshot) => (
@@ -352,45 +314,24 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
                             </div>
                           </div>
 
-                          {/* Gift Card Pool */}
+                          {/* Gift Card Reward - New Simplified Selector */}
                           <div className="space-y-2">
                             <Label>Gift Card Reward *</Label>
-                            <Select
-                              value={condition.gift_card_pool_id}
-                              onValueChange={(value) =>
-                                handleUpdateCondition(condition.id, { gift_card_pool_id: value })
+                            <SimpleBrandDenominationSelector
+                              clientId={clientId}
+                              value={condition.brand_id && condition.card_value ? {
+                                brand_id: condition.brand_id,
+                                card_value: condition.card_value
+                              } : null}
+                              onChange={(selection) =>
+                                handleUpdateCondition(condition.id, {
+                                  brand_id: selection.brand_id,
+                                  card_value: selection.card_value,
+                                  brand_name: selection.brand_name,
+                                })
                               }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a gift card..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {isLoading ? (
-                                  <SelectItem value="loading" disabled>
-                                    Loading gift cards...
-                                  </SelectItem>
-                                ) : giftCardPools && giftCardPools.length > 0 ? (
-                                  giftCardPools.map((pool) => (
-                                    <SelectItem key={pool.id} value={pool.id}>
-                                      {formatPoolDisplay(pool)}
-                                    </SelectItem>
-                                  ))
-                                ) : (
-                                  <SelectItem value="none" disabled>
-                                    No gift cards available - create one first
-                                  </SelectItem>
-                                )}
-                              </SelectContent>
-                            </Select>
-
-                            {validation && (
-                              <Alert variant={validation.type === "error" ? "destructive" : "default"} className="py-2">
-                                {validation.type === "error" && <AlertTriangle className="h-4 w-4" />}
-                                {validation.type === "warning" && <AlertTriangle className="h-4 w-4 text-yellow-600" />}
-                                {validation.type === "success" && <CheckCircle className="h-4 w-4 text-green-600" />}
-                                <AlertDescription>{validation.message}</AlertDescription>
-                              </Alert>
-                            )}
+                              showAvailability={true}
+                            />
                           </div>
 
                           {/* SMS Template */}
