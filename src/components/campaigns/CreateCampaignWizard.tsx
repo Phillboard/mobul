@@ -5,6 +5,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { MailingMethodStep } from "./wizard/MailingMethodStep";
 import { CampaignSetupStep } from "./wizard/CampaignSetupStep";
 import { AudiencesStep } from "./wizard/AudiencesStep";
@@ -16,9 +27,13 @@ import { DeliveryFulfillmentStep } from "./wizard/DeliveryFulfillmentStep";
 import { SummaryStep } from "./wizard/SummaryStep";
 import { StepIndicator } from "./wizard/StepIndicator";
 import { WizardSidebar } from "./wizard/WizardSidebar";
+import { WizardProgressIndicator } from "./wizard/WizardProgressIndicator";
 import { DraftManager } from "./DraftManager";
+import { supabase } from "@/integrations/supabase/client";
 import type { CampaignFormData, MailingMethod } from "@/types/campaigns";
 import { useMutation } from "@tanstack/react-query";
+import { Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CreateCampaignWizardProps {
@@ -32,6 +47,7 @@ export function CreateCampaignWizard({
   onOpenChange,
   clientId,
 }: CreateCampaignWizardProps) {
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
@@ -41,6 +57,9 @@ export function CreateCampaignWizard({
     utm_source: "directmail",
     utm_medium: "postcard",
   });
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showExitWarning, setShowExitWarning] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
 
   // Dynamic steps based on mailing method
   const isSelfMailer = formData.mailing_method === 'self';
@@ -103,11 +122,21 @@ export function CreateCampaignWizard({
       if (data?.draft?.id && !currentDraftId) {
         setCurrentDraftId(data.draft.id);
       }
+      setLastSavedAt(new Date());
+      setHasUnsavedChanges(false);
     },
   });
 
+  // Track form changes
+  useEffect(() => {
+    if (Object.keys(formData).length > 3) {
+      setHasUnsavedChanges(true);
+    }
+  }, [formData]);
+
   const handleNext = (data: Partial<CampaignFormData>) => {
     setFormData({ ...formData, ...data });
+    setHasUnsavedChanges(true);
     setCurrentStep(currentStep + 1);
   };
 
@@ -119,9 +148,28 @@ export function CreateCampaignWizard({
     setFormData(draft.formData);
     setCurrentStep(draft.step);
     setCurrentDraftId(draft.draftId);
+    setHasUnsavedChanges(false);
+  };
+
+  const handleSaveDraft = async () => {
+    await saveDraftMutation.mutateAsync();
+    setLastSavedAt(new Date());
+    setHasUnsavedChanges(false);
+    toast({
+      title: "Draft Saved",
+      description: "Your campaign progress has been saved",
+    });
   };
 
   const handleClose = () => {
+    if (hasUnsavedChanges) {
+      setShowExitWarning(true);
+      return;
+    }
+    closeWizard();
+  };
+
+  const closeWizard = () => {
     setCurrentStep(0);
     setCurrentDraftId(null);
     setFormData({
@@ -304,11 +352,37 @@ export function CreateCampaignWizard({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Create Campaign</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Create Campaign</DialogTitle>
+              <div className="flex items-center gap-2">
+                {lastSavedAt && (
+                  <span className="text-xs text-muted-foreground">
+                    Saved {lastSavedAt.toLocaleTimeString()}
+                  </span>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveDraft}
+                  disabled={saveDraftMutation.isPending || !hasUnsavedChanges}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {saveDraftMutation.isPending ? "Saving..." : "Save Draft"}
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Progress Indicator */}
+          <WizardProgressIndicator
+            steps={steps}
+            currentStep={currentStep}
+            className="mb-4"
+          />
 
         <StepIndicator 
           currentStep={currentStep} 
@@ -340,5 +414,42 @@ export function CreateCampaignWizard({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Exit Warning Dialog */}
+    <AlertDialog open={showExitWarning} onOpenChange={setShowExitWarning}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+          <AlertDialogDescription>
+            You have unsaved changes in your campaign. If you close now, your progress will be lost.
+            Would you like to save as a draft first?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setShowExitWarning(false)}>
+            Cancel
+          </AlertDialogCancel>
+          <Button
+            variant="outline"
+            onClick={() => {
+              closeWizard();
+              setShowExitWarning(false);
+            }}
+          >
+            Discard Changes
+          </Button>
+          <AlertDialogAction
+            onClick={async () => {
+              await handleSaveDraft();
+              closeWizard();
+              setShowExitWarning(false);
+            }}
+          >
+            Save & Close
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 }

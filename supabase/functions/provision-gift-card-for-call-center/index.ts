@@ -225,57 +225,76 @@ serve(async (req) => {
       throw new Error("No campaign found for this recipient");
     }
 
-    console.log(`[PROVISION-CC] Campaign: ${campaign.id}, checking reward config`);
+    console.log(`[PROVISION-CC] Campaign: ${campaign.id}, condition: ${conditionId}`);
 
-    // NEW: Check for direct campaign reward pool (new system)
-    let poolId: string | null = null;
-    let { data: campaignDetails, error: campaignError } = await supabaseAdmin
+    // NEW: Get condition details with brand_id and card_value
+    let brandId: string | null = null;
+    let cardValue: number | null = null;
+    let conditionInfo: any = null;
+
+    if (conditionId) {
+      const { data: condition, error: conditionError } = await supabaseAdmin
+        .from('campaign_conditions')
+        .select('id, brand_id, card_value, gift_card_pool_id, condition_name')
+        .eq('id', conditionId)
+        .single();
+
+      if (conditionError || !condition) {
+        throw new Error("Invalid condition ID");
+      }
+
+      conditionInfo = condition;
+      brandId = condition.brand_id;
+      cardValue = condition.card_value;
+
+      console.log(`[PROVISION-CC] Condition: ${condition.condition_name}, brand_id: ${brandId}, value: ${cardValue}`);
+
+      // If condition doesn't have brand_id yet (legacy), try to get from pool
+      if (!brandId && condition.gift_card_pool_id) {
+        const { data: pool } = await supabaseAdmin
+          .from('gift_card_pools')
+          .select('brand_id, card_value')
+          .eq('id', condition.gift_card_pool_id)
+          .single();
+        
+        if (pool) {
+          brandId = pool.brand_id;
+          cardValue = pool.card_value;
+          console.log(`[PROVISION-CC] Got brand/value from legacy pool: ${brandId}, $${cardValue}`);
+        }
+      }
+    }
+
+    // Get client_id for pool selection
+    const { data: campaignClient } = await supabaseAdmin
       .from('campaigns')
-      .select('rewards_enabled, reward_pool_id, reward_condition')
+      .select('client_id')
       .eq('id', campaign.id)
       .single();
 
-    if (campaignError) {
-      console.error("[PROVISION-CC] Error fetching campaign details:", campaignError);
-      throw campaignError;
+    if (!campaignClient?.client_id) {
+      throw new Error("Could not determine campaign client");
     }
 
-    // Use direct reward pool if configured
-    if (campaignDetails.rewards_enabled && campaignDetails.reward_pool_id) {
-      poolId = campaignDetails.reward_pool_id;
-      console.log(`[PROVISION-CC] Using direct reward pool: ${poolId}`);
-    } else {
-      // Fallback to legacy campaign_reward_configs (backward compatibility)
-      if (!campaign.campaign_reward_configs || campaign.campaign_reward_configs.length === 0) {
-        throw new Error("No gift card rewards configured for this campaign");
-      }
-
-      if (conditionNumber) {
-        const rewardConfig = campaign.campaign_reward_configs.find(
-          (rc: any) => rc.condition_number === conditionNumber
-        );
-        poolId = rewardConfig?.gift_card_pool_id || null;
-      } else {
-        poolId = campaign.campaign_reward_configs[0].gift_card_pool_id;
-      }
-      console.log(`[PROVISION-CC] Using legacy reward config pool: ${poolId}`);
+    if (!brandId || !cardValue) {
+      throw new Error("No gift card configured for this condition. Please contact support.");
     }
 
-    if (!poolId) {
-      throw new Error(`No gift card pool assigned for this campaign`);
-    }
+    console.log(`[PROVISION-CC] Claiming card: brand=${brandId}, value=$${cardValue}, client=${campaignClient.client_id}`);
 
-    console.log(`[PROVISION-CC] Claiming card from pool: ${poolId}`);
-
-    // NEW: Use atomic claiming function to prevent race conditions
+    // NEW: Use atomic claiming function with brand+denomination
     let claimedCard;
     try {
       const { data: atomicResult, error: claimError } = await supabaseAdmin
         .rpc('claim_card_atomic', {
-          p_pool_id: poolId,
+          p_brand_id: brandId,
+          p_card_value: cardValue,
+          p_client_id: campaignClient.client_id,
           p_recipient_id: recipient.id,
           p_campaign_id: campaign.id,
-          p_agent_id: user.id
+          p_condition_id: conditionId,
+          p_agent_id: user.id,
+          p_source: 'call_center'
         });
 
       if (claimError) {
@@ -283,20 +302,9 @@ serve(async (req) => {
         
         // Check if it's a pool empty error
         if (claimError.message?.includes('NO_CARDS_AVAILABLE')) {
-          // Create admin notification
-          try {
-            await supabaseAdmin.rpc('notify_pool_empty', {
-              p_pool_id: poolId,
-              p_campaign_id: campaign.id,
-              p_recipient_id: recipient.id
-            });
-          } catch (notifyErr) {
-            console.error('[PROVISION-CC] Failed to notify:', notifyErr);
-          }
-
           return new Response(JSON.stringify({ 
-            error: "POOL_EMPTY",
-            message: "The gift card pool is empty. An administrator has been notified."
+            error: "NO_CARDS_AVAILABLE",
+            message: `No ${conditionInfo?.condition_name || 'gift cards'} available. An administrator has been notified.`
           }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400,
@@ -311,92 +319,55 @@ serve(async (req) => {
       }
 
       claimedCard = atomicResult[0];
-      console.log(`[PROVISION-CC] Successfully claimed card: ${claimedCard.card_id}`);
+      
+      // Check if this was an existing assignment
+      if (claimedCard.already_assigned) {
+        console.log(`[PROVISION-CC] Returning existing assignment: ${claimedCard.card_id}`);
+        
+        // Return the existing card info
+        return new Response(JSON.stringify({
+          success: true,
+          alreadyAssigned: true,
+          recipient: {
+            id: recipient.id,
+            firstName: recipient.first_name,
+            lastName: recipient.last_name,
+            phone: deliveryPhone || recipient.phone,
+            email: deliveryEmail || recipient.email,
+          },
+          giftCard: {
+            id: claimedCard.card_id,
+            card_code: claimedCard.card_code,
+            card_number: claimedCard.card_number,
+            card_value: claimedCard.card_value_amount,
+            provider: claimedCard.provider,
+            brand_name: claimedCard.brand_name,
+            gift_card_pools: {
+              id: claimedCard.pool_id,
+              pool_name: claimedCard.pool_name,
+              card_value: claimedCard.card_value_amount,
+              provider: claimedCard.provider,
+            }
+          },
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
+
+      console.log(`[PROVISION-CC] Successfully claimed new card: ${claimedCard.card_id}`);
 
     } catch (claimError) {
       console.error("[PROVISION-CC] Failed to claim card:", claimError);
       throw new Error(`Failed to claim gift card: ${claimError.message}`);
     }
 
-    // Critical: Pool empty - create admin notification and alert
-    if (poolCheck.available_cards === 0) {
-      console.error(`[PROVISION-CC] Pool ${poolCheck.pool_name} is EMPTY`);
-      
-      // Create admin notification using helper function
-      try {
-        const { data: notificationId, error: notifyError } = await supabaseAdmin
-          .rpc('notify_pool_empty', {
-            p_pool_id: poolId,
-            p_campaign_id: campaign.id,
-            p_recipient_id: recipient.id
-          });
-        
-        if (notifyError) {
-          console.error('[PROVISION-CC] Failed to create notification:', notifyError);
-        } else {
-          console.log(`[PROVISION-CC] Created admin notification: ${notificationId}`);
-        }
-      } catch (err) {
-        console.error('[PROVISION-CC] Notification error:', err);
-      }
-      
-      return new Response(JSON.stringify({ 
-        error: "POOL_EMPTY",
-        message: "The gift card pool is empty. An administrator has been notified and will replenish the inventory shortly. Please try again later or contact support."
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      });
-    }
-
-    // Warning: Low stock - alert but continue
-    const lowStockThreshold = poolCheck.low_stock_threshold || 20;
-    if (poolCheck.available_cards <= lowStockThreshold) {
-      console.warn(`[PROVISION-CC] Pool ${poolCheck.pool_name} low: ${poolCheck.available_cards} cards`);
-      
-      // Send warning alert (async, don't block redemption)
-      supabaseAdmin.functions.invoke('send-inventory-alert', {
-        body: {
-          severity: 'warning',
-          poolId,
-          poolName: poolCheck.pool_name,
-          availableCards: poolCheck.available_cards
-        }
-      }).catch(err => console.error('Failed to send alert:', err));
-    }
-
-    // Claim a gift card
-    const { data: claimData, error: claimError } = await supabaseAdmin.rpc('claim_available_card', {
-      p_pool_id: poolId,
-      p_recipient_id: recipient.id,
-      p_call_session_id: null
-    });
-
-    if (claimError) {
-      console.error("[PROVISION-CC] Claim error:", claimError);
-      
-      if (claimError.message?.includes('No available cards')) {
-        return new Response(JSON.stringify({ 
-          error: "POOL_EMPTY",
-          message: ERROR_MESSAGES.POOL_EMPTY
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        });
-      }
-      
-      throw claimError;
-    }
-
-    const claimedCard = claimData[0];
-    console.log(`[PROVISION-CC] Claimed card: ${claimedCard.id}`);
-
     // Update recipient status to redeemed AND update contact information
     const { error: updateError } = await supabaseAdmin
       .from("recipients")
       .update({
         approval_status: "redeemed",
-        gift_card_assigned_id: claimedCard.id,
+        gift_card_assigned_id: claimedCard.card_id,
         // Update contact info with agent-provided data
         phone: deliveryPhone || recipient.phone,
         email: deliveryEmail || recipient.email,

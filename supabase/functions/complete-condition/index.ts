@@ -68,80 +68,173 @@ Deno.serve(async (req) => {
 
     let giftCardData = null;
 
-    // If condition has a gift card pool, claim a card (with API fallback)
-    if (condition.gift_card_pool_id) {
+    // If condition has gift card configured, claim a card using atomic system
+    if (condition.brand_id && condition.card_value) {
       const serviceClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      // Use new claim-and-provision function that handles fallback
-      const { data: claimResult, error: claimError } = await serviceClient.functions.invoke(
-        'claim-and-provision-card',
-        {
-          body: {
-            poolId: condition.gift_card_pool_id,
-            recipientId: recipientId,
-            callSessionId: callSessionId,
-          }
-        }
-      );
-
-      if (claimError || !claimResult?.success) {
-        console.error('Failed to claim gift card:', claimError);
-        throw new Error('No gift cards available');
-      }
-
-      const claimedCard = claimResult.card;
-      giftCardData = {
-        id: claimedCard.card_id,
-        code: claimedCard.card_code,
-        value: claimedCard.card_value,
-        provider: claimedCard.provider,
-        deliveryStatus: 'pending'
-      };
-
-      // Create gift card delivery record
-      const { data: recipient } = await supabaseClient
-        .from('recipients')
-        .select('phone')
-        .eq('id', recipientId)
+      // Get campaign client_id
+      const { data: campaign } = await serviceClient
+        .from('campaigns')
+        .select('client_id')
+        .eq('id', campaignId)
         .single();
 
-      if (recipient?.phone) {
-        const { error: deliveryError } = await serviceClient
-          .from('gift_card_deliveries')
-          .insert({
-            gift_card_id: claimedCard.card_id,
-            recipient_id: recipientId,
-            campaign_id: campaignId,
-            call_session_id: callSessionId,
-            condition_number: conditionNumber,
-            delivery_method: 'sms',
-            delivery_address: recipient.phone,
-            sms_message: condition.sms_template || `Congratulations! You've earned a $${claimedCard.card_value} ${claimedCard.provider} gift card. Code: ${claimedCard.card_code}`,
-            delivery_status: 'pending',
-          });
+      if (!campaign?.client_id) {
+        throw new Error('Could not determine campaign client');
+      }
 
-        if (deliveryError) {
-          console.error('Failed to create delivery record:', deliveryError);
-        } else {
-          // Invoke SMS sending function
-          const { error: smsError } = await serviceClient.functions.invoke('send-gift-card-sms', {
-            body: {
-              recipientPhone: recipient.phone,
-              giftCardCode: claimedCard.card_code,
-              giftCardValue: claimedCard.card_value,
-              provider: claimedCard.provider,
-              customMessage: condition.sms_template,
-            }
-          });
+      // Use atomic claim with brand+denomination
+      const { data: claimedCard, error: claimError } = await serviceClient
+        .rpc('claim_card_atomic', {
+          p_brand_id: condition.brand_id,
+          p_card_value: condition.card_value,
+          p_client_id: campaign.client_id,
+          p_recipient_id: recipientId,
+          p_campaign_id: campaignId,
+          p_condition_id: condition.id,
+          p_agent_id: user.id,
+          p_source: 'call_center'
+        });
 
-          if (smsError) {
-            console.error('Failed to send SMS:', smsError);
-          } else {
-            giftCardData.deliveryStatus = 'sent';
+      if (claimError) {
+        console.error('Failed to claim gift card:', claimError);
+        
+        // Check if already assigned
+        if (claimError.message?.includes('ALREADY_ASSIGNED')) {
+          console.log('Card already assigned for this condition');
+          // Get existing card
+          const { data: existing } = await serviceClient
+            .rpc('get_recipient_gift_card_for_condition', {
+              p_recipient_id: recipientId,
+              p_condition_id: condition.id
+            });
+
+          if (existing && existing.length > 0) {
+            const existingCard = existing[0];
+            giftCardData = {
+              id: existingCard.gift_card_id,
+              code: existingCard.card_code,
+              value: existingCard.card_value,
+              provider: existingCard.provider || 'Gift Card',
+              deliveryStatus: existingCard.delivery_status || 'pending',
+              alreadyAssigned: true
+            };
           }
+        } else if (claimError.message?.includes('NO_CARDS_AVAILABLE')) {
+          throw new Error('No gift cards available for this condition');
+        } else {
+          throw claimError;
+        }
+      } else if (claimedCard && claimedCard.length > 0) {
+        const card = claimedCard[0];
+        giftCardData = {
+          id: card.card_id,
+          code: card.card_code,
+          value: card.card_value_amount,
+          provider: card.provider,
+          brand_name: card.brand_name,
+          deliveryStatus: 'pending',
+          alreadyAssigned: card.already_assigned
+        };
+
+        // Update delivery status in recipient_gift_cards if not already assigned
+        if (!card.already_assigned) {
+          // Get recipient phone for SMS delivery
+          const { data: recipient } = await supabaseClient
+            .from('recipients')
+            .select('phone, email')
+            .eq('id', recipientId)
+            .single();
+
+          if (recipient?.phone || recipient?.email) {
+            const deliveryMethod = recipient.phone ? 'sms' : 'email';
+            const deliveryAddress = recipient.phone || recipient.email;
+
+            // Update delivery info
+            await serviceClient
+              .rpc('update_gift_card_delivery_status', {
+                p_recipient_id: recipientId,
+                p_condition_id: condition.id,
+                p_delivery_status: 'pending',
+                p_delivery_method: deliveryMethod,
+                p_delivery_address: deliveryAddress
+              });
+
+            // Optionally trigger SMS/email delivery here
+            if (deliveryMethod === 'sms' && recipient.phone) {
+              const smsMessage = condition.sms_template || 
+                `Congratulations! You've earned a $${giftCardData.value} ${giftCardData.brand_name} gift card. Code: ${giftCardData.code}`;
+
+              const { error: smsError } = await serviceClient.functions.invoke('send-gift-card-sms', {
+                body: {
+                  recipientPhone: recipient.phone,
+                  giftCardCode: giftCardData.code,
+                  giftCardValue: giftCardData.value,
+                  brandName: giftCardData.brand_name,
+                  customMessage: condition.sms_template,
+                }
+              });
+
+              if (smsError) {
+                console.error('Failed to send SMS:', smsError);
+              } else {
+                giftCardData.deliveryStatus = 'sent';
+                
+                // Update to 'sent' status
+                await serviceClient
+                  .rpc('update_gift_card_delivery_status', {
+                    p_recipient_id: recipientId,
+                    p_condition_id: condition.id,
+                    p_delivery_status: 'sent'
+                  });
+              }
+            }
+          }
+        }
+      }
+    } else if (condition.gift_card_pool_id) {
+      // Legacy support: condition still has pool_id but no brand_id
+      console.warn('Legacy pool_id detected, migrating to brand+denomination');
+      
+      const serviceClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      // Get brand and value from pool
+      const { data: pool } = await serviceClient
+        .from('gift_card_pools')
+        .select('brand_id, card_value, client_id')
+        .eq('id', condition.gift_card_pool_id)
+        .single();
+
+      if (pool?.brand_id && pool.card_value) {
+        // Use atomic claim with extracted values
+        const { data: claimedCard } = await serviceClient
+          .rpc('claim_card_atomic', {
+            p_brand_id: pool.brand_id,
+            p_card_value: pool.card_value,
+            p_client_id: pool.client_id,
+            p_recipient_id: recipientId,
+            p_campaign_id: campaignId,
+            p_condition_id: condition.id,
+            p_agent_id: user.id,
+            p_source: 'call_center'
+          });
+
+        if (claimedCard && claimedCard.length > 0) {
+          const card = claimedCard[0];
+          giftCardData = {
+            id: card.card_id,
+            code: card.card_code,
+            value: card.card_value_amount,
+            provider: card.provider,
+            brand_name: card.brand_name,
+            deliveryStatus: 'pending'
+          };
         }
       }
     }

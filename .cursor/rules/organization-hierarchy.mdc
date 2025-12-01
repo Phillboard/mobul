@@ -1,63 +1,57 @@
 ---
-description: Used for documenting multi-tenant organization structures, permission inheritance, and client-agency relationships
+description: Documentation for multi-tenant organization hierarchy, role permissions, and client-agency relationships
 ---
 
 
 # organization-hierarchy
 
-Organization Structure Components:
-
-1. Multi-Tenant Hierarchy (src/components/settings/PermissionCategoryManager.tsx)
+Multi-Tenant Organization Model
 Importance Score: 90
-- Three-tier organization model:
-  - Agency (top level)
-  - Company (mid level) 
-  - Client (bottom level)
-- Organizations can exist at any single tier
-- Clients can belong to multiple companies
-- Companies can belong to multiple agencies
 
-2. Permission Inheritance System (src/lib/auth/roleRequirements.ts)
-Importance Score: 85
-- Hierarchical permission flow:
-  - Permissions cascade down organization levels
-  - Child organizations inherit parent permissions
-  - Organization-specific permission overrides
-- Role-based access tied to organization level:
-  - agency_owner: Full agency-level access
-  - company_owner: Company + client access
-  - client_user: Single client access
+Core Hierarchy:
+- Platform Level
+  - ACE Engage (platform owner)
+  - System-wide configuration
+  - Cross-organization reporting
 
-3. Client-Agency Relationships (src/components/settings/ClientBrandingEditor.tsx)
-Importance Score: 80
-- Managed service provider model
-- Agencies can manage multiple client organizations
-- Clients maintain independent branding/settings
-- Resource sharing between agency-client pairs
-- Credit allocation flows from agency to client
+- Agency Level 
+  - Independent marketing agencies
+  - Multiple client management
+  - Resource allocation control
+  - Credit pool management
+  - Template library access
 
-4. Organization Settings Inheritance (src/contexts/TenantContext.tsx)
-Importance Score: 75
-- Configurable inheritance rules for:
-  - Brand settings
-  - Gift card pools
-  - Campaign templates
-  - User roles
-- Override system for client-specific configurations
+- Client Level
+  - End customer organizations
+  - Campaign execution
+  - Limited resource access
+  - Inherited templates
 
-5. Cross-Organization Operations (src/components/settings/ZapierIntegrationTab.tsx)
-Importance Score: 70
-- Integration configuration inheritance
-- Shared resource pools across organization levels
-- Agency-level analytics aggregation
-- Multi-client campaign management
+Permission Inheritance Rules:
+- Agency owners can access all client data
+- Client owners restricted to own organization
+- Role permissions cascade down hierarchy
+- Resource access follows organization tree
 
-Core Business Rules:
-- Organizations can only exist at one hierarchy level
-- Permissions flow downward only
-- Resources can be shared across organization levels
-- Client settings override agency defaults
-- Credit allocation follows organizational hierarchy
+Credit Flow System:
+- Unidirectional credit movement (Platform → Agency → Client)
+- Pool-based credit allocation
+- Agency-level budgeting controls
+- Client spending limits
+
+Client-Agency Relationships:
+- Many-to-many client-agency mappings
+- Primary agency designation
+- Inherited billing relationships
+- Shared resource access rules
+
+Data Isolation:
+- Strict tenant boundaries
+- Cross-organization data protection
+- Role-based visibility filters
+- Audit logging of cross-boundary access
+
+The organization hierarchy implements a sophisticated multi-tenant model with complex permission inheritance, credit flow management, and strict data isolation requirements specific to the marketing agency domain.
 
 $END$
 

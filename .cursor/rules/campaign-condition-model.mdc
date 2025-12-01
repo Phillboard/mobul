@@ -1,5 +1,5 @@
 ---
-description: Documents campaign condition business logic for marketing reward campaigns including triggers, verification and fulfillment workflows
+description: Defines the data models and logic for campaign reward conditions, triggers, and gift card distribution workflows
 ---
 
 
@@ -7,52 +7,71 @@ description: Documents campaign condition business logic for marketing reward ca
 
 Campaign Condition Core Components:
 
-1. Condition Builder System
-Path: src/components/campaigns/ConditionBuilder.tsx
-Importance Score: 95
-
-Implements multi-step condition model for campaign rewards:
-- Sequential condition chains (up to 3 conditions per campaign)
-- Trigger types: manual_agent, crm_event, time_delay, mail_delivered, call_completed
-- Cross-condition dependencies with reward chaining
-- Real-time condition validation and reward inventory checks
-
-2. Reward Distribution Engine 
+1. Reward Trigger System (Importance: 90)
 Path: src/components/campaigns/wizard/ConditionsStep.tsx
-Importance Score: 90
+- Multi-stage condition evaluation pipeline:
+  * Form submission validation
+  * SMS opt-in verification 
+  * Call completion tracking
+  * Manual agent review
+  * Time-based delays
+- Sequential condition dependencies with parallel execution support
+- Automated condition state transitions
+- Built-in safety mechanisms for duplicate rewards
 
-Core distribution logic:
-- Conditional reward allocation based on completion status
-- Multi-step verification requirements before reward release
-- Time-based delays with configurable waiting periods
-- Integration with gift card pools and inventory management
-
-3. Condition Evaluation Pipeline
-Path: supabase/functions/complete-condition/index.ts
-Importance Score: 85
-
-Handles condition completion workflow:
-- Status transitions: pending -> in_progress -> completed/failed
-- Automated evaluation of time-based and system triggers
-- Manual agent verification for specific condition types
-- Multi-step reward fulfillment after condition completion
-
-4. Gift Card Pool Integration
+2. Gift Card Pool Integration (Importance: 85)
 Path: src/lib/campaign/giftCardUtils.ts
-Importance Score: 80
+- Pool allocation and reservation system
+- Real-time inventory validation against recipient count
+- Buffer management for concurrent campaigns
+- Automatic pool depletion monitoring
+- Fallback pool assignment logic
 
-Pool management logic:
-- Real-time inventory validation against campaign conditions
-- Automated pool selection based on condition requirements
-- Low inventory alerts with configurable thresholds
-- Reward reservation system during condition completion
+3. Condition Evaluation Engine (Importance: 90)
+Path: src/lib/validation/campaignValidation.ts
+- Hierarchical condition evaluation:
+  * Primary conditions (must complete)
+  * Secondary conditions (optional)
+  * Time-based conditions (scheduled)
+- Cross-condition dependency management
+- State machine for condition progression
+- Rollback handling for failed conditions
 
-Critical Business Rules:
-- Sequential conditions must be completed in order
-- Time delays require minimum 24hr waiting period
-- Manual agent conditions require dual verification
-- Gift card inventory must be verified before condition creation
-- Failed conditions void subsequent reward chain
+4. Reward Distribution Controller (Importance: 85)
+Path: src/components/campaigns/RewardController.tsx
+- Manages reward delivery timing and methods
+- Handles multi-channel distribution:
+  * Email delivery
+  * SMS notifications  
+  * Web redemption
+  * Call center fulfillment
+- Implements retry logic for failed deliveries
+- Tracks delivery confirmation status
+
+Key Domain Patterns:
+- Two-phase reward validation (verification then delivery)
+- Pool-based inventory management with buffers
+- Time-sensitive condition evaluation
+- Multi-channel reward distribution
+- Hierarchical condition dependencies
+
+Core Data Models:
+```typescript
+interface CampaignCondition {
+  type: 'form' | 'call' | 'manual' | 'time';
+  requiredPrevious?: string[];
+  delayMinutes?: number;
+  reward?: RewardConfig;
+  verificationRules: VerificationRule[];
+}
+
+interface RewardConfig {
+  poolId: string;
+  deliveryMethod: 'email' | 'sms' | 'call';
+  expirationDays: number;
+  reminderSchedule?: ReminderConfig[];
+}
+```
 
 $END$
 

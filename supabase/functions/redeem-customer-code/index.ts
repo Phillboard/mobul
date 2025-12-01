@@ -27,10 +27,12 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // TEST CODE: Always allow 1234-5678-abcd for testing (normalize by removing dashes/spaces)
+    // TEST CODE: Only allow test code in development environment
     const normalizedCode = redemptionCode.replace(/[\s-]/g, '').toUpperCase();
-    if (normalizedCode === '12345678ABCD') {
-      console.log('Test code used in customer redemption - returning mock Jimmy Johns gift card');
+    const isDevelopment = Deno.env.get('ENVIRONMENT') === 'development' || Deno.env.get('SUPABASE_URL')?.includes('localhost');
+    
+    if (isDevelopment && normalizedCode === '12345678ABCD') {
+      console.log('[DEV] Test code used in customer redemption - returning mock Jimmy Johns gift card');
       
       return Response.json(
         {
@@ -146,113 +148,158 @@ Deno.serve(async (req) => {
     if (recipient.approval_status === 'redeemed' && recipient.gift_card_assigned_id) {
       console.log('Code already redeemed:', redemptionCode);
       
-      // Allow viewing again - return the same gift card
-      const { data: existingCard } = await supabase
-        .from('gift_cards')
+      // Allow viewing again - return existing gift cards for all conditions
+      const { data: assignedCards } = await supabase
+        .from('recipient_gift_cards')
         .select(`
-          *,
-          pool:gift_card_pools(card_value, provider, brand_id),
-          brand:gift_card_brands(brand_name, logo_url, brand_color, store_url, redemption_instructions, usage_restrictions)
+          gift_card_id,
+          campaign_conditions(condition_name),
+          gift_cards(
+            card_code,
+            card_number,
+            card_value,
+            expiration_date,
+            gift_card_pools(
+              card_value,
+              provider,
+              gift_card_brands(
+                brand_name,
+                logo_url,
+                brand_color,
+                store_url,
+                redemption_instructions,
+                usage_restrictions
+              )
+            )
+          )
         `)
-        .eq('id', recipient.gift_card_assigned_id)
-        .single();
+        .eq('recipient_id', recipient.id)
+        .eq('campaign_id', campaignId);
 
-      if (existingCard) {
+      if (assignedCards && assignedCards.length > 0) {
+        const cards = assignedCards.map((ac: any) => {
+          const gc = ac.gift_cards;
+          const pool = gc.gift_card_pools;
+          const brand = pool?.gift_card_brands;
+          
+          return {
+            card_code: gc.card_code,
+            card_number: gc.card_number,
+            card_value: pool?.card_value || gc.card_value,
+            provider: pool?.provider,
+            brand_name: brand?.brand_name || pool?.provider,
+            brand_logo: brand?.logo_url,
+            brand_color: brand?.brand_color || '#6366f1',
+            store_url: brand?.store_url,
+            redemption_instructions: brand?.redemption_instructions,
+            usage_restrictions: brand?.usage_restrictions || [],
+            expiration_date: gc.expiration_date,
+            condition_name: ac.campaign_conditions?.condition_name
+          };
+        });
+
         return Response.json({
           success: true,
           alreadyRedeemed: true,
-          giftCard: {
-            card_code: existingCard.card_code,
-            card_number: existingCard.card_number,
-            card_value: existingCard.pool.card_value,
-            provider: existingCard.pool.provider,
-            brand_name: existingCard.brand?.brand_name || existingCard.pool.provider,
-            brand_logo: existingCard.brand?.logo_url,
-            brand_color: existingCard.brand?.brand_color || '#6366f1',
-            store_url: existingCard.brand?.store_url,
-            redemption_instructions: existingCard.brand?.redemption_instructions,
-            usage_restrictions: existingCard.brand?.usage_restrictions || []
-          }
+          giftCard: cards[0], // Primary card for backward compatibility
+          giftCards: cards // All cards for multi-condition support
         }, { headers: corsHeaders });
       }
     }
 
-    // 5. Find gift card pool for this campaign
-    const { data: rewardConfig } = await supabase
-      .from('campaign_reward_configs')
-      .select('gift_card_pool_id')
+    // 5. Get campaign conditions with gift card rewards
+    const { data: conditions, error: conditionsError } = await supabase
+      .from('campaign_conditions')
+      .select('id, condition_name, brand_id, card_value, gift_card_pool_id')
       .eq('campaign_id', campaignId)
-      .single();
+      .not('brand_id', 'is', null);
 
-    if (!rewardConfig?.gift_card_pool_id) {
-      console.error('No reward config for campaign:', campaignId);
+    if (conditionsError || !conditions || conditions.length === 0) {
+      console.error('No gift card conditions for campaign:', campaignId, conditionsError);
       return Response.json(
-        { success: false, error: 'No gift card pool configured for this campaign.' },
+        { success: false, error: 'No gift cards configured for this campaign.' },
         { headers: corsHeaders, status: 500 }
       );
     }
 
-    // 6. Claim next available gift card from pool
-    let giftCard;
-    try {
-      const { data: claimedCard, error: claimError } = await supabase
-        .rpc('claim_available_card', {
-          p_pool_id: rewardConfig.gift_card_pool_id,
-          p_recipient_id: recipient.id,
-          p_call_session_id: recipient.approved_call_session_id
-        });
+    console.log(`[REDEEM] Found ${conditions.length} gift card condition(s)`);
 
-      if (claimError) {
-        if (claimError.message?.includes('API_PROVISIONING_REQUIRED')) {
-          // API provisioning needed
-          const apiProvider = claimError.message.split(':')[1];
-          console.log('Triggering API provisioning:', apiProvider);
+    // 6. Claim gift cards for each condition
+    const claimedCards: any[] = [];
+    for (const condition of conditions) {
+      try {
+        let brandId = condition.brand_id;
+        let cardValue = condition.card_value;
+
+        // If condition doesn't have brand_id yet (legacy), try to get from pool
+        if (!brandId && condition.gift_card_pool_id) {
+          const { data: pool } = await supabase
+            .from('gift_card_pools')
+            .select('brand_id, card_value')
+            .eq('id', condition.gift_card_pool_id)
+            .single();
           
-          const { data: apiCard, error: apiError } = await supabase.functions.invoke(
-            'provision-gift-card-from-api',
-            {
-              body: {
-                poolId: rewardConfig.gift_card_pool_id,
-                recipientId: recipient.id,
-                apiProvider
-              }
-            }
-          );
-
-          if (apiError || !apiCard) {
-            throw new Error('Failed to provision gift card from API');
+          if (pool) {
+            brandId = pool.brand_id;
+            cardValue = pool.card_value;
           }
-          
-          giftCard = apiCard;
-        } else {
-          throw claimError;
         }
-      } else {
-        giftCard = claimedCard[0];
+
+        if (!brandId || !cardValue) {
+          console.error(`[REDEEM] No brand/value for condition ${condition.id}`);
+          continue;
+        }
+
+        const { data: claimedCard, error: claimError } = await supabase
+          .rpc('claim_card_atomic', {
+            p_brand_id: brandId,
+            p_card_value: cardValue,
+            p_client_id: campaign.client_id,
+            p_recipient_id: recipient.id,
+            p_campaign_id: campaignId,
+            p_condition_id: condition.id,
+            p_agent_id: null,
+            p_source: 'landing_page'
+          });
+
+        if (claimError) {
+          // If already assigned, get existing card
+          if (claimError.message?.includes('ALREADY_ASSIGNED')) {
+            console.log(`[REDEEM] Card already assigned for condition ${condition.id}`);
+            const { data: existingCard } = await supabase
+              .rpc('get_recipient_gift_card_for_condition', {
+                p_recipient_id: recipient.id,
+                p_condition_id: condition.id
+              });
+
+            if (existingCard && existingCard.length > 0) {
+              claimedCards.push({ ...existingCard[0], condition_name: condition.condition_name });
+            }
+          } else {
+            console.error(`[REDEEM] Failed to claim card for condition ${condition.id}:`, claimError);
+          }
+        } else if (claimedCard && claimedCard.length > 0) {
+          claimedCards.push({ ...claimedCard[0], condition_name: condition.condition_name });
+        }
+      } catch (error) {
+        console.error(`[REDEEM] Error processing condition ${condition.id}:`, error);
       }
-    } catch (error) {
-      console.error('Error claiming gift card:', error);
-      
-      await supabase.from('recipient_audit_log').insert({
-        recipient_id: recipient.id,
-        action: 'redeemed',
-        ip_address: req.headers.get('x-forwarded-for'),
-        user_agent: req.headers.get('user-agent'),
-        metadata: { error: error instanceof Error ? error.message : 'Unknown error', campaignId, status: 'failed' }
-      });
-      
+    }
+
+    if (claimedCards.length === 0) {
+      console.error('[REDEEM] No cards could be claimed');
       return Response.json(
         { success: false, error: 'No gift cards available. Please contact support.' },
         { headers: corsHeaders, status: 500 }
       );
     }
 
-    // 7. Update recipient as redeemed
+    // 7. Update recipient as redeemed with first card
     await supabase
       .from('recipients')
       .update({
         approval_status: 'redeemed',
-        gift_card_assigned_id: giftCard.card_id,
+        gift_card_assigned_id: claimedCards[0].card_id,
         redemption_completed_at: new Date().toISOString(),
         redemption_ip: req.headers.get('x-forwarded-for'),
         redemption_user_agent: req.headers.get('user-agent')
@@ -267,36 +314,65 @@ Deno.serve(async (req) => {
       user_agent: req.headers.get('user-agent'),
       metadata: {
         campaignId,
-        giftCardId: giftCard.card_id,
-        poolId: rewardConfig.gift_card_pool_id,
+        giftCardIds: claimedCards.map(c => c.card_id),
+        conditionCount: claimedCards.length,
         status: 'success'
       }
     });
 
-    // 9. Get brand details
-    const { data: brand } = await supabase
-      .from('gift_card_brands')
-      .select('*')
-      .eq('id', giftCard.brand_id || rewardConfig.gift_card_pool_id)
-      .maybeSingle();
+    // 9. Get full details for all claimed cards
+    const fullCards = await Promise.all(
+      claimedCards.map(async (card) => {
+        const { data: fullCard } = await supabase
+          .from('gift_cards')
+          .select(`
+            *,
+            gift_card_pools(
+              card_value,
+              provider,
+              gift_card_brands(
+                brand_name,
+                logo_url,
+                brand_color,
+                store_url,
+                redemption_instructions,
+                usage_restrictions
+              )
+            )
+          `)
+          .eq('id', card.card_id)
+          .single();
 
-    console.log('Redemption successful:', { recipientId: recipient.id, cardCode: giftCard.card_code });
+        if (!fullCard) return null;
+
+        const pool = fullCard.gift_card_pools;
+        const brand = pool?.gift_card_brands;
+
+        return {
+          card_code: fullCard.card_code,
+          card_number: fullCard.card_number,
+          card_value: pool?.card_value || fullCard.card_value,
+          provider: pool?.provider,
+          brand_name: brand?.brand_name || pool?.provider,
+          brand_logo: brand?.logo_url,
+          brand_color: brand?.brand_color || '#6366f1',
+          store_url: brand?.store_url,
+          expiration_date: fullCard.expiration_date,
+          usage_restrictions: brand?.usage_restrictions || [],
+          redemption_instructions: brand?.redemption_instructions,
+          condition_name: card.condition_name
+        };
+      })
+    );
+
+    const validCards = fullCards.filter(c => c !== null);
+
+    console.log('Redemption successful:', { recipientId: recipient.id, cardCount: validCards.length });
 
     return Response.json({
       success: true,
-      giftCard: {
-        card_code: giftCard.card_code,
-        card_number: giftCard.card_number,
-        card_value: giftCard.card_value,
-        provider: giftCard.provider,
-        brand_name: brand?.brand_name || giftCard.provider,
-        brand_logo: brand?.logo_url,
-        brand_color: brand?.brand_color || '#6366f1',
-        store_url: brand?.store_url,
-        expiration_date: giftCard.expiration_date,
-        usage_restrictions: brand?.usage_restrictions || [],
-        redemption_instructions: brand?.redemption_instructions
-      }
+      giftCard: validCards[0], // Primary card for backward compatibility
+      giftCards: validCards // All cards for multi-condition support
     }, { headers: corsHeaders });
 
   } catch (error) {

@@ -39,6 +39,7 @@ import type { CampaignFormData } from "@/types/campaigns";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils/utils";
 import { useToast } from "@/hooks/use-toast";
+import { SimpleBrandDenominationSelector } from "@/components/gift-cards/SimpleBrandDenominationSelector";
 
 interface AudiencesRewardsStepProps {
   clientId: string;
@@ -128,7 +129,7 @@ export function AudiencesRewardsStep({
     return `${brandName} | $${pool.card_value} (${status.label})`;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!selectedListId) {
       toast({
         title: "Audience Required",
@@ -150,7 +151,7 @@ export function AudiencesRewardsStep({
         return;
       }
 
-      const missingPools = selectedConditions.filter((c) => !c.gift_card_pool_id);
+      const missingPools = selectedConditions.filter((c) => !c.brand_id || !c.card_value);
       if (missingPools.length > 0) {
         toast({
           title: "Gift Card Required",
@@ -158,6 +159,50 @@ export function AudiencesRewardsStep({
           variant: "destructive",
         });
         return;
+      }
+
+      // NEW: Validate inventory availability for each condition
+      for (const condition of selectedConditions) {
+        try {
+          const { data: availabilityData, error } = await supabase
+            .rpc('get_brand_denomination_info', {
+              p_client_id: clientId,
+              p_brand_id: condition.brand_id,
+              p_card_value: condition.card_value
+            });
+
+          if (error) {
+            console.error('Failed to check inventory:', error);
+            toast({
+              title: "Validation Error",
+              description: "Could not verify gift card availability. Please try again.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const availableCount = availabilityData?.[0]?.available_count || 0;
+          
+          if (availableCount === 0) {
+            toast({
+              title: "No Cards Available",
+              description: `No ${condition.brand_name} $${condition.card_value} gift cards are available. Please select a different reward or add inventory.`,
+              variant: "destructive",
+            });
+            return;
+          }
+
+          // Warn if inventory is low
+          if (availableCount < 10) {
+            toast({
+              title: "Low Inventory Warning",
+              description: `Only ${availableCount} cards available for ${condition.brand_name} $${condition.card_value}. Consider adding more inventory.`,
+              variant: "default",
+            });
+          }
+        } catch (err) {
+          console.error('Inventory check error:', err);
+        }
       }
     }
 
@@ -408,41 +453,24 @@ export function AudiencesRewardsStep({
                         )}
                       </div>
                       
-                      {/* Gift Card Pool Selection - Always show */}
+                      {/* Simplified Gift Card Selection */}
                       <div className="space-y-2">
                         <Label className="text-xs">Gift Card Reward *</Label>
-                        <Select
-                          value={condition.gift_card_pool_id}
-                          onValueChange={(value) =>
-                            updateCondition(index, { gift_card_pool_id: value })
+                        <SimpleBrandDenominationSelector
+                          clientId={clientId}
+                          value={condition.brand_id && condition.card_value ? {
+                            brand_id: condition.brand_id,
+                            card_value: condition.card_value
+                          } : null}
+                          onChange={(selection) =>
+                            updateCondition(index, {
+                              brand_id: selection.brand_id,
+                              card_value: selection.card_value,
+                              brand_name: selection.brand_name
+                            })
                           }
-                        >
-                          <SelectTrigger className="text-sm">
-                            <SelectValue placeholder="Select gift card..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {!giftCardPools ? (
-                              <SelectItem value="loading" disabled>
-                                Loading gift cards...
-                              </SelectItem>
-                            ) : giftCardPools.length > 0 ? (
-                              giftCardPools.map((pool) => (
-                                <SelectItem key={pool.id} value={pool.id}>
-                                  {formatPoolDisplay(pool)}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="none" disabled>
-                                No gift cards available - create one first
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                        {!giftCardPools || giftCardPools.length === 0 ? (
-                          <p className="text-xs text-destructive">
-                            Please create a gift card pool in Settings before adding rewards
-                          </p>
-                        ) : null}
+                          showAvailability={true}
+                        />
                       </div>
                     </CardContent>
                   </Card>

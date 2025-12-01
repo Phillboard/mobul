@@ -161,16 +161,19 @@ const App = () => (
                   <Route path="/landing-pages/:id/visual-editor" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
                   <Route path="/landing-pages/:id/edit-grapesjs" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
                   
-                  {/* Gift Cards */}
-                  <Route path="/gift-cards" element={<ProtectedRoute><GiftCards /></ProtectedRoute>} />
-                  <Route path="/gift-cards/pools/:poolId" element={<ProtectedRoute><PoolDetail /></ProtectedRoute>} />
-                  <Route path="/gift-cards/purchase/:poolId" element={<ProtectedRoute><PurchaseGiftCard /></ProtectedRoute>} />
-                  <Route path="/gift-cards/purchase" element={<ProtectedRoute><PurchaseGiftCards /></ProtectedRoute>} />
+                  {/* Gift Cards - Role-based access control */}
+                  {/* Admin + Agency Only - Pool Management & Marketplace */}
+                  <Route path="/gift-cards" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><GiftCards /></ProtectedRoute>} />
+                  <Route path="/gift-cards/pools/:poolId" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><PoolDetail /></ProtectedRoute>} />
+                  <Route path="/gift-cards/purchase/:poolId" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><PurchaseGiftCard /></ProtectedRoute>} />
+                  <Route path="/gift-cards/purchase" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><PurchaseGiftCards /></ProtectedRoute>} />
+                  <Route path="/purchase-gift-cards" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><PurchaseGiftCards /></ProtectedRoute>} />
+                  
+                  {/* Admin Only - Platform Marketplace & Pricing */}
                   <Route path="/gift-cards/marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
                   <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
                   <Route path="/admin/gift-cards/record-purchase" element={<ProtectedRoute requiredRole="admin"><RecordPurchase /></ProtectedRoute>} />
                   <Route path="/admin/gift-cards/pools/:poolId/pricing" element={<ProtectedRoute requiredRole="admin"><EditPoolPricing /></ProtectedRoute>} />
-                  <Route path="/purchase-gift-cards" element={<ProtectedRoute><PurchaseGiftCards /></ProtectedRoute>} />
                   
                   {/* Contacts System */}
                   <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />

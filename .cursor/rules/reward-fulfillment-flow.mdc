@@ -1,70 +1,66 @@
 ---
-description: Documenting reward fulfillment workflows including SMS opt-in, call center integration, verification and delivery
+description: Handles end-to-end reward fulfillment including SMS opt-in, verification, and multi-channel delivery workflows
 ---
 
 
 # reward-fulfillment-flow
 
-Core Fulfillment Components:
+Core Reward Fulfillment Components:
 
-1. Gift Card Redemption Workflow
-Path: src/components/call-center/CallCenterRedemptionPanel.tsx
-Importance Score: 95
-- Five-step verification workflow:
-  * Code validation
-  * SMS opt-in confirmation 
-  * Contact verification
-  * Condition validation
-  * Card delivery
-- Real-time status tracking between steps
-- Call center script integration per workflow stage
-- Automated SMS delivery on completion
-
-2. Gift Card Pool Management 
-Path: src/components/gift-cards/BrandPoolsView.tsx
-Importance Score: 90
-- Hierarchical pool structure with master/child relationships
-- Inventory thresholds with automated alerts
-- Balance verification scheduling system
-- Pool health calculations based on utilization metrics
-
-3. Card Provisioning Engine
-Path: supabase/functions/provision-gift-card/index.ts
-Importance Score: 85
-- Waterfall provisioning logic:
-  * CSV inventory check
-  * API provider request
-  * Buffer pool allocation
-- Atomic credit operations
-- Provider-specific error handling
-- Real-time inventory updates
-
-4. SMS Opt-in System
+1. SMS Opt-in Management System
 Path: src/components/call-center/OptInStatusIndicator.tsx
+- Multi-state opt-in workflow tracking (pending, opted_in, opted_out, expired)
+- Required opt-in verification before reward delivery
+- Automated retry logic for failed opt-in attempts
+Importance Score: 90
+
+2. Gift Card Provisioning Engine 
+Path: supabase/functions/provision-gift-card/index.ts
+- Hierarchical provisioning logic:
+  * CSV inventory pools (primary)
+  * API-based real-time provisioning (fallback)
+- Atomic credit deduction with rollback
+- Campaign-specific inventory allocation
+Importance Score: 85
+
+3. Call Center Verification Workflow
+Path: src/components/call-center/CallCenterRedemptionPanel.tsx
+- 5-step reward fulfillment process:
+  * Code verification
+  * Contact validation
+  * SMS opt-in confirmation
+  * Condition validation
+  * Gift card delivery
+- Real-time verification status tracking
+Importance Score: 85
+
+4. Multi-Channel Reward Delivery
+Path: src/lib/validation/conditionalLogic.ts
+- Channel-specific delivery rules:
+  * SMS with opt-in requirement
+  * Email with secure code display
+  * Call center agent reveal
+- Delivery method prioritization logic
 Importance Score: 80
-- Multi-state opt-in tracking:
-  * Pending
-  * Confirmed
-  * Declined
-  * Invalid
-- Response validation rules
-- Expiration management
-- Retry logic with limits
 
-5. Fulfillment Analytics
-Path: src/lib/campaign/giftCardUtils.ts
+5. Reward Condition Tracking
+Path: src/components/campaigns/ConditionBuilder.tsx
+- Sequential reward trigger system
+- Up to 3 chained conditions per reward
+- Supported triggers:
+  * Manual agent verification
+  * CRM event completion
+  * Time delay
+  * Mail delivery confirmation
+  * Call completion
 Importance Score: 75
-- Redemption rate tracking
-- Delivery success metrics
-- Response time analytics
-- Channel effectiveness scoring
 
-Critical Workflows:
-- SMS opt-in required before card delivery
-- Multi-step verification process
-- Real-time inventory management
-- Provider-agnostic card provisioning
-- Call center integration points
+Core Fulfillment Rules:
+- SMS opt-in required before reward delivery
+- Multi-step verification for call center redemptions
+- Sequential condition completion tracking
+- Channel-specific delivery restrictions
+- Atomic credit/inventory management
 
 $END$
 

@@ -10,45 +10,53 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Campaign Management Platform Business Logic
+Direct Mail Campaign Management Platform with integrated gift card rewards and multi-tenant organization structure.
 
 Core Business Components:
 
-Campaign Wizard System (src/components/campaigns/wizard/)
-- Multi-step campaign creation workflow combining fulfillment, rewards, tracking
-- Code generation and validation for direct mail pieces
-- Gift card pool inventory verification against recipient counts
-- Reward triggering logic with form/call/code redemption modes
-Importance Score: 85
+1. Campaign Reward System
+- Multi-stage gift card provisioning workflow
+- Dual-source card allocation (CSV pools + API provisioning)
+- Condition-based reward triggers with SMS opt-in requirements
+- Real-time inventory monitoring with automated alerts
 
-Gift Card Management (src/lib/campaign/giftCardUtils.ts)
-- Pool utilization tracking and inventory alerts
-- Dynamic pricing model with markup/fixed price options
-- Automated balance verification scheduling
-- Multi-tier card provisioning workflow
-Importance Score: 90
+2. Organization Hierarchy
+- Three-tier structure: Platform → Agency → Client
+- Credit-based accounting system with unidirectional flow
+- Role-based permissions with inheritance 
+- Industry-specific customizations
 
-Reward Fulfillment Logic (supabase/functions/provision-gift-card/)
-- Waterfall provisioning system (CSV → API → Buffer pools)
-- Credit deduction with atomic operations 
-- Campaign condition evaluation and validation
-- SMS opt-in verification workflow
-Importance Score: 95
+3. Credit Management System
+- Hierarchical credit allocation across organizational levels
+- Atomic credit operations with validation
+- Campaign-specific budgets and thresholds
+- Pool sharing rules between organizations
 
-Business Organization Model (src/contexts/TenantContext.tsx)
-- Hierarchical structure: Platform → Agency → Client
-- Role-based permissions with inheritance
-- Credit allocation system with one-way flow
-- Client-specific branding and settings
-Importance Score: 80
+4. Call Center Integration
+- Dynamic script generation based on campaign state
+- Real-time opt-in status verification
+- Multi-condition reward validation
+- Disposition-based reward triggering
 
-Core Integration Points:
-- CRM webhook processing for reward triggers
-- Call center redemption workflow
-- Mail tracking status management
-- Multi-provider gift card APIs
+5. Gift Card Marketplace
+- Brand-specific inventory management
+- Multi-provider integration with fallback logic
+- Custom pricing strategies and profit margins
+- Pool health monitoring with threshold alerts
 
-The system implements sophisticated campaign management with integrated reward fulfillment, focusing on direct mail campaigns with digital reward delivery. The most unique aspects are the gift card provisioning system and multi-tenant credit management.
+Primary Business Workflows:
+- Campaign creation with reward configuration
+- Gift card code validation and delivery
+- Call center verification and redemption
+- Credit allocation and budget management
+- Organization and role management
+
+The system implements sophisticated gift card campaign management with emphasis on:
+- Multi-tenant isolation
+- Complex reward conditions
+- Hierarchical credit control
+- Call center integration
+- Real-time inventory tracking
 
 $END$
 

@@ -1,46 +1,59 @@
 ---
-description: Rules for analyzing gift card provisioning, inventory management, and balance verification systems
+description: Specifies business logic for managing gift card inventory, provisioning, and redemption workflows
 ---
 
 
 # gift-card-provisioning-system
 
-Gift Card Provisioning Core Systems:
+Core Components:
 
-1. Gift Card Pool Hierarchy Management (src/components/gift-cards/BrandPoolsView.tsx)
-Importance Score: 85
-- Master/child pool structure for inventory segregation
-- Pool health monitoring with configurable thresholds
-- Real-time balance verification scheduling
-- Low stock alerts with configurable triggers
+1. Gift Card Pool Management
+Path: src/components/gift-cards/PoolManager.tsx
+Importance Score: 95
+- Maintains hierarchical pools with multi-tenant isolation
+- Enforces minimum balance thresholds with automated alerts
+- Tracks pool health metrics and utilization rates
+- Manages auto-replenishment rules and triggers
 
-2. Balance Verification Engine (src/components/gift-cards/PoolDetailDialog.tsx)
+2. Provisioning Engine 
+Path: src/lib/provisioning/engine.ts
 Importance Score: 90
-- Automated balance checking with configurable frequencies
-- Historical balance tracking and reconciliation
-- Change detection with audit logging
-- Batch verification operations across pools
+- Two-phase provisioning with provider fallback:
+  * Primary: Pre-purchased inventory pools
+  * Secondary: Real-time API provisioning
+- Atomic credit deduction with rollback
+- Provider-specific code formatting
+- Balance verification hooks
 
-3. Gift Card Sales System (src/components/gift-cards/SellGiftCardsDialog.tsx)
-Importance Score: 95
-- Dynamic pricing model with markup/fixed price options
-- Client credit validation and management
-- Inventory transfer between master/client pools
-- Profit calculation engine
+3. Redemption Workflow
+Path: src/components/rewards/RedemptionHandler.tsx
+Importance Score: 85
+- Multi-condition validation chain
+- SMS opt-in status verification 
+- Duplicate prevention system
+- Reward delivery state management
 
-4. Provisioning Workflow (supabase/functions/provision-gift-card/index.ts)
-Importance Score: 95
-- Waterfall provisioning logic: CSV -> API -> Buffer pools
-- Credit deduction with atomic operations
-- Provider-specific error handling
-- Real-time inventory management
+4. Balance Verification System
+Path: src/lib/gift-cards/verification.ts
+Importance Score: 80
+- Automated balance checking schedule
+- Provider-specific verification adapters
+- Invalid balance detection and alerts
+- Historical balance tracking
 
-Key Business Rules:
-- Pool health monitored against configurable thresholds
-- Automated balance verification scheduling
-- Multi-tier pricing model (markup vs fixed)
-- Client credit validation and limits
-- Inventory segregation between master/client pools
+5. Inventory Control
+Path: src/lib/pools/inventory.ts
+Importance Score: 85
+- Pool allocation algorithms
+- Low inventory alerts and thresholds
+- Utilization tracking per campaign
+- Auto-replenishment triggers
+
+Critical Workflows:
+- Gift card provisioning requires valid pool assignment
+- Redemption blocked until SMS opt-in confirmed
+- Balance verification runs on configurable schedule
+- Auto-replenishment triggered at defined thresholds
 
 $END$
 
