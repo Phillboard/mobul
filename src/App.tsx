@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
+import { GlobalSearch } from "@/components/shared/GlobalSearch";
+import { KeyboardShortcutsHelp } from "@/components/shared/KeyboardShortcutsHelp";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DrPhillipChatWrapper } from "@/components/DrPhillipChatWrapper";
 import { ErrorBoundary, CampaignErrorBoundary, GiftCardErrorBoundary, FormBuilderErrorBoundary } from "@/components/ErrorBoundaries";
@@ -103,6 +105,8 @@ const App = () => (
             <AuthProvider>
               <TenantProvider>
                 <ImpersonationBanner />
+                <GlobalSearch />
+                <KeyboardShortcutsHelp />
                 <Toaster />
                 <Sonner />
                 <DrPhillipChatWrapper />
