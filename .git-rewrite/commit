@@ -1,6 +1,11 @@
-tree 7d6b3d2f375de95d9978386d3a220b4cfd3ced30
-parent 074682e99bbae5aab98c26c3fe7356ebfa45bb5f
-author gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763689114 +0000
-committer gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763689114 +0000
+tree d4e41c05b4ecc2a4744f30ccd1390c77a07b3e8d
+parent 9399e745161f5f915de8a5ea4fd4c1fbcf5e3e20
+parent 50c3d61c669dbc0def7775575f0dba552a7a52c2
+author gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763936144 +0000
+committer gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763936144 +0000
 
-Changes
+Implement onboarding flow
+
+Add onboarding checklist and help center scaffolding, integrate into dashboard and app routes, and update sidebar with Help entry.
+
+X-Lovable-Edit-ID: edt-a6a1a678-2dbb-4386-8786-8f5925143910
