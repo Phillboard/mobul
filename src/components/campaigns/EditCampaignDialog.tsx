@@ -408,7 +408,7 @@ export function EditCampaignDialog({
           </Button>
           <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
             <Save className="h-4 w-4 mr-2" />
-            {saveMutation.isPending ? "Saving..." : "Save Changes'}
+            {saveMutation.isPending ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </DialogContent>

@@ -97,7 +97,7 @@ export function TrackingRewardsStep({ clientId, initialData, onNext, onBack }: T
   const enableCallTracking = form.watch("enableCallTracking");
   const lpMode = form.watch("lp_mode");
   const rewardsEnabled = form.watch("rewards_enabled");
-  const selectedPoolId = form.watch("reward_pool_id');
+  const selectedPoolId = form.watch("reward_pool_id");
   const recipientCount = initialData.recipient_count || 0;
 
   const availableNumbers = trackedNumbers?.filter(n => n.status === 'available') || [];
