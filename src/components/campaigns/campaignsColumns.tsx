@@ -20,6 +20,7 @@ export type CampaignRow = {
   size: string;
   postage: string | null;
   mail_date: string | null;
+  mailing_method: string | null;
   audience?: { name: string } | null;
   template?: { name: string } | null;
   callSessionCount: number;
@@ -90,13 +91,23 @@ export function createCampaignsColumns(
     },
     {
       accessorKey: "audience",
-      header: "Audience",
+      header: "List",
       cell: ({ row }) => {
-        const audience = row.original.audience;
+        const campaign = row.original as any;
+        // Prefer contact_lists over deprecated audiences
+        const listName = campaign.contact_lists?.name || campaign.audiences?.name;
+        const count = campaign.contact_lists?.contact_count || campaign.audiences?.valid_count || 0;
         return (
-          <span className="text-muted-foreground">
-            {audience?.name || "No audience"}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">
+              {listName || "No list"}
+            </span>
+            {listName && (
+              <span className="text-xs text-muted-foreground">
+                {count} contacts
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -135,11 +146,18 @@ export function createCampaignsColumns(
     {
       accessorKey: "size",
       header: "Size",
-      cell: ({ row }) => (
-        <span className="text-muted-foreground uppercase">
-          {row.getValue("size")}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const campaign = row.original;
+        // Hide size for self-mailers (they don't print physical cards)
+        if (campaign.mailing_method === "self") {
+          return <span className="text-muted-foreground">—</span>;
+        }
+        return (
+          <span className="text-muted-foreground uppercase">
+            {row.getValue("size")}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "mail_date",
@@ -180,15 +198,20 @@ export function createCampaignsColumns(
                 <BarChart3 className="mr-2 h-4 w-4" />
                 View Analytics
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => options.onReviewProof(campaign.id)}>
-                <FileText className="mr-2 h-4 w-4" />
-                Review Proof
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => options.onSubmitToVendor(campaign.id)}>
-                <Send className="mr-2 h-4 w-4" />
-                Submit to Vendor
-              </DropdownMenuItem>
+              {/* Review Proof and Submit to Vendor - only for ACE fulfillment campaigns */}
+              {campaign.mailing_method === "ace_fulfillment" && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => options.onReviewProof(campaign.id)}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Review Proof
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => options.onSubmitToVendor(campaign.id)}>
+                    <Send className="mr-2 h-4 w-4" />
+                    Submit to Vendor
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => options.onEdit(campaign.id)}>
                 <Edit className="mr-2 h-4 w-4" />

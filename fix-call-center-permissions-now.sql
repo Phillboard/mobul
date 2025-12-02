@@ -1,34 +1,50 @@
--- EMERGENCY FIX: Grant call center permissions to ALL roles
--- Run this immediately in Supabase SQL Editor
+-- IMMEDIATE FIX: Grant call center permissions to all roles
+-- Run this SQL directly in Supabase SQL Editor for instant fix
 
--- Check current role_permissions table
-SELECT * FROM role_permissions WHERE permission LIKE '%call%';
+-- Step 1: Ensure the permission exists
+INSERT INTO permissions (name, description, module)
+VALUES ('calls.confirm_redemption', 'Access to call center redemption panel', 'calls')
+ON CONFLICT (name) DO NOTHING;
 
--- Grant call center permissions to all user roles
-INSERT INTO role_permissions (role, permission)
-VALUES 
-  ('admin', 'calls.confirm_redemption'),
-  ('admin', 'calls.manage'),
-  ('agency_owner', 'calls.confirm_redemption'),
-  ('agency_user', 'calls.confirm_redemption'),
-  ('client_user', 'calls.confirm_redemption'),
-  ('client_admin', 'calls.confirm_redemption'),
-  ('call_center_agent', 'calls.confirm_redemption'),
-  ('call_center_agent', 'calls.manage'),
-  ('company_owner', 'calls.confirm_redemption')
-ON CONFLICT (role, permission) DO NOTHING;
+-- Step 2: Grant to all appropriate roles (using CORRECT app_role enum values)
+-- Valid roles: admin, tech_support, agency_owner, company_owner, developer, call_center
+WITH perm AS (
+  SELECT id FROM permissions WHERE name = 'calls.confirm_redemption'
+)
+INSERT INTO role_permissions (role, permission_id)
+SELECT role::app_role, perm.id
+FROM (VALUES 
+  ('admin'),
+  ('agency_owner'),
+  ('company_owner'),
+  ('call_center'),
+  ('tech_support')
+) AS roles(role)
+CROSS JOIN perm
+ON CONFLICT (role, permission_id) DO NOTHING;
 
--- Verify permissions were added
-SELECT role, permission FROM role_permissions WHERE permission LIKE '%call%' ORDER BY role;
+-- Step 3: Verify the permissions were granted
+SELECT 
+  r.role, 
+  p.name as permission,
+  p.module,
+  p.description
+FROM role_permissions r 
+JOIN permissions p ON p.id = r.permission_id 
+WHERE p.module = 'calls'
+ORDER BY r.role, p.name;
 
--- Check your current user's roles
+-- Step 4: Check your current user's permissions
+-- Replace 'your-email@example.com' with your actual email
 SELECT 
   u.email,
   ur.role,
-  rp.permission
+  p.name as permission
 FROM auth.users u
 JOIN user_roles ur ON ur.user_id = u.id
-LEFT JOIN role_permissions rp ON rp.role = ur.role
-WHERE u.email = 'your-email@example.com'  -- Replace with your email
-  AND rp.permission LIKE '%call%';
+JOIN role_permissions rp ON rp.role = ur.role
+JOIN permissions p ON p.id = rp.permission_id
+WHERE u.email = 'your-email@example.com'  -- REPLACE THIS
+  AND p.module = 'calls'
+ORDER BY ur.role, p.name;
 

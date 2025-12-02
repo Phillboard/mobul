@@ -219,6 +219,25 @@ export function SummaryStep({
                 </div>
               </div>
             </div>
+          ) : conditions.length > 0 ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Gift className="h-4 w-4" />
+                Gift Card Rewards
+              </div>
+              <div className="pl-6 space-y-1 text-sm">
+                {conditions.map((c: any, idx: number) => (
+                  <div key={idx} className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {c.condition_name}: {c.brand_name || 'Gift Card'} ${c.card_value?.toFixed(2) || '0.00'}
+                    </span>
+                  </div>
+                ))}
+                <div className="text-xs text-muted-foreground mt-1">
+                  Gift cards purchased on-demand when conditions are met
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium">
@@ -226,7 +245,7 @@ export function SummaryStep({
                 Gift Card Rewards
               </div>
               <div className="pl-6 text-sm text-muted-foreground">
-                No gift card pools linked to conditions yet
+                No reward conditions configured
               </div>
             </div>
           )}
@@ -322,12 +341,21 @@ export function SummaryStep({
                         {contactList.contact_count || 0} contacts
                       </Badge>
                     </div>
-                    <Alert className="mt-3">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <AlertDescription className="text-sm">
-                        Unique redemption codes will be auto-generated for all contacts when campaign is created.
-                      </AlertDescription>
-                    </Alert>
+                    {isSelfMailer ? (
+                      <Alert className="mt-3">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          Contacts with existing unique codes are ready for call center redemption.
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <Alert className="mt-3">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          Unique redemption codes will be auto-generated for all contacts when campaign is created.
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </>
                 ) : formData.codes_uploaded ? (
                   <Alert>
@@ -490,7 +518,11 @@ export function SummaryStep({
       <div className="bg-muted/50 p-4 rounded-lg border">
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Mail className="h-4 w-4" />
-          This campaign will be created as a <strong className="text-foreground">draft</strong>. You can review and make changes before activating.
+          {isSelfMailer ? (
+            <>This campaign will be created and ready for activation. Once active, call center agents can validate codes and provision gift cards.</>
+          ) : (
+            <>This campaign will be created as a <strong className="text-foreground">draft</strong>. You can review and make changes before activating.</>
+          )}
         </p>
       </div>
 

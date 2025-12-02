@@ -91,6 +91,11 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
       const result = await lookup(name);
       
       if (result.found) {
+        // Map lookup sources to valid database values: 'auto_lookup', 'manual', or 'tillo'
+        const metadataSource = (result.source === 'popular_db' || result.source === 'clearbit') 
+          ? 'auto_lookup' 
+          : 'manual';
+        
         setFormData({
           brand_name: name,
           logo_url: result.logoUrl || '',
@@ -98,7 +103,7 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
           category: result.category,
           description: result.description,
           brand_colors: result.colors,
-          metadata_source: result.source === 'popular_db' ? 'auto_lookup' : result.source,
+          metadata_source: metadataSource,
         });
         setLogoPreview(result.logoUrl || '');
       }

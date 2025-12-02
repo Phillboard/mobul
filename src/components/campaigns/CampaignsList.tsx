@@ -5,6 +5,7 @@ import { Mail } from "lucide-react";
 import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
 import { CampaignProofDialog } from "./CampaignProofDialog";
 import { DeleteCampaignDialog } from "./DeleteCampaignDialog";
+import { EditCampaignDialog } from "./EditCampaignDialog";
 import { CampaignCard } from "./CampaignCard";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -158,6 +159,10 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
         .from("campaigns")
         .select(`
           *,
+          contact_lists (
+            name,
+            contact_count
+          ),
           audiences (
             name,
             valid_count
@@ -332,6 +337,14 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
         onOpenChange={(open) => !open && setDeleteCampaignId(null)}
         campaignId={deleteCampaignId}
         onConfirm={() => deleteCampaignMutation.mutate(deleteCampaignId)}
+      />
+    )}
+    
+    {editCampaignId && (
+      <EditCampaignDialog
+        open={!!editCampaignId}
+        onOpenChange={(open) => !open && setEditCampaignId(null)}
+        campaignId={editCampaignId}
       />
     )}
     </>

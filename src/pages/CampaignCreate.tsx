@@ -125,6 +125,11 @@ export default function CampaignCreate() {
         }
       }
 
+      // Determine initial status based on mailing method
+      // Self-mailers can be activated immediately, ACE fulfillment starts as draft
+      const isSelfMailer = data.mailing_method === "self";
+      const initialStatus = isSelfMailer ? "active" : "draft";
+
       // Create campaign
       const { data: campaign, error: campaignError } = await supabase
         .from("campaigns")
@@ -142,13 +147,43 @@ export default function CampaignCreate() {
           utm_source: data.utm_source || null,
           utm_medium: data.utm_medium || null,
           utm_campaign: data.utm_campaign || null,
-          status: "draft",
-          mailing_method: data.mailing_method || null,
+          status: initialStatus,
+          mailing_method: data.mailing_method || "self",
         }])
         .select()
         .single();
 
       if (campaignError) throw campaignError;
+
+      // For self-mailers, create campaign_recipients to link contacts to the campaign
+      // This enables code validation in the call center
+      if (isSelfMailer && data.contact_list_id) {
+        // Get contacts from the list
+        const { data: listMembers, error: listMembersError } = await supabase
+          .from("contact_list_members")
+          .select("contact_id")
+          .eq("list_id", data.contact_list_id);
+
+        if (listMembersError) {
+          logger.warn("Failed to get list members for campaign_recipients:", listMembersError);
+        } else if (listMembers && listMembers.length > 0) {
+          // Create campaign_recipients entries
+          const campaignRecipients = listMembers.map((member: any) => ({
+            campaign_id: campaign.id,
+            contact_id: member.contact_id,
+            status: "pending",
+          }));
+
+          const { error: crError } = await supabase
+            .from("campaign_recipients")
+            .insert(campaignRecipients);
+
+          if (crError) {
+            logger.warn("Failed to create campaign_recipients:", crError);
+            // Don't throw - campaign is already created
+          }
+        }
+      }
 
       // Create conditions and reward configs if any
       if (data.conditions && data.conditions.length > 0) {
@@ -194,9 +229,12 @@ export default function CampaignCreate() {
     },
     onSuccess: (campaign) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      const isActive = campaign.status === "active";
       toast({
-        title: "Campaign Created!",
-        description: "Your campaign has been created successfully.",
+        title: isActive ? "Campaign Activated!" : "Campaign Created!",
+        description: isActive 
+          ? "Your campaign is now active. Call center agents can validate codes."
+          : "Your campaign has been created as a draft.",
       });
       navigate(`/campaigns/${campaign.id}`);
     },

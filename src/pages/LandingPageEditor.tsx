@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +13,11 @@ import {
   Send,
   Sparkles,
   Paperclip,
-  RotateCcw
+  RotateCcw,
+  Link2,
+  Copy,
+  ExternalLink,
+  Globe
 } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,25 +32,57 @@ interface ChatMessage {
 export default function LandingPageEditor() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { id: pageId } = useParams();
   const { currentClient } = useTenant();
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   const mode = searchParams.get('mode') || 'ai';
   
   const [pageName, setPageName] = useState('');
+  const [pageSlug, setPageSlug] = useState('');
   const [html, setHtml] = useState('');
   const [prompt, setPrompt] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [availableForms, setAvailableForms] = useState<any[]>([]);
+  const [existingPageId, setExistingPageId] = useState<string | null>(pageId || null);
 
   useEffect(() => {
     if (currentClient) {
       loadForms();
+      if (pageId) {
+        loadExistingPage();
+      }
     }
-  }, [currentClient]);
+  }, [currentClient, pageId]);
+
+  const loadExistingPage = async () => {
+    if (!pageId) return;
+    try {
+      const { data, error } = await supabase
+        .from('landing_pages')
+        .select('*')
+        .eq('id', pageId)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setPageName(data.name || '');
+        setPageSlug(data.slug || '');
+        setHtml(data.html_content || '');
+        setIsPublished(data.published || false);
+        setExistingPageId(data.id);
+        if (data.content_json?.chatHistory) {
+          setChatHistory(data.content_json.chatHistory);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load page:', error);
+    }
+  };
 
   // Auto-scroll chat to bottom
   useEffect(() => {
@@ -137,7 +173,15 @@ export default function LandingPageEditor() {
     toast.info('Started fresh!');
   };
 
-  const handleSave = async () => {
+  const generateSlug = (name: string) => {
+    return name.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  };
+
+  const handleSave = async (publish = false) => {
     if (!pageName.trim()) {
       toast.error('Please enter a page name');
       return;
@@ -145,30 +189,64 @@ export default function LandingPageEditor() {
 
     setIsSaving(true);
     try {
-      const { data, error } = await supabase
-        .from('landing_pages')
-        .insert({
-          client_id: currentClient?.id,
-          name: pageName,
-          slug: pageName.toLowerCase().replace(/\s+/g, '-'),
-          html_content: html,
-          content_json: { html, chatHistory },
-          editor_type: 'ai',
-          published: false,
-        })
-        .select()
-        .single();
+      const slug = pageSlug || generateSlug(pageName);
+      const pageData = {
+        client_id: currentClient?.id,
+        name: pageName,
+        slug,
+        html_content: html,
+        content_json: { html, chatHistory },
+        editor_type: 'ai',
+        published: publish || isPublished,
+      };
 
-      if (error) throw error;
+      let result;
+      if (existingPageId) {
+        // Update existing page
+        const { data, error } = await supabase
+          .from('landing_pages')
+          .update(pageData)
+          .eq('id', existingPageId)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+      } else {
+        // Create new page
+        const { data, error } = await supabase
+          .from('landing_pages')
+          .insert(pageData)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+        setExistingPageId(result.id);
+      }
 
-      toast.success('Landing page saved!');
-      navigate(`/landing-pages`);
+      setPageSlug(result.slug);
+      setIsPublished(result.published);
+      toast.success(publish ? 'Page published!' : 'Page saved!');
     } catch (error: any) {
       console.error('Save error:', error);
-      toast.error('Failed to save');
+      toast.error('Failed to save: ' + error.message);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handlePublish = async () => {
+    await handleSave(true);
+  };
+
+  const getPublicUrl = () => {
+    const clientSlug = currentClient?.slug || currentClient?.name?.toLowerCase().replace(/\s+/g, '-') || 'client';
+    const slug = pageSlug || generateSlug(pageName);
+    return `${window.location.origin}/${clientSlug}/p/${slug}`;
+  };
+
+  const copyPublicUrl = () => {
+    navigator.clipboard.writeText(getPublicUrl());
+    toast.success('URL copied to clipboard!');
   };
 
   if (!currentClient) {
@@ -192,10 +270,24 @@ export default function LandingPageEditor() {
           </Button>
           <Input
             value={pageName}
-            onChange={(e) => setPageName(e.target.value)}
+            onChange={(e) => {
+              setPageName(e.target.value);
+              if (!existingPageId) {
+                setPageSlug(generateSlug(e.target.value));
+              }
+            }}
             placeholder="Page name"
-            className="w-64"
+            className="w-48"
           />
+          {pageName && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+              <Globe className="h-3 w-3" />
+              <span className="max-w-[200px] truncate">/{currentClient?.slug || 'client'}/p/{pageSlug || generateSlug(pageName)}</span>
+              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={copyPublicUrl}>
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {html && (
@@ -204,13 +296,19 @@ export default function LandingPageEditor() {
               Start Over
             </Button>
           )}
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving || !pageName || !html}>
+          {isPublished && (
+            <Button variant="outline" size="sm" onClick={() => window.open(getPublicUrl(), '_blank')}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Live
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => handleSave(false)} disabled={isSaving || !pageName || !html}>
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? 'Saving...' : 'Save Draft'}
+          </Button>
+          <Button onClick={handlePublish} disabled={isSaving || !pageName || !html} className="bg-green-600 hover:bg-green-700">
+            <Globe className="h-4 w-4 mr-2" />
+            {isPublished ? 'Update Live' : 'Publish'}
           </Button>
         </div>
       </div>

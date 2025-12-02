@@ -31,7 +31,7 @@ interface RotateApiKeyRequest {
   expiresInDays?: number;
 }
 
-export function useApiKeys(clientId?: string) {
+export function useAPIKeys(clientId?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

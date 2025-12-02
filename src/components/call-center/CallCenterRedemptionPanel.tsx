@@ -19,6 +19,13 @@ import { useOptInStatus } from "@/hooks/useOptInStatus";
 
 type WorkflowStep = "code" | "optin" | "contact" | "condition" | "complete";
 
+interface CampaignGiftCardConfig {
+  id: string;
+  brand_id: string;
+  denomination: number;
+  condition_number: number;
+}
+
 interface RecipientData {
   id: string;
   redemption_code: string;
@@ -39,10 +46,7 @@ interface RecipientData {
         condition_name: string;
         is_active: boolean;
       }>;
-      campaign_reward_configs?: Array<{
-        condition_number: number;
-        gift_card_pool_id: string;
-      }>;
+      campaign_gift_card_config?: CampaignGiftCardConfig[];
     }>;
   };
 }
@@ -175,9 +179,67 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     }
   };
 
-  // Step 1: Look up recipient by code
+  // Step 1: Look up recipient by code - FIXED: check contacts table AND campaign_recipients
   const lookupMutation = useMutation({
     mutationFn: async (code: string) => {
+      // First try: Look up contact by unique_code directly
+      const { data: contact, error: contactError } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("unique_code", code.toUpperCase())
+        .maybeSingle();
+
+      // If contact found, check if they're part of an active campaign
+      if (contact) {
+        // Check campaign_recipients table for this contact's campaign assignment
+        const { data: campaignRecipient, error: crError } = await supabase
+          .from("campaign_recipients")
+          .select(`
+            *,
+            campaign:campaigns!inner (
+              id,
+              name,
+              status,
+              client_id,
+              campaign_conditions (*),
+              campaign_gift_card_config (*)
+            )
+          `)
+          .eq("contact_id", contact.id)
+          .in("campaign.status", ["active", "draft", "in_production"])
+          .maybeSingle();
+
+        if (campaignRecipient) {
+          // Check if already redeemed
+          if (campaignRecipient.redeemed_at) {
+            throw new Error("This code has already been redeemed");
+          }
+
+          // Transform data to expected RecipientData format
+          return {
+            id: campaignRecipient.id,
+            redemption_code: contact.unique_code,
+            first_name: contact.first_name,
+            last_name: contact.last_name,
+            phone: contact.phone,
+            email: contact.email,
+            approval_status: campaignRecipient.status || "pending",
+            audiences: {
+              id: campaignRecipient.campaign?.id || "",
+              name: campaignRecipient.campaign?.name || "",
+              campaigns: campaignRecipient.campaign ? [{
+                id: campaignRecipient.campaign.id,
+                name: campaignRecipient.campaign.name,
+                client_id: campaignRecipient.campaign.client_id,
+                campaign_conditions: campaignRecipient.campaign.campaign_conditions || [],
+                campaign_gift_card_config: campaignRecipient.campaign.campaign_gift_card_config || [],
+              }] : []
+            }
+          } as RecipientData;
+        }
+      }
+
+      // Fallback: Try the legacy recipients table for backwards compatibility
       const { data, error } = await supabase
         .from("recipients")
         .select(`
@@ -190,22 +252,23 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
               name,
               client_id,
               campaign_conditions (*),
-              campaign_reward_configs (*)
+              campaign_gift_card_config (*)
             )
           )
         `)
         .eq("redemption_code", code.toUpperCase())
-        .single();
+        .maybeSingle();
 
-      if (error) throw new Error("Code not found. Please check and try again.");
-      if (!data) throw new Error("Recipient not found");
-      
-      // Check if already redeemed
-      if (data.approval_status === "redeemed") {
-        throw new Error("This code has already been redeemed");
+      if (data) {
+        // Check if already redeemed
+        if (data.approval_status === "redeemed") {
+          throw new Error("This code has already been redeemed");
+        }
+        return data as RecipientData;
       }
 
-      return data as RecipientData;
+      // If neither found, show helpful error message
+      throw new Error("Code not found. Please verify the code and ensure the contact has been added to an active campaign.");
     },
     onSuccess: (data) => {
       setRecipient(data);
@@ -314,9 +377,14 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
 
   // campaign is already declared at line 113, so we just use it here
   const activeConditions = campaign?.campaign_conditions?.filter(c => c.is_active) || [];
-  const poolId = campaign?.campaign_reward_configs?.find(
-    c => c.condition_number === parseInt(selectedConditionId)
-  )?.gift_card_pool_id;
+  
+  // Get gift card config for selected condition (marketplace model)
+  const giftCardConfig = campaign?.campaign_gift_card_config?.find(
+    gc => gc.condition_number === parseInt(selectedConditionId)
+  );
+  
+  // For backward compatibility with PoolInventoryWidget, we'll pass config instead of poolId
+  const poolId = giftCardConfig ? `${giftCardConfig.brand_id}-${giftCardConfig.denomination}` : null;
 
   return (
     <div className="space-y-6">

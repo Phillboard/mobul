@@ -209,7 +209,10 @@ export function AudiencesRewardsStep({
                   <div className="space-y-2">
                     <h4 className="font-semibold text-sm">About Audiences</h4>
                     <p className="text-sm text-muted-foreground">
-                      Select an existing contact list for this campaign. Each contact will receive a unique redemption code.
+                      Select an existing contact list for this campaign. Each contact should have a unique code already assigned (from your mail piece).
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      When contacts call in with their code, agents can validate and trigger rewards through the call center.
                     </p>
                   </div>
                 </PopoverContent>
@@ -255,7 +258,7 @@ export function AudiencesRewardsStep({
                           <strong className="text-foreground">{selectedList.name}</strong>
                         </div>
                         <div className="text-sm">
-                          {selectedList.contact_count || 0} contacts will receive unique codes
+                          {selectedList.contact_count || 0} contacts with unique codes ready for redemption
                         </div>
                         {selectedList.description && (
                           <div className="text-sm text-muted-foreground">
@@ -469,7 +472,7 @@ export function AudiencesRewardsStep({
             <Alert>
               <BarChart3 className="h-4 w-4" />
               <AlertDescription>
-                <strong>How tracking works:</strong> Each recipient gets a unique code that's embedded in their personalized landing page URL (PURL) and QR code. This lets you track who visits, submits forms, and redeems rewards.
+                <strong>How tracking works:</strong> Each contact's unique code (from your mail piece) is used to track redemptions. When they call in, the code validates their identity and triggers rewards after conditions are met.
               </AlertDescription>
             </Alert>
 

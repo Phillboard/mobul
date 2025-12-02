@@ -67,15 +67,20 @@ export function CampaignCard({
               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onViewAnalytics(); }}>
                 Analytics
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onReviewProof(); }}>
-                Review Proof
-              </DropdownMenuItem>
-              {campaign.status === 'draft' && (
+              {/* Review Proof and Submit to Vendor - only for ACE fulfillment campaigns */}
+              {campaign.mailing_method === 'ace_fulfillment' && (
                 <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSubmitToVendor(); }}>
-                    Submit to Vendor
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onReviewProof(); }}>
+                    Review Proof
                   </DropdownMenuItem>
+                  {campaign.status === 'draft' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSubmitToVendor(); }}>
+                        Submit to Vendor
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </>
               )}
               <DropdownMenuSeparator />
@@ -108,7 +113,11 @@ export function CampaignCard({
             <div className="flex h-7 w-7 items-center justify-center rounded-[calc(var(--radius)-4px)] bg-accent/10">
               <Users className="h-4 w-4 shrink-0 text-accent" />
             </div>
-            <span>{campaign.audiences?.valid_count || 0} recipients</span>
+            <span>
+              {campaign.contact_lists?.name || campaign.audiences?.name || 'No list'} 
+              {' '}
+              ({campaign.contact_lists?.contact_count || campaign.audiences?.valid_count || 0} contacts)
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-[calc(var(--radius)-4px)] bg-success/10">

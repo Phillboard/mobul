@@ -1,0 +1,560 @@
+Mobul ACE Demo
+Tue, Dec 2, 2025
+
+0:12 - Dave Sargent
+Hey, Dave. Hey, Tucker. Good to see you.
+
+0:15 - Tucker Blair
+Good to see you. Good to see your picture.
+
+0:17 - Unidentified Speaker
+Yeah, that's right. I'm about to go live here.
+
+0:19 - Tucker Blair
+They're so young in that picture.
+
+0:26 - Dave Sargent
+Yeah, I know. That was 2016. So that makes sense. And so happy. Oh, yeah. That was our rehearsal dinner for our wedding.
+
+0:36 - Tucker Blair
+Oh, was it really? That was a good night, wasn't it?
+
+0:39 - Dave Sargent
+It was a great night. One of my favorite nights ever for sure. It basically turned into a roast. Like all, all the bridesmaids told really funny stories about Christina, but then the groomsmen just like lit me up with funny stories and videos. Then they had a projector set up. I mean, it was, it was funny, but a great time. Great time.
+
+0:59 - Tucker Blair
+Hey guys, did you just get married?
+
+1:02 - Dave Sargent
+No, no. That's from our rehearsal dinner, that photo there. You look so young and so happy. Now I'm old and happy and that's okay.
+
+1:17 - Tucker Blair
+Yeah, that's good. That's the way it should go.
+
+1:19 - Phillip Vincent
+And I plan to go out old and weird and happy.
+
+1:21 - Dave Sargent
+What did I walk in on? You're still in your 30s, buddy.
+
+1:34 - Phillip Vincent
+You do get wiser as you get older. You realize what's important more and more, and you just don't put up with shit. You just put up with less and less shit. And by the time you get old, you're not going to put up with any shit, so.
+
+1:44 - Billy Keister
+I turned 38 three days ago, so I got you. I'm always supportive. You're getting there.
+
+1:49 - Phillip Vincent
+38's a good year. You're really starting to look at your friendships more, and this helps. This pushes me the right way or brings me the wrong way, you know, and really start cutting some stuff off, where in your 20s, you might put up with some crazy friends just because they're fun, you know?
+
+2:03 - Dave Sargent
+Happy belated birthday. That's exciting.
+
+2:07 - Billy Keister
+Oh, thank you.
+
+2:08 - Unidentified Speaker
+Yeah, you're welcome.
+
+2:10 - Phillip Vincent
+I'm excited to be here, by the way. Billy's got a lot to show.
+
+2:14 - Tucker Blair
+We're excited to see you, Dave. Dave, you cannot imagine what Billy has done in the last two and a half, three weeks.
+
+2:21 - Phillip Vincent
+It's unbelievable.
+
+2:22 - Dave Sargent
+Is he a human or a cyborg?
+
+2:24 - Dave Sargent
+I want some answers.
+
+2:26 - Phillip Vincent
+Well, he doesn't sleep, so we don't know. We're checking his alarm.
+
+2:30 - Billy Keister
+Yeah, This is last night. I pulled an all-nighter. Like, uh, so I redid the way gift cards were handled in the system last night.
+
+2:40 - Dave Sargent
+We're recording this, right? So, so I can show this to Jake and everybody else. We're recording this video, right? So we can.
+
+2:47 - Unidentified Speaker
+Uh, yes, I am.
+
+2:50 - Phillip Vincent
+I don't know who's in possession of the recording, but it says it is.
+
+2:52 - Tucker Blair
+Let me, uh, let me verify real quick that it's actually recording recording and that's not just an Hold on just a second. Here we go. Record to the cloud.
+
+3:03 - Dave Sargent
+All right.
+
+3:08 - Tucker Blair
+Now we are recording. Hey, Billy, before you jump in, give Dave a quick high overview of kind of what we're looking at and what we've got done so far.
+
+3:24 - Billy Keister
+Yeah, so we kind of went a different way from your guys' PRD, your guys' Figma. We have clients that are wanting to do really mass bulk mailings, and they have their own mail centers, right? They have their own designs. They have their own basically everything. They just need to use us. Like webhook or API in. We're building with an API webhook first architecture. The whole idea is that anything that you can do on our system, like that you can click, you can do via API. Beyond that, you can do it via edge function, which is a cool coding term, and you can do more via APIs, webhooks and stuff like that and through integrations than you can natively on the system itself. So while the system itself is powerful, like for the clicking inside of here, it integrates really well with other platforms, right? That was the idea because people have their own CRMs with, you know, massive databases of users. We don't wanna have to go in and like make them switch everything over to us, right? Because somebody that's got 200 million contacts, they're just not gonna do it, right? It's a lot harder to get them to do it. So we're building it like as if it was like a plugin, almost. And it integrates very easily with just about every other platform out there. And in just a few clicks, it can integrate.
+
+5:11 - Phillip Vincent
+And with that being said, Billy did build it where a normal Rufer could log in and use it too. But for right now, we're building to the purpose of the guy that does 200 million pieces of mail a month. So it is backwards compatible today for the, what I'll call customers. But for today, we're going to focus on the whales and trying to get that test done with the whales.
+
+5:31 - Billy Keister
+Got it. Got it. I made it to be very, very simple if you wanted it to be. And also very, very powerful if you wanted it to be right. Your use case decides how you use the system. Start off with available gift cards. So I built a system that can buy gift cards automatically for you as needed. So customer, do you want me to just do like customer journey? Please do. That's the easiest way to do this. All right. Our client goes in there and he mails out a bunch of mail, right? So he sends out 10,000 pieces of mail to 10,000 different people and it's already got his unique code on it. It's ready to roll. He comes into our system and he clicks on start a new campaign. He puts in the, whatever he wants to name it, like spring 2026 he's his own mail house. So he's mailing himself, and then he continues. If he's already got the list uploaded, he can select a list because it's got our contact manager in there, or he can create a list right here. He can upload a list. But for this one, we're going to use that list. If you don't have unique codes already, it'll generate them for you. You then select the reward and the condition for that reward. So the person, the condition will say the person listened to a sales call. What triggers the gift card to happen? The agent accepted it. So this was for call center agents, okay? How much do you wanna give away? This time I wanna give away and I want to give away $25. And then, now you can come down here. For some reason, my screen isn't updating super quick. It's not the system. That's just my screen. It's Chrome. And then you can come down here and you can select what type of landing page you're using for people to do the gift card. And this is for, It's UTM. It's not necessarily for Google, but you can use it inside of Google. This is for attribution and tracking. Then you continue on to design. Here you can create a new landing page with AI. You can choose a landing page that's already there, or you can just use a form. Most people will use a form because they're going to put The forms you can export them very easily. Just put them onto your own landing pages that you've already got built. Then you're continuing to review. You review the campaign. Say, yeah, it's all there. I'm happy. Create the campaign. And of course, it's going to fail because I'm going to call it right now. I was in the middle of like bug hunting all night long, so I've messed with a lot of stuff. Stuff in the last couple hours.
+
+8:53 - Dave Sargent
+Well, I just think that shows that it's real. It's actually trying to work. So I appreciate that.
+
+9:03 - Billy Keister
+Anyways, you can see the new campaigns. Oh, it actually didn't do it.
+
+9:10 - Billy Keister
+It was giving me an error message, even though it did it.
+
+9:15 - Billy Keister
+I got to look into that. I rebuilt the entire gift card engine because before I was working on and stuff like that, and I simplified it down. Okay, so the customer gets that piece of mail. It's when the call center rep comes in and says, hey, I got that piece of mail, right? You call in, you're talking to the call center rep. You call in, you're entering your code, which of course isn't going to work right now because I'm on this call. You're going to give them the code. I swear to God, it'll be ready in two hours.
+
+9:52 - Phillip Vincent
+By the way, Dave, our use case, they are already using codes in their tens of millions of pieces of mail. They're already used to this. The code on the piece of mail. So we're purpose building this for how we're trying to make this add on to what they're already doing as simply as possible.
+
+10:08 - Dave Sargent
+Same workflow.
+
+10:10 - Phillip Vincent
+To validate.
+
+10:12 - Unidentified Speaker
+Love it.
+
+10:14 - Billy Keister
+They give us a confirmation code. And the next page, they give us their cell phone number. After they give us their cell phone number, it immediately sends them a text message that says, hey, are you OK with us marketing to you for the next 30 days, 60, 90 days, whatever, right? And the customer has to say yes to be able to get the next text message, which is the code. Then the call center rep can update their contact information. Add in more information, and do their sales step. At the very end, the call center rep has the ability to say, hey, did they listen to my whole sales call, or did they not listen to my whole sales call? If they listen to the entire sales call, the call center rep will mark it as complete. When the call center rep marks it as complete, the system will buy a gift card either from our available inventory or the API, like go out to their website, like starbucks.com and buy a gift card, right? And assign it to that customer at that specific time. Okay, so up until now, all the way up until now, all this marketing was done without ever purchasing a gift card.
+
+11:37 - Phillip Vincent
+Which got rid of one of our biggest problems, Dave, that I've talked to you a few times that was keeping me up at night. How do we try to, Is it based on 20 percent two percent like anytime you have to ask for money without knowing the result they're like, oh, you know, they get paused And we've learned about a few things here about something called a zero balance account. I just learned what zbas are So instead of having their credit card on file, they're most likely going to have a uh a bank Uh on file and when it gets down below five hundred dollars, it'll tap in To make sure that their balance is high so they they can actually pay for them on demand as long as it's tied to a bank account um that that it'll pull from, which, you know, anytime you're tied to credit cards, especially at the kind of money we're going to make here, credit cards fail all the time, there's expiration dates, they're not as good as the bank account hitting directly. Got it. If you go back to opt-in to number two, the reason why they asked for the text out was that at the request of the use case, they love the idea of enriching the data immediately in that moment. So Dave calls in, he's got his code, great, we validated that, but hey Dave, I'm gonna send you this gift card here in a minute, I need your cell phone number to send it to. We send you that link, which gives us rights to market to you for 30 days, and you're doing two things during that. While we're waiting for you to say yes on your code to give us that permission, that opt-in, which is super valuable to the user, the client I should say, it also gives you time to let things validate. Even though it's gonna happen instantly, you're really trying to buy that four seven minutes for the automotive user to go through their spiel of what they sell.
+
+13:13 - Dave Sargent
+Got it.
+
+13:15 - Phillip Vincent
+So that might happen instantly. I've got Dave on the phone. You're, you're sitting there in a happy place because you're getting ready to get your gift card and I'm validating some things, your code and Hey, did you, did you hit yes yet? And I'm waiting for those things to happen. And even if it all happens instantly, we're doing that to keep you in a happy state of mind while you're waiting to receive that. Industry, prolonging the listening, giving you a reason to stay engaged. Where the hell's my you know what I mean? Instead of being so negative throughout it, and just give me my card, I want to get out of here. If you meet the condition of their four to seven minutes, you've now met the condition, we're going to need your your, your credit or your cell phone number to send it to you to deliver it is all digital. And you know, now we've given them the reason to do that, which enriches their data, gives them marketing rights. It'll make sure that there's no problems later with we didn't have opt-in rights to do this with them and all those things. We've gotten rid of all those things at once by doing this early.
+
+14:13 - Dave Sargent
+I was going to ask, you know, would it be beneficial to combine those two texts and say, you know, please verify your cell phone by pressing one and by pressing one to receive your gift card, you are opting into our marketing and communications for the next 10 years. But I appreciate the fact that maybe more steps is beneficial for other reasons.
+
+14:34 - Phillip Vincent
+You're trying to buy that time. And I think what you said is basically what we're doing. You just, I think you just described it in a different way that we're asking for that. This is, we're getting you excited. Hey, you're getting ready to get, this is, you just felt like, oh man, this is real. They, you know, they just sent me a text and I validated it. Now I'm going to get my card. This is real. It's my time to stay happy.
+
+14:51 - Dave Sargent
+It makes even more sense, right? When you're live on the phone with one of these reps, uh, yeah, it gives you more touch points and more dopamine when you get that first text and you opt in, Oh, it's working. It's things are coming to me.
+
+15:06 - Phillip Vincent
+And I think it makes you in a more opening state when you're happy. Open to listen. The reciprocation, right, is what we're talking about. You're more in a reciprocal mood.
+
+15:18 - Dave Sargent
+Yes, totally.
+
+15:20 - Billy Keister
+And then when you're ready for the, when the customer is ready to add it to their, like use the gift card, they can use a QR code if they want, print it out, or they can just add it to their Google or Apple wallet, quick add to wallet.
+
+15:40 - Phillip Vincent
+Bill, you have this work all the way through. So these changes you're making are just to make things cleaner. So you this Demo, I mean, you can figure out those bugs, right? Oh, God, yes. Because you've already had it working. So that's what I'm asking.
+
+15:56 - Billy Keister
+Yeah, you just used a bunch of stuff. Yeah, I migrated to a more powerful system. Like for when we scale and stuff like that, because I'm getting ready for the test.
+
+16:05 - Dave Sargent
+Can you tell me a little bit about the system, the platform it's built on and, and the programming language and kind of how you thought about the architecture?
+
+16:14 - Billy Keister
+So for one, you can always come here and look at the full system architecture. If you're an admin, and I have this available for you if you want it, which shows you how everything is built. So like in pretty good detail. So I decided to go with on the front end, it's React, Vite, Vite React, JavaScript with Tailwind CSS. How granular do you want me to go?
+
+16:50 - Dave Sargent
+No, that's plenty. Tailwind a little bit, but yeah, that's plenty. And then what about, what about the backend?
+
+16:57 - Billy Keister
+It's just a super base, uh, with Postgres. Uh, SQL. Um, and then of course I use super base for the API calls, the edge functions and everything like that because of their built-in security with the row level security and stuff like that. So what it means, the, the type of like a, it's a really secure system. Like even if somebody was to compromise us because the way real-level security works is they can only mess with a little tiny bit at a time, right? You hear about those big, huge hacks from other companies. It doesn't really, it would be very hard to make something like that work here. So we're going on Google Cloud as our host of SuperBase, Database, Twilio for our SMS, TILO for our gift card API.
+
+17:58 - Phillip Vincent
+Exposure to your, you know, we were talking about yesterday how these codes in the mail don't have any intrinsic value, Dave, until they've met that condition. So if a postman finds this, they can't really get it unless they've listened to the condition called in with all the right information about the car and all those things. Like it's really hard to game it. There's no paid for four cards floating around out there that your employees can steal, you all these things have been met. So it's pretty hard to game this as far as like losing gift cards to breakage.
+
+18:30 - Billy Keister
+Because each gift card is assigned to a customer that has to have verified themselves. So the call center rep doesn't have access to the unique codes, right?
+
+18:44 - Dave Sargent
+So they can't just randomly put in They literally have to come from the consumer.
+
+18:51 - Billy Keister
+Yeah, exactly. And if the yeah, so and The redemption page logs, so we double check for IPS and rate limiting. So like if a call center rep was wily enough to try to steal one, they'd get one.
+
+19:16 - Billy Keister
+Right, right.
+
+19:17 - Dave Sargent
+The second one, we'd catch them.
+
+19:19 - Dave Sargent
+Fair enough. One quick question then on the database side before we move on. I should have mentioned this before, but my college roommate founded Firebase. I don't know if you're familiar with Firebase, Billy.
+
+19:31 - Billy Keister
+Very, very.
+
+19:32 - Dave Sargent
+So Google acquired them back in 2014. He lived with me for a couple of years. We were on the speech team together. One of my dear friends, he was one of my groomsmen the day that picture was taken, Tucker. That's awesome. So I always, I'm curious to hear what you think about Firebase versus Superbase, but I'm guessing the open source makes it so much easier just to deal with something that's non-proprietary and not have to be handcuffed by Google down the road.
+
+20:00 - Billy Keister
+Yeah, I could honestly, it's set up. I could very easily switch over to Firebase.
+
+20:06 - Unidentified Speaker
+Not that we need to. He's long exited, you know, 10 plus years ago. I was just curious.
+
+20:09 - Billy Keister
+It's open source. It's free to use to start off. There's no handcuffs. In the beginning, it's easier for development. It just makes the beginning part of the process easier. We very well might likely switch to Firebase and v3 or v4.
+
+20:25 - Dave Sargent
+But before we do that, let me know, because I bet I can get us a coupon, if not a little more than that.
+
+20:32 - Phillip Vincent
+We'll see. Get us a Firebase gift card.
+
+20:36 - Dave Sargent
+There you go. It may be conditionally funded if we'll let them use our technology.
+
+20:45 - Billy Keister
+I love Firebase. I use it all the time. I actually use it in another project. Me and Phillip are working on together.
+
+20:50 - Billy Keister
+Oh, nice.
+
+20:51 - Dave Sargent
+All right. I'll send you some info about my friend and we'll talk more about that.
+
+20:57 - Phillip Vincent
+And our goal is to have this ready for Wednesday. We have the meeting with Mike who represents about 200 million pieces of mail per month. And you know, he's been in this industry 30 years. You know, names like Chrysler, you know, the Stellantis Group and what's the big, they sell the Carvana, not Carvana, what's the one with the, is it Carvana? The one with the- Carvana is the one you were talking about. Carvana, the one with the rotating where they spin them out. Yeah, that's Carvana. And he's very, very excited about this. So much so that, you know, he's, you know, all he wants to make sure that we can do is that can we deliver these at scale in the most simplistic way? Getting into the development of all different CRMs. I've probably talked to 20 different people now, Dave. Every one of them have spent $500,000 to $3 million on their own software. They don't want to let you in very easily. And they're not very keen to spend three months, six months developing when they don't know the results yet. And so the way we're building, it's going to allow us to test and then they'll see that if we do incorporate into their system, that's fine. But we're going to have some proof and a reason to do it before all that happens.
+
+22:07 - Dave Sargent
+It's very logical. I love it.
+
+22:10 - Billy Keister
+There's really good documentation here. By the way, if you want to get on there and play with it. Hold on. I'm trying to show you the light thing while I'm here. My Chrome is acting funny because I've been coding all night and in and out of developer mode, literally all night long. I think it's just being weird on me. There you go. But if you wanted to log in, we have really good documentation. Everything is here that you would, anything that we're doing is here that you would wanna know. And then, yeah. We've got on the setting side, which of course is gonna freaking fail, Rick, that should not fail right now.
+
+23:11 - Dave Sargent
+But we've got- At least I know you're human, Billy, it's okay. You just validated. It's a good thing. I was a little scared before.
+
+23:16 - Billy Keister
+No, I just, I spent all night trying to get- I feel you, I feel you. The new powerful system up and running. I finished the migration, that it didn't, wow. So I just gotta go in and clean that stuff up. It'll be ready in literally an hour and a half. It's like, I already know what the issues are, right? It's that I just changed a bunch of names and types in the backend to rename stuff from pools and cleaned up the code base. Because of that, everything's name is just a little bit off. That's what's causing all the failures.
+
+24:04 - Dave Sargent
+I'm sure there's just a couple of things pointing to the old version versus the new one.
+
+24:08 - Billy Keister
+That's exactly what it is. It's trying to load old code and new code at the same time, but it's like an hour and a half worth of fixes.
+
+24:16 - Dave Sargent
+There's so much to show here. What do you think tomorrow will be focused on mostly?
+
+24:23 - Billy Keister
+I want to take Mike through his exact process, and I'm going to send him a gift card on the call.
+
+24:28 - Dave Sargent
+Keep it just streamlined to what he's going to experience. I mean, why not?
+
+24:32 - Phillip Vincent
+He's been explicit of how he wants it to work, and that's what Billy's been building. So that's why we're going to run a Demo here this afternoon, again, as if we're on that call with Mike to make sure we have all these bugs out. That's his biggest fear, because he's got the relationships. He just wants to make sure it can do it. And I think for any client, not knowing or not having to charge them anything to get started is pretty damn powerful because, you know, when they heard the results that you guys had with roofing, they're like, don't believe it. We're out too good to be true. And so, Hey, what a, what a good thing. And so to test it, you know, on 30,000 mailers to start, um, the more sins we do, the better data we'll have. Um, just to let you know, if we can go from a half of a percent to even 3%, that he's already been quoted as saying, you guys have created fire. In his industry, that's how powerful this is, to just go to that. I know you guys are at 28%, but they're like, hold on, we can't even say that, because they'll laugh us out of the room. Even though we ended up at think 28%, that's the great thing here, is whether it's 12%, 28%, they're going up to pay for them as they come in, and they only pay for them when they're redeemed or the conditions met.
+
+25:44 - Dave Sargent
+How powerful will those metrics be if we can validate even just a fraction of them. And, you know, we're like Prometheus to some extent, we're not inventing all of this from scratch. You know, we're, we're taking the fire from different places, but I don't think Prometheus even does us justice. I mean, we're more like Zeus putting this together. I mean, this is a lot of innovative.
+
+26:06 - Phillip Vincent
+And I think we're all, you know, a lot of time and effort has been here on a super small sample size. So we want to see it too, Dave, you know, I need to see 30,000 mailers versus 400. Four years ago. I mean, and I do like the fact that, you know, that industry also has a half a percent response rate. So does this industry. So there's a lot of industries. And so it's, you know, to make direct mail better. Everybody wants that. And when you when you do the math for yes, more calls and you're probably buying coffee for, let's just say, 80, 90 percent of the wrong people. It doesn't matter when that 10 20 percent represents, you know, 20 X what they're doing each month. It's irrelevant when that happens. And that's what we're needing to prove.
+
+26:50 - Dave Sargent
+And the only way to do it is to get out to the market.
+
+26:53 - Phillip Vincent
+That's right. That's right. Go out and test. And we know if we can build it for the big boys, then of course the small players can come.
+
+27:00 - Tucker Blair
+Then it's just a matter of how to handle that small volume and still make money as opposed to being overwhelmed with tiny little things every day.
+
+27:10 - Phillip Vincent
+The onboarding process, right?
+
+27:12 - Dave Sargent
+Yeah, well, what Billy just showed, I mean, a lot of this is already automated. I mean, you can create the campaign without our help.
+
+27:18 - Tucker Blair
+He's also got an AI assistant, now that he brought that up, that will walk them through how to do it themselves. So they don't need to be on the phone with us when they can't figure it out. His AI assistant understands the full system from start to finish. So once all the bugs are worked out, it will all click together and they'll be able to walk through this themselves. He's made it super simple. First iteration of this was like, you know, there's all this complex stuff and he's got it down to like four steps now. So it's really nice.
+
+27:49 - Billy Keister
+I built it out super complicated at first because like, it's just the way my mind works. I probably didn't have to build it out all complicated, but it's just the way my mind works. I had to like, I had to see the whole process.
+
+28:04 - Dave Sargent
+I'm the same way. I tend to, I tend to build the full vision and then pare back or limited offering.
+
+28:13 - Phillip Vincent
+And what we found through just research, most people show up with their data. They already show up with their designs. Um, you know, and so could, could we go procure those for people? But that's, you know, that's, we already like, we already have something else that, uh, that works with everyone that already has that. And I think that's where, you know, what Tucker just said about the smaller fish getting down in designs and back and forth and make this red or make that blue. It's like, uh, you know, let's work with people that can tell us why it needs to be purple or whatever. You know, these people have, you know, he, he tells me that when you walk into their offices, there's a whole wall of screens and there's more data than you've ever seen. You you're sending 8 million pieces of mail a week. You know, they're, they're very serious about it, which is why they all became mail houses to get that cost of mail down so much because it's, you know, they're just, uh, uh, self, they're in their own vertical, right. They're helping themselves. When you prove this, this will be the standard on all their mail. And that's our goal here, guys. It's just one test, but it's really the same. And, you know, Dave, too, I, you know, you know, nobody's thinking we're going to have 25% response, but whatever the response rate is, there's some things when you send 100,000 a day and, you know, even 10% respond, your data gets better. You'll never send those 10,000 people again. So now your, your data set gets lower. And you don't waste mail on the front end on people that have already raised their hand. Because of the actual customer engagement lets you know, you put them in a yes or no bucket, but that's fine. Now we stop mailing them. Because what I've learned about direct mail, at least in real estate, is the key is to turn it on and never turn it off. Waiting, we call it spray and pray, waiting for that right moment when they need me, waiting for that. When you get them to get off the sidelines and actually engage, there's value even in the nose.
+
+30:00 - Tucker Blair
+Yes, that's right. And there's no spray and pray I mean, it's just, it's zero spread.
+
+30:05 - Tucker Blair
+It's amazing.
+
+30:07 - Phillip Vincent
+Um, kind of interesting guys. I have a buddy that's been real estate a long time. He came up with something called the dollar mailer. So he's doing a, not a postcard cause that would be stolen in two seconds, but he does a letter and inside of every letter, he puts a $1 bill and he's doing that to increase engagement. But guys, we know the open rate, you know, the open rate is probably, you know, 5%, but then only half a percent call you. So only, only five people out of 100 saw the dollar, 95% of the people probably threw it in the damn trash. Can you imagine doing some math with one of the guys that uses that program? And he was talking about he does about 4000 mailers a month. Well, he's he's wasting $4,000. Plus, what would that be another 3200 on the mail cost? He's already We went through the whole thing of response rates, we think it'll be and what the cost of the cards will be. And I said, wouldn't you rather give more money to the people that actually engage with you than throwing in the round file, he's like, well, obviously, you know, like, that's what this is.
+
+31:02 - Dave Sargent
+Yeah, that's a good point. And I have heard that type of campaign being successful. And I've heard of it being used in the nonprofit space, they will send you $1 in an envelope and said, at the very least, it's more important for us to show that more people are giving anything than to have one person give a bunch. So at a bare minimum, could you just mail the dollar we sent you back to us? And then people add a few more, add 100 they had a thousand more, and all of a sudden the response rates were dramatically improved. So that's reciprocity again, right?
+
+31:34 - Phillip Vincent
+They gave you a dollar, want to give back. I mean, that's that psychology of it.
+
+31:40 - Billy Keister
+Oh, by the way, I was just working on the AI page builder a little bit.
+
+31:45 - Phillip Vincent
+So to summarize this too, Dave, we think that the landing page, they've already listened to the seven minute spiel. They bought or they didn't buy. When they get delivered their card, they fill out their code and their cell phone number again, that could be another bite of the apple for marketing for that brand. But for right now, we're just making it be look like this, right, as simple as possible, just to prove we can deliver the card. Sure, sure. But it can get really, I won't say complicated, it can get better by just with what Billy's already built.
+
+32:16 - Billy Keister
+So just to let you know, like, just the biggest forms, like they can add so much power to this because we can ask conditional questions, add conditional logic to it, where basically what we're doing is we're going in and we're saying, hey, do you have another car? And if they click yes, then it drops down to a whole other part of the form that's like, hey, tell us about this other car, right? And so we can make the form as complex as we want to, to where we can get like a full Like we can, we can lead them on with the form is basically what I'm saying, trying to say, and get a lot more data that only, and, and, and I built it in such a way to where like, it'll only like the next parts will only show up as you complete the previous parts. So it feels like, you know, like if you see a big long form, you're not going to fill it out.
+
+33:12 - Dave Sargent
+But you never know how many questions are just beyond this one in front of you. So you're more inclined to do it.
+
+33:18 - Billy Keister
+Yeah, that was my idea behind it.
+
+33:20 - Dave Sargent
+And we're in the process to do they touch this form?
+
+33:25 - Billy Keister
+That's after the call center. This is after the sales call. And after the call center rep has confirmed that they listened to the full sales call, and after they opted into our marketing.
+
+33:41 - Dave Sargent
+And this form is required before next step?
+
+33:47 - Billy Keister
+This is required for them to get the gift card.
+
+33:49 - Phillip Vincent
+OK, it's just right now. It's just re put your code in and put your cell phone number in and then it sends it to him so they don't have to fill anything out. That's what I'm saying. I want to complicate today. Oh sorry, yeah, we delivered them their card by just putting that code back in and putting their cell phone. They're done. They have their card. They can stick it in their wallet. But what we're saying is that's another opportunity to market to them and Billy's. You know we can make it as crazy as we want, we don't need to do that.
+
+34:15 - Dave Sargent
+So there is a form functionality that could be used at some point within the process, or multiple points within the process, but doesn't have to be.
+
+34:23 - Phillip Vincent
+Got it. That's correct. And for today, we just want to prove, hey, and that's all Mike's asking, can you actually deliver the cards via SMS after they've done the condition? That's what we're trying. But just know there's more things we can do.
+
+34:36 - Dave Sargent
+Got it. You could say, would you like another $5 for filling out this form and letting us know more about you and how we might be able to help?
+
+34:43 - Phillip Vincent
+you have another friend we could help, right? You could do referrals, like all of those things. And they're going to be all over that stuff. It's just, let's run our crawl before we run. Right, right, right, right. Okay, cool. That's how we're thinking already about how big this could be. Love it. And I think this is powerful too, for all the no's, right? They close, you know, 100,000 mailers a day, 500 people call them. So half a percent, a third of those tell them to pound sand. And then from that, they make about 50 sales. Well, they've got, you know, 300 people a day saying, know, there's probably some value. There are other things that could be drawn out of list, even on the nose.
+
+35:19 - Dave Sargent
+Yeah, I agree.
+
+35:22 - Billy Keister
+But yeah, um, this is Dr. Phillip. He knows what page you're on. And you can talk to him. You can also switch over to a live operator, but he knows the entire system better than me. And he can walk you through everything. So he can help you with your budgeting. You can close them for a while if you want to. But yeah, Dr. Phillip is insanely smart, insanely cool. And he can help you create campaigns and all that good stuff.
+
+35:55 - Dave Sargent
+But anyways, I was gonna ask, what is the name of the AI assistant? And so it is Dr. Phillip.
+
+36:01 - Phillip Vincent
+Well, Billy, I don't care what the name of it is that Billy came up with that.
+
+36:03 - Billy Keister
+I love it, honestly. I don't think Phillip likes it anymore. I don't care. It's fine. I really like it, man. I really do. And it's not about vanity or anything like that. It's like a doctor. It's like a Dr. Phillip thing. And your doctor. So he's analyzing. He's the psychology of marketing. I like it.
+
+36:28 - Phillip Vincent
+And I'll tell you kind of where Mike's at with this meeting tomorrow is that once we prove this works, we've got the three use cases where they're sending tens of millions of pieces We're going to start with three different companies with 10,000 mailers apiece. So that way we can get it not just one sample size, but three different companies sample size. He's also friends with the CFO of Jimmy John's. We really think where the world's at today, and I'd love your opinion on this. I think there's more value in $10 food than there is of $10 of coffee, only because so many people are talking about food right now, food costs, food costs. And it's the same $10. It's like, what weighs more, a ton bricks or a ton of feathers, right? It's the same, but it just feels like the food feels a little more valuable. You know, you turn on the media, it's always the cost of something, right? Yeah, the cost of food.
+
+37:15 - Dave Sargent
+Well, and food, obviously, much more integral and critical to to survival than coffee itself.
+
+37:26 - Phillip Vincent
+Take this further, Dave. He's so he knows so much data, he says, you know, because Mike's rich. So he's like, I wouldn't do anything for 100 of cars, but he goes, but he's trying to think about this demographic that buys the car warranties. He said, it's a lower demographic. It's a, uh, it's the unbanked by this a lot, the 80 million Americans that are unbanked. He says they will very much be all over food. Uh, as he goes, that'll really resonate with that group that we sell to.
+
+37:53 - Dave Sargent
+I think Jimmy John's is a great brand for that.
+
+37:56 - Dave Sargent
+Yeah, absolutely.
+
+37:57 - Phillip Vincent
+I love Jimmy John's. I think Pizza, a Jimmy John's, or a coffee would be great. I don't, all three of them would be great. We're just trying to, you know, lay out.
+
+38:07 - Dave Sargent
+And I'd be curious to see all the numbers as we test each one and see where they're at.
+
+38:11 - Tucker Blair
+Exactly, exactly.
+
+38:12 - Unidentified Speaker
+Oh yeah, that's true.
+
+38:16 - Billy Keister
+A cool thing about our system is we're only, the users can only select cards that we enable in the back end here. So card types. So like Starbucks, They only use the ones that we tell them they can.
+
+38:33 - Phillip Vincent
+So this is the this is the I'm the consumer now I've called in I've met the condition. This is a text and I get to pick which ones I might pick.
+
+38:42 - Billy Keister
+No, this is for the roofer.
+
+38:48 - Phillip Vincent
+Who's clicking the button on who gets what the agency the agency when they're setting up the campaign.
+
+38:53 - Billy Keister
+Okay, they can only select from what we select back here.
+
+38:59 - Dave Sargent
+Theoretically, are you giving the agency sometimes the option to, to choose all three or to let the consumer choose?
+
+39:06 - Unidentified Speaker
+Not yet.
+
+39:06 - Dave Sargent
+No, not yet, but could, could down the road. You can say to the consumer, Hey, what do you like more?
+
+39:12 - Phillip Vincent
+Or what do you want to start?
+
+39:16 - Billy Keister
+We could down the road, but for right now it's meant as like, just as like a way to be able to, like, if we've got like a bunch, if we find a bunch of gift cards, we can put them in here and they buy from us first. So, and here's the cool thing. You ready? Client price. Now they're paying 13 bucks for a $10 gift card. Or maybe we give agencies a little bit of a break. So we can charge them whatever we want for the gift cards.
+
+39:57 - Unidentified Speaker
+That's fantastic.
+
+39:58 - Billy Keister
+Um, so that way, like we can get paid when we get paid for successes.
+
+40:06 - Tucker Blair
+This is very cool.
+
+40:07 - Dave Sargent
+This is sexy. This is one of the sexiest pages to me. I just I love seeing those brands. It almost gives you implicit credibility to see those, you know, and Dave take that further.
+
+40:17 - Phillip Vincent
+When you have Dave's auto warranty versus Chrysler's auto warranty. Dave's auto warranty response rates about a half a percent, but Chrysler's is around 2%. So the power of brand is super powerful. So us having those national brands will give every piece of mail more staying power because of those known brands. And whoever our national partner, you know, basically that's what we're going to go to them and say, Hey, do you want us to spend millions of dollars to promote your company? You know, they, they should want that, right. They should want to do that for them, but that also gives the right to be able to, you know.
+
+40:49 - Dave Sargent
+And I think we need to, with a straight face, be able to say, you know, there's other fish in the sea, so it's either Dunkin' or Starbucks. That's right. That's right. Yeah, you pick. Should we go next door? Are we good? We got a deal? Okay, good. We got a deal.
+
+40:59 - Phillip Vincent
+Yeah, would you rather spend millions on your competitor? I'll enjoy those meetings, Dave.
+
+41:07 - Phillip Vincent
+Yeah, absolutely.
+
+41:09 - Billy Keister
+I don't know.
+
+41:14 - Billy Keister
+I think the African get the bugs worked out of it today. It'll be a lot smoother, but, uh, no, it looks fantastic.
+
+41:21 - Dave Sargent
+I mean, it's really impressive.
+
+41:24 - Tucker Blair
+We'll try to get it to for tomorrow. Dave is that we go through that whole thing. We just showed you it's smooth all the way through. And then we actually deliver a real gift card to his wallet, to my able to see he's got a gift card in his phone now and he added to his Apple wallet.
+
+41:38 - Phillip Vincent
+That's our, that's our goal with that into that tomorrow. He'll know that we can do it. Oh, I love that.
+
+41:43 - Unidentified Speaker
+I love that.
+
+41:44 - Dave Sargent
+And based in St.
+
+41:46 - Phillip Vincent
+He is in St. I met him in an entrepreneur group. He was only there for a short time.
+
+41:50 - Dave Sargent
+Maybe you even go meet up and have a coffee with him at some point.
+
+41:52 - Phillip Vincent
+Yeah, he was so far above everyone's level. I knew he wouldn't be there very long. You know what I mean? Like, this guy's selling insurance and this guy has, I think his software company is in 11 different countries. He's pretty big.
+
+42:06 - Tucker Blair
+He's a great guy for us to know to get this off the ground because he's going to know so many little things that we would never coming, you know, as you're trying to scale this up.
+
+42:15 - Billy Keister
+Well, if you really think about it, he's spending at least $100 million a month just with the USPS. Just sending out mail. Over $100 million a month. That's insane.
+
+42:28 - Tucker Blair
+I had not thought of it that way. He's spending a billion dollars a year on mailings. And like, remember, you get political clout. To that.
+
+42:39 - Tucker Blair
+The U.S.
+
+42:41 - Tucker Blair
+government knows who he is for that. You know what I mean?
+
+42:44 - Dave Sargent
+You would think so. What time is the meeting tomorrow?
+
+42:48 - Phillip Vincent
+He's shooting for noon is what he told me. That's cool.
+
+42:50 - Dave Sargent
+I don't need to be on it. I mean, I can be if you want me to. I don't want to like overwhelm him with a bunch of people on our side. So I'm happy to just watch the video after whatever you guys think is best.
+
+43:01 - Tucker Blair
+Let's talk about that real quick. I think Dave should be on it because they're going to be legal questions.
+
+43:06 - Phillip Vincent
+I'd rather Dave answer Oh, yeah, because yeah, he did have a legal question. So if we have two attorneys there with that be valuable.
+
+43:14 - Tucker Blair
+And I think it would save time for Dave and just, you know, the more Dave more that you can see what we're building out here, Dave, the more you can help us understand from your perspective, you know, what you guys need and want as well.
+
+43:27 - Dave Sargent
+And it's it's all evolving. The more energy and mind space come focused on this idea. That's right. It's growing so much already. I mean, this is amazing.
+
+43:36 - Phillip Vincent
+Is there a time of day that doesn't work for anyone tomorrow?
+
+43:39 - Dave Sargent
+No, I'll make any time work.
+
+43:43 - Phillip Vincent
+I'm going to shoot for, uh, well, let's see, let's see what Mike says.
+
+43:46 - Dave Sargent
+We thought new tech technically after, after 10 Eastern would be best. So I don't think you guys are going to do anything earlier than that. Nine central.
+
+43:54 - Tucker Blair
+And Phillip, you say noon. Do you mean noon? I met one year time, the same as today.
+
+43:59 - Phillip Vincent
+So it's fine. But Mike's my time too. So I'll let you know.
+
+44:02 - Tucker Blair
+That's all fine.
+
+44:03 - Phillip Vincent
+But I'll shoot for at least late morning, if not early afternoon. And Billy, you want to try to meet back up today after those bugs are worked out in a couple hours? I want to run through this and deliver some gift cards.
+
+44:19 - Billy Keister
+Give me, let me be nice to myself and give me three hours.
+
+44:26 - Phillip Vincent
+I'll be around. Yeah, you're good.
+
+44:28 - Billy Keister
+And I'm going to start working on those bugs right now. And I guess just holler if you need me. Does anybody else need anything else for me before I go off and work on this thing?
+
+44:40 - Dave Sargent
+Thanks so much to everyone. This is incredible effort.
+
+44:42 - Dave Sargent
+I'm so excited about this, man.
+
+44:44 - Billy Keister
+I really am. I honestly like I can't it's it's all my entire mind. It's all I can think about.
+
+44:52 - Dave Sargent
+I love it. I absolutely love it. I mean, and thank goodness this all came together at this timing because it was just going to be sitting back burner for so long and it's like yeah yeah it deserves to be out in the world now you gotta agree with you agree Dave yep all right guys thanks my pleasure thank you guys

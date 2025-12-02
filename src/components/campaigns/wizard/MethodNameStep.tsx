@@ -8,29 +8,29 @@
  * - Real-time validation
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   Mail, 
-  Truck, 
+  // Truck - kept for ACE fulfillment when re-enabled
   HelpCircle, 
   ArrowRight, 
   Sparkles,
   Check
 } from "lucide-react";
-import { cn } from "@/lib/utils/utils";
 import type { CampaignFormData, MailingMethod } from "@/types/campaigns";
 
 const schema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters").max(100),
-  mailing_method: z.enum(["self", "ace_fulfillment"]),
+  // ACE fulfillment temporarily disabled - keeping "self" as the only option
+  mailing_method: z.enum(["self"]).default("self"),
 });
 
 interface MethodNameStepProps {
@@ -40,15 +40,16 @@ interface MethodNameStepProps {
 }
 
 export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStepProps) {
+  // ACE fulfillment temporarily disabled - defaulting to "self"
   const [selectedMethod, setSelectedMethod] = useState<MailingMethod | null>(
-    initialData.mailing_method || null
+    initialData.mailing_method || "self"
   );
 
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       name: initialData.name || "",
-      mailing_method: initialData.mailing_method || ("" as any),
+      mailing_method: initialData.mailing_method || "self",
     },
   });
 
@@ -134,10 +135,10 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
             </CardContent>
           </Card>
 
-          {/* Mailing Method Selection */}
+          {/* Mailing Method Selection - Self-mailing is currently the only option */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-semibold">How will you deliver the mail?</h3>
+              <h3 className="text-xl font-semibold">Mailing Method</h3>
               <Popover>
                 <PopoverTrigger asChild>
                   <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -146,12 +147,13 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Mailing Options</h4>
+                    <h4 className="font-semibold text-sm">Self-Mailing</h4>
                     <p className="text-sm text-muted-foreground">
-                      <strong>Self-Mailing:</strong> You handle printing and sending. We provide codes and redemption tracking.
+                      You handle printing and sending with your own mail house. 
+                      We provide unique code tracking and gift card redemption.
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      <strong>ACE Fulfillment:</strong> We handle everything - design, printing, and mailing for you.
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Upload your contact list with pre-assigned unique codes, then track redemptions through our call center.
                     </p>
                   </div>
                 </PopoverContent>
@@ -164,37 +166,37 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {/* Self-Mailing Card */}
+                    <div className="grid gap-4">
+                      {/* Self-Mailing Card - Currently the only option */}
                       <Card
-                        className={cn(
-                          "cursor-pointer transition-all hover:shadow-lg",
-                          selectedMethod === "self"
-                            ? "border-primary border-2 bg-primary/5"
-                            : "border-2 hover:border-primary/50"
-                        )}
-                        onClick={() => handleMethodSelect("self")}
+                        className="border-primary border-2 bg-primary/5"
                       >
-                        <CardContent className="p-6 text-center relative">
-                          {selectedMethod === "self" && (
-                            <div className="absolute top-4 right-4">
-                              <div className="rounded-full bg-primary p-1">
-                                <Check className="h-4 w-4 text-primary-foreground" />
+                        <CardContent className="p-6 relative">
+                          <div className="absolute top-4 right-4">
+                            <div className="rounded-full bg-primary p-1">
+                              <Check className="h-4 w-4 text-primary-foreground" />
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-4">
+                            <Mail className="h-12 w-12 text-primary shrink-0" />
+                            <div>
+                              <h3 className="font-bold text-lg mb-2">I'm Mailing Myself</h3>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                You already have your designs and mail house. Upload contacts with their unique codes - we'll handle the call center redemption and gift card delivery.
+                              </p>
+                              <div className="text-xs text-muted-foreground bg-muted p-2 rounded inline-block">
+                                <strong>Quick setup</strong> - Upload contacts with codes, set rewards, and go live
                               </div>
                             </div>
-                          )}
-                          <Mail className="h-16 w-16 mx-auto mb-4 text-primary" />
-                          <h3 className="font-bold text-lg mb-2">I'm Mailing Myself</h3>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            You already have your designs and mail house. We'll provide codes and handle redemption.
-                          </p>
-                          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                            <strong>Most Common</strong> - Quick setup, just upload your codes
                           </div>
                         </CardContent>
                       </Card>
 
-                      {/* ACE Fulfillment Card */}
+                      {/* 
+                      ============================================================
+                      ACE FULFILLMENT - TEMPORARILY DISABLED
+                      Keep this code for future use, do not delete
+                      ============================================================
                       <Card
                         className={cn(
                           "cursor-pointer transition-all hover:shadow-lg",
@@ -222,6 +224,7 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
                           </div>
                         </CardContent>
                       </Card>
+                      */}
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -238,7 +241,7 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
             <Button 
               type="submit" 
               size="lg"
-              disabled={!form.formState.isValid || !selectedMethod}
+              disabled={!form.formState.isValid}
               className="min-w-[180px]"
             >
               Continue
