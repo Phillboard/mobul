@@ -179,68 +179,15 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     }
   };
 
-  // Step 1: Look up recipient by code - FIXED: check contacts table AND campaign_recipients
+  // Step 1: Look up recipient by redemption code
+  // Uses the existing data model: recipients → audiences → campaigns
   const lookupMutation = useMutation({
     mutationFn: async (code: string) => {
-      // First try: Look up contact by unique_code directly
-      const { data: contact, error: contactError } = await supabase
-        .from("contacts")
-        .select("*")
-        .eq("unique_code", code.toUpperCase())
-        .maybeSingle();
+      console.log('[CALL-CENTER] Looking up code:', code.toUpperCase());
 
-      // If contact found, check if they're part of an active campaign
-      if (contact) {
-        // Check campaign_recipients table for this contact's campaign assignment
-        const { data: campaignRecipient, error: crError } = await supabase
-          .from("campaign_recipients")
-          .select(`
-            *,
-            campaign:campaigns!inner (
-              id,
-              name,
-              status,
-              client_id,
-              campaign_conditions (*),
-              campaign_gift_card_config (*)
-            )
-          `)
-          .eq("contact_id", contact.id)
-          .in("campaign.status", ["active", "draft", "in_production"])
-          .maybeSingle();
-
-        if (campaignRecipient) {
-          // Check if already redeemed
-          if (campaignRecipient.redeemed_at) {
-            throw new Error("This code has already been redeemed");
-          }
-
-          // Transform data to expected RecipientData format
-          return {
-            id: campaignRecipient.id,
-            redemption_code: contact.unique_code,
-            first_name: contact.first_name,
-            last_name: contact.last_name,
-            phone: contact.phone,
-            email: contact.email,
-            approval_status: campaignRecipient.status || "pending",
-            audiences: {
-              id: campaignRecipient.campaign?.id || "",
-              name: campaignRecipient.campaign?.name || "",
-              campaigns: campaignRecipient.campaign ? [{
-                id: campaignRecipient.campaign.id,
-                name: campaignRecipient.campaign.name,
-                client_id: campaignRecipient.campaign.client_id,
-                campaign_conditions: campaignRecipient.campaign.campaign_conditions || [],
-                campaign_gift_card_config: campaignRecipient.campaign.campaign_gift_card_config || [],
-              }] : []
-            }
-          } as RecipientData;
-        }
-      }
-
-      // Fallback: Try the legacy recipients table for backwards compatibility
-      const { data, error } = await supabase
+      // Primary lookup: recipients table with redemption_code
+      // This is the working data model: recipients → audiences → campaigns
+      const { data: recipient, error: recipientError } = await supabase
         .from("recipients")
         .select(`
           *,
@@ -250,6 +197,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
             campaigns!inner (
               id,
               name,
+              status,
               client_id,
               campaign_conditions (*),
               campaign_gift_card_config (*)
@@ -259,15 +207,82 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         .eq("redemption_code", code.toUpperCase())
         .maybeSingle();
 
-      if (data) {
+      if (recipient) {
+        console.log('[CALL-CENTER] Found recipient:', recipient.id);
+        
+        // Check campaign status
+        const campaign = recipient.audiences?.campaigns?.[0];
+        if (campaign && !["active", "draft", "in_production"].includes(campaign.status)) {
+          throw new Error("This campaign is not active. Campaign status: " + campaign.status);
+        }
+
         // Check if already redeemed
-        if (data.approval_status === "redeemed") {
+        if (recipient.approval_status === "redeemed") {
           throw new Error("This code has already been redeemed");
         }
-        return data as RecipientData;
+        
+        return recipient as RecipientData;
       }
 
-      // If neither found, show helpful error message
+      // Secondary lookup: Try contacts table with customer_code
+      // This handles cases where unique codes are stored on contacts
+      console.log('[CALL-CENTER] Trying contacts.customer_code lookup...');
+      const { data: contact, error: contactError } = await supabase
+        .from("contacts")
+        .select("id, first_name, last_name, email, phone, customer_code")
+        .eq("customer_code", code.toUpperCase())
+        .maybeSingle();
+
+      if (contact) {
+        console.log('[CALL-CENTER] Found contact:', contact.id, '- checking for campaign assignment...');
+        
+        // Find a recipient record linked to this contact
+        const { data: linkedRecipient, error: linkError } = await supabase
+          .from("recipients")
+          .select(`
+            *,
+            audiences!inner (
+              id,
+              name,
+              campaigns!inner (
+                id,
+                name,
+                status,
+                client_id,
+                campaign_conditions (*),
+                campaign_gift_card_config (*)
+              )
+            )
+          `)
+          .eq("contact_id", contact.id)
+          .maybeSingle();
+
+        if (linkedRecipient) {
+          console.log('[CALL-CENTER] Found linked recipient via contact');
+          
+          // Check campaign status
+          const campaign = linkedRecipient.audiences?.campaigns?.[0];
+          if (campaign && !["active", "draft", "in_production"].includes(campaign.status)) {
+            throw new Error("This campaign is not active. Campaign status: " + campaign.status);
+          }
+          
+          if (linkedRecipient.approval_status === "redeemed") {
+            throw new Error("This code has already been redeemed");
+          }
+          
+          // Return with the contact's customer_code as redemption_code
+          return {
+            ...linkedRecipient,
+            redemption_code: contact.customer_code,
+          } as RecipientData;
+        }
+        
+        // Contact exists but not assigned to a campaign
+        throw new Error("Contact found but not assigned to any active campaign. Please add this contact to a campaign first.");
+      }
+
+      // Nothing found
+      console.log('[CALL-CENTER] Code not found in recipients or contacts');
       throw new Error("Code not found. Please verify the code and ensure the contact has been added to an active campaign.");
     },
     onSuccess: (data) => {

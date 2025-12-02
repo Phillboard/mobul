@@ -1043,6 +1043,8 @@ export type Database = {
           simulation_batch_id: string | null
           time_delay_hours: number | null
           trigger_type: string
+          brand_id: string | null
+          card_value: number | null
         }
         Insert: {
           campaign_id: string
@@ -1056,6 +1058,8 @@ export type Database = {
           simulation_batch_id?: string | null
           time_delay_hours?: number | null
           trigger_type?: string
+          brand_id?: string | null
+          card_value?: number | null
         }
         Update: {
           campaign_id?: string
@@ -1069,6 +1073,8 @@ export type Database = {
           simulation_batch_id?: string | null
           time_delay_hours?: number | null
           trigger_type?: string
+          brand_id?: string | null
+          card_value?: number | null
         }
         Relationships: [
           {
@@ -1076,6 +1082,58 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_conditions_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_gift_card_config: {
+        Row: {
+          id: string
+          campaign_id: string
+          brand_id: string
+          denomination: number
+          condition_number: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          brand_id: string
+          denomination: number
+          condition_number: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          brand_id?: string
+          denomination?: number
+          condition_number?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_gift_card_config_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_gift_card_config_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "gift_card_brands"
             referencedColumns: ["id"]
           },
         ]

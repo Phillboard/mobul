@@ -1,8 +1,8 @@
 /**
- * MethodNameStep - Modern combined step for campaign name and mailing method
+ * MethodNameStep - Compact, modern step for campaign name and mailing method
  * 
  * Features:
- * - Hero-style campaign name input
+ * - Compact layout with inline fields
  * - Visual card selection for mailing method
  * - Contextual help with popovers
  * - Real-time validation
@@ -13,18 +13,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardContent } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { 
   Mail, 
   // Truck - kept for ACE fulfillment when re-enabled
   HelpCircle, 
   ArrowRight, 
-  Sparkles,
-  Check
+  Calendar,
+  Check,
+  FileText
 } from "lucide-react";
 import type { CampaignFormData, MailingMethod } from "@/types/campaigns";
 
@@ -53,7 +55,10 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
     defaultValues: {
       name: initialData.name || "",
       mailing_method: initialData.mailing_method || "self",
+      mail_date: initialData.mail_date || "",
+      campaign_status: (initialData as any).campaign_status || "draft",
     },
+    mode: "onChange",
   });
 
   const onSubmit = (data: z.infer<typeof schema>) => {
@@ -67,121 +72,74 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
     form.trigger();
   };
 
+  const campaignStatus = form.watch("campaign_status");
+
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      {/* Hero Section */}
-      <div className="text-center space-y-2">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <h2 className="text-3xl font-bold">Create Your Campaign</h2>
-        </div>
-        <p className="text-muted-foreground text-lg">
-          Let's start with the basics. Give your campaign a name and choose how you'll deliver it.
-        </p>
-      </div>
-
+    <div className="space-y-6 max-w-3xl mx-auto">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           
-          {/* Campaign Name - Hero Input */}
-          <Card className="border-2 border-primary/20 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Campaign Name
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
-                      <HelpCircle className="h-4 w-4" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-sm">Campaign Name Tips</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Choose a descriptive name that helps you identify this campaign later. 
-                        Include the product, season, or target audience.
-                      </p>
-                      <div className="text-sm text-muted-foreground">
-                        <strong>Examples:</strong>
-                        <ul className="list-disc list-inside mt-1 space-y-1">
-                          <li>Spring 2025 Roofing Promo</li>
-                          <li>Q4 Auto Warranty Campaign</li>
-                          <li>New Customer Welcome - Jan 2025</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </CardTitle>
-              <CardDescription>
-                This helps you identify and organize your campaigns
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., Spring 2025 Auto Warranty Promo"
-                        className="text-xl py-6 font-medium"
-                        autoFocus
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+          {/* Combined Campaign Details Section */}
+          <div className="space-y-4">
+            {/* Campaign Name */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2 text-base font-semibold">
+                    <FileText className="h-4 w-4 text-primary" />
+                    Campaign Name
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+                          <HelpCircle className="h-3.5 w-3.5" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-72" side="right">
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-sm">Naming Tips</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Include product, season, or audience. E.g., "Spring 2025 Auto Warranty" or "Q4 Roofing Promo"
+                          </p>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g., Spring 2025 Auto Warranty Promo"
+                      className="h-11"
+                      autoFocus
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Mail Date and Status - For Self-Mailers */}
-          {selectedMethod === "self" && (
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Mailing Information
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
-                        <HelpCircle className="h-4 w-4" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-sm">When are you mailing?</h4>
-                        <p className="text-sm text-muted-foreground">
-                          If you've already mailed, you can activate your campaign immediately.
-                          Otherwise, set your planned mail date so we know when to expect calls.
-                        </p>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </CardTitle>
-                <CardDescription>
-                  Let us know if you've already mailed or when you plan to
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            {/* Mail Date and Status - Inline Row */}
+            {selectedMethod === "self" && (
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="mail_date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mail Date</FormLabel>
+                      <FormLabel className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                        Mail Date
+                        <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="date"
+                          className="h-10"
                           {...field}
                           value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
                         />
                       </FormControl>
-                      <FormDescription>
-                        The date you mailed (or will mail) these pieces
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -192,54 +150,41 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
                   name="campaign_status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Mailing Status</FormLabel>
+                      <FormLabel className="text-sm">Mailing Status</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || "draft"}>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Have you already mailed?" />
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="draft">Not mailed yet - Planning</SelectItem>
-                          <SelectItem value="mailed">Already mailed - Ready to activate</SelectItem>
+                          <SelectItem value="draft">Not mailed yet</SelectItem>
+                          <SelectItem value="mailed">Already mailed</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormDescription>
-                        {field.value === "mailed" 
-                          ? "Campaign will be activated immediately so call center can process codes"
-                          : "Campaign will be saved as draft until you're ready to mail"}
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            )}
 
-          {/* Mailing Method Selection - Self-mailing is currently the only option */}
-          <div className="space-y-4">
+            {/* Status indicator */}
+            {selectedMethod === "self" && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className={`w-2 h-2 rounded-full ${campaignStatus === "mailed" ? "bg-green-500" : "bg-amber-500"}`} />
+                {campaignStatus === "mailed" 
+                  ? "Campaign will activate immediately for call center processing"
+                  : "Campaign will be saved as draft until you mail"}
+              </div>
+            )}
+          </div>
+
+          {/* Mailing Method - Compact Card */}
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-semibold">Mailing Method</h3>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
-                    <HelpCircle className="h-4 w-4" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Self-Mailing</h4>
-                    <p className="text-sm text-muted-foreground">
-                      You handle printing and sending with your own mail house. 
-                      We provide unique code tracking and gift card redemption.
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Upload your contact list with pre-assigned unique codes, then track redemptions through our call center.
-                    </p>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <span className="text-sm font-medium text-muted-foreground">Delivery Method</span>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Self-Service</Badge>
             </div>
 
             <FormField
@@ -248,66 +193,76 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <div className="grid gap-4">
-                      {/* Self-Mailing Card - Currently the only option */}
-                      <Card
-                        className="border-primary border-2 bg-primary/5"
-                      >
-                        <CardContent className="p-6 relative">
+                    <Card className="border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-lg bg-primary/10 p-2.5">
+                            <Mail className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-sm">I'm Mailing Myself</h3>
+                              <div className="rounded-full bg-primary p-0.5">
+                                <Check className="h-3 w-3 text-primary-foreground" />
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Upload contacts with unique codes • We handle redemption & gift card delivery
+                            </p>
+                          </div>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button type="button" className="text-muted-foreground hover:text-foreground transition-colors p-1">
+                                <HelpCircle className="h-4 w-4" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-72" side="left">
+                              <div className="space-y-2">
+                                <h4 className="font-semibold text-sm">Self-Mailing</h4>
+                                <p className="text-xs text-muted-foreground">
+                                  You handle printing and mailing with your own mail house. 
+                                  We provide code tracking, call center support, and gift card fulfillment.
+                                </p>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* 
+                    ============================================================
+                    ACE FULFILLMENT - TEMPORARILY DISABLED
+                    Keep this code for future use, do not delete
+                    ============================================================
+                    <Card
+                      className={cn(
+                        "cursor-pointer transition-all hover:shadow-lg",
+                        selectedMethod === "ace_fulfillment"
+                          ? "border-primary border-2 bg-primary/5"
+                          : "border-2 hover:border-primary/50"
+                      )}
+                      onClick={() => handleMethodSelect("ace_fulfillment")}
+                    >
+                      <CardContent className="p-6 text-center relative">
+                        {selectedMethod === "ace_fulfillment" && (
                           <div className="absolute top-4 right-4">
                             <div className="rounded-full bg-primary p-1">
                               <Check className="h-4 w-4 text-primary-foreground" />
                             </div>
                           </div>
-                          <div className="flex items-start gap-4">
-                            <Mail className="h-12 w-12 text-primary shrink-0" />
-                            <div>
-                              <h3 className="font-bold text-lg mb-2">I'm Mailing Myself</h3>
-                              <p className="text-sm text-muted-foreground mb-3">
-                                You already have your designs and mail house. Upload contacts with their unique codes - we'll handle the call center redemption and gift card delivery.
-                              </p>
-                              <div className="text-xs text-muted-foreground bg-muted p-2 rounded inline-block">
-                                <strong>Quick setup</strong> - Upload contacts with codes, set rewards, and go live
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* 
-                      ============================================================
-                      ACE FULFILLMENT - TEMPORARILY DISABLED
-                      Keep this code for future use, do not delete
-                      ============================================================
-                      <Card
-                        className={cn(
-                          "cursor-pointer transition-all hover:shadow-lg",
-                          selectedMethod === "ace_fulfillment"
-                            ? "border-primary border-2 bg-primary/5"
-                            : "border-2 hover:border-primary/50"
                         )}
-                        onClick={() => handleMethodSelect("ace_fulfillment")}
-                      >
-                        <CardContent className="p-6 text-center relative">
-                          {selectedMethod === "ace_fulfillment" && (
-                            <div className="absolute top-4 right-4">
-                              <div className="rounded-full bg-primary p-1">
-                                <Check className="h-4 w-4 text-primary-foreground" />
-                              </div>
-                            </div>
-                          )}
-                          <Truck className="h-16 w-16 mx-auto mb-4 text-primary" />
-                          <h3 className="font-bold text-lg mb-2">ACE Handles Mailing</h3>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            Full-service: We design, print, and mail everything for you.
-                          </p>
-                          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                            <strong>Full Service</strong> - We handle design, printing, and delivery
-                          </div>
-                        </CardContent>
-                      </Card>
-                      */}
-                    </div>
+                        <Truck className="h-16 w-16 mx-auto mb-4 text-primary" />
+                        <h3 className="font-bold text-lg mb-2">ACE Handles Mailing</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Full-service: We design, print, and mail everything for you.
+                        </p>
+                        <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                          <strong>Full Service</strong> - We handle design, printing, and delivery
+                        </div>
+                      </CardContent>
+                    </Card>
+                    */}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -316,15 +271,13 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
           </div>
 
           {/* Actions */}
-          <div className="flex justify-between pt-4">
+          <div className="flex justify-between pt-2 border-t">
             <Button type="button" variant="ghost" onClick={onCancel}>
               Cancel
             </Button>
             <Button 
               type="submit" 
-              size="lg"
               disabled={!form.formState.isValid}
-              className="min-w-[180px]"
             >
               Continue
               <ArrowRight className="ml-2 h-4 w-4" />

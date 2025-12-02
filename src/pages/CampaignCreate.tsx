@@ -92,20 +92,22 @@ export default function CampaignCreate() {
         if (audienceError) throw audienceError;
         audienceId = audience.id;
 
-        // Get contacts from list
+        // Get contacts from list - include customer_code for redemption
         const { data: listMembers, error: membersError } = await supabase
           .from("contact_list_members")
-          .select("contact:contacts(id, first_name, last_name, email, phone, address, address2, city, state, zip)")
+          .select("contact:contacts(id, first_name, last_name, email, phone, address, address2, city, state, zip, customer_code)")
           .eq("list_id", data.contact_list_id);
 
         if (membersError) throw membersError;
 
-        // Create recipients for all contacts
+        // Create recipients for all contacts with redemption_code from customer_code
         if (listMembers && listMembers.length > 0) {
           const recipients = listMembers.map((member: any) => ({
             audience_id: audienceId,
             contact_id: member.contact?.id,
             token: crypto.randomUUID().replace(/-/g, '').substring(0, 16),
+            // Critical: Use customer_code as redemption_code for call center lookup
+            redemption_code: member.contact?.customer_code || crypto.randomUUID().replace(/-/g, '').substring(0, 12).toUpperCase(),
             first_name: member.contact?.first_name,
             last_name: member.contact?.last_name,
             email: member.contact?.email,
@@ -122,6 +124,8 @@ export default function CampaignCreate() {
             .insert(recipients);
 
           if (recipientsError) throw recipientsError;
+          
+          logger.info(`Created ${recipients.length} recipients with redemption codes`);
         }
       }
 
@@ -156,38 +160,11 @@ export default function CampaignCreate() {
 
       if (campaignError) throw campaignError;
 
-      // For self-mailers, create campaign_recipients to link contacts to the campaign
-      // This enables code validation in the call center
-      if (isSelfMailer && data.contact_list_id) {
-        // Get contacts from the list
-        const { data: listMembers, error: listMembersError } = await supabase
-          .from("contact_list_members")
-          .select("contact_id")
-          .eq("list_id", data.contact_list_id);
+      logger.info(`Campaign created: ${campaign.id} with status: ${campaign.status}`);
 
-        if (listMembersError) {
-          logger.warn("Failed to get list members for campaign_recipients:", listMembersError);
-        } else if (listMembers && listMembers.length > 0) {
-          // Create campaign_recipients entries
-          const campaignRecipients = listMembers.map((member: any) => ({
-            campaign_id: campaign.id,
-            contact_id: member.contact_id,
-            status: "pending",
-          }));
-
-          const { error: crError } = await supabase
-            .from("campaign_recipients")
-            .insert(campaignRecipients);
-
-          if (crError) {
-            logger.warn("Failed to create campaign_recipients:", crError);
-            // Don't throw - campaign is already created
-          }
-        }
-      }
-
-      // Create conditions and reward configs if any
+      // Create conditions if any
       if (data.conditions && data.conditions.length > 0) {
+        // Insert conditions with brand_id and card_value for gift card configuration
         const conditionsToInsert = data.conditions.map((condition: any, index: number) => ({
           campaign_id: campaign.id,
           condition_number: condition.condition_number || index + 1,
@@ -195,17 +172,46 @@ export default function CampaignCreate() {
           trigger_type: condition.trigger_type,
           time_delay_hours: condition.time_delay_hours,
           crm_event_name: condition.crm_event_name,
-          brand_id: condition.brand_id,
-          card_value: condition.card_value,
-          sms_template: condition.sms_template,
           is_active: condition.is_active !== false,
+          // Gift card configuration - stored directly on condition
+          brand_id: condition.brand_id || null,
+          card_value: condition.card_value || null,
         }));
 
         const { error: conditionsError } = await supabase
           .from("campaign_conditions")
           .insert(conditionsToInsert);
 
-        if (conditionsError) throw conditionsError;
+        if (conditionsError) {
+          logger.error("Failed to create conditions:", conditionsError);
+          throw conditionsError;
+        }
+
+        logger.info(`Created ${conditionsToInsert.length} campaign conditions`);
+
+        // Also create campaign_gift_card_config entries for call center provisioning
+        // This provides a dedicated table for quick gift card lookup during redemption
+        const giftCardConfigs = data.conditions
+          .filter((condition: any) => condition.brand_id && condition.card_value)
+          .map((condition: any, index: number) => ({
+            campaign_id: campaign.id,
+            condition_number: condition.condition_number || index + 1,
+            brand_id: condition.brand_id,
+            denomination: condition.card_value,
+          }));
+
+        if (giftCardConfigs.length > 0) {
+          const { error: configError } = await supabase
+            .from("campaign_gift_card_config")
+            .insert(giftCardConfigs);
+
+          if (configError) {
+            // Log but don't throw - campaign is already created
+            logger.warn("Failed to create gift card config (table may not exist yet):", configError);
+          } else {
+            logger.info(`Created ${giftCardConfigs.length} gift card configurations`);
+          }
+        }
       }
 
       // Link forms to campaign if any
@@ -239,11 +245,22 @@ export default function CampaignCreate() {
       });
       navigate(`/campaigns/${campaign.id}`);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       logger.error("Failed to create campaign:", error);
+      // Extract meaningful error message from various error formats
+      let errorMessage = "Failed to create campaign";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.error?.message) {
+        errorMessage = error.error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
       toast({
         title: "Creation Failed",
-        description: error instanceof Error ? error.message : "Failed to create campaign",
+        description: errorMessage,
         variant: "destructive",
       });
     },

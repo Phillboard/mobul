@@ -168,24 +168,28 @@ serve(async (req) => {
       }
     }
 
-    // If no config found, try to get from campaign default or condition
+    // If no config found, try to get from campaign_conditions (new schema)
     if (!giftCardConfig) {
       const { data: conditionData, error: conditionError } = await supabaseClient
         .from('campaign_conditions')
-        .select('gift_card_brand_id, gift_card_denomination')
+        .select('brand_id, card_value, condition_number')
         .eq('campaign_id', campaignId)
-        .order('sequence_order')
+        .eq('is_active', true)
+        .order('condition_number')
         .limit(1)
         .single();
 
-      if (conditionError || !conditionData?.gift_card_brand_id) {
+      if (conditionError || !conditionData?.brand_id) {
+        console.error('[CALL-CENTER-PROVISION] No gift card config in conditions:', conditionError);
         throw new Error('No gift card configured for this campaign condition');
       }
 
       giftCardConfig = {
-        brand_id: conditionData.gift_card_brand_id,
-        denomination: conditionData.gift_card_denomination || 25,
+        brand_id: conditionData.brand_id,
+        denomination: conditionData.card_value || 25,
       };
+      
+      console.log('[CALL-CENTER-PROVISION] Using config from campaign_conditions');
     }
 
     console.log('[CALL-CENTER-PROVISION] Gift card config:', giftCardConfig);

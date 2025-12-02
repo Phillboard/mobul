@@ -244,16 +244,16 @@ export function useCampaignValidation(
     message: activeConditions.length > 0 ? undefined : 'No active reward conditions',
   });
 
-  // Check if conditions have gift card pools
-  const conditionsWithPools = activeConditions.filter((c: any) => c.gift_card_pool_id);
+  // Check if conditions have gift card rewards configured (brand_id + card_value)
+  const conditionsWithRewards = activeConditions.filter((c: any) => c.brand_id && c.card_value);
   if (activeConditions.length > 0) {
     checks.push({
-      id: 'gift-card-pools',
-      label: 'Gift Card Pools',
-      status: conditionsWithPools.length === activeConditions.length ? 'success' : 
-              conditionsWithPools.length > 0 ? 'warning' : 'warning',
-      message: conditionsWithPools.length === activeConditions.length ? 
-        undefined : 'Some conditions do not have gift card pools assigned',
+      id: 'gift-card-rewards',
+      label: 'Gift Card Rewards',
+      status: conditionsWithRewards.length === activeConditions.length ? 'success' : 
+              conditionsWithRewards.length > 0 ? 'warning' : 'warning',
+      message: conditionsWithRewards.length === activeConditions.length ? 
+        undefined : 'Some conditions do not have gift cards configured',
     });
   }
 
