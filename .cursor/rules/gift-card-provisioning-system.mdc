@@ -1,69 +1,57 @@
 ---
-description: Business logic for provisioning gift cards, managing pools, inventory tracking, and fulfillment workflows
+description: Specifies gift card provisioning system logic including inventory management, balance verification, and automated distribution
 ---
 
 
 # gift-card-provisioning-system
 
-## Core Provisioning Logic (Importance: 95/100)
+## Core Provisioning Logic
+Path: src/lib/gift-cards/provisioning-utils.ts
+Importance Score: 95
 
-Main system for managing gift card inventory and fulfillment across multiple providers and pools:
+Gift card provisioning implements a waterfall strategy:
+- Primary allocation from pre-purchased CSV inventory pools
+- Fallback to real-time Tillo API purchases
+- Final fallback to manual operations queue
 
-### Inventory Management 
-`src/lib/gift-cards/provisioning-utils.ts`
-- Pool-based inventory system with master/client pool hierarchy
-- Real-time balance verification against provider APIs
-- Automated threshold monitoring with configurable low-stock alerts
-- Pool depletion tracking with automated replenishment triggers
+Inventory thresholds trigger automated replenishment:
+- Warning at 25% remaining
+- Critical at 10% remaining 
+- Emergency purchase at 5% remaining
 
-### Provisioning Workflow
-`src/components/gift-cards/PoolDetailDialog.tsx`
-- Multi-step verification before code release:
-  1. Pool availability check
-  2. Balance verification 
-  3. Client credit validation
-  4. Campaign condition evaluation
-- Atomic provisioning with rollback on failure
-- Support for both API-based and inventory-based fulfillment
+## Pool Management System
+Path: supabase/functions/monitor-gift-card-system/index.ts
+Importance Score: 85
 
-### Delivery System
-`supabase/functions/provision-gift-card-unified/index.ts`
-- SMS delivery with opt-in verification
-- Email fallback for failed SMS
-- Scheduled delivery support
-- Multi-channel status tracking
+Pool health monitoring with:
+- Real-time balance verification every 15 minutes
+- Automated pool reallocation based on campaign demand
+- Cross-pool balance transfers for optimization
+- Stuck allocation detection and recovery
 
-## Balance Management (Importance: 85/100)
+## Balance Verification
+Path: supabase/functions/check-gift-card-balance/index.ts
+Importance Score: 80
 
-`src/hooks/useGiftCardProvisioning.ts`
-- Real-time balance checking against provider APIs
-- Cached balance tracking for inventory pools
-- Automated reconciliation for discrepancies
-- Multi-provider balance aggregation
+Multi-provider balance checking:
+- Primary verification through Tillo API
+- Secondary manual verification queue
+- Balance reconciliation across pools
+- Automated status updates and alerts
 
-## Pool Operations (Importance: 80/100)
+## Provisioning Workflow
+Path: src/components/gift-cards/GiftCardDisplay.tsx
+Importance Score: 75
 
-`src/components/gift-cards/PurchasePoolDialog.tsx`
-- Transfer logic between master and client pools
-- Profit margin calculations for reseller operations
-- Automated pool replenishment based on usage patterns
-- Pool health scoring system
-
-## Security Controls (Importance: 90/100)
-
-`src/lib/gift-cards/security.ts`
-- Role-based access to sensitive card data
-- Timed reveal system for card numbers
-- Audit logging of all card operations
-- IP-based access restrictions
-
-## Analytics Engine (Importance: 75/100)
-
-`src/components/gift-cards/AnalyticsPanel.tsx`
-- Redemption rate tracking
-- Provider performance metrics
-- Delivery success monitoring
-- Cost basis analysis by provider
+Distribution workflow:
+1. Pool selection based on:
+   - Campaign requirements
+   - Available balance
+   - Client preferences
+2. Atomic claiming system
+3. Real-time balance verification
+4. Digital wallet pass generation
+5. Delivery status tracking
 
 $END$
 

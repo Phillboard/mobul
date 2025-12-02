@@ -81,6 +81,7 @@ const ClientGiftCards = lazy(() => import("./pages/ClientGiftCards"));
 const GiftCardManager = lazy(() => import("./pages/GiftCardManager"));
 const ClientBillingDashboard = lazy(() => import("./pages/ClientBillingDashboard"));
 const AdminOrganizationManagement = lazy(() => import("./pages/AdminOrganizationManagement"));
+const PublicRedemption = lazy(() => import("./pages/PublicRedemption"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -134,6 +135,7 @@ const App = () => (
                   <Route path="/f/:formSlug" element={<AceFormPublic />} />
                   <Route path="/forms/:formId" element={<AceFormPublic />} />
                   <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
+                  <Route path="/redeem-gift-card" element={<PublicRedemption />} />
 
                   {/* Redirects for consolidated pages */}
                   <Route path="/analytics" element={<Navigate to="/admin/system-health?tab=overview" replace />} />

@@ -1,60 +1,52 @@
 ---
-description: Specifies organization structure, hierarchical permissions, and multi-tenant relationships for a direct mail marketing platform
+description: Technical specification for implementing organization hierarchy, multi-tenant model, and role-based permissions in enterprise SaaS platforms
 ---
 
 
 # organization-hierarchy
 
-Multi-Tenant Hierarchy Model
-Importance Score: 95
+Core organization model implementing a multi-tier hierarchy:
 
-1. Organization Structure
-- Three-tier hierarchy: Platform -> Agency -> Client
-- Asymmetric parent-child relationships with inheritance
-- Agencies can manage multiple clients but clients belong to one agency
-- Platform admins have cross-organization visibility
+PLATFORM
+|-- ORGANIZATION 
+    |-- AGENCY
+        |-- CLIENT
+            |-- CAMPAIGN
 
-2. Credit Management Hierarchy
-- Unidirectional credit flow from platform down to clients
-- Agency-level credit pools with allocation controls
-- Client-specific credit limits and usage tracking
-- Campaign-level budget reservations
-- Automatic rollup reporting to parent organizations
+Organization Management System (Importance: 95/100)
+- Hierarchical credit distribution from platform -> org -> agency -> client levels 
+- Inherited settings/permissions flow down hierarchy with override capabilities
+- Each level has independent gift card pools and credit accounts
+- Organizations can manage multiple agencies, each with multiple clients
 
-3. Role-Based Access Control
-- Role inheritance follows organizational hierarchy
-- Specialized roles:
-  * Platform Admin: Cross-organization access
-  * Agency Owner: Agency + child client access
-  * Client Admin: Single client access
-  * Campaign Manager: Campaign-specific access
-- Permission inheritance with override capability at child levels
+Permissions & Role System (Importance: 90/100)
+- Role-based access control with granular permissions:
+  - platform_admin
+  - organization_admin 
+  - agency_owner
+  - client_owner
+  - call_center_agent
+  - api_integration
+- Permissions inherit down hierarchy but can be restricted at each level
+- Dual permission model: role-based + direct grants
 
-4. Client-Agency Relationships  
-- Agencies can provision and manage multiple clients
-- Client configuration inheritance from parent agency
-- Template sharing between agency and client levels
-- Custom billing rates per client relationship
-- Shared resource pools with allocation controls
+Client-Agency Model (Importance: 85/100)
+- Agencies can manage multiple clients
+- Clients belong to single agency
+- Shared resource pools between agency and clients
+- Client-specific overrides for inherited settings
 
-5. Resource Management
-- Gift card pool allocation across hierarchy
-- Template sharing with inheritance
-- Audience list segregation by organization
-- Campaign asset management with parent visibility
+Business Rules:
+- Credits flow one-way down hierarchy (platform -> org -> agency -> client)
+- Settings inherit down with override capability at each level
+- Organizations maintain isolation between agencies
+- Agencies share resources with their clients
+- Each level tracks its own gift card pools and credit balances
 
-Key Files:
-- src/contexts/TenantContext.tsx: Multi-tenant context provider
-- src/contexts/AuthContext.tsx: Hierarchical permission system
-- src/types/creditAccounts.ts: Credit flow management
-- src/features/organizations/types/index.ts: Organization structure definitions
-
-Core Business Rules:
-- Strict parent-child relationships between organization tiers
-- Unidirectional credit flow through hierarchy
-- Role-based access with inheritance
-- Resource sharing controlled by organizational level
-- Client isolation with agency oversight capabilities
+Key Implementation Files:
+- src/types/organizations.ts - Core organization data model
+- src/hooks/useOrganization.ts - Organization management logic
+- src/contexts/OrganizationContext.tsx - Hierarchy state management
 
 $END$
 

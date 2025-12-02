@@ -1,54 +1,57 @@
 ---
-description: Defines the campaign condition models, triggers, and reward distribution rules for ACE Engage campaigns
+description: Specifies data models and logic for campaign reward conditions, triggers, and distribution workflows
 ---
 
 
 # campaign-condition-model
 
-Campaign conditions engine implements a multi-stage verification and reward distribution system:
+Campaign Condition Management System that handles reward distribution based on configurable triggers and conditions:
 
-1. Condition Types & Evaluation (Importance: 95)
-- Manual agent approval requiring human verification
-- Call completion with duration/disposition requirements
-- Form submission with field validation rules
-- Time-based delays with configurable windows
-- Mail delivery confirmation via USPS IMB tracking
+Core Components:
 
-2. Reward Distribution Logic (Importance: 90)
-- Sequential condition evaluation with prerequisite checks
-- Automated reward trigger on condition completion
-- Time-windowed reward expiration handling
-- Multi-step verification before reward release
-- SMS delivery status monitoring
-- Opt-in requirement validation
+1. Condition Evaluation Engine (Importance: 95/100)
+- Implements sequential condition verification with dependencies
+- Supports condition types:
+  * form_submission
+  * call_completion 
+  * time_delay
+  * manual_agent
+  * crm_event
+- Handles multi-step verification workflows
+- Manages condition state transitions
+- Integrates with reward distribution system
 
-3. Gift Card Pool Management (Importance: 85)  
-- Pool allocation based on campaign parameters
-- Real-time inventory validation
-- Brand/denomination restrictions
-- Automatic pool replenishment triggers
-- Low balance alerting
+2. Reward Distribution Logic (Importance: 90/100)
+- Automated gift card provisioning based on condition completion
+- Supports delayed/scheduled reward distribution
+- Implements reward pool management and inventory checks
+- Handles multi-condition reward aggregation
+- Manages reward delivery status tracking
 
-4. Campaign Wizard Integration (Importance: 80)
-- Combined audience selection and reward setup
-- Gift card inventory availability checks
-- UTM parameter configuration
-- Landing page generation with reward forms
-- SMS template configuration
+3. Campaign Integration Layer (Importance: 85/100)
+- Links conditions to campaign recipients
+- Tracks completion status per recipient
+- Manages campaign-level reward budgets
+- Handles condition reset/retry workflows
 
-Key Files:
-/src/components/campaigns/wizard/ConditionsStep.tsx
-/src/components/campaigns/wizard/AudiencesRewardsStep.tsx
-/src/lib/campaign-conditions/evaluator.ts
-/src/lib/gift-cards/pool-manager.ts
+4. Trigger Evaluation System (Importance: 80/100)
+- Real-time condition monitoring
+- Event-based trigger processing
+- Webhook integration for external triggers
+- Time-based trigger scheduling
 
-Business Rules:
-- Gift card inventory must be validated before campaign creation
-- Minimum 3-day lead time for scheduled mailings
-- Specific trigger conditions for reward distribution
-- Required UTM parameters for tracking
-- Mail provider validation rules
-- SMS opt-in confirmation before reward delivery
+Key Business Rules:
+- Conditions must be evaluated in sequence when dependencies exist
+- Gift card inventory must be validated before condition activation
+- Time-delayed rewards require explicit scheduling
+- Manual agent conditions need verification tracking
+- CRM events require source validation
+
+Data Models:
+- Condition: type, status, dependencies, verification_requirements
+- Reward: type, value, delivery_method, scheduled_time
+- Trigger: source, event_type, validation_rules
+- Distribution: recipient, condition_status, reward_status
 
 $END$
 

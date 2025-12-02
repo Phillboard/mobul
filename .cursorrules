@@ -10,52 +10,46 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Marketing Campaign & Gift Card Management Platform
+Gift Card Campaign Management Platform
 
 Core Business Components:
 
-1. Gift Card Campaign Orchestration (90/100)
-src/lib/demo/demo-orchestrator.ts
-- Unified gift card provisioning across multiple providers
-- Campaign-specific reward pool allocation
-- Multi-step qualification workflows
-- Real-time inventory tracking with automated replenishment
+1. Credit Account System (Importance: 95/100)
+- Hierarchical credit distribution: Platform → Agency → Client → Campaign
+- Real-time balance tracking and allocation limits
+- Transaction logging with atomic operations
+- Credit reservation system for campaign budgets
+Path: src/lib/auth/giftCardPermissions.ts
 
-2. Credit Account Hierarchy (85/100)
-src/types/creditAccounts.ts
-- Hierarchical credit flow: Platform → Agency → Client → Campaign
-- Unidirectional credit distribution controls
-- Automated credit allocation and reconciliation
-- Budget validation against available credits
+2. Campaign Reward Logic (Importance: 90/100)
+- Multi-trigger reward system with sequential condition evaluation 
+- Time-delayed and event-based reward distribution
+- CRM event mapping for automated rewards
+- Campaign-specific validation rules
+Path: src/components/campaigns/wizard/MethodNameStep.tsx
 
-3. Campaign Condition Engine (85/100)
-supabase/functions/evaluate-conditions/index.ts
-- Sequential reward qualification logic
-- Multi-trigger reward distribution
-- Time-based condition evaluation
-- Integration with CRM events
+3. Gift Card Provisioning (Importance: 90/100)
+- Two-tier provisioning system (CSV inventory → Tillo API)
+- Brand-denomination management with custom pricing
+- Real-time inventory tracking and threshold alerts
+- Pool health monitoring and automatic replenishment
+Path: supabase/functions/provision-gift-card-unified/index.ts
 
-4. Call Center Integration (80/100)
-src/components/call-center/CallCenterRedemptionPanel.tsx
-- SMS opt-in validation workflow
-- Real-time recipient matching
-- Campaign-specific script routing
-- Gift card provisioning controls
+4. Campaign Analytics Engine (Importance: 85/100)
+- ROI calculation incorporating mail costs and gift card values
+- Conversion funnel tracking with industry benchmarks
+- Geographic performance analysis
+- Response rate and redemption tracking
+Path: src/components/analytics/CampaignROICalculator.tsx
 
-5. Industry Vertical Management (75/100)
-src/lib/system/mvp-verification.ts
-- Vertical-specific campaign templates
-- Industry-tailored reward structures
-- Custom field configurations per vertical
-- Specialized conversion tracking
+5. Call Center Integration (Importance: 80/100)
+- Multi-step gift card redemption workflow
+- SMS opt-in status management
+- Call verification with unique mailer codes
+- Real-time reward eligibility checking
+Path: src/components/call-center/CallCenterRedemptionPanel.tsx
 
-Integration Architecture:
-- Gift card provisioning linked to campaign conditions
-- Credit system integrated with reward distribution
-- Call center verification tied to reward delivery
-- Industry rules connected to campaign creation
-
-The platform implements sophisticated campaign management with integrated gift card rewards, focusing on multi-tenant credit management and industry-specific marketing automation.
+The system implements a comprehensive marketing campaign platform with integrated gift card rewards, focusing on multi-level credit management and automated reward distribution. Core business value centers on the credit-based gift card provisioning system and sophisticated campaign condition evaluation engine.
 
 $END$
 

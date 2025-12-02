@@ -1,69 +1,57 @@
 ---
-description: Specification for reward fulfillment workflow including SMS opt-in, verification and delivery phases
+description: Specification for implementing reward fulfillment workflows including SMS opt-in, verification, and multi-channel delivery
 ---
 
 
 # reward-fulfillment-flow
 
-## Core Fulfillment Components
+Gift Card Fulfillment System
+Importance Score: 95/100
 
-### SMS Opt-In Workflow
-Importance Score: 90
-- Enforces SMS opt-in validation before any reward distribution
-- Manages tiered retry attempts (3 max) for failed opt-ins
-- Tracks recipient consent status with timestamps
-- Integrates with call center systems for real-time status updates
+Core Components:
 
-### Reward Verification Engine
-Importance Score: 95
-- Implements multi-condition verification chain:
-  1. Call center agent approval
-  2. Form submission completion
-  3. SMS opt-in confirmation
-  4. Time-based trigger validation
-- Enforces sequential condition completion
-- Handles parallel condition processing for multi-reward campaigns
-- Manages condition expiration and retry policies
+1. Multi-Stage Verification Workflow
+File: src/components/call-center/CallCenterRedemptionPanel.tsx
+- SMS opt-in verification required before gift card delivery
+- Real-time opt-in status monitoring (not_sent, pending, opted_in, opted_out)
+- Call center agent verification step with disposition tracking
+- Multi-channel verification support (SMS, call, email)
 
-### Gift Card Distribution System
-Importance Score: 85
-- Manages pool-based vs API-based gift card provisioning
-- Implements fallback logic between inventory sources
-- Controls denomination selection based on campaign rules
-- Handles brand-specific delivery requirements
+2. Gift Card Provisioning Logic 
+File: supabase/functions/provision-gift-card-unified/index.ts
+- Hierarchical provisioning system with provider fallbacks
+- Pool-based inventory management with atomic claiming
+- Real-time balance verification before delivery
+- Automated reallocation on failed deliveries
 
-### Call Center Integration
-Importance Score: 80
-- Real-time verification status broadcasting
-- Agent-specific approval workflows
-- Condition completion tracking
-- Script customization based on verification state
+3. Condition Evaluation Engine
+File: src/components/agent/ConditionTriggers.tsx
+- Sequential condition validation for reward release
+- Time-delayed trigger support for staged fulfillment
+- CRM event integration for automated rewards
+- Multi-condition orchestration with dependency tracking
 
-## Key Files
+4. Delivery Channel Management
+File: src/components/campaigns/wizard/DeliveryFulfillmentStep.tsx
+- Channel selection based on recipient preferences
+- Fallback delivery methods with priority ordering
+- Delivery status tracking across channels
+- Failed delivery handling with automatic retries
 
-```
-src/components/call-center/CallCenterRedemptionPanel.tsx
-src/components/call-center/OptInStatusIndicator.tsx 
-src/components/gift-cards/GiftCardReveal.tsx
-supabase/functions/provision-gift-card-unified/index.ts
-supabase/functions/evaluate-conditions/index.ts
-```
+5. Credit Management System
+File: src/hooks/useCreditManagement.enhanced.ts
+- Credit reservation during fulfillment process
+- Atomic credit deduction on successful delivery
+- Credit release on failed fulfillment
+- Balance tracking across organizational hierarchy 
 
-## Critical Workflows
-
-### Standard Fulfillment Flow
-1. SMS opt-in verification
-2. Condition evaluation 
-3. Pool/API gift card selection
-4. Delivery method determination
-5. Fulfillment execution
-6. Status tracking
-
-### Call Center Override Flow
-1. Agent verification
-2. Manual condition override
-3. Expedited fulfillment
-4. Audit trail creation
+Business Rules:
+- SMS opt-in required before any gift card fulfillment
+- Multiple verification methods must complete successfully
+- Real-time balance verification before sending rewards
+- Credit availability confirmed before fulfillment initiation
+- Automatic retries on delivery failures within 24 hours
+- Maximum 3 delivery attempts before manual review
 
 $END$
 

@@ -156,7 +156,12 @@ Deno.serve(async (req) => {
     // If approved, optionally send SMS/email with redemption link
     if (action === 'approve' && recipient.phone) {
       const campaignId = recipient.call_session?.campaign_id || recipient.audience_id;
-      const redemptionUrl = `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app')}/forms/redeem?code=${recipient.redemption_code}`;
+      
+      // Get PUBLIC_APP_URL from environment, fallback to Supabase URL
+      const appUrl = Deno.env.get('PUBLIC_APP_URL') || Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app') || 'https://app.mobilace.com';
+      
+      // Updated redemption URL to use new public redemption page
+      const redemptionUrl = `${appUrl}/redeem-gift-card?code=${recipient.redemption_code}&campaign=${campaignId}`;
       
       // Queue SMS notification (async, don't block)
       supabase.functions.invoke('send-gift-card-sms', {
