@@ -102,6 +102,31 @@ export function useClientAvailableGiftCards(clientId?: string) {
     queryFn: async () => {
       if (!clientId) return [];
 
+      // Try to use the helper function first
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('get_client_gift_cards_with_details', {
+          p_client_id: clientId
+        });
+
+      if (!rpcError && rpcData) {
+        // Transform RPC result to match expected format
+        return rpcData.map((item: any) => ({
+          id: item.client_gift_card_id,
+          brand_id: item.brand_id,
+          denomination: item.denomination,
+          is_enabled: item.is_enabled,
+          gift_card_brands: {
+            id: item.brand_id,
+            brand_name: item.brand_name,
+            brand_code: item.brand_code,
+            logo_url: item.brand_logo_url,
+            category: item.brand_category
+          }
+        }));
+      }
+
+      // Fallback to direct query if RPC not available
+      console.warn('RPC get_client_gift_cards_with_details not available, using direct query');
       const { data, error } = await supabase
         .from('client_available_gift_cards')
         .select(`
@@ -117,10 +142,14 @@ export function useClientAvailableGiftCards(clientId?: string) {
         .eq('client_id', clientId)
         .eq('is_enabled', true);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching client gift cards:', error);
+        return [];
+      }
+      return data || [];
     },
     enabled: !!clientId,
+    retry: 1, // Only retry once
   });
 }
 
@@ -133,13 +162,30 @@ export function useInventoryCount(brandId?: string, denomination?: number) {
     queryFn: async () => {
       if (!brandId || !denomination) return 0;
 
+      // Try RPC function first
       const { data, error } = await supabase
         .rpc('get_inventory_count', {
           p_brand_id: brandId,
           p_denomination: denomination,
         });
 
-      if (error) throw error;
+      if (error) {
+        // If RPC doesn't exist, fall back to direct query
+        console.warn('RPC get_inventory_count not available, using direct query');
+        const { count, error: countError } = await supabase
+          .from('gift_card_inventory')
+          .select('*', { count: 'exact', head: true })
+          .eq('brand_id', brandId)
+          .eq('denomination', denomination)
+          .eq('status', 'available');
+
+        if (countError) {
+          console.error('Error counting inventory:', countError);
+          return 0;
+        }
+        return count || 0;
+      }
+
       return data as number;
     },
     enabled: !!brandId && !!denomination,

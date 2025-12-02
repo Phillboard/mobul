@@ -139,12 +139,12 @@ serve(async (req) => {
       // Get admin cost from denominations table
       const { data: denomData } = await supabaseClient
         .from('gift_card_denominations')
-        .select('admin_cost_per_card')
+        .select('cost_basis, use_custom_pricing, client_price, agency_price')
         .eq('brand_id', brandId)
         .eq('denomination', denomination)
         .single();
       
-      costBasis = denomData?.admin_cost_per_card || denomination * 0.95; // Default 5% discount
+      costBasis = denomData?.cost_basis || denomination * 0.95; // Default 5% discount
     } else {
       // No inventory available, try Tillo API
       console.log('[PROVISION] No inventory, purchasing from Tillo');
@@ -217,10 +217,38 @@ serve(async (req) => {
     }
 
     // =====================================================
-    // STEP 4: Record billing transaction
+    // STEP 4: Get custom pricing and record billing transaction
     // =====================================================
     
-    const amountBilled = denomination; // Bill face value for now (can add markup later)
+    // Get custom pricing configuration
+    const { data: pricingData } = await supabaseClient
+      .from('gift_card_denominations')
+      .select('use_custom_pricing, client_price, agency_price, cost_basis')
+      .eq('brand_id', brandId)
+      .eq('denomination', denomination)
+      .single();
+
+    // Determine the amount to bill based on custom pricing
+    const useCustomPricing = pricingData?.use_custom_pricing || false;
+    const isAgency = entity_type === 'agency';
+    
+    let amountBilled = denomination; // Default to face value
+    if (useCustomPricing) {
+      if (isAgency && pricingData?.agency_price) {
+        amountBilled = pricingData.agency_price;
+      } else if (pricingData?.client_price) {
+        amountBilled = pricingData.client_price;
+      }
+    }
+
+    console.log('[PROVISION] Billing:', {
+      denomination,
+      useCustomPricing,
+      clientPrice: pricingData?.client_price,
+      agencyPrice: pricingData?.agency_price,
+      amountBilled,
+      costBasis,
+    });
 
     const { data: ledgerId, error: billingRecordError } = await supabaseClient
       .rpc('record_billing_transaction', {

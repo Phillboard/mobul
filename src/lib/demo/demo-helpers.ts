@@ -172,7 +172,8 @@ export async function ensureGiftCardBrand(brandName: string): Promise<string> {
 }
 
 /**
- * Create gift card pool
+ * DEPRECATED: Use addClientGiftCardOption instead
+ * Create gift card option for client (replaces pool creation)
  */
 export async function createGiftCardPool(
   clientId: string,
@@ -180,48 +181,46 @@ export async function createGiftCardPool(
   value: number,
   inventorySize: number
 ): Promise<string> {
+  // In the new system, we just enable the brand-denomination for the client
   const { data, error } = await supabase
-    .from('gift_card_pools')
+    .from('client_available_gift_cards')
     .insert({
       client_id: clientId,
       brand_id: brandId,
-      card_value: value,
-      provider: 'csv',
-      total_cards: inventorySize,
-      available_cards: inventorySize,
-      is_active: true
+      denomination: value,
+      is_enabled: true
     })
     .select('id')
     .single();
 
-  if (error) throw new Error(`Failed to create gift card pool: ${error.message}`);
+  if (error) {
+    // If it already exists, just return a mock ID
+    if (error.code === '23505') {
+      return `existing-${brandId}-${value}`;
+    }
+    throw new Error(`Failed to add gift card option: ${error.message}`);
+  }
   return data.id;
 }
 
 /**
- * Populate gift card inventory
+ * DEPRECATED: Use populateInventory instead
+ * Populate gift card inventory (new system uses gift_card_inventory table)
  */
 export async function populateGiftCardInventory(
   poolId: string,
   count: number,
   onProgress?: (current: number, total: number) => void
 ): Promise<void> {
-  const batchSize = 10;
-  const batches = Math.ceil(count / batchSize);
-
-  for (let i = 0; i < batches; i++) {
-    const batchCount = Math.min(batchSize, count - (i * batchSize));
-    const cards = Array.from({ length: batchCount }, (_, idx) => ({
-      pool_id: poolId,
-      card_code: `DEMO-${Date.now()}-${i * batchSize + idx}`,
-      card_number: generateCardNumber(),
-      status: 'available' as const,
-      expiration_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-    }));
-
-    const { error } = await supabase
-      .from('gift_cards')
-      .insert(cards);
+  // This function is deprecated in the new system
+  // Gift cards are now uploaded directly to gift_card_inventory
+  // or provisioned via Tillo API on-demand
+  console.warn('populateGiftCardInventory is deprecated - use gift_card_inventory table directly');
+  
+  if (onProgress) {
+    onProgress(count, count);
+  }
+}
 
     if (error) throw new Error(`Failed to create gift cards: ${error.message}`);
     

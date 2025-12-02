@@ -81,53 +81,23 @@ export function AudiencesRewardsStep({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contact_lists")
-        .select("*")
+        .select("*, contact_list_members(count)")
         .eq("client_id", clientId)
         .order("created_at", { ascending: false });
+      
       if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch gift card pools
-  const { data: giftCardPools } = useQuery({
-    queryKey: ["gift-card-pools", clientId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("gift_card_pools")
-        .select(`
-          id,
-          pool_name,
-          card_value,
-          available_cards,
-          total_cards,
-          is_active,
-          created_at,
-          gift_card_brands (
-            brand_name
-          )
-        `)
-        .eq("client_id", clientId)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      
+      // Transform to include proper count
+      return (data as any[])?.map(list => ({
+        ...list,
+        contact_count: Array.isArray(list.contact_list_members) 
+          ? list.contact_list_members[0]?.count || 0
+          : 0
+      })) || [];
     },
   });
 
   const selectedList = contactLists?.find((l) => l.id === selectedListId);
-
-  const getPoolStatus = (availableCards: number) => {
-    if (availableCards === 0) return { label: 'empty', color: 'text-red-600' };
-    if (availableCards <= 20) return { label: 'low stock', color: 'text-yellow-600' };
-    return { label: 'active', color: 'text-green-600' };
-  };
-
-  const formatPoolDisplay = (pool: any) => {
-    const brandName = pool.gift_card_brands?.brand_name || pool.pool_name;
-    const status = getPoolStatus(pool.available_cards);
-    return `${brandName} | $${pool.card_value} (${status.label})`;
-  };
 
   const handleNext = async () => {
     if (!selectedListId) {
@@ -461,15 +431,24 @@ export function AudiencesRewardsStep({
                           clientId={clientId}
                           value={condition.brand_id && condition.card_value ? {
                             brand_id: condition.brand_id,
-                            card_value: condition.card_value
+                            card_value: condition.card_value,
+                            brand_name: condition.brand_name
                           } : null}
-                          onChange={(selection) =>
-                            updateCondition(index, {
-                              brand_id: selection.brand_id,
-                              card_value: selection.card_value,
-                              brand_name: selection.brand_name
-                            })
-                          }
+                          onChange={(selection) => {
+                            if (!selection) {
+                              updateCondition(index, {
+                                brand_id: null,
+                                card_value: null,
+                                brand_name: null
+                              });
+                            } else {
+                              updateCondition(index, {
+                                brand_id: selection.brand_id,
+                                card_value: selection.card_value,
+                                brand_name: selection.brand_name
+                              });
+                            }
+                          }}
                           showAvailability={true}
                         />
                       </div>

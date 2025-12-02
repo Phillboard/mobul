@@ -9,6 +9,7 @@ import { AlertTriangle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { logger } from '@/lib/services/logger';
+import { logReactError } from '@/lib/error-logging';
 
 interface Props {
   children: ReactNode;
@@ -31,10 +32,16 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log to console
     logger.error('[ErrorBoundary] React error caught:', {
       error: error.message,
       stack: error.stack,
       componentStack: errorInfo.componentStack,
+    });
+    
+    // Log to database for monitoring
+    logReactError(error, errorInfo).catch((err) => {
+      console.error('[ErrorBoundary] Failed to log error to database:', err);
     });
   }
 

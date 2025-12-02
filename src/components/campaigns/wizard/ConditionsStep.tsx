@@ -296,14 +296,14 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
                             <SimpleBrandDenominationSelector
                               clientId={clientId}
                               value={condition.brand_id && condition.card_value ? {
-                                brand_id: condition.brand_id,
-                                card_value: condition.card_value
+                                brandId: condition.brand_id,
+                                denomination: condition.card_value
                               } : null}
                               onChange={(selection) =>
                                 handleUpdateCondition(condition.id, {
-                                  brand_id: selection.brand_id,
-                                  card_value: selection.card_value,
-                                  brand_name: selection.brand_name,
+                                  brand_id: selection.brandId,
+                                  card_value: selection.denomination,
+                                  brand_name: selection.brandName,
                                 })
                               }
                               showAvailability={true}

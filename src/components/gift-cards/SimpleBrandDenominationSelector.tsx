@@ -6,15 +6,17 @@
  */
 
 import { useClientAvailableGiftCards, useInventoryCount } from '@/hooks/useGiftCardProvisioning';
+import { useDenominationPricing } from '@/hooks/useDenominationPricing';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Package } from 'lucide-react';
+import { AlertCircle, Package, DollarSign } from 'lucide-react';
 
 interface SimpleBrandDenominationSelectorProps {
   clientId: string;
-  value?: { brandId: string; denomination: number; brandName?: string };
-  onChange: (value: { brandId: string; denomination: number; brandName: string } | null) => void;
+  value?: { brand_id: string; card_value: number; brand_name?: string } | null;
+  onChange: (value: { brand_id: string; card_value: number; brand_name: string } | null) => void;
+  showAvailability?: boolean;
 }
 
 export function SimpleBrandDenominationSelector({
@@ -26,21 +28,38 @@ export function SimpleBrandDenominationSelector({
 
   // Get inventory count for selected gift card
   const { data: inventoryCount } = useInventoryCount(
-    value?.brandId,
-    value?.denomination
+    value?.brand_id,
+    value?.card_value
+  );
+
+  // Get custom pricing for selected denomination
+  const { data: pricing } = useDenominationPricing(
+    value?.brand_id,
+    value?.card_value
   );
 
   if (isLoading) {
-    return <div className="text-sm text-muted-foreground">Loading gift cards...</div>;
+    return (
+      <div className="text-sm text-muted-foreground py-4 text-center">
+        <div className="animate-pulse">Loading gift cards...</div>
+      </div>
+    );
   }
 
   // Handle database errors gracefully (tables might not exist yet)
   if (error) {
+    console.error('Gift card loading error:', error);
     return (
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Gift card system is being configured. Please run migrations first.
+          <div className="space-y-2">
+            <p className="font-medium">Gift card system needs setup</p>
+            <p className="text-sm">Please run the database migrations:</p>
+            <code className="text-xs bg-muted px-2 py-1 rounded block mt-1">
+              npm run setup:gift-cards
+            </code>
+          </div>
         </AlertDescription>
       </Alert>
     );
@@ -51,7 +70,14 @@ export function SimpleBrandDenominationSelector({
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          No gift cards available. Configure gift cards in client settings first.
+          <div className="space-y-2">
+            <p className="font-medium">No gift cards available</p>
+            <p className="text-sm">Ask your administrator to:</p>
+            <ul className="text-sm list-disc list-inside mt-1 space-y-1">
+              <li>Enable gift card brands in admin panel</li>
+              <li>Assign gift cards to your client account</li>
+            </ul>
+          </div>
         </AlertDescription>
       </Alert>
     );
@@ -72,9 +98,9 @@ export function SimpleBrandDenominationSelector({
   );
 
   // Get denominations for selected brand
-  const selectedBrandDenominations = value?.brandId
+  const selectedBrandDenominations = value?.brand_id
     ? availableGiftCards
-        .filter((gc: any) => gc.gift_card_brands.id === value.brandId)
+        .filter((gc: any) => gc.gift_card_brands.id === value.brand_id)
         .map((gc: any) => gc.denomination)
     : [];
 
@@ -89,9 +115,9 @@ export function SimpleBrandDenominationSelector({
 
     if (firstDenom) {
       onChange({
-        brandId: brand.id,
-        denomination: firstDenom,
-        brandName: brand.name,
+        brand_id: brand.id,
+        card_value: firstDenom,
+        brand_name: brand.name,
       });
     } else {
       onChange(null);
@@ -99,15 +125,15 @@ export function SimpleBrandDenominationSelector({
   };
 
   const handleDenominationChange = (denomination: string) => {
-    if (!value?.brandId) return;
+    if (!value?.brand_id) return;
 
-    const brand = brandOptions.find((b) => b.id === value.brandId);
+    const brand = brandOptions.find((b) => b.id === value.brand_id);
     if (!brand) return;
 
     onChange({
-      brandId: value.brandId,
-      denomination: parseFloat(denomination),
-      brandName: brand.name,
+      brand_id: value.brand_id,
+      card_value: parseFloat(denomination),
+      brand_name: brand.name,
     });
   };
 
@@ -116,7 +142,7 @@ export function SimpleBrandDenominationSelector({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-sm font-medium mb-2 block">Brand</label>
-          <Select value={value?.brandId || ''} onValueChange={handleBrandChange}>
+          <Select value={value?.brand_id || ''} onValueChange={handleBrandChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select brand..." />
             </SelectTrigger>
@@ -138,9 +164,9 @@ export function SimpleBrandDenominationSelector({
         <div>
           <label className="text-sm font-medium mb-2 block">Denomination</label>
           <Select
-            value={value?.denomination?.toString() || ''}
+            value={value?.card_value?.toString() || ''}
             onValueChange={handleDenominationChange}
-            disabled={!value?.brandId}
+            disabled={!value?.brand_id}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select value..." />
@@ -156,15 +182,36 @@ export function SimpleBrandDenominationSelector({
         </div>
       </div>
 
-      {value && inventoryCount !== undefined && (
-        <div className="flex items-center gap-2 text-sm">
-          <Package className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Available in inventory:</span>
-          <Badge variant={inventoryCount > 50 ? 'default' : inventoryCount > 0 ? 'secondary' : 'destructive'}>
-            {inventoryCount} cards
-          </Badge>
-          {inventoryCount === 0 && (
-            <span className="text-xs text-muted-foreground">(Will purchase from Tillo API)</span>
+      {value && (
+        <div className="space-y-2">
+          {/* Pricing Display */}
+          {pricing && pricing.use_custom_pricing && pricing.client_price && (
+            <div className="flex items-center gap-2 text-sm p-2 bg-primary/5 rounded-md border border-primary/20">
+              <DollarSign className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">Client Price:</span>
+              <Badge variant="default">
+                ${pricing.client_price.toFixed(2)}
+              </Badge>
+              {pricing.client_price !== value.card_value && (
+                <span className="text-xs text-muted-foreground">
+                  (Face value: ${value.card_value})
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Inventory Status */}
+          {showAvailability && inventoryCount !== undefined && (
+            <div className="flex items-center gap-2 text-sm">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">CSV Inventory:</span>
+              <Badge variant={inventoryCount > 50 ? 'default' : inventoryCount > 0 ? 'secondary' : 'destructive'}>
+                {inventoryCount} cards
+              </Badge>
+              {inventoryCount === 0 && (
+                <span className="text-xs text-muted-foreground">(Will purchase from Tillo API)</span>
+              )}
+            </div>
           )}
         </div>
       )}

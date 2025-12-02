@@ -76,6 +76,7 @@ const RecordPurchase = lazy(() => import("./pages/RecordPurchase"));
 const EditPoolPricing = lazy(() => import("./pages/EditPoolPricing"));
 const DemoDataGenerator = lazy(() => import("./pages/admin/DemoDataGenerator"));
 const ClientGiftCards = lazy(() => import("./pages/ClientGiftCards"));
+const GiftCardManager = lazy(() => import("./pages/GiftCardManager"));
 const ClientBillingDashboard = lazy(() => import("./pages/ClientBillingDashboard"));
 const AdminOrganizationManagement = lazy(() => import("./pages/AdminOrganizationManagement"));
 
@@ -171,8 +172,8 @@ const App = () => (
                   <Route path="/landing-pages/:id/edit-grapesjs" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
                   
                   {/* Gift Cards - Role-based access control */}
-                  {/* Admin + Agency Only - Pool Management & Marketplace */}
-                  <Route path="/gift-cards" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><GiftCards /></ProtectedRoute>} />
+                  {/* Client/Agency - Simple Gift Card Manager */}
+                  <Route path="/gift-cards" element={<ProtectedRoute><GiftCardManager /></ProtectedRoute>} />
                   <Route path="/gift-cards/pools/:poolId" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PoolDetail /></ProtectedRoute>} />
                   <Route path="/gift-cards/purchase/:poolId" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PurchaseGiftCard /></ProtectedRoute>} />
                   <Route path="/gift-cards/purchase" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PurchaseGiftCards /></ProtectedRoute>} />
@@ -186,7 +187,8 @@ const App = () => (
                   <Route path="/admin/gift-cards/record-purchase" element={<ProtectedRoute requiredRole="admin"><RecordPurchase /></ProtectedRoute>} />
                   <Route path="/admin/gift-cards/pools/:poolId/pricing" element={<ProtectedRoute requiredRole="admin"><EditPoolPricing /></ProtectedRoute>} />
                   
-                  {/* Client Gift Card Management */}
+                  {/* Client Gift Card Management - NEW simplified UI */}
+                  <Route path="/gift-cards/manager" element={<ProtectedRoute><GiftCardManager /></ProtectedRoute>} />
                   <Route path="/client/gift-cards" element={<ProtectedRoute><ClientGiftCards /></ProtectedRoute>} />
                   <Route path="/client/billing" element={<ProtectedRoute><ClientBillingDashboard /></ProtectedRoute>} />
                   

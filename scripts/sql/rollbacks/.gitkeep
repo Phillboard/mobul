@@ -1,0 +1,6 @@
+# Rollback Scripts Directory
+
+Store migration rollback scripts here with naming convention:
+YYYYMMDD_rollback_MIGRATION_NAME.sql
+
+

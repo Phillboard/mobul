@@ -159,10 +159,10 @@ export async function parseGiftCardCsv(file: File): Promise<{
 }
 
 /**
- * Generate unique upload batch ID
+ * Generate unique upload batch ID as UUID
  */
 export function generateUploadBatchId(): string {
-  return `batch-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  return crypto.randomUUID();
 }
 
 /**
@@ -199,5 +199,246 @@ export function getSourceBadgeColor(source: 'inventory' | 'tillo'): string {
  */
 export function formatSource(source: 'inventory' | 'tillo'): string {
   return source === 'inventory' ? 'Uploaded Inventory' : 'Tillo API';
+}
+
+/**
+ * ========================================
+ * PROVISIONING WATERFALL LOGIC
+ * CSV Inventory First → Tillo API Fallback
+ * ========================================
+ */
+
+import { supabase } from "@/integrations/supabase/client";
+
+export interface ProvisionResult {
+  success: boolean;
+  source: 'csv' | 'tillo';
+  card?: {
+    id: string;
+    card_code: string;
+    card_number?: string;
+    denomination: number;
+  };
+  cost_basis?: number;
+  client_price?: number;
+  error?: string;
+}
+
+/**
+ * Provision a gift card using CSV-first waterfall
+ * Step 1: Try to claim from CSV inventory
+ * Step 2: If no CSV available, purchase from Tillo API
+ */
+export async function provisionGiftCard(
+  brandId: string,
+  denomination: number,
+  recipientId: string,
+  campaignId: string
+): Promise<ProvisionResult> {
+  try {
+    // Step 1: Try CSV inventory first
+    const csvResult = await claimFromCSVInventory(brandId, denomination, recipientId, campaignId);
+    if (csvResult.success) {
+      return csvResult;
+    }
+
+    // Step 2: Fallback to Tillo API
+    const tilloResult = await purchaseFromTillo(brandId, denomination, recipientId, campaignId);
+    return tilloResult;
+
+  } catch (error) {
+    console.error('Provisioning failed:', error);
+    return {
+      success: false,
+      source: 'csv',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Claim a gift card from CSV inventory
+ */
+async function claimFromCSVInventory(
+  brandId: string,
+  denomination: number,
+  recipientId: string,
+  campaignId: string
+): Promise<ProvisionResult> {
+  try {
+    // Find and claim an available card atomically
+    const { data: card, error: claimError } = await supabase.rpc('claim_gift_card_from_inventory', {
+      p_brand_id: brandId,
+      p_denomination: denomination,
+      p_recipient_id: recipientId,
+      p_campaign_id: campaignId,
+    });
+
+    if (claimError) {
+      console.log('No CSV inventory available:', claimError.message);
+      return { success: false, source: 'csv', error: 'No CSV inventory available' };
+    }
+
+    if (!card) {
+      return { success: false, source: 'csv', error: 'No cards available' };
+    }
+
+    // Get pricing for billing
+    const { data: pricing } = await supabase
+      .from('gift_card_denominations')
+      .select('client_price, use_custom_pricing, cost_basis')
+      .eq('brand_id', brandId)
+      .eq('denomination', denomination)
+      .single();
+
+    const clientPrice = pricing?.use_custom_pricing && pricing?.client_price 
+      ? pricing.client_price 
+      : denomination;
+
+    return {
+      success: true,
+      source: 'csv',
+      card: {
+        id: card.id,
+        card_code: card.card_code,
+        card_number: card.card_number,
+        denomination,
+      },
+      cost_basis: pricing?.cost_basis || 0,
+      client_price: clientPrice,
+    };
+  } catch (error) {
+    console.error('CSV claim error:', error);
+    return {
+      success: false,
+      source: 'csv',
+      error: error instanceof Error ? error.message : 'Failed to claim from CSV',
+    };
+  }
+}
+
+/**
+ * Purchase a gift card from Tillo API
+ */
+async function purchaseFromTillo(
+  brandId: string,
+  denomination: number,
+  recipientId: string,
+  campaignId: string
+): Promise<ProvisionResult> {
+  try {
+    // Get brand information
+    const { data: brand, error: brandError } = await supabase
+      .from('gift_card_brands')
+      .select('brand_code, tillo_brand_code')
+      .eq('id', brandId)
+      .single();
+
+    if (brandError || !brand) {
+      return {
+        success: false,
+        source: 'tillo',
+        error: 'Brand not found',
+      };
+    }
+
+    // Call Tillo purchase edge function
+    const { data, error } = await supabase.functions.invoke('purchase-from-tillo', {
+      body: {
+        brandCode: brand.tillo_brand_code || brand.brand_code,
+        denomination,
+        recipientId,
+        campaignId,
+      },
+    });
+
+    if (error) {
+      console.error('Tillo purchase error:', error);
+      return {
+        success: false,
+        source: 'tillo',
+        error: error.message || 'Tillo API unavailable',
+      };
+    }
+
+    // Get pricing
+    const { data: pricing } = await supabase
+      .from('gift_card_denominations')
+      .select('client_price, use_custom_pricing, tillo_cost_per_card')
+      .eq('brand_id', brandId)
+      .eq('denomination', denomination)
+      .single();
+
+    const clientPrice = pricing?.use_custom_pricing && pricing?.client_price 
+      ? pricing.client_price 
+      : denomination;
+
+    return {
+      success: true,
+      source: 'tillo',
+      card: data.card,
+      cost_basis: pricing?.tillo_cost_per_card || denomination, // Tillo cost or face value
+      client_price: clientPrice,
+    };
+  } catch (error) {
+    console.error('Tillo purchase error:', error);
+    return {
+      success: false,
+      source: 'tillo',
+      error: error instanceof Error ? error.message : 'Tillo purchase failed',
+    };
+  }
+}
+
+/**
+ * Check if CSV inventory is available for a brand-denomination
+ */
+export async function checkCSVInventoryAvailable(
+  brandId: string,
+  denomination: number
+): Promise<{ available: boolean; count: number }> {
+  try {
+    const { count, error } = await supabase
+      .from('gift_card_inventory')
+      .select('*', { count: 'exact', head: true })
+      .eq('brand_id', brandId)
+      .eq('denomination', denomination)
+      .eq('status', 'available');
+
+    if (error) throw error;
+
+    return {
+      available: (count || 0) > 0,
+      count: count || 0,
+    };
+  } catch (error) {
+    console.error('Error checking CSV inventory:', error);
+    return { available: false, count: 0 };
+  }
+}
+
+/**
+ * Get available sources for a brand-denomination
+ */
+export async function getAvailableSources(
+  brandId: string,
+  denomination: number
+): Promise<{ csv: boolean; tillo: boolean; csvCount: number }> {
+  const csvCheck = await checkCSVInventoryAvailable(brandId, denomination);
+
+  // Check if Tillo is configured for this brand
+  const { data: brand } = await supabase
+    .from('gift_card_brands')
+    .select('provider, tillo_brand_code')
+    .eq('id', brandId)
+    .single();
+
+  const tilloAvailable = brand?.provider === 'tillo' || !!brand?.tillo_brand_code;
+
+  return {
+    csv: csvCheck.available,
+    tillo: tilloAvailable,
+    csvCount: csvCheck.count,
+  };
 }
 

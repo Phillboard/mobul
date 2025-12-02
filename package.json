@@ -11,10 +11,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.17.0",
     "@grapesjs/studio-sdk": "^1.0.56",
     "@grapesjs/studio-sdk-plugins": "^1.0.30",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^3.10.0",
+    "cheerio": "^1.0.0-rc.12",
+    "html-to-react": "^1.7.0",
+    "jszip": "^3.10.1",
+    "openai": "^4.20.0",
+    "react-color": "^2.19.3",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",

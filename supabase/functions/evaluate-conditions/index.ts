@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,32 +12,88 @@ interface EvaluateConditionsRequest {
   metadata?: Record<string, any>;
 }
 
+// =====================================================
+// PERFORMANCE OPTIMIZATION: Cache and connection reuse
+// =====================================================
+
+// Cache for campaign conditions (reduces DB queries)
+const conditionCache = new Map<string, { data: any[]; expires: number }>();
+const CACHE_TTL = 60 * 1000; // 1 minute
+
+function getCachedConditions(campaignId: string): any[] | null {
+  const cached = conditionCache.get(campaignId);
+  if (cached && cached.expires > Date.now()) {
+    return cached.data;
+  }
+  conditionCache.delete(campaignId);
+  return null;
+}
+
+function setCachedConditions(campaignId: string, conditions: any[]): void {
+  // Limit cache size to prevent memory issues
+  if (conditionCache.size > 100) {
+    // Remove oldest entry
+    const firstKey = conditionCache.keys().next().value;
+    if (firstKey) conditionCache.delete(firstKey);
+  }
+  conditionCache.set(campaignId, {
+    data: conditions,
+    expires: Date.now() + CACHE_TTL,
+  });
+}
+
+// Reuse Supabase client across requests (reduces cold start)
+let supabaseClient: SupabaseClient | null = null;
+
+function getSupabaseClient(): SupabaseClient {
+  if (!supabaseClient) {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    supabaseClient = createClient(supabaseUrl, supabaseKey);
+  }
+  return supabaseClient;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = performance.now();
+
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = getSupabaseClient();
 
     const { recipientId, campaignId, eventType, metadata = {} } = await req.json() as EvaluateConditionsRequest;
 
     console.log('Evaluating conditions:', { recipientId, campaignId, eventType });
 
-    // Get all conditions for this campaign
-    const { data: conditions, error: conditionsError } = await supabase
-      .from('campaign_conditions')
-      .select('*')
-      .eq('campaign_id', campaignId)
-      .order('sequence_order');
+    // PERFORMANCE: Try cache first for conditions
+    let conditions = getCachedConditions(campaignId);
+    
+    if (!conditions) {
+      // Cache miss - fetch from database
+      const { data: fetchedConditions, error: conditionsError } = await supabase
+        .from('campaign_conditions')
+        .select('*')
+        .eq('campaign_id', campaignId)
+        .order('sequence_order');
 
-    if (conditionsError) {
-      throw conditionsError;
+      if (conditionsError) {
+        throw conditionsError;
+      }
+
+      conditions = fetchedConditions || [];
+      
+      // Store in cache for subsequent requests
+      if (conditions.length > 0) {
+        setCachedConditions(campaignId, conditions);
+      }
     }
 
-    if (!conditions || conditions.length === 0) {
+    if (conditions.length === 0) {
+      const duration = performance.now() - startTime;
+      console.log(`Condition evaluation completed in ${duration.toFixed(2)}ms (no conditions)`);
       return new Response(
         JSON.stringify({ success: true, message: 'No conditions to evaluate' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -118,8 +174,15 @@ Deno.serve(async (req) => {
       console.log('Trigger executed:', triggerId);
     }
 
+    const duration = performance.now() - startTime;
+    console.log(`Condition evaluation completed in ${duration.toFixed(2)}ms`);
+
     return new Response(
-      JSON.stringify({ success: true, message: 'Conditions evaluated successfully' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Conditions evaluated successfully',
+        performance: { durationMs: Math.round(duration) }
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
