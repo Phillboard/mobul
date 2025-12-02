@@ -133,22 +133,30 @@ export function EditCampaignDialog({
         // Continue without versioning
       }
 
+      // Build update object with only changed fields
+      const updates: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      // Only update fields that have changed and are allowed to be updated
+      if (formData.name !== campaign.name) updates.name = formData.name;
+      if (formData.mail_date !== campaign.mail_date) updates.mail_date = formData.mail_date;
+      if (formData.status !== campaign.status) updates.status = formData.status;
+      if (formData.landing_page_id !== campaign.landing_page_id) updates.landing_page_id = formData.landing_page_id;
+      if (formData.rewards_enabled !== campaign.rewards_enabled) updates.rewards_enabled = formData.rewards_enabled;
+      if (formData.reward_brand_id !== campaign.reward_brand_id) updates.reward_brand_id = formData.reward_brand_id;
+      if (formData.reward_condition !== campaign.reward_condition) updates.reward_condition = formData.reward_condition;
+
       // Update campaign
       const { error: updateError } = await supabase
         .from("campaigns")
-        .update({
-          name: formData.name,
-          mail_date: formData.mail_date,
-          status: formData.status,
-          landing_page_id: formData.landing_page_id,
-          rewards_enabled: formData.rewards_enabled,
-          reward_brand_id: formData.reward_brand_id,
-          reward_condition: formData.reward_condition,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq("id", campaignId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Campaign update error:", updateError);
+        throw updateError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-edit", campaignId] });
@@ -160,6 +168,7 @@ export function EditCampaignDialog({
       onOpenChange(false);
     },
     onError: (error: Error) => {
+      console.error("Save mutation error:", error);
       toast({
         title: "Update Failed",
         description: error.message,

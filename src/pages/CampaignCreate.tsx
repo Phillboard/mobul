@@ -125,10 +125,11 @@ export default function CampaignCreate() {
         }
       }
 
-      // Determine initial status based on mailing method
-      // Self-mailers can be activated immediately, ACE fulfillment starts as draft
+      // Determine initial status based on mailing method and mailing status
+      // Self-mailers can be activated immediately if already mailed
       const isSelfMailer = data.mailing_method === "self";
-      const initialStatus = isSelfMailer ? "active" : "draft";
+      const hasBeenMailed = data.campaign_status === "mailed";
+      const initialStatus = isSelfMailer && hasBeenMailed ? "active" : "draft";
 
       // Create campaign
       const { data: campaign, error: campaignError } = await supabase

@@ -14,8 +14,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   Mail, 
@@ -31,6 +32,8 @@ const schema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters").max(100),
   // ACE fulfillment temporarily disabled - keeping "self" as the only option
   mailing_method: z.enum(["self"]).default("self"),
+  mail_date: z.string().optional(),
+  campaign_status: z.enum(["draft", "mailed"]).default("draft"),
 });
 
 interface MethodNameStepProps {
@@ -134,6 +137,85 @@ export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStep
               />
             </CardContent>
           </Card>
+
+          {/* Mail Date and Status - For Self-Mailers */}
+          {selectedMethod === "self" && (
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Mailing Information
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+                        <HelpCircle className="h-4 w-4" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-sm">When are you mailing?</h4>
+                        <p className="text-sm text-muted-foreground">
+                          If you've already mailed, you can activate your campaign immediately.
+                          Otherwise, set your planned mail date so we know when to expect calls.
+                        </p>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </CardTitle>
+                <CardDescription>
+                  Let us know if you've already mailed or when you plan to
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="mail_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mail Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        The date you mailed (or will mail) these pieces
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="campaign_status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mailing Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || "draft"}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Have you already mailed?" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="draft">Not mailed yet - Planning</SelectItem>
+                          <SelectItem value="mailed">Already mailed - Ready to activate</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {field.value === "mailed" 
+                          ? "Campaign will be activated immediately so call center can process codes"
+                          : "Campaign will be saved as draft until you're ready to mail"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Mailing Method Selection - Self-mailing is currently the only option */}
           <div className="space-y-4">
