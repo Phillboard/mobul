@@ -182,7 +182,7 @@ export function canManageOrganization(
  */
 export function validateArchiveOperation(
   orgType: 'agency' | 'client',
-  hasActiveC ampaigns: boolean,
+  hasActiveCampaigns: boolean,
   hasActiveUsers: boolean,
   hasUnresolvedBilling: boolean
 ): {
