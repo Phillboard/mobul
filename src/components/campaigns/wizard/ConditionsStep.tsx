@@ -56,10 +56,9 @@ interface Condition {
   condition_number: number;
   condition_name: string;
   trigger_type: TriggerType;
-  gift_card_pool_id?: string; // Legacy support
-  brand_id?: string; // New system
-  card_value?: number; // New system
-  brand_name?: string; // New system
+  brand_id?: string; // Brand selection
+  card_value?: number; // Denomination
+  brand_name?: string; // Display name
   sms_template: string;
   is_active: boolean;
 }
@@ -94,31 +93,8 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
     ];
   });
 
-  // Fetch gift card pools - NOT NEEDED with new SimpleBrandDenominationSelector
-  // Keeping for legacy conditions that still use pool_id
-  const { data: giftCardPools, isLoading } = useQuery({
-    queryKey: ["gift-card-pools", clientId],
-    queryFn: async () => {
-      const { data, error} = await supabase
-        .from("gift_card_pools")
-        .select(`
-          id, 
-          pool_name, 
-          card_value, 
-          available_cards, 
-          total_cards,
-          gift_card_brands (
-            brand_name
-          )
-        `)
-        .eq("client_id", clientId)
-        .order("pool_name");
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: false, // Only enable if we have legacy conditions
-  });
+  // No longer need to fetch pools - SimpleBrandDenominationSelector handles brand/denomination selection
+  // directly from client_available_gift_cards table
 
   const handleAddCondition = () => {
     const newCondition: Condition = {
@@ -178,8 +154,8 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
       return;
     }
 
-    // Check for missing gift cards (brand_id + card_value OR legacy pool_id)
-    const missingGiftCards = activeConditions.filter((c) => !c.brand_id && !c.card_value && !c.gift_card_pool_id);
+    // Check for missing gift cards (brand_id + card_value)
+    const missingGiftCards = activeConditions.filter((c) => !c.brand_id || !c.card_value);
     if (missingGiftCards.length > 0) {
       toast({
         title: "Gift Card Required",
