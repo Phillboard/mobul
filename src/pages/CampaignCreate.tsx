@@ -16,7 +16,7 @@
 
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -25,6 +25,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { logger } from "@/lib/services/logger";
 
 // Modern Wizard Components
 import { MethodNameStep } from "@/components/campaigns/wizard/MethodNameStep";
@@ -46,6 +47,7 @@ const STEPS = [
 export default function CampaignCreate() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { currentClient } = useTenant();
   const [currentStep, setCurrentStep] = useState(0);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
@@ -54,6 +56,158 @@ export default function CampaignCreate() {
     mailing_method: undefined,
     utm_source: "directmail",
     utm_medium: "postcard",
+  });
+
+  // Create campaign mutation
+  const createCampaignMutation = useMutation({
+    mutationFn: async (data: Partial<CampaignFormData>) => {
+      if (!currentClient) throw new Error("No client selected");
+
+      let audienceId = null;
+
+      // If contact list selected, create audience and recipients
+      if (data.contact_list_id) {
+        const { data: contactList, error: listError } = await supabase
+          .from("contact_lists")
+          .select("name, contact_count")
+          .eq("id", data.contact_list_id)
+          .single();
+
+        if (listError) throw listError;
+
+        // Create audience
+        const { data: audience, error: audienceError } = await supabase
+          .from("audiences")
+          .insert([{
+            client_id: currentClient.id,
+            name: `${data.name} - Recipients`,
+            source: "import",
+            status: "ready",
+            total_count: contactList.contact_count || 0,
+            valid_count: contactList.contact_count || 0,
+          }])
+          .select()
+          .single();
+
+        if (audienceError) throw audienceError;
+        audienceId = audience.id;
+
+        // Get contacts from list
+        const { data: listMembers, error: membersError } = await supabase
+          .from("contact_list_members")
+          .select("contact:contacts(id, first_name, last_name, email, phone, address, address2, city, state, zip)")
+          .eq("list_id", data.contact_list_id);
+
+        if (membersError) throw membersError;
+
+        // Create recipients for all contacts
+        if (listMembers && listMembers.length > 0) {
+          const recipients = listMembers.map((member: any) => ({
+            audience_id: audienceId,
+            contact_id: member.contact?.id,
+            token: crypto.randomUUID().replace(/-/g, '').substring(0, 16),
+            first_name: member.contact?.first_name,
+            last_name: member.contact?.last_name,
+            email: member.contact?.email,
+            phone: member.contact?.phone,
+            address1: member.contact?.address,
+            address2: member.contact?.address2,
+            city: member.contact?.city,
+            state: member.contact?.state,
+            zip: member.contact?.zip,
+          }));
+
+          const { error: recipientsError } = await supabase
+            .from("recipients")
+            .insert(recipients);
+
+          if (recipientsError) throw recipientsError;
+        }
+      }
+
+      // Create campaign
+      const { data: campaign, error: campaignError } = await supabase
+        .from("campaigns")
+        .insert([{
+          client_id: currentClient.id,
+          name: data.name!,
+          template_id: data.template_id || null,
+          size: data.size || "4x6",
+          postage: data.postage || "standard",
+          mail_date: data.mail_date ? new Date(data.mail_date).toISOString() : null,
+          contact_list_id: data.contact_list_id || null,
+          audience_id: audienceId,
+          landing_page_id: data.landing_page_id || null,
+          lp_mode: data.lp_mode as any || "bridge",
+          utm_source: data.utm_source || null,
+          utm_medium: data.utm_medium || null,
+          utm_campaign: data.utm_campaign || null,
+          status: "draft",
+          mailing_method: data.mailing_method || null,
+        }])
+        .select()
+        .single();
+
+      if (campaignError) throw campaignError;
+
+      // Create conditions and reward configs if any
+      if (data.conditions && data.conditions.length > 0) {
+        const conditionsToInsert = data.conditions.map((condition: any, index: number) => ({
+          campaign_id: campaign.id,
+          condition_number: condition.condition_number || index + 1,
+          condition_name: condition.condition_name,
+          trigger_type: condition.trigger_type,
+          time_delay_hours: condition.time_delay_hours,
+          crm_event_name: condition.crm_event_name,
+          brand_id: condition.brand_id,
+          card_value: condition.card_value,
+          sms_template: condition.sms_template,
+          is_active: condition.is_active !== false,
+        }));
+
+        const { error: conditionsError } = await supabase
+          .from("campaign_conditions")
+          .insert(conditionsToInsert);
+
+        if (conditionsError) throw conditionsError;
+      }
+
+      // Link forms to campaign if any
+      if ((data as any).selected_form_ids && (data as any).selected_form_ids.length > 0) {
+        const { error: formsError } = await supabase
+          .from("ace_forms")
+          .update({ campaign_id: campaign.id })
+          .in("id", (data as any).selected_form_ids);
+
+        if (formsError) throw formsError;
+      }
+
+      // Delete draft if exists
+      if (currentDraftId) {
+        await supabase
+          .from("campaign_drafts")
+          .delete()
+          .eq("id", currentDraftId);
+      }
+
+      return campaign;
+    },
+    onSuccess: (campaign) => {
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      toast({
+        title: "Campaign Created!",
+        description: "Your campaign has been created successfully.",
+      });
+      navigate(`/campaigns/${campaign.id}`);
+    },
+    onError: (error) => {
+      logger.error("Failed to create campaign:", error);
+      toast({
+        title: "Creation Failed",
+        description: error instanceof Error ? error.message : "Failed to create campaign",
+        variant: "destructive",
+      });
+    },
   });
 
   // Save draft mutation
@@ -124,6 +278,10 @@ export default function CampaignCreate() {
     navigate("/campaigns");
   };
 
+  const handleCreateCampaign = () => {
+    createCampaignMutation.mutate(formData);
+  };
+
   const handleStepClick = (targetStep: number) => {
     // Only allow going back to completed steps
     if (targetStep < currentStep) {
@@ -174,7 +332,8 @@ export default function CampaignCreate() {
             clientId={currentClient.id}
             recipientCount={formData.recipient_count || 0}
             onBack={handleBack}
-            onConfirm={handleClose}
+            onConfirm={handleCreateCampaign}
+            isCreating={createCampaignMutation.isPending}
             onSaveDraft={handleSaveDraft}
           />
         );

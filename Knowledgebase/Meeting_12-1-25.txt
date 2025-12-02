@@ -1,0 +1,890 @@
+Billy Keister's Zoom Meeting
+Mon, Dec 1, 2025
+
+0:20 - Tucker Blair
+Hello, Billy.
+
+0:20 - Billy Keister
+Hello, Tucker.
+
+0:24 - Unidentified Speaker
+How you been, man?
+
+0:26 - Billy Keister
+Oh, busy, busy. You know how it is.
+
+0:29 - Tucker Blair
+You have been. You've been a busy, busy boy.
+
+0:36 - Billy Keister
+My birthday was on the 29th. I don't know if you knew that.
+
+0:39 - Tucker Blair
+Well, your birthday was? I did not know that. How old are you?
+
+0:44 - Billy Keister
+I am. I've been saying my age wrong. For months now, by the way. Oh, really? I am now 38.
+
+0:53 - Tucker Blair
+Well, happy birthday, Billy.
+
+0:58 - Billy Keister
+I worked through it, not because I had to, but because I'm finally on a project that I love. I'm so excited for that. I can't stop.
+
+1:07 - Tucker Blair
+I love it. That's so cool. We're going to have to get back to the coffee shop after we get this thing built. But until then, we're okay. If we can get this thing built, then we can just pay people to do the coffee shop for us. You know what I mean?
+
+1:28 - Billy Keister
+I can't even show you guys. I meant to message in there. I can't even show you guys anything right now. Because I'm in the middle of a free Data transfer. Yeah, migration. So everything is down currently. Oh, well. Sorry, we talked about for long. I'm trying to hurry up and smash it out.
+
+2:05 - Unidentified Speaker
+Think you get it done while we're on the call or is it like a couple hours?
+
+2:07 - Billy Keister
+I've been working on it for a couple hours already. So, well, since 730 this morning, but I'm like at the very last parts of it. Um, so matter of fact, that's okay.
+
+2:27 - Tucker Blair
+We can, uh, if you don't have anything to show us, you know, we've got a bunch of administrative stuff we can cover. I'm gonna make sure Phillip's got all the money that I sent I want to make sure You're getting paid like you sent that invoice. Did you pay it? You got to pay yourself with it?
+
+2:42 - Billy Keister
+Yeah, I didn't yet. I just haven't got around to it I wanted to I don't want to just automatically pay myself.
+
+2:48 - Tucker Blair
+I need to get an approval from somebody Well, that's and that's what we'll talk about here. We've got a you know start being able to to run business, you know what I mean have tracking and Things like that. I need to sit down with Ashley and get QuickBooks up and running. There's just a lot of shit we got to do. But the holidays kind of disjointed me because I had to travel. And I got sick. I didn't really get sick. I don't know what it was. My stomach got fucked up. You know what I mean? I don't know what happened. It might have just been I'm not used to eating non-clean. And drinking as much as my brother drinks. I think I'm just overfed and over liquored.
+
+3:55 - Unidentified Speaker
+Why is it not? I've already ran these.
+
+4:10 - Phillip Vincent
+Hi, guys. Bad when you make it you're late to your Meeting and you're in your own house the whole time. I had to walk downstairs. I'm like, I better get something to drink in I better go pee, so. But I'm here.
+
+4:28 - Unidentified Speaker
+That's Meeting Prep 101, right?
+
+4:29 - Phillip Vincent
+Yeah, yeah, you got to. Yeah, you got to.
+
+4:33 - Billy Keister
+So I was just telling Phillip, unfortunately, I don't have anything to show you guys at this very second, because I was in the middle of a migration.
+
+4:41 - Phillip Vincent
+That's OK.
+
+4:43 - Phillip Vincent
+Yeah, so it sounds like you just simplified some things, right? And it looks like we have till Wednesday now to meet with Mike. So let's try it out a couple of times and go through the, let's, we'll do it like a demo of what we'll do with him a few times and be ready.
+
+4:56 - Billy Keister
+Like it's, I've got it down to here. I can share my screen. I got it down to this is the new campaign maker. It's, it's really that simple. It's that this isn't the most up to date, but this is basically this four steps method. And you put the title here at the same time, set up. You pick the designs on the pages and reveal.
+
+5:26 - Phillip Vincent
+Or upload your own, right?
+
+5:29 - Billy Keister
+So, uploading your own. So, like, if you're just using a form, you don't need to upload your own.
+
+5:36 - Phillip Vincent
+Do they know that? Is that clear in there? Because most people can show up.
+
+5:40 - Billy Keister
+It's very much so. It changes. Like, if Ace handles mailing, right? Their mail house and they want to use ours, then it's a completely different setup, right? Because then it requires you to have design choices and stuff like that because then you have to design and mail or then you have to have other things. So, it's a completely different setup. And then it's, I'm mailing myself. So, I simplified all that down. Gift cards, I've simplified down. The users no longer see pools. They no longer have to have the option to fluid codes in bulk. They no longer have to do anything other than select the brand and how much money on the gift each gift card. That's all they select. $10 card.
+
+6:30 - Phillip Vincent
+How are five digit codes generated from whom and where?
+
+6:36 - Billy Keister
+The the unique codes? Yes, sir. So they are either provided by the customer. But if the customer does not have them, like if we're handling the mailing, we, one upload, it automatically forces you to add a unique code to each client.
+
+6:57 - Phillip Vincent
+And that'll generate itself for them. And that'll be under setup, name codes conditions right there is under that section. Yeah, makes sense.
+
+7:11 - Billy Keister
+So, and then on the back, and it just connects to the thing. So it works exactly like Mike wanted, right? So now the mailer gets mailed out. They call in with a unique code. They give that unique code to the person. The person then says, thanks so much. Can you give me your cell phone number? They give them their cell phone number. There's an instant text message sent out that says, please confirm we're allowed message you, blah, blah, blah. And then the next screen on the call center's reps page is, did they listen to your entire sales pitch?
+
+7:50 - Phillip Vincent
+Which means they met the condition, right?
+
+7:53 - Billy Keister
+And as soon as the call center person says yes, then another text message goes out. It's editable, like we can choose what it says, but it's the direct link to the landing page, where the user can then fill out the form and get their gift card.
+
+8:12 - Phillip Vincent
+And it's as simple as putting your cell phone number back in and the five-digit code back in, correct?
+
+8:17 - Billy Keister
+That's the only two things that are needed. That's pretty simple. Actually, they don't even need to put in their cell phone number again, because we already have that.
+
+8:27 - Phillip Vincent
+Oh, I see. Only they've already verified it, and they wouldn't have that code. Nobody can, uh, is it called nerfing? Somebody can game the system unless they had those codes.
+
+8:44 - Billy Keister
+And, and if they wanted to game the system, they would have to redeem that gift card in the rep saying, cause it immediately, as soon as the rep says they listened to my sales call, that's when that code becomes active. Ah, it's not even active in that moment.
+
+9:04 - Tucker Blair
+That's why it's so cool. Yeah, that's sexy, guys.
+
+9:08 - Billy Keister
+Yeah, so like, even if somebody was to get all the unique codes, like from the mailers, if they were to go down the street and pick up all the cards and like, yeah, put in those codes, it would help. It would do them no good. They can't steal it. And each unique code is tied to a customer is tied to a client. So unless they call up and confirm all that information. So yeah, the system is, I'm not going to say impossible to game, but I can't think of a way to game it.
+
+9:40 - Phillip Vincent
+I'm sitting here wondering that it's probably best to leave that re-verify your cell phone number in there. If we ever do get questions about validity that they gave us the cell phone, if they re-put their cell phone number in again, I'm sure having that redundancy is a good thing for us.
+
+9:52 - Billy Keister
+I agree with that. And remember, this form is so editable that you can even add conditions to it. I set up a condition engine to the forms. So like you can ask them, do you have another car? Now it's the dropdown of what kind of car.
+
+10:09 - Phillip Vincent
+Or whatever they come up with, right? Yeah, exactly. But I think where that really becomes valuable is all their waste. All the people that say no, that 80, 90% that say no, that they're just getting the freebie. There's a way to generate more leads from that as well.
+
+10:25 - Billy Keister
+And if the person didn't buy on the phone, right, then we can have that information right then and there. And we can like through customizing the system, because it can be more powerful. Yeah, we know that they didn't buy. So we can send them to a different landing page if they didn't buy.
+
+10:42 - Phillip Vincent
+Yeah, well, only there was a downsell offer the way it's 80. I was gonna say, I'm like, Jesus, we don't sell them.
+
+10:47 - Billy Keister
+That's the whole point of why I was saying that yes, you can want to buy some coffee from fuel.
+
+10:56 - Tucker Blair
+Let's do it. I'll ship it out. I'll ship it out tomorrow.
+
+11:02 - Phillip Vincent
+That's awesome.
+
+11:04 - Billy Keister
+So with the downsell option, it's I think it becomes really cool, too.
+
+11:10 - Phillip Vincent
+But for MVP, we want to try to just keep that form background of the postcard. Yeah, for the MVP, I'm making it so super Do you think it would behoove us to come up with some simple designs of what these cars could look like, Because people keep asking me that. They almost like need to see it. And it's not hard. I just, I haven't spent too much time on chat GPT to try to make that look good. Or do you think that's worthwhile?
+
+11:36 - Tucker Blair
+What do you mean? That little graphic behind Billy is plenty. I mean, that little graphic behind Billy is plenty, man. I mean, that's all we need is something like that.
+
+11:44 - Billy Keister
+You're talking about the mailers.
+
+11:46 - Phillip Vincent
+Yeah, a couple examples of what these mailers look like, Because I talked to two people today. They both love the idea. They say, Phillip, can you show me what it looks like, They're just interested, you know? I mean, I've got some pretty, let me find them. I'll send it here. But it could be much better.
+
+12:06 - Billy Keister
+I created some really ugly ones.
+
+12:09 - Phillip Vincent
+Yeah, me too. And I think guys, like what I'm saying is they're going to show up with their own perfect designs with tons the data behind why it's that design. We don't want to get in their space. There's no reason to.
+
+12:26 - Tucker Blair
+Who's asking you what they look like, Phillip?
+
+12:28 - Phillip Vincent
+Two people, one in the real estate space. Interestingly enough, we're both part of this mastermind that he kind of coined the dollar mailer. So listen to this, guys. He sends out a letter, which is probably 76 cents. He puts a $1 bill in every single one of them. So now he's spending open $1.76, rates, a half a percent. He's wasting $99 every single time he does a mailer for that one person to open it and go, wow, that's cool. You know?
+
+12:57 - Phillip Vincent
+That guy needs a card, man.
+
+13:00 - Phillip Vincent
+Listen to this. We did the math. We did the math. When he does 4,000 mailers that he's spending $4,000, obviously, right? Plus, let's say, what's 65 cents times 400 or 4,000, somebody. $6.50, or 2,600, he's spending 2,600 on the mailers. He's spending 6,600 to get that half a percent even with the dollars in there. We use the example of just doing 1,000 mailers with a 25% response. He came back to that, I don't know if I'm ready to handle 250 calls, because he did five. And I said, what a great problem we have here. But my point was, is he'll probably buy five, and he said, what did he say? He buys about one house for every 10 calls is what it is when it's the low amount. So will that stay true? Could he really buy 25 houses out of 250? That sounds high. So let's be even more, guys, if he bought just five houses of the 250 calls, he would give us a back rub for how powerful that is.
+
+14:06 - Tucker Blair
+You send fewer mailers, right? But you're still spending the same $4,000, but you get two times the response rate.
+
+14:14 - Phillip Vincent
+Well, yeah, way higher, right? It's actually 50x the response rate if he gets 25 percent. Right, if he gets 25 percent. Yeah, so now he's at 65 a mailer times a thousand. He pays $32.50 for, and I used $10 and $3, $13 the math I came up with. He spends $32.50 plus $6.50, so just say $4k. So he spends but $2,600 he got 250 calls versus the 20 calls he got from the 4,000 mailers.
+
+14:42 - Tucker Blair
+I mean, think about it, man. It's like, it's, it's a no brainer for guys like that. He got a small, tiny account, but there's gotta be a thousand guys like that out there.
+
+14:50 - Phillip Vincent
+Hundreds of thousands, hundreds of thousands that do stuff like this in different businesses. And once again, I want to build for the whales and he kind of, I guess my post I put out in that, uh, group of men about we have the ability to call back. I already prefaced it. Yeah, we can. We have that ability, but on the size of your account, since you only send that many or probably not, you either can afford the 13 bucks to make your phone ring or not. Where I said, I gave the example of people sending millions. We might do it there only because it's, you know, we're trying to be their standard. And he got it, he didn't push back. He's like, well, yeah, I mean, that's what I'm saying. I mean, well, let's call back, but let's charge you 10 bucks every time the phone rings. I mean, we can play with the numbers, you know what I'm saying? I'm trying not to do that.
+
+15:32 - Tucker Blair
+Yeah, the point is he's not throwing away that $99 out of every hundred that he sends out.
+
+15:36 - Phillip Vincent
+And he does it 4,000 times.
+
+15:37 - Tucker Blair
+Yeah, and you're getting clean data across the board on what you're doing as opposed to zero data for 99 out of 100.
+
+15:45 - Phillip Vincent
+And he got really excited about if you had 25% response next month, you only need to send 3000 mailers. That's powerful. My other guys in the healthcare space, he got away from direct mail. And he's trying to do some online stuff. So he's a national customer too. And so I'm going to meet with him on Friday.
+
+16:10 - Tucker Blair
+What kind of health care space?
+
+16:12 - Phillip Vincent
+He basically has aid and attendance benefits. So he gets about 500 leads a month organically from home health care agencies, where they say the three of us are brothers. We want mom to get care, but she has no money. But turns out dad was in the Army. And now she's eligible for aid and attendance. Most Americans don't know that that's real. So there's an awareness issue. So as long as they have less than $163,000 in cash, house excluded, they could have a million dollar house, that wouldn't matter. 163,000 cash and dad served in a wartime, the mom is eligible for that. It's about 21 grand a year or two and say in money.
+
+16:49 - Tucker Blair
+It's called VA. Oh, it's a VA benefit.
+
+16:52 - Unidentified Speaker
+Yeah, VA.
+
+16:55 - Tucker Blair
+Aid and attendance.
+
+16:57 - Phillip Vincent
+And so here's the thing, guys. It's a 50 page document online that you to do, I think it's monthly. I think it's monthly. And if you mess up on page 47, you got to start off on page one. Every bit of this shit's on purpose, guys, they don't want to pay it. You know, you know, in a perfect world, they're like, Hey, here's your money every month because your husband served in war, they definitely don't do that. And so he works as an outside vendor to do that compliance every single month for the three brothers of us. And it costs like five grand. But here's the thing, if we start getting 25% $500 a month in savings for it, and we never have to touch it. It's a yes all day long.
+
+17:35 - Tucker Blair
+Hey, man, look, my mom is spending 10 grand to 15 grand a month for in-home care for my dad. So it's like anything that takes a chunk out of that is a big deal.
+
+17:49 - Phillip Vincent
+Did mom or dad serve in wartime? Dad was, he's my stepdad, so he was- But they're married though, right?
+
+17:59 - Tucker Blair
+As long as Yeah, yeah, they've been married for 35 years. He, he was in the Air Force. I don't know if it was during quote wartime. He was never deployed. I know that but it might have been during Vietnam.
+
+18:13 - Phillip Vincent
+You'd be surprised how many people are eligible even if they didn't shoot a gun, right? If they were active is the term and they were active during that wartime. They're all right. I'll check that out. Let's get that 21 grand a year.
+
+18:29 - Tucker Blair
+It just says during wartime period. I mean, that's huge, man.
+
+18:33 - Phillip Vincent
+You know, the assets might be where they don't qualify, not including the house. Do they have less than 163,000 in assets? If it's above that, they don't qualify.
+
+18:43 - Tucker Blair
+They don't qualify. Well, if he stays, if he stays alive for another they're going to qualify.
+
+18:52 - Phillip Vincent
+I knew a guy that was 99 years old. He was spending 50 grand. For 24-hour care for him and his wife. She died, it went down to 30 grand. He was a multi-multi-millionaire and he burned it all.
+
+19:03 - Tucker Blair
+Fuck, it's so fucking irritating. You know, you can get around that with Medicaid. You just have to understand how to use the gifting and look-back provision correctly. And if nothing else, it's only a five-year look-back. So if you're 85 to 90, you're not going to burn through that 50 grand a month for five fucking years.
+
+19:21 - Phillip Vincent
+But people don't Well, first of all, okay, you got to look at that Medicaid thing. They will never give you 30 grand a month for Medicaid.
+
+19:30 - Tucker Blair
+No, no, no, no.
+
+19:32 - Phillip Vincent
+I'm telling you right now, brother, it's not the answer that you think it is. People think Medicare, which is a drug plan, will pay for their long-term care. It will not. Medicaid will pay 21 days for relief and then up to 100 days and then that's over. Unless you're going to a Medicaid facility and a guy with means, you go to Taj Mahal and you stay at a Motel 6, It's not where you want your to be honest with you. No, no, no, for sure. So yeah, he's a big wig in this space. So I mean, I'm taking meetings about, because I want to try to multiple industries, right? We need some data across multiple industries here.
+
+20:08 - Tucker Blair
+Yes, yes.
+
+20:12 - Phillip Vincent
+Billy, great job. I think you took what he wanted. You created it into the world. You birthed the baby of what he wanted. So now, If he was here right now, what do we need to be able to send the gift card right to him if he's the case use customer?
+
+20:32 - Billy Keister
+I can send it through email right now. I can't send through a phone number because Twilio hasn't been approved.
+
+20:37 - Phillip Vincent
+I'm going through that.
+
+20:41 - Billy Keister
+You know what? I can set up. I can finish setting up that temporary provider to where we can send him a gift card on Wednesday.
+
+20:48 - Phillip Vincent
+And let me ask you, the temporary provider is probably not big enough to help us with our 30,000 test mailings, or is it big enough to do that?
+
+20:55 - Billy Keister
+It's big enough to do that. But the problem is when it goes to sub-billings and stuff like that. Twilio is built for software as a service platforms, right? This is meant for users.
+
+21:07 - Phillip Vincent
+I don't think I understand the problem. So basically, long story short, we need Twilio.
+
+21:12 - Billy Keister
+So Twilio can handle multiple phone numbers, multiple big systems, right? Which is what we need, right?
+
+21:20 - Phillip Vincent
+Yeah, we definitely need that.
+
+21:21 - Billy Keister
+This temporary provider can give us one phone number to use.
+
+21:26 - Phillip Vincent
+With the response rate being way, way into the probably 99% range where they text back, we should be okay on compliance though, right? Oh, you're saying because we can't track it across three different campaigns.
+
+21:37 - Billy Keister
+Exactly, right?
+
+21:39 - Unidentified Speaker
+So we need- You can only do one thing.
+
+21:41 - Billy Keister
+Proper tracking and proper everything. But I can- use it to set up for right now so that way we can test the system. Yeah, that's fine.
+
+21:48 - Phillip Vincent
+Now, could we just buy a phone number for each person or is it too cost cumbersome to do so?
+
+21:55 - Billy Keister
+It's just way easier to use Twilio.
+
+21:57 - Phillip Vincent
+Okay, so what does it take to get that approval?
+
+21:59 - Billy Keister
+I need all the incorporation documents. For Fillboard. I can send that to you. And I need the EIN. I think that's everything.
+
+22:18 - Tucker Blair
+Phillip, agreement, EIN, state licensing, if you have it, if you don't have it.
+
+22:24 - Phillip Vincent
+Yeah, we don't. Operating.
+
+22:29 - Billy Keister
+Hold on, I can tell you exactly.
+
+22:31 - Tucker Blair
+And then you need your articles of formation from your state, whoever you filed with. And those probably have to be certified, so get a certified copy of that.
+
+22:45 - Phillip Vincent
+Yeah, I have all those things. So that's how I set the bank account up. Will you email me that or what exactly? And I'll get that to you.
+
+22:55 - Billy Keister
+Yeah, I don't think you need them like certified or anything. But here's let me just share my screen.
+
+23:04 - Tucker Blair
+They very likely have a way to just they have a system to just go in and check that you're on that Secretary State's website as a registry.
+
+23:13 - Billy Keister
+So we will have to get each customer verified as we're bringing them in. But as an ISV, we need to provide company name, physical address, business type, status, industry, website, name, job position, blah, blah, phone number, email address of an authorized representative. So that has to be Phillip, I believe. Um, so yeah. And then, uh, EIN, uh, just kind of, and the opt-in work workflow. So we're going to have to, uh, show the opt-in process to Twilio.
+
+23:55 - Phillip Vincent
+And because we're asking the opt-in first, they're going to like that, right?
+
+24:00 - Billy Keister
+Well, it's kind of required nowadays.
+
+24:03 - Phillip Vincent
+By the way, I have to do this for every For every website we set up for my people that are senior transition specialists, we have to do this verification every single time. It's just the new standard.
+
+24:16 - Billy Keister
+So this is the same thing. So they're just going to put us under a bigger microscope because we're going to get permission to be able to grab some extra numbers and be able to assign them out.
+
+24:27 - Phillip Vincent
+And do we know how long it takes?
+
+24:29 - Billy Keister
+We're going to be able to do our own due diligence.
+
+24:33 - Phillip Vincent
+for verification? No, I'm asking a question. Do you know how long it's going to take?
+
+24:41 - Billy Keister
+It might be a week. It might be 10 days. Not sure. Normally, they're pretty quick, though.
+
+24:50 - Tucker Blair
+So let me ask a couple of quick questions, make sure I understand just formation-wise what we're talking about here. So we're going to run this through Fillboard, right?
+
+25:01 - Phillip Vincent
+For now, that's not the goal. It's really to be run through the subsidy of mobile, right?
+
+25:05 - Tucker Blair
+Yeah, and actually that reminded me on that page that you had, you were talking about Ace runs your campaign or you run your campaign. I think that should say mobile, not Ace. Ace is the card, and mobile is the company that's deploying the card.
+
+25:21 - Phillip Vincent
+Another way to say it is the product. Ace is the product, right?
+
+25:25 - Tucker Blair
+Right, right. So you want to change those, Billy, I think, unless I'm misunderstanding. Or something.
+
+25:31 - Billy Keister
+What page are you talking about this?
+
+25:35 - Tucker Blair
+No, you were showing the actual front page of the of the dashboard. And where you go to who's going to do your who's going to do your thing? Are you Are you doing it or are we doing it?
+
+26:01 - Billy Keister
+Where do you see that?
+
+26:03 - Tucker Blair
+Well, that was the first thing you showed us.
+
+26:06 - Unidentified Speaker
+Oh, that screenshot.
+
+26:08 - Tucker Blair
+That right there. Yeah, I'm mailing myself. Ace handles mailing. Where it says Ace, it should be Mobile handles mailing. I want Mobile to design, print, and send for me. What Mobile is sending is an Ace card, Ace branded card.
+
+26:24 - Billy Keister
+Yeah, Mobile's the company. You're right.
+
+26:27 - Tucker Blair
+I get them confused sometimes, because I call the company in my head Mobile Ace, M-O-B-E-A-C-E, M-O-B-E-A-C-E, M-O-B-E-A-C our branding and that would be that would be using it as our branding because it say we want ace to do this for us so it's really if you want to use it we got to specifically nail that down yeah Tucker I don't care if we it'd not to let us use it but at the same time if they say no it's not gonna stop us from what we're doing no no of course and I think they would say fine But it will, I mean, they've got acecard.com whatever. I think it might create some confusion between their company and our company. It's probably better that we differentiate the brand, the company that is our service, right? That provides that product, differentiate those two.
+
+27:40 - Phillip Vincent
+And to be clear, I'm just as happy with it saying mobile and then the actual customer engagement program. We can just use the words that Ace represents. We don't need to say the word Ace.
+
+27:50 - Tucker Blair
+And you can use it as the They don't care about that at all. They want us to do that.
+
+27:55 - Billy Keister
+I got it up and running up for you guys to see the campaign creation. All right, cool.
+
+28:00 - Tucker Blair
+Let me just finish this line of thought real quick, Billy. They want us to use Ace as the card. They want us to brand that for them. They're very interested in that. And that's actually something that we're providing exposure for them through this. And that's a value that we're providing to them. Because if we take it out and expose this thing to thousands of users, obviously they're getting a lot of exposure on that if we use that branding. We don't have to call it the ace card though, so it's really something that they're getting value for that we're providing that is in addition to the percentage that we're paying them.
+
+28:37 - Phillip Vincent
+And will they see it that way, right, is the question?
+
+28:39 - Tucker Blair
+They will see it that way. Dave will definitely see it that way. We didn't get this far in our conversation internally, so I didn't put that into to the memo that I sent him, but I will broach that as well, especially when we get pushback. It's a great thing to come back with and say, wow, yeah, I see what you're saying, but let me tell you this, we're gonna be promoting your ace card, and if you want us to do that, we're not gonna charge you for that, it's just an additional benefit, it's extremely valuable for you. So I can use that. Yeah, that looks good, Billy, I like that much better.
+
+29:12 - Billy Keister
+No, nevermind, it's not ready. I thought it was, it's not.
+
+29:15 - Tucker Blair
+Mobile Ace looks pretty cool, actually. That they will probably allow us to use. Yeah, that does distinguish us from them enough. Because what they want is just they want like a MasterCard, a Visa card and an Ace card. You know, I mean, that's how they want people to see these, these Ace cards. So if we're mobile Ace, we're just the mobile MasterCard or the mobile Visa.
+
+29:43 - Billy Keister
+I'm sorry. Yeah, I got to go back in and I need to finish like creating all the dummy data for this.
+
+29:49 - Tucker Blair
+Billy, it's okay. Don't don't rush through it, man. Take your time. And we'll come back to it when it's ready. We're not in a huge hurry. We just need to have I guess we're gonna make a plan.
+
+29:59 - Phillip Vincent
+That's all we're really discussing here. What's the plan? We need to be ready for Mike tomorrow.
+
+30:07 - Tucker Blair
+Not even tomorrow. So we got time.
+
+30:09 - Billy Keister
+Yeah, yeah. I'll be ready by then. Um, I'll be ready later on today for a lot more showing. Um, honestly, I was ready earlier this morning for a lot more. And then I decided to, to move it. Because I was having problems with CLI and it was slowing me down. Um, CLI, uh, uh, command line interface. Uh, so I was trying to like do database updates in real time and it was like, it's an extra two or three minutes per database at it, but it's, that's a lot. Considering I'm doing two or 300 edits and it's like, what the fuck? Um, yeah. Uh, if you guys want to do this again, really quickly tomorrow, just as a demo now, absolutely.
+
+31:09 - Tucker Blair
+I think anytime we get a to demo this thing and take a look, run through it together, it's valuable because we all see different things.
+
+31:16 - Phillip Vincent
+And what's his biggest concern, guys, is really our texting problem right now. Do we have the ability to text these out at scale? Because 30,000 generate 7,500, no, yeah, 7,500 gift cards. That's not a little number.
+
+31:31 - Tucker Blair
+No, it's a huge number. If we have to start managing that shit manually, all of our wives will be involved.
+
+31:40 - Unidentified Speaker
+Yes, yes.
+
+31:41 - Tucker Blair
+Our children.
+
+31:42 - Billy Keister
+It just doesn't work.
+
+31:46 - Phillip Vincent
+It doesn't work manually. No, no, it does not work.
+
+31:49 - Phillip Vincent
+It did work when he sent 100 mailers.
+
+31:52 - Billy Keister
+And that's honestly a big reason why I completely redid the gift card system was because I was like, if they've got 12 campaigns going, right, and they have to worry about a pool for each campaign. That's going to get complicated and hard quick. So instead of that, just have them like a credits, you know, on their dashboard is credits that auto reload when the credits get low. And, and the way that I have it reloading is, $500 is the minimum balance in the account at $500. It tries to reload. And this is a adjustable number, but and it just keeps reloading to keep always $500 in the account to keep the gift cards coming.
+
+32:46 - Tucker Blair
+So you can adjust the minimum trigger, but you can also adjust how much reloads, right?
+
+32:52 - Billy Keister
+And I can adjust every part of that. And I actually wanted to make it smart, kind of like Facebook ads billing, right? Phillip, you know this better than I do, but like with Facebook ads, when you're running ads, had to pay for each individual impression, it'd be like three cents a million times a day. They charge you in increments.
+
+33:15 - Phillip Vincent
+Yeah, every night it hits me.
+
+33:19 - Billy Keister
+Well, it might even hit you twice in a day if you use it a lot that day. That's the system that I see for us, except for preemptive billing instead of retroactive.
+
+33:33 - Phillip Vincent
+Yeah, ever be on the hook for them.
+
+33:36 - Billy Keister
+So Facebook lets you, you're like a little bit on the hook, right? You can owe them money. So with my system, I'm building it out to where we're always reloading to where we're always going to have enough.
+
+33:49 - Phillip Vincent
+That's the only way to do it. Keep it getting.
+
+33:51 - Tucker Blair
+What happens if their reload fails and they're still incurring?
+
+33:56 - Phillip Vincent
+From what I've heard, Tucker, it'll be fraud on them. He said, mail fraud.
+
+34:01 - Billy Keister
+Yeah, well, so on our side, as soon as their credits hit zero, they stopped getting gift cards.
+
+34:09 - Tucker Blair
+But I mean, what, how do we fix that for them if that happens, and they don't really know what's going on?
+
+34:13 - Phillip Vincent
+A redundant card, two cards on file? Well, and this is this, have we incorporated the zero balance accounts, where it pulls from a bank account. So instead of pulling against a credit card, which will fail all Yeah, I have not done that yet.
+
+34:30 - Billy Keister
+Yeah, but going based off of completely credits on a dashboard. I don't know how to work with zero balance accounts. I've never done it before.
+
+34:38 - Phillip Vincent
+Yeah, Mike will.
+
+34:39 - Unidentified Speaker
+I'll need his help with that.
+
+34:41 - Phillip Vincent
+Yeah, publicly traded companies, it's gonna hit some account with a ton of money in it, right? And credit cards fail all the time because of expiration dates and stuff. And when you get to scale, it's such because remember, guys, we hope to have these people on for years and And then credit cards have limits, and they're not always very high. No, it's the fail rate can cause a lot of pain. And we don't want to have that happen.
+
+35:02 - Billy Keister
+We're the bigger customers will figure out a better way than credit cards, right? We'll do like transfers.
+
+35:09 - Phillip Vincent
+He already said the answer for it. He said this. Well, that's all about it. So that's what you know, if he if he's done these before, and he said, that's your solution. We'll just ask him how to get it implemented. I think your solution solution is good enough for the test of the 30,000. I really do think it's good enough for that.
+
+35:31 - Billy Keister
+I mean, it could probably handle a couple, like if we had enough, yeah, it would handle millions.
+
+35:36 - Phillip Vincent
+So I think we're good for Wednesday's call. It's just, we don't want it to be tied to credit cards.
+
+35:43 - Billy Keister
+No, not. So yeah. When we talking about version three and version four of the software, you know, that's when, or version I'm thinking this is a version two. Honestly, guys, I really think that there's not an AI first omnichannel marketing solution. And I think like version three or version four is we should really think about that. Like, there's no reason why we can't do email for this. There's no reason why we can't do drip campaigns There's no reason why we can't just, as of right now, most people have to sign up for their email marketing, their direct mail marketing, their SMS marketing, and that's all separate platforms, right? And you gotta work, you gotta hire people to interconnect them and to connect that data together and Zaps and Zapier and all kinds of confusing things. I think realistically in six months, less than six months, we could just have a platform that just does it all. Like you come to us and like our AI software says, is just like walks you through it. When all the best platforms, it just does your marketing.
+
+36:59 - Phillip Vincent
+They say the way to eat an elephant is one bite at a time. And so once we eat this first couple bites, the world we can do whatever we want. I hear you and I agree with you. And it's just, I feel like I don't want it to distract Billy's brain from what we're trying to do.
+
+37:15 - Billy Keister
+No, no, no, no. I'm nowhere on it yet. I swear to God, I'm not. I agree with you. I agree with you.
+
+37:22 - Phillip Vincent
+Based on what my calculator tells me every day, we have one focus. One, to make this simple. And it's not hard, right? The system we're building is code, they get a text back, they listen to the spiel, which is, I hate calling it, if there's a better name than the timeshare model, let's come up with it. But that's basically what it is. And people get that they traded three hours of your time for these tickets. I'm trading seven minutes of your time for this gift card and we deliver it. We're rich as fuck, Billy. And here's the thing, customer service and emails and, and, um, employees. Which I mean, this is what I'd rather do. I'd rather go ahead on that wall. And it doesn't mean there's not millions of dollars in there. I'm just saying we have a thing that is going to print fucking money with very low employees. That is a sexy business. And if we want to have an offshoot and grow, you guys can do that. That's a unicorn business.
+
+38:23 - Tucker Blair
+That's a fucking unicorn right there.
+
+38:26 - Phillip Vincent
+And one of the biggest things that for unicorns they look at is revenue per employees. And if your revenue is crazy high and you've got six employees, that's pretty sexy. If you've got 6,000 employees, it's just not It's just never as sexy. People are trying to get away from employees right now. Look at what's going on in the world, right? I agree with you, Billy. Let's eat one bite of this elephant right now. And I agree, you're an elephant.
+
+38:51 - Billy Keister
+I'm all the way there with you. And by the way, I think that when we do grow, I think that we should be AI everything, AI customer support, AI call-in support, AI everything, right? We are AI first company.
+
+39:06 - Phillip Vincent
+With very few employees. Yes, agreed.
+
+39:08 - Tucker Blair
+Let me tell my concept of this is. Here's what my concept of this is, Billy. If we can get this thing working the way that Phillip is seeing it, with the kind of customers that Phillip is seeing, and we get those whales in there, and it's very little work for a lot of money, the first thing we do is we go acquire a public company, reverse merge into it, and then sell this motherfucker, you know, of it, and we're out, and we hire a bunch of guys to go run it and do what want to do next.
+
+39:37 - Phillip Vincent
+Doesn't matter. That's right. Let's do all that. But yeah.
+
+39:42 - Tucker Blair
+But Phillip's right. Start with this. And Phillip, to Billy's credit, this is exactly what he's done. He's built this thing. I can't believe he's built this this fast.
+
+39:51 - Phillip Vincent
+Yeah, it's there. It's real. Yeah, it's and it's. So let's let's take this simple ish thing and make it home, right? That's the key right now. And that's the biggest fear is not is will this work at scale? That's his only concern before he puts his name on it, right? 30 years of credit. This one bite of the elephant has to work flawlessly.
+
+40:11 - Billy Keister
+Well, you know, I'm going to test it at scale before we ever launch our first campaign. There's ways to test it at scale. So I'm going to simulate 30,000 people using the system all at the same time.
+
+40:23 - Phillip Vincent
+He'll love that you're saying that, right?
+
+40:25 - Billy Keister
+I'm not going to guess if it's going to work or not.
+
+40:29 - Tucker Blair
+I mean, right now you've got, uh, you know, one, one to 10, you know, user platform that you can show him, but you could tell him that and tell him, Hey, our next step is to test it at 30,000, which we can simulate. And then we'll know for sure that it's going to work for your guys, whether or not their marketing works is on them. It's not on us, but the system will work.
+
+40:50 - Phillip Vincent
+That's all right. Question that he asked about the legal stuff.
+
+40:54 - Tucker Blair
+Uh, didn't find any more. I already know the answer though. The answer is there. I don't see any problem legally with us doing that. That statute does not apply to us.
+
+41:05 - Phillip Vincent
+Do you think us citing something will help him? Because that's great that you feel that way, but he seems like a fact checker kind of guy, you know?
+
+41:13 - Tucker Blair
+Well, I mean, there's not a case out there you can rely on. You know, there's no authority for it. It's just you have to interpret the statute and look at it, and you have to create a legal opinion that says, yeah, this does not apply to us. Here's why. Boom, boom, boom. And that's all you can do. So if he needs a memo, we can support him. Why I'm a memo and we can have it signed off by a lawyer who is- I think that would help.
+
+41:35 - Phillip Vincent
+And I get why the Circuit City thing is that was gift cards that consumer paid for and now they were over a barrel. That's not what we're doing here at all.
+
+41:42 - Tucker Blair
+Not what we're doing here at all. And that's one of the three exemptions that we have. There are two stronger ones than that.
+
+41:49 - Phillip Vincent
+Well, good. And maybe just in that memo, just cite those and say- Yeah. I'll have that formed by the- I don't think it needs to be complicated. I just think that we, hey, we heard you, we listened and here's why.
+
+41:58 - Tucker Blair
+And I'll other potential roadblocks that that I find when I put that memo together.
+
+42:07 - Phillip Vincent
+And then I'll have Dave sign off on it. And Billy, when you start doing the math on, you know, these guys are doing eight million pieces a week. I mean, if we if we become their standard, brother, there's. Yeah, start looking for boats, you know. Another question.
+
+42:26 - Billy Keister
+for us was PCI compliance. Yeah, I set up a Meeting tomorrow with the PCI compliance company. If you guys want to be on that.
+
+42:36 - Tucker Blair
+Around that time to meetings about compliance stuff like that. All right. Just make sure that I get on those.
+
+42:44 - Billy Keister
+I will. Yeah, yeah. It's with Vanta.com. I just signed up for it.
+
+42:48 - Phillip Vincent
+It's the one that said they're the big player in the space. Tucker, I would the So our only word of advice, we want to make ourselves feel, even though we're going to be big, we want to feel as small as possible so they don't try to put us over a barrel. Like we don't want to go into that Meeting talking about how much money we're going to make, right?
+
+43:04 - Tucker Blair
+No, hell no.
+
+43:06 - Phillip Vincent
+Based on how much, you know, who knows how they charge. And if we call ourselves a whale, then they're going to charge us like a whale.
+
+43:12 - Tucker Blair
+Oh, we're not going to, no, we're going to say, Hey, we're a complete startup. We need your smallest possible package. We have zero money.
+
+43:17 - Phillip Vincent
+I mean, that's why I'm saying that, but we all need to be on that same page. We're a half hand in this Meeting.
+
+43:23 - Tucker Blair
+Yeah, yeah. We're new little minnows in a big pool.
+
+43:27 - Phillip Vincent
+And basically we are. We've done 400 mailings-ish. Sort of, not really. We're that tiny. We're that small. We didn't even do.
+
+43:35 - Tucker Blair
+It was four years ago.
+
+43:38 - Billy Keister
+The only thing that we have to worry about within software is if we say that we're a minnow and they set us up, they limit our speed. Some stuff that we're doing.
+
+43:51 - Phillip Vincent
+Let's have that conversation openly.
+
+43:55 - Billy Keister
+So like right now, when I'm talking to the print houses, when we sign up for an account with them, we have to sign up for an account that can handle massive amounts of calls and requests, right?
+
+44:09 - Phillip Vincent
+I don't think that's your time should not be focused on mail houses at all, Billy. I don't want to be in the mail house business. I don't. Not when the customers have all of that done. We're a tool that goes on top of mail house companies.
+
+44:24 - Billy Keister
+That's the type of company that could.
+
+44:28 - Phillip Vincent
+I know. And yeah, of course they won't scale. There is business there, but it's like some term about we're tripping over quarters to get to nickels or something like that. It's like, what are we, you know, the customers we want aren't the little ones.
+
+44:45 - Billy Keister
+So always the, so should we just take away ACE handles mailing for right now?
+
+44:49 - Phillip Vincent
+Yes, I think so. I would do that for a distraction.
+
+44:53 - Tucker Blair
+It's a distraction. Don't, don't, don't kill it, Billy. Just take it. Leave it in the background.
+
+45:03 - Billy Keister
+Well, that's what I'm saying. I'll just won't leave it as an option for right now. Thank you. Um, so I'll, take out that complete. So now we're down to three steps. Yeah, remember, they're gonna show up.
+
+45:14 - Phillip Vincent
+Remember, you want to get their data, they're gonna show up with their data, right? They're gonna show up with their mail house, and they're gonna show up with their designs.
+
+45:22 - Tucker Blair
+And Billy, I think we're probably gonna get pushback once Mike realizes what we're doing with this on making them after the call, go to a website to put in their stuff. I don't think they even want us to make their customers do that. I think they just want to just authorize it right there on the phone and it's done. You know, they either get the sale or they don't.
+
+45:41 - Phillip Vincent
+I don't think they want that. You might. And Tucker, couldn't the call center person just go to that website link and generate that? They already have their code. They already have their code and they already have their number.
+
+45:50 - Tucker Blair
+Call center person could be the only one that sees that landing page.
+
+45:53 - Billy Keister
+By sending them to that landing page, that's our second or third bite at the apple, right?
+
+45:59 - Phillip Vincent
+Nobody's asked us for that yet though, Billy.
+
+46:02 - Tucker Blair
+And they've indicated they don't want that kind of complexity in their in their process. For this kind of customer. Like all they want is a phone call, that's it. They don't want anything else.
+
+46:12 - Phillip Vincent
+And once again, I agree with you, there's another body of the Apple that maybe gets introduced later, but they're not asking us to do that right now.
+
+46:18 - Billy Keister
+Yeah, but okay, so when we send them the gift card, we send them...
+
+46:23 - Phillip Vincent
+The gift card.
+
+46:27 - Tucker Blair
+That we could track when they use it.
+
+46:29 - Billy Keister
+So we just text them the gift card?
+
+46:32 - Tucker Blair
+Text them the gift card. That's our only job.
+
+46:34 - Phillip Vincent
+We fucked our $28 and we do it How do they use the gift card?
+
+46:39 - Phillip Vincent
+Well, you put it in your wallet still, right?
+
+46:40 - Phillip Vincent
+It goes in your wallet and they scan it.
+
+46:41 - Tucker Blair
+Well, to do that, we got to send them to a page.
+
+46:44 - Phillip Vincent
+No, the call center person could go to that page and type it in. They already have their code and they already have their... Hey, it looks like the validation just came through.
+
+46:52 - Billy Keister
+I'll a... Let's think about the technology side of it. So the person sends them the code, the gift card to their phone. Now, for me to add that to the Google Wallet, there's got to be a link there. There's got to be a page that they go to and click, because you're doing it on your phone. When you hit Add to Google Wallet on a web page, what it's doing is it's opening up Google Wallet on your phone and making that connection there and then importing the data from that page into Google Wallet.
+
+47:31 - Phillip Vincent
+So, you're saying the call center person would open up their wallet from their command center, and that's not what we want.
+
+47:37 - Billy Keister
+Yeah, exactly. So, they have to go to a page at some point in time to be able to get the gift card. And let's put that stuff in the gift card code.
+
+47:49 - Phillip Vincent
+Yeah, for now, that's probably fine.
+
+47:52 - Phillip Vincent
+We're just saying, let's don't make that second or third bite of the apple right there right now. Let's just deliver it as cleanly and simply as possible. Where they can open it up in their wallet. As soon as that hits their wallet, we've done our job.
+
+48:05 - Billy Keister
+So we'll just make it to where that page is just enter unique code only.
+
+48:10 - Phillip Vincent
+Well, once again- And confirm cell number. I like the cell number there too, because if we ever get questioned that you didn't have the right to do that, they'd put it in twice now.
+
+48:19 - Billy Keister
+Okay, yeah. Okay, unique code and cell phone. Yeah, perfect.
+
+48:23 - Phillip Vincent
+And now it opens up in their wallet. And hey, here's a good question. I think you're right. How you're thinking, Billy, this is a question we need to ask Mike. Here's how simple we've made it. Will this fly?
+
+48:34 - Tucker Blair
+And he does want more complexity.
+
+48:36 - Tucker Blair
+He's actually said he wants more. He wants another bite at the apple. But he doesn't think these guys that he's he's doing the service for want that.
+
+48:44 - Phillip Vincent
+Yeah, he's just questioning can we deliver the damn gift card in the first place? So let's start there. That's that first bite. Let's start with the minimal and then we can add.
+
+48:54 - Billy Keister
+Yeah, we're already at that. I'm already delivering the gift card, like that's already done. That system is built, that's done, that's in the past.
+
+49:02 - Phillip Vincent
+And did you buy some gift cards to where we can actually send one on Wednesday?
+
+49:06 - Billy Keister
+I didn't buy them yet, but I did it with test gift cards.
+
+49:09 - Phillip Vincent
+Which is probably fine. He'll get it.
+
+49:11 - Tucker Blair
+Yeah, it's so cool.
+
+49:13 - Unidentified Speaker
+It is so cool.
+
+49:16 - Billy Keister
+So yeah, that's why I'm saying like, even if we don't do the landing page, just that form, that form's like a necessity.
+
+49:22 - Phillip Vincent
+And describe to me the difference between the pool and the not pool. I don't understand what that means from the call center person's thing.
+
+49:33 - Billy Keister
+The pool?
+
+49:33 - Phillip Vincent
+Remember you said you got rid of the pool and there's no more pool? Oh, yeah, there's no more.
+
+49:37 - Billy Keister
+Before, remember, we used to have to set up a pool of gift cards. We were buying them in bulk.
+
+49:44 - Phillip Vincent
+Oh, I see. Where this is buying it on demand, they don't need the pool anymore. Is that why? Yeah, that's better. That's better. Hey, and by the way, we've solved the biggest issue that I have is knowing what to charge these knuckleheads out of the gate when we don't know if it's a 3% or a 30% response rate. That kept me up at night going, shit, we can't, we can't be wrong there. But this is, this is where the ZBA comes in. It's they only charge when they get their action. So that's what you signed up for. Well, we got you too much response. That's not an it to the right customer. That's not a problem. The small fish. It's a huge problem, Billy.
+
+50:19 - Billy Keister
+Well, that's why we've got it set up. Like even without the ZBA, just the credit card charging system. Like as the credits get low, just rebuild it.
+
+50:28 - Phillip Vincent
+But credit cards fail me every single day in my business, right?
+
+50:33 - Billy Keister
+Especially when I say this, I understand that.
+
+50:35 - Phillip Vincent
+And basically with monthly recurring businesses, there's whole companies that have to pay to make sure that they keep their credit cards up and running. So for now, great. Tomorrow ZBA, that's one of our questions for Mike. Okay, I got a call started nine minutes, I'm gonna get you guys the EIN, the operating agreement, the articles of organization for a fillboard. And then you're going to get some sort of pretty letter that said blessed from an attorney, right, Tucker. And I would cite those different things and say, here's why here's our opinion, why that'll be you either buy gift cards or not the $5 ones, that's fine. I do think it's cool to send them an actual gift card from an actual company. It just feels different than than a dummy card?
+
+51:15 - Billy Keister
+Yeah, well, for Mike, I was going to buy like a $25 Starbucks gift card, something that was actually worth it for him that he might actually use.
+
+51:23 - Phillip Vincent
+$25 is not worth it for him. He already told us he won't. He's stupid. I don't want to spend a lot of money on it. He's stupid rich already. No, just do the function that a gift card, it can be $5.
+
+51:32 - Billy Keister
+Okay, $5 one for him.
+
+51:34 - Unidentified Speaker
+Yeah, it can be $5.
+
+51:35 - Tucker Blair
+It doesn't even have to be a real one.
+
+51:38 - Billy Keister
+Yeah, but I'm saying... I want it to be a real one so that way he can add to his wallet right then and there.
+
+51:43 - Phillip Vincent
+Yeah, I do too. Yeah, I do too. I want it to feel like, oh, they did do what I asked, right? If we come away from these meetings, Billy did everything I asked. Now he has, okay, I'm going to put my name on the line with my guys. That's what we're shooting.
+
+51:56 - Tucker Blair
+We can ask him. We can show him the, the, the clawback too. And I think, right, Billy, can you show him that?
+
+52:03 - Phillip Vincent
+We can, but here's the thing. He's, he's setting this up to where we make the 28 bucks every time. If they can absorb that, guys, why would we give half the money away? Let's don't. Why don't we do that? I didn't know.
+
+52:17 - Tucker Blair
+I thought he cared about the clawback. But if he doesn't care about it, then fine.
+
+52:21 - Phillip Vincent
+Well, we talked about clawback originally whenever we didn't know how much success it was going to have. And with the ZBA account where it only charges what it needs, then there was never that risk. If we need to give us 50 grand and hope we need to spend it like that, that was money out of the gate. I think that's fixed in our new method.
+
+52:37 - Tucker Blair
+The one thing I would say Phillip is on the side where they're hesitant about. Remember they asked, hey, can you guys fund this for the first trial so we can see how it goes? We could reply. We can't fund it for you because that would be stupid. But the good news is, if you don't spend the money, you don't lose it. That's the benefit of it. Just for the first account to get them going.
+
+52:55 - Phillip Vincent
+So here's the latest update on that. 10,000 letters at $0.56 piece is only $5,600. The question we have right now, guys, is what is, what do you think our response rate is really going to be? If we had to guess?
+
+53:12 - Tucker Blair
+No idea.
+
+53:12 - Unidentified Speaker
+No idea.
+
+53:14 - Phillip Vincent
+You think it's all going to be three?
+
+53:16 - Billy Keister
+I think it's going to be closer to three.
+
+53:19 - Phillip Vincent
+So what is 10,000? So that's 300 cards times the $28. Let's say they all go through. We're, we're making 8,400 back almost immediately, right? As soon as those calls come in. So we didn't lose anything. In fact, we made Yeah, that's how I look at it.
+
+53:35 - Billy Keister
+Well, that's if we get those $25 gift cards for free.
+
+53:41 - Phillip Vincent
+Well, and once again, do we have them? Don't call mail houses. Let's call Marcos. We got it. And he's gonna call Jimmy John's guy too.
+
+53:49 - Billy Keister
+Yeah, I need to get a hold of Yeah, I need to get a hold of her the Marcos girl. She asked me for a one pager and I haven't sent it to her yet. I did send it to you and Tucker. Do you think that's okay to send out?
+
+54:02 - Tucker Blair
+When did you send that? I didn't see it.
+
+54:04 - Billy Keister
+The other day when we were on the phone.
+
+54:07 - Tucker Blair
+What day?
+
+54:07 - Billy Keister
+The other day when we were on the phone.
+
+54:09 - Tucker Blair
+Did you send it via WhatsApp?
+
+54:13 - Billy Keister
+Pretty sure that one was text. Probably, maybe WhatsApp.
+
+54:17 - Phillip Vincent
+Hey guys, I'm going to run. I'm going to get ready for this next Meeting. We'll keep driving. Yeah, keep driving. And then tomorrow if we're going to go to the PCI thing and do the test, I'm open. See you guys. Thank you.

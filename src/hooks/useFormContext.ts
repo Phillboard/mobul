@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
-import { useGiftCardPools } from "./useGiftCardPools";
 
 interface FormContext {
   companyName: string;
@@ -37,17 +36,39 @@ export function useFormContext(clientId?: string) {
     enabled: !!client?.id,
   });
 
-  // Fetch gift card pools for this client
-  const { pools } = useGiftCardPools(client?.id);
+  // Fetch gift card brands available for this client
+  const { data: giftCardBrands } = useQuery({
+    queryKey: ["client-gift-card-brands", client?.id],
+    queryFn: async () => {
+      if (!client?.id) return [];
+      
+      const { data, error } = await supabase
+        .from("client_gift_cards")
+        .select(`
+          gift_card_brands (
+            brand_name
+          )
+        `)
+        .eq("client_id", client.id)
+        .eq("is_active", true)
+        .limit(3);
+      
+      if (error) {
+        console.error("Error fetching gift card brands:", error);
+        return [];
+      }
+      
+      // Extract unique brand names
+      const brands = data
+        ?.map(item => item.gift_card_brands?.brand_name)
+        .filter(Boolean) || [];
+      
+      return [...new Set(brands)];
+    },
+    enabled: !!client?.id,
+  });
 
-  // Extract gift card brand names from pools
-  const giftCardBrands = pools
-    ?.map(pool => {
-      // Try to get brand name from brand_id relation or provider
-      return pool.provider || "Gift Card";
-    })
-    .filter(Boolean)
-    .slice(0, 3) || [];
+  const brandNames = giftCardBrands || [];
 
   const activeCampaigns = campaigns?.filter(c => c.status === 'draft' || c.status === 'in_production') || [];
 
@@ -55,8 +76,8 @@ export function useFormContext(clientId?: string) {
     companyName: client?.name || "Your Company",
     industry: client?.industry || "general",
     activeCampaigns,
-    giftCardBrands,
-    hasData: !!client && (activeCampaigns.length > 0 || giftCardBrands.length > 0),
+    giftCardBrands: brandNames,
+    hasData: !!client && (activeCampaigns.length > 0 || brandNames.length > 0),
   };
 
   /**

@@ -4,7 +4,7 @@
  * React hook for syncing brand data with Tillo API
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { TilloBrandSearchResult } from '@/types/giftCards';
@@ -50,9 +50,9 @@ export function useTilloBrandSync() {
   /**
    * Reset sync state
    */
-  const reset = () => {
+  const reset = useCallback(() => {
     setSyncResult(null);
-  };
+  }, []);
 
   return {
     syncWithTillo: syncWithTillo.mutate,

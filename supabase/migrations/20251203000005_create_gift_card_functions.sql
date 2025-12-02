@@ -242,7 +242,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION record_billing_transaction IS 'Records a gift card transaction in the billing ledger';
+-- Note: Comment skipped due to function overloading
 
 -- =====================================================
 -- 5. GET BRAND DENOMINATIONS WITH INVENTORY
@@ -358,7 +358,7 @@ GRANT EXECUTE ON FUNCTION get_client_gift_cards_with_details TO authenticated;
 -- Grant execute to service role for provisioning functions
 GRANT EXECUTE ON FUNCTION claim_gift_card_from_inventory TO service_role;
 GRANT EXECUTE ON FUNCTION get_billing_entity_for_campaign TO service_role;
-GRANT EXECUTE ON FUNCTION record_billing_transaction TO service_role;
+GRANT EXECUTE ON FUNCTION record_billing_transaction(TEXT, TEXT, UUID, UUID, UUID, UUID, NUMERIC, NUMERIC, NUMERIC, UUID, TEXT, TEXT, JSONB, TEXT) TO service_role;
 
 -- Also allow authenticated for billing entity (used in edge functions)
 GRANT EXECUTE ON FUNCTION get_billing_entity_for_campaign TO authenticated;

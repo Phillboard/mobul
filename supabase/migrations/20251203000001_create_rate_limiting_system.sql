@@ -24,9 +24,9 @@ CREATE INDEX IF NOT EXISTS idx_rate_limit_identifier_time
 CREATE INDEX IF NOT EXISTS idx_rate_limit_endpoint_time 
   ON rate_limit_log(endpoint, created_at DESC);
 
+-- Simple index for cleanup queries (without predicate)
 CREATE INDEX IF NOT EXISTS idx_rate_limit_cleanup 
-  ON rate_limit_log(created_at) 
-  WHERE created_at < NOW() - INTERVAL '24 hours';
+  ON rate_limit_log(created_at);
 
 -- Enable RLS
 ALTER TABLE rate_limit_log ENABLE ROW LEVEL SECURITY;

@@ -68,7 +68,7 @@ export function AudiencesRewardsStep({
 
   // Tracking settings state
   const [trackingSettings, setTrackingSettings] = useState({
-    lp_mode: initialData.lp_mode || 'purl',
+    lp_mode: initialData.lp_mode || 'bridge',
     base_lp_url: initialData.base_lp_url || '',
     utm_source: initialData.utm_source || 'directmail',
     utm_medium: initialData.utm_medium || 'postcard',
@@ -131,49 +131,9 @@ export function AudiencesRewardsStep({
         return;
       }
 
-      // NEW: Validate inventory availability for each condition
-      for (const condition of selectedConditions) {
-        try {
-          const { data: availabilityData, error } = await supabase
-            .rpc('get_brand_denomination_info', {
-              p_client_id: clientId,
-              p_brand_id: condition.brand_id,
-              p_card_value: condition.card_value
-            });
-
-          if (error) {
-            console.error('Failed to check inventory:', error);
-            toast({
-              title: "Validation Error",
-              description: "Could not verify gift card availability. Please try again.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          const availableCount = availabilityData?.[0]?.available_count || 0;
-          
-          if (availableCount === 0) {
-            toast({
-              title: "No Cards Available",
-              description: `No ${condition.brand_name} $${condition.card_value} gift cards are available. Please select a different reward or add inventory.`,
-              variant: "destructive",
-            });
-            return;
-          }
-
-          // Warn if inventory is low
-          if (availableCount < 10) {
-            toast({
-              title: "Low Inventory Warning",
-              description: `Only ${availableCount} cards available for ${condition.brand_name} $${condition.card_value}. Consider adding more inventory.`,
-              variant: "default",
-            });
-          }
-        } catch (err) {
-          console.error('Inventory check error:', err);
-        }
-      }
+      // Note: Inventory validation happens at provisioning time
+      // CSV inventory is used first, then Tillo API as fallback
+      // No need to block campaign creation here
     }
 
     onNext({
@@ -524,10 +484,8 @@ export function AudiencesRewardsStep({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="purl">PURL (Personalized URL)</SelectItem>
                     <SelectItem value="bridge">Bridge Page</SelectItem>
                     <SelectItem value="redirect">Direct Redirect</SelectItem>
-                    <SelectItem value="none">No Landing Page</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">

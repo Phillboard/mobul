@@ -68,7 +68,7 @@ export default function LandingPages() {
   };
 
   const handleEdit = (page: any) => {
-    navigate(`/landing-pages/${page.id}/visual-editor`);
+    navigate(`/landing-pages/${page.id}/editor`);
   };
 
 
@@ -88,9 +88,9 @@ export default function LandingPages() {
         {canCreate && (
           <LibraryHeader
             title="Landing Pages"
-            subtitle="Create and manage landing pages for gift card redemption"
+            subtitle="Create and manage landing pages with AI or visual editor"
             createButtonText="Create Landing Page"
-            onCreateClick={() => navigate("/landing-pages/new/visual-editor")}
+            onCreateClick={() => navigate("/landing-pages/create")}
           />
         )}
 
@@ -120,9 +120,9 @@ export default function LandingPages() {
           <LibraryEmptyState
             icon={Globe}
             title="No landing pages found"
-            message={searchQuery ? `No landing pages match "${searchQuery}"` : "Create your first landing page to get started"}
+            message={searchQuery ? `No landing pages match "${searchQuery}"` : "Create your first AI-powered landing page in seconds"}
             actionLabel="Create Landing Page"
-            onAction={() => navigate("/landing-pages/new/visual-editor")}
+            onAction={() => navigate("/landing-pages/create")}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

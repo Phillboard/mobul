@@ -4,7 +4,7 @@
  * React hook for intelligent brand lookup using multiple sources
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { lookupBrandByName, lookupLogoFromWebsite } from '@/lib/gift-cards/brand-lookup-service';
 import type { BrandLookupResult } from '@/types/giftCards';
 
@@ -42,10 +42,10 @@ export function useBrandLookup() {
   /**
    * Reset lookup state
    */
-  const reset = () => {
+  const reset = useCallback(() => {
     setLookupResult(null);
     setIsLooking(false);
-  };
+  }, []);
 
   return {
     lookup,

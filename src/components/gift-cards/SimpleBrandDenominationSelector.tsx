@@ -23,6 +23,7 @@ export function SimpleBrandDenominationSelector({
   clientId,
   value,
   onChange,
+  showAvailability = false,
 }: SimpleBrandDenominationSelectorProps) {
   const { data: availableGiftCards, isLoading, error } = useClientAvailableGiftCards(clientId);
 

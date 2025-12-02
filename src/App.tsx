@@ -37,6 +37,8 @@ const Settings = lazy(() => import("./pages/Settings"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const LandingPages = lazy(() => import("./pages/LandingPages"));
+const LandingPageCreate = lazy(() => import("./pages/LandingPageCreate"));
+const LandingPageEditor = lazy(() => import("./pages/LandingPageEditor"));
 const GiftCardReveal = lazy(() => import("./pages/GiftCardReveal"));
 const EmbedGiftCard = lazy(() => import("./pages/EmbedGiftCard"));
 const AgencyManagement = lazy(() => import("./pages/AgencyManagement"));
@@ -166,10 +168,18 @@ const App = () => (
                   {/* Redirects from old template routes */}
                   <Route path="/templates" element={<Navigate to="/mail" replace />} />
                   <Route path="/template-builder/:id" element={<Navigate to="/mail-designer/:id" replace />} />
+                  
+                  {/* Landing Page Builder - Simple Routes */}
                   <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
-                  <Route path="/landing-pages/new/visual-editor" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
-                  <Route path="/landing-pages/:id/visual-editor" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
-                  <Route path="/landing-pages/:id/edit-grapesjs" element={<ProtectedRoute><GrapesJSLandingPageEditor /></ProtectedRoute>} />
+                  <Route path="/landing-pages/create" element={<ProtectedRoute><LandingPageCreate /></ProtectedRoute>} />
+                  <Route path="/landing-pages/new" element={<ProtectedRoute><LandingPageEditor /></ProtectedRoute>} />
+                  <Route path="/landing-pages/:id/editor" element={<ProtectedRoute><LandingPageEditor /></ProtectedRoute>} />
+                  
+                  {/* Legacy routes redirect to new simple flow */}
+                  <Route path="/landing-pages/new/visual-editor" element={<Navigate to="/landing-pages/create" replace />} />
+                  <Route path="/landing-pages/:id/visual-editor" element={<Navigate to="/landing-pages/:id/editor" replace />} />
+                  <Route path="/landing-pages/:id/edit-grapesjs" element={<Navigate to="/landing-pages/:id/editor" replace />} />
+                  <Route path="/landing-pages/ai-generate/:mode" element={<Navigate to="/landing-pages/create" replace />} />
                   
                   {/* Gift Cards - Role-based access control */}
                   {/* Client/Agency - Simple Gift Card Manager */}

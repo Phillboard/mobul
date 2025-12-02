@@ -19,6 +19,121 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 /**
+ * Template Selection Screen
+ */
+function TemplateSelectionScreen({ 
+  onTemplateSelected,
+  onAIGenerated 
+}: { 
+  onTemplateSelected: (name: string, config: any) => void;
+  onAIGenerated: (name: string, description: string, config: any) => void;
+}) {
+  const navigate = useNavigate();
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [showAI, setShowAI] = useState(false);
+
+  if (showAI) {
+    return (
+      <Layout>
+        <div className="space-y-6 max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Button 
+              variant="link" 
+              className="p-0 h-auto font-normal"
+              onClick={() => navigate("/ace-forms")}
+            >
+              Ace Forms
+            </Button>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-foreground font-medium">Generate with AI</span>
+          </div>
+          
+          <AIFormGenerator onGenerated={onAIGenerated} />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (showTemplates) {
+    return (
+      <Layout>
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Button 
+              variant="link" 
+              className="p-0 h-auto font-normal"
+              onClick={() => navigate("/ace-forms")}
+            >
+              Ace Forms
+            </Button>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-foreground font-medium">Choose Template</span>
+          </div>
+
+          <FormTemplateSelector
+            onSelect={(template) => {
+              onTemplateSelected(template.name, template.config);
+            }}
+            onCancel={() => navigate("/ace-forms")}
+          />
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="space-y-6">
+        {/* Breadcrumbs */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Button 
+            variant="link" 
+            className="p-0 h-auto font-normal"
+            onClick={() => navigate("/ace-forms")}
+          >
+            Ace Forms
+          </Button>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-foreground font-medium">Create New Form</span>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* AI Generator */}
+          <div className="border rounded-lg p-6 space-y-4 bg-card">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Generate with AI</h2>
+            </div>
+            <p className="text-muted-foreground">
+              Describe your form and let AI create it for you in seconds.
+            </p>
+            <Button onClick={() => setShowAI(true)} size="lg" className="w-full">
+              <Sparkles className="w-4 w-4 mr-2" />
+              Start with AI
+            </Button>
+          </div>
+
+          {/* Templates */}
+          <div className="border rounded-lg p-6 space-y-4 bg-card">
+            <div className="flex items-center gap-2">
+              <Code2 className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Choose a Template</h2>
+            </div>
+            <p className="text-muted-foreground">
+              Start with a pre-built template and customize it to your needs.
+            </p>
+            <Button onClick={() => setShowTemplates(true)} variant="outline" size="lg" className="w-full">
+              <Code2 className="w-4 h-4 mr-2" />
+              Browse Templates
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}
+
+/**
  * Inner component that uses FormBuilderContext
  */
 function AceFormBuilderContent() {
@@ -26,7 +141,6 @@ function AceFormBuilderContent() {
   const navigate = useNavigate();
   const { currentClient } = useTenant();
   const { createForm, updateForm } = useAceForms(currentClient?.id);
-  const [showTemplates, setShowTemplates] = useState(!formId);
   const [showExport, setShowExport] = useState(false);
   const [showEmbed, setShowEmbed] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
@@ -168,61 +282,6 @@ function AceFormBuilderContent() {
       description: "Your form has been generated. You can now customize it further.",
     });
   };
-
-  if (showTemplates) {
-    return (
-      <Layout>
-        <div className="space-y-6">
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Button 
-              variant="link" 
-              className="p-0 h-auto font-normal"
-              onClick={() => navigate("/ace-forms")}
-            >
-              Ace Forms
-            </Button>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-foreground font-medium">Create New Form</span>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* AI Generator */}
-            <div className="border rounded-lg p-6 space-y-4 bg-card">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold">Generate with AI</h2>
-              </div>
-              <p className="text-muted-foreground">
-                Describe your form and let AI create it for you in seconds.
-              </p>
-              <AIFormGenerator onGenerated={handleAIGenerated} />
-            </div>
-
-            {/* Template Selector */}
-            <div className="border rounded-lg p-6 bg-card">
-              <h2 className="text-xl font-semibold mb-4">Or Choose a Template</h2>
-              <FormTemplateSelector
-                onSelect={(template) => {
-                  setConfig(template.config);
-                  setFormName(template.name);
-                  setShowTemplates(false);
-                }}
-                onCancel={() => navigate("/ace-forms")}
-              />
-            </div>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  // Don't show templates selector if we have a formId
-  useEffect(() => {
-    if (formId) {
-      setShowTemplates(false);
-    }
-  }, [formId]);
 
   return (
     <Layout>
@@ -390,7 +449,29 @@ function AceFormBuilderContent() {
  */
 export default function AceFormBuilder() {
   const { formId } = useParams();
+  const navigate = useNavigate();
+  const [showTemplates, setShowTemplates] = useState(!formId);
+  const [formConfig, setFormConfig] = useState<any>(null);
+  const [formName, setFormName] = useState("");
   const { data: existingForm, isLoading } = useAceForm(formId || "");
+
+  // Show template selection for new forms (before FormBuilderProvider)
+  if (!formId && showTemplates && !formConfig) {
+    return (
+      <TemplateSelectionScreen
+        onTemplateSelected={(name, config) => {
+          setFormName(name);
+          setFormConfig(config);
+          setShowTemplates(false);
+        }}
+        onAIGenerated={(name, _description, config) => {
+          setFormName(name);
+          setFormConfig(config);
+          setShowTemplates(false);
+        }}
+      />
+    );
+  }
 
   // Show loading state while fetching existing form
   if (formId && isLoading) {
@@ -406,8 +487,11 @@ export default function AceFormBuilder() {
     );
   }
 
+  // Use the generated config or the existing form config
+  const initialConfig = formConfig || existingForm?.form_config;
+
   return (
-    <FormBuilderProvider initialConfig={existingForm?.form_config}>
+    <FormBuilderProvider initialConfig={initialConfig}>
       <AceFormBuilderContent />
     </FormBuilderProvider>
   );
