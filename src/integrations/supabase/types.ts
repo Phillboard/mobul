@@ -1284,11 +1284,13 @@ export type Database = {
           contact_list_id: string | null
           created_at: string | null
           created_by_user_id: string | null
+          form_id: string | null
           id: string
           is_simulated: boolean | null
           landing_page_id: string | null
           lp_mode: Database["public"]["Enums"]["lp_mode"] | null
           mail_date: string | null
+          mailing_method: string | null
           name: string
           postage: Database["public"]["Enums"]["postage_class"] | null
           simulation_batch_id: string | null
@@ -1308,11 +1310,13 @@ export type Database = {
           contact_list_id?: string | null
           created_at?: string | null
           created_by_user_id?: string | null
+          form_id?: string | null
           id?: string
           is_simulated?: boolean | null
           landing_page_id?: string | null
           lp_mode?: Database["public"]["Enums"]["lp_mode"] | null
           mail_date?: string | null
+          mailing_method?: string | null
           name: string
           postage?: Database["public"]["Enums"]["postage_class"] | null
           simulation_batch_id?: string | null
@@ -1332,11 +1336,13 @@ export type Database = {
           contact_list_id?: string | null
           created_at?: string | null
           created_by_user_id?: string | null
+          form_id?: string | null
           id?: string
           is_simulated?: boolean | null
           landing_page_id?: string | null
           lp_mode?: Database["public"]["Enums"]["lp_mode"] | null
           mail_date?: string | null
+          mailing_method?: string | null
           name?: string
           postage?: Database["public"]["Enums"]["postage_class"] | null
           simulation_batch_id?: string | null
@@ -1614,6 +1620,7 @@ export type Database = {
           is_simulated: boolean | null
           list_id: string
           simulation_batch_id: string | null
+          unique_code: string | null
         }
         Insert: {
           added_at?: string | null
@@ -1623,6 +1630,7 @@ export type Database = {
           is_simulated?: boolean | null
           list_id: string
           simulation_batch_id?: string | null
+          unique_code?: string | null
         }
         Update: {
           added_at?: string | null
@@ -1632,6 +1640,7 @@ export type Database = {
           is_simulated?: boolean | null
           list_id?: string
           simulation_batch_id?: string | null
+          unique_code?: string | null
         }
         Relationships: [
           {

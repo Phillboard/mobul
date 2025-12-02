@@ -92,32 +92,46 @@ export default function CampaignCreate() {
         if (audienceError) throw audienceError;
         audienceId = audience.id;
 
-        // Get contacts from list - include customer_code for redemption
+        // Get contacts from list - include unique_code from list membership AND customer_code as fallback
+        // This allows same contact to have different codes in different lists/campaigns
         const { data: listMembers, error: membersError } = await supabase
           .from("contact_list_members")
-          .select("contact:contacts(id, first_name, last_name, email, phone, address, address2, city, state, zip, customer_code)")
+          .select("unique_code, contact:contacts(id, first_name, last_name, email, phone, address, address2, city, state, zip, customer_code)")
           .eq("list_id", data.contact_list_id);
 
         if (membersError) throw membersError;
 
-        // Create recipients for all contacts with redemption_code from customer_code
+        // Create recipients for contacts
+        // CRITICAL: ALWAYS create recipients for EVERY contact in the list
+        // Each campaign needs its own recipients linked to its audience
+        // The same code CAN appear in multiple campaigns (via compound unique constraint)
+        // 
+        // Priority for redemption code:
+        // 1. LIST-LEVEL unique_code (from contact_list_members)
+        // 2. CONTACT-LEVEL customer_code (fallback)
+        // 3. Auto-generated code (only if no code exists)
         if (listMembers && listMembers.length > 0) {
-          const recipients = listMembers.map((member: any) => ({
-            audience_id: audienceId,
-            contact_id: member.contact?.id,
-            token: crypto.randomUUID().replace(/-/g, '').substring(0, 16),
-            // Critical: Use customer_code as redemption_code for call center lookup
-            redemption_code: member.contact?.customer_code || crypto.randomUUID().replace(/-/g, '').substring(0, 12).toUpperCase(),
-            first_name: member.contact?.first_name,
-            last_name: member.contact?.last_name,
-            email: member.contact?.email,
-            phone: member.contact?.phone,
-            address1: member.contact?.address,
-            address2: member.contact?.address2,
-            city: member.contact?.city,
-            state: member.contact?.state,
-            zip: member.contact?.zip,
-          }));
+          const recipients = listMembers.map((member: any) => {
+            // Priority: list-level unique_code > contact-level customer_code > auto-generate
+            const code = member.unique_code || member.contact?.customer_code;
+            const redemptionCode = code || crypto.randomUUID().replace(/-/g, '').substring(0, 12).toUpperCase();
+
+            return {
+              audience_id: audienceId,
+              contact_id: member.contact?.id,
+              token: crypto.randomUUID().replace(/-/g, '').substring(0, 16),
+              redemption_code: redemptionCode,
+              first_name: member.contact?.first_name,
+              last_name: member.contact?.last_name,
+              email: member.contact?.email,
+              phone: member.contact?.phone,
+              address1: member.contact?.address,
+              address2: member.contact?.address2,
+              city: member.contact?.city,
+              state: member.contact?.state,
+              zip: member.contact?.zip,
+            };
+          });
 
           const { error: recipientsError } = await supabase
             .from("recipients")
@@ -125,17 +139,21 @@ export default function CampaignCreate() {
 
           if (recipientsError) throw recipientsError;
           
-          logger.info(`Created ${recipients.length} recipients with redemption codes`);
+          logger.info(`Created ${recipients.length} recipients with redemption codes for campaign`);
         }
       }
 
-      // Determine initial status based on mailing method and mailing status
-      // Self-mailers can be activated immediately if already mailed
+      // Determine initial status based on mailing status selection
+      // Valid campaign_status enum values: draft, proofed, in_production, mailed, completed
+      // NOTE: Database constraint allows self-mailers to use 'mailed' status without landing page
       const isSelfMailer = data.mailing_method === "self";
       const hasBeenMailed = data.campaign_status === "mailed";
-      const initialStatus = isSelfMailer && hasBeenMailed ? "active" : "draft";
+      // Self-mailers who marked as mailed can go directly to 'mailed' status
+      const initialStatus = (isSelfMailer && hasBeenMailed) ? "mailed" : "draft";
 
       // Create campaign
+      // Note: size is an enum (4x6, 6x9, 6x11, letter, trifold) - use "4x6" default for self-mailers
+      // The UI hides these fields for self-mailers anyway
       const { data: campaign, error: campaignError } = await supabase
         .from("campaigns")
         .insert([{
@@ -236,11 +254,11 @@ export default function CampaignCreate() {
     },
     onSuccess: (campaign) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      const isActive = campaign.status === "active";
+      const isReadyForCallCenter = campaign.status === "mailed";
       toast({
-        title: isActive ? "Campaign Activated!" : "Campaign Created!",
-        description: isActive 
-          ? "Your campaign is now active. Call center agents can validate codes."
+        title: isReadyForCallCenter ? "Campaign Ready!" : "Campaign Created!",
+        description: isReadyForCallCenter 
+          ? "Your campaign is ready. Call center agents can validate codes and provision gift cards."
           : "Your campaign has been created as a draft.",
       });
       navigate(`/campaigns/${campaign.id}`);

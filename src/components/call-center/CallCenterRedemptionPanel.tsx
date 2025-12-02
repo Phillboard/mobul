@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Send, Info } from "lucide-react";
+import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Send, Info, XCircle, SkipForward, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { PoolInventoryWidget } from "./PoolInventoryWidget";
 import { ResendSmsButton } from "./ResendSmsButton";
@@ -18,6 +18,23 @@ import { OptInStatusIndicator } from "./OptInStatusIndicator";
 import { useOptInStatus } from "@/hooks/useOptInStatus";
 
 type WorkflowStep = "code" | "optin" | "contact" | "condition" | "complete";
+type VerificationMethod = "sms" | "email" | "skipped";
+type DispositionType = "positive" | "negative";
+
+// Disposition options
+const POSITIVE_DISPOSITIONS = [
+  { value: "verified_verbally", label: "Verified Verbally", description: "Customer confirmed identity over the phone" },
+  { value: "already_opted_in", label: "Already Opted In", description: "Customer previously opted in to SMS" },
+  { value: "vip_customer", label: "VIP Customer", description: "Special customer, skip verification required" },
+];
+
+const NEGATIVE_DISPOSITIONS = [
+  { value: "do_not_call", label: "Do Not Call", description: "Add to Do Not Call list" },
+  { value: "not_interested", label: "Not Interested", description: "Customer declined offer" },
+  { value: "wrong_number", label: "Wrong Number", description: "Phone number is incorrect" },
+  { value: "call_back_later", label: "Call Back Later", description: "Schedule a follow-up call" },
+  { value: "invalid_contact", label: "Invalid Contact", description: "Contact info is invalid" },
+];
 
 interface CampaignGiftCardConfig {
   id: string;
@@ -99,6 +116,14 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   const [isSendingOptIn, setIsSendingOptIn] = useState(false);
   const [callSessionId, setCallSessionId] = useState<string | null>(null);
   
+  // Verification alternatives
+  const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>("sms");
+  const [showSkipDisposition, setShowSkipDisposition] = useState(false);
+  const [selectedDisposition, setSelectedDisposition] = useState<string>("");
+  const [isSendingEmailVerification, setIsSendingEmailVerification] = useState(false);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+  const [isSubmittingDisposition, setIsSubmittingDisposition] = useState(false);
+  
   // Step 3: Contact Method (for delivery)
   const [deliveryMethod, setDeliveryMethod] = useState<"sms" | "email">("sms");
   const [phone, setPhone] = useState("");
@@ -179,6 +204,120 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     }
   };
 
+  // Send email verification link
+  const sendEmailVerification = async () => {
+    if (!recipient?.email || !campaign) {
+      toast({
+        title: "No Email Address",
+        description: "This customer doesn't have an email address on file.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSendingEmailVerification(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-verification-email', {
+        body: {
+          recipient_id: recipient.id,
+          campaign_id: campaign.id,
+          email: recipient.email,
+          client_name: clientName,
+          recipient_name: `${recipient.first_name || ''} ${recipient.last_name || ''}`.trim(),
+        }
+      });
+      
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      setEmailVerificationSent(true);
+      setVerificationMethod("email");
+      
+      toast({
+        title: "Verification Email Sent!",
+        description: `Email sent to ${recipient.email}. Customer must click the link to verify.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to send email",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmailVerification(false);
+    }
+  };
+
+  // Handle skip verification with disposition
+  const handleSkipDisposition = async (disposition: string) => {
+    if (!recipient || !campaign) return;
+    
+    setIsSubmittingDisposition(true);
+    const isPositive = POSITIVE_DISPOSITIONS.some(d => d.value === disposition);
+    
+    try {
+      // Update recipient with disposition and verification method
+      const { error: updateError } = await supabase
+        .from('recipients')
+        .update({
+          verification_method: 'skipped',
+          disposition: disposition,
+          approval_status: isPositive ? 'pending' : 'rejected',
+        })
+        .eq('id', recipient.id);
+      
+      if (updateError) throw updateError;
+      
+      // If positive disposition with skipped verification, send admin alert
+      if (isPositive) {
+        try {
+          await supabase.functions.invoke('send-admin-alert', {
+            body: {
+              type: 'skipped_verification_positive',
+              recipient_id: recipient.id,
+              campaign_id: campaign.id,
+              disposition: disposition,
+              agent_id: (await supabase.auth.getUser()).data.user?.id,
+              customer_name: `${recipient.first_name || ''} ${recipient.last_name || ''}`.trim(),
+              customer_code: recipient.redemption_code,
+            }
+          });
+        } catch (alertError) {
+          console.warn('Failed to send admin alert:', alertError);
+          // Don't block the flow for admin alert failure
+        }
+        
+        toast({
+          title: "Proceeding with Positive Disposition",
+          description: "Admin has been notified of the skipped verification.",
+        });
+        
+        // Continue to delivery step
+        setVerificationMethod("skipped");
+        setSelectedDisposition(disposition);
+        setShowSkipDisposition(false);
+        setStep("contact");
+      } else {
+        // Negative disposition - end the call flow
+        toast({
+          title: "Call Marked",
+          description: `Disposition recorded: ${NEGATIVE_DISPOSITIONS.find(d => d.value === disposition)?.label}`,
+        });
+        
+        // Reset to start for next call
+        handleStartNew();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Failed to record disposition",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingDisposition(false);
+    }
+  };
+
   // Step 1: Look up recipient by redemption code
   // Uses the existing data model: recipients → audiences → campaigns
   const lookupMutation = useMutation({
@@ -210,10 +349,25 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       if (recipient) {
         console.log('[CALL-CENTER] Found recipient:', recipient.id);
         
-        // Check campaign status
+        // Check campaign status - only allow active campaigns for redemption
+        // Active statuses: in_production, mailed, scheduled
         const campaign = recipient.audiences?.campaigns?.[0];
-        if (campaign && !["active", "draft", "in_production"].includes(campaign.status)) {
-          throw new Error("This campaign is not active. Campaign status: " + campaign.status);
+        if (campaign) {
+          const status = campaign.status;
+          const activeStatuses = ["in_production", "mailed", "scheduled"];
+          
+          if (!activeStatuses.includes(status)) {
+            // Provide specific error messages for non-active statuses
+            if (status === "draft") {
+              throw new Error("This contact is in a draft campaign that hasn't been activated yet. Please activate the campaign first.");
+            } else if (status === "completed") {
+              throw new Error("This campaign has been completed. The redemption period has ended.");
+            } else if (status === "proofed") {
+              throw new Error("This campaign is still being reviewed. It needs to be moved to 'In Production' or 'Mailed' status.");
+            } else {
+              throw new Error(`This campaign has status '${status}' which is not eligible for redemption. Campaign must be 'In Production', 'Mailed', or 'Scheduled'.`);
+            }
+          }
         }
 
         // Check if already redeemed
@@ -260,10 +414,25 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         if (linkedRecipient) {
           console.log('[CALL-CENTER] Found linked recipient via contact');
           
-          // Check campaign status
+          // Check campaign status - only allow active campaigns for redemption
+          // Active statuses: in_production, mailed, scheduled
           const campaign = linkedRecipient.audiences?.campaigns?.[0];
-          if (campaign && !["active", "draft", "in_production"].includes(campaign.status)) {
-            throw new Error("This campaign is not active. Campaign status: " + campaign.status);
+          if (campaign) {
+            const status = campaign.status;
+            const activeStatuses = ["in_production", "mailed", "scheduled"];
+            
+            if (!activeStatuses.includes(status)) {
+              // Provide specific error messages for non-active statuses
+              if (status === "draft") {
+                throw new Error("This contact is in a draft campaign that hasn't been activated yet. Please activate the campaign first.");
+              } else if (status === "completed") {
+                throw new Error("This campaign has been completed. The redemption period has ended.");
+              } else if (status === "proofed") {
+                throw new Error("This campaign is still being reviewed. It needs to be moved to 'In Production' or 'Mailed' status.");
+              } else {
+                throw new Error(`This campaign has status '${status}' which is not eligible for redemption. Campaign must be 'In Production', 'Mailed', or 'Scheduled'.`);
+              }
+            }
           }
           
           if (linkedRecipient.approval_status === "redeemed") {
@@ -577,6 +746,127 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               </Alert>
             )}
 
+            <Separator className="my-4" />
+
+            {/* Alternative Verification Options */}
+            {!showSkipDisposition && (
+              <div className="space-y-3">
+                <Label className="text-sm text-muted-foreground">Alternative Verification Methods</Label>
+                <div className="flex flex-wrap gap-2">
+                  {/* Email Verification Button */}
+                  <Button
+                    variant="outline"
+                    onClick={sendEmailVerification}
+                    disabled={!recipient?.email || isSendingEmailVerification || emailVerificationSent}
+                    className="flex-1 min-w-[140px]"
+                  >
+                    {isSendingEmailVerification ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : emailVerificationSent ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                        Email Sent
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-4 w-4 mr-2" />
+                        Verify via Email
+                      </>
+                    )}
+                  </Button>
+                  
+                  {/* Skip Verification Button */}
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowSkipDisposition(true)}
+                    className="flex-1 min-w-[140px]"
+                  >
+                    <SkipForward className="h-4 w-4 mr-2" />
+                    Skip Verification
+                  </Button>
+                </div>
+                
+                {!recipient?.email && (
+                  <p className="text-xs text-muted-foreground">
+                    Email verification not available - no email on file
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Skip Verification - Disposition Selection */}
+            {showSkipDisposition && (
+              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Select Disposition</Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowSkipDisposition(false)}
+                  >
+                    <XCircle className="h-4 w-4 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+                
+                {/* Positive Dispositions - Customer gets gift card */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-green-700">
+                    <ThumbsUp className="h-4 w-4" />
+                    Positive (Customer Gets Gift Card)
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    ⚠️ Admin will be notified if you skip verification with a positive disposition
+                  </p>
+                  <div className="grid gap-2">
+                    {POSITIVE_DISPOSITIONS.map((disposition) => (
+                      <Button
+                        key={disposition.value}
+                        variant="outline"
+                        className="justify-start h-auto py-2 border-green-200 hover:bg-green-50 hover:border-green-400"
+                        onClick={() => handleSkipDisposition(disposition.value)}
+                        disabled={isSubmittingDisposition}
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">{disposition.label}</div>
+                          <div className="text-xs text-muted-foreground">{disposition.description}</div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                {/* Negative Dispositions - No gift card */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-red-700">
+                    <ThumbsDown className="h-4 w-4" />
+                    Negative (No Gift Card)
+                  </div>
+                  <div className="grid gap-2">
+                    {NEGATIVE_DISPOSITIONS.map((disposition) => (
+                      <Button
+                        key={disposition.value}
+                        variant="outline"
+                        className="justify-start h-auto py-2 border-red-200 hover:bg-red-50 hover:border-red-400"
+                        onClick={() => handleSkipDisposition(disposition.value)}
+                        disabled={isSubmittingDisposition}
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">{disposition.label}</div>
+                          <div className="text-xs text-muted-foreground">{disposition.description}</div>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={handleStartNew}>
                 <RotateCcw className="h-4 w-4 mr-2" />
@@ -584,12 +874,17 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               </Button>
               <Button
                 onClick={() => setStep("contact")}
-                disabled={!optInStatus.isOptedIn}
+                disabled={!optInStatus.isOptedIn && !emailVerificationSent}
                 className="flex-1"
               >
                 {optInStatus.isOptedIn ? (
                   <>
                     Continue to Delivery
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </>
+                ) : emailVerificationSent ? (
+                  <>
+                    Continue (Email Sent)
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 ) : (
@@ -708,13 +1003,23 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Opt-in validation reminder */}
-            {!optInStatus.isOptedIn && (
+            {/* Opt-in validation reminder - only show if not opted in AND not skipped with positive disposition */}
+            {!optInStatus.isOptedIn && !(verificationMethod === "skipped" && POSITIVE_DISPOSITIONS.some(d => d.value === selectedDisposition)) && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   <strong>Warning:</strong> Customer has not opted in via SMS. 
                   You should not proceed unless they have explicitly opted in.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {/* Show if verification was skipped with positive disposition */}
+            {verificationMethod === "skipped" && POSITIVE_DISPOSITIONS.some(d => d.value === selectedDisposition) && (
+              <Alert className="border-amber-500 bg-amber-50">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800">
+                  <strong>Note:</strong> Verification was skipped. Disposition: {POSITIVE_DISPOSITIONS.find(d => d.value === selectedDisposition)?.label}. Admin has been notified.
                 </AlertDescription>
               </Alert>
             )}
@@ -746,28 +1051,37 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               <Button variant="outline" onClick={() => setStep("contact")}>
                 Back
               </Button>
-              <Button
-                onClick={() => provisionMutation.mutate()}
-                disabled={!selectedConditionId || provisionMutation.isPending || !optInStatus.isOptedIn}
-                className="flex-1"
-              >
-                {provisionMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Provisioning...
-                  </>
-                ) : !optInStatus.isOptedIn ? (
-                  <>
-                    <AlertCircle className="h-4 w-4 mr-2" />
-                    Requires Opt-In
-                  </>
-                ) : (
-                  <>
-                    <Gift className="h-4 w-4 mr-2" />
-                    Provision Gift Card
-                  </>
-                )}
-              </Button>
+              {(() => {
+                // Check if verification was completed via any method
+                const hasValidVerification = optInStatus.isOptedIn || 
+                  (verificationMethod === "skipped" && POSITIVE_DISPOSITIONS.some(d => d.value === selectedDisposition)) ||
+                  (verificationMethod === "email");
+                
+                return (
+                  <Button
+                    onClick={() => provisionMutation.mutate()}
+                    disabled={!selectedConditionId || provisionMutation.isPending || !hasValidVerification}
+                    className="flex-1"
+                  >
+                    {provisionMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Provisioning...
+                      </>
+                    ) : !hasValidVerification ? (
+                      <>
+                        <AlertCircle className="h-4 w-4 mr-2" />
+                        Requires Opt-In
+                      </>
+                    ) : (
+                      <>
+                        <Gift className="h-4 w-4 mr-2" />
+                        Provision Gift Card
+                      </>
+                    )}
+                  </Button>
+                );
+              })()}
             </div>
           </CardContent>
         </Card>

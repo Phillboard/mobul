@@ -118,6 +118,19 @@ export function EditCampaignDialog({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      // Validate: 'mailed' and 'in_production' statuses require either:
+      // 1. Self-mailer (mailing_method = 'self')
+      // 2. Landing page
+      // 3. Form
+      const statusRequiresDestination = ['mailed', 'in_production'].includes(formData.status);
+      const isSelfMailer = formData.mailing_method === 'self';
+      const hasLandingPage = !!formData.landing_page_id;
+      const hasForm = !!formData.form_id;
+      
+      if (statusRequiresDestination && !isSelfMailer && !hasLandingPage && !hasForm) {
+        throw new Error(`Cannot set status to "${formData.status}" without a landing page or form. Self-mailers are exempt from this requirement.`);
+      }
+
       // Try to create version snapshot (optional - table may not exist)
       try {
         await supabase
@@ -288,6 +301,15 @@ export function EditCampaignDialog({
                     <SelectItem value="completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
+                {['mailed', 'in_production'].includes(formData.status) && 
+                  formData.mailing_method !== 'self' && 
+                  !formData.landing_page_id && 
+                  !formData.form_id && (
+                  <p className="text-xs text-amber-500 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    A landing page or form is required for "{formData.status}" status (unless self-mailing)
+                  </p>
+                )}
               </div>
             </div>
           </TabsContent>

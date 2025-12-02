@@ -159,7 +159,16 @@ export function useAddContactsToList() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ listId, contactIds }: { listId: string; contactIds: string[] }) => {
+    mutationFn: async ({ 
+      listId, 
+      contactIds,
+      uniqueCodes 
+    }: { 
+      listId: string; 
+      contactIds: string[];
+      // Optional map of contactId -> uniqueCode for per-list codes
+      uniqueCodes?: Record<string, string>;
+    }) => {
       // Get existing members to avoid duplicates
       const { data: existingMembers } = await supabase
         .from("contact_list_members")
@@ -180,6 +189,8 @@ export function useAddContactsToList() {
         list_id: listId,
         contact_id: contactId,
         added_by_user_id: user?.id,
+        // Store unique code on list membership for per-campaign codes
+        unique_code: uniqueCodes?.[contactId] || null,
       }));
 
       const { error } = await supabase.from("contact_list_members").insert(members);
