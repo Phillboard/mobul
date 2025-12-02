@@ -36,24 +36,23 @@ export function EditCampaignDialog({
   const [formData, setFormData] = useState<any>({});
 
   // Fetch campaign details
-  const { data: campaign, isLoading } = useQuery({
+  const { data: campaign, isLoading, error: campaignError } = useQuery({
     queryKey: ["campaign-edit", campaignId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaigns")
-        .select(`
-          *,
-          landing_pages (id, name, public_url),
-          gift_card_pools (id, pool_name, card_value, available_cards)
-        `)
+        .select("*")
         .eq("id", campaignId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Failed to fetch campaign:", error);
+        throw error;
+      }
       setFormData(data);
       return data;
     },
-    enabled: open,
+    enabled: open && !!campaignId,
   });
 
   // Fetch landing pages for selection
@@ -66,33 +65,38 @@ export function EditCampaignDialog({
         .from("landing_pages")
         .select("id, name, public_url")
         .eq("client_id", campaign.client_id)
+        .eq("is_active", true)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.warn("Failed to fetch landing pages:", error);
+        return [];
+      }
+      return data || [];
     },
     enabled: !!campaign?.client_id,
   });
 
-  // Fetch gift card pools for selection
-  const { data: giftCardPools } = useQuery({
-    queryKey: ["gift-card-pools-for-edit", campaign?.client_id],
+  // Fetch gift card brands for rewards (replaced old pools system)
+  const { data: giftCardBrands } = useQuery({
+    queryKey: ["gift-card-brands-for-edit"],
     queryFn: async () => {
-      if (!campaign?.client_id) return [];
-      
       const { data, error } = await supabase
-        .from("gift_card_pools")
-        .select("id, pool_name, card_value, available_cards")
-        .eq("client_id", campaign.client_id)
-        .order("pool_name");
+        .from("gift_card_brands")
+        .select("id, brand_name")
+        .eq("is_active", true)
+        .order("brand_name");
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.warn("Failed to fetch gift card brands:", error);
+        return [];
+      }
+      return data || [];
     },
-    enabled: !!campaign?.client_id,
+    enabled: open,
   });
 
-  // Fetch version history
+  // Fetch version history (optional - may not exist yet)
   const { data: versions } = useQuery({
     queryKey: ["campaign-versions", campaignId],
     queryFn: async () => {
@@ -103,10 +107,13 @@ export function EditCampaignDialog({
         .order("created_at", { ascending: false })
         .limit(10);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.warn("Version history not available:", error);
+        return [];
+      }
+      return data || [];
     },
-    enabled: open,
+    enabled: open && !!campaignId,
   });
 
   const saveMutation = useMutation({
@@ -161,6 +168,28 @@ export function EditCampaignDialog({
             <DialogTitle>Edit Campaign</DialogTitle>
           </DialogHeader>
           <p>Loading campaign details...</p>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (campaignError) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Campaign</DialogTitle>
+          </DialogHeader>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error Loading Campaign</AlertTitle>
+            <AlertDescription>
+              {campaignError instanceof Error ? campaignError.message : "Failed to load campaign details"}
+            </AlertDescription>
+          </Alert>
+          <Button onClick={() => onOpenChange(false)} className="mt-4">
+            Close
+          </Button>
         </DialogContent>
       </Dialog>
     );
@@ -275,12 +304,14 @@ export function EditCampaignDialog({
                 </Select>
               </div>
 
-              {campaign.landing_pages && (
+              {formData.landing_page_id && landingPages?.length > 0 && (
                 <div className="border rounded-lg p-3 bg-muted">
-                  <div className="font-medium">Current: {campaign.landing_pages.name}</div>
-                  {campaign.landing_pages.public_url && (
+                  <div className="font-medium">
+                    Current: {landingPages.find(lp => lp.id === formData.landing_page_id)?.name || 'Unknown'}
+                  </div>
+                  {landingPages.find(lp => lp.id === formData.landing_page_id)?.public_url && (
                     <div className="text-sm text-muted-foreground mt-1">
-                      {campaign.landing_pages.public_url}
+                      {landingPages.find(lp => lp.id === formData.landing_page_id)?.public_url}
                     </div>
                   )}
                 </div>
@@ -317,23 +348,26 @@ export function EditCampaignDialog({
               {formData.rewards_enabled && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="reward_pool">Gift Card Pool</Label>
+                    <Label htmlFor="reward_brand">Gift Card Brand</Label>
                     <Select
-                      value={formData.reward_pool_id || ""}
-                      onValueChange={(value) => setFormData({ ...formData, reward_pool_id: value })}
+                      value={formData.reward_brand_id || ""}
+                      onValueChange={(value) => setFormData({ ...formData, reward_brand_id: value })}
                       disabled={!rewardsEditable.canEdit}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a pool..." />
+                        <SelectValue placeholder="Select a brand..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {giftCardPools?.map((pool) => (
-                          <SelectItem key={pool.id} value={pool.id}>
-                            {pool.pool_name} - ${pool.card_value} ({pool.available_cards} available)
+                        {giftCardBrands?.map((brand) => (
+                          <SelectItem key={brand.id} value={brand.id}>
+                            {brand.brand_name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Note: Gift card rewards are now configured per condition in campaign conditions
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -353,15 +387,6 @@ export function EditCampaignDialog({
                     </Select>
                   </div>
                 </>
-              )}
-
-              {campaign.gift_card_pools && (
-                <div className="border rounded-lg p-3 bg-muted">
-                  <div className="font-medium">Current Pool: {campaign.gift_card_pools.pool_name}</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    ${campaign.gift_card_pools.card_value} • {campaign.gift_card_pools.available_cards} available
-                  </div>
-                </div>
               )}
             </div>
           </TabsContent>
