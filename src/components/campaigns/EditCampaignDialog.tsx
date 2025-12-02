@@ -118,24 +118,32 @@ export function EditCampaignDialog({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // Create version snapshot first
-      const { error: versionError } = await supabase
-        .from("campaign_versions")
-        .insert({
-          campaign_id: campaignId,
-          version_number: (campaign?.version || 0) + 1,
-          changes: formData,
-          previous_state: campaign,
-        });
-
-      if (versionError) throw versionError;
+      // Try to create version snapshot (optional - table may not exist)
+      try {
+        await supabase
+          .from("campaign_versions")
+          .insert({
+            campaign_id: campaignId,
+            version_number: (campaign?.version || 0) + 1,
+            changes: formData,
+            previous_state: campaign,
+          });
+      } catch (versionError) {
+        console.warn("Version history not available:", versionError);
+        // Continue without versioning
+      }
 
       // Update campaign
       const { error: updateError } = await supabase
         .from("campaigns")
         .update({
-          ...formData,
-          version: (campaign?.version || 0) + 1,
+          name: formData.name,
+          mail_date: formData.mail_date,
+          status: formData.status,
+          landing_page_id: formData.landing_page_id,
+          rewards_enabled: formData.rewards_enabled,
+          reward_brand_id: formData.reward_brand_id,
+          reward_condition: formData.reward_condition,
           updated_at: new Date().toISOString(),
         })
         .eq("id", campaignId);
