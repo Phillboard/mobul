@@ -222,14 +222,6 @@ export async function populateGiftCardInventory(
   }
 }
 
-    if (error) throw new Error(`Failed to create gift cards: ${error.message}`);
-    
-    if (onProgress) {
-      onProgress((i + 1) * batchSize, count);
-    }
-  }
-}
-
 function generateCardNumber(): string {
   return Array.from({ length: 16 }, () => Math.floor(Math.random() * 10)).join('');
 }
