@@ -99,7 +99,7 @@ export function calculateCampaignCreditRequirement(
 /**
  * Check if entity has sufficient credits for campaign
  */
-export function hasS ufficientCreditsForCampaign(
+export function hasSufficientCreditsForCampaign(
   entityBalance: number,
   recipientCount: number,
   giftCardDenomination: number,
