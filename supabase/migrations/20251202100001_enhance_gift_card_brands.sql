@@ -1,9 +1,12 @@
 -- =====================================================
--- ENHANCE GIFT CARD BRANDS TABLE
+-- RUN THIS SCRIPT IN SUPABASE SQL EDITOR
 -- =====================================================
--- Add optional metadata fields for comprehensive brand management
--- Required: brand_name, logo_url
--- Optional: website_url, description, terms_url, brand_colors, metadata_source
+-- Complete migration script for Gift Card Brand Management System
+-- Combines schema enhancements and storage bucket creation
+-- =====================================================
+
+-- PART 1: ENHANCE GIFT CARD BRANDS TABLE
+-- =====================================================
 
 -- Add new optional fields to gift_card_brands
 ALTER TABLE gift_card_brands 
@@ -44,4 +47,96 @@ CREATE TRIGGER generate_brand_code_trigger
   BEFORE INSERT ON gift_card_brands
   FOR EACH ROW
   EXECUTE FUNCTION generate_brand_code_from_name();
+
+-- =====================================================
+-- PART 2: CREATE STORAGE BUCKET FOR BRAND LOGOS
+-- =====================================================
+
+-- Create the storage bucket
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'gift-card-brand-logos',
+  'gift-card-brand-logos',
+  true,
+  2097152, -- 2MB in bytes
+  ARRAY['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 2097152,
+  allowed_mime_types = ARRAY['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+
+-- Allow authenticated users to upload logos
+DROP POLICY IF EXISTS "Authenticated users can upload brand logos" ON storage.objects;
+CREATE POLICY "Authenticated users can upload brand logos"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'gift-card-brand-logos');
+
+-- Allow authenticated users to update their uploaded logos
+DROP POLICY IF EXISTS "Authenticated users can update brand logos" ON storage.objects;
+CREATE POLICY "Authenticated users can update brand logos"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id = 'gift-card-brand-logos');
+
+-- Allow authenticated users to delete logos
+DROP POLICY IF EXISTS "Authenticated users can delete brand logos" ON storage.objects;
+CREATE POLICY "Authenticated users can delete brand logos"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'gift-card-brand-logos');
+
+-- Allow anyone to read logos (public bucket)
+DROP POLICY IF EXISTS "Anyone can view brand logos" ON storage.objects;
+CREATE POLICY "Anyone can view brand logos"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'gift-card-brand-logos');
+
+-- =====================================================
+-- VERIFICATION QUERIES
+-- =====================================================
+
+-- Check that new columns were added
+SELECT 
+  column_name, 
+  data_type, 
+  is_nullable
+FROM information_schema.columns
+WHERE table_name = 'gift_card_brands'
+  AND column_name IN ('website_url', 'description', 'terms_url', 'brand_colors', 'metadata_source')
+ORDER BY column_name;
+
+-- Check that storage bucket was created
+SELECT 
+  id, 
+  name, 
+  public, 
+  file_size_limit, 
+  allowed_mime_types
+FROM storage.buckets
+WHERE id = 'gift-card-brand-logos';
+
+-- Check storage policies
+SELECT 
+  policyname,
+  cmd,
+  qual
+FROM pg_policies
+WHERE tablename = 'objects'
+  AND policyname LIKE '%brand logo%';
+
+-- Success message
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Migration completed successfully!';
+  RAISE NOTICE '✅ gift_card_brands table enhanced with new columns';
+  RAISE NOTICE '✅ Storage bucket gift-card-brand-logos created';
+  RAISE NOTICE '✅ RLS policies configured';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Next steps:';
+  RAISE NOTICE '1. Test adding Starbucks brand (should auto-detect)';
+  RAISE NOTICE '2. Test adding custom brand with logo upload';
+END $$;
 

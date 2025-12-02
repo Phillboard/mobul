@@ -96,8 +96,3 @@ verify_jwt = true
 [functions.purchase-gift-cards]
 verify_jwt = false
 
-[functions.release-twilio-number]
-verify_jwt = false
-
-[functions.retry-failed-sms]
-verify_jwt = false

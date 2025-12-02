@@ -49,7 +49,97 @@ curl -H "Authorization: Bearer eyJhb..." https://api.mobulace.com/v1/campaigns
 
 ---
 
+## Edge Function Authentication
+
+### JWT Authentication
+
+All edge functions require valid JWT tokens in the Authorization header:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}' \
+  https://your-project.supabase.co/functions/v1/function-name
+```
+
+### Role-Based Authorization
+
+Edge functions enforce role-based access control:
+
+| Role | Permissions |
+|------|------------|
+| **admin** | All operations |
+| **platform_admin** | Platform-level operations |
+| **agency_owner** | Agency and client management |
+| **client_admin** | Client-level operations |
+| **client_user** | Campaign management |
+| **call_center_agent** | Gift card provisioning |
+| **call_center_supervisor** | Agent oversight |
+
+### API Gateway Security
+
+The API gateway provides:
+- **Authentication Verification** - Validates JWT signature
+- **Token Expiration Check** - Rejects expired tokens
+- **Role Validation** - Enforces required permissions
+- **Rate Limiting** - 100 requests/minute per user
+- **Audit Logging** - Tracks all sensitive operations
+
+### Service-to-Service Authentication
+
+For internal edge function calls:
+
+```typescript
+import { createServiceClient } from '../_shared/api-gateway.ts';
+
+const supabase = createServiceClient();
+// Uses SUPABASE_SERVICE_ROLE_KEY for elevated permissions
+```
+
+### Authentication Errors
+
+Common authentication error responses:
+
+```json
+{
+  "success": false,
+  "error": "No authorization header",
+  "code": "UNAUTHORIZED"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "Invalid or expired token",
+  "code": "INVALID_TOKEN"
+}
+```
+
+```json
+{
+  "success": false,
+  "error": "This operation requires admin role",
+  "code": "INSUFFICIENT_PERMISSIONS"
+}
+```
+
+### Token Refresh
+
+Tokens expire after 1 hour. Refresh before expiration:
+
+```typescript
+const { data, error } = await supabase.auth.refreshSession();
+if (data.session) {
+  const newToken = data.session.access_token;
+}
+```
+
+---
+
 ## Related Documentation
 
-- [REST API](/admin/docs/api-reference/rest-api)
-- [Security](/admin/docs/architecture/security)
+- [Edge Functions API](./EDGE_FUNCTIONS.md)
+- [REST API](./REST_API.md)
+- [Security Architecture](../2-ARCHITECTURE/SECURITY.md)

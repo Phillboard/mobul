@@ -17,15 +17,30 @@ export function useTilloBrandSync() {
    */
   const syncWithTillo = useMutation({
     mutationFn: async (brandName: string): Promise<TilloBrandSearchResult> => {
-      const { data, error } = await supabase.functions.invoke('lookup-tillo-brand', {
-        body: { brandName },
-      });
+      try {
+        const { data, error } = await supabase.functions.invoke('lookup-tillo-brand', {
+          body: { brandName },
+        });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to lookup brand in Tillo');
+        // Handle Supabase function invocation errors
+        if (error) {
+          console.warn('Tillo sync failed:', error.message);
+          // Return not found instead of throwing
+          return {
+            found: false,
+            error: 'Tillo API is currently unavailable',
+          };
+        }
+
+        return data as TilloBrandSearchResult;
+      } catch (err: any) {
+        console.warn('Tillo sync failed:', err);
+        // Return not found for graceful degradation
+        return {
+          found: false,
+          error: 'Tillo API is currently unavailable',
+        };
       }
-
-      return data as TilloBrandSearchResult;
     },
     onSuccess: (data) => {
       setSyncResult(data);

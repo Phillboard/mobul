@@ -1,8 +1,58 @@
-# MVP Production Deployment Guide
+# Production Deployment Guide
 
-## Deployment Steps
+## Overview
 
-### Step 1: Deploy Edge Functions (5 minutes)
+This guide covers deploying the Mobul ACE Platform with API-first edge functions, database migrations, and environment configuration.
+
+---
+
+## Quick Deployment
+
+### One-Command Deployment
+
+```powershell
+# Deploy all edge functions and run tests
+.\run-deployment-pipeline.ps1
+```
+
+This automated script:
+1. Deploys all 7 edge functions
+2. Runs integration tests
+3. Executes performance benchmarks
+4. Guides manual verification
+
+**Time**: 15-20 minutes
+
+---
+
+## Edge Functions Deployment
+
+### Deploy All New Functions
+
+```powershell
+# Using deployment script (recommended)
+.\scripts\deploy-edge-functions.ps1
+
+# Or manually
+supabase functions deploy provision-gift-card-for-call-center
+supabase functions deploy provision-gift-card-from-api
+supabase functions deploy simulate-mail-tracking
+supabase functions deploy validate-campaign-budget
+supabase functions deploy validate-gift-card-configuration
+supabase functions deploy update-organization-status
+supabase functions deploy calculate-credit-requirements
+```
+
+### Verify Deployment
+
+1. Go to Supabase Dashboard → Functions
+2. Check all functions show "Healthy"
+3. View logs for any errors
+4. Test one function manually
+
+---
+
+## Step 1: Deploy Edge Functions (15 minutes)
 
 Deploy the new email functions and updated edge functions:
 

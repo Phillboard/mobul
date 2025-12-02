@@ -109,14 +109,18 @@ serve(async (req) => {
   } catch (error: any) {
     console.error('Error in lookup-tillo-brand function:', error);
 
+    // Return 200 with found: false for graceful failure
+    // Only return error status codes for auth issues
+    const isAuthError = error.message === 'Unauthorized' || error.message.includes('permissions');
+    
     return new Response(
       JSON.stringify({
         found: false,
-        error: error.message || 'Failed to lookup brand in Tillo',
+        error: error.message || 'Tillo API unavailable',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: error.message === 'Unauthorized' || error.message.includes('permissions') ? 403 : 500,
+        status: isAuthError ? 403 : 200, // Return 200 for non-auth errors to allow graceful handling
       }
     );
   }

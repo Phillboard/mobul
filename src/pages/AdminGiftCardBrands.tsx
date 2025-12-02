@@ -124,19 +124,19 @@ export default function AdminGiftCardBrands() {
             <Card key={brand.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
                     {brand.logo_url && (
                       <img
                         src={brand.logo_url}
                         alt={brand.brand_name}
-                        className="w-12 h-12 rounded object-contain"
+                        className="w-12 h-12 rounded object-contain flex-shrink-0"
                       />
                     )}
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <CardTitle>{brand.brand_name}</CardTitle>
+                        <CardTitle className="truncate">{brand.brand_name}</CardTitle>
                         {brand.metadata_source === 'auto_lookup' && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs flex-shrink-0">
                             <Sparkles className="mr-1 h-3 w-3" />
                             Auto-detected
                           </Badge>
@@ -156,7 +156,7 @@ export default function AdminGiftCardBrands() {
                         </div>
                         {brand.website_url && (
                           <a
-                            href={brand.website_url}
+                            href={brand.website_url.startsWith('http') ? brand.website_url : `https://${brand.website_url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-blue-500 hover:underline flex items-center gap-1"
@@ -219,7 +219,6 @@ function DenominationManager({ brandId }: { brandId: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newDenom, setNewDenom] = useState('');
-  const [newCost, setNewCost] = useState('');
 
   const { data: denominations } = useQuery({
     queryKey: ['gift-card-denominations', 'admin', brandId],
@@ -238,18 +237,18 @@ function DenominationManager({ brandId }: { brandId: string }) {
   const addDenomination = useMutation({
     mutationFn: async () => {
       const denom = parseFloat(newDenom);
-      const cost = newCost ? parseFloat(newCost) : denom * 0.95;
 
       if (isNaN(denom) || denom <= 0) {
         throw new Error('Invalid denomination');
       }
 
+      // Set cost to same as denomination (no discount by default)
       const { error } = await supabase.from('gift_card_denominations').insert({
         brand_id: brandId,
         denomination: denom,
         is_enabled_by_admin: true,
-        admin_cost_per_card: cost,
-        tillo_cost_per_card: cost,
+        admin_cost_per_card: denom, // Cost equals denomination
+        tillo_cost_per_card: denom,
       });
 
       if (error) throw error;
@@ -257,7 +256,6 @@ function DenominationManager({ brandId }: { brandId: string }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['gift-card-denominations', 'admin', brandId] });
       setNewDenom('');
-      setNewCost('');
       toast({ title: 'Denomination added' });
     },
     onError: (error: Error) => {
@@ -300,36 +298,25 @@ function DenominationManager({ brandId }: { brandId: string }) {
       <div className="flex items-center gap-2">
         <Input
           type="number"
-          placeholder="Denomination ($)"
+          placeholder="Amount (e.g., 25)"
           value={newDenom}
           onChange={(e) => setNewDenom(e.target.value)}
-          className="w-32"
+          onKeyPress={(e) => e.key === 'Enter' && addDenomination.mutate()}
+          className="w-40"
         />
-        <Input
-          type="number"
-          placeholder="Cost ($)"
-          value={newCost}
-          onChange={(e) => setNewCost(e.target.value)}
-          className="w-32"
-        />
-        <Button onClick={() => addDenomination.mutate()} size="sm">
+        <Button onClick={() => addDenomination.mutate()} size="sm" disabled={!newDenom}>
           <Plus className="mr-1 h-4 w-4" />
           Add
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {denominations?.map((denom) => (
           <Card key={denom.id} className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
                 <span className="font-semibold">${denom.denomination}</span>
-                {denom.admin_cost_per_card && (
-                  <span className="text-xs text-muted-foreground">
-                    (cost: ${denom.admin_cost_per_card})
-                  </span>
-                )}
               </div>
               <div className="flex items-center gap-2">
                 <Switch

@@ -1,25 +1,26 @@
 # ACE Engage - Direct Mail Marketing Platform
 
-> **🔄 MIGRATION NOTICE:** This project has been configured for a new Supabase account.  
-> **New to this project?** See [MIGRATION_COMPLETE.md](MIGRATION_COMPLETE.md) for setup instructions.
+> **✅ API-FIRST ARCHITECTURE:** Fully refactored with edge functions, business rules, and comprehensive security.  
+> **📚 Complete Documentation:** See [API_FIRST_MASTER_INDEX.md](API_FIRST_MASTER_INDEX.md) for API reference and deployment guides.
 
-**Version:** 1.0.0  
-**Status:** 🚀 Production Ready (9/10 Quality)  
-**Tech Stack:** React 18 + TypeScript + Supabase + Shadcn UI
+**Version:** 2.0.0  
+**Status:** 🚀 Production Ready (API-First)  
+**Tech Stack:** React 18 + TypeScript + Supabase Edge Functions + Shadcn UI
 
 ---
 
 ## 🎯 What This Is
 
-ACE Engage is a **complete direct mail marketing platform** that helps businesses create, track, and optimize direct mail campaigns with integrated gift card rewards and data enrichment capabilities.
+ACE Engage is a **complete direct mail marketing platform** with API-first architecture, featuring gift card rewards, campaign management, and comprehensive analytics.
 
 ### Core Features:
-- ✅ **Campaign Management** - Create and track direct mail campaigns
-- ✅ **Gift Card System** - Distribute rewards via SMS/email
+- ✅ **Campaign Management** - Budget validation & real-time tracking
+- ✅ **Gift Card System** - Brand-denomination marketplace with unified provisioning
 - ✅ **Contact Management** - CRM with data enrichment
 - ✅ **Landing Pages** - AI-powered page generation
-- ✅ **Call Center** - Gift card redemption interface
-- ✅ **Analytics** - Campaign performance tracking
+- ✅ **Call Center** - SMS opt-in compliant gift card delivery
+- ✅ **Analytics** - Complete billing and performance tracking
+- ✅ **API-First** - All business logic server-side with edge functions
 
 ---
 
@@ -27,12 +28,13 @@ ACE Engage is a **complete direct mail marketing platform** that helps businesse
 
 ### Prerequisites:
 - Node.js 18+
+- Supabase CLI (`npm install -g supabase`)
 - Supabase account
 - Twilio account (for SMS)
 
-### Setup (5 minutes):
+### Setup (10 minutes):
 
-```bash
+```powershell
 # 1. Clone and install
 git clone https://github.com/Phillboard/mobul
 cd mobul
@@ -42,42 +44,104 @@ npm install --legacy-peer-deps
 cp .env.example .env
 # Add your Supabase and Twilio credentials
 
-# 3. Run development server
+# 3. Deploy edge functions
+.\run-deployment-pipeline.ps1
+
+# 4. Run development server
 npm run dev
 # Opens at http://localhost:8081
 ```
 
 ### First Time Setup:
-1. Visit `/admin/mvp-verification` to check system health
-2. Use `/admin/demo-data` to generate test data
-3. See [MVP Setup Guide](public/docs/1-GETTING-STARTED/MVP_SETUP.md) for detailed setup
+1. **Deploy Edge Functions**: Run `.\run-deployment-pipeline.ps1` (15-20 min)
+2. **Verify Deployment**: Check Supabase Dashboard → Functions
+3. **Generate Test Data**: Visit `/admin/demo-data`
+4. **See Detailed Guide**: [Quick Start Deployment](public/docs/7-IMPLEMENTATION/QUICK_START_DEPLOYMENT.md)
 
 ---
 
-## 📚 Documentation
+## 📚 Documentation Hub
 
-All documentation is located in `public/docs/`:
+**Start Here**: [API_FIRST_MASTER_INDEX.md](API_FIRST_MASTER_INDEX.md) - Complete navigation
+
+### Quick Links
+
+**For Management:**
+- [Executive Summary](EXECUTIVE_SUMMARY.md) - High-level overview
+- [Implementation Status](public/docs/7-IMPLEMENTATION/IMPLEMENTATION_STATUS_FINAL.md) - Current status
+
+**For Developers:**
+- [API Reference](public/docs/7-IMPLEMENTATION/API_FIRST_IMPLEMENTATION_COMPLETE.md) - Complete API docs
+- [Edge Functions Guide](public/docs/4-DEVELOPER-GUIDE/EDGE_FUNCTIONS.md) - Development patterns
+- [Frontend Migration](public/docs/7-IMPLEMENTATION/FRONTEND_MIGRATION_GUIDE.md) - Integration guide
+
+**For Deployment:**
+- [Quick Start Deployment](public/docs/7-IMPLEMENTATION/QUICK_START_DEPLOYMENT.md) - 20-minute deploy
+- [Deployment Testing Guide](public/docs/7-IMPLEMENTATION/DEPLOYMENT_TESTING_GUIDE.md) - Detailed steps
+- [Production Checklist](public/docs/4-DEVELOPER-GUIDE/PRODUCTION_CHECKLIST.md) - Go-live checklist
+
+---
+
+## 📚 Complete Documentation Structure
 
 ### Getting Started:
-- **[Quick Start](public/docs/1-GETTING-STARTED/QUICKSTART.md)** - Platform quick start
-- **[MVP Setup](public/docs/1-GETTING-STARTED/MVP_SETUP.md)** - Development environment setup
-- **[First Campaign](public/docs/1-GETTING-STARTED/FIRST_CAMPAIGN.md)** - Create your first campaign
-- **[Terminology](public/docs/1-GETTING-STARTED/TERMINOLOGY.md)** - Platform terms and concepts
+- [Quick Start](public/docs/1-GETTING-STARTED/QUICKSTART.md)
+- [MVP Setup](public/docs/1-GETTING-STARTED/MVP_SETUP.md)
+- [First Campaign](public/docs/1-GETTING-STARTED/FIRST_CAMPAIGN.md)
+- [Terminology](public/docs/1-GETTING-STARTED/TERMINOLOGY.md)
+
+### Architecture:
+- [System Overview](public/docs/2-ARCHITECTURE/OVERVIEW.md)
+- [Data Model](public/docs/2-ARCHITECTURE/DATA_MODEL.md)
+- [Security](public/docs/2-ARCHITECTURE/SECURITY.md)
+- [Scalability](public/docs/2-ARCHITECTURE/SCALABILITY.md)
 
 ### Features:
-- **[Campaigns](public/docs/3-FEATURES/CAMPAIGNS.md)** - Campaign management
-- **[Gift Cards](public/docs/3-FEATURES/GIFT_CARDS.md)** - Gift card system
-- **[Code Enrichment](public/docs/3-FEATURES/CODE_ENRICHMENT.md)** - Customer data enrichment
-- **[Landing Pages](public/docs/3-FEATURES/LANDING_PAGES.md)** - AI page builder
-- **[Analytics](public/docs/3-FEATURES/ANALYTICS.md)** - Reporting & dashboards
+- [Campaigns](public/docs/3-FEATURES/CAMPAIGNS.md)
+- [Gift Cards](public/docs/3-FEATURES/GIFT_CARDS.md)
+- [Audiences](public/docs/3-FEATURES/AUDIENCES.md)
+- [Landing Pages](public/docs/3-FEATURES/LANDING_PAGES.md)
+- [Analytics](public/docs/3-FEATURES/ANALYTICS.md)
 
 ### Developer Guide:
-- **[Setup](public/docs/4-DEVELOPER-GUIDE/SETUP.md)** - Development setup
-- **[Testing](public/docs/4-DEVELOPER-GUIDE/TESTING.md)** - MVP testing guide
-- **[Testing Campaigns](public/docs/4-DEVELOPER-GUIDE/TESTING_CAMPAIGNS.md)** - Campaign workflow testing
-- **[Demo Data](public/docs/4-DEVELOPER-GUIDE/DEMO_DATA.md)** - Generate test data
-- **[Deployment](public/docs/4-DEVELOPER-GUIDE/DEPLOYMENT.md)** - Production deployment
-- **[Email Setup](public/docs/4-DEVELOPER-GUIDE/EMAIL_SETUP.md)** - Resend email setup
+- [Edge Functions](public/docs/4-DEVELOPER-GUIDE/EDGE_FUNCTIONS.md) ⭐ NEW
+- [Deployment](public/docs/4-DEVELOPER-GUIDE/DEPLOYMENT.md)
+- [Testing](public/docs/4-DEVELOPER-GUIDE/TESTING.md)
+- [Database](public/docs/4-DEVELOPER-GUIDE/DATABASE.md)
+
+### API Reference:
+- [Edge Functions API](public/docs/5-API-REFERENCE/EDGE_FUNCTIONS.md) ⭐ NEW
+- [Authentication](public/docs/5-API-REFERENCE/AUTHENTICATION.md) ⭐ UPDATED
+- [REST API](public/docs/5-API-REFERENCE/REST_API.md)
+- [Examples](public/docs/5-API-REFERENCE/EXAMPLES.md) ⭐ UPDATED
+
+### Implementation Guides:
+- [API Implementation](public/docs/7-IMPLEMENTATION/API_FIRST_IMPLEMENTATION_COMPLETE.md) ⭐ NEW
+- [Quick Start Deployment](public/docs/7-IMPLEMENTATION/QUICK_START_DEPLOYMENT.md) ⭐ NEW
+- [Frontend Migration](public/docs/7-IMPLEMENTATION/FRONTEND_MIGRATION_GUIDE.md) ⭐ NEW
+- [Brand Management](public/docs/7-IMPLEMENTATION/BRAND_MANAGEMENT_IMPLEMENTATION_COMPLETE.md) ⭐ NEW
+
+---
+
+## 🔑 Environment Variables
+
+```bash
+# Supabase
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+
+# Tillo Gift Cards (optional)
+TILLO_API_KEY=your_tillo_key
+TILLO_SECRET_KEY=your_tillo_secret
+
+# Twilio (for SMS)
+VITE_TWILIO_ACCOUNT_SID=your_account_sid
+VITE_TWILIO_AUTH_TOKEN=your_auth_token
+```
+
+---
+
+## 🏗️ Project Structure
 
 ### User Guides:
 - **[Admin Guide](public/docs/6-USER-GUIDES/ADMIN_GUIDE.md)** - Platform administration

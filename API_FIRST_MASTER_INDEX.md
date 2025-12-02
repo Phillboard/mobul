@@ -3,17 +3,24 @@
 ## 🎯 Quick Navigation
 
 ### Start Here
-- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - High-level overview and status
-- **[QUICK_START_DEPLOYMENT.md](QUICK_START_DEPLOYMENT.md)** - Deploy in 20 minutes
+- **[Executive Summary](EXECUTIVE_SUMMARY.md)** - High-level overview and status
+- **[Quick Start Deployment](public/docs/7-IMPLEMENTATION/QUICK_START_DEPLOYMENT.md)** - Deploy in 20 minutes
+- **[Documentation Index](public/docs/INDEX.md)** - Full documentation structure
 
 ### For Developers
-- **[API_FIRST_IMPLEMENTATION_COMPLETE.md](API_FIRST_IMPLEMENTATION_COMPLETE.md)** - Complete API reference
-- **[FRONTEND_MIGRATION_GUIDE.md](FRONTEND_MIGRATION_GUIDE.md)** - Frontend integration guide
-- **[DEPLOYMENT_TESTING_GUIDE.md](DEPLOYMENT_TESTING_GUIDE.md)** - Detailed deployment steps
+- **[API Implementation](public/docs/7-IMPLEMENTATION/API_FIRST_IMPLEMENTATION_COMPLETE.md)** - Complete API reference
+- **[Frontend Migration](public/docs/7-IMPLEMENTATION/FRONTEND_MIGRATION_GUIDE.md)** - Frontend integration guide
+- **[Deployment Testing](public/docs/7-IMPLEMENTATION/DEPLOYMENT_TESTING_GUIDE.md)** - Detailed deployment steps
+- **[Edge Functions Guide](public/docs/4-DEVELOPER-GUIDE/EDGE_FUNCTIONS.md)** - Development patterns
 
 ### For Management
-- **[API_FIRST_REFACTOR_SUMMARY.md](API_FIRST_REFACTOR_SUMMARY.md)** - Implementation summary
-- **[IMPLEMENTATION_STATUS_FINAL.md](IMPLEMENTATION_STATUS_FINAL.md)** - Current status
+- **[API Refactor Summary](public/docs/7-IMPLEMENTATION/API_FIRST_REFACTOR_SUMMARY.md)** - Implementation summary
+- **[Implementation Status](public/docs/7-IMPLEMENTATION/IMPLEMENTATION_STATUS_FINAL.md)** - Current status
+
+### API Reference
+- **[Edge Functions API](public/docs/5-API-REFERENCE/EDGE_FUNCTIONS.md)** - API endpoints
+- **[Authentication](public/docs/5-API-REFERENCE/AUTHENTICATION.md)** - JWT & RBAC
+- **[Examples](public/docs/5-API-REFERENCE/EXAMPLES.md)** - Code samples
 
 ## 📂 Directory Structure
 

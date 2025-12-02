@@ -2,7 +2,76 @@
 
 ## Overview
 
-The gift card system automates reward provisioning for campaign engagement. It manages brand inventory, pool allocation, redemption workflows, and delivery tracking with 99.5%+ reliability.
+The gift card system automates reward provisioning with a modern brand-denomination marketplace. It features unified provisioning (inventory + Tillo API), comprehensive billing tracking, and hierarchical configuration for agencies and clients.
+
+---
+
+## New Architecture (December 2024)
+
+### Brand-Denomination Marketplace
+
+The platform now uses a simplified brand-denomination model:
+
+**Key Components:**
+- **Gift Card Brands** - Catalog of available brands (Amazon, Visa, etc.)
+- **Denominations** - Available values per brand ($10, $25, $50, etc.)
+- **Inventory** - Uploaded gift card codes (CSV bulk upload)
+- **Tillo Integration** - Automatic fallback to Tillo API when inventory depleted
+
+### Unified Provisioning
+
+Intelligent provisioning with automatic fallback:
+
+```
+1. Check Inventory → If available, claim card
+2. If no inventory → Purchase from Tillo API
+3. Record billing transaction
+4. Return card details
+```
+
+**Edge Function**: `provision-gift-card-unified`
+
+```typescript
+const { data } = await supabase.functions.invoke(
+  'provision-gift-card-unified',
+  {
+    body: {
+      campaignId: 'uuid',
+      recipientId: 'uuid',
+      brandId: 'uuid',
+      denomination: 25,
+      conditionNumber: 1,
+    },
+  }
+);
+```
+
+### Hierarchical Configuration
+
+**Admin Level:**
+- Enable/disable brands globally
+- Configure denominations per brand
+- Upload bulk inventory (CSV)
+- View platform-wide analytics
+
+**Agency Level:**
+- Select which brands to offer clients
+- Set markup percentages
+- Configure custom pricing
+
+**Client Level:**
+- Choose from agency-approved brands
+- Select denominations for campaigns
+- View spending and billing
+
+### Billing & Tracking
+
+Complete transaction ledger:
+- **Source Tracking** - Inventory vs Tillo API
+- **Cost Basis** - Admin cost per card
+- **Profit Calculation** - Automatic margin tracking
+- **Billing Entity** - Client or agency billed
+- **Immutable Ledger** - All transactions recorded
 
 ---
 
