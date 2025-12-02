@@ -229,7 +229,8 @@ export function AudiencesRewardsStep({
       condition_number: conditionNumber,
       condition_name: defaultNames[conditionNumber - 1] || `Condition ${conditionNumber}`,
       trigger_type: "manual_agent",
-      gift_card_pool_id: "",
+      brand_id: "",
+      card_value: 0,
       sms_template: "",
       is_active: true,
     };
