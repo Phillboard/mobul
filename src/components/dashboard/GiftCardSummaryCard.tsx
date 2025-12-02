@@ -9,38 +9,50 @@ interface GiftCardSummaryCardProps {
 }
 
 export function GiftCardSummaryCard({ clientId }: GiftCardSummaryCardProps) {
-  const { data: summary, isLoading } = useQuery({
+  const { data: summary, isLoading, error } = useQuery({
     queryKey: ["gift-card-summary", clientId],
     queryFn: async () => {
-      // Get pool totals
-      const { data: pools, error: poolError } = await supabase
-        .from("gift_card_pools")
-        .select("card_value, total_cards, available_cards, delivered_cards")
-        .eq("client_id", clientId);
+      // Get inventory totals for this client's campaigns
+      const { data: inventory, error: invError } = await supabase
+        .from("gift_card_inventory")
+        .select("denomination, status, assigned_to_campaign_id, campaigns!inner(client_id)")
+        .eq("campaigns.client_id", clientId);
 
-      if (poolError) throw poolError;
+      if (invError) {
+        console.error("Inventory query error:", invError);
+        // Return empty data if error (tables might not exist yet)
+        return {
+          totalValue: 0,
+          totalCards: 0,
+          availableCards: 0,
+          deliveredCards: 0,
+          recentValue: 0,
+          recentCount: 0,
+          pools: 0,
+        };
+      }
 
-      const totalValue = pools?.reduce((sum, pool) => sum + (pool.card_value * pool.total_cards), 0) || 0;
-      const totalCards = pools?.reduce((sum, pool) => sum + pool.total_cards, 0) || 0;
-      const availableCards = pools?.reduce((sum, pool) => sum + (pool.available_cards || 0), 0) || 0;
-      const deliveredCards = pools?.reduce((sum, pool) => sum + (pool.delivered_cards || 0), 0) || 0;
+      const totalCards = inventory?.length || 0;
+      const availableCards = inventory?.filter(c => c.status === 'available').length || 0;
+      const deliveredCards = inventory?.filter(c => c.status === 'delivered').length || 0;
+      const totalValue = inventory?.reduce((sum, card) => sum + (card.denomination || 0), 0) || 0;
 
-      // Get recent deliveries for trend
+      // Get recent billing data for trend (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const { data: recentDeliveries, error: deliveryError } = await supabase
-        .from("gift_card_deliveries")
-        .select("created_at, gift_cards!inner(gift_card_pools!inner(client_id, card_value))")
-        .gte("created_at", thirtyDaysAgo.toISOString())
-        .eq("gift_cards.gift_card_pools.client_id", clientId)
-        .eq("delivery_status", "sent");
+      const { data: recentBilling, error: billingError } = await supabase
+        .from("gift_card_billing_ledger")
+        .select("denomination, billed_at")
+        .eq("billed_entity_type", "client")
+        .eq("billed_entity_id", clientId)
+        .gte("billed_at", thirtyDaysAgo.toISOString());
 
-      if (deliveryError) throw deliveryError;
+      if (billingError) {
+        console.error("Billing query error:", billingError);
+      }
 
-      const recentValue = recentDeliveries?.reduce((sum, d: any) => {
-        return sum + (d.gift_cards?.gift_card_pools?.card_value || 0);
-      }, 0) || 0;
+      const recentValue = recentBilling?.reduce((sum, b) => sum + (b.denomination || 0), 0) || 0;
 
       return {
         totalValue,
@@ -48,8 +60,8 @@ export function GiftCardSummaryCard({ clientId }: GiftCardSummaryCardProps) {
         availableCards,
         deliveredCards,
         recentValue,
-        recentCount: recentDeliveries?.length || 0,
-        pools: pools?.length || 0,
+        recentCount: recentBilling?.length || 0,
+        pools: 0, // No longer using pools
       };
     },
   });
@@ -78,7 +90,7 @@ export function GiftCardSummaryCard({ clientId }: GiftCardSummaryCardProps) {
         <CardContent>
           <div className="text-2xl font-bold">${summary?.totalValue.toFixed(2)}</div>
           <p className="text-xs text-muted-foreground">
-            {summary?.totalCards} cards across {summary?.pools} pools
+            {summary?.totalCards} total cards
           </p>
         </CardContent>
       </Card>

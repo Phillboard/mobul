@@ -1,339 +1,234 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+/**
+ * Gift Card API Testing Function
+ * 
+ * Test wrapper for Tillo API provisioning validation:
+ * 1. Supports test mode (no billing)
+ * 2. Direct API provider testing
+ * 3. Returns detailed API response data
+ * 4. Used for admin testing and diagnostics
+ */
+
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { getTilloClient } from '../_shared/tillo-client.ts';
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Base provider interface
-interface GiftCardProvider {
-  provisionCard(amount: number, config: any): Promise<{
+interface ApiTestRequest {
+  poolId?: string;
+  recipientId?: string | null;
+  callSessionId?: string | null;
+  testMode: boolean;
+  testConfig?: {
+    api_provider: string;
+    card_value: number;
+    api_config?: any;
+  };
+  // Production mode params
+  brandId?: string;
+  denomination?: number;
+  campaignId?: string;
+}
+
+interface ApiTestResult {
+  success: boolean;
+  card?: {
     cardCode: string;
     cardNumber?: string;
+    denomination: number;
+    brandName?: string;
     expirationDate?: string;
-    transactionId: string;
-  }>;
-}
-
-// Tango Card provider
-class TangoCardProvider implements GiftCardProvider {
-  async provisionCard(amount: number, config: any) {
-    const { username, password, platformName } = config;
-    const auth = btoa(`${username}:${password}`);
-    
-    const response = await fetch('https://integration-api.tangocard.com/raas/v2/orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        accountIdentifier: platformName,
-        amount: amount,
-        utid: `UTID-${Date.now()}`,
-        sendEmail: false
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Tango Card API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return {
-      cardCode: data.reward.credentials.redemptionUrl,
-      cardNumber: data.reward.credentials.cardNumber,
-      transactionId: data.referenceOrderID,
-      expirationDate: undefined
-    };
-  }
-}
-
-// Giftbit provider
-class GiftbitProvider implements GiftCardProvider {
-  async provisionCard(amount: number, config: any) {
-    const { apiKey } = config;
-    
-    const response = await fetch('https://api.giftbit.com/v2/gifts', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        gift: {
-          price_in_cents: amount * 100,
-          delivery_date: new Date().toISOString()
-        }
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Giftbit API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return {
-      cardCode: data.gift.code,
-      transactionId: data.gift.id,
-      expirationDate: undefined
-    };
-  }
-}
-
-// Rybbon provider
-class RybbonProvider implements GiftCardProvider {
-  async provisionCard(amount: number, config: any) {
-    const { apiKey } = config;
-    
-    const response = await fetch('https://api.rybbon.net/v1/rewards', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        amount: amount,
-        currency: 'USD'
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Rybbon API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return {
-      cardCode: data.code,
-      transactionId: data.id,
-      expirationDate: data.expires_at
-    };
-  }
-}
-
-// Tillo provider
-class TilloProvider implements GiftCardProvider {
-  private async generateSignature(secretKey: string, timestamp: number, body: string): Promise<string> {
-    const crypto = globalThis.crypto;
-    const encoder = new TextEncoder();
-    const message = `${timestamp}${body}`;
-    const key = encoder.encode(secretKey);
-    const data = encoder.encode(message);
-    
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      key,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-    
-    const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
-    const hashArray = Array.from(new Uint8Array(signature));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  async provisionCard(amount: number, config: any) {
-    const { apiKey, secretKey, brandCode, currency = 'USD' } = config;
-    
-    const timestamp = Date.now();
-    const body = JSON.stringify({
-      brand: brandCode,
-      face_value: {
-        amount: amount,
-        currency: currency
-      },
-      reference: `pool-${Date.now()}`
-    });
-    
-    const signature = await this.generateSignature(secretKey, timestamp, body);
-    
-    const response = await fetch('https://api.tillo.tech/v2/orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'API-Key': apiKey,
-        'Signature': signature,
-        'Timestamp': timestamp.toString()
-      },
-      body: body
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Tillo API error: ${response.status} - ${JSON.stringify(errorData)}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.code !== '000') {
-      throw new Error(`Tillo API error: ${data.message || 'Unknown error'}`);
-    }
-    
-    return {
-      cardCode: data.data.url || data.data.code,
-      cardNumber: data.data.barcode?.string,
-      transactionId: data.data.reference,
-      expirationDate: data.data.expiration_date
-    };
-  }
-}
-
-// Provider factory
-function getProvider(providerName: string): GiftCardProvider {
-  switch (providerName) {
-    case 'tango_card':
-      return new TangoCardProvider();
-    case 'giftbit':
-      return new GiftbitProvider();
-    case 'rybbon':
-      return new RybbonProvider();
-    case 'tillo':
-      return new TilloProvider();
-    default:
-      throw new Error(`Unknown provider: ${providerName}`);
-  }
+    source: 'tillo' | 'test';
+  };
+  apiResponse?: {
+    transactionId?: string;
+    orderReference?: string;
+    provider: string;
+    timestamp: string;
+    rawResponse?: any;
+  };
+  testMode: boolean;
+  error?: string;
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
+  // Handle CORS
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     { auth: { persistSession: false } }
   );
 
   try {
-    const { poolId, recipientId, callSessionId } = await req.json();
+    const {
+      poolId,
+      recipientId,
+      callSessionId,
+      testMode,
+      testConfig,
+      brandId,
+      denomination,
+      campaignId,
+    }: ApiTestRequest = await req.json();
+
+    console.log('[API-TEST] Starting:', { testMode, poolId, brandId });
+
+    // =====================================================
+    // TEST MODE: Direct API testing without billing
+    // =====================================================
     
-    if (!poolId) {
-      throw new Error("poolId is required");
-    }
+    if (testMode && testConfig) {
+      console.log('[API-TEST] Test mode - calling Tillo API');
 
-    console.log(`[PROVISION-API] Starting for pool: ${poolId}`);
+      const { api_provider, card_value, api_config } = testConfig;
 
-    // Get pool configuration
-    const { data: pool, error: poolError } = await supabaseClient
-      .from('gift_card_pools')
-      .select('*')
-      .eq('id', poolId)
-      .single();
-
-    if (poolError || !pool) {
-      throw new Error(`Pool not found: ${poolError?.message}`);
-    }
-
-    if (!pool.api_provider || !pool.api_config) {
-      throw new Error('Pool does not have API provisioning configured');
-    }
-
-    console.log(`[PROVISION-API] Using provider: ${pool.api_provider}`);
-
-    // Record purchase attempt
-    const { data: purchase, error: purchaseError } = await supabaseClient
-      .from('gift_card_api_purchases')
-      .insert({
-        pool_id: poolId,
-        api_provider: pool.api_provider,
-        quantity: 1,
-        card_value: pool.card_value,
-        total_cost_cents: pool.card_value * 100,
-        status: 'pending'
-      })
-      .select()
-      .single();
-
-    if (purchaseError) {
-      throw new Error(`Failed to record purchase: ${purchaseError.message}`);
-    }
-
-    try {
-      // Provision card from API
-      const provider = getProvider(pool.api_provider);
-      const result = await provider.provisionCard(pool.card_value, pool.api_config);
-
-      console.log(`[PROVISION-API] Card provisioned: ${result.transactionId}`);
-
-      // Insert gift card into database
-      const { data: giftCard, error: insertError } = await supabaseClient
-        .from('gift_cards')
-        .insert({
-          pool_id: poolId,
-          card_code: result.cardCode,
-          card_number: result.cardNumber,
-          expiration_date: result.expirationDate,
-          status: 'claimed',
-          claimed_at: new Date().toISOString(),
-          claimed_by_recipient_id: recipientId,
-          claimed_by_call_session_id: callSessionId
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        throw new Error(`Failed to insert card: ${insertError.message}`);
+      if (!api_provider || !card_value) {
+        throw new Error('Test mode requires api_provider and card_value');
       }
 
-      // Update pool statistics
-      await supabaseClient
-        .from('gift_card_pools')
-        .update({
-          total_cards: pool.total_cards + 1,
-          claimed_cards: pool.claimed_cards + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', poolId);
+      // For test mode, use a test brand or default
+      let testBrandCode = 'AMZN'; // Default to Amazon for testing
 
-      // Update purchase record
-      await supabaseClient
-        .from('gift_card_api_purchases')
-        .update({
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-          api_transaction_id: result.transactionId,
-          api_response: result
-        })
-        .eq('id', purchase.id);
+      if (api_config?.brandCode) {
+        testBrandCode = api_config.brandCode;
+      }
 
-      return new Response(JSON.stringify({
-        success: true,
-        card: {
-          id: giftCard.id,
-          cardCode: giftCard.card_code,
-          cardNumber: giftCard.card_number,
-          cardValue: pool.card_value,
-          provider: pool.provider,
-          provisionedViaApi: true
-        }
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+      try {
+        const tilloClient = getTilloClient();
+        const tilloCard = await tilloClient.provisionCard(
+          testBrandCode,
+          card_value,
+          'USD'
+        );
 
-    } catch (provisionError) {
-      // Update purchase record with error
-      await supabaseClient
-        .from('gift_card_api_purchases')
-        .update({
-          status: 'failed',
-          error_message: provisionError instanceof Error ? provisionError.message : 'Unknown error'
-        })
-        .eq('id', purchase.id);
+        console.log('[API-TEST] Tillo API test successful');
 
-      throw provisionError;
+        const result: ApiTestResult = {
+          success: true,
+          testMode: true,
+          card: {
+            cardCode: tilloCard.cardCode,
+            cardNumber: tilloCard.cardNumber,
+            denomination: card_value,
+            brandName: api_provider,
+            expirationDate: tilloCard.expirationDate,
+            source: 'tillo',
+          },
+          apiResponse: {
+            transactionId: tilloCard.transactionId,
+            orderReference: tilloCard.orderReference,
+            provider: 'Tillo',
+            timestamp: new Date().toISOString(),
+            rawResponse: {
+              success: true,
+              message: 'Test provisioning successful',
+            },
+          },
+        };
+
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      } catch (tilloError) {
+        console.error('[API-TEST] Tillo API test failed:', tilloError);
+        
+        const errorResult: ApiTestResult = {
+          success: false,
+          testMode: true,
+          error: `Tillo API Error: ${tilloError.message}`,
+          apiResponse: {
+            provider: 'Tillo',
+            timestamp: new Date().toISOString(),
+            rawResponse: {
+              error: tilloError.message,
+            },
+          },
+        };
+
+        return new Response(JSON.stringify(errorResult), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        });
+      }
     }
 
+    // =====================================================
+    // PRODUCTION MODE: Call unified provisioning
+    // =====================================================
+    
+    console.log('[API-TEST] Production mode - delegating to unified provisioning');
+
+    if (!brandId || !denomination || !campaignId || !recipientId) {
+      throw new Error('Production mode requires brandId, denomination, campaignId, and recipientId');
+    }
+
+    // Call the unified provisioning function
+    const provisionRequest = {
+      campaignId,
+      recipientId,
+      brandId,
+      denomination,
+      conditionNumber: 1,
+    };
+
+    const provisionResponse = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/functions/v1/provision-gift-card-unified`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+        body: JSON.stringify(provisionRequest),
+      }
+    );
+
+    if (!provisionResponse.ok) {
+      const errorText = await provisionResponse.text();
+      throw new Error(`Provisioning failed: ${errorText}`);
+    }
+
+    const provisionResult = await provisionResponse.json();
+
+    if (!provisionResult.success) {
+      throw new Error(provisionResult.error || 'Provisioning failed');
+    }
+
+    const result: ApiTestResult = {
+      success: true,
+      testMode: false,
+      card: provisionResult.card,
+      apiResponse: {
+        provider: provisionResult.card.source === 'tillo' ? 'Tillo' : 'Inventory',
+        timestamp: new Date().toISOString(),
+      },
+    };
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[PROVISION-API] Error:', errorMessage);
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+    console.error('[API-TEST] Error:', error);
+
+    const result: ApiTestResult = {
+      success: false,
+      testMode: false,
+      error: error.message || 'Unknown error occurred',
+    };
+
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 400,
     });
   }
 });
+

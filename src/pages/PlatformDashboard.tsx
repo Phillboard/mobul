@@ -29,7 +29,7 @@ export function PlatformDashboard() {
         supabase.from('profiles').select('id, full_name, email, created_at'),
         supabase.from('campaigns').select('id, name, status, created_at'),
         supabase.from('call_sessions').select('id, created_at'),
-        supabase.from('gift_card_deliveries').select('id, created_at'),
+        supabase.from('gift_card_billing_ledger').select('id, billed_at'),
       ]);
 
       if (orgsRes.error) throw orgsRes.error;
@@ -37,7 +37,8 @@ export function PlatformDashboard() {
       if (usersRes.error) throw usersRes.error;
       if (campaignsRes.error) throw campaignsRes.error;
       if (callsRes.error) throw callsRes.error;
-      if (giftsRes.error) throw giftsRes.error;
+      // Gift card billing ledger might not exist yet - handle gracefully
+      if (giftsRes.error && giftsRes.error.code !== 'PGRST116') console.warn('Gift card query:', giftsRes.error);
 
       // Calculate clients by industry
       const clientsByIndustry = (clientsRes.data || []).reduce((acc, client) => {

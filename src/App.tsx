@@ -52,6 +52,8 @@ const Activities = lazy(() => import("./pages/Activities"));
 const Tasks = lazy(() => import("./pages/Tasks"));
 const TeamManagement = lazy(() => import("./pages/TeamManagement"));
 const AdminGiftCardMarketplace = lazy(() => import("./pages/AdminGiftCardMarketplace"));
+const AdminGiftCardBrands = lazy(() => import("./pages/AdminGiftCardBrands"));
+const AdminFinancialReports = lazy(() => import("./pages/AdminFinancialReports"));
 const AdminSiteDirectory = lazy(() => import("./pages/AdminSiteDirectory"));
 const AceForms = lazy(() => import("./pages/AceForms"));
 const AceFormBuilder = lazy(() => import("./pages/AceFormBuilder"));
@@ -73,6 +75,9 @@ const PurchaseGiftCard = lazy(() => import("./pages/PurchaseGiftCard"));
 const RecordPurchase = lazy(() => import("./pages/RecordPurchase"));
 const EditPoolPricing = lazy(() => import("./pages/EditPoolPricing"));
 const DemoDataGenerator = lazy(() => import("./pages/admin/DemoDataGenerator"));
+const ClientGiftCards = lazy(() => import("./pages/ClientGiftCards"));
+const ClientBillingDashboard = lazy(() => import("./pages/ClientBillingDashboard"));
+const AdminOrganizationManagement = lazy(() => import("./pages/AdminOrganizationManagement"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -167,17 +172,23 @@ const App = () => (
                   
                   {/* Gift Cards - Role-based access control */}
                   {/* Admin + Agency Only - Pool Management & Marketplace */}
-                  <Route path="/gift-cards" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><GiftCards /></ProtectedRoute>} />
-                  <Route path="/gift-cards/pools/:poolId" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><PoolDetail /></ProtectedRoute>} />
-                  <Route path="/gift-cards/purchase/:poolId" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><PurchaseGiftCard /></ProtectedRoute>} />
-                  <Route path="/gift-cards/purchase" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><PurchaseGiftCards /></ProtectedRoute>} />
-                  <Route path="/purchase-gift-cards" element={<ProtectedRoute allowedRoles={['admin', 'agency_owner']}><PurchaseGiftCards /></ProtectedRoute>} />
+                  <Route path="/gift-cards" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><GiftCards /></ProtectedRoute>} />
+                  <Route path="/gift-cards/pools/:poolId" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PoolDetail /></ProtectedRoute>} />
+                  <Route path="/gift-cards/purchase/:poolId" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PurchaseGiftCard /></ProtectedRoute>} />
+                  <Route path="/gift-cards/purchase" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PurchaseGiftCards /></ProtectedRoute>} />
+                  <Route path="/purchase-gift-cards" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PurchaseGiftCards /></ProtectedRoute>} />
                   
                   {/* Admin Only - Platform Marketplace & Pricing */}
                   <Route path="/gift-cards/marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
                   <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
+                  <Route path="/admin/gift-cards" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardBrands /></ProtectedRoute>} />
+                  <Route path="/admin/financial-reports" element={<ProtectedRoute requiredRole="admin"><AdminFinancialReports /></ProtectedRoute>} />
                   <Route path="/admin/gift-cards/record-purchase" element={<ProtectedRoute requiredRole="admin"><RecordPurchase /></ProtectedRoute>} />
                   <Route path="/admin/gift-cards/pools/:poolId/pricing" element={<ProtectedRoute requiredRole="admin"><EditPoolPricing /></ProtectedRoute>} />
+                  
+                  {/* Client Gift Card Management */}
+                  <Route path="/client/gift-cards" element={<ProtectedRoute><ClientGiftCards /></ProtectedRoute>} />
+                  <Route path="/client/billing" element={<ProtectedRoute><ClientBillingDashboard /></ProtectedRoute>} />
                   
                   {/* Contacts System */}
                   <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
@@ -202,7 +213,7 @@ const App = () => (
                   
                   {/* Administration - Consolidated */}
                   <Route path="/admin/system-health" element={<ProtectedRoute><SystemHealth /></ProtectedRoute>} />
-                  <Route path="/admin/demo-data-generator" element={<ProtectedRoute requiredRole="admin"><AdminDemoDataGenerator /></ProtectedRoute>} />
+                  <Route path="/admin/demo-data-generator" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
                   <Route path="/admin/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
                    <Route path="/admin/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                    <Route path="/admin/docs/:category" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
@@ -227,6 +238,7 @@ const App = () => (
                   <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
                   <Route path="/admin/site-directory" element={<ProtectedRoute requiredRole="admin"><AdminSiteDirectory /></ProtectedRoute>} />
                   <Route path="/admin/demo-data" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
+                  <Route path="/admin/organizations" element={<ProtectedRoute requiredRole="admin"><AdminOrganizationManagement /></ProtectedRoute>} />
                   
                   {/* 404 */}
                   <Route path="*" element={<NotFound />} />

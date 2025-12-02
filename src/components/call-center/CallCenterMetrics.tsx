@@ -10,53 +10,59 @@ import { Phone, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export function CallCenterMetrics() {
-  // Today's redemption stats
+  // Today's redemption stats - using billing ledger now
   const { data: todayStats } = useQuery({
     queryKey: ["call-center-today-stats"],
     queryFn: async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { data: redemptions, error } = await supabase
-        .from("gift_card_deliveries")
-        .select("id, delivered_at, delivery_status")
-        .eq("delivery_method", "call_center")
-        .gte("created_at", today.toISOString());
+      const { data: transactions, error } = await supabase
+        .from("gift_card_billing_ledger")
+        .select("id, billed_at")
+        .gte("billed_at", today.toISOString());
 
-      if (error) throw error;
+      if (error) {
+        console.error("Billing stats query error:", error);
+        return {
+          totalRedemptions: 0,
+          successfulRedemptions: 0,
+          successRate: "0",
+        };
+      }
 
-      const successfulToday = redemptions?.filter(
-        (r) => r.delivery_status === "delivered"
-      ).length || 0;
-
-      const totalToday = redemptions?.length || 0;
+      const totalToday = transactions?.length || 0;
 
       return {
         totalRedemptions: totalToday,
-        successfulRedemptions: successfulToday,
-        successRate: totalToday > 0 ? ((successfulToday / totalToday) * 100).toFixed(1) : "0",
+        successfulRedemptions: totalToday, // All billing entries are successful
+        successRate: "100",
       };
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Recent activity
+  // Recent activity - using inventory assignments
   const { data: recentActivity } = useQuery({
     queryKey: ["call-center-recent-activity"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("gift_card_deliveries")
+        .from("gift_card_inventory")
         .select(`
           id,
+          assigned_at,
           delivered_at,
-          delivery_status,
-          recipient:recipients(first_name, last_name)
+          status,
+          recipients(first_name, last_name)
         `)
-        .eq("delivery_method", "call_center")
-        .order("created_at", { ascending: false })
+        .not("assigned_to_recipient_id", "is", null)
+        .order("assigned_at", { ascending: false })
         .limit(5);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Recent activity query error:", error);
+        return [];
+      }
       return data;
     },
     refetchInterval: 15000, // Refresh every 15 seconds
@@ -87,7 +93,7 @@ export function CallCenterMetrics() {
     refetchInterval: 60000, // Refresh every minute
   });
 
-  // Redemptions per hour (last 24 hours)
+  // Redemptions per hour (last 24 hours) - using billing ledger
   const { data: hourlyRate } = useQuery({
     queryKey: ["call-center-hourly-rate"],
     queryFn: async () => {
@@ -95,12 +101,14 @@ export function CallCenterMetrics() {
       twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
       const { data, error } = await supabase
-        .from("gift_card_deliveries")
+        .from("gift_card_billing_ledger")
         .select("id")
-        .eq("delivery_method", "call_center")
-        .gte("created_at", twentyFourHoursAgo.toISOString());
+        .gte("billed_at", twentyFourHoursAgo.toISOString());
 
-      if (error) throw error;
+      if (error) {
+        console.error("Hourly rate query error:", error);
+        return "0";
+      }
 
       return ((data?.length || 0) / 24).toFixed(1);
     },
@@ -167,14 +175,14 @@ export function CallCenterMetrics() {
               recentActivity.map((activity) => (
                 <div key={activity.id} className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">
-                    {activity.recipient?.first_name} {activity.recipient?.last_name}
+                    {activity.recipients?.first_name} {activity.recipients?.last_name}
                   </span>
                   <div className="flex items-center gap-2">
-                    {activity.delivery_status === "delivered" && (
+                    {activity.status === "delivered" && (
                       <CheckCircle className="h-3 w-3 text-green-500" />
                     )}
                     <span className="text-muted-foreground">
-                      {activity.delivered_at && formatDistanceToNow(new Date(activity.delivered_at), { addSuffix: true })}
+                      {activity.assigned_at && formatDistanceToNow(new Date(activity.assigned_at), { addSuffix: true })}
                     </span>
                   </div>
                 </div>

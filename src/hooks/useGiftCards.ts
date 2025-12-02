@@ -1,31 +1,35 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Tables } from "@/integrations/supabase/types";
 
-type GiftCard = Tables<"gift_cards">;
-
-export function useGiftCards(poolId?: string) {
+// Using new gift_card_inventory table
+export function useGiftCards(brandId?: string, denomination?: number) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: cards, isLoading } = useQuery({
-    queryKey: ["gift-cards", poolId],
+    queryKey: ["gift-card-inventory", brandId, denomination],
     queryFn: async () => {
       let query = supabase
-        .from("gift_cards")
-        .select("*, gift_card_pools(pool_name, card_value, provider)")
+        .from("gift_card_inventory")
+        .select("*, gift_card_brands(brand_name, logo_url)")
         .order("created_at", { ascending: false });
 
-      if (poolId) {
-        query = query.eq("pool_id", poolId);
+      if (brandId) {
+        query = query.eq("brand_id", brandId);
+      }
+      
+      if (denomination) {
+        query = query.eq("denomination", denomination);
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error("Gift card inventory query error:", error);
+        return [];
+      }
       return data;
     },
-    enabled: !!poolId || poolId === undefined,
   });
 
   const updateCardStatus = useMutation({
@@ -39,7 +43,7 @@ export function useGiftCards(poolId?: string) {
       delivered_at?: string;
     }) => {
       const { data, error } = await supabase
-        .from("gift_cards")
+        .from("gift_card_inventory")
         .update({ status, delivered_at })
         .eq("id", id)
         .select()
@@ -49,8 +53,8 @@ export function useGiftCards(poolId?: string) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["gift-cards"] });
-      queryClient.invalidateQueries({ queryKey: ["gift-card-pools"] });
+      queryClient.invalidateQueries({ queryKey: ["gift-card-inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["gift-card-billing"] });
     },
     onError: (error: Error) => {
       toast({
@@ -68,26 +72,30 @@ export function useGiftCards(poolId?: string) {
   };
 }
 
+// Updated to use billing ledger instead of deliveries table
 export function useGiftCardDeliveries(campaignId?: string) {
   const { data: deliveries, isLoading } = useQuery({
-    queryKey: ["gift-card-deliveries", campaignId],
+    queryKey: ["gift-card-billing-ledger", campaignId],
     queryFn: async () => {
       let query = supabase
-        .from("gift_card_deliveries")
+        .from("gift_card_billing_ledger")
         .select(`
           *,
-          gift_cards(card_code, gift_card_pools(card_value, provider)),
-          recipients(first_name, last_name, phone, email),
-          campaigns(name)
+          gift_card_brands(brand_name, logo_url),
+          campaigns(name),
+          gift_card_inventory(card_code, status)
         `)
-        .order("delivered_at", { ascending: false });
+        .order("billed_at", { ascending: false });
 
       if (campaignId) {
         query = query.eq("campaign_id", campaignId);
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error("Billing ledger query error:", error);
+        return [];
+      }
       return data;
     },
   });

@@ -14,8 +14,9 @@ export function DeliveryTimelinePanel({ campaignId }: DeliveryTimelinePanelProps
   const { data: deliveries, isLoading } = useQuery({
     queryKey: ["campaign-gift-deliveries", campaignId],
     queryFn: async () => {
+      // Query the new billing ledger for gift card transactions
       const { data, error } = await supabase
-        .from("gift_card_deliveries")
+        .from("gift_card_billing_ledger")
         .select(`
           *,
           recipients (
@@ -23,20 +24,38 @@ export function DeliveryTimelinePanel({ campaignId }: DeliveryTimelinePanelProps
             last_name,
             phone
           ),
-          gift_cards (
+          gift_card_brands (
+            brand_name
+          ),
+          gift_card_inventory (
             card_code,
-            gift_card_pools (
-              provider,
-              card_value
-            )
+            status
           )
         `)
         .eq("campaign_id", campaignId)
-        .order("created_at", { ascending: false })
+        .order("billed_at", { ascending: false })
         .limit(50);
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error("Billing ledger query error:", error);
+        return [];
+      }
+      
+      // Transform to expected format
+      return (data || []).map(entry => ({
+        id: entry.id,
+        delivery_status: entry.gift_card_inventory?.status === 'delivered' ? 'delivered' : 'sent',
+        condition_number: 1, // Condition info would come from campaign_gift_card_config
+        created_at: entry.billed_at,
+        recipients: entry.recipients,
+        gift_cards: {
+          card_code: entry.gift_card_inventory?.card_code,
+          gift_card_pools: {
+            provider: entry.gift_card_brands?.brand_name || 'Gift Card',
+            card_value: entry.denomination
+          }
+        }
+      }));
     },
   });
 

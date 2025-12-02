@@ -1,238 +1,144 @@
 /**
- * Gift Card System Type Definitions
- * 
- * Centralized TypeScript types for the gift card management system.
- * These types extend the auto-generated Supabase types with composite
- * types and helper interfaces used throughout the application.
- * 
- * Note: For credit-based system types, see creditAccounts.ts
+ * Gift Card Type Definitions
+ * Updated for new brand-denomination system
  */
 
-import { Tables } from "@/integrations/supabase/types";
-import type { CreditAccount, GiftCardRedemption } from "./creditAccounts";
+export interface GiftCardBrand {
+  id: string;
+  brand_name: string;
+  brand_code: string;
+  tillo_brand_code?: string;
+  provider?: string;
+  logo_url?: string;
+  category?: string;
+  is_enabled_by_admin: boolean;
+  balance_check_enabled?: boolean;
+  balance_check_url?: string;
+  is_active?: boolean;
+  created_at: string;
+  updated_at?: string;
+}
 
-// ============================================================================
-// Base Types (from Supabase)
-// ============================================================================
+export interface GiftCardDenomination {
+  id: string;
+  brand_id: string;
+  denomination: number;
+  is_enabled_by_admin: boolean;
+  admin_cost_per_card?: number;
+  tillo_cost_per_card?: number;
+  last_tillo_price_check?: string;
+  created_at: string;
+  updated_at: string;
+}
 
-export type GiftCard = Tables<"gift_cards">;
-export type GiftCardPool = Tables<"gift_card_pools">;
-export type GiftCardBrand = Tables<"gift_card_brands">;
-export type GiftCardDelivery = Tables<"gift_card_deliveries">;
-export type GiftCardBalanceHistory = Tables<"gift_card_balance_history">;
-export type AdminCardSale = Tables<"admin_card_sales">;
-export type AdminGiftCardInventory = Tables<"admin_gift_card_inventory">;
+export interface GiftCardInventory {
+  id: string;
+  brand_id: string;
+  denomination: number;
+  card_code: string;
+  card_number?: string;
+  expiration_date?: string;
+  status: 'available' | 'assigned' | 'delivered' | 'expired';
+  uploaded_at: string;
+  uploaded_by_user_id?: string;
+  upload_batch_id?: string;
+  assigned_to_recipient_id?: string;
+  assigned_to_campaign_id?: string;
+  assigned_at?: string;
+  delivered_at?: string;
+  notes?: string;
+  created_at: string;
+}
 
-// ============================================================================
-// Status & Type Enums
-// ============================================================================
+export interface ClientAvailableGiftCard {
+  id: string;
+  client_id: string;
+  brand_id: string;
+  denomination: number;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
-/**
- * Possible statuses for gift cards
- */
-export type GiftCardStatus = 'available' | 'claimed' | 'delivered' | 'failed';
+export interface AgencyAvailableGiftCard {
+  id: string;
+  agency_id: string;
+  brand_id: string;
+  denomination: number;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
-/**
- * Pool type classification
- */
-export type PoolType = 'master' | 'client' | 'csv' | 'buffer' | 'api_config';
+export interface GiftCardBillingLedger {
+  id: string;
+  transaction_type: 'purchase_from_inventory' | 'purchase_from_tillo' | 'refund';
+  billed_entity_type: 'client' | 'agency';
+  billed_entity_id: string;
+  campaign_id?: string;
+  recipient_id?: string;
+  brand_id: string;
+  denomination: number;
+  amount_billed: number;
+  cost_basis?: number;
+  profit: number;
+  inventory_card_id?: string;
+  tillo_transaction_id?: string;
+  tillo_order_reference?: string;
+  billed_at: string;
+  metadata?: Record<string, any>;
+  notes?: string;
+}
 
-/**
- * Methods for purchasing/provisioning cards into pools
- */
-export type PurchaseMethod = 'csv_only' | 'api_only' | 'csv_with_fallback';
+export interface CampaignGiftCardConfig {
+  id: string;
+  campaign_id: string;
+  brand_id: string;
+  denomination: number;
+  condition_number: number;
+  created_at: string;
+  updated_at: string;
+}
 
-/**
- * Balance check status
- */
-export type BalanceCheckStatus = 'success' | 'error' | 'pending';
+// Extended types with relations
+export interface GiftCardInventoryWithBrand extends GiftCardInventory {
+  gift_card_brands: GiftCardBrand;
+}
 
-// ============================================================================
-// Composite Types (with Relationships)
-// ============================================================================
+export interface ClientAvailableGiftCardWithBrand extends ClientAvailableGiftCard {
+  gift_card_brands: GiftCardBrand;
+}
 
-/**
- * Gift Card Pool with its associated brand information
- */
-export interface GiftCardPoolWithBrand extends GiftCardPool {
+export interface BillingLedgerWithRelations extends GiftCardBillingLedger {
   gift_card_brands?: GiftCardBrand;
+  campaigns?: { name: string };
+  recipients?: { first_name: string; last_name: string };
+  gift_card_inventory?: GiftCardInventory;
 }
 
-/**
- * Gift Card with its pool and brand information
- */
-export interface GiftCardWithPool extends GiftCard {
-  gift_card_pools?: GiftCardPoolWithBrand;
+export interface CampaignGiftCardConfigWithBrand extends CampaignGiftCardConfig {
+  gift_card_brands: GiftCardBrand;
 }
 
-/**
- * Admin sale record with full relationship data
- */
-export interface AdminSaleWithRelations extends AdminCardSale {
-  gift_card_pools?: GiftCardPoolWithBrand;
-  clients?: {
-    id: string;
-    name: string;
-  };
+// Legacy types (deprecated - for backward compatibility)
+/** @deprecated Use GiftCardInventory instead */
+export interface GiftCard {
+  id: string;
+  pool_id?: string;
+  card_code: string;
+  card_number?: string;
+  status: string;
+  claimed_at?: string;
+  delivered_at?: string;
 }
 
-/**
- * Gift card delivery with full relationship data
- */
-export interface GiftCardDeliveryWithRelations extends GiftCardDelivery {
-  gift_cards?: GiftCardWithPool;
-  recipients?: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    phone: string;
-    email: string;
-  };
-  campaigns?: {
-    id: string;
-    name: string;
-  };
-}
-
-/**
- * Balance history with card reference
- */
-export interface BalanceHistoryWithCard extends GiftCardBalanceHistory {
-  gift_cards?: {
-    card_code: string;
-  };
-}
-
-/**
- * Inventory purchase with brand information
- */
-export interface InventoryPurchaseWithBrand extends AdminGiftCardInventory {
-  gift_card_brands?: {
-    brand_name: string;
-  };
-}
-
-// ============================================================================
-// UI Helper Types
-// ============================================================================
-
-/**
- * Statistics for a gift card pool
- */
-export interface PoolStats {
-  totalCards: number;
-  availableCards: number;
-  claimedCards: number;
-  deliveredCards: number;
-  failedCards: number;
-  totalValue: number;
-  availableValue: number;
-  utilizationPercent: number;
-}
-
-/**
- * Filter options for card listings
- */
-export interface CardFilters {
-  status?: GiftCardStatus;
-  searchQuery?: string;
-  dateFrom?: Date;
-  dateTo?: Date;
-}
-
-/**
- * Options for exporting pool data
- */
-export interface ExportOptions {
-  poolId: string;
-  includeSensitiveData: boolean;
-  format: 'csv' | 'json';
-}
-
-/**
- * Balance check result
- */
-export interface BalanceCheckResult {
-  cardId: string;
-  cardCode: string;
-  previousBalance: number | null;
-  newBalance: number;
-  status: BalanceCheckStatus;
-  error?: string;
-}
-
-// ============================================================================
-// Form Types
-// ============================================================================
-
-/**
- * Form data for creating a new pool
- */
-export interface CreatePoolFormData {
-  poolName: string;
-  brandId: string;
-  cardValue: number;
-  provider: string;
-  isMasterPool: boolean;
-  clientId?: string;
-  autoBalanceCheck?: boolean;
-  balanceCheckFrequencyHours?: number;
-  lowStockThreshold?: number;
-}
-
-/**
- * Form data for recording inventory purchase
- */
-export interface RecordPurchaseFormData {
-  brandId: string;
-  quantity: number;
-  costPerCard: number;
-  totalCost: number;
-  supplierName?: string;
-  supplierReference?: string;
-  purchaseDate: string;
-  notes?: string;
-}
-
-/**
- * Form data for transferring cards (selling to client)
- */
-export interface TransferCardsFormData {
-  masterPoolId: string;
-  buyerClientId: string;
-  quantity: number;
-  pricePerCard: number;
-  notes?: string;
-}
-
-/**
- * Form data for pool settings update
- */
-export interface PoolSettingsFormData {
-  autoBalanceCheck: boolean;
-  balanceCheckFrequencyHours: number;
-  lowStockThreshold: number;
-}
-
-// ============================================================================
-// Credit System Integration
-// ============================================================================
-
-/**
- * Pool with credit account information (for new system)
- */
-export interface GiftCardPoolWithCredit extends GiftCardPool {
-  credit_account?: CreditAccount;
-  cost_per_card?: number;
-  pool_type?: 'csv' | 'buffer' | 'api_config';
-}
-
-/**
- * Enhanced pool stats with credit tracking
- */
-export interface EnhancedPoolStats extends PoolStats {
-  costBasis?: number;
-  estimatedValue?: number;
-  poolType?: 'csv' | 'buffer' | 'api_config';
-  healthStatus?: 'healthy' | 'low' | 'empty';
+/** @deprecated Use GiftCardBillingLedger instead */
+export interface GiftCardDelivery {
+  id: string;
+  gift_card_id: string;
+  recipient_id: string;
+  campaign_id: string;
+  delivery_method: string;
+  delivery_status: string;
+  delivered_at?: string;
 }

@@ -5,7 +5,7 @@ import {
   ShoppingCart, Globe, Activity, ListTodo, ChevronRight, ArrowLeft, FormInput,
   Gauge, BookOpen, List, Upload, FolderTree, Database, FileSearch, Rocket, TestTube,
   Megaphone, Headphones, ClipboardList, Shield, UserCog, ShieldAlert, CheckSquare,
-  PhoneCall, Target, Plug, Settings as SettingsIcon, Package
+  PhoneCall, Target, Plug, Settings as SettingsIcon, Package, Building2, CreditCard, DollarSign
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -63,9 +63,9 @@ const navigationGroups: NavGroup[] = [
     label: "Audience",
     collapsible: true,
     items: [
-      { name: "Contacts", href: "/contacts", icon: Users, permissions: ['contacts.view'], keywords: ["contacts", "customers", "crm", "people"], description: "Manage customer database" },
-      { name: "Lists & Segments", href: "/contacts/lists", icon: List, permissions: ['contacts.view'], keywords: ["lists", "segments", "groups", "targeting"], description: "Organize and segment contacts" },
-      { name: "Import Contacts", href: "/contacts/import", icon: Upload, permissions: ['contacts.create'], keywords: ["import", "csv", "upload", "bulk"], description: "Import contacts from CSV" },
+      { name: "Contacts", href: "/contacts", icon: Users, keywords: ["contacts", "customers", "crm", "people"], description: "Manage customer database" },
+      { name: "Lists & Segments", href: "/contacts/lists", icon: List, keywords: ["lists", "segments", "groups", "targeting"], description: "Organize and segment contacts" },
+      { name: "Import Contacts", href: "/contacts/import", icon: Upload, keywords: ["import", "csv", "upload", "bulk"], description: "Import contacts from CSV" },
     ]
   },
   {
@@ -74,7 +74,6 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Gift Card Inventory", href: "/gift-cards", icon: Gift, roles: ['admin', 'agency_owner'], permissions: ['gift_cards.manage', 'giftcards.view'], keywords: ["rewards", "inventory", "pools"], description: "Manage gift card inventory" },
       { name: "Purchase Cards", href: "/purchase-gift-cards", icon: Package, roles: ['admin', 'agency_owner'], permissions: ['gift_cards.purchase', 'giftcards.purchase'], keywords: ["buy", "order"], description: "Purchase gift cards" },
-      { name: "Marketplace", href: "/admin/gift-card-marketplace", icon: ShoppingCart, roles: ['admin'], permissions: ['giftcards.admin_view'], keywords: ["admin", "master", "platform"], description: "Platform gift card marketplace" },
     ]
   },
   {
@@ -91,6 +90,16 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Tasks", href: "/tasks", icon: CheckSquare, keywords: ["tasks", "todos", "follow-ups", "action items"], description: "Manage tasks and to-dos" },
       { name: "Activities", href: "/activities", icon: Activity, keywords: ["activities", "interactions", "timeline", "history"], description: "Track customer interactions" },
+      { name: "Team", href: "/team", icon: Users, keywords: ["team", "members", "management"], description: "Manage team members" },
+    ]
+  },
+  {
+    label: "My Account",
+    collapsible: true,
+    roles: ['company_owner'],
+    items: [
+      { name: "My Gift Cards", href: "/client/gift-cards", icon: Gift, roles: ['company_owner'], keywords: ["rewards", "gift cards", "client"], description: "View your gift cards" },
+      { name: "Billing", href: "/client/billing", icon: CreditCard, roles: ['company_owner'], keywords: ["billing", "invoices", "payments"], description: "View billing and payments" },
     ]
   },
   {
@@ -107,8 +116,12 @@ const navigationGroups: NavGroup[] = [
     roles: ['admin'],
     items: [
       { name: "Platform Overview", href: "/platform", icon: Shield, roles: ['admin'], keywords: ["platform", "overview", "stats"], description: "Platform-wide overview" },
+      { name: "Organizations", href: "/admin/organizations", icon: Building2, roles: ['admin'], keywords: ["agencies", "clients", "companies", "archive", "delete"], description: "Manage agencies & clients" },
       { name: "User Management", href: "/users", icon: UserCog, roles: ['admin'], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
       { name: "System Health", href: "/admin/system-health", icon: Activity, roles: ['admin'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
+      { name: "Platform Inventory", href: "/admin/gift-card-marketplace", icon: ShoppingCart, roles: ['admin'], keywords: ["marketplace", "inventory", "gift cards", "master pools", "admin"], description: "Manage platform gift card inventory" },
+      { name: "Gift Card Brands", href: "/admin/gift-cards", icon: Gift, roles: ['admin'], keywords: ["brands", "providers"], description: "Manage gift card brands" },
+      { name: "Financial Reports", href: "/admin/financial-reports", icon: DollarSign, roles: ['admin'], keywords: ["finances", "revenue", "reports"], description: "Platform financial reports" },
       { name: "Demo Data", href: "/admin/demo-data", icon: Database, roles: ['admin'], keywords: ["demo", "test", "simulation", "seed", "generate"], description: "Generate demo data for testing" },
       { name: "Audit Log", href: "/admin/audit-log", icon: ShieldAlert, roles: ['admin'], keywords: ["audit", "logs", "history"], description: "User management audit trail" },
       { name: "Site Directory", href: "/admin/site-directory", icon: FileSearch, roles: ['admin'], keywords: ["pages", "routes", "navigation"], description: "All pages directory" },

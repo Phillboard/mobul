@@ -75,7 +75,7 @@ export function BulkInviteDialog({
       
       for (const email of emailList) {
         try {
-          const { error } = await supabase.functions.invoke('invite-user', {
+          const { error } = await supabase.functions.invoke('send-user-invitation', {
             body: {
               email: email.trim(),
               role,

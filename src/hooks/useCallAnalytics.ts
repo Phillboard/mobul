@@ -58,23 +58,29 @@ export function useRewardStats(campaignId: string | null) {
     queryFn: async () => {
       if (!campaignId) return null;
 
-      // Get gift card deliveries
-      const { data: deliveries, error: deliveriesError } = await supabase
-        .from('gift_card_deliveries')
-        .select('*, gift_card:gift_cards(*, pool:gift_card_pools(*)), recipient:recipients(*)')
+      // Get gift card billing data (replaces deliveries)
+      const { data: billing, error: billingError } = await supabase
+        .from('gift_card_billing_ledger')
+        .select('*, gift_card_brands(brand_name), gift_card_inventory(status, card_code)')
         .eq('campaign_id', campaignId);
 
-      if (deliveriesError) throw deliveriesError;
+      if (billingError) {
+        console.error('Billing ledger query error:', billingError);
+        return null;
+      }
 
       // Get conditions met
       const { data: conditionsMet, error: conditionsError } = await supabase
         .from('call_conditions_met')
-        .select('*, gift_card:gift_cards(*, pool:gift_card_pools(*))')
+        .select('*')
         .eq('campaign_id', campaignId);
 
-      if (conditionsError) throw conditionsError;
+      if (conditionsError) {
+        console.error('Conditions query error:', conditionsError);
+        return null;
+      }
 
-      // Group by condition number
+      // Group by condition number (if condition data exists)
       const byCondition = conditionsMet?.reduce((acc, cond) => {
         const condNum = cond.condition_number;
         if (!acc[condNum]) {
@@ -88,41 +94,43 @@ export function useRewardStats(campaignId: string | null) {
         }
         acc[condNum].count++;
         
-        const cardValue = cond.gift_card?.pool?.card_value || 0;
-        acc[condNum].totalValue += Number(cardValue);
-        
-        // Check delivery status
-        const delivery = deliveries?.find(d => d.gift_card_id === cond.gift_card_id);
-        if (delivery?.delivery_status === 'sent') acc[condNum].delivered++;
-        else if (delivery?.delivery_status === 'failed') acc[condNum].failed++;
-        else acc[condNum].pending++;
+        // Find matching billing entry
+        const billingEntry = billing?.find(b => b.recipient_id === cond.recipient_id);
+        if (billingEntry) {
+          acc[condNum].totalValue += Number(billingEntry.denomination);
+          
+          // Check delivery status from inventory
+          if (billingEntry.gift_card_inventory?.status === 'delivered') acc[condNum].delivered++;
+          else if (billingEntry.gift_card_inventory?.status === 'assigned') acc[condNum].pending++;
+        }
         
         return acc;
       }, {} as Record<number, { count: number; totalValue: number; delivered: number; failed: number; pending: number }>) || {};
 
-      // Group by date for timeline
-      const deliveriesByDate = deliveries?.reduce((acc, delivery) => {
-        const date = new Date(delivery.delivered_at || delivery.created_at).toLocaleDateString();
-        const condNum = delivery.condition_number;
-        if (!acc[date]) acc[date] = {};
-        acc[date][condNum] = (acc[date][condNum] || 0) + 1;
+      // Group by date for timeline using billing data
+      const billingByDate = billing?.reduce((acc, entry) => {
+        const date = new Date(entry.billed_at).toLocaleDateString();
+        if (!acc[date]) acc[date] = { count: 0, value: 0 };
+        acc[date].count++;
+        acc[date].value += Number(entry.denomination) || 0;
         return acc;
-      }, {} as Record<string, Record<number, number>>) || {};
+      }, {} as Record<string, { count: number; value: number }>) || {};
 
       const totalValue = Object.values(byCondition).reduce((sum, cond) => sum + cond.totalValue, 0);
-      const totalDelivered = deliveries?.filter(d => d.delivery_status === 'sent').length || 0;
-      const totalFailed = deliveries?.filter(d => d.delivery_status === 'failed').length || 0;
+      const totalDelivered = billing?.length || 0;
+      const totalFailed = 0; // Failures would be tracked differently in new system
 
       return {
         byCondition,
         totalValue,
         totalDelivered,
         totalFailed,
-        timeline: Object.entries(deliveriesByDate).map(([date, conditions]) => ({
+        timeline: Object.entries(billingByDate).map(([date, data]) => ({
           date,
-          ...conditions,
+          count: data.count,
+          value: data.value,
         })),
-        recentDeliveries: deliveries?.slice(0, 10) || [],
+        recentDeliveries: billing?.slice(0, 10) || [],
       };
     },
     enabled: !!campaignId,
@@ -182,24 +190,20 @@ export function useRewardSummary(clientId: string | null, dateRange: number) {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - dateRange);
 
-      // Get campaigns for this client
-      const { data: campaigns } = await supabase
-        .from('campaigns')
-        .select('id')
-        .eq('client_id', clientId);
+      // Get billing ledger entries for this client
+      const { data: billing, error } = await supabase
+        .from('gift_card_billing_ledger')
+        .select('id, denomination, billed_at')
+        .eq('billed_entity_type', 'client')
+        .eq('billed_entity_id', clientId)
+        .gte('billed_at', startDate.toISOString());
 
-      if (!campaigns) return null;
+      if (error) {
+        console.error('Reward summary query error:', error);
+        return { totalDelivered: 0 };
+      }
 
-      const campaignIds = campaigns.map(c => c.id);
-
-      // Get deliveries
-      const { data: deliveries } = await supabase
-        .from('gift_card_deliveries')
-        .select('*, gift_card:gift_cards(*, pool:gift_card_pools(*))')
-        .in('campaign_id', campaignIds)
-        .gte('created_at', startDate.toISOString());
-
-      const totalDelivered = deliveries?.filter(d => d.delivery_status === 'sent').length || 0;
+      const totalDelivered = billing?.length || 0;
 
       return {
         totalDelivered,

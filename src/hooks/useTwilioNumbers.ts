@@ -122,23 +122,26 @@ export function useAssignNumber() {
 
 export function useGiftCardDeliveries(campaignId?: string) {
   return useQuery({
-    queryKey: ['gift-card-deliveries', campaignId],
+    queryKey: ['gift-card-billing-deliveries', campaignId],
     queryFn: async () => {
       let query = supabase
-        .from('gift_card_deliveries')
+        .from('gift_card_billing_ledger')
         .select(`
           *,
-          gift_cards(card_code, gift_card_pools(card_value, pool_name)),
-          recipients(first_name, last_name, phone)
+          gift_card_brands(brand_name, logo_url),
+          gift_card_inventory(card_code, status)
         `)
-        .order('created_at', { ascending: false });
+        .order('billed_at', { ascending: false });
 
       if (campaignId) {
         query = query.eq('campaign_id', campaignId);
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Gift card billing query error:', error);
+        return [];
+      }
       return data;
     },
   });
@@ -148,29 +151,28 @@ export function useRetryFailedSMS() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (deliveryId?: string) => {
-      if (deliveryId) {
-        // Retry single delivery
-        const { data: delivery } = await supabase
-          .from('gift_card_deliveries')
+    mutationFn: async (inventoryId?: string) => {
+      if (inventoryId) {
+        // Retry single delivery using new gift card inventory system
+        const { data: inventory } = await supabase
+          .from('gift_card_inventory')
           .select(`
             *,
-            gift_cards!inner(card_code, gift_card_pools!inner(card_value)),
+            gift_card_brands!inner(brand_name),
             recipients!inner(phone, first_name)
           `)
-          .eq('id', deliveryId)
+          .eq('id', inventoryId)
           .single();
 
-        if (!delivery) throw new Error('Delivery not found');
+        if (!inventory) throw new Error('Gift card inventory not found');
 
         const { data, error } = await supabase.functions.invoke('send-gift-card-sms', {
           body: {
-            deliveryId: delivery.id,
-            giftCardCode: delivery.gift_cards.card_code,
-            giftCardValue: delivery.gift_cards.gift_card_pools.card_value,
-            recipientPhone: delivery.recipients.phone,
-            recipientName: delivery.recipients.first_name,
-            customMessage: delivery.sms_message,
+            inventoryId: inventory.id,
+            giftCardCode: inventory.card_code,
+            giftCardValue: inventory.denomination,
+            recipientPhone: inventory.recipients?.phone,
+            recipientName: inventory.recipients?.first_name,
           },
         });
 
@@ -184,7 +186,8 @@ export function useRetryFailedSMS() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gift-card-deliveries'] });
+      queryClient.invalidateQueries({ queryKey: ['gift-card-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['gift-card-billing'] });
       toast.success('SMS retry initiated');
     },
     onError: (error: Error) => {

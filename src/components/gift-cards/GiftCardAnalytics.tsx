@@ -8,42 +8,51 @@ export function GiftCardAnalytics({ clientId }: { clientId?: string }) {
   const { data: stats } = useQuery({
     queryKey: ["gift-card-analytics", clientId],
     queryFn: async () => {
-      let poolsQuery = supabase.from("gift_card_pools").select("*");
-      const cardsQuery = supabase.from("gift_cards").select("*, gift_card_pools(client_id)");
-      const deliveriesQuery = supabase.from("gift_card_deliveries").select("*, campaigns(client_id)");
+      // Query new inventory table
+      let inventoryQuery = supabase
+        .from("gift_card_inventory")
+        .select("*, gift_card_brands(brand_name), campaigns(client_id)");
 
       if (clientId) {
-        poolsQuery = poolsQuery.eq("client_id", clientId);
+        inventoryQuery = inventoryQuery.eq("campaigns.client_id", clientId);
       }
 
-      const [poolsResult, cardsResult, deliveriesResult] = await Promise.all([
-        poolsQuery,
-        cardsQuery,
-        deliveriesQuery
+      // Query billing ledger for financial data
+      let billingQuery = supabase
+        .from("gift_card_billing_ledger")
+        .select("*");
+
+      if (clientId) {
+        billingQuery = billingQuery.eq("billed_entity_id", clientId).eq("billed_entity_type", "client");
+      }
+
+      const [inventoryResult, billingResult] = await Promise.all([
+        inventoryQuery,
+        billingQuery
       ]);
 
-      const pools = poolsResult.data || [];
-      const cards = clientId
-        ? (cardsResult.data || []).filter((c: any) => c.gift_card_pools?.client_id === clientId)
-        : (cardsResult.data || []);
-      const deliveries = clientId
-        ? (deliveriesResult.data || []).filter((d: any) => d.campaigns?.client_id === clientId)
-        : (deliveriesResult.data || []);
+      const inventory = inventoryResult.data || [];
+      const billing = billingResult.data || [];
 
-      const totalValue = pools.reduce((sum, p) => sum + (p.total_cards * p.card_value), 0);
-      const claimedValue = pools.reduce((sum, p) => sum + (p.claimed_cards * p.card_value), 0);
+      const totalCards = inventory.length;
+      const availableCards = inventory.filter((c: any) => c.status === 'available').length;
+      const assignedCards = inventory.filter((c: any) => c.status === 'assigned').length;
+      const deliveredCards = inventory.filter((c: any) => c.status === 'delivered').length;
+
+      const totalValue = billing.reduce((sum, b) => sum + (b.amount_billed || 0), 0);
+      const totalCost = billing.reduce((sum, b) => sum + (b.cost_basis || 0), 0);
 
       return {
-        totalPools: pools.length,
-        totalCards: cards.length,
-        availableCards: cards.filter((c: any) => c.status === 'available').length,
-        claimedCards: cards.filter((c: any) => c.status === 'claimed').length,
-        deliveredCards: deliveries.filter((d: any) => d.delivery_status === 'sent').length,
-        failedDeliveries: deliveries.filter((d: any) => d.delivery_status === 'failed').length,
+        totalPools: 0, // No longer using pools
+        totalCards,
+        availableCards,
+        claimedCards: assignedCards,
+        deliveredCards,
+        failedDeliveries: 0,
         totalValue,
-        claimedValue,
-        deliveries,
-        pools
+        claimedValue: totalValue,
+        deliveries: billing,
+        pools: []
       };
     }
   });
@@ -57,7 +66,8 @@ export function GiftCardAnalytics({ clientId }: { clientId?: string }) {
   ];
 
   const deliveryMethodData = stats?.deliveries.reduce((acc: any[], d: any) => {
-    const method = d.delivery_method || 'unknown';
+    // Extract method from metadata if available
+    const method = d.metadata?.delivery_method || 'unknown';
     const existing = acc.find(item => item.name === method);
     if (existing) {
       existing.value++;
