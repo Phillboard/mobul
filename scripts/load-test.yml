@@ -1,0 +1,72 @@
+config:
+  target: "https://your-project.supabase.co"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 10
+      name: "Sustained load"
+    - duration: 60
+      arrivalRate: 20
+      name: "Spike test"
+  defaults:
+    headers:
+      Authorization: "Bearer YOUR_TOKEN_HERE"
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Calculate Credit Requirements"
+    weight: 40
+    flow:
+      - post:
+          url: "/functions/v1/calculate-credit-requirements"
+          json:
+            recipientCount: 100
+            giftCardDenomination: 25
+            mailCostPerPiece: 0.55
+          capture:
+            - json: "$.data.grandTotal"
+              as: "calculatedTotal"
+          expect:
+            - statusCode: 200
+            - hasProperty: "data.grandTotal"
+
+  - name: "Validate Campaign Budget"
+    weight: 30
+    flow:
+      - post:
+          url: "/functions/v1/validate-campaign-budget"
+          json:
+            campaignId: "{{ $randomUUID }}"
+            recipientCount: 50
+            giftCardDenomination: 25
+            mailCostPerPiece: 0.55
+          expect:
+            - statusCode: 200
+
+  - name: "Validate Gift Card Config"
+    weight: 20
+    flow:
+      - post:
+          url: "/functions/v1/validate-gift-card-configuration"
+          json:
+            campaignId: "{{ $randomUUID }}"
+            brandId: "{{ $randomUUID }}"
+            denomination: 25
+            conditionNumber: 1
+          expect:
+            - statusCode: 200
+
+  - name: "Simulate Tracking"
+    weight: 10
+    flow:
+      - post:
+          url: "/functions/v1/simulate-mail-tracking"
+          json:
+            campaignId: "{{ $randomUUID }}"
+            deliveryRate: 85
+            returnRate: 5
+          expect:
+            - statusCode: 200
+

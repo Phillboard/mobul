@@ -10,53 +10,52 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Direct Mail Campaign Management Platform with integrated gift card rewards and multi-tenant organization structure.
+Marketing Campaign & Gift Card Management Platform
 
 Core Business Components:
 
-1. Campaign Reward System
-- Multi-stage gift card provisioning workflow
-- Dual-source card allocation (CSV pools + API provisioning)
-- Condition-based reward triggers with SMS opt-in requirements
-- Real-time inventory monitoring with automated alerts
+1. Gift Card Campaign Orchestration (90/100)
+src/lib/demo/demo-orchestrator.ts
+- Unified gift card provisioning across multiple providers
+- Campaign-specific reward pool allocation
+- Multi-step qualification workflows
+- Real-time inventory tracking with automated replenishment
 
-2. Organization Hierarchy
-- Three-tier structure: Platform → Agency → Client
-- Credit-based accounting system with unidirectional flow
-- Role-based permissions with inheritance 
-- Industry-specific customizations
+2. Credit Account Hierarchy (85/100)
+src/types/creditAccounts.ts
+- Hierarchical credit flow: Platform → Agency → Client → Campaign
+- Unidirectional credit distribution controls
+- Automated credit allocation and reconciliation
+- Budget validation against available credits
 
-3. Credit Management System
-- Hierarchical credit allocation across organizational levels
-- Atomic credit operations with validation
-- Campaign-specific budgets and thresholds
-- Pool sharing rules between organizations
+3. Campaign Condition Engine (85/100)
+supabase/functions/evaluate-conditions/index.ts
+- Sequential reward qualification logic
+- Multi-trigger reward distribution
+- Time-based condition evaluation
+- Integration with CRM events
 
-4. Call Center Integration
-- Dynamic script generation based on campaign state
-- Real-time opt-in status verification
-- Multi-condition reward validation
-- Disposition-based reward triggering
+4. Call Center Integration (80/100)
+src/components/call-center/CallCenterRedemptionPanel.tsx
+- SMS opt-in validation workflow
+- Real-time recipient matching
+- Campaign-specific script routing
+- Gift card provisioning controls
 
-5. Gift Card Marketplace
-- Brand-specific inventory management
-- Multi-provider integration with fallback logic
-- Custom pricing strategies and profit margins
-- Pool health monitoring with threshold alerts
+5. Industry Vertical Management (75/100)
+src/lib/system/mvp-verification.ts
+- Vertical-specific campaign templates
+- Industry-tailored reward structures
+- Custom field configurations per vertical
+- Specialized conversion tracking
 
-Primary Business Workflows:
-- Campaign creation with reward configuration
-- Gift card code validation and delivery
-- Call center verification and redemption
-- Credit allocation and budget management
-- Organization and role management
+Integration Architecture:
+- Gift card provisioning linked to campaign conditions
+- Credit system integrated with reward distribution
+- Call center verification tied to reward delivery
+- Industry rules connected to campaign creation
 
-The system implements sophisticated gift card campaign management with emphasis on:
-- Multi-tenant isolation
-- Complex reward conditions
-- Hierarchical credit control
-- Call center integration
-- Real-time inventory tracking
+The platform implements sophisticated campaign management with integrated gift card rewards, focusing on multi-tenant credit management and industry-specific marketing automation.
 
 $END$
 

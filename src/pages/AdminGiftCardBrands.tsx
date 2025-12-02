@@ -2,10 +2,11 @@
  * Admin Gift Card Brands & Denominations Page
  * 
  * Admin-only page for:
- * - Managing gift card brands (enable/disable)
+ * - Managing gift card brands (enable/disable, add/edit)
  * - Configuring denominations for each brand
  * - Setting cost structures
  * - Uploading bulk CSV inventory
+ * - Auto-lookup for popular brands
  */
 
 import { useState } from 'react';
@@ -20,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAllBrands } from '@/hooks/useGiftCardProvisioning';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Trash2, Upload, CheckCircle, XCircle, DollarSign, Package } from 'lucide-react';
+import { Plus, Trash2, Upload, CheckCircle, XCircle, DollarSign, Package, Edit, ExternalLink, Sparkles } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -30,13 +31,18 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { parseGiftCardCsv, generateUploadBatchId } from '@/lib/gift-cards/provisioning-utils';
+import { AddBrandDialog } from '@/components/gift-cards/AddBrandDialog';
+import { EditBrandDialog } from '@/components/gift-cards/EditBrandDialog';
+import type { GiftCardBrand } from '@/types/giftCards';
 
 export default function AdminGiftCardBrands() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: brands, isLoading } = useAllBrands();
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [addBrandDialogOpen, setAddBrandDialogOpen] = useState(false);
+  const [editBrandDialogOpen, setEditBrandDialogOpen] = useState(false);
+  const [selectedBrand, setSelectedBrand] = useState<GiftCardBrand | null>(null);
 
   // Toggle brand enabled status
   const toggleBrand = useMutation({
@@ -57,6 +63,12 @@ export default function AdminGiftCardBrands() {
     },
   });
 
+  // Handle edit brand
+  const handleEditBrand = (brand: GiftCardBrand) => {
+    setSelectedBrand(brand);
+    setEditBrandDialogOpen(true);
+  };
+
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div className="flex items-center justify-between">
@@ -66,24 +78,43 @@ export default function AdminGiftCardBrands() {
             Manage gift card brands, denominations, and inventory
           </p>
         </div>
-        <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Inventory
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Upload Gift Card Inventory</DialogTitle>
-              <DialogDescription>
-                Upload a CSV file with gift card codes. Format: CardCode, CardNumber (optional), ExpirationDate (optional)
-              </DialogDescription>
-            </DialogHeader>
-            <BulkUploadForm onSuccess={() => setUploadDialogOpen(false)} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button onClick={() => setAddBrandDialogOpen(true)} variant="default">
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Brand
+          </Button>
+          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Inventory
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Upload Gift Card Inventory</DialogTitle>
+                <DialogDescription>
+                  Upload a CSV file with gift card codes. Format: CardCode, CardNumber (optional), ExpirationDate (optional)
+                </DialogDescription>
+              </DialogHeader>
+              <BulkUploadForm onSuccess={() => setUploadDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {/* Add/Edit Brand Dialogs */}
+      <AddBrandDialog 
+        open={addBrandDialogOpen} 
+        onOpenChange={setAddBrandDialogOpen}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['gift-card-brands'] })}
+      />
+      <EditBrandDialog
+        open={editBrandDialogOpen}
+        onOpenChange={setEditBrandDialogOpen}
+        brand={selectedBrand}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['gift-card-brands'] })}
+      />
 
       {isLoading ? (
         <div>Loading brands...</div>
@@ -101,14 +132,53 @@ export default function AdminGiftCardBrands() {
                         className="w-12 h-12 rounded object-contain"
                       />
                     )}
-                    <div>
-                      <CardTitle>{brand.brand_name}</CardTitle>
-                      <CardDescription>
-                        {brand.brand_code} {brand.tillo_brand_code && `• Tillo: ${brand.tillo_brand_code}`}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <CardTitle>{brand.brand_name}</CardTitle>
+                        {brand.metadata_source === 'auto_lookup' && (
+                          <Badge variant="outline" className="text-xs">
+                            <Sparkles className="mr-1 h-3 w-3" />
+                            Auto-detected
+                          </Badge>
+                        )}
+                      </div>
+                      <CardDescription className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span>{brand.brand_code}</span>
+                          {brand.tillo_brand_code && (
+                            <span>• Tillo: {brand.tillo_brand_code}</span>
+                          )}
+                          {brand.category && (
+                            <Badge variant="secondary" className="text-xs">
+                              {brand.category.replace('_', ' ')}
+                            </Badge>
+                          )}
+                        </div>
+                        {brand.website_url && (
+                          <a
+                            href={brand.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-500 hover:underline flex items-center gap-1"
+                          >
+                            {brand.website_url}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                        {brand.description && (
+                          <p className="text-xs">{brand.description}</p>
+                        )}
                       </CardDescription>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditBrand(brand)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                     <div className="flex items-center gap-2">
                       <Label htmlFor={`brand-${brand.id}`}>Enabled</Label>
                       <Switch

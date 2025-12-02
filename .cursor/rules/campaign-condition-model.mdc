@@ -1,77 +1,54 @@
 ---
-description: Defines the data models and logic for campaign reward conditions, triggers, and gift card distribution workflows
+description: Defines the campaign condition models, triggers, and reward distribution rules for ACE Engage campaigns
 ---
 
 
 # campaign-condition-model
 
-Campaign Condition Core Components:
+Campaign conditions engine implements a multi-stage verification and reward distribution system:
 
-1. Reward Trigger System (Importance: 90)
-Path: src/components/campaigns/wizard/ConditionsStep.tsx
-- Multi-stage condition evaluation pipeline:
-  * Form submission validation
-  * SMS opt-in verification 
-  * Call completion tracking
-  * Manual agent review
-  * Time-based delays
-- Sequential condition dependencies with parallel execution support
-- Automated condition state transitions
-- Built-in safety mechanisms for duplicate rewards
+1. Condition Types & Evaluation (Importance: 95)
+- Manual agent approval requiring human verification
+- Call completion with duration/disposition requirements
+- Form submission with field validation rules
+- Time-based delays with configurable windows
+- Mail delivery confirmation via USPS IMB tracking
 
-2. Gift Card Pool Integration (Importance: 85)
-Path: src/lib/campaign/giftCardUtils.ts
-- Pool allocation and reservation system
-- Real-time inventory validation against recipient count
-- Buffer management for concurrent campaigns
-- Automatic pool depletion monitoring
-- Fallback pool assignment logic
+2. Reward Distribution Logic (Importance: 90)
+- Sequential condition evaluation with prerequisite checks
+- Automated reward trigger on condition completion
+- Time-windowed reward expiration handling
+- Multi-step verification before reward release
+- SMS delivery status monitoring
+- Opt-in requirement validation
 
-3. Condition Evaluation Engine (Importance: 90)
-Path: src/lib/validation/campaignValidation.ts
-- Hierarchical condition evaluation:
-  * Primary conditions (must complete)
-  * Secondary conditions (optional)
-  * Time-based conditions (scheduled)
-- Cross-condition dependency management
-- State machine for condition progression
-- Rollback handling for failed conditions
+3. Gift Card Pool Management (Importance: 85)  
+- Pool allocation based on campaign parameters
+- Real-time inventory validation
+- Brand/denomination restrictions
+- Automatic pool replenishment triggers
+- Low balance alerting
 
-4. Reward Distribution Controller (Importance: 85)
-Path: src/components/campaigns/RewardController.tsx
-- Manages reward delivery timing and methods
-- Handles multi-channel distribution:
-  * Email delivery
-  * SMS notifications  
-  * Web redemption
-  * Call center fulfillment
-- Implements retry logic for failed deliveries
-- Tracks delivery confirmation status
+4. Campaign Wizard Integration (Importance: 80)
+- Combined audience selection and reward setup
+- Gift card inventory availability checks
+- UTM parameter configuration
+- Landing page generation with reward forms
+- SMS template configuration
 
-Key Domain Patterns:
-- Two-phase reward validation (verification then delivery)
-- Pool-based inventory management with buffers
-- Time-sensitive condition evaluation
-- Multi-channel reward distribution
-- Hierarchical condition dependencies
+Key Files:
+/src/components/campaigns/wizard/ConditionsStep.tsx
+/src/components/campaigns/wizard/AudiencesRewardsStep.tsx
+/src/lib/campaign-conditions/evaluator.ts
+/src/lib/gift-cards/pool-manager.ts
 
-Core Data Models:
-```typescript
-interface CampaignCondition {
-  type: 'form' | 'call' | 'manual' | 'time';
-  requiredPrevious?: string[];
-  delayMinutes?: number;
-  reward?: RewardConfig;
-  verificationRules: VerificationRule[];
-}
-
-interface RewardConfig {
-  poolId: string;
-  deliveryMethod: 'email' | 'sms' | 'call';
-  expirationDays: number;
-  reminderSchedule?: ReminderConfig[];
-}
-```
+Business Rules:
+- Gift card inventory must be validated before campaign creation
+- Minimum 3-day lead time for scheduled mailings
+- Specific trigger conditions for reward distribution
+- Required UTM parameters for tracking
+- Mail provider validation rules
+- SMS opt-in confirmation before reward delivery
 
 $END$
 

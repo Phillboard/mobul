@@ -17,6 +17,15 @@ export interface GiftCardBrand {
   is_active?: boolean;
   created_at: string;
   updated_at?: string;
+  // New optional metadata fields
+  website_url?: string;
+  description?: string;
+  terms_url?: string;
+  brand_colors?: {
+    primary?: string;
+    secondary?: string;
+  };
+  metadata_source?: 'auto_lookup' | 'manual' | 'tillo';
 }
 
 export interface GiftCardDenomination {
@@ -141,4 +150,45 @@ export interface GiftCardDelivery {
   delivery_method: string;
   delivery_status: string;
   delivered_at?: string;
+}
+
+// Brand Lookup Types
+export interface BrandLookupResult {
+  found: boolean;
+  logoUrl?: string;
+  website?: string;
+  category?: string;
+  description?: string;
+  colors?: {
+    primary?: string;
+    secondary?: string;
+  };
+  source: 'popular_db' | 'clearbit' | 'not_found';
+}
+
+export interface TilloBrandSearchResult {
+  found: boolean;
+  tillo_brand_code?: string;
+  brand_name?: string;
+  denominations?: number[];
+  costs?: Array<{
+    denomination: number;
+    cost: number;
+  }>;
+}
+
+export interface BrandFormData {
+  brand_name: string;
+  brand_code?: string;
+  logo_url: string;
+  website_url?: string;
+  category?: string;
+  description?: string;
+  terms_url?: string;
+  brand_colors?: {
+    primary?: string;
+    secondary?: string;
+  };
+  tillo_brand_code?: string;
+  metadata_source: 'auto_lookup' | 'manual' | 'tillo';
 }

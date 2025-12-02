@@ -1,57 +1,60 @@
 ---
-description: Documentation for multi-tenant organization hierarchy, role permissions, and client-agency relationships
+description: Specifies organization structure, hierarchical permissions, and multi-tenant relationships for a direct mail marketing platform
 ---
 
 
 # organization-hierarchy
 
-Multi-Tenant Organization Model
-Importance Score: 90
+Multi-Tenant Hierarchy Model
+Importance Score: 95
 
-Core Hierarchy:
-- Platform Level
-  - ACE Engage (platform owner)
-  - System-wide configuration
-  - Cross-organization reporting
+1. Organization Structure
+- Three-tier hierarchy: Platform -> Agency -> Client
+- Asymmetric parent-child relationships with inheritance
+- Agencies can manage multiple clients but clients belong to one agency
+- Platform admins have cross-organization visibility
 
-- Agency Level 
-  - Independent marketing agencies
-  - Multiple client management
-  - Resource allocation control
-  - Credit pool management
-  - Template library access
+2. Credit Management Hierarchy
+- Unidirectional credit flow from platform down to clients
+- Agency-level credit pools with allocation controls
+- Client-specific credit limits and usage tracking
+- Campaign-level budget reservations
+- Automatic rollup reporting to parent organizations
 
-- Client Level
-  - End customer organizations
-  - Campaign execution
-  - Limited resource access
-  - Inherited templates
+3. Role-Based Access Control
+- Role inheritance follows organizational hierarchy
+- Specialized roles:
+  * Platform Admin: Cross-organization access
+  * Agency Owner: Agency + child client access
+  * Client Admin: Single client access
+  * Campaign Manager: Campaign-specific access
+- Permission inheritance with override capability at child levels
 
-Permission Inheritance Rules:
-- Agency owners can access all client data
-- Client owners restricted to own organization
-- Role permissions cascade down hierarchy
-- Resource access follows organization tree
+4. Client-Agency Relationships  
+- Agencies can provision and manage multiple clients
+- Client configuration inheritance from parent agency
+- Template sharing between agency and client levels
+- Custom billing rates per client relationship
+- Shared resource pools with allocation controls
 
-Credit Flow System:
-- Unidirectional credit movement (Platform → Agency → Client)
-- Pool-based credit allocation
-- Agency-level budgeting controls
-- Client spending limits
+5. Resource Management
+- Gift card pool allocation across hierarchy
+- Template sharing with inheritance
+- Audience list segregation by organization
+- Campaign asset management with parent visibility
 
-Client-Agency Relationships:
-- Many-to-many client-agency mappings
-- Primary agency designation
-- Inherited billing relationships
-- Shared resource access rules
+Key Files:
+- src/contexts/TenantContext.tsx: Multi-tenant context provider
+- src/contexts/AuthContext.tsx: Hierarchical permission system
+- src/types/creditAccounts.ts: Credit flow management
+- src/features/organizations/types/index.ts: Organization structure definitions
 
-Data Isolation:
-- Strict tenant boundaries
-- Cross-organization data protection
-- Role-based visibility filters
-- Audit logging of cross-boundary access
-
-The organization hierarchy implements a sophisticated multi-tenant model with complex permission inheritance, credit flow management, and strict data isolation requirements specific to the marketing agency domain.
+Core Business Rules:
+- Strict parent-child relationships between organization tiers
+- Unidirectional credit flow through hierarchy
+- Role-based access with inheritance
+- Resource sharing controlled by organizational level
+- Client isolation with agency oversight capabilities
 
 $END$
 

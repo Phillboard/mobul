@@ -1,9 +1,16 @@
 {
-  "name": "mobul-scripts",
+  "name": "mobul-edge-functions-tests",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
-    "apply-migrations": "tsx scripts/apply-migrations.ts"
-  }
+    "deploy": "pwsh -File run-deployment-pipeline.ps1",
+    "deploy:functions": "pwsh -File scripts/deploy-edge-functions.ps1",
+    "test:integration": "vitest run src/test/edge-functions.test.ts",
+    "test:integration:watch": "vitest watch src/test/edge-functions.test.ts",
+    "test:load": "artillery run scripts/load-test.yml",
+    "verify:local": "supabase functions serve",
+    "logs:provisioning": "supabase functions logs provision-gift-card-unified --tail",
+    "logs:call-center": "supabase functions logs provision-gift-card-for-call-center --tail",
+    "logs:all": "supabase functions logs --tail"
+  },
+  "description": "Deployment and testing scripts for edge functions"
 }
-

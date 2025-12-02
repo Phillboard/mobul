@@ -1,59 +1,69 @@
 ---
-description: Specifies business logic for managing gift card inventory, provisioning, and redemption workflows
+description: Business logic for provisioning gift cards, managing pools, inventory tracking, and fulfillment workflows
 ---
 
 
 # gift-card-provisioning-system
 
-Core Components:
+## Core Provisioning Logic (Importance: 95/100)
 
-1. Gift Card Pool Management
-Path: src/components/gift-cards/PoolManager.tsx
-Importance Score: 95
-- Maintains hierarchical pools with multi-tenant isolation
-- Enforces minimum balance thresholds with automated alerts
-- Tracks pool health metrics and utilization rates
-- Manages auto-replenishment rules and triggers
+Main system for managing gift card inventory and fulfillment across multiple providers and pools:
 
-2. Provisioning Engine 
-Path: src/lib/provisioning/engine.ts
-Importance Score: 90
-- Two-phase provisioning with provider fallback:
-  * Primary: Pre-purchased inventory pools
-  * Secondary: Real-time API provisioning
-- Atomic credit deduction with rollback
-- Provider-specific code formatting
-- Balance verification hooks
+### Inventory Management 
+`src/lib/gift-cards/provisioning-utils.ts`
+- Pool-based inventory system with master/client pool hierarchy
+- Real-time balance verification against provider APIs
+- Automated threshold monitoring with configurable low-stock alerts
+- Pool depletion tracking with automated replenishment triggers
 
-3. Redemption Workflow
-Path: src/components/rewards/RedemptionHandler.tsx
-Importance Score: 85
-- Multi-condition validation chain
-- SMS opt-in status verification 
-- Duplicate prevention system
-- Reward delivery state management
+### Provisioning Workflow
+`src/components/gift-cards/PoolDetailDialog.tsx`
+- Multi-step verification before code release:
+  1. Pool availability check
+  2. Balance verification 
+  3. Client credit validation
+  4. Campaign condition evaluation
+- Atomic provisioning with rollback on failure
+- Support for both API-based and inventory-based fulfillment
 
-4. Balance Verification System
-Path: src/lib/gift-cards/verification.ts
-Importance Score: 80
-- Automated balance checking schedule
-- Provider-specific verification adapters
-- Invalid balance detection and alerts
-- Historical balance tracking
+### Delivery System
+`supabase/functions/provision-gift-card-unified/index.ts`
+- SMS delivery with opt-in verification
+- Email fallback for failed SMS
+- Scheduled delivery support
+- Multi-channel status tracking
 
-5. Inventory Control
-Path: src/lib/pools/inventory.ts
-Importance Score: 85
-- Pool allocation algorithms
-- Low inventory alerts and thresholds
-- Utilization tracking per campaign
-- Auto-replenishment triggers
+## Balance Management (Importance: 85/100)
 
-Critical Workflows:
-- Gift card provisioning requires valid pool assignment
-- Redemption blocked until SMS opt-in confirmed
-- Balance verification runs on configurable schedule
-- Auto-replenishment triggered at defined thresholds
+`src/hooks/useGiftCardProvisioning.ts`
+- Real-time balance checking against provider APIs
+- Cached balance tracking for inventory pools
+- Automated reconciliation for discrepancies
+- Multi-provider balance aggregation
+
+## Pool Operations (Importance: 80/100)
+
+`src/components/gift-cards/PurchasePoolDialog.tsx`
+- Transfer logic between master and client pools
+- Profit margin calculations for reseller operations
+- Automated pool replenishment based on usage patterns
+- Pool health scoring system
+
+## Security Controls (Importance: 90/100)
+
+`src/lib/gift-cards/security.ts`
+- Role-based access to sensitive card data
+- Timed reveal system for card numbers
+- Audit logging of all card operations
+- IP-based access restrictions
+
+## Analytics Engine (Importance: 75/100)
+
+`src/components/gift-cards/AnalyticsPanel.tsx`
+- Redemption rate tracking
+- Provider performance metrics
+- Delivery success monitoring
+- Cost basis analysis by provider
 
 $END$
 
