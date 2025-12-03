@@ -83,15 +83,8 @@ serve(async (req) => {
     // Parse service account credentials
     let serviceAccount: ServiceAccountKey;
     try {
-      console.log('[DEBUG] Service account JSON length:', serviceAccountJson.length);
-      console.log('[DEBUG] First 100 chars:', serviceAccountJson.substring(0, 100));
       serviceAccount = JSON.parse(serviceAccountJson);
-      console.log('[DEBUG] Parsed service account - project_id:', serviceAccount.project_id);
-      console.log('[DEBUG] Parsed service account - client_email:', serviceAccount.client_email);
-      console.log('[DEBUG] Private key length:', serviceAccount.private_key?.length);
-      console.log('[DEBUG] Private key starts with:', serviceAccount.private_key?.substring(0, 50));
-    } catch (e) {
-      console.error('[DEBUG] JSON parse error:', e);
+    } catch {
       throw new Error('Invalid service account JSON format');
     }
 
@@ -136,9 +129,7 @@ serve(async (req) => {
     };
 
     // Sign the JWT
-    console.log('[DEBUG] About to sign JWT...');
     const signedJwt = await signJwt(jwtPayload, serviceAccount.private_key);
-    console.log('[DEBUG] JWT signed successfully, length:', signedJwt.length);
 
     // Generate the save URL
     const saveUrl = `https://pay.google.com/gp/v/save/${signedJwt}`;
