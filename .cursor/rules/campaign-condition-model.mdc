@@ -1,57 +1,48 @@
 ---
-description: Specifies data models and logic for campaign reward conditions, triggers, and distribution workflows
+description: For analyzing campaign condition data models, reward triggers, and fulfillment workflows
 ---
 
 
 # campaign-condition-model
 
-Campaign Condition Management System that handles reward distribution based on configurable triggers and conditions:
+Campaign conditions govern reward distribution through a multi-stage verification system:
 
-Core Components:
+Core Condition Types:
+1. Manual Agent Verification
+- Agent disposition triggers (interested, qualified, appointment) 
+- SMS opt-in requirement before reward issuance
+- Customizable verification skip rules with audit logging
 
-1. Condition Evaluation Engine (Importance: 95/100)
-- Implements sequential condition verification with dependencies
-- Supports condition types:
-  * form_submission
-  * call_completion 
-  * time_delay
-  * manual_agent
-  * crm_event
-- Handles multi-step verification workflows
-- Manages condition state transitions
-- Integrates with reward distribution system
+2. Form Submission
+- Lead capture with auto-validation
+- Field-level completion requirements
+- CRM integration triggers
 
-2. Reward Distribution Logic (Importance: 90/100)
-- Automated gift card provisioning based on condition completion
-- Supports delayed/scheduled reward distribution
-- Implements reward pool management and inventory checks
-- Handles multi-condition reward aggregation
-- Manages reward delivery status tracking
+3. Time-Delayed Rewards 
+- Configurable delay periods after qualifying events
+- Prerequisite condition dependencies
+- Campaign-specific timeout rules
 
-3. Campaign Integration Layer (Importance: 85/100)
-- Links conditions to campaign recipients
-- Tracks completion status per recipient
-- Manages campaign-level reward budgets
-- Handles condition reset/retry workflows
+Reward Distribution Logic:
+- Hierarchical credit flow: Platform → Agency → Client → Campaign
+- Pool-based gift card inventory with brand/denomination mapping
+- Automatic Tillo API fallback when CSV inventory depleted
+- Real-time balance verification and threshold alerts
 
-4. Trigger Evaluation System (Importance: 80/100)
-- Real-time condition monitoring
-- Event-based trigger processing
-- Webhook integration for external triggers
-- Time-based trigger scheduling
+Condition State Machine:
+```
+pending → in_progress → completed/failed
+         ↳ expired
+         ↳ cancelled
+```
 
-Key Business Rules:
-- Conditions must be evaluated in sequence when dependencies exist
-- Gift card inventory must be validated before condition activation
-- Time-delayed rewards require explicit scheduling
-- Manual agent conditions need verification tracking
-- CRM events require source validation
+Verification Requirements:
+- SMS opt-in status validation
+- Campaign budget availability check
+- Pool inventory verification
+- Credit balance confirmation
 
-Data Models:
-- Condition: type, status, dependencies, verification_requirements
-- Reward: type, value, delivery_method, scheduled_time
-- Trigger: source, event_type, validation_rules
-- Distribution: recipient, condition_status, reward_status
+The model implements complex reward triggers with built-in delays, multi-step verification, and automated fulfillment logic while maintaining strict credit controls and inventory management.
 
 $END$
 

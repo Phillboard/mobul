@@ -1,57 +1,54 @@
 ---
-description: Specification for implementing reward fulfillment workflows including SMS opt-in, verification, and multi-channel delivery
+description: Defines the reward fulfillment flow including SMS opt-in, verification steps, and multi-channel delivery
 ---
 
 
 # reward-fulfillment-flow
 
-Gift Card Fulfillment System
-Importance Score: 95/100
+Core reward fulfillment system orchestrates a multi-step verification and delivery process:
 
-Core Components:
+1. Verification Workflow (Importance: 95/100)
+- SMS opt-in requirement before reward issuance
+- Call center agent verification for specific campaigns
+- Multi-condition validation (form submission, call completion)
+- Sequential condition checking with dependencies
 
-1. Multi-Stage Verification Workflow
-File: src/components/call-center/CallCenterRedemptionPanel.tsx
-- SMS opt-in verification required before gift card delivery
-- Real-time opt-in status monitoring (not_sent, pending, opted_in, opted_out)
-- Call center agent verification step with disposition tracking
-- Multi-channel verification support (SMS, call, email)
+2. Gift Card Provisioning (Importance: 90/100)
+- Two-tier provisioning strategy:
+  - Primary: CSV inventory allocation
+  - Fallback: Tillo API real-time purchase
+- Cost basis tracking across provisioning methods
+- Brand/denomination-specific inventory pools
+- Automated threshold monitoring and replenishment
 
-2. Gift Card Provisioning Logic 
-File: supabase/functions/provision-gift-card-unified/index.ts
-- Hierarchical provisioning system with provider fallbacks
-- Pool-based inventory management with atomic claiming
-- Real-time balance verification before delivery
-- Automated reallocation on failed deliveries
+3. Delivery Channels (Importance: 85/100)
+- SMS delivery with configurable retry logic
+- Digital wallet integration (Apple/Google)
+- Email fallback for failed SMS
+- Real-time delivery status tracking
 
-3. Condition Evaluation Engine
-File: src/components/agent/ConditionTriggers.tsx
-- Sequential condition validation for reward release
-- Time-delayed trigger support for staged fulfillment
-- CRM event integration for automated rewards
-- Multi-condition orchestration with dependency tracking
+4. Call Center Integration (Importance: 85/100)
+- Agent-assisted verification workflow
+- Disposition-based reward triggers
+- Real-time opt-in status monitoring
+- Skip logic with admin approval requirements
 
-4. Delivery Channel Management
-File: src/components/campaigns/wizard/DeliveryFulfillmentStep.tsx
-- Channel selection based on recipient preferences
-- Fallback delivery methods with priority ordering
-- Delivery status tracking across channels
-- Failed delivery handling with automatic retries
+5. Credit Management (Importance: 80/100)
+- Hierarchical credit system (Platform → Agency → Client)
+- Real-time balance verification
+- Campaign-specific credit reservations
+- Automated low balance alerts
 
-5. Credit Management System
-File: src/hooks/useCreditManagement.enhanced.ts
-- Credit reservation during fulfillment process
-- Atomic credit deduction on successful delivery
-- Credit release on failed fulfillment
-- Balance tracking across organizational hierarchy 
+File Paths:
+```
+src/components/call-center/CallCenterRedemptionPanel.tsx
+src/hooks/useGiftCardProvisioning.ts
+supabase/functions/provision-gift-card-unified/index.ts
+supabase/functions/send-sms-opt-in/index.ts
+supabase/functions/complete-condition/index.ts
+```
 
-Business Rules:
-- SMS opt-in required before any gift card fulfillment
-- Multiple verification methods must complete successfully
-- Real-time balance verification before sending rewards
-- Credit availability confirmed before fulfillment initiation
-- Automatic retries on delivery failures within 24 hours
-- Maximum 3 delivery attempts before manual review
+The system emphasizes compliance and verification while maintaining efficient reward delivery through multiple channels. Credit management and inventory tracking ensure sustainable reward fulfillment operations.
 
 $END$
 

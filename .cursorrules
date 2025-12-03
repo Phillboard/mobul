@@ -10,46 +10,56 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Gift Card Campaign Management Platform
+Direct mail campaign management platform with integrated gift card provisioning and reward systems.
 
 Core Business Components:
 
-1. Credit Account System (Importance: 95/100)
-- Hierarchical credit distribution: Platform → Agency → Client → Campaign
-- Real-time balance tracking and allocation limits
-- Transaction logging with atomic operations
-- Credit reservation system for campaign budgets
-Path: src/lib/auth/giftCardPermissions.ts
+1. Campaign Wizard System (85/100)
+- Multi-step workflow orchestrating:
+  * Mail piece configuration (self vs ACE fulfillment)
+  * Audience selection with reward conditions
+  * Delivery rules and pricing calculations
+  * Unique code generation and validation
+  * Landing page integration with redemption flows
 
-2. Campaign Reward Logic (Importance: 90/100)
-- Multi-trigger reward system with sequential condition evaluation 
-- Time-delayed and event-based reward distribution
-- CRM event mapping for automated rewards
-- Campaign-specific validation rules
-Path: src/components/campaigns/wizard/MethodNameStep.tsx
+2. Gift Card Provisioning Engine (90/100)
+- Hierarchical credit allocation: Platform → Agency → Client → Campaign
+- Dual-source inventory management:
+  * CSV-based inventory with cost basis tracking
+  * Tillo API integration for automated fulfillment
+- Brand-specific denomination controls and pricing tiers
 
-3. Gift Card Provisioning (Importance: 90/100)
-- Two-tier provisioning system (CSV inventory → Tillo API)
-- Brand-denomination management with custom pricing
-- Real-time inventory tracking and threshold alerts
-- Pool health monitoring and automatic replenishment
-Path: supabase/functions/provision-gift-card-unified/index.ts
+3. Call Center Integration (85/100)
+- Multi-stage verification workflow:
+  * Code validation
+  * SMS opt-in verification
+  * Campaign condition evaluation
+  * Reward fulfillment
+- Disposition-based reward triggers
+- Real-time agent activity monitoring
 
-4. Campaign Analytics Engine (Importance: 85/100)
-- ROI calculation incorporating mail costs and gift card values
-- Conversion funnel tracking with industry benchmarks
-- Geographic performance analysis
-- Response rate and redemption tracking
-Path: src/components/analytics/CampaignROICalculator.tsx
+4. Landing Page System (80/100)
+- Conditional reward triggering based on:
+  * Form submissions
+  * Call completion
+  * Manual agent verification
+- Integrated QR code and PURL tracking
+- Multi-channel conversion attribution
 
-5. Call Center Integration (Importance: 80/100)
-- Multi-step gift card redemption workflow
-- SMS opt-in status management
-- Call verification with unique mailer codes
-- Real-time reward eligibility checking
-Path: src/components/call-center/CallCenterRedemptionPanel.tsx
+Key Implementation Paths:
+```
+src/components/campaigns/wizard/
+supabase/functions/provision-gift-card-unified/
+supabase/functions/complete-condition/
+src/components/call-center/
+```
 
-The system implements a comprehensive marketing campaign platform with integrated gift card rewards, focusing on multi-level credit management and automated reward distribution. Core business value centers on the credit-based gift card provisioning system and sophisticated campaign condition evaluation engine.
+Business Domain Focus:
+- Direct mail campaign orchestration
+- Gift card reward management
+- Multi-tenant credit system
+- Call center verification workflows
+- Campaign performance tracking
 
 $END$
 
