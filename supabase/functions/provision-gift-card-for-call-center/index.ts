@@ -275,10 +275,35 @@ serve(async (req) => {
 
       if (conditionError || !conditionData?.brand_id) {
         console.error('[CALL-CENTER-PROVISION] === GIFT CARD CONFIG ERROR ===');
+        console.error('[CALL-CENTER-PROVISION] Campaign ID:', campaignId);
+        console.error('[CALL-CENTER-PROVISION] Condition ID requested:', conditionId || 'not specified (using first active)');
         console.error('[CALL-CENTER-PROVISION] Query error:', conditionError);
-        console.error('[CALL-CENTER-PROVISION] Condition data:', JSON.stringify(conditionData, null, 2));
+        console.error('[CALL-CENTER-PROVISION] Condition data found:', JSON.stringify(conditionData, null, 2));
         console.error('[CALL-CENTER-PROVISION] Likely cause: brand_id and card_value were not saved during campaign creation');
-        throw new Error('No gift card configured for this campaign condition. Please set up a gift card brand and value in the campaign settings.');
+        
+        // Try the RPC function as a fallback
+        if (conditionId) {
+          console.log('[CALL-CENTER-PROVISION] Trying RPC fallback for condition:', conditionId);
+          const { data: rpcResult, error: rpcError } = await supabaseClient
+            .rpc('get_condition_gift_card_config', { p_condition_id: conditionId });
+          
+          if (!rpcError && rpcResult && rpcResult.length > 0 && rpcResult[0].brand_id) {
+            console.log('[CALL-CENTER-PROVISION] RPC fallback succeeded:', rpcResult[0]);
+            conditionData = {
+              id: rpcResult[0].condition_id,
+              brand_id: rpcResult[0].brand_id,
+              card_value: rpcResult[0].card_value,
+              condition_number: rpcResult[0].condition_number,
+              sms_template: rpcResult[0].sms_template,
+              condition_name: rpcResult[0].condition_name,
+            };
+          } else {
+            console.error('[CALL-CENTER-PROVISION] RPC fallback also failed:', rpcError);
+            throw new Error(`No gift card configured for campaign ${campaignId}, condition ${conditionId || 'first active'}. Please configure a gift card brand and value in campaign settings.`);
+          }
+        } else {
+          throw new Error(`No gift card configured for campaign ${campaignId}. Please configure a gift card brand and value in campaign settings.`);
+        }
       }
 
       giftCardConfig = {

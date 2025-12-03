@@ -1,0 +1,123 @@
+-- ============================================================
+-- REPAIR CAMPAIGN CONDITIONS DATA
+-- ============================================================
+-- This migration fixes campaigns that were created before the 
+-- brand_id/card_value fields were being properly saved.
+-- ============================================================
+
+-- Step 1: Report what we're about to fix
+DO $$
+DECLARE
+  v_affected_count INTEGER;
+  v_default_brand_id UUID;
+  v_default_brand_name TEXT;
+BEGIN
+  -- Count affected conditions
+  SELECT COUNT(*) INTO v_affected_count
+  FROM campaign_conditions 
+  WHERE is_active = true 
+    AND (brand_id IS NULL OR card_value IS NULL);
+  
+  RAISE NOTICE 'Found % active conditions with missing brand_id or card_value', v_affected_count;
+
+  -- Find a default brand to use
+  SELECT id, brand_name INTO v_default_brand_id, v_default_brand_name
+  FROM gift_card_brands
+  WHERE is_enabled_by_admin = true
+  ORDER BY 
+    -- Prefer Visa/Mastercard as most universal
+    CASE 
+      WHEN brand_name ILIKE '%visa%' THEN 1
+      WHEN brand_name ILIKE '%mastercard%' THEN 2
+      WHEN brand_name ILIKE '%amazon%' THEN 3
+      WHEN brand_name ILIKE '%starbucks%' THEN 4
+      ELSE 10
+    END,
+    brand_name
+  LIMIT 1;
+
+  IF v_default_brand_id IS NULL THEN
+    RAISE NOTICE 'No enabled brands found. Please add brands first.';
+    RETURN;
+  END IF;
+
+  RAISE NOTICE 'Using default brand: % (%)', v_default_brand_name, v_default_brand_id;
+END $$;
+
+-- Step 2: Update all active conditions missing brand_id with a default brand
+UPDATE campaign_conditions
+SET 
+  brand_id = (
+    SELECT id FROM gift_card_brands
+    WHERE is_enabled_by_admin = true
+    ORDER BY 
+      CASE 
+        WHEN brand_name ILIKE '%visa%' THEN 1
+        WHEN brand_name ILIKE '%mastercard%' THEN 2
+        WHEN brand_name ILIKE '%amazon%' THEN 3
+        WHEN brand_name ILIKE '%starbucks%' THEN 4
+        ELSE 10
+      END,
+      brand_name
+    LIMIT 1
+  ),
+  card_value = COALESCE(card_value, 25.00)
+WHERE is_active = true
+  AND brand_id IS NULL;
+
+-- Step 3: Update conditions that have brand_id but missing card_value
+UPDATE campaign_conditions
+SET card_value = 25.00
+WHERE is_active = true
+  AND brand_id IS NOT NULL
+  AND card_value IS NULL;
+
+-- Step 4: Set default SMS template for conditions missing it
+UPDATE campaign_conditions
+SET sms_template = 'Hi {first_name}! Here''s your ${value} {provider} gift card: {link}'
+WHERE is_active = true
+  AND sms_template IS NULL;
+
+-- Step 5: Report final state
+DO $$
+DECLARE
+  v_still_missing INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO v_still_missing
+  FROM campaign_conditions 
+  WHERE is_active = true 
+    AND (brand_id IS NULL OR card_value IS NULL);
+  
+  IF v_still_missing > 0 THEN
+    RAISE WARNING 'Still have % conditions with missing configuration!', v_still_missing;
+  ELSE
+    RAISE NOTICE 'All active conditions now have valid gift card configuration!';
+  END IF;
+END $$;
+
+-- Step 6: Show the updated "spring 26" campaign specifically
+DO $$
+DECLARE
+  v_spring_26_id UUID;
+  v_condition_count INTEGER;
+BEGIN
+  SELECT id INTO v_spring_26_id
+  FROM campaigns 
+  WHERE campaign_name ILIKE '%spring%26%' 
+     OR campaign_name ILIKE '%spring 26%'
+  LIMIT 1;
+
+  IF v_spring_26_id IS NOT NULL THEN
+    SELECT COUNT(*) INTO v_condition_count
+    FROM campaign_conditions
+    WHERE campaign_id = v_spring_26_id
+      AND is_active = true
+      AND brand_id IS NOT NULL
+      AND card_value IS NOT NULL;
+    
+    RAISE NOTICE 'Spring 26 campaign now has % fully configured conditions', v_condition_count;
+  ELSE
+    RAISE NOTICE 'Spring 26 campaign not found (may have different name)';
+  END IF;
+END $$;
+
