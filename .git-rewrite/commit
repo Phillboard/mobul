@@ -1,0 +1,13 @@
+tree ee2e3d4b5c292d8df56193dcae7c49559106b013
+parent 2984789ff5acb0df26cff8f308272c0f69582bf1
+parent 684cec06bbcfed26cae316b1393fbefe477b548a
+author gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763647563 +0000
+committer gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763647563 +0000
+
+Fix edge function for new pages
+
+- Handle new landing pages in AIDesignEditor by providing default starter HTML when designId is undefined
+- Add ai-design-chat edge function to config.toml and ensure proper deployment configuration
+- Initialize edge interaction with valid currentHtml and safe payloads to avoid "Failed to send a request to the Edge Function" errors
+
+X-Lovable-Edit-ID: edt-a1efbb98-96a3-45fc-9e90-0845ac45dc5a
