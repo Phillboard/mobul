@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Send, Info, XCircle, SkipForward, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Send, Info, XCircle, SkipForward, ThumbsUp, ThumbsDown, Zap } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { PoolInventoryWidget } from "./PoolInventoryWidget";
 import { ResendSmsButton } from "./ResendSmsButton";
@@ -124,6 +124,12 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);
   const [isSubmittingDisposition, setIsSubmittingDisposition] = useState(false);
   
+  // Simulation mode for testing - skip real SMS sending
+  const [isSimulatedMode, setIsSimulatedMode] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationCountdown, setSimulationCountdown] = useState(0);
+  const simulationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
   // Step 3: Contact Method (for SMS delivery)
   const [phone, setPhone] = useState("");
   
@@ -198,6 +204,82 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       setIsSendingOptIn(false);
     }
   };
+
+  // Simulate SMS opt-in (for testing - no real SMS sent)
+  const simulateSmsOptIn = async () => {
+    if (!cellPhone || !recipient || !campaign) return;
+    
+    setIsSimulating(true);
+    setIsSimulatedMode(true);
+    setSimulationCountdown(10);
+    setPhone(cellPhone);
+    
+    toast({
+      title: "🧪 Simulated SMS Sent",
+      description: "Simulating opt-in response in 10 seconds...",
+    });
+    
+    // Update recipient to pending status in database
+    await supabase
+      .from('recipients')
+      .update({
+        sms_opt_in_status: 'pending',
+        sms_opt_in_sent_at: new Date().toISOString(),
+        verification_method: 'sms',
+      })
+      .eq('id', recipient.id);
+    
+    // Start countdown
+    simulationTimerRef.current = setInterval(() => {
+      setSimulationCountdown(prev => {
+        if (prev <= 1) {
+          // Clear interval
+          if (simulationTimerRef.current) {
+            clearInterval(simulationTimerRef.current);
+            simulationTimerRef.current = null;
+          }
+          // Trigger the opt-in simulation
+          simulateOptInConfirmation();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+  
+  // Complete the simulation - mark as opted in
+  const simulateOptInConfirmation = async () => {
+    if (!recipient) return;
+    
+    // Update recipient to opted_in in the database
+    await supabase
+      .from('recipients')
+      .update({
+        sms_opt_in_status: 'opted_in',
+        sms_opt_in_response: 'YES (SIMULATED)',
+        sms_opt_in_response_at: new Date().toISOString(),
+      })
+      .eq('id', recipient.id);
+    
+    setIsSimulating(false);
+    
+    toast({
+      title: "✅ Simulated Opt-In Confirmed!",
+      description: "Customer has been marked as opted in (simulated).",
+    });
+    
+    // Refresh opt-in status
+    optInStatus.refresh();
+  };
+  
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (simulationTimerRef.current) {
+        clearInterval(simulationTimerRef.current);
+      }
+    };
+  }, []);
 
   // Send email verification link
   const sendEmailVerification = async () => {
@@ -482,6 +564,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           deliveryEmail: null,
           conditionNumber: condition?.condition_number,
           conditionId: selectedConditionId,
+          skipSmsDelivery: isSimulatedMode, // Skip actual SMS when in simulation mode
         }
       });
 
@@ -519,6 +602,14 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     setShowSkipDisposition(false);
     setSelectedDisposition("");
     setEmailVerificationSent(false);
+    // Reset simulation state
+    setIsSimulatedMode(false);
+    setIsSimulating(false);
+    setSimulationCountdown(0);
+    if (simulationTimerRef.current) {
+      clearInterval(simulationTimerRef.current);
+      simulationTimerRef.current = null;
+    }
   };
 
   const copyAllDetails = () => {
@@ -670,7 +761,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                   placeholder="(555) 555-5555"
                   value={cellPhone}
                   onChange={(e) => setCellPhone(e.target.value)}
-                  disabled={optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response'}
+                  disabled={optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response' && !isSimulating}
                   className="text-lg"
                 />
                 <Button 
@@ -678,6 +769,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                   disabled={
                     !cellPhone || 
                     isSendingOptIn || 
+                    isSimulating ||
                     (optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response')
                   }
                   className="min-w-[140px]"
@@ -694,6 +786,37 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                     </>
                   )}
                 </Button>
+              </div>
+              
+              {/* Simulation button for testing */}
+              <div className="flex gap-2 items-center">
+                <Button 
+                  variant="outline"
+                  onClick={simulateSmsOptIn}
+                  disabled={
+                    !cellPhone || 
+                    isSimulating ||
+                    optInStatus.isOptedIn
+                  }
+                  className="border-dashed border-2 border-yellow-400 bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
+                >
+                  {isSimulating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Simulating... ({simulationCountdown}s)
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4 mr-2" />
+                      Imitate SMS Sent
+                    </>
+                  )}
+                </Button>
+                {isSimulatedMode && !isSimulating && optInStatus.isOptedIn && (
+                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-400">
+                    🧪 Simulated Mode
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -1134,9 +1257,20 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                 )}
               </div>
 
+              {/* Simulation Mode Banner */}
+              {isSimulatedMode && (
+                <Alert className="border-yellow-400 bg-yellow-50">
+                  <Zap className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-700">
+                    <strong>🧪 Simulation Mode Active</strong> - SMS delivery was skipped. 
+                    You can manually send the gift card details to the customer.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Actions */}
               <div className="pt-4 space-y-2">
-                {result.recipient.phone && (
+                {result.recipient.phone && !isSimulatedMode && (
                   <ResendSmsButton
                     giftCardId={result.giftCard.id}
                     recipientId={result.recipient.id}
@@ -1147,6 +1281,23 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                                result.giftCard.gift_card_pools?.provider}
                     cardNumber={result.giftCard.card_number || undefined}
                   />
+                )}
+                
+                {/* Simulated mode - show imitate resend button */}
+                {isSimulatedMode && result.recipient.phone && (
+                  <Button 
+                    className="w-full border-dashed border-2 border-yellow-400 bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
+                    variant="outline"
+                    onClick={() => {
+                      toast({
+                        title: "🧪 Simulated SMS Resent",
+                        description: `Would send gift card to ${result.recipient.phone}`,
+                      });
+                    }}
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Imitate SMS Resend
+                  </Button>
                 )}
                 
                 <Button onClick={handleStartNew} variant="outline" className="w-full">

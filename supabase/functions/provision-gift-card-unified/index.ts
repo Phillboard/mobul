@@ -77,16 +77,24 @@ serve(async (req) => {
     denomination = requestData.denomination;
     conditionNumber = requestData.conditionNumber;
 
-    console.log(`[PROVISION] [${errorLogger.requestId}] Starting:`, {
+    console.log('='.repeat(60));
+    console.log(`[UNIFIED-PROVISION] [${errorLogger.requestId}] === REQUEST START ===`);
+    console.log('[UNIFIED-PROVISION] Request params:', JSON.stringify({
       campaignId,
       recipientId,
       brandId,
       denomination,
       conditionNumber,
-    });
+    }, null, 2));
 
     // Validate inputs
     if (!campaignId || !recipientId || !brandId || !denomination) {
+      console.error('[UNIFIED-PROVISION] Missing required parameters:', {
+        hasCampaignId: !!campaignId,
+        hasRecipientId: !!recipientId,
+        hasBrandId: !!brandId,
+        hasDenomination: !!denomination,
+      });
       throw new Error('Missing required parameters');
     }
 
@@ -94,35 +102,60 @@ serve(async (req) => {
     // STEP 1: Get campaign and determine billing entity
     // =====================================================
     
+    console.log('[UNIFIED-PROVISION] STEP 1 - Getting billing entity for campaign:', campaignId);
     const { data: billingEntity, error: billingError } = await supabaseClient
       .rpc('get_billing_entity_for_campaign', { p_campaign_id: campaignId });
 
+    console.log('[UNIFIED-PROVISION] Billing entity result:', {
+      data: billingEntity,
+      error: billingError,
+    });
+
     if (billingError || !billingEntity || billingEntity.length === 0) {
-      throw new Error(`Failed to determine billing entity: ${billingError?.message}`);
+      console.error('[UNIFIED-PROVISION] === BILLING ENTITY ERROR ===');
+      console.error('[UNIFIED-PROVISION] Campaign may not have a valid client or billing setup');
+      throw new Error(`Failed to determine billing entity: ${billingError?.message || 'No billing entity found'}`);
     }
 
     const { entity_type, entity_id, entity_name } = billingEntity[0];
-    console.log('[PROVISION] Billing entity:', { entity_type, entity_id, entity_name });
+    console.log('[UNIFIED-PROVISION] STEP 1 COMPLETE - Billing entity:', { entity_type, entity_id, entity_name });
 
     // =====================================================
     // STEP 2: Get brand details
     // =====================================================
     
+    console.log('[UNIFIED-PROVISION] STEP 2 - Getting brand details for:', brandId);
     const { data: brand, error: brandError } = await supabaseClient
       .from('gift_card_brands')
       .select('brand_name, brand_code, tillo_brand_code, logo_url')
       .eq('id', brandId)
       .single();
 
+    console.log('[UNIFIED-PROVISION] Brand lookup result:', {
+      found: !!brand,
+      brand_name: brand?.brand_name,
+      error: brandError,
+    });
+
     if (brandError || !brand) {
+      console.error('[UNIFIED-PROVISION] === BRAND NOT FOUND ===');
+      console.error('[UNIFIED-PROVISION] Brand ID:', brandId);
       throw new Error(`Brand not found: ${brandError?.message}`);
     }
 
-    console.log('[PROVISION] Brand:', brand.brand_name);
+    console.log('[UNIFIED-PROVISION] STEP 2 COMPLETE - Brand:', brand.brand_name);
 
     // =====================================================
     // STEP 3: Try to claim from inventory first
     // =====================================================
+    
+    console.log('[UNIFIED-PROVISION] STEP 3 - Attempting to claim from inventory');
+    console.log('[UNIFIED-PROVISION] Inventory claim params:', {
+      brand_id: brandId,
+      denomination: denomination,
+      recipient_id: recipientId,
+      campaign_id: campaignId,
+    });
     
     const { data: inventoryCard, error: inventoryError } = await supabaseClient
       .rpc('claim_gift_card_from_inventory', {
@@ -131,6 +164,13 @@ serve(async (req) => {
         p_recipient_id: recipientId,
         p_campaign_id: campaignId,
       });
+
+    console.log('[UNIFIED-PROVISION] Inventory claim result:', {
+      found: inventoryCard && inventoryCard.length > 0,
+      cardCount: inventoryCard?.length || 0,
+      error: inventoryError,
+      firstCard: inventoryCard?.[0] ? 'present' : 'none',
+    });
 
     let cardResult: any = null;
     let source: 'inventory' | 'tillo' = 'inventory';
@@ -141,8 +181,12 @@ serve(async (req) => {
 
     if (inventoryCard && inventoryCard.length > 0) {
       // SUCCESS: Got card from inventory
-      console.log('[PROVISION] Claimed from inventory');
+      console.log('[UNIFIED-PROVISION] SUCCESS - Claimed card from inventory');
       cardResult = inventoryCard[0];
+      console.log('[UNIFIED-PROVISION] Card details:', {
+        card_id: cardResult.card_id,
+        brand_name: cardResult.brand_name,
+      });
       source = 'inventory';
       inventoryCardId = cardResult.card_id;
       
@@ -157,19 +201,34 @@ serve(async (req) => {
       costBasis = denomData?.cost_basis || denomination * 0.95; // Default 5% discount
     } else {
       // No inventory available, try Tillo API
-      console.log('[PROVISION] No inventory, checking Tillo API...');
+      console.log('[UNIFIED-PROVISION] No inventory available - checking Tillo fallback');
       
       // Check if Tillo is configured first
       const tilloApiKey = Deno.env.get('TILLO_API_KEY');
       const tilloSecretKey = Deno.env.get('TILLO_SECRET_KEY');
       
+      console.log('[UNIFIED-PROVISION] Tillo configuration:', {
+        hasApiKey: !!tilloApiKey,
+        hasSecretKey: !!tilloSecretKey,
+        apiKeyLength: tilloApiKey?.length || 0,
+      });
+      
       if (!tilloApiKey || !tilloSecretKey) {
-        console.error('[PROVISION] No inventory and Tillo API not configured');
+        console.error('[UNIFIED-PROVISION] === NO INVENTORY AND NO TILLO ===');
+        console.error('[UNIFIED-PROVISION] This is the most common cause of provisioning failures');
+        console.error('[UNIFIED-PROVISION] Options: 1) Upload gift card inventory, or 2) Configure Tillo API');
         throw new Error('No gift cards available in inventory and Tillo API is not configured. Please upload gift card inventory or configure Tillo API credentials.');
       }
       
       const tilloBrandCode = brand.tillo_brand_code || brand.brand_code;
+      console.log('[UNIFIED-PROVISION] Tillo brand code:', tilloBrandCode);
+      
       if (!tilloBrandCode) {
+        console.error('[UNIFIED-PROVISION] Brand missing Tillo code:', {
+          brand_name: brand.brand_name,
+          brand_code: brand.brand_code,
+          tillo_brand_code: brand.tillo_brand_code,
+        });
         throw new Error('Brand does not have Tillo integration configured. Please add a Tillo brand code to this gift card brand, or upload inventory manually.');
       }
 
@@ -328,14 +387,27 @@ serve(async (req) => {
       },
     };
 
-    console.log('[PROVISION] Success:', result);
+    console.log('[UNIFIED-PROVISION] === SUCCESS ===');
+    console.log('[UNIFIED-PROVISION] Result:', JSON.stringify(result, null, 2));
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
-    console.error(`[PROVISION] [${errorLogger.requestId}] Error:`, error);
+    console.error('='.repeat(60));
+    console.error(`[UNIFIED-PROVISION] [${errorLogger.requestId}] === ERROR ===`);
+    console.error('[UNIFIED-PROVISION] Error type:', error?.constructor?.name);
+    console.error('[UNIFIED-PROVISION] Error message:', error?.message);
+    console.error('[UNIFIED-PROVISION] Error stack:', error?.stack);
+    console.error('[UNIFIED-PROVISION] Context:', {
+      campaignId,
+      recipientId,
+      brandId,
+      denomination,
+      conditionNumber,
+    });
+    console.error('='.repeat(60));
 
     // Log error to database
     await errorLogger.logError(error, {

@@ -26,6 +26,7 @@ interface CallCenterProvisionRequest {
   conditionNumber?: number;
   conditionId?: string;
   callSessionId?: string;
+  skipSmsDelivery?: boolean; // For simulation mode - skip actual SMS sending
 }
 
 interface ProvisionResult {
@@ -89,6 +90,7 @@ serve(async (req) => {
     const conditionNumber = requestData.conditionNumber;
     const conditionId = requestData.conditionId;
     const callSessionId = requestData.callSessionId;
+    const skipSmsDelivery = requestData.skipSmsDelivery || false;
 
     console.log('='.repeat(60));
     console.log(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] === REQUEST START ===`);
@@ -99,6 +101,7 @@ serve(async (req) => {
       conditionNumber,
       conditionId,
       callSessionId,
+      skipSmsDelivery,
     }, null, 2));
 
     // Validate inputs
@@ -367,48 +370,55 @@ serve(async (req) => {
 
     try {
       if (deliveryMethod === 'sms' && deliveryPhone) {
-        // Prepare SMS message from template
-        let customMessage = giftCardConfig?.sms_template;
-        
-        // Replace template variables if we have a template
-        if (customMessage) {
-          customMessage = customMessage
-            .replace(/\{first_name\}/gi, recipient.first_name || '')
-            .replace(/\{last_name\}/gi, recipient.last_name || '')
-            .replace(/\{value\}/g, provisionResult.card.denomination.toString())
-            .replace(/\$\{value\}/g, provisionResult.card.denomination.toString())
-            .replace(/\{provider\}/gi, provisionResult.card.brandName || 'Gift Card')
-            .replace(/\{company\}/gi, provisionResult.card.brandName || 'us')
-            .replace(/\{link\}/gi, provisionResult.card.cardCode); // Simplified - replace with actual redemption link if available
-        }
-        
-        // Send SMS with correct parameters
-        const smsResponse = await fetch(
-          `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-gift-card-sms`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-            },
-            body: JSON.stringify({
-              deliveryId: `call_center_${Date.now()}`, // Temporary ID for logging
-              giftCardCode: provisionResult.card.cardCode,
-              giftCardValue: provisionResult.card.denomination,
-              recipientPhone: deliveryPhone,
-              recipientName: `${recipient.first_name} ${recipient.last_name}`,
-              customMessage: customMessage || undefined,
-              recipientId: recipient.id,
-              giftCardId: provisionResult.card.id || null,
-            }),
-          }
-        );
-
-        if (!smsResponse.ok) {
-          const errorText = await smsResponse.text();
-          console.error('[CALL-CENTER-PROVISION] SMS delivery failed:', errorText);
+        // Check if we should skip SMS delivery (simulation mode)
+        if (skipSmsDelivery) {
+          console.log('[CALL-CENTER-PROVISION] SIMULATION MODE - Skipping SMS delivery');
+          console.log('[CALL-CENTER-PROVISION] Would have sent SMS to:', deliveryPhone);
+          console.log('[CALL-CENTER-PROVISION] Gift card code:', provisionResult.card.cardCode);
         } else {
-          console.log('[CALL-CENTER-PROVISION] SMS sent successfully');
+          // Prepare SMS message from template
+          let customMessage = giftCardConfig?.sms_template;
+          
+          // Replace template variables if we have a template
+          if (customMessage) {
+            customMessage = customMessage
+              .replace(/\{first_name\}/gi, recipient.first_name || '')
+              .replace(/\{last_name\}/gi, recipient.last_name || '')
+              .replace(/\{value\}/g, provisionResult.card.denomination.toString())
+              .replace(/\$\{value\}/g, provisionResult.card.denomination.toString())
+              .replace(/\{provider\}/gi, provisionResult.card.brandName || 'Gift Card')
+              .replace(/\{company\}/gi, provisionResult.card.brandName || 'us')
+              .replace(/\{link\}/gi, provisionResult.card.cardCode); // Simplified - replace with actual redemption link if available
+          }
+          
+          // Send SMS with correct parameters
+          const smsResponse = await fetch(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-gift-card-sms`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+              },
+              body: JSON.stringify({
+                deliveryId: `call_center_${Date.now()}`, // Temporary ID for logging
+                giftCardCode: provisionResult.card.cardCode,
+                giftCardValue: provisionResult.card.denomination,
+                recipientPhone: deliveryPhone,
+                recipientName: `${recipient.first_name} ${recipient.last_name}`,
+                customMessage: customMessage || undefined,
+                recipientId: recipient.id,
+                giftCardId: provisionResult.card.id || null,
+              }),
+            }
+          );
+
+          if (!smsResponse.ok) {
+            const errorText = await smsResponse.text();
+            console.error('[CALL-CENTER-PROVISION] SMS delivery failed:', errorText);
+          } else {
+            console.log('[CALL-CENTER-PROVISION] SMS sent successfully');
+          }
         }
       } else if (deliveryMethod === 'email' && deliveryEmail) {
         // Send Email
