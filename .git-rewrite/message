@@ -1,8 +1,5 @@
-Continue with all phases
+Add call center provision flow
 
-Extend testing readiness and apply Phase 5 testing prep
-- Implement Phase 5: Testing by outlining detailed core, security, UI/UX, and performance tests
-- Update TESTING_CHECKLIST.md with actionable test items and readiness notes
-- Ensure Phase 1-4 are complete and Phase 5 ready for execution
+Implement Phase 1: add provision-gift-card-for-call-center edge function, create CallCenterRedemptionPanel UI, refactor CallCenterDashboard to host the panel, and wire up App routing and Sidebar entries for call_center users to provision gift cards.
 
-X-Lovable-Edit-ID: edt-8582cf1b-98b8-44c0-9652-ad70e550d427
+X-Lovable-Edit-ID: edt-53544b42-23bf-4bb8-9a1f-817b718fcfd0
