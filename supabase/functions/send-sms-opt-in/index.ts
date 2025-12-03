@@ -2,7 +2,7 @@
  * send-sms-opt-in
  * 
  * Triggered when call center rep enters a cell phone number.
- * Immediately sends opt-in request SMS via Twilio.
+ * Sends opt-in request SMS via EZ Texting API.
  * 
  * Request body:
  * {
@@ -15,14 +15,14 @@
  * 
  * Flow:
  * 1. Validate phone number format
- * 2. Send SMS via Twilio: "This is {client_name}. Reply YES to receive your gift card and marketing messages for 30 days. Reply STOP to opt out."
+ * 2. Send SMS via EZ Texting: "This is {client_name}. Reply YES to receive your gift card and marketing messages for 30 days. Reply STOP to opt out."
  * 3. Update recipient.sms_opt_in_status = 'pending'
  * 4. Update recipient.sms_opt_in_sent_at = now()
  * 5. Log to sms_opt_in_log
  * 6. Broadcast status update via Supabase Realtime
  * 
  * Response:
- * { success: true, message_sid: string }
+ * { success: true, message_id: string }
  * or
  * { success: false, error: string }
  */
@@ -38,22 +38,34 @@ const corsHeaders = {
 // Phone number validation regex (US numbers)
 const PHONE_REGEX = /^\+?1?[\s.-]?\(?[0-9]{3}\)?[\s.-]?[0-9]{3}[\s.-]?[0-9]{4}$/;
 
-// Format phone to E.164
-function formatPhoneE164(phone: string): string {
+// Format phone for EZ Texting (10 digits, no country code)
+function formatPhoneForEZTexting(phone: string): string {
   // Remove all non-digits
   const digits = phone.replace(/\D/g, '');
   
-  // If 10 digits, assume US and add country code
+  // If 11 digits starting with 1, remove the leading 1
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return digits.substring(1);
+  }
+  
+  // If 10 digits, return as-is
+  if (digits.length === 10) {
+    return digits;
+  }
+  
+  // Otherwise return last 10 digits
+  return digits.slice(-10);
+}
+
+// Format phone to E.164 for storage
+function formatPhoneE164(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
   if (digits.length === 10) {
     return `+1${digits}`;
   }
-  
-  // If 11 digits starting with 1, format as +1
   if (digits.length === 11 && digits.startsWith('1')) {
     return `+${digits}`;
   }
-  
-  // Otherwise return with + prefix
   return `+${digits}`;
 }
 
@@ -64,7 +76,14 @@ serve(async (req) => {
   }
 
   try {
-    const { recipient_id, campaign_id, call_session_id, phone, client_name } = await req.json();
+    const { 
+      recipient_id, 
+      campaign_id, 
+      call_session_id, 
+      phone, 
+      client_name,
+      custom_message // Optional: custom opt-in message template
+    } = await req.json();
 
     // Validate required fields
     if (!recipient_id) {
@@ -85,8 +104,9 @@ serve(async (req) => {
       throw new Error("Invalid phone number format");
     }
 
+    const ezTextingPhone = formatPhoneForEZTexting(phone);
     const formattedPhone = formatPhoneE164(phone);
-    console.log(`[SEND-SMS-OPT-IN] Sending opt-in to ${formattedPhone} for recipient ${recipient_id}`);
+    console.log(`[SEND-SMS-OPT-IN] Sending opt-in to ${ezTextingPhone} for recipient ${recipient_id}`);
 
     // Initialize Supabase admin client
     const supabaseAdmin = createClient(
@@ -135,51 +155,86 @@ serve(async (req) => {
     }
 
     // Prepare opt-in message
-    const optInMessage = `This is ${client_name}. Reply YES to receive your gift card and marketing messages for 30 days. Reply STOP to opt out.`;
+    // Priority: 1) custom_message from request, 2) campaign setting, 3) default
+    let optInMessage: string;
+    
+    if (custom_message) {
+      // Use custom message from request, replace placeholders
+      optInMessage = custom_message
+        .replace(/\{client_name\}/gi, client_name)
+        .replace(/\{company\}/gi, client_name);
+    } else {
+      // Try to fetch campaign-level opt-in message setting
+      const { data: campaignSettings } = await supabaseAdmin
+        .from("campaigns")
+        .select("sms_opt_in_message")
+        .eq("id", campaign_id)
+        .single();
+      
+      if (campaignSettings?.sms_opt_in_message) {
+        optInMessage = campaignSettings.sms_opt_in_message
+          .replace(/\{client_name\}/gi, client_name)
+          .replace(/\{company\}/gi, client_name);
+      } else {
+        // Default message
+        optInMessage = `This is ${client_name}. Reply YES to receive your gift card and marketing messages for 30 days. Reply STOP to opt out.`;
+      }
+    }
+    
+    console.log(`[SEND-SMS-OPT-IN] Opt-in message: ${optInMessage}`);
 
-    // Get Twilio credentials
-    const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const twilioPhoneNumber = Deno.env.get("TWILIO_PHONE_NUMBER");
+    // Get EZ Texting credentials
+    const ezTextingUsername = Deno.env.get("EZTEXTING_USERNAME");
+    const ezTextingPassword = Deno.env.get("EZTEXTING_PASSWORD");
 
-    if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
-      console.error("[SEND-SMS-OPT-IN] Missing Twilio credentials");
+    if (!ezTextingUsername || !ezTextingPassword) {
+      console.error("[SEND-SMS-OPT-IN] Missing EZ Texting credentials");
       throw new Error("SMS service not configured");
     }
 
-    // Send SMS via Twilio API
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
-    const authHeader = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+    console.log(`[SEND-SMS-OPT-IN] Sending SMS to ${ezTextingPhone} via EZ Texting...`);
 
-    // Build status callback URL
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const statusCallbackUrl = `${supabaseUrl}/functions/v1/handle-sms-status`;
+    // EZ Texting uses HTTP Basic Authentication
+    const authHeader = btoa(`${ezTextingUsername}:${ezTextingPassword}`);
 
-    const twilioResponse = await fetch(twilioUrl, {
+    // Send SMS via EZ Texting REST API
+    // Docs: https://www.eztexting.com/developers/sms-api-documentation/rest
+    const ezTextingResponse = await fetch("https://app.eztexting.com/sending/messages?format=json", {
       method: "POST",
       headers: {
         "Authorization": `Basic ${authHeader}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        To: formattedPhone,
-        From: twilioPhoneNumber,
-        Body: optInMessage,
-        StatusCallback: statusCallbackUrl,
+        User: ezTextingUsername,
+        Password: ezTextingPassword,
+        PhoneNumbers: ezTextingPhone,
+        Message: optInMessage,
+        MessageTypeID: "1", // 1 = Express (immediate delivery)
       }),
     });
 
-    const twilioData = await twilioResponse.json();
-
-    if (!twilioResponse.ok) {
-      console.error("[SEND-SMS-OPT-IN] Twilio error:", twilioData);
-      throw new Error(twilioData.message || "Failed to send SMS");
+    let ezTextingData;
+    const responseText = await ezTextingResponse.text();
+    console.log(`[SEND-SMS-OPT-IN] EZ Texting response status: ${ezTextingResponse.status}`);
+    console.log(`[SEND-SMS-OPT-IN] EZ Texting response body: ${responseText}`);
+    
+    try {
+      ezTextingData = JSON.parse(responseText);
+    } catch {
+      ezTextingData = { raw: responseText };
     }
 
-    const messageSid = twilioData.sid;
+    if (!ezTextingResponse.ok) {
+      console.error("[SEND-SMS-OPT-IN] EZ Texting error:", ezTextingData);
+      throw new Error(ezTextingData.Error || ezTextingData.message || `EZ Texting API error: ${ezTextingResponse.status}`);
+    }
+
+    // EZ Texting returns message ID in the response
+    const messageId = ezTextingData.Response?.Entry?.ID || ezTextingData.ID || `ez_${Date.now()}`;
     const now = new Date().toISOString();
 
-    console.log(`[SEND-SMS-OPT-IN] SMS sent successfully, SID: ${messageSid}`);
+    console.log(`[SEND-SMS-OPT-IN] SMS sent successfully via EZ Texting, ID: ${messageId}`);
 
     // Update recipient status
     const { error: updateError } = await supabaseAdmin
@@ -201,7 +256,7 @@ serve(async (req) => {
       campaign_id,
       call_session_id: call_session_id || null,
       phone: formattedPhone,
-      message_sid: messageSid,
+      message_sid: messageId,
       direction: "outbound",
       message_text: optInMessage,
       status: "sent",
@@ -234,7 +289,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      message_sid: messageSid,
+      message_id: messageId,
       status: "pending",
       sent_at: now,
     }), {

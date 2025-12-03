@@ -1,10 +1,11 @@
 /**
- * ConditionsStep - Set up reward triggers
+ * ConditionsStep - Set up reward triggers and SMS message templates
  * 
  * Per Mike's requirements:
  * - Default condition name: "Listened to sales call"
  * - Default trigger: manual_agent (agent marks it complete)
  * - Predefined conditions only (no custom free-form input)
+ * - SMS opt-in and delivery message customization
  */
 
 import { useState } from "react";
@@ -19,11 +20,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, GripVertical, AlertCircle, CheckCircle, AlertTriangle, Gift } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Plus, Trash2, GripVertical, AlertCircle, CheckCircle, AlertTriangle, Gift, MessageSquare, ChevronDown, Info } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useToast } from "@/hooks/use-toast";
 import type { CampaignFormData } from "@/types/campaigns";
 import { SimpleBrandDenominationSelector } from "@/components/gift-cards/SimpleBrandDenominationSelector";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+// Default SMS message templates (compliance-friendly)
+const DEFAULT_OPT_IN_MESSAGE = "To send your activation code, we'll text you a link and a few related messages over the next 30 days from {company}. Msg & data rates may apply. Reply STOP to stop at any time.";
+const DEFAULT_DELIVERY_MESSAGE = "Hi {first_name}! Here's your ${value} {provider} gift card from {company}: {link}";
 
 // Predefined trigger types - per Mike's requirements
 const TRIGGER_TYPES = [
@@ -74,6 +81,12 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
   const { toast } = useToast();
   const recipientCount = initialData.recipient_count || 0;
 
+  // SMS Settings state
+  const [smsSettingsOpen, setSmsSettingsOpen] = useState(true);
+  const [smsOptInMessage, setSmsOptInMessage] = useState(
+    initialData.sms_opt_in_message || DEFAULT_OPT_IN_MESSAGE
+  );
+
   // Initialize conditions - default to "Listened to sales call" with manual_agent trigger
   const [conditions, setConditions] = useState<Condition[]>(() => {
     const existing = (initialData as any).conditions;
@@ -87,7 +100,7 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
         condition_number: 1,
         condition_name: "Listened to sales call",
         trigger_type: "manual_agent" as TriggerType,
-        sms_template: "Hi {first_name}! Thanks for your time. Here's your ${value} {provider} gift card: {link}",
+        sms_template: DEFAULT_DELIVERY_MESSAGE,
         is_active: true,
       },
     ];
@@ -102,7 +115,7 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
       condition_number: conditions.length + 1,
       condition_name: `Condition ${conditions.length + 1}`,
       trigger_type: "manual_agent",
-      sms_template: "Hi {first_name}! Your ${value} {provider} gift card: {link}",
+      sms_template: DEFAULT_DELIVERY_MESSAGE,
       is_active: true,
     };
     setConditions([...conditions, newCondition]);
@@ -175,7 +188,10 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
       return;
     }
 
-    onNext({ conditions } as any);
+    onNext({ 
+      conditions,
+      sms_opt_in_message: smsOptInMessage,
+    } as any);
   };
 
   return (
@@ -194,6 +210,73 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
           they receive their gift card via SMS automatically.
         </AlertDescription>
       </Alert>
+
+      {/* SMS Message Templates */}
+      <Collapsible open={smsSettingsOpen} onOpenChange={setSmsSettingsOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <div>
+                    <CardTitle className="text-base">SMS Message Templates</CardTitle>
+                    <CardDescription>Customize opt-in and delivery messages</CardDescription>
+                  </div>
+                </div>
+                <ChevronDown className={`h-5 w-5 transition-transform ${smsSettingsOpen ? "rotate-180" : ""}`} />
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-6 pt-0">
+              {/* Opt-In Message */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium">Opt-In Message (Consent Request)</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>This message is sent when the agent requests SMS consent. It must include company name, message frequency, and opt-out instructions for compliance.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Textarea
+                  value={smsOptInMessage}
+                  onChange={(e) => setSmsOptInMessage(e.target.value)}
+                  rows={3}
+                  placeholder={DEFAULT_OPT_IN_MESSAGE}
+                  className="font-mono text-sm"
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Variables: {"{company}"}, {"{client_name}"}</span>
+                  <span className={smsOptInMessage.length > 160 ? "text-amber-500" : ""}>
+                    {smsOptInMessage.length}/160 characters {smsOptInMessage.length > 160 && "(may split into multiple SMS)"}
+                  </span>
+                </div>
+                {smsOptInMessage !== DEFAULT_OPT_IN_MESSAGE && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSmsOptInMessage(DEFAULT_OPT_IN_MESSAGE)}
+                    className="text-xs"
+                  >
+                    Reset to default
+                  </Button>
+                )}
+              </div>
+
+              <div className="border-t pt-4">
+                <p className="text-xs text-muted-foreground">
+                  <strong>Gift Card Delivery Messages</strong> are configured per condition below. Each condition can have its own custom message.
+                </p>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="conditions">
@@ -312,7 +395,7 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
 
                           {/* SMS Template */}
                           <div className="space-y-2">
-                            <Label>Gift Card SMS Message</Label>
+                            <Label>Gift Card Delivery Message</Label>
                             <Textarea
                               value={condition.sms_template}
                               onChange={(e) =>
@@ -321,11 +404,15 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
                                 })
                               }
                               rows={2}
-                              placeholder="Hi {first_name}! Your ${value} {provider} gift card: {link}"
+                              placeholder={DEFAULT_DELIVERY_MESSAGE}
+                              className="font-mono text-sm"
                             />
-                            <p className="text-xs text-muted-foreground">
-                              Variables: {"{first_name}"}, {"{last_name}"}, {"{value}"}, {"{provider}"}, {"{link}"}
-                            </p>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Variables: {"{first_name}"}, {"{last_name}"}, {"{value}"}, {"{provider}"}, {"{company}"}, {"{link}"}</span>
+                              <span className={condition.sms_template.length > 160 ? "text-amber-500" : ""}>
+                                {condition.sms_template.length}/160
+                              </span>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>

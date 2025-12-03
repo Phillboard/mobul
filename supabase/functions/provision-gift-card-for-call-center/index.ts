@@ -15,6 +15,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 interface CallCenterProvisionRequest {
@@ -60,9 +61,9 @@ interface ProvisionResult {
 }
 
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { status: 200, headers: corsHeaders });
   }
 
   const supabaseClient = createClient(
@@ -112,6 +113,8 @@ serve(async (req) => {
         redemption_code,
         sms_opt_in_status,
         sms_opt_in_date,
+        verification_method,
+        disposition,
         audiences!inner(
           campaign_id,
           campaigns!inner(
@@ -132,14 +135,35 @@ serve(async (req) => {
     console.log('[CALL-CENTER-PROVISION] Recipient found:', recipient.id);
 
     // =====================================================
-    // STEP 2: Validate SMS opt-in if delivering via SMS
+    // STEP 2: Validate verification status for SMS delivery
+    // Accepts: SMS opt-in, skipped with positive disposition, or email verification
     // =====================================================
     
     if (deliveryPhone) {
-      if (recipient.sms_opt_in_status !== 'opted_in') {
-        throw new Error('Recipient has not opted in to receive SMS. Please use email delivery or collect SMS opt-in first.');
+      // Check all valid verification methods
+      const isOptedIn = recipient.sms_opt_in_status === 'opted_in';
+      const positiveDispositions = ['verified_verbally', 'already_opted_in', 'vip_customer'];
+      const hasSkippedVerification = recipient.verification_method === 'skipped' && 
+        positiveDispositions.includes(recipient.disposition || '');
+      const hasEmailVerification = recipient.verification_method === 'email';
+      
+      if (!isOptedIn && !hasSkippedVerification && !hasEmailVerification) {
+        console.log('[CALL-CENTER-PROVISION] Verification check failed:', {
+          sms_opt_in_status: recipient.sms_opt_in_status,
+          verification_method: recipient.verification_method,
+          disposition: recipient.disposition,
+        });
+        throw new Error('Recipient verification required. Use SMS opt-in, email verification, or skip with valid disposition.');
       }
-      console.log('[CALL-CENTER-PROVISION] SMS opt-in verified');
+      
+      // Log which verification method was used
+      if (isOptedIn) {
+        console.log('[CALL-CENTER-PROVISION] Verified via SMS opt-in');
+      } else if (hasSkippedVerification) {
+        console.log('[CALL-CENTER-PROVISION] Verified via skipped verification with disposition:', recipient.disposition);
+      } else if (hasEmailVerification) {
+        console.log('[CALL-CENTER-PROVISION] Verified via email verification');
+      }
     }
 
     // =====================================================
@@ -169,19 +193,40 @@ serve(async (req) => {
     }
 
     // If no config found, try to get from campaign_conditions (new schema)
+    // Use specific conditionId if provided, otherwise fall back to first active condition
     if (!giftCardConfig) {
-      const { data: conditionData, error: conditionError } = await supabaseClient
-        .from('campaign_conditions')
-        .select('brand_id, card_value, condition_number')
-        .eq('campaign_id', campaignId)
-        .eq('is_active', true)
-        .order('condition_number')
-        .limit(1)
-        .single();
+      let conditionData: any = null;
+      let conditionError: any = null;
+
+      if (conditionId) {
+        // Query specific condition by ID
+        const result = await supabaseClient
+          .from('campaign_conditions')
+          .select('brand_id, card_value, condition_number')
+          .eq('id', conditionId)
+          .single();
+        conditionData = result.data;
+        conditionError = result.error;
+        console.log('[CALL-CENTER-PROVISION] Querying condition by ID:', conditionId);
+      } else {
+        // Fallback to first active condition for this campaign
+        const result = await supabaseClient
+          .from('campaign_conditions')
+          .select('brand_id, card_value, condition_number')
+          .eq('campaign_id', campaignId)
+          .eq('is_active', true)
+          .order('condition_number')
+          .limit(1)
+          .single();
+        conditionData = result.data;
+        conditionError = result.error;
+        console.log('[CALL-CENTER-PROVISION] Querying first active condition for campaign');
+      }
 
       if (conditionError || !conditionData?.brand_id) {
         console.error('[CALL-CENTER-PROVISION] No gift card config in conditions:', conditionError);
-        throw new Error('No gift card configured for this campaign condition');
+        console.error('[CALL-CENTER-PROVISION] Condition data:', conditionData);
+        throw new Error('No gift card configured for this campaign condition. Please set up a gift card brand and value in the campaign settings.');
       }
 
       giftCardConfig = {
@@ -189,7 +234,7 @@ serve(async (req) => {
         denomination: conditionData.card_value || 25,
       };
       
-      console.log('[CALL-CENTER-PROVISION] Using config from campaign_conditions');
+      console.log('[CALL-CENTER-PROVISION] Using config from campaign_conditions:', giftCardConfig);
     }
 
     console.log('[CALL-CENTER-PROVISION] Gift card config:', giftCardConfig);

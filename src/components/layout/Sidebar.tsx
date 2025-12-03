@@ -73,7 +73,7 @@ const navigationGroups: NavGroup[] = [
     collapsible: true,
     items: [
       { name: "Gift Card Inventory", href: "/gift-cards", icon: Gift, roles: ['admin', 'agency_owner'], permissions: ['gift_cards.manage', 'giftcards.view'], keywords: ["rewards", "inventory", "pools"], description: "Manage gift card inventory" },
-      { name: "Purchase Cards", href: "/purchase-gift-cards", icon: Package, roles: ['admin', 'agency_owner'], permissions: ['gift_cards.purchase', 'giftcards.purchase'], keywords: ["buy", "order"], description: "Purchase gift cards" },
+      { name: "Credits & Billing", href: "/credits-billing", icon: CreditCard, roles: ['admin', 'agency_owner', 'company_owner'], permissions: ['gift_cards.purchase', 'giftcards.purchase', 'settings.billing'], keywords: ["credits", "billing", "auto-reload", "balance", "payments"], description: "Manage credits and billing" },
     ]
   },
   {

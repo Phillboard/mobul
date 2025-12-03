@@ -35,7 +35,9 @@ $functions = @(
     "validate-campaign-budget",
     "validate-gift-card-configuration",
     "update-organization-status",
-    "calculate-credit-requirements"
+    "calculate-credit-requirements",
+    "generate-google-wallet-pass",
+    "generate-apple-wallet-pass"
 )
 
 foreach ($func in $functions) {

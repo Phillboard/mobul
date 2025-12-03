@@ -32,7 +32,7 @@ const MailDesigner = lazy(() => import("./pages/MailDesigner"));
 const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
 const APIDocumentation = lazy(() => import("./pages/APIDocumentation"));
 const GiftCards = lazy(() => import("./pages/GiftCards"));
-const PurchaseGiftCards = lazy(() => import("./pages/PurchaseGiftCards"));
+const CreditsBilling = lazy(() => import("./pages/CreditsBilling"));
 const Settings = lazy(() => import("./pages/Settings"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
@@ -192,8 +192,7 @@ const App = () => (
                   <Route path="/gift-cards" element={<ProtectedRoute><GiftCardManager /></ProtectedRoute>} />
                   <Route path="/gift-cards/pools/:poolId" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PoolDetail /></ProtectedRoute>} />
                   <Route path="/gift-cards/purchase/:poolId" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PurchaseGiftCard /></ProtectedRoute>} />
-                  <Route path="/gift-cards/purchase" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PurchaseGiftCards /></ProtectedRoute>} />
-                  <Route path="/purchase-gift-cards" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PurchaseGiftCards /></ProtectedRoute>} />
+                  <Route path="/credits-billing" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner', 'company_owner']}><CreditsBilling /></ProtectedRoute>} />
                   
                   {/* Admin Only - Platform Marketplace & Pricing */}
                   <Route path="/gift-cards/marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />

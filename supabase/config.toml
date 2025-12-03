@@ -96,3 +96,9 @@ verify_jwt = true
 [functions.purchase-gift-cards]
 verify_jwt = false
 
+[functions.eztexting-webhook]
+verify_jwt = false
+
+[functions.send-sms-opt-in]
+verify_jwt = true
+

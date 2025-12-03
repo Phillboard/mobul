@@ -2,11 +2,12 @@
  * CampaignQuickActions Component
  * 
  * Dropdown menu with common actions for campaigns.
+ * Includes $100 minimum credit check before campaign activation.
  */
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +34,8 @@ import {
   Send,
   Users,
   Loader2,
+  AlertCircle,
+  CreditCard,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -45,6 +48,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CloneCampaignDialog } from "./CloneCampaignDialog";
+
+const MINIMUM_ACTIVATION_CREDIT = 100;
 
 interface Campaign {
   id: string;
@@ -65,6 +70,41 @@ export function CampaignQuickActions({ campaign, variant = 'default' }: Campaign
   
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCloneDialog, setShowCloneDialog] = useState(false);
+  const [showInsufficientCreditsDialog, setShowInsufficientCreditsDialog] = useState(false);
+
+  // Fetch client credit balance
+  const { data: creditBalance } = useQuery({
+    queryKey: ['client-credit-balance', campaign.client_id],
+    queryFn: async () => {
+      // First get the credit account for this client
+      const { data: account, error } = await supabase
+        .from('credit_accounts')
+        .select('total_remaining')
+        .eq('entity_type', 'client')
+        .eq('entity_id', campaign.client_id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching credit balance:', error);
+        return 0;
+      }
+      
+      return account?.total_remaining ?? 0;
+    },
+    enabled: !!campaign.client_id,
+    staleTime: 30000, // Cache for 30 seconds
+  });
+
+  const hasSufficientCredits = (creditBalance ?? 0) >= MINIMUM_ACTIVATION_CREDIT;
+
+  // Handle activation with credit check
+  const handleActivate = () => {
+    if (!hasSufficientCredits) {
+      setShowInsufficientCreditsDialog(true);
+      return;
+    }
+    updateStatus.mutate('active');
+  };
 
   // Status update mutation
   const updateStatus = useMutation({
@@ -178,11 +218,19 @@ export function CampaignQuickActions({ campaign, variant = 'default' }: Campaign
           
           {canActivate && (
             <DropdownMenuItem 
-              onClick={() => updateStatus.mutate('active')}
+              onClick={handleActivate}
               disabled={updateStatus.isPending}
+              className={!hasSufficientCredits ? "text-muted-foreground" : ""}
             >
-              <Play className="h-4 w-4 mr-2 text-green-600" />
+              {!hasSufficientCredits ? (
+                <AlertCircle className="h-4 w-4 mr-2 text-orange-500" />
+              ) : (
+                <Play className="h-4 w-4 mr-2 text-green-600" />
+              )}
               Activate
+              {!hasSufficientCredits && (
+                <span className="ml-auto text-xs text-orange-500">Low credits</span>
+              )}
             </DropdownMenuItem>
           )}
           
@@ -275,6 +323,42 @@ export function CampaignQuickActions({ campaign, variant = 'default' }: Campaign
                 <Trash2 className="h-4 w-4 mr-2" />
               )}
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Insufficient Credits Dialog */}
+      <AlertDialog open={showInsufficientCreditsDialog} onOpenChange={setShowInsufficientCreditsDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-orange-500" />
+              Insufficient Credits
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                You need at least <strong>${MINIMUM_ACTIVATION_CREDIT}</strong> in credits to activate a campaign.
+              </p>
+              <p>
+                Your current balance: <strong>${(creditBalance ?? 0).toFixed(2)}</strong>
+              </p>
+              <p className="text-muted-foreground">
+                Please add credits to your account before activating this campaign.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowInsufficientCreditsDialog(false);
+                navigate('/credits-billing');
+              }}
+              className="bg-primary"
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Add Credits
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -172,6 +172,7 @@ export default function CampaignCreate() {
           utm_campaign: data.utm_campaign || null,
           status: initialStatus,
           mailing_method: data.mailing_method || "self",
+          sms_opt_in_message: data.sms_opt_in_message || null,
         }])
         .select()
         .single();
@@ -194,6 +195,8 @@ export default function CampaignCreate() {
           // Gift card configuration - stored directly on condition
           brand_id: condition.brand_id || null,
           card_value: condition.card_value || null,
+          // SMS delivery message template
+          sms_template: condition.sms_template || null,
         }));
 
         const { error: conditionsError } = await supabase

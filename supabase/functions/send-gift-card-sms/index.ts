@@ -16,6 +16,30 @@ interface SendGiftCardSMSRequest {
   giftCardId?: string;
 }
 
+// Format phone for EZ Texting (10 digits, no country code)
+function formatPhoneForEZTexting(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return digits.substring(1);
+  }
+  if (digits.length === 10) {
+    return digits;
+  }
+  return digits.slice(-10);
+}
+
+// Format phone to E.164 for storage
+function formatPhoneE164(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return `+${digits}`;
+  }
+  return `+${digits}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -40,10 +64,9 @@ Deno.serve(async (req) => {
 
     console.log('Sending gift card SMS:', { deliveryId, recipientPhone, value: giftCardValue });
 
-    // Format phone number for Twilio (E.164 format)
-    const formattedPhone = recipientPhone.startsWith('+') 
-      ? recipientPhone 
-      : `+1${recipientPhone.replace(/\D/g, '')}`;
+    // Format phone numbers
+    const ezTextingPhone = formatPhoneForEZTexting(recipientPhone);
+    const formattedPhone = formatPhoneE164(recipientPhone);
 
     // Build SMS message
     const defaultMessage = `Congratulations ${recipientName || ''}! You've earned a $${giftCardValue} gift card. Your code: ${giftCardCode}. Thank you for your business!`;
@@ -73,35 +96,48 @@ Deno.serve(async (req) => {
       .update({ sms_message: smsMessage })
       .eq('id', deliveryId);
 
-    // Send SMS via Twilio
-    const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const twilioPhoneNumber = Deno.env.get('TWILIO_PHONE_NUMBER');
+    // Get EZ Texting credentials
+    const ezTextingUsername = Deno.env.get('EZTEXTING_USERNAME');
+    const ezTextingPassword = Deno.env.get('EZTEXTING_PASSWORD');
 
-    if (!twilioAccountSid || !twilioAuthToken || !twilioPhoneNumber) {
-      throw new Error('Twilio credentials not configured');
+    if (!ezTextingUsername || !ezTextingPassword) {
+      throw new Error('EZ Texting credentials not configured');
     }
 
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
-    const auth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+    console.log(`Sending SMS to ${ezTextingPhone} via EZ Texting...`);
 
-    const twilioResponse = await fetch(twilioUrl, {
+    // EZ Texting uses HTTP Basic Authentication
+    const authHeader = btoa(`${ezTextingUsername}:${ezTextingPassword}`);
+
+    // Send SMS via EZ Texting REST API
+    const ezTextingResponse = await fetch('https://app.eztexting.com/sending/messages?format=json', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${auth}`,
+        'Authorization': `Basic ${authHeader}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        To: formattedPhone,
-        From: twilioPhoneNumber,
-        Body: smsMessage,
+        User: ezTextingUsername,
+        Password: ezTextingPassword,
+        PhoneNumbers: ezTextingPhone,
+        Message: smsMessage,
+        MessageTypeID: '1',
       }),
     });
 
-    const twilioData = await twilioResponse.json();
+    let ezTextingData;
+    const responseText = await ezTextingResponse.text();
+    console.log(`EZ Texting response status: ${ezTextingResponse.status}`);
+    console.log(`EZ Texting response body: ${responseText}`);
+    
+    try {
+      ezTextingData = JSON.parse(responseText);
+    } catch {
+      ezTextingData = { raw: responseText };
+    }
 
-    if (!twilioResponse.ok) {
-      console.error('Twilio error:', twilioData);
+    if (!ezTextingResponse.ok) {
+      console.error('EZ Texting error:', ezTextingData);
       
       // Update SMS delivery log with failure
       if (logEntry) {
@@ -109,7 +145,7 @@ Deno.serve(async (req) => {
           .from('sms_delivery_log')
           .update({
             delivery_status: 'failed',
-            error_message: twilioData.message || 'Unknown Twilio error',
+            error_message: ezTextingData.Error || ezTextingData.message || 'Unknown EZ Texting error',
             last_retry_at: new Date().toISOString(),
           })
           .eq('id', logEntry.id);
@@ -120,15 +156,16 @@ Deno.serve(async (req) => {
         .from('gift_card_deliveries')
         .update({
           sms_status: 'failed',
-          sms_error_message: twilioData.message || 'Unknown Twilio error',
+          sms_error_message: ezTextingData.Error || ezTextingData.message || 'Unknown EZ Texting error',
           retry_count: 1,
         })
         .eq('id', deliveryId);
 
-      throw new Error(`Twilio API error: ${twilioData.message}`);
+      throw new Error(`EZ Texting API error: ${ezTextingData.Error || ezTextingData.message}`);
     }
 
-    console.log('SMS sent successfully:', twilioData.sid);
+    const messageId = ezTextingData.Response?.Entry?.ID || ezTextingData.ID || `ez_${Date.now()}`;
+    console.log('SMS sent successfully via EZ Texting:', messageId);
 
     // Update SMS delivery log with success
     if (logEntry) {
@@ -136,7 +173,7 @@ Deno.serve(async (req) => {
         .from('sms_delivery_log')
         .update({
           delivery_status: 'sent',
-          twilio_message_sid: twilioData.sid,
+          twilio_message_sid: messageId, // Reusing this field for EZ Texting message ID
           delivered_at: new Date().toISOString(),
         })
         .eq('id', logEntry.id);
@@ -147,7 +184,7 @@ Deno.serve(async (req) => {
       .from('gift_card_deliveries')
       .update({
         sms_status: 'sent',
-        twilio_message_sid: twilioData.sid,
+        twilio_message_sid: messageId, // Reusing this field for EZ Texting message ID
         sms_sent_at: new Date().toISOString(),
       })
       .eq('id', deliveryId);
@@ -159,8 +196,8 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        messageSid: twilioData.sid,
-        status: twilioData.status,
+        messageId: messageId,
+        status: 'sent',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

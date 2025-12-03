@@ -158,6 +158,9 @@ export interface CampaignFormData {
   // Conditions and rewards
   conditions?: Partial<CampaignCondition>[];
   reward_configs?: Partial<CampaignRewardConfig>[];
+  
+  // SMS Message Templates
+  sms_opt_in_message?: string; // Campaign-level opt-in message template
 }
 
 /**

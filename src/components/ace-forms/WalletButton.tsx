@@ -1,9 +1,11 @@
-import { Smartphone, Wallet } from "lucide-react";
+import { useState } from "react";
+import { Smartphone, Wallet, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { detectPlatform, getWalletName, supportsWallet } from '@/lib/web/walletDetection';
 import { useToast } from "@/hooks/use-toast";
 import { GiftCardRedemption } from "@/types/aceForms";
 import { cn } from '@/lib/utils/utils';
+import { supabase } from "@/integrations/supabase/client";
 
 interface WalletButtonProps {
   redemption: GiftCardRedemption;
@@ -14,52 +16,157 @@ interface WalletButtonProps {
 /**
  * Smart wallet button that adapts to user's platform
  * Shows Apple Wallet on iOS, Google Wallet on Android, generic on Desktop
+ * 
+ * Calls the appropriate edge function to generate wallet passes:
+ * - iOS: generate-apple-wallet-pass (returns .pkpass file)
+ * - Android: generate-google-wallet-pass (returns save URL)
  */
 export function WalletButton({ redemption, size = "lg", className }: WalletButtonProps) {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const platform = detectPlatform();
   const walletName = getWalletName();
   const hasWalletSupport = supportsWallet();
 
   const handleAddToWallet = async () => {
-    /**
-     * FEATURE: Wallet Pass Integration
-     * 
-     * Status: Planned for future release
-     * Dependencies: 
-     *   - supabase/functions/generate-apple-wallet-pass
-     *   - supabase/functions/generate-google-wallet-pass
-     * 
-     * Implementation Plan:
-     * 1. Complete edge functions for pass generation
-     * 2. Configure Apple Developer account for .pkpass signing
-     * 3. Configure Google Wallet API credentials
-     * 4. Test on actual devices
-     * 
-     * For now, users can download gift card details or screenshot
-     */
-    
+    // On desktop, show a helpful message
     if (!hasWalletSupport) {
       toast({
-        title: "Wallet Not Available",
-        description: "Wallet passes are only available on mobile devices. You can download the gift card details instead.",
+        title: "Open on Mobile",
+        description: "Wallet passes work best on mobile devices. Open this page on your phone to add to your wallet.",
       });
       return;
     }
 
-    toast({
-      title: `Add to ${walletName}`,
-      description: `${walletName} integration is planned for a future release. You can download or screenshot your gift card for now.`,
-      duration: 5000,
-    });
+    setIsLoading(true);
 
-    // Future implementation (when edge functions are complete):
-    // const { data, error } = await supabase.functions.invoke(
-    //   platform === 'ios' ? 'generate-apple-wallet-pass' : 'generate-google-wallet-pass',
-    //   { body: { redemptionId: redemption.id } }
-    // );
-    // if (error) throw error;
-    // window.location.href = data.passUrl;
+    try {
+      // Prepare gift card data for the edge function
+      const giftCardData = {
+        id: redemption.card_code, // Use card_code as unique ID
+        card_code: redemption.card_code,
+        card_number: redemption.card_number,
+        card_value: redemption.card_value,
+        provider: redemption.provider,
+        brand_name: redemption.brand_name,
+        logo_url: redemption.brand_logo,
+        expiration_date: redemption.expiration_date,
+        // balance_check_url could be added if available
+      };
+
+      if (platform === 'ios') {
+        // Apple Wallet - download .pkpass file
+        await handleAppleWallet(giftCardData);
+      } else {
+        // Google Wallet - redirect to save URL
+        await handleGoogleWallet(giftCardData);
+      }
+
+    } catch (error) {
+      console.error('Wallet error:', error);
+      
+      // Check if it's a configuration error
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('not configured')) {
+        toast({
+          title: "Wallet Not Configured",
+          description: `${walletName} integration needs to be set up by the administrator.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Failed to Add to Wallet",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Handle Apple Wallet pass generation and download
+   */
+  const handleAppleWallet = async (giftCard: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke(
+      'generate-apple-wallet-pass',
+      { 
+        body: { giftCard },
+        // Important: we need the raw response for binary data
+      }
+    );
+
+    if (error) {
+      // Parse error response
+      if (typeof error === 'object' && 'message' in error) {
+        throw new Error(error.message);
+      }
+      throw error;
+    }
+
+    // Check if the response is an error JSON
+    if (data && typeof data === 'object' && 'error' in data) {
+      throw new Error(data.error);
+    }
+
+    // The response should be a .pkpass file (binary)
+    // For Supabase functions, we need to handle this specially
+    // The function returns the binary directly with Content-Type: application/vnd.apple.pkpass
+    
+    // Create download link
+    const blob = new Blob([data], { type: 'application/vnd.apple.pkpass' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `giftcard-${giftCard.id}.pkpass`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Pass Downloaded",
+      description: "Open the downloaded file to add to Apple Wallet.",
+    });
+  };
+
+  /**
+   * Handle Google Wallet pass generation and redirect
+   */
+  const handleGoogleWallet = async (giftCard: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke(
+      'generate-google-wallet-pass',
+      { body: { giftCard } }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data || !data.success) {
+      throw new Error(data?.error || 'Failed to generate wallet pass');
+    }
+
+    // Redirect to Google's save URL
+    if (data.url) {
+      toast({
+        title: "Opening Google Wallet",
+        description: "Redirecting to add your gift card...",
+      });
+      
+      // Small delay to show the toast
+      setTimeout(() => {
+        window.location.href = data.url;
+      }, 500);
+    } else {
+      throw new Error('No save URL returned from server');
+    }
   };
 
   return (
@@ -67,12 +174,18 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
       <Button
         size={size}
         onClick={handleAddToWallet}
+        disabled={isLoading}
         className={cn(
-          "w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700",
+          "w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:opacity-70",
           className
         )}
       >
-        {platform === 'ios' ? (
+        {isLoading ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Generating Pass...
+          </>
+        ) : platform === 'ios' ? (
           <>
             <Wallet className="w-5 h-5" />
             Add to Apple Wallet
@@ -90,7 +203,10 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
         )}
       </Button>
       <p className="text-xs text-center text-muted-foreground">
-        Save to your phone's wallet app for easy access anytime
+        {isLoading 
+          ? "Creating your wallet pass..." 
+          : "Save to your phone's wallet app for easy access anytime"
+        }
       </p>
     </div>
   );

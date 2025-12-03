@@ -101,7 +101,7 @@ export const GIFT_CARD_ROUTE_PROTECTION = {
   '/gift-cards/pools/:poolId': ['admin', 'agency_owner'],
   '/gift-cards/marketplace': ['admin', 'agency_owner'],
   '/gift-cards/purchase/:poolId': ['admin', 'agency_owner'],
-  '/purchase-gift-cards': ['admin', 'agency_owner'],
+  '/credits-billing': ['admin', 'agency_owner', 'company_owner'],
   '/admin/gift-card-marketplace': ['admin'],
   '/admin/gift-cards/record-purchase': ['admin'],
   '/admin/gift-cards/pools/:poolId/pricing': ['admin'],

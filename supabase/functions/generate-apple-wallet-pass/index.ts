@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
-import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+// Using npm: specifier for node-forge (Supabase Edge Functions support npm packages)
+import forge from "npm:node-forge@1.3.1";
 import { JSZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 
 const corsHeaders = {
@@ -12,16 +12,18 @@ const corsHeaders = {
  * Generate Apple Wallet Pass (.pkpass) for Gift Card
  * 
  * SETUP REQUIRED:
- * 1. Enroll in Apple Developer Program
- * 2. Create Pass Type ID (pass.com.yourcompany.giftcard)
+ * 1. Enroll in Apple Developer Program ($99/year)
+ * 2. Create Pass Type ID (e.g., pass.com.yourcompany.giftcard)
  * 3. Generate Pass Type ID Certificate from Apple Developer
  * 4. Export certificate as .p12 with password
- * 5. Add these secrets to Supabase:
+ * 5. Download Apple WWDR G4 certificate from:
+ *    https://www.apple.com/certificateauthority/
+ * 6. Add these secrets to Supabase:
  *    - APPLE_WALLET_CERTIFICATE (base64 encoded .p12 file)
  *    - APPLE_WALLET_CERTIFICATE_PASSWORD (password for .p12)
  *    - APPLE_WALLET_TEAM_ID (your Apple Team ID)
  *    - APPLE_WALLET_PASS_TYPE_ID (e.g., pass.com.yourcompany.giftcard)
- *    - APPLE_WWDR_CERTIFICATE (base64 encoded Apple WWDR certificate)
+ *    - APPLE_WWDR_CERTIFICATE (base64 encoded Apple WWDR G4 .cer file)
  * 
  * Documentation: https://developer.apple.com/documentation/walletpasses
  */
@@ -66,7 +68,14 @@ serve(async (req) => {
         JSON.stringify({ 
           error: 'Apple Wallet not configured',
           message: 'Please configure Apple Wallet secrets (certificate, password, team ID, pass type ID)',
-          requiredSecrets: ['APPLE_WALLET_CERTIFICATE', 'APPLE_WALLET_CERTIFICATE_PASSWORD', 'APPLE_WALLET_TEAM_ID', 'APPLE_WALLET_PASS_TYPE_ID']
+          requiredSecrets: [
+            'APPLE_WALLET_CERTIFICATE',
+            'APPLE_WALLET_CERTIFICATE_PASSWORD', 
+            'APPLE_WALLET_TEAM_ID',
+            'APPLE_WALLET_PASS_TYPE_ID',
+            'APPLE_WWDR_CERTIFICATE (optional but recommended)'
+          ],
+          setupUrl: 'https://developer.apple.com/account/resources/certificates/list'
         }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -85,15 +94,24 @@ serve(async (req) => {
       serialNumber,
     });
 
-    // Create the .pkpass file
+    // Parse the certificate
+    const { privateKey, certificate } = parseCertificate(certificateB64, password);
+
+    // Parse WWDR certificate if provided
+    let wwdrCert: forge.pki.Certificate | undefined;
+    if (wwdrCertB64) {
+      wwdrCert = parseWWDRCertificate(wwdrCertB64);
+    }
+
+    // Create the .pkpass file with proper signing
     const pkpassBuffer = await createPkpassFile({
       passJson,
-      certificateB64,
-      password,
-      wwdrCertB64,
+      privateKey,
+      certificate,
+      wwdrCert,
     });
 
-    console.log('Apple Wallet pass generated successfully');
+    console.log('Apple Wallet pass generated successfully, size:', pkpassBuffer.length, 'bytes');
 
     // Return the .pkpass file as a download
     return new Response(pkpassBuffer, {
@@ -107,12 +125,84 @@ serve(async (req) => {
   } catch (error) {
     console.error('Apple Wallet error:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        hint: 'Check that your Apple certificates are properly configured. The .p12 file should be base64 encoded.'
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
+/**
+ * Parse the .p12 certificate to extract private key and certificate
+ */
+function parseCertificate(
+  p12Base64: string, 
+  password: string
+): { privateKey: forge.pki.PrivateKey; certificate: forge.pki.Certificate } {
+  try {
+    // Decode base64 to get the p12 data
+    const p12Der = forge.util.decode64(p12Base64);
+    
+    // Parse the p12 (PKCS#12) file
+    const p12Asn1 = forge.asn1.fromDer(p12Der);
+    const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
+    
+    // Extract the private key
+    const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
+    const keyBag = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag];
+    
+    if (!keyBag || keyBag.length === 0 || !keyBag[0].key) {
+      throw new Error('No private key found in certificate');
+    }
+    
+    const privateKey = keyBag[0].key;
+    
+    // Extract the certificate
+    const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
+    const certBag = certBags[forge.pki.oids.certBag];
+    
+    if (!certBag || certBag.length === 0 || !certBag[0].cert) {
+      throw new Error('No certificate found in .p12 file');
+    }
+    
+    const certificate = certBag[0].cert;
+    
+    return { privateKey, certificate };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Invalid password')) {
+      throw new Error('Invalid certificate password. Check APPLE_WALLET_CERTIFICATE_PASSWORD.');
+    }
+    throw new Error(`Failed to parse certificate: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Parse Apple WWDR certificate (DER or PEM format)
+ */
+function parseWWDRCertificate(wwdrB64: string): forge.pki.Certificate {
+  try {
+    const wwdrDer = forge.util.decode64(wwdrB64);
+    
+    // Try to parse as DER first
+    try {
+      const asn1 = forge.asn1.fromDer(wwdrDer);
+      return forge.pki.certificateFromAsn1(asn1);
+    } catch {
+      // If DER fails, try as PEM
+      const pem = forge.util.decodeUtf8(wwdrDer);
+      return forge.pki.certificateFromPem(pem);
+    }
+  } catch (error) {
+    console.warn('Failed to parse WWDR certificate, continuing without it:', error);
+    throw new Error('Failed to parse WWDR certificate');
+  }
+}
+
+/**
+ * Create the pass.json structure for Apple Wallet
+ */
 function createPassJson({
   giftCard,
   teamId,
@@ -134,7 +224,7 @@ function createPassJson({
     passTypeIdentifier: passTypeId,
     serialNumber: serialNumber,
     teamIdentifier: teamId,
-    organizationName: brandName,
+    organizationName: 'Mobul ACE',
     description: `${brandName} Gift Card`,
     logoText: brandName,
     
@@ -161,7 +251,7 @@ function createPassJson({
       },
     ],
     
-    // Store card style
+    // Store card style (best for gift cards)
     storeCard: {
       headerFields: [
         {
@@ -191,13 +281,18 @@ function createPassJson({
           label: 'Terms & Conditions',
           value: 'This gift card is redeemable for merchandise at participating locations. Card cannot be redeemed for cash. Protect this card like cash - lost or stolen cards cannot be replaced.',
         },
+        {
+          key: 'poweredBy',
+          label: 'Powered By',
+          value: 'Mobul ACE - Direct Mail Campaign Platform',
+        },
       ],
     },
   };
 
   // Add card number if present
   if (giftCard.card_number) {
-    (pass.storeCard as any).auxiliaryFields.push({
+    (pass.storeCard as Record<string, unknown[]>).auxiliaryFields.push({
       key: 'cardNumber',
       label: 'CARD #',
       value: giftCard.card_number,
@@ -206,16 +301,24 @@ function createPassJson({
 
   // Add expiration if present
   if (giftCard.expiration_date) {
-    (pass.storeCard as any).auxiliaryFields.push({
+    const expirationDate = new Date(giftCard.expiration_date);
+    (pass.storeCard as Record<string, unknown[]>).auxiliaryFields.push({
       key: 'expires',
       label: 'EXPIRES',
-      value: new Date(giftCard.expiration_date).toLocaleDateString(),
+      value: expirationDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short', 
+        day: 'numeric',
+      }),
     });
+    
+    // Add expiration date for pass validity
+    pass.expirationDate = expirationDate.toISOString();
   }
 
   // Add recipient name if present
   if (giftCard.recipient_name) {
-    (pass.storeCard as any).secondaryFields.push({
+    (pass.storeCard as Record<string, unknown[]>).secondaryFields.push({
       key: 'recipient',
       label: 'TO',
       value: giftCard.recipient_name,
@@ -224,7 +327,7 @@ function createPassJson({
 
   // Add balance check URL as back field
   if (giftCard.balance_check_url) {
-    (pass.storeCard as any).backFields.push({
+    (pass.storeCard as Record<string, unknown[]>).backFields.push({
       key: 'checkBalance',
       label: 'Check Balance',
       value: giftCard.balance_check_url,
@@ -235,16 +338,19 @@ function createPassJson({
   return pass;
 }
 
+/**
+ * Create the .pkpass file with proper PKCS#7 signing
+ */
 async function createPkpassFile({
   passJson,
-  certificateB64,
-  password,
-  wwdrCertB64,
+  privateKey,
+  certificate,
+  wwdrCert,
 }: {
   passJson: Record<string, unknown>;
-  certificateB64: string;
-  password: string;
-  wwdrCertB64?: string;
+  privateKey: forge.pki.PrivateKey;
+  certificate: forge.pki.Certificate;
+  wwdrCert?: forge.pki.Certificate;
 }): Promise<Uint8Array> {
   const zip = new JSZip();
 
@@ -252,161 +358,205 @@ async function createPkpassFile({
   const passJsonString = JSON.stringify(passJson, null, 2);
   zip.addFile('pass.json', new TextEncoder().encode(passJsonString));
 
-  // Create default icon (simple colored square as placeholder)
-  // In production, you'd want to use actual brand logos
-  const iconPng = createSimpleIcon();
+  // Create default icons (simple colored square as placeholder)
+  // In production, you should use actual brand logos
+  const iconPng = createSimpleIcon(29);
+  const icon2xPng = createSimpleIcon(58);
+  const icon3xPng = createSimpleIcon(87);
+  
   zip.addFile('icon.png', iconPng);
-  zip.addFile('icon@2x.png', iconPng);
+  zip.addFile('icon@2x.png', icon2xPng);
+  zip.addFile('icon@3x.png', icon3xPng);
+
+  // Create logo images
+  const logoPng = createSimpleIcon(160);
+  const logo2xPng = createSimpleIcon(320);
+  
+  zip.addFile('logo.png', logoPng);
+  zip.addFile('logo@2x.png', logo2xPng);
 
   // Create manifest.json with SHA1 hashes
   const manifest: Record<string, string> = {};
   
-  // Hash pass.json
-  const passJsonHash = await sha1Hash(new TextEncoder().encode(passJsonString));
-  manifest['pass.json'] = passJsonHash;
-  
-  // Hash icons
-  const iconHash = await sha1Hash(iconPng);
-  manifest['icon.png'] = iconHash;
-  manifest['icon@2x.png'] = iconHash;
+  // Hash all files
+  manifest['pass.json'] = sha1Hash(new TextEncoder().encode(passJsonString));
+  manifest['icon.png'] = sha1Hash(iconPng);
+  manifest['icon@2x.png'] = sha1Hash(icon2xPng);
+  manifest['icon@3x.png'] = sha1Hash(icon3xPng);
+  manifest['logo.png'] = sha1Hash(logoPng);
+  manifest['logo@2x.png'] = sha1Hash(logo2xPng);
 
   const manifestString = JSON.stringify(manifest);
   zip.addFile('manifest.json', new TextEncoder().encode(manifestString));
 
-  // Sign the manifest
-  // Note: Full PKCS#7 signing requires the certificate to be properly configured
-  // For a complete implementation, you'd use a library like node-forge or openssl
-  try {
-    const signature = await signManifest(manifestString, certificateB64, password, wwdrCertB64);
-    zip.addFile('signature', signature);
-  } catch (signError) {
-    console.error('Signing error (pass will work in some contexts):', signError);
-    // Create a placeholder signature - the pass may still work for preview purposes
-    // Full production implementation requires proper PKCS#7 signing
-  }
+  // Create PKCS#7 detached signature
+  const signature = createPkcs7Signature(manifestString, privateKey, certificate, wwdrCert);
+  zip.addFile('signature', signature);
 
   // Generate the ZIP file
   const pkpassBuffer = await zip.generateAsync({ type: 'uint8array' });
   return pkpassBuffer;
 }
 
-async function sha1Hash(data: Uint8Array): Promise<string> {
-  const hashBuffer = await crypto.subtle.digest('SHA-1', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function signManifest(
+/**
+ * Create PKCS#7 detached signature using node-forge
+ * This is the critical part that makes Apple Wallet passes work
+ */
+function createPkcs7Signature(
   manifest: string,
-  certificateB64: string,
-  _password: string,
-  _wwdrCertB64?: string,
-): Promise<Uint8Array> {
-  // PKCS#7 detached signature implementation
-  // This is a simplified version - full implementation would use openssl or forge
+  privateKey: forge.pki.PrivateKey,
+  certificate: forge.pki.Certificate,
+  wwdrCert?: forge.pki.Certificate,
+): Uint8Array {
+  // Create a PKCS#7 signed data structure
+  const p7 = forge.pkcs7.createSignedData();
   
-  // For Deno/Edge functions, we'll create a basic signature structure
-  // A full production implementation would:
-  // 1. Parse the .p12 certificate
-  // 2. Extract the private key and certificate chain
-  // 3. Create a PKCS#7 SignedData structure
-  // 4. Sign with SHA256
+  // Set the content (manifest)
+  p7.content = forge.util.createBuffer(manifest, 'utf8');
   
-  // Decode the certificate to verify it's valid
-  try {
-    const certBytes = Uint8Array.from(atob(certificateB64), c => c.charCodeAt(0));
-    
-    // Create signature using SHA-256
-    const manifestBytes = new TextEncoder().encode(manifest);
-    const signatureData = await crypto.subtle.digest('SHA-256', manifestBytes);
-    
-    // For full implementation, you would use a PKCS#7 library
-    // This creates a basic signature that may need additional processing
-    return new Uint8Array(signatureData);
-  } catch (error) {
-    console.error('Certificate processing error:', error);
-    throw new Error('Failed to sign manifest - check certificate configuration');
+  // Add the signer's certificate
+  p7.addCertificate(certificate);
+  
+  // Add WWDR intermediate certificate if available
+  if (wwdrCert) {
+    p7.addCertificate(wwdrCert);
   }
+  
+  // Add signer
+  p7.addSigner({
+    key: privateKey,
+    certificate: certificate,
+    digestAlgorithm: forge.pki.oids.sha256,
+    authenticatedAttributes: [
+      {
+        type: forge.pki.oids.contentType,
+        value: forge.pki.oids.data,
+      },
+      {
+        type: forge.pki.oids.messageDigest,
+        // messageDigest will be calculated automatically
+      },
+      {
+        type: forge.pki.oids.signingTime,
+        value: new Date(),
+      },
+    ],
+  });
+  
+  // Sign the data (detached = true means content is not included in signature)
+  p7.sign({ detached: true });
+  
+  // Convert to DER format
+  const asn1 = p7.toAsn1();
+  const der = forge.asn1.toDer(asn1);
+  
+  // Convert to Uint8Array
+  const bytes = new Uint8Array(der.length());
+  for (let i = 0; i < der.length(); i++) {
+    bytes[i] = der.at(i);
+  }
+  
+  return bytes;
 }
 
-function createSimpleIcon(): Uint8Array {
-  // Create a minimal valid PNG (29x29 purple square)
-  // This is a pre-generated minimal PNG
-  // In production, you'd generate this dynamically or use stored brand images
+/**
+ * Calculate SHA1 hash (required by Apple for manifest)
+ */
+function sha1Hash(data: Uint8Array): string {
+  const md = forge.md.sha1.create();
+  md.update(forge.util.binary.raw.encode(data));
+  return md.digest().toHex();
+}
+
+/**
+ * Create a simple colored PNG icon
+ * In production, replace with actual brand logos
+ */
+function createSimpleIcon(size: number): Uint8Array {
+  // Create a minimal valid PNG with purple color
+  // This is a simplified PNG generator for placeholder icons
   
-  // Minimal 1x1 purple PNG encoded
-  const pngHeader = [
-    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
-    0x00, 0x00, 0x00, 0x0D, // IHDR length
-    0x49, 0x48, 0x44, 0x52, // IHDR
-    0x00, 0x00, 0x00, 0x1D, // width: 29
-    0x00, 0x00, 0x00, 0x1D, // height: 29
-    0x08, 0x02, // bit depth: 8, color type: 2 (RGB)
-    0x00, 0x00, 0x00, // compression, filter, interlace
-    0x90, 0x77, 0x53, 0xDE, // CRC
+  const width = size;
+  const height = size;
+  
+  // PNG signature
+  const signature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  
+  // IHDR chunk
+  const ihdrData = [
+    (width >> 24) & 0xFF, (width >> 16) & 0xFF, (width >> 8) & 0xFF, width & 0xFF,
+    (height >> 24) & 0xFF, (height >> 16) & 0xFF, (height >> 8) & 0xFF, height & 0xFF,
+    8, // bit depth
+    2, // color type (RGB)
+    0, // compression
+    0, // filter
+    0, // interlace
+  ];
+  const ihdrCrc = crc32([0x49, 0x48, 0x44, 0x52, ...ihdrData]);
+  const ihdr = [
+    0x00, 0x00, 0x00, 0x0D, // length
+    0x49, 0x48, 0x44, 0x52, // type "IHDR"
+    ...ihdrData,
+    (ihdrCrc >> 24) & 0xFF, (ihdrCrc >> 16) & 0xFF, (ihdrCrc >> 8) & 0xFF, ihdrCrc & 0xFF,
   ];
   
-  // Create image data (29x29 purple pixels)
-  const width = 29;
-  const height = 29;
+  // Create image data (purple pixels)
   const rawData: number[] = [];
-  
   for (let y = 0; y < height; y++) {
-    rawData.push(0); // Filter byte
+    rawData.push(0); // Filter byte (none)
     for (let x = 0; x < width; x++) {
-      rawData.push(124); // R (purple)
+      rawData.push(124); // R (purple-600)
       rawData.push(58);  // G
       rawData.push(237); // B
     }
   }
   
-  // Compress with deflate (simplified - using uncompressed blocks)
-  const deflated = deflateUncompressed(new Uint8Array(rawData));
+  // Compress with zlib/deflate
+  const deflated = deflateSync(new Uint8Array(rawData));
   
   // IDAT chunk
-  const idatLength = deflated.length;
+  const idatCrc = crc32([0x49, 0x44, 0x41, 0x54, ...deflated]);
   const idat = [
-    (idatLength >> 24) & 0xFF,
-    (idatLength >> 16) & 0xFF,
-    (idatLength >> 8) & 0xFF,
-    idatLength & 0xFF,
-    0x49, 0x44, 0x41, 0x54, // IDAT
+    (deflated.length >> 24) & 0xFF, (deflated.length >> 16) & 0xFF, 
+    (deflated.length >> 8) & 0xFF, deflated.length & 0xFF,
+    0x49, 0x44, 0x41, 0x54, // type "IDAT"
     ...deflated,
+    (idatCrc >> 24) & 0xFF, (idatCrc >> 16) & 0xFF, (idatCrc >> 8) & 0xFF, idatCrc & 0xFF,
   ];
-  
-  // Calculate IDAT CRC
-  const idatCrc = crc32(new Uint8Array([0x49, 0x44, 0x41, 0x54, ...deflated]));
-  idat.push((idatCrc >> 24) & 0xFF);
-  idat.push((idatCrc >> 16) & 0xFF);
-  idat.push((idatCrc >> 8) & 0xFF);
-  idat.push(idatCrc & 0xFF);
   
   // IEND chunk
   const iend = [
-    0x00, 0x00, 0x00, 0x00, // length: 0
-    0x49, 0x45, 0x4E, 0x44, // IEND
-    0xAE, 0x42, 0x60, 0x82, // CRC
+    0x00, 0x00, 0x00, 0x00,
+    0x49, 0x45, 0x4E, 0x44,
+    0xAE, 0x42, 0x60, 0x82,
   ];
   
-  return new Uint8Array([...pngHeader, ...idat, ...iend]);
+  return new Uint8Array([...signature, ...ihdr, ...idat, ...iend]);
 }
 
-function deflateUncompressed(data: Uint8Array): number[] {
-  // Simple uncompressed deflate - each block max 65535 bytes
+/**
+ * Simple deflate compression (uncompressed blocks for simplicity)
+ */
+function deflateSync(data: Uint8Array): number[] {
   const result: number[] = [];
-  let offset = 0;
   
+  // Zlib header
+  result.push(0x78, 0x9C); // Default compression
+  
+  let offset = 0;
   while (offset < data.length) {
     const remaining = data.length - offset;
     const blockSize = Math.min(remaining, 65535);
     const isLast = offset + blockSize >= data.length;
     
-    result.push(isLast ? 0x01 : 0x00); // BFINAL + BTYPE=00
+    // Block header
+    result.push(isLast ? 0x01 : 0x00);
     result.push(blockSize & 0xFF);
     result.push((blockSize >> 8) & 0xFF);
     result.push((~blockSize) & 0xFF);
     result.push(((~blockSize) >> 8) & 0xFF);
     
+    // Block data
     for (let i = 0; i < blockSize; i++) {
       result.push(data[offset + i]);
     }
@@ -429,7 +579,10 @@ function deflateUncompressed(data: Uint8Array): number[] {
   return result;
 }
 
-function crc32(data: Uint8Array): number {
+/**
+ * CRC32 calculation for PNG chunks
+ */
+function crc32(data: number[]): number {
   let crc = 0xFFFFFFFF;
   const table = getCrc32Table();
   
@@ -440,17 +593,17 @@ function crc32(data: Uint8Array): number {
   return (crc ^ 0xFFFFFFFF) >>> 0;
 }
 
-let crc32Table: Uint32Array | null = null;
+let crc32TableCache: Uint32Array | null = null;
 function getCrc32Table(): Uint32Array {
-  if (crc32Table) return crc32Table;
+  if (crc32TableCache) return crc32TableCache;
   
-  crc32Table = new Uint32Array(256);
+  crc32TableCache = new Uint32Array(256);
   for (let i = 0; i < 256; i++) {
     let c = i;
     for (let j = 0; j < 8; j++) {
       c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
     }
-    crc32Table[i] = c >>> 0;
+    crc32TableCache[i] = c >>> 0;
   }
-  return crc32Table;
+  return crc32TableCache;
 }

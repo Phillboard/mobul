@@ -39,3 +39,4 @@ $$;
 COMMENT ON FUNCTION public.handle_new_user() IS 
 'Creates profile for new users. Auto-assigns admin role for users with @mobul.com or @fuelreset.com email domains.';
 
+

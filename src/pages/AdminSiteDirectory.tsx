@@ -61,7 +61,7 @@ const routes: RouteInfo[] = [
   
   // Gift Cards & Rewards
   { path: "/gift-cards", name: "Gift Card Inventory", category: "Rewards", auth: "protected", requiredPermissions: ["giftcards.view"], description: "Gift card pool management" },
-  { path: "/purchase-gift-cards", name: "Purchase Cards", category: "Rewards", auth: "protected", requiredPermissions: ["giftcards.purchase"], description: "Purchase gift cards" },
+  { path: "/credits-billing", name: "Credits & Billing", category: "Rewards", auth: "protected", requiredPermissions: ["giftcards.purchase", "settings.billing"], description: "Manage credits and auto-billing" },
   { path: "/admin/gift-card-marketplace", name: "Gift Card Marketplace", category: "Rewards", auth: "protected", requiredRole: "admin", description: "Platform gift card marketplace (admin)" },
   
   // Call Center

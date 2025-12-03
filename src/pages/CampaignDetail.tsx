@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, ArrowLeft, Package, TrendingUp } from "lucide-react";
+import { AlertCircle, ArrowLeft, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDistanceToNow } from "date-fns";
@@ -54,47 +54,6 @@ export default function CampaignDetail() {
       return data;
     },
     enabled: !!id,
-  });
-
-  const { data: events } = useQuery({
-    queryKey: ['campaign-events', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*, recipient:recipients(*)')
-        .eq('campaign_id', id!)
-        .order('occurred_at', { ascending: false })
-        .limit(50);
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  const simulateTrackingMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('simulate-mail-tracking', {
-        body: { campaignId: id },
-      });
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Tracking Simulated",
-        description: `Generated tracking for ${data.deliveredCount} delivered, ${data.returnedCount} returned`,
-      });
-      queryClient.invalidateQueries({ queryKey: ['campaign-events', id] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Simulation Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 
   if (isLoading) {
@@ -181,27 +140,10 @@ export default function CampaignDetail() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button 
-                className="w-full" 
-                variant="outline"
-                onClick={() => simulateTrackingMutation.mutate()}
-                disabled={simulateTrackingMutation.isPending}
-              >
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Simulate Mail Tracking (Testing)
-              </Button>
-            </CardContent>
-          </Card>
         </div>
 
-        <Tabs defaultValue="tracking" className="w-full">
-          <TabsList className="grid w-full grid-cols-9">
-            <TabsTrigger value="tracking">Mail Tracking</TabsTrigger>
+        <Tabs defaultValue="conditions" className="w-full">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="conditions">Conditions</TabsTrigger>
             <TabsTrigger value="calls">Call Analytics</TabsTrigger>
             <TabsTrigger value="rewards">Rewards</TabsTrigger>
@@ -211,59 +153,6 @@ export default function CampaignDetail() {
             <TabsTrigger value="approvals">Approvals</TabsTrigger>
             <TabsTrigger value="comments">Comments</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="tracking" className="space-y-4">
-            {events && events.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Mail Tracking Events</CardTitle>
-                  <CardDescription>Recent delivery and tracking updates</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Recipient</TableHead>
-                        <TableHead>Address</TableHead>
-                        <TableHead>Event</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {events.map((event) => (
-                        <TableRow key={event.id}>
-                          <TableCell>
-                            {event.recipient?.first_name} {event.recipient?.last_name}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {event.recipient?.address1}, {event.recipient?.city}, {event.recipient?.state}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {event.event_type.replace('imb_', '').replace('_', ' ')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={event.event_type === 'mail_returned' ? 'bg-red-500' : 'bg-green-500'}>
-                              {event.event_type === 'mail_returned' ? 'Returned' : 'Success'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{formatDistanceToNow(new Date(event.occurred_at!), { addSuffix: true })}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="py-8">
-                  <div className="text-center text-muted-foreground">No tracking events yet</div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
 
           <TabsContent value="conditions">
             <ConditionsDisplay campaignId={id!} />

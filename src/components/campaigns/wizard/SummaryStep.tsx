@@ -214,9 +214,6 @@ export function SummaryStep({
                   </span>
                   <span className="font-medium">{giftCardCostEstimate.formattedTotalCost}</span>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Based on {giftCardCostEstimate.redemptionRate}% redemption rate, includes {giftCardCostEstimate.feePercentage}% fee
-                </div>
               </div>
             </div>
           ) : conditions.length > 0 ? (

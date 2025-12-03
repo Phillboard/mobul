@@ -1041,6 +1041,7 @@ export type Database = {
           is_active: boolean
           is_simulated: boolean | null
           simulation_batch_id: string | null
+          sms_template: string | null
           time_delay_hours: number | null
           trigger_type: string
           brand_id: string | null
@@ -1056,6 +1057,7 @@ export type Database = {
           is_active?: boolean
           is_simulated?: boolean | null
           simulation_batch_id?: string | null
+          sms_template?: string | null
           time_delay_hours?: number | null
           trigger_type?: string
           brand_id?: string | null
@@ -1071,6 +1073,7 @@ export type Database = {
           is_active?: boolean
           is_simulated?: boolean | null
           simulation_batch_id?: string | null
+          sms_template?: string | null
           time_delay_hours?: number | null
           trigger_type?: string
           brand_id?: string | null
@@ -1295,6 +1298,7 @@ export type Database = {
           postage: Database["public"]["Enums"]["postage_class"] | null
           simulation_batch_id: string | null
           size: Database["public"]["Enums"]["template_size"]
+          sms_opt_in_message: string | null
           status: Database["public"]["Enums"]["campaign_status"] | null
           template_id: string | null
           updated_at: string | null
@@ -1321,6 +1325,7 @@ export type Database = {
           postage?: Database["public"]["Enums"]["postage_class"] | null
           simulation_batch_id?: string | null
           size: Database["public"]["Enums"]["template_size"]
+          sms_opt_in_message?: string | null
           status?: Database["public"]["Enums"]["campaign_status"] | null
           template_id?: string | null
           updated_at?: string | null
@@ -1347,6 +1352,7 @@ export type Database = {
           postage?: Database["public"]["Enums"]["postage_class"] | null
           simulation_batch_id?: string | null
           size?: Database["public"]["Enums"]["template_size"]
+          sms_opt_in_message?: string | null
           status?: Database["public"]["Enums"]["campaign_status"] | null
           template_id?: string | null
           updated_at?: string | null

@@ -124,10 +124,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);
   const [isSubmittingDisposition, setIsSubmittingDisposition] = useState(false);
   
-  // Step 3: Contact Method (for delivery)
-  const [deliveryMethod, setDeliveryMethod] = useState<"sms" | "email">("sms");
+  // Step 3: Contact Method (for SMS delivery)
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   
   // Step 4: Condition Selection
   const [selectedConditionId, setSelectedConditionId] = useState("");
@@ -142,16 +140,12 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   const campaign = recipient?.audiences?.campaigns?.[0];
   const clientName = (campaign as any)?.clients?.name || "Your provider";
 
-  // Pre-fill contact method from recipient if available
+  // Pre-fill phone from recipient if available
   useEffect(() => {
     if (recipient) {
       if (recipient.phone) {
         setPhone(recipient.phone);
         setCellPhone(recipient.phone);
-        setDeliveryMethod("sms");
-      } else if (recipient.email) {
-        setEmail(recipient.email);
-        setDeliveryMethod("email");
       }
     }
   }, [recipient]);
@@ -268,28 +262,11 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       
       if (updateError) throw updateError;
       
-      // If positive disposition with skipped verification, send admin alert
+      // If positive disposition with skipped verification, continue to delivery
       if (isPositive) {
-        try {
-          await supabase.functions.invoke('send-admin-alert', {
-            body: {
-              type: 'skipped_verification_positive',
-              recipient_id: recipient.id,
-              campaign_id: campaign.id,
-              disposition: disposition,
-              agent_id: (await supabase.auth.getUser()).data.user?.id,
-              customer_name: `${recipient.first_name || ''} ${recipient.last_name || ''}`.trim(),
-              customer_code: recipient.redemption_code,
-            }
-          });
-        } catch (alertError) {
-          console.warn('Failed to send admin alert:', alertError);
-          // Don't block the flow for admin alert failure
-        }
-        
         toast({
           title: "Proceeding with Positive Disposition",
-          description: "Admin has been notified of the skipped verification.",
+          description: `Verification skipped with disposition: ${POSITIVE_DISPOSITIONS.find(d => d.value === disposition)?.label}`,
         });
         
         // Continue to delivery step
@@ -338,6 +315,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
               name,
               status,
               client_id,
+              clients (id, name),
               campaign_conditions (*),
               campaign_gift_card_config (*)
             )
@@ -403,6 +381,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
                 name,
                 status,
                 client_id,
+                clients (id, name),
                 campaign_conditions (*),
                 campaign_gift_card_config (*)
               )
@@ -486,9 +465,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         throw new Error("Missing required information");
       }
 
-      const contactMethod = deliveryMethod === "sms" ? phone : email;
-      if (!contactMethod) {
-        throw new Error(`Please enter ${deliveryMethod === "sms" ? "phone number" : "email address"}`);
+      if (!phone) {
+        throw new Error("Please enter phone number");
       }
 
       const condition = recipient.audiences?.campaigns?.[0]?.campaign_conditions?.find(
@@ -498,8 +476,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       const { data, error } = await supabase.functions.invoke("provision-gift-card-for-call-center", {
         body: {
           redemptionCode: recipient.redemption_code,
-          deliveryPhone: deliveryMethod === "sms" ? phone : null,
-          deliveryEmail: deliveryMethod === "email" ? email : null,
+          deliveryPhone: phone,
+          deliveryEmail: null,
           conditionNumber: condition?.condition_number,
           conditionId: selectedConditionId,
         }
@@ -902,10 +880,10 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              Gift Card Delivery Method
+              Gift Card SMS Delivery
             </CardTitle>
             <CardDescription>
-              How should we send the gift card to the customer?
+              Enter the phone number to send the gift card via text message
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -929,48 +907,21 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
             )}
 
             <div className="space-y-4">
-              <Label>Delivery Method</Label>
-              <RadioGroup value={deliveryMethod} onValueChange={(value: "sms" | "email") => setDeliveryMethod(value)}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="sms" id="sms" />
-                  <Label htmlFor="sms" className="cursor-pointer">Text Message (SMS)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="email" id="email" />
-                  <Label htmlFor="email" className="cursor-pointer">Email</Label>
-                </div>
-              </RadioGroup>
-
-              {deliveryMethod === "sms" && (
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="(555) 555-5555"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                  {cellPhone && phone === cellPhone && (
-                    <p className="text-xs text-muted-foreground">
-                      ✓ Using the same number from opt-in
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {deliveryMethod === "email" && (
-                <div className="space-y-2">
-                  <Label htmlFor="email-input">Email Address</Label>
-                  <Input
-                    id="email-input"
-                    type="email"
-                    placeholder="customer@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number for SMS Delivery</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="(555) 555-5555"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+                {cellPhone && phone === cellPhone && (
+                  <p className="text-xs text-muted-foreground">
+                    ✓ Using the same number from opt-in
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-2">
@@ -979,7 +930,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               </Button>
               <Button
                 onClick={() => setStep("condition")}
-                disabled={deliveryMethod === "sms" ? !phone : !email}
+                disabled={!phone}
                 className="flex-1"
               >
                 Continue
@@ -1118,18 +1069,11 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                 <span className="font-medium">
                   {result.recipient.firstName} {result.recipient.lastName}
                 </span>
-                {deliveryMethod === "sms" && result.recipient.phone && (
+                {result.recipient.phone && (
                   <>
                     <Separator orientation="vertical" className="h-4" />
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">{result.recipient.phone}</span>
-                  </>
-                )}
-                {deliveryMethod === "email" && result.recipient.email && (
-                  <>
-                    <Separator orientation="vertical" className="h-4" />
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{result.recipient.email}</span>
                   </>
                 )}
               </div>
@@ -1197,7 +1141,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
 
               {/* Actions */}
               <div className="pt-4 space-y-2">
-                {result.recipient.phone && deliveryMethod === "sms" && (
+                {result.recipient.phone && (
                   <ResendSmsButton
                     giftCardId={result.giftCard.id}
                     recipientId={result.recipient.id}

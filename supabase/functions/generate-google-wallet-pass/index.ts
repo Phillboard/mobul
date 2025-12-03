@@ -71,7 +71,8 @@ serve(async (req) => {
         JSON.stringify({ 
           error: 'Google Wallet not configured',
           message: 'Please configure GOOGLE_WALLET_ISSUER_ID and GOOGLE_WALLET_SERVICE_ACCOUNT secrets',
-          requiredSecrets: ['GOOGLE_WALLET_ISSUER_ID', 'GOOGLE_WALLET_SERVICE_ACCOUNT']
+          requiredSecrets: ['GOOGLE_WALLET_ISSUER_ID', 'GOOGLE_WALLET_SERVICE_ACCOUNT'],
+          setupUrl: 'https://pay.google.com/business/console'
         }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -88,8 +89,14 @@ serve(async (req) => {
     }
 
     // Create unique IDs for class and object
-    const classId = `${issuerId}.giftcard_class`;
+    const classId = `${issuerId}.giftcard_class_v1`;
     const objectId = `${issuerId}.gc_${giftCard.id}_${Date.now()}`;
+
+    // Create the Generic Pass Class (will be created if doesn't exist)
+    const passClass = createGiftCardClass({
+      issuerId,
+      classId,
+    });
 
     // Create the gift card pass object
     const passObject = createGiftCardObject({
@@ -99,13 +106,24 @@ serve(async (req) => {
       objectId,
     });
 
-    // Create the JWT payload
+    // Get allowed origins from environment or use defaults
+    const allowedOrigins = Deno.env.get('WALLET_ALLOWED_ORIGINS')?.split(',') || [
+      'https://mobulace.com',
+      'https://www.mobulace.com',
+      'https://app.mobulace.com',
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ];
+
+    // Create the JWT payload - includes both class and object
+    // Google will create the class if it doesn't exist
     const jwtPayload = {
       iss: serviceAccount.client_email,
       aud: 'google',
-      origins: ['https://mobulace.com'], // Add your domains
+      origins: allowedOrigins,
       typ: 'savetowallet',
       payload: {
+        genericClasses: [passClass],
         genericObjects: [passObject],
       },
     };
@@ -116,13 +134,14 @@ serve(async (req) => {
     // Generate the save URL
     const saveUrl = `https://pay.google.com/gp/v/save/${signedJwt}`;
 
-    console.log('Google Wallet pass generated successfully');
+    console.log('Google Wallet pass generated successfully for object:', objectId);
 
     return new Response(
       JSON.stringify({ 
         success: true,
         url: saveUrl,
         objectId,
+        classId,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -130,12 +149,69 @@ serve(async (req) => {
   } catch (error) {
     console.error('Google Wallet error:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        hint: 'Check that GOOGLE_WALLET_ISSUER_ID and GOOGLE_WALLET_SERVICE_ACCOUNT secrets are properly configured'
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
+/**
+ * Creates the Generic Pass Class definition
+ * This defines the template/schema for all gift card passes
+ */
+function createGiftCardClass({
+  issuerId,
+  classId,
+}: {
+  issuerId: string;
+  classId: string;
+}) {
+  return {
+    id: classId,
+    // Class template settings
+    classTemplateInfo: {
+      cardTemplateOverride: {
+        cardRowTemplateInfos: [
+          {
+            twoItems: {
+              startItem: {
+                firstValue: {
+                  fields: [
+                    {
+                      fieldPath: "object.textModulesData['code']",
+                    },
+                  ],
+                },
+              },
+              endItem: {
+                firstValue: {
+                  fields: [
+                    {
+                      fieldPath: "object.textModulesData['balance']",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+    // Enable barcode display
+    enableSmartTap: false,
+    // Review status - set to UNDER_REVIEW for testing, APPROVED for production
+    reviewStatus: 'UNDER_REVIEW',
+    // Multiple devices can have this pass
+    multipleDevicesAndHoldersAllowedStatus: 'MULTIPLE_HOLDERS',
+  };
+}
+
+/**
+ * Creates the Generic Pass Object (the actual gift card instance)
+ */
 function createGiftCardObject({
   giftCard,
   issuerId,
@@ -186,8 +262,8 @@ function createGiftCardObject({
       alternateText: giftCard.card_code,
     },
     
-    // Hero image (optional - could use brand logo)
-    hexBackgroundColor: '#7c3aed', // Purple-600 to match app theme
+    // Background color - Purple to match app theme
+    hexBackgroundColor: '#7c3aed',
     
     // Text modules for additional info
     textModulesData: [
@@ -203,25 +279,13 @@ function createGiftCardObject({
       },
     ],
     
-    // Links
+    // Links module
     linksModuleData: {
       uris: [] as Array<{ uri: string; description: string; id: string }>,
     },
     
-    // Info module
-    infoModuleData: {
-      labelValueRows: [
-        {
-          columns: [
-            {
-              label: 'Card Code',
-              value: giftCard.card_code,
-            },
-          ],
-        },
-      ],
-      showLastUpdateTime: true,
-    },
+    // Image module (for brand logos)
+    imageModulesData: [] as Array<{ mainImage: { sourceUri: { uri: string }; contentDescription: { defaultValue: { language: string; value: string } } }; id: string }>,
   };
 
   // Add card number if present
@@ -244,7 +308,7 @@ function createGiftCardObject({
 
   // Add expiration if present
   if (giftCard.expiration_date) {
-    (genericObject as any).validTimeInterval = {
+    (genericObject as Record<string, unknown>).validTimeInterval = {
       end: {
         date: giftCard.expiration_date,
       },
@@ -252,13 +316,17 @@ function createGiftCardObject({
     (genericObject.textModulesData as Array<unknown>).push({
       id: 'expiry',
       header: 'EXPIRES',
-      body: new Date(giftCard.expiration_date).toLocaleDateString(),
+      body: new Date(giftCard.expiration_date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }),
     });
   }
 
   // Add balance check URL if present
   if (giftCard.balance_check_url) {
-    (genericObject.linksModuleData as any).uris.push({
+    (genericObject.linksModuleData as { uris: Array<unknown> }).uris.push({
       uri: giftCard.balance_check_url,
       description: 'Check Balance',
       id: 'checkBalance',
@@ -267,7 +335,7 @@ function createGiftCardObject({
 
   // Add logo if present
   if (giftCard.logo_url) {
-    (genericObject as any).logo = {
+    (genericObject as Record<string, unknown>).logo = {
       sourceUri: {
         uri: giftCard.logo_url,
       },
@@ -275,6 +343,19 @@ function createGiftCardObject({
         defaultValue: {
           language: 'en',
           value: `${brandName} logo`,
+        },
+      },
+    };
+    
+    // Also add as hero image
+    (genericObject as Record<string, unknown>).heroImage = {
+      sourceUri: {
+        uri: giftCard.logo_url,
+      },
+      contentDescription: {
+        defaultValue: {
+          language: 'en',
+          value: `${brandName}`,
         },
       },
     };

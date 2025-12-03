@@ -23,6 +23,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 // Admin email for alerts
@@ -42,7 +43,7 @@ interface AlertRequest {
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   try {
@@ -226,19 +227,26 @@ serve(async (req) => {
 </html>
     `;
 
-    // Send email via the send-email function
-    const { data: emailResult, error: emailError } = await supabaseAdmin.functions.invoke('send-email', {
-      body: {
-        to: ADMIN_EMAIL,
-        subject: subject,
-        html: emailHtml,
-        from: Deno.env.get("EMAIL_FROM") || 'alerts@mopads.com',
-      }
-    });
+    // Send email via the send-email function (non-blocking)
+    let emailSent = false;
+    try {
+      const { data: emailResult, error: emailError } = await supabaseAdmin.functions.invoke('send-email', {
+        body: {
+          to: ADMIN_EMAIL,
+          subject: subject,
+          html: emailHtml,
+          from: Deno.env.get("EMAIL_FROM") || 'alerts@mopads.com',
+        }
+      });
 
-    if (emailError) {
-      console.error("[SEND-ADMIN-ALERT] Email send error:", emailError);
-      throw new Error("Failed to send admin alert email");
+      if (emailError) {
+        console.warn("[SEND-ADMIN-ALERT] Email send warning:", emailError);
+      } else {
+        emailSent = true;
+        console.log("[SEND-ADMIN-ALERT] Email sent successfully");
+      }
+    } catch (emailErr) {
+      console.warn("[SEND-ADMIN-ALERT] Email send failed (non-critical):", emailErr);
     }
 
     // Log the alert to database
@@ -259,12 +267,13 @@ serve(async (req) => {
       console.warn("[SEND-ADMIN-ALERT] Failed to log alert (table may not exist):", logError);
     }
 
-    console.log(`[SEND-ADMIN-ALERT] Alert sent successfully to ${ADMIN_EMAIL}`);
+    console.log(`[SEND-ADMIN-ALERT] Alert processed for ${ADMIN_EMAIL} (email_sent: ${emailSent})`);
 
     return new Response(JSON.stringify({
       success: true,
-      message: "Admin alert sent",
+      message: emailSent ? "Admin alert sent" : "Admin alert logged (email service unavailable)",
       sent_to: ADMIN_EMAIL,
+      email_sent: emailSent,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
