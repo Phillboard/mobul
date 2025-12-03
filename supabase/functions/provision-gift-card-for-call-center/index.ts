@@ -7,31 +7,42 @@
  * 3. Call session tracking
  * 4. Delivery method handling (SMS/Email)
  * 5. Delegates actual provisioning to unified function
+ * 
+ * COMPREHENSIVE LOGGING:
+ * - Every step is logged to gift_card_provisioning_trace table
+ * - Errors are logged with structured error codes
+ * - Full request context is captured for debugging
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { createErrorLogger } from '../_shared/error-logger.ts';
+import { createErrorLogger, PROVISIONING_ERROR_CODES } from '../_shared/error-logger.ts';
+import type { ProvisioningErrorCode } from '../_shared/error-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 interface CallCenterProvisionRequest {
-  redemptionCode: string;
+  // Direct IDs - recipient already identified on frontend
+  recipientId: string;
+  campaignId: string;
+  brandId: string;
+  denomination: number;
+  conditionId?: string;
   deliveryPhone?: string | null;
   deliveryEmail?: string | null;
-  conditionNumber?: number;
-  conditionId?: string;
-  callSessionId?: string;
-  skipSmsDelivery?: boolean; // For simulation mode - skip actual SMS sending
+  skipSmsDelivery?: boolean;
+  requestId?: string; // Optional client-provided trace ID
 }
 
 interface ProvisionResult {
   success: boolean;
+  requestId: string; // Always return for tracing
   card?: {
+    id?: string;
     cardCode: string;
     cardNumber?: string;
     denomination: number;
@@ -57,10 +68,27 @@ interface ProvisionResult {
   deliveryInfo?: {
     method: 'sms' | 'email';
     destination: string;
+    status?: 'sent' | 'skipped' | 'failed';
   };
   error?: string;
   message?: string;
+  errorCode?: ProvisioningErrorCode;
+  errorDescription?: string;
+  canRetry?: boolean;
+  requiresCampaignEdit?: boolean;
 }
+
+// Step definitions for trace logging
+// Note: Recipient lookup removed - frontend passes recipientId directly
+const STEPS = {
+  VALIDATE_INPUT: { number: 1, name: 'Validate Input Parameters' },
+  FETCH_RECIPIENT: { number: 2, name: 'Fetch Recipient Details' },
+  VERIFY_RECIPIENT: { number: 3, name: 'Verify Recipient Status' },
+  CHECK_ALREADY_PROVISIONED: { number: 4, name: 'Check if Already Provisioned' },
+  CALL_UNIFIED_PROVISION: { number: 5, name: 'Claim Gift Card from Inventory/Tillo' },
+  SEND_DELIVERY: { number: 6, name: 'Send Gift Card to Recipient' },
+  FINALIZE: { number: 7, name: 'Finalize and Return Result' },
+};
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -74,49 +102,91 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
-  // Initialize error logger
-  const errorLogger = createErrorLogger('provision-gift-card-for-call-center');
+  // Initialize error logger with comprehensive tracing
+  const logger = createErrorLogger('provision-gift-card-for-call-center');
 
   // Declare variables at function scope for error logging access
-  let redemptionCode: string | undefined;
   let recipientId: string | undefined;
   let campaignId: string | undefined;
+  let brandId: string | undefined;
+  let denomination: number | undefined;
+  let currentStep = STEPS.VALIDATE_INPUT;
 
   try {
+    // =====================================================
+    // STEP 1: VALIDATE INPUT PARAMETERS
+    // All IDs are passed directly from frontend - no redundant lookups
+    // =====================================================
+    await logger.checkpoint(STEPS.VALIDATE_INPUT.number, STEPS.VALIDATE_INPUT.name, 'started');
+    
     const requestData: CallCenterProvisionRequest = await req.json();
-    redemptionCode = requestData.redemptionCode;
+    recipientId = requestData.recipientId;
+    campaignId = requestData.campaignId;
+    brandId = requestData.brandId;
+    denomination = requestData.denomination;
+    const conditionId = requestData.conditionId;
     const deliveryPhone = requestData.deliveryPhone;
     const deliveryEmail = requestData.deliveryEmail;
-    const conditionNumber = requestData.conditionNumber;
-    const conditionId = requestData.conditionId;
-    const callSessionId = requestData.callSessionId;
     const skipSmsDelivery = requestData.skipSmsDelivery || false;
 
-    console.log('='.repeat(60));
-    console.log(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] === REQUEST START ===`);
-    console.log('[CALL-CENTER-PROVISION] Request body:', JSON.stringify({
-      redemptionCode,
-      deliveryPhone: deliveryPhone ? '***' + deliveryPhone.slice(-4) : null,
-      deliveryEmail: deliveryEmail ? '***@***' : null,
-      conditionNumber,
-      conditionId,
-      callSessionId,
-      skipSmsDelivery,
-    }, null, 2));
+    console.log('╔' + '═'.repeat(70) + '╗');
+    console.log(`║ [CALL-CENTER-PROVISION] Request ID: ${logger.requestId}`);
+    console.log('╠' + '═'.repeat(70) + '╣');
+    console.log('║ INPUT PARAMETERS (Direct IDs - no lookup needed):');
+    console.log(`║   recipientId: ${recipientId || 'MISSING'}`);
+    console.log(`║   campaignId: ${campaignId || 'MISSING'}`);
+    console.log(`║   brandId: ${brandId || 'MISSING'}`);
+    console.log(`║   denomination: $${denomination || 'MISSING'}`);
+    console.log(`║   conditionId: ${conditionId || 'N/A'}`);
+    console.log(`║   deliveryPhone: ${deliveryPhone ? '***' + deliveryPhone.slice(-4) : 'none'}`);
+    console.log(`║   deliveryEmail: ${deliveryEmail ? '***@***' : 'none'}`);
+    console.log(`║   skipSmsDelivery: ${skipSmsDelivery}`);
+    console.log('╚' + '═'.repeat(70) + '╝');
 
-    // Validate inputs
-    if (!redemptionCode) {
-      throw new Error('Redemption code is required');
+    // Validate required inputs
+    const validationErrors: string[] = [];
+    if (!recipientId) validationErrors.push('recipientId is required');
+    if (!campaignId) validationErrors.push('campaignId is required');
+    if (!brandId) validationErrors.push('brandId is required (configure gift card in campaign)');
+    if (!denomination) validationErrors.push('denomination is required (configure gift card value in campaign)');
+    if (!deliveryPhone && !deliveryEmail) validationErrors.push('Either phone or email delivery method is required');
+
+    if (validationErrors.length > 0) {
+      await logger.checkpoint(STEPS.VALIDATE_INPUT.number, STEPS.VALIDATE_INPUT.name, 'failed', {
+        errors: validationErrors,
+      });
+      await logger.logProvisioningError('GC-012', new Error(validationErrors.join(', ')), STEPS.VALIDATE_INPUT);
+      throw new Error(validationErrors.join('. '));
     }
 
-    if (!deliveryPhone && !deliveryEmail) {
-      throw new Error('Either phone or email delivery method is required');
-    }
+    // Set logger context immediately since we have all IDs
+    logger.setProvisioningContext({
+      campaignId,
+      recipientId,
+      brandId,
+      denomination,
+    });
+
+    await logger.checkpoint(STEPS.VALIDATE_INPUT.number, STEPS.VALIDATE_INPUT.name, 'completed', {
+      recipientId,
+      campaignId,
+      brandId,
+      denomination,
+      hasPhone: !!deliveryPhone,
+      hasEmail: !!deliveryEmail,
+    });
 
     // =====================================================
-    // STEP 1: Look up recipient by redemption code
+    // STEP 2: FETCH RECIPIENT DETAILS (by ID - no lookup needed)
+    // Frontend already identified the recipient, just fetch details
     // =====================================================
+    currentStep = STEPS.FETCH_RECIPIENT;
+    await logger.checkpoint(STEPS.FETCH_RECIPIENT.number, STEPS.FETCH_RECIPIENT.name, 'started', {
+      recipientId,
+    });
     
+    console.log(`[STEP ${STEPS.FETCH_RECIPIENT.number}] Fetching recipient details by ID: ${recipientId}`);
+
     const { data: recipient, error: recipientError } = await supabaseClient
       .from('recipients')
       .select(`
@@ -125,338 +195,252 @@ serve(async (req) => {
         last_name,
         email,
         phone,
-        redemption_code,
         sms_opt_in_status,
         sms_opt_in_date,
         verification_method,
-        disposition,
-        audiences!inner(
-          campaign_id,
-          campaigns!inner(
-            id,
-            campaign_name,
-            client_id
-          )
-        )
+        disposition
       `)
-      .eq('redemption_code', redemptionCode)
+      .eq('id', recipientId)
       .single();
 
-    if (recipientError || !recipient) {
-      console.error('[CALL-CENTER-PROVISION] Recipient lookup failed:', {
-        error: recipientError,
-        code: redemptionCode,
-      });
-      throw new Error('Invalid redemption code');
-    }
-
-    // Store recipient and campaign IDs for error logging
-    recipientId = recipient.id;
-    campaignId = recipient.audiences[0]?.campaign_id;
-
-    console.log('[CALL-CENTER-PROVISION] STEP 1 - Recipient found:', {
-      id: recipient.id,
-      name: `${recipient.first_name} ${recipient.last_name}`,
-      sms_opt_in_status: recipient.sms_opt_in_status,
-      verification_method: recipient.verification_method,
-      disposition: recipient.disposition,
-      campaign_id: campaignId,
+    console.log(`[STEP ${STEPS.FETCH_RECIPIENT.number}] Recipient fetch result:`, {
+      found: !!recipient,
+      name: recipient ? `${recipient.first_name} ${recipient.last_name}` : null,
+      error: recipientError?.message || null,
     });
 
+    if (recipientError || !recipient) {
+      await logger.checkpoint(STEPS.FETCH_RECIPIENT.number, STEPS.FETCH_RECIPIENT.name, 'failed', {
+        error: recipientError?.message || 'Recipient not found',
+        code: recipientError?.code,
+      });
+      await logger.logProvisioningError('GC-011', recipientError || new Error('Recipient not found'), STEPS.FETCH_RECIPIENT);
+      throw new Error('Recipient not found. Please try looking up the customer again.');
+    }
+
+    await logger.checkpoint(STEPS.FETCH_RECIPIENT.number, STEPS.FETCH_RECIPIENT.name, 'completed', {
+      recipientId,
+      recipientName: `${recipient.first_name} ${recipient.last_name}`,
+      smsOptInStatus: recipient.sms_opt_in_status,
+      verificationMethod: recipient.verification_method,
+      disposition: recipient.disposition,
+    });
+
+    console.log(`[STEP ${STEPS.FETCH_RECIPIENT.number}] ✓ Recipient: ${recipient.first_name} ${recipient.last_name}`);
+
     // =====================================================
-    // STEP 2: Validate verification status for SMS delivery
-    // Accepts: SMS opt-in, skipped with positive disposition, or email verification
+    // STEP 3: VERIFY RECIPIENT STATUS (for SMS delivery)
     // =====================================================
+    currentStep = STEPS.VERIFY_RECIPIENT;
+    await logger.checkpoint(STEPS.VERIFY_RECIPIENT.number, STEPS.VERIFY_RECIPIENT.name, 'started', {
+      smsOptInStatus: recipient.sms_opt_in_status,
+      verificationMethod: recipient.verification_method,
+      disposition: recipient.disposition,
+    });
     
+    console.log(`[STEP ${STEPS.VERIFY_RECIPIENT.number}] Verifying recipient status...`);
+
     if (deliveryPhone) {
-      // Check all valid verification methods
       const isOptedIn = recipient.sms_opt_in_status === 'opted_in';
       const positiveDispositions = ['verified_verbally', 'already_opted_in', 'vip_customer'];
       const hasSkippedVerification = recipient.verification_method === 'skipped' && 
         positiveDispositions.includes(recipient.disposition || '');
       const hasEmailVerification = recipient.verification_method === 'email';
       
-      if (!isOptedIn && !hasSkippedVerification && !hasEmailVerification) {
-        console.log('[CALL-CENTER-PROVISION] Verification check failed:', {
-          sms_opt_in_status: recipient.sms_opt_in_status,
-          verification_method: recipient.verification_method,
-          disposition: recipient.disposition,
-        });
-        throw new Error('Recipient verification required. Use SMS opt-in, email verification, or skip with valid disposition.');
-      }
-      
-      // Log which verification method was used
-      if (isOptedIn) {
-        console.log('[CALL-CENTER-PROVISION] Verified via SMS opt-in');
-      } else if (hasSkippedVerification) {
-        console.log('[CALL-CENTER-PROVISION] Verified via skipped verification with disposition:', recipient.disposition);
-      } else if (hasEmailVerification) {
-        console.log('[CALL-CENTER-PROVISION] Verified via email verification');
-      }
-    }
-
-    // =====================================================
-    // STEP 3: Get campaign and condition details
-    // =====================================================
-    
-    // campaignId was already assigned in STEP 1 (line 155)
-    if (!campaignId) {
-      throw new Error('Recipient is not associated with a campaign');
-    }
-
-    // Get gift card configuration for this condition
-    let giftCardConfig: any = null;
-    if (conditionId) {
-      const { data: config, error: configError } = await supabaseClient
-        .from('campaign_gift_card_config')
-        .select('*')
-        .eq('campaign_id', campaignId)
-        .eq('condition_number', conditionNumber || 1)
-        .single();
-
-      if (configError) {
-        console.warn('[CALL-CENTER-PROVISION] No gift card config found:', configError);
-      } else {
-        giftCardConfig = config;
-      }
-    }
-
-    // If no config found, try to get from campaign_conditions (new schema)
-    // Use specific conditionId if provided, otherwise fall back to first active condition
-    if (!giftCardConfig) {
-      console.log('[CALL-CENTER-PROVISION] STEP 3b - No legacy config, checking campaign_conditions table');
-      let conditionData: any = null;
-      let conditionError: any = null;
-
-      if (conditionId) {
-        // Query specific condition by ID (include sms_template for delivery message)
-        console.log('[CALL-CENTER-PROVISION] Querying condition by ID:', conditionId);
-        const result = await supabaseClient
-          .from('campaign_conditions')
-          .select('id, brand_id, card_value, condition_number, sms_template, condition_name, is_active')
-          .eq('id', conditionId)
-          .single();
-        conditionData = result.data;
-        conditionError = result.error;
-        console.log('[CALL-CENTER-PROVISION] Condition query result:', {
-          found: !!result.data,
-          data: result.data,
-          error: result.error,
-        });
-      } else {
-        // Fallback to first active condition for this campaign (include sms_template)
-        console.log('[CALL-CENTER-PROVISION] Querying first active condition for campaign:', campaignId);
-        const result = await supabaseClient
-          .from('campaign_conditions')
-          .select('id, brand_id, card_value, condition_number, sms_template, condition_name, is_active')
-          .eq('campaign_id', campaignId)
-          .eq('is_active', true)
-          .order('condition_number')
-          .limit(1)
-          .single();
-        conditionData = result.data;
-        conditionError = result.error;
-        console.log('[CALL-CENTER-PROVISION] Condition query result:', {
-          found: !!result.data,
-          data: result.data,
-          error: result.error,
-        });
-      }
-
-      // Log detailed diagnostic info - COMPREHENSIVE LOGGING
-      console.log('[CALL-CENTER-PROVISION] === CONDITION ANALYSIS START ===');
-      console.log('[CALL-CENTER-PROVISION] Campaign ID:', campaignId);
-      console.log('[CALL-CENTER-PROVISION] Condition ID requested:', conditionId || 'not specified (using first active)');
-      console.log('[CALL-CENTER-PROVISION] Full condition data:', JSON.stringify(conditionData, null, 2));
-      console.log('[CALL-CENTER-PROVISION] Condition analysis:', {
-        hasConditionData: !!conditionData,
-        brand_id: conditionData?.brand_id || 'NULL/MISSING',
-        card_value: conditionData?.card_value || 'NULL/MISSING',
-        condition_name: conditionData?.condition_name,
-        has_brand_id: !!conditionData?.brand_id,
-        has_card_value: !!conditionData?.card_value,
-        is_active: conditionData?.is_active,
-        raw_brand_id_type: typeof conditionData?.brand_id,
-        raw_card_value_type: typeof conditionData?.card_value,
-      });
-      console.log('[CALL-CENTER-PROVISION] === CONDITION ANALYSIS END ===');
-
-      if (conditionError || !conditionData?.brand_id) {
-        console.error('[CALL-CENTER-PROVISION] === GIFT CARD CONFIG ERROR ===');
-        console.error('[CALL-CENTER-PROVISION] Campaign ID:', campaignId);
-        console.error('[CALL-CENTER-PROVISION] Condition ID requested:', conditionId || 'not specified (using first active)');
-        console.error('[CALL-CENTER-PROVISION] Query error:', conditionError);
-        console.error('[CALL-CENTER-PROVISION] Condition data found:', JSON.stringify(conditionData, null, 2));
-        console.error('[CALL-CENTER-PROVISION] Likely cause: brand_id and card_value were not saved during campaign creation');
-        
-        // ENHANCED: Try to find ALL conditions for this campaign for diagnostic purposes
-        console.log('[CALL-CENTER-PROVISION] === DIAGNOSTIC: Fetching ALL conditions for campaign ===');
-        const { data: allConditions, error: allCondError } = await supabaseClient
-          .from('campaign_conditions')
-          .select('id, brand_id, card_value, condition_number, condition_name, is_active')
-          .eq('campaign_id', campaignId);
-        
-        console.log('[CALL-CENTER-PROVISION] All conditions for campaign:', JSON.stringify(allConditions, null, 2));
-        console.log('[CALL-CENTER-PROVISION] All conditions error:', allCondError);
-        
-        // Check if any condition has brand_id set
-        const conditionWithBrand = allConditions?.find(c => c.brand_id && c.card_value);
-        if (conditionWithBrand) {
-          console.log('[CALL-CENTER-PROVISION] Found condition with valid config:', conditionWithBrand);
-          conditionData = conditionWithBrand;
-        } else {
-          // Try the RPC function as a fallback
-          if (conditionId) {
-            console.log('[CALL-CENTER-PROVISION] Trying RPC fallback for condition:', conditionId);
-            const { data: rpcResult, error: rpcError } = await supabaseClient
-              .rpc('get_condition_gift_card_config', { p_condition_id: conditionId });
-            
-            if (!rpcError && rpcResult && rpcResult.length > 0 && rpcResult[0].brand_id) {
-              console.log('[CALL-CENTER-PROVISION] RPC fallback succeeded:', rpcResult[0]);
-              conditionData = {
-                id: rpcResult[0].condition_id,
-                brand_id: rpcResult[0].brand_id,
-                card_value: rpcResult[0].card_value,
-                condition_number: rpcResult[0].condition_number,
-                sms_template: rpcResult[0].sms_template,
-                condition_name: rpcResult[0].condition_name,
-              };
-            } else {
-              console.error('[CALL-CENTER-PROVISION] RPC fallback also failed:', rpcError);
-              
-              // Provide detailed error about what we found
-              const conditionCount = allConditions?.length || 0;
-              const activeCount = allConditions?.filter(c => c.is_active)?.length || 0;
-              const withBrandCount = allConditions?.filter(c => c.brand_id)?.length || 0;
-              
-              throw new Error(`No gift card configured for campaign ${campaignId}, condition ${conditionId || 'first active'}. ` +
-                `Found ${conditionCount} total conditions, ${activeCount} active, ${withBrandCount} with brand_id. ` +
-                `Please edit the campaign and configure a gift card brand and value for each condition.`);
-            }
-          } else {
-            // Provide detailed error about what we found
-            const conditionCount = allConditions?.length || 0;
-            const activeCount = allConditions?.filter(c => c.is_active)?.length || 0;
-            const withBrandCount = allConditions?.filter(c => c.brand_id)?.length || 0;
-            
-            throw new Error(`No gift card configured for campaign ${campaignId}. ` +
-              `Found ${conditionCount} total conditions, ${activeCount} active, ${withBrandCount} with brand_id. ` +
-              `Please edit the campaign and configure a gift card brand and value for each condition.`);
-          }
-        }
-      }
-
-      giftCardConfig = {
-        brand_id: conditionData.brand_id,
-        denomination: conditionData.card_value || 25,
-        sms_template: conditionData.sms_template || null,
+      const verificationDetails = {
+        isOptedIn,
+        hasSkippedVerification,
+        hasEmailVerification,
+        verificationMethod: recipient.verification_method,
+        disposition: recipient.disposition,
+        smsOptInStatus: recipient.sms_opt_in_status,
       };
+
+      console.log(`[STEP ${STEPS.VERIFY_RECIPIENT.number}] Verification check:`, verificationDetails);
+
+      if (!isOptedIn && !hasSkippedVerification && !hasEmailVerification) {
+        await logger.checkpoint(STEPS.VERIFY_RECIPIENT.number, STEPS.VERIFY_RECIPIENT.name, 'failed', {
+          ...verificationDetails,
+          error: 'No valid verification method found',
+        });
+        await logger.logProvisioningError('GC-009', new Error('Recipient verification required'), STEPS.VERIFY_RECIPIENT, verificationDetails);
+        throw new Error('Recipient verification required. Customer must opt-in via SMS, verify via email, or be marked with a valid disposition.');
+      }
+
+      // Log which verification method was used
+      let verificationUsed = 'unknown';
+      if (isOptedIn) verificationUsed = 'sms_opt_in';
+      else if (hasSkippedVerification) verificationUsed = 'skipped_with_disposition';
+      else if (hasEmailVerification) verificationUsed = 'email';
+
+      await logger.checkpoint(STEPS.VERIFY_RECIPIENT.number, STEPS.VERIFY_RECIPIENT.name, 'completed', {
+        verificationUsed,
+        ...verificationDetails,
+      });
       
-      console.log('[CALL-CENTER-PROVISION] STEP 3 COMPLETE - Gift card config:', giftCardConfig);
+      console.log(`[STEP ${STEPS.VERIFY_RECIPIENT.number}] ✓ Verified via: ${verificationUsed}`);
+    } else {
+      // Email delivery - skip SMS verification
+      await logger.checkpoint(STEPS.VERIFY_RECIPIENT.number, STEPS.VERIFY_RECIPIENT.name, 'skipped', {
+        reason: 'Email delivery - SMS verification not required',
+      });
+      console.log(`[STEP ${STEPS.VERIFY_RECIPIENT.number}] ✓ Skipped (email delivery)`);
     }
 
-    console.log('[CALL-CENTER-PROVISION] Final gift card config:', {
-      brand_id: giftCardConfig.brand_id,
-      denomination: giftCardConfig.denomination,
-      has_sms_template: !!giftCardConfig.sms_template,
-    });
+    // brandId and denomination are passed directly from frontend - no lookup needed!
+    console.log(`[READY] Gift card config: brand=${brandId}, value=$${denomination}`);
 
     // =====================================================
-    // STEP 4: Check if already provisioned for this condition
+    // STEP 4: CHECK IF ALREADY PROVISIONED
     // =====================================================
+    currentStep = STEPS.CHECK_ALREADY_PROVISIONED;
+    await logger.checkpoint(STEPS.CHECK_ALREADY_PROVISIONED.number, STEPS.CHECK_ALREADY_PROVISIONED.name, 'started');
     
+    console.log(`[STEP ${STEPS.CHECK_ALREADY_PROVISIONED.number}] Checking for existing provisioning...`);
+
     const { data: existingLedger, error: ledgerCheckError } = await supabaseClient
       .from('gift_card_billing_ledger')
-      .select('id')
+      .select('id, created_at')
       .eq('recipient_id', recipient.id)
       .eq('campaign_id', campaignId)
-      .eq('brand_id', giftCardConfig.brand_id)
+      .eq('brand_id', brandId)
       .limit(1);
 
     if (existingLedger && existingLedger.length > 0) {
-      console.warn('[CALL-CENTER-PROVISION] Gift card already provisioned');
+      const existingEntry = existingLedger[0];
+      await logger.checkpoint(STEPS.CHECK_ALREADY_PROVISIONED.number, STEPS.CHECK_ALREADY_PROVISIONED.name, 'failed', {
+        error: 'Already provisioned',
+        existingLedgerId: existingEntry.id,
+        provisionedAt: existingEntry.created_at,
+      });
+      await logger.logProvisioningError('GC-010', new Error('Gift card already provisioned'), STEPS.CHECK_ALREADY_PROVISIONED, {
+        existingLedgerId: existingEntry.id,
+      });
       throw new Error('Gift card has already been provisioned for this recipient and condition');
     }
 
-    // =====================================================
-    // STEP 5: Call unified provisioning function
-    // =====================================================
+    await logger.checkpoint(STEPS.CHECK_ALREADY_PROVISIONED.number, STEPS.CHECK_ALREADY_PROVISIONED.name, 'completed', {
+      alreadyProvisioned: false,
+    });
     
+    console.log(`[STEP ${STEPS.CHECK_ALREADY_PROVISIONED.number}] ✓ No existing provisioning found`);
+
+    // =====================================================
+    // STEP 5: CALL UNIFIED PROVISIONING (Claim from Inventory/Tillo)
+    // =====================================================
+    currentStep = STEPS.CALL_UNIFIED_PROVISION;
+    await logger.checkpoint(STEPS.CALL_UNIFIED_PROVISION.number, STEPS.CALL_UNIFIED_PROVISION.name, 'started', {
+      campaignId,
+      recipientId,
+      brandId,
+      denomination,
+    });
+    
+    console.log(`[STEP ${STEPS.CALL_UNIFIED_PROVISION.number}] Claiming gift card from inventory/Tillo...`);
+
     const provisionRequest = {
       campaignId: campaignId,
       recipientId: recipient.id,
-      brandId: giftCardConfig.brand_id,
-      denomination: giftCardConfig.denomination,
-      conditionNumber: conditionNumber || 1,
+      brandId: brandId,
+      denomination: denomination,
+      conditionId: conditionId, // Pass condition ID for tracking
+      requestId: logger.requestId, // Pass trace ID for correlation
     };
 
-    console.log('[CALL-CENTER-PROVISION] STEP 5 - Calling unified provisioning');
-    console.log('[CALL-CENTER-PROVISION] Provision request:', JSON.stringify(provisionRequest, null, 2));
+    console.log(`[STEP ${STEPS.CALL_UNIFIED_PROVISION.number}] Request:`, JSON.stringify(provisionRequest, null, 2));
 
-    // Use Supabase Functions invoke internally (server-to-server)
     const unifiedUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/provision-gift-card-unified`;
-    console.log('[CALL-CENTER-PROVISION] Calling:', unifiedUrl);
+    const provisionStartTime = Date.now();
     
     const provisionResponse = await fetch(unifiedUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        'x-request-id': logger.requestId,
       },
       body: JSON.stringify(provisionRequest),
     });
 
-    console.log('[CALL-CENTER-PROVISION] Unified response status:', provisionResponse.status);
+    const provisionDuration = Date.now() - provisionStartTime;
+    console.log(`[STEP ${STEPS.CALL_UNIFIED_PROVISION.number}] Response received in ${provisionDuration}ms, status: ${provisionResponse.status}`);
 
     if (!provisionResponse.ok) {
       const errorText = await provisionResponse.text();
-      console.error('[CALL-CENTER-PROVISION] === UNIFIED FUNCTION FAILED ===');
-      console.error('[CALL-CENTER-PROVISION] Status:', provisionResponse.status);
-      console.error('[CALL-CENTER-PROVISION] Response:', errorText);
-      throw new Error(`Provisioning failed: ${errorText}`);
+      let errorData: any = {};
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText };
+      }
+
+      await logger.checkpoint(STEPS.CALL_UNIFIED_PROVISION.number, STEPS.CALL_UNIFIED_PROVISION.name, 'failed', {
+        httpStatus: provisionResponse.status,
+        error: errorData.error || errorText,
+        errorCode: errorData.errorCode,
+        durationMs: provisionDuration,
+      });
+
+      // Use the error code from unified function if available
+      if (errorData.errorCode) {
+        await logger.logProvisioningError(errorData.errorCode, new Error(errorData.error || errorText), STEPS.CALL_UNIFIED_PROVISION);
+      } else {
+        await logger.logProvisioningError('GC-015', new Error(errorData.error || errorText), STEPS.CALL_UNIFIED_PROVISION);
+      }
+
+      throw new Error(errorData.error || `Unified provisioning failed: ${errorText}`);
     }
 
     const provisionResult = await provisionResponse.json();
-    console.log('[CALL-CENTER-PROVISION] Unified response:', JSON.stringify(provisionResult, null, 2));
+    console.log(`[STEP ${STEPS.CALL_UNIFIED_PROVISION.number}] Result:`, JSON.stringify({
+      success: provisionResult.success,
+      hasCard: !!provisionResult.card,
+      source: provisionResult.card?.source,
+      hasBilling: !!provisionResult.billing,
+    }));
 
     if (!provisionResult.success) {
-      console.error('[CALL-CENTER-PROVISION] Unified function returned error:', provisionResult.error);
+      await logger.checkpoint(STEPS.CALL_UNIFIED_PROVISION.number, STEPS.CALL_UNIFIED_PROVISION.name, 'failed', {
+        error: provisionResult.error,
+        errorCode: provisionResult.errorCode,
+        durationMs: provisionDuration,
+      });
       throw new Error(provisionResult.error || 'Provisioning failed');
     }
 
-    console.log('[CALL-CENTER-PROVISION] STEP 5 COMPLETE - Provisioning successful');
+    await logger.checkpoint(STEPS.CALL_UNIFIED_PROVISION.number, STEPS.CALL_UNIFIED_PROVISION.name, 'completed', {
+      source: provisionResult.card?.source,
+      brandName: provisionResult.card?.brandName,
+      denomination: provisionResult.card?.denomination,
+      billedEntity: provisionResult.billing?.billedEntity,
+      durationMs: provisionDuration,
+    });
+
+    console.log(`[STEP ${STEPS.CALL_UNIFIED_PROVISION.number}] ✓ Card provisioned from ${provisionResult.card?.source}`);
 
     // =====================================================
-    // STEP 6: Send delivery notification (SMS or Email)
+    // STEP 6: SEND GIFT CARD TO RECIPIENT
     // =====================================================
-    
+    currentStep = STEPS.SEND_DELIVERY;
     const deliveryMethod = deliveryPhone ? 'sms' : 'email';
     const deliveryDestination = deliveryPhone || deliveryEmail;
+    let deliveryStatus: 'sent' | 'skipped' | 'failed' = 'skipped';
+
+    await logger.checkpoint(STEPS.SEND_DELIVERY.number, STEPS.SEND_DELIVERY.name, 'started', {
+      method: deliveryMethod,
+      destination: deliveryMethod === 'sms' ? '***' + deliveryDestination!.slice(-4) : '***@***',
+      skipSmsDelivery,
+    });
+
+    console.log(`[STEP ${STEPS.SEND_DELIVERY.number}] Sending ${deliveryMethod} notification...`);
 
     try {
       if (deliveryMethod === 'sms' && deliveryPhone) {
-        // Check if we should skip SMS delivery (simulation mode)
         if (skipSmsDelivery) {
-          console.log('[CALL-CENTER-PROVISION] SIMULATION MODE - Skipping SMS delivery');
-          console.log('[CALL-CENTER-PROVISION] Would have sent SMS to:', deliveryPhone);
-          console.log('[CALL-CENTER-PROVISION] Gift card code:', provisionResult.card.cardCode);
+          console.log(`[STEP ${STEPS.SEND_DELIVERY.number}] Simulation mode - skipping SMS`);
+          deliveryStatus = 'skipped';
         } else {
-          // Prepare SMS message from template
-          let customMessage = giftCardConfig?.sms_template;
-          
-          // Replace template variables if we have a template
-          if (customMessage) {
-            customMessage = customMessage
-              .replace(/\{first_name\}/gi, recipient.first_name || '')
-              .replace(/\{last_name\}/gi, recipient.last_name || '')
-              .replace(/\{value\}/g, provisionResult.card.denomination.toString())
-              .replace(/\$\{value\}/g, provisionResult.card.denomination.toString())
-              .replace(/\{provider\}/gi, provisionResult.card.brandName || 'Gift Card')
-              .replace(/\{company\}/gi, provisionResult.card.brandName || 'us')
-              .replace(/\{link\}/gi, provisionResult.card.cardCode); // Simplified - replace with actual redemption link if available
-          }
-          
-          // Send SMS with correct parameters
+          // Send SMS with gift card details
           const smsResponse = await fetch(
             `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-gift-card-sms`,
             {
@@ -466,27 +450,22 @@ serve(async (req) => {
                 'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
               },
               body: JSON.stringify({
-                deliveryId: `call_center_${Date.now()}`, // Temporary ID for logging
+                deliveryId: `call_center_${Date.now()}`,
                 giftCardCode: provisionResult.card.cardCode,
                 giftCardValue: provisionResult.card.denomination,
                 recipientPhone: deliveryPhone,
                 recipientName: `${recipient.first_name} ${recipient.last_name}`,
-                customMessage: customMessage || undefined,
                 recipientId: recipient.id,
                 giftCardId: provisionResult.card.id || null,
+                brandName: provisionResult.card.brandName,
               }),
             }
           );
 
-          if (!smsResponse.ok) {
-            const errorText = await smsResponse.text();
-            console.error('[CALL-CENTER-PROVISION] SMS delivery failed:', errorText);
-          } else {
-            console.log('[CALL-CENTER-PROVISION] SMS sent successfully');
-          }
+          deliveryStatus = smsResponse.ok ? 'sent' : 'failed';
+          console.log(`[STEP ${STEPS.SEND_DELIVERY.number}] SMS result: ${deliveryStatus}`);
         }
       } else if (deliveryMethod === 'email' && deliveryEmail) {
-        // Send Email
         const emailResponse = await fetch(
           `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-gift-card-email`,
           {
@@ -506,38 +485,42 @@ serve(async (req) => {
           }
         );
 
-        if (!emailResponse.ok) {
-          console.error('[CALL-CENTER-PROVISION] Email delivery failed');
-        } else {
-          console.log('[CALL-CENTER-PROVISION] Email sent successfully');
-        }
+        deliveryStatus = emailResponse.ok ? 'sent' : 'failed';
+        console.log(`[STEP ${STEPS.SEND_DELIVERY.number}] Email result: ${deliveryStatus}`);
+      }
+
+      await logger.checkpoint(STEPS.SEND_DELIVERY.number, STEPS.SEND_DELIVERY.name, 
+        deliveryStatus === 'failed' ? 'failed' : 'completed', {
+        method: deliveryMethod,
+        status: deliveryStatus,
+      });
+
+      if (deliveryStatus === 'sent') {
+        console.log(`[STEP ${STEPS.SEND_DELIVERY.number}] ✓ ${deliveryMethod.toUpperCase()} sent successfully`);
+      } else if (deliveryStatus === 'skipped') {
+        console.log(`[STEP ${STEPS.SEND_DELIVERY.number}] ⚠ Delivery skipped (simulation mode)`);
+      } else {
+        console.log(`[STEP ${STEPS.SEND_DELIVERY.number}] ⚠ Delivery failed - card still provisioned`);
       }
     } catch (deliveryError) {
-      console.error('[CALL-CENTER-PROVISION] Delivery notification error:', deliveryError);
-      // Don't fail the entire request if delivery fails - card is already provisioned
+      console.error(`[STEP ${STEPS.SEND_DELIVERY.number}] Delivery error:`, deliveryError);
+      deliveryStatus = 'failed';
+      await logger.checkpoint(STEPS.SEND_DELIVERY.number, STEPS.SEND_DELIVERY.name, 'failed', {
+        error: deliveryError instanceof Error ? deliveryError.message : String(deliveryError),
+      });
+      await logger.logProvisioningError('GC-014', deliveryError, STEPS.SEND_DELIVERY);
+      // Don't throw - card is already provisioned
     }
 
     // =====================================================
-    // STEP 7: Update call session if provided
+    // STEP 7: FINALIZE AND RETURN RESULT
     // =====================================================
-    
-    if (callSessionId) {
-      await supabaseClient
-        .from('call_sessions')
-        .update({
-          gift_card_provisioned: true,
-          gift_card_provisioned_at: new Date().toISOString(),
-          notes: `Gift card provisioned: ${provisionResult.card.brandName} $${provisionResult.card.denomination}`,
-        })
-        .eq('id', callSessionId);
-    }
+    currentStep = STEPS.FINALIZE;
+    await logger.checkpoint(STEPS.FINALIZE.number, STEPS.FINALIZE.name, 'started');
 
-    // =====================================================
-    // STEP 8: Return comprehensive result
-    // =====================================================
-    
     const result: ProvisionResult = {
       success: true,
+      requestId: logger.requestId,
       card: provisionResult.card,
       billing: provisionResult.billing,
       recipient: {
@@ -550,59 +533,120 @@ serve(async (req) => {
       deliveryInfo: {
         method: deliveryMethod,
         destination: deliveryDestination!,
+        status: deliveryStatus,
       },
     };
 
-    console.log('[CALL-CENTER-PROVISION] Complete success');
+    await logger.checkpoint(STEPS.FINALIZE.number, STEPS.FINALIZE.name, 'completed', {
+      success: true,
+      source: result.card?.source,
+      deliveryStatus,
+    });
+
+    console.log('╔' + '═'.repeat(70) + '╗');
+    console.log(`║ [CALL-CENTER-PROVISION] ✓ SUCCESS - Request ID: ${logger.requestId}`);
+    console.log('╠' + '═'.repeat(70) + '╣');
+    console.log(`║   Recipient: ${result.recipient?.firstName} ${result.recipient?.lastName}`);
+    console.log(`║   Brand: ${result.card?.brandName}`);
+    console.log(`║   Value: $${result.card?.denomination}`);
+    console.log(`║   Source: ${result.card?.source}`);
+    console.log(`║   Delivery: ${result.deliveryInfo?.method} (${result.deliveryInfo?.status})`);
+    console.log('╚' + '═'.repeat(70) + '╝');
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
+
   } catch (error) {
-    console.error('='.repeat(60));
-    console.error(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] === ERROR ===`);
-    console.error('[CALL-CENTER-PROVISION] Error type:', error?.constructor?.name);
-    console.error('[CALL-CENTER-PROVISION] Error message:', error?.message);
-    console.error('[CALL-CENTER-PROVISION] Error stack:', error?.stack);
-    console.error('[CALL-CENTER-PROVISION] Context:', {
-      redemptionCode,
-      recipientId,
-      campaignId,
-    });
-    console.error('='.repeat(60));
+    // Comprehensive error logging
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    // Determine error code based on message
+    let errorCode: ProvisioningErrorCode = 'GC-015';
+    let canRetry = false;
+    let requiresCampaignEdit = false;
 
-    // Log error to database
-    await errorLogger.logError(error, {
-      recipientId,
-      campaignId,
-      metadata: {
-        redemptionCode,
-      },
-    });
-
-    // Provide helpful error messages based on the error type
-    let errorMessage = error.message || 'Unknown error occurred';
-    let helpfulHint = '';
-
-    if (errorMessage.includes('No gift card configured')) {
-      helpfulHint = ' → Please configure a gift card brand and value in the campaign settings.';
-    } else if (errorMessage.includes('Provisioning failed')) {
-      helpfulHint = ' → Check that you have gift cards in inventory OR Tillo API configured. Go to Settings → Gift Cards to manage inventory.';
-    } else if (errorMessage.includes('not configured')) {
-      helpfulHint = ' → Please contact your administrator to configure the required API credentials.';
-    } else if (errorMessage.includes('Recipient verification required')) {
-      helpfulHint = ' → Customer must opt-in via SMS, verify via email, or you must skip verification with a valid disposition.';
+    if (errorMessage.includes('Missing') || errorMessage.includes('required')) {
+      errorCode = 'GC-012';
+    } else if (errorMessage.includes('Recipient not found') || errorMessage.includes('not found')) {
+      errorCode = 'GC-011';
+      canRetry = true;
+    } else if (errorMessage.includes('verification required') || errorMessage.includes('opt-in')) {
+      errorCode = 'GC-009';
+      canRetry = true;
     } else if (errorMessage.includes('already been provisioned')) {
-      helpfulHint = ' → This customer has already received a gift card for this campaign.';
-    } else if (errorMessage.includes('Invalid redemption code')) {
-      helpfulHint = ' → Please verify the redemption code and ensure the customer is in an active campaign.';
+      errorCode = 'GC-010';
+    } else if (errorMessage.includes('Gift card not configured') || errorMessage.includes('brand_id')) {
+      errorCode = 'GC-001';
+      requiresCampaignEdit = true;
+    } else if (errorMessage.includes('Campaign') && errorMessage.includes('billing')) {
+      errorCode = 'GC-008';
+      requiresCampaignEdit = true;
+    } else if (errorMessage.includes('Brand not found') || errorMessage.includes('brand')) {
+      errorCode = 'GC-002';
+      requiresCampaignEdit = true;
+    } else if (errorMessage.includes('inventory') && errorMessage.includes('Tillo')) {
+      errorCode = 'GC-003';
+      canRetry = true;
+    } else if (errorMessage.includes('Tillo API not configured')) {
+      errorCode = 'GC-004';
+    } else if (errorMessage.includes('Tillo')) {
+      errorCode = 'GC-005';
+      canRetry = true;
+    } else if (errorMessage.includes('credits') || errorMessage.includes('Insufficient')) {
+      errorCode = 'GC-006';
+    } else if (errorMessage.includes('billing')) {
+      errorCode = 'GC-007';
+    }
+
+    console.error('╔' + '═'.repeat(70) + '╗');
+    console.error(`║ [CALL-CENTER-PROVISION] ✗ FAILED - Request ID: ${logger.requestId}`);
+    console.error('╠' + '═'.repeat(70) + '╣');
+    console.error(`║   Error Code: ${errorCode}`);
+    console.error(`║   Description: ${PROVISIONING_ERROR_CODES[errorCode]}`);
+    console.error(`║   Message: ${errorMessage.substring(0, 60)}${errorMessage.length > 60 ? '...' : ''}`);
+    console.error(`║   Failed Step: ${currentStep.number} - ${currentStep.name}`);
+    console.error(`║   Can Retry: ${canRetry}`);
+    console.error(`║   Requires Edit: ${requiresCampaignEdit}`);
+    console.error('╠' + '═'.repeat(70) + '╣');
+    console.error(`║   Recipient: ${recipientId || 'N/A'}`);
+    console.error(`║   Campaign: ${campaignId || 'N/A'}`);
+    console.error(`║   Brand: ${brandId || 'N/A'}`);
+    console.error(`║   Denomination: $${denomination || 'N/A'}`);
+    console.error('╚' + '═'.repeat(70) + '╝');
+
+    if (errorStack) {
+      console.error('[CALL-CENTER-PROVISION] Stack trace:', errorStack);
+    }
+
+    // Log to database
+    await logger.logProvisioningError(errorCode, error, currentStep);
+
+    // Build helpful error message
+    let helpfulHint = '';
+    if (errorCode === 'GC-001') {
+      helpfulHint = ' → Edit the campaign and configure a gift card brand and value for all conditions.';
+    } else if (errorCode === 'GC-003' || errorCode === 'GC-004') {
+      helpfulHint = ' → Upload gift cards to inventory OR configure Tillo API credentials in Settings.';
+    } else if (errorCode === 'GC-006') {
+      helpfulHint = ' → Add credits to the client/agency account.';
+    } else if (errorCode === 'GC-009') {
+      helpfulHint = ' → Customer must opt-in via SMS, verify via email, or select a valid disposition.';
+    } else if (errorCode === 'GC-011') {
+      helpfulHint = ' → Verify the redemption code and ensure customer is in an active campaign.';
     }
 
     const result: ProvisionResult = {
       success: false,
+      requestId: logger.requestId,
       error: errorMessage + helpfulHint,
       message: errorMessage + helpfulHint,
+      errorCode,
+      errorDescription: PROVISIONING_ERROR_CODES[errorCode],
+      canRetry,
+      requiresCampaignEdit,
     };
 
     return new Response(JSON.stringify(result), {
@@ -611,4 +655,3 @@ serve(async (req) => {
     });
   }
 });
-

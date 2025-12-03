@@ -164,7 +164,7 @@ export function AudiencesRewardsStep({
       // CSV inventory is used first, then Tillo API as fallback
       // No need to block campaign creation here
       
-      // Log success for debugging
+      // Log success for debugging with full details
       console.log('[AudiencesRewardsStep] Validation passed:', {
         conditionCount: selectedConditions.length,
         allHaveBrand: selectedConditions.every(c => c.brand_id),
@@ -172,19 +172,35 @@ export function AudiencesRewardsStep({
         conditions: selectedConditions.map(c => ({
           name: c.condition_name,
           brand_id: c.brand_id,
+          brand_id_type: typeof c.brand_id,
           card_value: c.card_value,
+          card_value_type: typeof c.card_value,
+          brand_name: c.brand_name,
         })),
       });
     }
 
-    onNext({
+    // Log what we're passing to onNext
+    const dataToPass = {
       contact_list_id: selectedListId,
       recipient_count: selectedList?.contact_count || 0,
       conditions: selectedConditions.length > 0 ? selectedConditions : undefined,
       audience_selection_complete: true,
       selected_audience_type: 'list',
       ...trackingSettings,
+    };
+    
+    console.log('[AudiencesRewardsStep] Passing to onNext:', {
+      hasConditions: !!dataToPass.conditions,
+      conditionCount: dataToPass.conditions?.length || 0,
+      conditions: dataToPass.conditions?.map((c: any) => ({
+        condition_name: c.condition_name,
+        brand_id: c.brand_id,
+        card_value: c.card_value,
+      })),
     });
+
+    onNext(dataToPass);
   };
 
   const addCondition = () => {
@@ -209,8 +225,23 @@ export function AudiencesRewardsStep({
   };
 
   const updateCondition = (index: number, updates: Partial<any>) => {
+    console.log('[AudiencesRewardsStep] updateCondition called:', {
+      index,
+      updates,
+      updates_brand_id: updates.brand_id,
+      updates_card_value: updates.card_value,
+    });
+    
     const updated = [...selectedConditions];
     updated[index] = { ...updated[index], ...updates };
+    
+    console.log('[AudiencesRewardsStep] Updated condition:', {
+      index,
+      brand_id: updated[index].brand_id,
+      card_value: updated[index].card_value,
+      condition_name: updated[index].condition_name,
+    });
+    
     setSelectedConditions(updated);
   };
 

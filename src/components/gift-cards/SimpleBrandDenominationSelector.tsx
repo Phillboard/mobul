@@ -107,7 +107,10 @@ export function SimpleBrandDenominationSelector({
 
   const handleBrandChange = (brandId: string) => {
     const brand = brandOptions.find((b) => b.id === brandId);
-    if (!brand) return;
+    if (!brand) {
+      console.warn('[SimpleBrandDenominationSelector] Brand not found:', brandId);
+      return;
+    }
 
     // Auto-select first denomination if available
     const firstDenom = availableGiftCards.find(
@@ -115,27 +118,38 @@ export function SimpleBrandDenominationSelector({
     )?.denomination;
 
     if (firstDenom) {
-      onChange({
+      const newValue = {
         brand_id: brand.id,
         card_value: firstDenom,
         brand_name: brand.name,
-      });
+      };
+      console.log('[SimpleBrandDenominationSelector] Brand changed - calling onChange:', newValue);
+      onChange(newValue);
     } else {
+      console.log('[SimpleBrandDenominationSelector] No denominations for brand, calling onChange(null)');
       onChange(null);
     }
   };
 
   const handleDenominationChange = (denomination: string) => {
-    if (!value?.brand_id) return;
+    if (!value?.brand_id) {
+      console.warn('[SimpleBrandDenominationSelector] No brand_id in value, cannot change denomination');
+      return;
+    }
 
     const brand = brandOptions.find((b) => b.id === value.brand_id);
-    if (!brand) return;
+    if (!brand) {
+      console.warn('[SimpleBrandDenominationSelector] Brand not found for denomination change');
+      return;
+    }
 
-    onChange({
+    const newValue = {
       brand_id: value.brand_id,
       card_value: parseFloat(denomination),
       brand_name: brand.name,
-    });
+    };
+    console.log('[SimpleBrandDenominationSelector] Denomination changed - calling onChange:', newValue);
+    onChange(newValue);
   };
 
   return (

@@ -84,6 +84,7 @@ const ClientBillingDashboard = lazy(() => import("./pages/ClientBillingDashboard
 const AdminOrganizationManagement = lazy(() => import("./pages/AdminOrganizationManagement"));
 const PublicRedemption = lazy(() => import("./pages/PublicRedemption"));
 const PublicLandingPage = lazy(() => import("./pages/PublicLandingPage"));
+const TestRedemption = lazy(() => import("./pages/TestRedemption"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -138,6 +139,7 @@ const App = () => (
                   <Route path="/forms/:formId" element={<AceFormPublic />} />
                   <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
                   <Route path="/redeem-gift-card" element={<PublicRedemption />} />
+                  <Route path="/test-redemption" element={<TestRedemption />} />
                   
                   {/* Public Landing Pages - mobul.com/:clientSlug/p/:pageSlug */}
                   <Route path="/:clientSlug/p/:pageSlug" element={<PublicLandingPage />} />

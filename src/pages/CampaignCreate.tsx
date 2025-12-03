@@ -148,6 +148,36 @@ export default function CampaignCreate() {
     mutationFn: async (data: Partial<CampaignFormData>) => {
       if (!currentClient) throw new Error("No client selected");
 
+      // ========== GIFT CARD CONFIG VALIDATION ==========
+      // Prevent campaigns from being activated ("mailed" or "in_production") 
+      // if conditions are missing gift card configuration
+      const isSelfMailer = data.mailing_method === "self";
+      const hasBeenMailed = (data as any).campaign_status === "mailed";
+      const targetStatus = (isSelfMailer && hasBeenMailed) ? "mailed" : "draft";
+      const requiresGiftCardConfig = ["mailed", "in_production", "scheduled"].includes(targetStatus);
+      
+      if (requiresGiftCardConfig && data.conditions && data.conditions.length > 0) {
+        const conditionsWithoutConfig = data.conditions.filter((c: any) => 
+          !c.brand_id || c.brand_id === "" || c.brand_id === null ||
+          !c.card_value || c.card_value === 0 || c.card_value === null
+        );
+        
+        if (conditionsWithoutConfig.length > 0) {
+          const missingNames = conditionsWithoutConfig.map((c: any) => c.condition_name || 'Unnamed').join(', ');
+          throw new Error(
+            `Cannot activate campaign with incomplete gift card configuration. ` +
+            `The following conditions are missing brand or value: ${missingNames}. ` +
+            `Please go back to Setup and configure gift cards for all conditions.`
+          );
+        }
+        
+        logger.info('[CAMPAIGN-VALIDATION] Gift card config validated for activation:', {
+          targetStatus,
+          conditionCount: data.conditions.length,
+          allConfigured: true,
+        });
+      }
+
       // ========== EDIT MODE: Update existing campaign ==========
       if (isEditMode && campaignId) {
         // Build update object
@@ -306,12 +336,7 @@ export default function CampaignCreate() {
         }
       }
 
-      // Determine initial status based on mailing status selection
-      const isSelfMailer = data.mailing_method === "self";
-      const hasBeenMailed = (data as any).campaign_status === "mailed";
-      const initialStatus = (isSelfMailer && hasBeenMailed) ? "mailed" : "draft";
-
-      // Create campaign
+      // Create campaign (using targetStatus determined in validation block above)
       const { data: campaign, error: campaignError } = await supabase
         .from("campaigns")
         .insert([{
@@ -328,7 +353,7 @@ export default function CampaignCreate() {
           utm_source: data.utm_source || null,
           utm_medium: data.utm_medium || null,
           utm_campaign: data.utm_campaign || null,
-          status: initialStatus,
+          status: targetStatus,
           mailing_method: data.mailing_method || "self",
           sms_opt_in_message: data.sms_opt_in_message || null,
         }])
@@ -341,32 +366,50 @@ export default function CampaignCreate() {
 
       // Create conditions if any
       if (data.conditions && data.conditions.length > 0) {
-        // ENHANCED: Log incoming condition data for debugging
+        // ENHANCED: Log incoming condition data for debugging with full type information
         logger.info('[CAMPAIGN-CREATE] Received conditions from wizard:', {
           count: data.conditions.length,
           conditions: data.conditions.map((c: any) => ({
             name: c.condition_name,
             brand_id: c.brand_id,
+            brand_id_type: typeof c.brand_id,
+            brand_id_value: String(c.brand_id),
             card_value: c.card_value,
-            hasBrand: !!c.brand_id,
-            hasValue: !!c.card_value,
+            card_value_type: typeof c.card_value,
+            hasBrand: !!c.brand_id && c.brand_id !== "" && c.brand_id !== null,
+            hasValue: !!c.card_value && c.card_value !== 0 && c.card_value !== null,
+            rawCondition: JSON.stringify(c),
           })),
         });
 
-        const conditionsToInsert = data.conditions.map((condition: any, index: number) => ({
-          campaign_id: campaign.id,
-          condition_number: condition.condition_number || index + 1,
-          condition_name: condition.condition_name,
-          trigger_type: condition.trigger_type,
-          time_delay_hours: condition.time_delay_hours,
-          crm_event_name: condition.crm_event_name,
-          is_active: condition.is_active !== false,
-          brand_id: condition.brand_id || null,
-          card_value: condition.card_value || null,
-          sms_template: condition.sms_template || null,
-        }));
+        const conditionsToInsert = data.conditions.map((condition: any, index: number) => {
+          // Ensure brand_id is properly extracted (handles both direct and nested values)
+          const brandId = condition.brand_id || null;
+          const cardValue = condition.card_value || null;
+          
+          // Log each condition mapping
+          logger.info(`[CAMPAIGN-CREATE] Mapping condition ${index + 1}:`, {
+            input_brand_id: condition.brand_id,
+            input_card_value: condition.card_value,
+            output_brand_id: brandId,
+            output_card_value: cardValue,
+          });
+          
+          return {
+            campaign_id: campaign.id,
+            condition_number: condition.condition_number || index + 1,
+            condition_name: condition.condition_name,
+            trigger_type: condition.trigger_type,
+            time_delay_hours: condition.time_delay_hours,
+            crm_event_name: condition.crm_event_name,
+            is_active: condition.is_active !== false,
+            brand_id: brandId,
+            card_value: cardValue,
+            sms_template: condition.sms_template || null,
+          };
+        });
 
-        // ENHANCED: Log what we're actually inserting
+        // ENHANCED: Log what we're actually inserting with verification
         logger.info('[CAMPAIGN-CREATE] Inserting conditions:', {
           count: conditionsToInsert.length,
           conditions: conditionsToInsert.map((c: any) => ({
@@ -374,19 +417,36 @@ export default function CampaignCreate() {
             condition_name: c.condition_name,
             brand_id: c.brand_id,
             card_value: c.card_value,
+            has_brand: c.brand_id !== null,
+            has_value: c.card_value !== null,
           })),
         });
 
-        const { error: conditionsError } = await supabase
+        const { data: insertedConditions, error: conditionsError } = await supabase
           .from("campaign_conditions")
-          .insert(conditionsToInsert);
+          .insert(conditionsToInsert)
+          .select();
 
         if (conditionsError) {
           logger.error("Failed to create conditions:", conditionsError);
           throw conditionsError;
         }
 
+        // Log what was actually inserted in the database
         logger.info(`Created ${conditionsToInsert.length} campaign conditions`);
+        if (insertedConditions) {
+          logger.info('[CAMPAIGN-CREATE] Verified inserted conditions:', {
+            count: insertedConditions.length,
+            conditions: insertedConditions.map((c: any) => ({
+              id: c.id,
+              condition_name: c.condition_name,
+              brand_id: c.brand_id,
+              card_value: c.card_value,
+              brand_id_saved: c.brand_id !== null,
+              card_value_saved: c.card_value !== null,
+            })),
+          });
+        }
 
         const giftCardConfigs = data.conditions
           .filter((condition: any) => condition.brand_id && condition.card_value)

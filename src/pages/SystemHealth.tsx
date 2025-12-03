@@ -1,21 +1,44 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Activity, AlertTriangle, BarChart3, Bell, CheckCircle2, Clock, Database, 
-  Gift, Info, Mail, Phone, TrendingDown, TrendingUp, Users, XCircle, Zap 
+  Gift, Info, Mail, Phone, TrendingDown, TrendingUp, Users, XCircle, Zap,
+  RefreshCw, Copy, ChevronDown, ChevronRight, Search, CreditCard
 } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import { format, subDays, subHours } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { ExportButton } from "@/components/monitoring/ExportButton";
 import { FilterPanel } from "@/components/monitoring/FilterPanel";
 import { useSearchParams } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+// Error code descriptions for display
+const ERROR_CODE_DESCRIPTIONS: Record<string, string> = {
+  'GC-001': 'Campaign condition missing gift card config',
+  'GC-002': 'Gift card brand not found',
+  'GC-003': 'No inventory available',
+  'GC-004': 'Tillo API not configured',
+  'GC-005': 'Tillo API call failed',
+  'GC-006': 'Insufficient credits',
+  'GC-007': 'Billing transaction failed',
+  'GC-008': 'Campaign billing not configured',
+  'GC-009': 'Recipient verification required',
+  'GC-010': 'Already provisioned',
+  'GC-011': 'Invalid redemption code',
+  'GC-012': 'Missing parameters',
+  'GC-013': 'Database function error',
+  'GC-014': 'Delivery failed',
+  'GC-015': 'Unknown error',
+};
 
 export default function SystemHealth() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -39,10 +62,14 @@ export default function SystemHealth() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">
               <BarChart3 className="h-4 w-4 mr-2" />
               Overview
+            </TabsTrigger>
+            <TabsTrigger value="gift-cards">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Gift Cards
             </TabsTrigger>
             <TabsTrigger value="performance">
               <Activity className="h-4 w-4 mr-2" />
@@ -62,6 +89,10 @@ export default function SystemHealth() {
             <OverviewTab />
           </TabsContent>
 
+          <TabsContent value="gift-cards" className="space-y-6">
+            <GiftCardProvisioningTab queryClient={queryClient} />
+          </TabsContent>
+
           <TabsContent value="performance" className="space-y-6">
             <PerformanceTab />
           </TabsContent>
@@ -77,6 +108,477 @@ export default function SystemHealth() {
       </div>
     </Layout>
   );
+}
+
+// Gift Card Provisioning Tab Component
+function GiftCardProvisioningTab({ queryClient }: { queryClient: any }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedTraces, setExpandedTraces] = useState<Set<string>>(new Set());
+
+  // Fetch provisioning health metrics
+  const { data: healthMetrics, isLoading: healthLoading, refetch: refetchHealth } = useQuery({
+    queryKey: ['provisioning-health'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_provisioning_health', { p_hours: 24 });
+      if (error) {
+        console.error('Health metrics error:', error);
+        return null;
+      }
+      return data?.[0] || null;
+    },
+    refetchInterval: 30000,
+  });
+
+  // Fetch error statistics
+  const { data: errorStats, isLoading: errorStatsLoading } = useQuery({
+    queryKey: ['provisioning-error-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_provisioning_error_stats', { p_hours: 24 });
+      if (error) {
+        console.error('Error stats error:', error);
+        return [];
+      }
+      return data || [];
+    },
+    refetchInterval: 30000,
+  });
+
+  // Fetch recent failures
+  const { data: recentFailures, isLoading: failuresLoading, refetch: refetchFailures } = useQuery({
+    queryKey: ['recent-provisioning-failures', searchQuery],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_recent_provisioning_failures', {
+        p_limit: 50,
+        p_campaign_id: null,
+        p_hours: 48,
+      });
+      if (error) {
+        console.error('Recent failures error:', error);
+        return [];
+      }
+      // Filter by search query if provided
+      if (searchQuery) {
+        return data?.filter((f: any) => 
+          f.request_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          f.error_message?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          f.error_code?.toLowerCase().includes(searchQuery.toLowerCase())
+        ) || [];
+      }
+      return data || [];
+    },
+    refetchInterval: 30000,
+  });
+
+  // Fetch trace details for expanded items
+  const fetchTraceDetails = async (requestId: string) => {
+    const { data, error } = await supabase.rpc('get_provisioning_trace', { p_request_id: requestId });
+    if (error) {
+      console.error('Trace fetch error:', error);
+      return [];
+    }
+    return data || [];
+  };
+
+  const toggleTraceExpand = (requestId: string) => {
+    const newExpanded = new Set(expandedTraces);
+    if (newExpanded.has(requestId)) {
+      newExpanded.delete(requestId);
+    } else {
+      newExpanded.add(requestId);
+    }
+    setExpandedTraces(newExpanded);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied", description: "Request ID copied to clipboard" });
+  };
+
+  // Calculate success rate
+  const successRate = healthMetrics?.success_rate || 0;
+  const totalAttempts = healthMetrics?.total_attempts || 0;
+  const failedAttempts = healthMetrics?.failed_attempts || 0;
+
+  // Prepare chart data for error distribution
+  const errorChartData = errorStats?.map((stat: any) => ({
+    name: stat.error_code,
+    value: parseInt(stat.occurrence_count),
+    description: ERROR_CODE_DESCRIPTIONS[stat.error_code] || 'Unknown error',
+  })) || [];
+
+  const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899'];
+
+  return (
+    <>
+      {/* Header with Refresh */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Gift Card Provisioning Monitor</h2>
+          <p className="text-sm text-muted-foreground">Real-time monitoring of gift card provisioning attempts</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => { refetchHealth(); refetchFailures(); }}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Health Metrics */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Success Rate (24h)</CardTitle>
+            {successRate >= 90 ? (
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            ) : successRate >= 70 ? (
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            ) : (
+              <XCircle className="h-4 w-4 text-destructive" />
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${
+              successRate >= 90 ? 'text-green-500' : 
+              successRate >= 70 ? 'text-yellow-500' : 'text-destructive'
+            }`}>
+              {successRate.toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {healthMetrics?.successful_attempts || 0} of {totalAttempts} succeeded
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Failed (24h)</CardTitle>
+            <XCircle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">{failedAttempts}</div>
+            <p className="text-xs text-muted-foreground">
+              Top error: {healthMetrics?.top_error_code || 'N/A'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Duration</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {healthMetrics?.avg_duration_ms ? `${Math.round(healthMetrics.avg_duration_ms)}ms` : 'N/A'}
+            </div>
+            <p className="text-xs text-muted-foreground">End-to-end processing</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Attempts</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalAttempts}</div>
+            <p className="text-xs text-muted-foreground">Last 24 hours</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Error Distribution Chart */}
+      {errorChartData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Error Distribution (24h)</CardTitle>
+            <CardDescription>Breakdown of failure reasons by error code</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={errorChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  >
+                    {errorChartData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2">
+                <h4 className="font-medium">Error Code Legend</h4>
+                <ScrollArea className="h-[200px]">
+                  {errorChartData.map((stat: any, index: number) => (
+                    <div key={stat.name} className="flex items-center gap-2 py-1.5 text-sm">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                      />
+                      <Badge variant="outline" className="font-mono">{stat.name}</Badge>
+                      <span className="text-muted-foreground flex-1 truncate">{stat.description}</span>
+                      <span className="font-semibold">{stat.value}</span>
+                    </div>
+                  ))}
+                </ScrollArea>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Failures with Trace Details */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Recent Failures</CardTitle>
+              <CardDescription>Click to expand and view full trace</CardDescription>
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by request ID or error..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {failuresLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Activity className="h-6 w-6 animate-spin mr-2" />
+              <span>Loading failures...</span>
+            </div>
+          ) : recentFailures?.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-500" />
+              <p>No failures in the last 48 hours</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {recentFailures?.map((failure: any) => (
+                <FailureTraceItem
+                  key={failure.request_id}
+                  failure={failure}
+                  isExpanded={expandedTraces.has(failure.request_id)}
+                  onToggle={() => toggleTraceExpand(failure.request_id)}
+                  onCopy={() => copyToClipboard(failure.request_id)}
+                  fetchTraceDetails={fetchTraceDetails}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => {
+              window.open('/admin/gift-cards', '_blank');
+            }}>
+              <Gift className="h-4 w-4 mr-2" />
+              Manage Inventory
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              window.open('/settings?tab=integrations', '_blank');
+            }}>
+              <Zap className="h-4 w-4 mr-2" />
+              Configure Tillo API
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              // Run diagnostics
+              toast({ title: "Running diagnostics...", description: "This may take a moment" });
+            }}>
+              <Activity className="h-4 w-4 mr-2" />
+              Run Diagnostics
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+// Failure Trace Item Component
+function FailureTraceItem({ 
+  failure, 
+  isExpanded, 
+  onToggle, 
+  onCopy,
+  fetchTraceDetails 
+}: { 
+  failure: any; 
+  isExpanded: boolean; 
+  onToggle: () => void;
+  onCopy: () => void;
+  fetchTraceDetails: (requestId: string) => Promise<any[]>;
+}) {
+  const [traceDetails, setTraceDetails] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleToggle = async () => {
+    if (!isExpanded && traceDetails.length === 0) {
+      setLoading(true);
+      const details = await fetchTraceDetails(failure.request_id);
+      setTraceDetails(details);
+      setLoading(false);
+    }
+    onToggle();
+  };
+
+  return (
+    <Collapsible open={isExpanded} onOpenChange={handleToggle}>
+      <div className="border rounded-lg">
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+            <div className="flex items-center gap-3">
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+              <Badge variant="destructive" className="font-mono">
+                {failure.error_code || 'ERROR'}
+              </Badge>
+              <span className="text-sm font-medium">
+                Step {failure.failure_step}: {failure.failure_step_name}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-muted-foreground">
+                {format(new Date(failure.failed_at), 'MMM dd HH:mm:ss')}
+              </span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={(e) => { e.stopPropagation(); onCopy(); }}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="border-t p-4 bg-muted/30 space-y-4">
+            {/* Error Details */}
+            <div>
+              <h4 className="text-sm font-medium mb-2">Error Message</h4>
+              <p className="text-sm text-destructive bg-destructive/10 p-2 rounded font-mono">
+                {failure.error_message || 'No message available'}
+              </p>
+            </div>
+
+            {/* Context */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Request ID:</span>
+                <code className="ml-2 font-mono text-xs bg-muted px-1 rounded">{failure.request_id}</code>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Campaign:</span>
+                <code className="ml-2 font-mono text-xs">{failure.campaign_id || 'N/A'}</code>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Recipient:</span>
+                <code className="ml-2 font-mono text-xs">{failure.recipient_id || 'N/A'}</code>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Amount:</span>
+                <span className="ml-2">${failure.denomination || 'N/A'}</span>
+              </div>
+            </div>
+
+            {/* Full Trace */}
+            <div>
+              <h4 className="text-sm font-medium mb-2">Full Trace</h4>
+              {loading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Activity className="h-4 w-4 animate-spin" />
+                  Loading trace...
+                </div>
+              ) : traceDetails.length > 0 ? (
+                <div className="space-y-1">
+                  {traceDetails.map((step, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`flex items-center gap-2 text-xs p-2 rounded ${
+                        step.status === 'completed' ? 'bg-green-500/10' :
+                        step.status === 'failed' ? 'bg-destructive/10' :
+                        step.status === 'skipped' ? 'bg-yellow-500/10' :
+                        'bg-blue-500/10'
+                      }`}
+                    >
+                      <span className="font-mono w-6">{step.step_number}.</span>
+                      <span className="flex-1">{step.step_name}</span>
+                      <Badge variant={
+                        step.status === 'completed' ? 'default' :
+                        step.status === 'failed' ? 'destructive' :
+                        'secondary'
+                      } className="text-xs">
+                        {step.status}
+                      </Badge>
+                      {step.duration_ms && (
+                        <span className="text-muted-foreground">{step.duration_ms}ms</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No trace data available</p>
+              )}
+            </div>
+
+            {/* Recommendation */}
+            {failure.error_code && ERROR_CODE_DESCRIPTIONS[failure.error_code] && (
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded p-3">
+                <h4 className="text-sm font-medium text-blue-600 mb-1">Recommendation</h4>
+                <p className="text-sm">
+                  {getRecommendation(failure.error_code)}
+                </p>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
+// Get recommendation based on error code
+function getRecommendation(errorCode: string): string {
+  const recommendations: Record<string, string> = {
+    'GC-001': 'Edit the campaign and configure a gift card brand and value for all conditions.',
+    'GC-002': 'Verify the brand ID is correct or choose a different brand in campaign settings.',
+    'GC-003': 'Upload gift card inventory OR configure Tillo API credentials in Settings → Integrations.',
+    'GC-004': 'Configure TILLO_API_KEY and TILLO_SECRET_KEY in Supabase secrets.',
+    'GC-005': 'Check Tillo API credentials and ensure the brand code is valid. Try again in a few minutes.',
+    'GC-006': 'Add credits to the client/agency account before provisioning.',
+    'GC-007': 'Contact support - billing transaction failed. Card may need manual reconciliation.',
+    'GC-008': 'Ensure the campaign has a valid client assigned with billing configuration.',
+    'GC-009': 'Complete SMS opt-in or email verification before provisioning.',
+    'GC-010': 'This recipient already has a gift card for this campaign condition.',
+    'GC-011': 'Verify the redemption code and ensure customer is in an active campaign.',
+    'GC-012': 'Check that all required fields are provided in the request.',
+    'GC-013': 'Run database migrations to create required functions.',
+    'GC-014': 'Delivery notification failed but card was provisioned. Check SMS/Email settings.',
+    'GC-015': 'Check the full trace for more details. Contact support if issue persists.',
+  };
+  return recommendations[errorCode] || 'Review the error details and contact support if needed.';
 }
 
 // Overview Tab Component
@@ -365,7 +867,7 @@ function ErrorsTab({ queryClient }: { queryClient: any }) {
       }
 
       if (filters.searchQuery) {
-        query = query.ilike('error_message', `%${filters.searchQuery}%`);
+        query = query.or(`message.ilike.%${filters.searchQuery}%,category.ilike.%${filters.searchQuery}%`);
       }
       
       const { data, error } = await query;
@@ -390,7 +892,7 @@ function ErrorsTab({ queryClient }: { queryClient: any }) {
   });
 
   const unresolvedErrors = errors?.filter(e => !e.resolved).length || 0;
-  const criticalErrors = errors?.filter(e => !e.resolved && e.error_type === 'critical').length || 0;
+  const giftCardErrors = errors?.filter(e => !e.resolved && e.category === 'gift_card').length || 0;
 
   return (
     <>
@@ -421,12 +923,12 @@ function ErrorsTab({ queryClient }: { queryClient: any }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Errors</CardTitle>
-            <XCircle className="h-4 w-4 text-destructive" />
+            <CardTitle className="text-sm font-medium">Gift Card Errors</CardTitle>
+            <CreditCard className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{criticalErrors}</div>
-            <p className="text-xs text-muted-foreground">High priority</p>
+            <div className="text-2xl font-bold text-destructive">{giftCardErrors}</div>
+            <p className="text-xs text-muted-foreground">Provisioning issues</p>
           </CardContent>
         </Card>
 
@@ -452,15 +954,23 @@ function ErrorsTab({ queryClient }: { queryClient: any }) {
               <div key={error.id} className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant={error.resolved ? "secondary" : "destructive"}>
-                        {error.error_type || 'Unknown'}
+                        {error.category || 'unknown'}
+                      </Badge>
+                      <Badge variant="outline">
+                        {error.severity || 'medium'}
                       </Badge>
                       <span className="text-sm text-muted-foreground">
                         {format(new Date(error.occurred_at), 'MMM dd, yyyy HH:mm:ss')}
                       </span>
                     </div>
-                    <p className="font-medium">{error.error_message}</p>
+                    <p className="font-medium">{error.message}</p>
+                    {error.error_details?.error_code && (
+                      <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                        {error.error_details.error_code}
+                      </code>
+                    )}
                   </div>
                   {!error.resolved && (
                     <Button
@@ -507,9 +1017,9 @@ function AlertsTab({ queryClient }: { queryClient: any }) {
       }
 
       if (filters.status === "unresolved") {
-        query = query.eq('resolved', false);
+        query = query.eq('dismissed', false);
       } else if (filters.status === "resolved") {
-        query = query.eq('resolved', true);
+        query = query.eq('dismissed', true);
       }
       
       const { data, error } = await query;
@@ -519,22 +1029,22 @@ function AlertsTab({ queryClient }: { queryClient: any }) {
     refetchInterval: 30000,
   });
 
-  const resolveAlert = useMutation({
+  const dismissAlert = useMutation({
     mutationFn: async (alertId: string) => {
       const { error } = await supabase
         .from('system_alerts')
-        .update({ resolved: true, resolved_at: new Date().toISOString() })
+        .update({ dismissed: true, dismissed_at: new Date().toISOString() })
         .eq('id', alertId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-alerts'] });
-      toast({ title: "Success", description: "Alert resolved" });
+      toast({ title: "Success", description: "Alert dismissed" });
     },
   });
 
-  const unresolvedAlerts = alerts?.filter(a => !a.resolved).length || 0;
-  const criticalAlerts = alerts?.filter(a => !a.resolved && a.severity === 'critical').length || 0;
+  const undismissedAlerts = alerts?.filter(a => !a.dismissed).length || 0;
+  const criticalAlerts = alerts?.filter(a => !a.dismissed && a.severity === 'critical').length || 0;
 
   return (
     <>
@@ -548,11 +1058,11 @@ function AlertsTab({ queryClient }: { queryClient: any }) {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unresolved Alerts</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
             <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{unresolvedAlerts}</div>
+            <div className="text-2xl font-bold">{undismissedAlerts}</div>
             <p className="text-xs text-muted-foreground">Require attention</p>
           </CardContent>
         </Card>
@@ -587,7 +1097,7 @@ function AlertsTab({ queryClient }: { queryClient: any }) {
         <CardContent>
           <div className="space-y-4">
             {alerts?.map((alert) => (
-              <div key={alert.id} className={`border rounded-lg p-4 space-y-3 ${alert.resolved ? 'opacity-60' : ''}`}>
+              <div key={alert.id} className={`border rounded-lg p-4 space-y-3 ${alert.dismissed ? 'opacity-60' : ''}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
                     {alert.severity === 'critical' && <XCircle className="h-5 w-5 text-destructive" />}
@@ -606,14 +1116,14 @@ function AlertsTab({ queryClient }: { queryClient: any }) {
                       <p className="text-sm text-muted-foreground">{alert.message}</p>
                     </div>
                   </div>
-                  {!alert.resolved && (
+                  {!alert.dismissed && (
                     <Button
                       size="sm"
-                      onClick={() => resolveAlert.mutate(alert.id)}
-                      disabled={resolveAlert.isPending}
+                      onClick={() => dismissAlert.mutate(alert.id)}
+                      disabled={dismissAlert.isPending}
                     >
                       <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Resolve
+                      Dismiss
                     </Button>
                   )}
                 </div>

@@ -11,6 +11,7 @@ import { SmartCSVImporter } from "@/components/contacts/SmartCSVImporter";
 import { ExportButton } from "@/components/contacts/ExportButton";
 import { useTenant } from "@/contexts/TenantContext";
 import { useContacts } from "@/hooks/useContacts";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { seedContactsData } from '@/lib/demo/seed-contacts-data';
@@ -33,9 +34,12 @@ export default function Contacts() {
   const [filters, setFilters] = useState<ContactFiltersType>({});
   const [isSeeding, setIsSeeding] = useState(false);
 
+  // Debounce the search query to prevent rapid-fire database queries
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
   const appliedFilters: ContactFiltersType = {
     ...filters,
-    search: searchQuery || undefined,
+    search: debouncedSearchQuery || undefined,
   };
 
   const { data: contacts } = useContacts(appliedFilters);

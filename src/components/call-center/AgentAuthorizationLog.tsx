@@ -22,12 +22,11 @@ export function AgentAuthorizationLog() {
           recipient:recipients(
             redemption_code,
             first_name,
-            last_name,
-            gift_card:gift_cards(card_value)
+            last_name
           )
         `)
         .eq("performed_by_user_id", user?.id)
-        .in("action", ["redeemed", "gift_card_assigned"])
+        .in("action", ["redeemed", "gift_card_provisioned"])
         .order("created_at", { ascending: false })
         .limit(5);
 
@@ -64,29 +63,35 @@ export function AgentAuthorizationLog() {
               Loading...
             </div>
           ) : authorizations && authorizations.length > 0 ? (
-            authorizations.map((auth: any) => (
-              <div key={auth.id} className="flex items-start justify-between text-sm border-b pb-2 last:border-0 last:pb-0">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    <span className="font-medium">
-                      {auth.recipient?.first_name} {auth.recipient?.last_name}
-                    </span>
+            authorizations.map((auth: any) => {
+              // Get card value from metadata (stored during provisioning)
+              const cardValue = auth.metadata?.card_value || auth.metadata?.denomination || auth.metadata?.amount;
+              return (
+                <div key={auth.id} className="flex items-start justify-between text-sm border-b pb-2 last:border-0 last:pb-0">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-3 w-3 text-green-500" />
+                      <span className="font-medium">
+                        {auth.recipient?.first_name} {auth.recipient?.last_name}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {auth.recipient?.redemption_code}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {auth.recipient?.redemption_code}
+                  <div className="text-right">
+                    {cardValue && (
+                      <div className="font-medium text-primary">
+                        ${cardValue}
+                      </div>
+                    )}
+                    <div className="text-xs text-muted-foreground">
+                      {format(new Date(auth.created_at), "HH:mm")}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-medium text-primary">
-                    ${auth.recipient?.gift_card?.card_value}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {format(new Date(auth.created_at), "HH:mm")}
-                  </div>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="text-sm text-muted-foreground text-center py-4">
               No activity yet
