@@ -35,8 +35,12 @@ import {
   ExternalLink,
   Plus,
   Minus,
+  AlertTriangle,
+  Settings,
 } from 'lucide-react';
-import type { BrandFormData } from '@/types/giftCards';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card } from '@/components/ui/card';
+import type { BrandFormData, BalanceCheckMethod } from '@/types/giftCards';
 
 interface AddBrandDialogProps {
   open: boolean;
@@ -56,11 +60,13 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
     brand_name: '',
     logo_url: '',
     metadata_source: 'manual',
+    balance_check_method: 'manual',
   });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [suggestedDenominations, setSuggestedDenominations] = useState<number[]>([]);
   const [customDenomInput, setCustomDenomInput] = useState('');
+  const [showApiConfig, setShowApiConfig] = useState(false);
 
   // Categories for dropdown
   const categories = getAllCategories();
@@ -74,10 +80,12 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
         brand_name: '',
         logo_url: '',
         metadata_source: 'manual',
+        balance_check_method: 'manual',
       });
       setLogoFile(null);
       setLogoPreview('');
       setSuggestedDenominations([]);
+      setShowApiConfig(false);
       resetLookup();
       resetSync();
     }
@@ -134,6 +142,7 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
         setFormData(prev => ({
           ...prev,
           tillo_brand_code: result.tillo_brand_code,
+          balance_check_method: 'tillo_api', // Auto-set to Tillo when synced
         }));
         
         if (result.denominations) {
@@ -142,7 +151,7 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
         
         toast({
           title: 'Tillo sync successful',
-          description: `Found brand in Tillo: ${result.brand_name}`,
+          description: `Found brand in Tillo: ${result.brand_name}. Balance checking via Tillo API enabled.`,
         });
       } else {
         toast({
@@ -216,7 +225,7 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
         finalLogoUrl = uploadResult.publicUrl!;
       }
 
-      // Insert brand
+      // Insert brand with balance check configuration
       const { data: brand, error: brandError } = await supabase
         .from('gift_card_brands')
         .insert({
@@ -232,6 +241,11 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
           metadata_source: formData.metadata_source,
           is_enabled_by_admin: true,
           is_active: true,
+          // Balance check configuration
+          balance_check_method: formData.balance_check_method || 'manual',
+          balance_check_url: formData.balance_check_url,
+          balance_check_api_endpoint: formData.balance_check_api_endpoint,
+          balance_check_config: formData.balance_check_config || {},
         })
         .select()
         .single();
@@ -546,6 +560,136 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
                 onChange={(e) => setFormData(prev => ({ ...prev, terms_url: e.target.value }))}
               />
             </div>
+
+            {/* Balance Check Configuration */}
+            <Card className="p-4 bg-muted/30">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  <Label className="font-semibold">Balance Check Configuration</Label>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="balance-method">Balance Check Method</Label>
+                    <Select
+                      value={formData.balance_check_method || 'manual'}
+                      onValueChange={(value: BalanceCheckMethod) => {
+                        setFormData(prev => ({ ...prev, balance_check_method: value }));
+                        setShowApiConfig(value === 'tillo_api' || value === 'other_api');
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manual">Manual Entry</SelectItem>
+                        <SelectItem value="tillo_api">Tillo API</SelectItem>
+                        <SelectItem value="other_api">Other API</SelectItem>
+                        <SelectItem value="none">None (Not Supported)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      How card balances will be checked
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="balance-url">Customer Balance Check URL</Label>
+                    <Input
+                      id="balance-url"
+                      placeholder="https://brand.com/check-balance"
+                      value={formData.balance_check_url || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, balance_check_url: e.target.value }))}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      URL customers can use to check their balance
+                    </p>
+                  </div>
+                </div>
+
+                {/* Warning for manual entry */}
+                {formData.balance_check_method === 'manual' && (
+                  <Alert className="border-yellow-500 bg-yellow-500/10">
+                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                    <AlertDescription className="text-sm">
+                      Manual balance entry requires admin to manually update card balances.
+                      Consider using Tillo API for automatic balance checking.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* API Configuration */}
+                {(showApiConfig || formData.balance_check_method === 'tillo_api' || formData.balance_check_method === 'other_api') && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <Label className="text-sm text-muted-foreground">API Configuration</Label>
+                    
+                    {formData.balance_check_method === 'tillo_api' && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">
+                          Tillo API credentials will be used from platform configuration.
+                          {formData.tillo_brand_code && (
+                            <span className="block mt-1 font-medium text-green-600">
+                              ✓ Tillo Brand Code: {formData.tillo_brand_code}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    )}
+
+                    {formData.balance_check_method === 'other_api' && (
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="api-endpoint">API Endpoint</Label>
+                          <Input
+                            id="api-endpoint"
+                            placeholder="https://api.brand.com/v1/balance"
+                            value={formData.balance_check_api_endpoint || ''}
+                            onChange={(e) => setFormData(prev => ({ 
+                              ...prev, 
+                              balance_check_api_endpoint: e.target.value 
+                            }))}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label htmlFor="api-key">API Key</Label>
+                            <Input
+                              id="api-key"
+                              type="password"
+                              placeholder="••••••••"
+                              value={formData.balance_check_config?.apiKey || ''}
+                              onChange={(e) => setFormData(prev => ({ 
+                                ...prev, 
+                                balance_check_config: {
+                                  ...prev.balance_check_config,
+                                  apiKey: e.target.value
+                                }
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="response-path">Response Balance Path</Label>
+                            <Input
+                              id="response-path"
+                              placeholder="data.balance.amount"
+                              value={formData.balance_check_config?.responseBalancePath || ''}
+                              onChange={(e) => setFormData(prev => ({ 
+                                ...prev, 
+                                balance_check_config: {
+                                  ...prev.balance_check_config,
+                                  responseBalancePath: e.target.value
+                                }
+                              }))}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Card>
 
             {/* Denominations */}
             {(suggestedDenominations.length > 0 || syncResult?.found) && (

@@ -14,6 +14,9 @@ export interface GiftCardBrand {
   is_enabled_by_admin: boolean;
   balance_check_enabled?: boolean;
   balance_check_url?: string;
+  balance_check_method?: 'tillo_api' | 'manual' | 'other_api' | 'none';
+  balance_check_api_endpoint?: string;
+  balance_check_config?: Record<string, any>;
   is_active?: boolean;
   created_at: string;
   updated_at?: string;
@@ -191,4 +194,17 @@ export interface BrandFormData {
   };
   tillo_brand_code?: string;
   metadata_source: 'auto_lookup' | 'manual' | 'tillo';
+  // Balance check configuration
+  balance_check_method?: 'tillo_api' | 'manual' | 'other_api' | 'none';
+  balance_check_url?: string;
+  balance_check_api_endpoint?: string;
+  balance_check_config?: {
+    apiKey?: string;
+    secretKey?: string;
+    headers?: Record<string, string>;
+    bodyTemplate?: Record<string, any>;
+    responseBalancePath?: string;
+  };
 }
+
+export type BalanceCheckMethod = 'tillo_api' | 'manual' | 'other_api' | 'none';

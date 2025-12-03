@@ -7,7 +7,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload, Package, Gift, Settings, DollarSign } from "lucide-react";
+import { Plus, Upload, Package, Gift, Settings, DollarSign, CreditCard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from '@/lib/utils/utils';
@@ -18,6 +18,7 @@ import { AdminUploadDialog } from "@/components/gift-cards/AdminUploadDialog";
 import { useGiftCardBrandsWithDenominations } from "@/hooks/useGiftCardBrands";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AdminIndividualCardsView } from "@/components/gift-cards/AdminIndividualCardsView";
 
 export default function AdminGiftCardMarketplace() {
   const [addBrandDialogOpen, setAddBrandDialogOpen] = useState(false);
@@ -169,6 +170,10 @@ export default function AdminGiftCardMarketplace() {
           <TabsList>
             <TabsTrigger value="brands">Brands & Denominations</TabsTrigger>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
+            <TabsTrigger value="individual-cards">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Individual Cards
+            </TabsTrigger>
             <TabsTrigger value="pricing">Pricing Configuration</TabsTrigger>
           </TabsList>
 
@@ -352,6 +357,10 @@ export default function AdminGiftCardMarketplace() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="individual-cards" className="space-y-4">
+            <AdminIndividualCardsView />
           </TabsContent>
 
           <TabsContent value="pricing" className="space-y-4">
