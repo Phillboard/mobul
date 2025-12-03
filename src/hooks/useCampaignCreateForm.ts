@@ -165,6 +165,9 @@ export function useCampaignCreateForm({ clientId }: UseCampaignCreateFormProps) 
           time_delay_hours: condition.time_delay_hours,
           crm_event_name: condition.crm_event_name,
           is_active: condition.is_active !== false,
+          brand_id: condition.brand_id || null,
+          card_value: condition.card_value || null,
+          sms_template: condition.sms_template || null,
         }));
 
         const { data: insertedConditions, error: conditionsError } = await supabase

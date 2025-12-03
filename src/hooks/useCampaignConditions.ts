@@ -14,6 +14,10 @@ interface Condition {
   is_simulated?: boolean;
   simulation_batch_id?: string;
   created_at?: string;
+  // Gift card configuration
+  brand_id?: string;
+  card_value?: number;
+  sms_template?: string;
 }
 
 export function useCampaignConditions(campaignId: string) {
@@ -53,6 +57,9 @@ export function useCampaignConditions(campaignId: string) {
           crm_event_name: c.crm_event_name || null,
           time_delay_hours: c.time_delay_hours || null,
           is_active: c.is_active,
+          brand_id: c.brand_id || null,
+          card_value: c.card_value || null,
+          sms_template: c.sms_template || null,
         }));
 
         const { data, error } = await supabase

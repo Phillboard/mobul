@@ -4,22 +4,28 @@
  * Unified interface for sending SMS messages with automatic provider
  * selection and fallback support.
  * 
- * Supports:
- * - Infobip (primary)
- * - Twilio (fallback)
+ * Supports (in order of priority):
+ * - NotificationAPI (primary)
+ * - Infobip (fallback 1)
+ * - Twilio (fallback 2)
  * 
  * Configuration is loaded from the sms_provider_settings table.
  */
 
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { getNotificationAPIClient, NotificationAPIClient } from './notificationapi-client.ts';
 import { getInfobipClient, InfobipClient } from './infobip-client.ts';
 import { getTwilioClient, TwilioClient } from './twilio-client.ts';
 
-export type SMSProvider = 'infobip' | 'twilio';
+export type SMSProvider = 'notificationapi' | 'infobip' | 'twilio';
 
 export interface SMSProviderSettings {
   primaryProvider: SMSProvider;
   enableFallback: boolean;
+  fallbackProvider1: SMSProvider | null;
+  fallbackProvider2: SMSProvider | null;
+  notificationapiEnabled: boolean;
+  notificationapiNotificationId: string | null;
   infobipEnabled: boolean;
   infobipBaseUrl: string;
   infobipSenderId: string | null;
@@ -79,6 +85,10 @@ async function getProviderSettings(supabaseClient?: SupabaseClient): Promise<SMS
     cachedSettings = {
       primaryProvider: data.primary_provider as SMSProvider,
       enableFallback: data.enable_fallback,
+      fallbackProvider1: data.fallback_provider_1 as SMSProvider | null,
+      fallbackProvider2: data.fallback_provider_2 as SMSProvider | null,
+      notificationapiEnabled: data.notificationapi_enabled ?? true,
+      notificationapiNotificationId: data.notificationapi_notification_id,
       infobipEnabled: data.infobip_enabled,
       infobipBaseUrl: data.infobip_base_url || 'https://api.infobip.com',
       infobipSenderId: data.infobip_sender_id,
@@ -89,7 +99,9 @@ async function getProviderSettings(supabaseClient?: SupabaseClient): Promise<SMS
 
     console.log('[SMS-PROVIDER] Loaded settings:', {
       primary: cachedSettings.primaryProvider,
-      fallback: cachedSettings.enableFallback,
+      fallback1: cachedSettings.fallbackProvider1,
+      fallback2: cachedSettings.fallbackProvider2,
+      fallbackEnabled: cachedSettings.enableFallback,
     });
 
     return cachedSettings;
@@ -100,12 +112,16 @@ async function getProviderSettings(supabaseClient?: SupabaseClient): Promise<SMS
 }
 
 /**
- * Get default settings (Infobip primary, Twilio fallback)
+ * Get default settings (NotificationAPI primary, Infobip fallback 1, Twilio fallback 2)
  */
 function getDefaultSettings(): SMSProviderSettings {
   return {
-    primaryProvider: 'infobip',
+    primaryProvider: 'notificationapi',
     enableFallback: true,
+    fallbackProvider1: 'infobip',
+    fallbackProvider2: 'twilio',
+    notificationapiEnabled: true,
+    notificationapiNotificationId: null,
     infobipEnabled: true,
     infobipBaseUrl: 'https://api.infobip.com',
     infobipSenderId: null,
@@ -126,7 +142,12 @@ export function clearSettingsCache(): void {
  * Check if a provider is available (credentials configured)
  */
 function isProviderAvailable(provider: SMSProvider): boolean {
-  if (provider === 'infobip') {
+  if (provider === 'notificationapi') {
+    return !!(
+      Deno.env.get('NOTIFICATIONAPI_CLIENT_ID') &&
+      Deno.env.get('NOTIFICATIONAPI_CLIENT_SECRET')
+    );
+  } else if (provider === 'infobip') {
     return !!Deno.env.get('INFOBIP_API_KEY');
   } else if (provider === 'twilio') {
     return !!(
@@ -146,7 +167,23 @@ async function sendWithProvider(
   to: string,
   message: string
 ): Promise<{ success: boolean; messageId?: string; status?: string; error?: string }> {
-  if (provider === 'infobip') {
+  if (provider === 'notificationapi') {
+    try {
+      const client = getNotificationAPIClient();
+      const result = await client.sendSMS(to, message);
+      return {
+        success: result.success,
+        messageId: result.trackingId,
+        status: result.status,
+        error: result.error,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'NotificationAPI client error',
+      };
+    }
+  } else if (provider === 'infobip') {
     try {
       const client = getInfobipClient();
       return await client.sendSMS(to, message);
@@ -181,6 +218,25 @@ async function sendWithProvider(
 }
 
 /**
+ * Get the fallback chain based on settings
+ */
+function getFallbackChain(settings: SMSProviderSettings): SMSProvider[] {
+  const chain: SMSProvider[] = [];
+  
+  if (settings.fallbackProvider1 && settings.fallbackProvider1 !== settings.primaryProvider) {
+    chain.push(settings.fallbackProvider1);
+  }
+  
+  if (settings.fallbackProvider2 && 
+      settings.fallbackProvider2 !== settings.primaryProvider &&
+      settings.fallbackProvider2 !== settings.fallbackProvider1) {
+    chain.push(settings.fallbackProvider2);
+  }
+  
+  return chain;
+}
+
+/**
  * Main SMS sending function with provider selection and fallback
  */
 export async function sendSMS(
@@ -191,43 +247,48 @@ export async function sendSMS(
   const settings = await getProviderSettings(supabaseClient);
   const attempts: SendSMSResult['attempts'] = [];
 
-  // Determine provider order
+  // Get provider chain: primary + fallbacks
   const primaryProvider = settings.primaryProvider;
-  const fallbackProvider: SMSProvider = primaryProvider === 'infobip' ? 'twilio' : 'infobip';
+  const fallbackChain = getFallbackChain(settings);
 
   console.log(`[SMS-PROVIDER] Sending SMS to ${to}`);
-  console.log(`[SMS-PROVIDER] Primary: ${primaryProvider}, Fallback enabled: ${settings.enableFallback}`);
+  console.log(`[SMS-PROVIDER] Primary: ${primaryProvider}, Fallbacks: [${fallbackChain.join(', ')}], Fallback enabled: ${settings.enableFallback}`);
 
   // Check if primary provider is available
   if (!isProviderAvailable(primaryProvider)) {
     console.warn(`[SMS-PROVIDER] Primary provider ${primaryProvider} not configured`);
     
-    // Try fallback if enabled
-    if (settings.enableFallback && isProviderAvailable(fallbackProvider)) {
-      console.log(`[SMS-PROVIDER] Using fallback provider: ${fallbackProvider}`);
-      const result = await sendWithProvider(fallbackProvider, to, message);
-      
-      attempts.push({
-        provider: fallbackProvider,
-        success: result.success,
-        error: result.error,
-      });
+    // Try fallbacks if enabled
+    if (settings.enableFallback) {
+      for (const fallbackProvider of fallbackChain) {
+        if (isProviderAvailable(fallbackProvider)) {
+          console.log(`[SMS-PROVIDER] Using fallback provider: ${fallbackProvider}`);
+          const result = await sendWithProvider(fallbackProvider, to, message);
+          
+          attempts.push({
+            provider: fallbackProvider,
+            success: result.success,
+            error: result.error,
+          });
 
-      return {
-        success: result.success,
-        provider: fallbackProvider,
-        messageId: result.messageId,
-        status: result.status,
-        error: result.error,
-        fallbackUsed: true,
-        attempts,
-      };
+          if (result.success) {
+            return {
+              success: true,
+              provider: fallbackProvider,
+              messageId: result.messageId,
+              status: result.status,
+              fallbackUsed: true,
+              attempts,
+            };
+          }
+        }
+      }
     }
 
     return {
       success: false,
       provider: primaryProvider,
-      error: `Primary provider ${primaryProvider} not configured and fallback not available`,
+      error: `Primary provider ${primaryProvider} not configured and no fallback available`,
       attempts,
     };
   }
@@ -254,42 +315,51 @@ export async function sendSMS(
     };
   }
 
-  // Primary failed - try fallback if enabled
+  // Primary failed - try fallbacks if enabled
   console.warn(`[SMS-PROVIDER] ${primaryProvider} failed: ${primaryResult.error}`);
 
-  if (settings.enableFallback && settings.fallbackOnError && isProviderAvailable(fallbackProvider)) {
-    console.log(`[SMS-PROVIDER] Attempting fallback: ${fallbackProvider}...`);
-    const fallbackResult = await sendWithProvider(fallbackProvider, to, message);
-    
-    attempts.push({
-      provider: fallbackProvider,
-      success: fallbackResult.success,
-      error: fallbackResult.error,
-    });
+  if (settings.enableFallback && settings.fallbackOnError) {
+    for (const fallbackProvider of fallbackChain) {
+      if (isProviderAvailable(fallbackProvider)) {
+        console.log(`[SMS-PROVIDER] Attempting fallback: ${fallbackProvider}...`);
+        const fallbackResult = await sendWithProvider(fallbackProvider, to, message);
+        
+        attempts.push({
+          provider: fallbackProvider,
+          success: fallbackResult.success,
+          error: fallbackResult.error,
+        });
 
-    if (fallbackResult.success) {
-      console.log(`[SMS-PROVIDER] Fallback ${fallbackProvider} succeeded`);
-      return {
-        success: true,
-        provider: fallbackProvider,
-        messageId: fallbackResult.messageId,
-        status: fallbackResult.status,
-        fallbackUsed: true,
-        attempts,
-      };
+        if (fallbackResult.success) {
+          console.log(`[SMS-PROVIDER] Fallback ${fallbackProvider} succeeded`);
+          return {
+            success: true,
+            provider: fallbackProvider,
+            messageId: fallbackResult.messageId,
+            status: fallbackResult.status,
+            fallbackUsed: true,
+            attempts,
+          };
+        }
+
+        console.warn(`[SMS-PROVIDER] Fallback ${fallbackProvider} failed: ${fallbackResult.error}`);
+      }
     }
 
-    console.error(`[SMS-PROVIDER] Fallback ${fallbackProvider} also failed: ${fallbackResult.error}`);
+    // All providers failed
+    const errorMessages = attempts.map(a => `${a.provider}: ${a.error}`).join('; ');
+    console.error(`[SMS-PROVIDER] All providers failed: ${errorMessages}`);
+    
     return {
       success: false,
-      provider: fallbackProvider,
-      error: `Both providers failed. Primary (${primaryProvider}): ${primaryResult.error}. Fallback (${fallbackProvider}): ${fallbackResult.error}`,
+      provider: attempts[attempts.length - 1]?.provider || primaryProvider,
+      error: `All providers failed. ${errorMessages}`,
       fallbackUsed: true,
       attempts,
     };
   }
 
-  // No fallback or fallback not available
+  // No fallback or fallback not enabled
   return {
     success: false,
     provider: primaryProvider,
@@ -304,32 +374,41 @@ export async function sendSMS(
  */
 export async function getCurrentProviderConfig(supabaseClient?: SupabaseClient): Promise<{
   settings: SMSProviderSettings;
+  notificationapiAvailable: boolean;
   infobipAvailable: boolean;
   twilioAvailable: boolean;
   activeProvider: SMSProvider;
+  fallbackChain: SMSProvider[];
 }> {
   const settings = await getProviderSettings(supabaseClient);
+  const notificationapiAvailable = isProviderAvailable('notificationapi');
   const infobipAvailable = isProviderAvailable('infobip');
   const twilioAvailable = isProviderAvailable('twilio');
 
   // Determine which provider will actually be used
   let activeProvider = settings.primaryProvider;
   if (!isProviderAvailable(settings.primaryProvider)) {
-    if (settings.enableFallback) {
-      activeProvider = settings.primaryProvider === 'infobip' ? 'twilio' : 'infobip';
+    const fallbackChain = getFallbackChain(settings);
+    for (const provider of fallbackChain) {
+      if (isProviderAvailable(provider)) {
+        activeProvider = provider;
+        break;
+      }
     }
   }
 
   return {
     settings,
+    notificationapiAvailable,
     infobipAvailable,
     twilioAvailable,
     activeProvider,
+    fallbackChain: getFallbackChain(settings),
   };
 }
 
 /**
- * Helper to format phone to E.164 (used by both providers)
+ * Helper to format phone to E.164 (used by all providers)
  */
 export function formatPhoneE164(phone: string): string {
   const digits = phone.replace(/\D/g, '');
@@ -344,4 +423,3 @@ export function formatPhoneE164(phone: string): string {
   }
   return `+${digits}`;
 }
-

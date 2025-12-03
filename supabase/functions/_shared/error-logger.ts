@@ -60,11 +60,20 @@ export async function logError(params: LogErrorParams): Promise<ErrorLogResult> 
   try {
     const supabase = getSupabaseClient();
     
+    // Map severity to database values (low, medium, high, critical)
+    const severityMap: Record<string, string> = {
+      'info': 'low',
+      'warning': 'medium',
+      'error': 'high',
+      'critical': 'critical',
+    };
+    const mappedSeverity = severityMap[params.severity] || params.severity;
+    
     const { data, error } = await supabase
       .from('error_logs')
       .insert({
         error_type: params.errorType,
-        severity: params.severity,
+        severity: mappedSeverity,
         source: params.source,
         error_message: params.errorMessage,
         error_stack: params.errorStack || null,
@@ -74,6 +83,7 @@ export async function logError(params: LogErrorParams): Promise<ErrorLogResult> 
         organization_id: params.organizationId || null,
         metadata: params.metadata || {},
         request_id: params.requestId || generateRequestId(),
+        timestamp: new Date().toISOString(),
       })
       .select('id')
       .single();

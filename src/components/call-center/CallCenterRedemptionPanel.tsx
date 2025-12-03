@@ -970,16 +970,6 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               </Alert>
             )}
             
-            {/* Show if verification was skipped with positive disposition */}
-            {verificationMethod === "skipped" && POSITIVE_DISPOSITIONS.some(d => d.value === selectedDisposition) && (
-              <Alert className="border-amber-500 bg-amber-50">
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-800">
-                  <strong>Note:</strong> Verification was skipped. Disposition: {POSITIVE_DISPOSITIONS.find(d => d.value === selectedDisposition)?.label}. Admin has been notified.
-                </AlertDescription>
-              </Alert>
-            )}
-
             {campaign && (
               <div className="p-3 bg-muted rounded-lg">
                 <div className="text-sm text-muted-foreground">Campaign</div>

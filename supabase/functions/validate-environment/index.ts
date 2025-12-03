@@ -7,7 +7,12 @@
  * Usage:
  * - Call this function from admin panel to check system configuration
  * - Returns detailed status of all required and optional environment variables
- * - Shows active SMS provider configuration (Infobip/Twilio)
+ * - Shows active SMS provider configuration (NotificationAPI/Infobip/Twilio)
+ * 
+ * Provider Priority:
+ * 1. NotificationAPI (Primary)
+ * 2. Infobip (Fallback 1)
+ * 3. Twilio (Fallback 2)
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -83,24 +88,32 @@ serve(async (req) => {
     results.push(checkEnvVar('Supabase Core', 'SUPABASE_ANON_KEY', true));
 
     // =====================================================
-    // SMS Provider: Infobip (Primary)
+    // SMS Provider: NotificationAPI (Primary)
     // =====================================================
     
-    results.push(checkEnvVar('Infobip SMS (Primary)', 'INFOBIP_API_KEY', false));
-    results.push(checkEnvVar('Infobip SMS (Primary)', 'INFOBIP_BASE_URL', false, false));
-    results.push(checkEnvVar('Infobip SMS (Primary)', 'INFOBIP_SENDER_ID', false, false));
+    results.push(checkEnvVar('NotificationAPI SMS (Primary)', 'NOTIFICATIONAPI_CLIENT_ID', false));
+    results.push(checkEnvVar('NotificationAPI SMS (Primary)', 'NOTIFICATIONAPI_CLIENT_SECRET', false));
+    results.push(checkEnvVar('NotificationAPI SMS (Primary)', 'NOTIFICATIONAPI_NOTIFICATION_ID', false, false));
 
     // =====================================================
-    // SMS Provider: Twilio (Fallback)
+    // SMS Provider: Infobip (Fallback 1)
     // =====================================================
     
-    results.push(checkEnvVar('Twilio SMS (Fallback)', 'TWILIO_ACCOUNT_SID', false));
-    results.push(checkEnvVar('Twilio SMS (Fallback)', 'TWILIO_AUTH_TOKEN', false));
+    results.push(checkEnvVar('Infobip SMS (Fallback 1)', 'INFOBIP_API_KEY', false));
+    results.push(checkEnvVar('Infobip SMS (Fallback 1)', 'INFOBIP_BASE_URL', false, false));
+    results.push(checkEnvVar('Infobip SMS (Fallback 1)', 'INFOBIP_SENDER_ID', false, false));
+
+    // =====================================================
+    // SMS Provider: Twilio (Fallback 2)
+    // =====================================================
+    
+    results.push(checkEnvVar('Twilio SMS (Fallback 2)', 'TWILIO_ACCOUNT_SID', false));
+    results.push(checkEnvVar('Twilio SMS (Fallback 2)', 'TWILIO_AUTH_TOKEN', false));
     
     // Check for from number (either name works)
     const twilioFromNumber = Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER');
     results.push({
-      category: 'Twilio SMS (Fallback)',
+      category: 'Twilio SMS (Fallback 2)',
       variable: 'TWILIO_FROM_NUMBER',
       required: false,
       configured: !!twilioFromNumber,
@@ -161,13 +174,20 @@ serve(async (req) => {
     // =====================================================
     
     // Check if at least one SMS provider is configured
+    const notificationapiConfigured = !!(
+      Deno.env.get('NOTIFICATIONAPI_CLIENT_ID') &&
+      Deno.env.get('NOTIFICATIONAPI_CLIENT_SECRET')
+    );
     const infobipConfigured = !!Deno.env.get('INFOBIP_API_KEY');
     const twilioConfigured = !!(
       Deno.env.get('TWILIO_ACCOUNT_SID') &&
       Deno.env.get('TWILIO_AUTH_TOKEN') &&
       twilioFromNumber
     );
-    const hasAnySmsProvider = infobipConfigured || twilioConfigured;
+    const hasAnySmsProvider = notificationapiConfigured || infobipConfigured || twilioConfigured;
+
+    // Count configured providers
+    const configuredProviderCount = [notificationapiConfigured, infobipConfigured, twilioConfigured].filter(Boolean).length;
 
     // Add SMS provider availability check
     if (!hasAnySmsProvider) {
@@ -177,16 +197,18 @@ serve(async (req) => {
         required: true,
         configured: false,
         status: 'error',
-        message: 'CRITICAL: No SMS provider configured. Set either Infobip or Twilio credentials.',
+        message: 'CRITICAL: No SMS provider configured. Set NotificationAPI, Infobip, or Twilio credentials.',
       });
     } else {
+      const activeProvider = smsProviderConfig?.activeProvider || 
+        (notificationapiConfigured ? 'notificationapi' : infobipConfigured ? 'infobip' : 'twilio');
       results.push({
         category: 'SMS System',
         variable: 'ANY_SMS_PROVIDER',
         required: true,
         configured: true,
         status: 'ok',
-        message: `Active provider: ${smsProviderConfig?.activeProvider || (infobipConfigured ? 'infobip' : 'twilio')}`,
+        message: `Active provider: ${activeProvider} (${configuredProviderCount} provider(s) configured)`,
       });
     }
 
@@ -218,21 +240,39 @@ serve(async (req) => {
     }
 
     // SMS Provider recommendations
-    if (!infobipConfigured && !twilioConfigured) {
-      recommendations.push('🔴 CRITICAL: Configure at least one SMS provider (Infobip or Twilio)');
-    } else if (infobipConfigured && !twilioConfigured) {
-      recommendations.push('💡 TIP: Configure Twilio as a fallback SMS provider for reliability');
-    } else if (!infobipConfigured && twilioConfigured) {
-      recommendations.push('💡 TIP: Configure Infobip as primary SMS provider for better rates');
+    if (!hasAnySmsProvider) {
+      recommendations.push('🔴 CRITICAL: Configure at least one SMS provider (NotificationAPI, Infobip, or Twilio)');
     } else {
-      recommendations.push('✅ Both SMS providers configured - fallback enabled');
+      // Show provider status
+      if (notificationapiConfigured) {
+        recommendations.push('✅ NotificationAPI configured as primary SMS provider');
+      } else {
+        recommendations.push('💡 TIP: Configure NotificationAPI as primary provider for best performance');
+      }
+
+      if (infobipConfigured) {
+        recommendations.push('✅ Infobip configured as fallback SMS provider');
+      } else if (notificationapiConfigured) {
+        recommendations.push('💡 TIP: Configure Infobip as fallback 1 for reliability');
+      }
+
+      if (twilioConfigured) {
+        recommendations.push('✅ Twilio configured as secondary fallback SMS provider');
+      } else if (notificationapiConfigured || infobipConfigured) {
+        recommendations.push('💡 TIP: Configure Twilio as fallback 2 for maximum reliability');
+      }
+
+      if (configuredProviderCount >= 2) {
+        recommendations.push('✅ Multiple SMS providers configured - fallback enabled');
+      }
     }
 
     // Show active SMS provider info
     if (smsProviderConfig) {
       recommendations.push(`📱 Active SMS Provider: ${smsProviderConfig.activeProvider.toUpperCase()}`);
-      if (smsProviderConfig.settings.enableFallback) {
-        recommendations.push(`🔄 Fallback: Enabled (will try ${smsProviderConfig.settings.primaryProvider === 'infobip' ? 'Twilio' : 'Infobip'} if primary fails)`);
+      recommendations.push(`📋 Provider Priority: ${smsProviderConfig.settings.primaryProvider} → ${smsProviderConfig.fallbackChain.join(' → ') || 'no fallback'}`);
+      if (smsProviderConfig.settings.enableFallback && smsProviderConfig.fallbackChain.length > 0) {
+        recommendations.push(`🔄 Fallback: Enabled (will try ${smsProviderConfig.fallbackChain.join(', ')} if primary fails)`);
       }
     }
 
@@ -243,7 +283,7 @@ serve(async (req) => {
 
     const ezTextingConfigured = results.find(r => r.variable === 'EZTEXTING_USERNAME')?.configured;
     if (ezTextingConfigured) {
-      recommendations.push('⚠️ DEPRECATED: EZ Texting credentials detected but no longer used. System now uses Infobip/Twilio for SMS.');
+      recommendations.push('⚠️ DEPRECATED: EZ Texting credentials detected but no longer used. System now uses NotificationAPI/Infobip/Twilio for SMS.');
     }
 
     const supportConfigured = results.find(r => r.variable === 'COMPANY_NAME')?.configured;
@@ -263,6 +303,8 @@ serve(async (req) => {
           activeProvider: smsProviderConfig.activeProvider,
           primaryProvider: smsProviderConfig.settings.primaryProvider,
           fallbackEnabled: smsProviderConfig.settings.enableFallback,
+          fallbackChain: smsProviderConfig.fallbackChain,
+          notificationapiAvailable: smsProviderConfig.notificationapiAvailable,
           infobipAvailable: smsProviderConfig.infobipAvailable,
           twilioAvailable: smsProviderConfig.twilioAvailable,
         } : null,

@@ -2,27 +2,34 @@
 
 ## Overview
 
-This guide documents the Twilio SMS configuration for the Mobul ACE platform. Twilio serves as the **fallback SMS provider** with Infobip as the primary provider.
+This guide documents the Twilio SMS configuration for the Mobul ACE platform. Twilio serves as the **second fallback SMS provider** in the provider chain.
 
-> **Note:** As of December 2025, the system uses a dual-provider architecture:
-> - **Primary Provider**: Infobip (see [INFOBIP_MIGRATION_GUIDE.md](./INFOBIP_MIGRATION_GUIDE.md))
-> - **Fallback Provider**: Twilio (this guide)
+> **Note:** As of December 2025, the system uses a three-provider architecture:
+> - **Primary Provider**: NotificationAPI (see [NOTIFICATIONAPI_MIGRATION_GUIDE.md](./NOTIFICATIONAPI_MIGRATION_GUIDE.md))
+> - **Fallback 1**: Infobip (see [INFOBIP_MIGRATION_GUIDE.md](./INFOBIP_MIGRATION_GUIDE.md))
+> - **Fallback 2**: Twilio (this guide)
 
 ## Architecture
 
-The SMS system uses a provider abstraction layer that:
-1. Tries the primary provider (Infobip) first
-2. If Infobip fails and fallback is enabled, tries Twilio
-3. Logs which provider was used for each message
+The SMS system uses a provider abstraction layer with the following fallback chain:
+
+```
+NotificationAPI (Primary)
+    ↓ on failure
+Infobip (Fallback 1)
+    ↓ on failure
+Twilio (Fallback 2)
+```
 
 ## Twilio as Fallback Provider
 
-Twilio is configured as the fallback SMS provider. When Infobip fails (API errors, rate limits, etc.), the system automatically falls back to Twilio.
+Twilio is configured as the second (last resort) fallback SMS provider. When both NotificationAPI and Infobip fail, the system automatically falls back to Twilio.
 
-### Benefits of Fallback
-- **Reliability**: Messages still send even if primary provider is down
-- **Redundancy**: Two independent SMS providers
-- **Flexibility**: Can switch primary/fallback via database settings
+### Benefits of Twilio as Fallback
+- **Reliability**: Industry-leading SMS infrastructure
+- **Redundancy**: Third independent SMS provider
+- **Flexibility**: Can be promoted to primary via database settings
+- **Integration**: Already integrated with call tracking features
 
 ## Required Environment Variables
 
@@ -53,23 +60,26 @@ SELECT * FROM get_sms_provider_settings();
 
 ```sql
 SELECT update_sms_provider_settings(
-  p_primary_provider := 'twilio'
-);
-```
-
-### Make Infobip Primary (Default)
-
-```sql
-SELECT update_sms_provider_settings(
-  p_primary_provider := 'infobip'
-);
-```
-
-### Disable Fallback (Twilio Only)
-
-```sql
-SELECT update_sms_provider_settings(
   p_primary_provider := 'twilio',
+  p_fallback_provider_1 := 'notificationapi',
+  p_fallback_provider_2 := 'infobip'
+);
+```
+
+### Keep Twilio as Fallback 2 (Default)
+
+```sql
+SELECT update_sms_provider_settings(
+  p_primary_provider := 'notificationapi',
+  p_fallback_provider_1 := 'infobip',
+  p_fallback_provider_2 := 'twilio'
+);
+```
+
+### Disable Fallback (Use Only Primary)
+
+```sql
+SELECT update_sms_provider_settings(
   p_enable_fallback := false
 );
 ```
@@ -83,21 +93,29 @@ SELECT update_sms_provider_settings(
 );
 ```
 
+### Disable Twilio
+
+```sql
+SELECT update_sms_provider_settings(
+  p_twilio_enabled := false
+);
+```
+
 ## Testing Twilio
 
 ### Test as Fallback
 
-1. Temporarily set invalid Infobip credentials
+1. Temporarily set invalid NotificationAPI and Infobip credentials
 2. Send a test SMS
 3. Check logs for `[SMS-PROVIDER] Fallback twilio succeeded`
-4. Restore valid Infobip credentials
+4. Restore valid credentials
 
 ### Test as Primary
 
 1. Set Twilio as primary: `SELECT update_sms_provider_settings(p_primary_provider := 'twilio');`
 2. Send a test SMS
 3. Check logs for `[TWILIO] SMS sent successfully`
-4. Reset to Infobip if desired
+4. Reset to NotificationAPI if desired
 
 ## Monitoring
 
@@ -119,13 +137,29 @@ LIMIT 20;
 ### Fallback Usage Statistics
 
 ```sql
--- Count of fallback vs primary usage (last 7 days)
+-- Count of provider usage (last 7 days)
 SELECT 
   provider_used,
   COUNT(*) as message_count
 FROM sms_delivery_log
 WHERE created_at > NOW() - INTERVAL '7 days'
-GROUP BY provider_used;
+GROUP BY provider_used
+ORDER BY message_count DESC;
+```
+
+### Fallback Trigger Analysis
+
+```sql
+-- See when fallback was used
+SELECT 
+  created_at,
+  phone_number,
+  provider_used,
+  delivery_status
+FROM sms_delivery_log
+WHERE provider_used = 'twilio'
+  AND created_at > NOW() - INTERVAL '24 hours'
+ORDER BY created_at DESC;
 ```
 
 ## Troubleshooting
@@ -156,12 +190,12 @@ GROUP BY provider_used;
 2. Verify the number in `TWILIO_FROM_NUMBER` exists in your account
 3. Purchase a new number if needed
 
-### Error: "Both providers failed"
+### Error: "All providers failed"
 
-**Cause:** Both Infobip and Twilio failed
+**Cause:** NotificationAPI, Infobip, and Twilio all failed
 
 **Solution:**
-1. Check both provider credentials
+1. Check all three provider credentials
 2. Verify phone number format
 3. Check provider account status and balance
 4. Review logs for specific error messages
@@ -174,11 +208,11 @@ GROUP BY provider_used;
 - Monthly phone number costs (~$1/month)
 - Real-time delivery status
 
-### When Twilio is Used (as Fallback)
+### When Twilio is Used (as Fallback 2)
+- NotificationAPI API is down
 - Infobip API is down
-- Infobip returns an error
-- Infobip rate limit exceeded
-- Infobip credentials invalid
+- Both primary and fallback 1 return errors
+- Rate limits exceeded on both providers
 
 ## Files Reference
 
@@ -196,16 +230,16 @@ GROUP BY provider_used;
 
 ### SMS Delivery Log
 ```sql
--- New column added for provider tracking
+-- Provider tracking column
 ALTER TABLE sms_delivery_log 
-ADD COLUMN provider_used TEXT CHECK (provider_used IN ('infobip', 'twilio'));
+ADD COLUMN provider_used TEXT CHECK (provider_used IN ('notificationapi', 'infobip', 'twilio'));
 ```
 
 ### SMS Opt-In Log
 ```sql
--- New column added for provider tracking
+-- Provider tracking column
 ALTER TABLE sms_opt_in_log 
-ADD COLUMN provider_used TEXT CHECK (provider_used IN ('infobip', 'twilio'));
+ADD COLUMN provider_used TEXT CHECK (provider_used IN ('notificationapi', 'infobip', 'twilio'));
 ```
 
 ## Migration History
@@ -223,9 +257,16 @@ ADD COLUMN provider_used TEXT CHECK (provider_used IN ('infobip', 'twilio'));
 - Twilio became fallback provider
 - Dual-provider architecture implemented
 
+### December 2025: NotificationAPI + Infobip + Twilio
+- NotificationAPI became primary provider
+- Infobip became fallback 1
+- Twilio became fallback 2
+- Three-provider architecture implemented
+
 ## Related Documentation
 
-- [Infobip Migration Guide](./INFOBIP_MIGRATION_GUIDE.md) - Primary SMS provider
+- [NotificationAPI Migration Guide](./NOTIFICATIONAPI_MIGRATION_GUIDE.md) - Primary SMS provider
+- [Infobip Migration Guide](./INFOBIP_MIGRATION_GUIDE.md) - Fallback 1 provider
 - [Gift Card Provisioning Troubleshooting](./GIFT_CARD_PROVISIONING_TROUBLESHOOTING.md)
 - [Twilio SMS API](https://www.twilio.com/docs/sms/api)
 - [Supabase Edge Functions](https://supabase.com/docs/guides/functions)

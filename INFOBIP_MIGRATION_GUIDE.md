@@ -1,28 +1,47 @@
-# Infobip SMS Integration Guide
+# Infobip SMS Configuration Guide
 
 ## Overview
 
-This guide documents the integration of Infobip as the primary SMS provider for the Mobul ACE platform, with Twilio as a configurable fallback option.
+This guide documents the Infobip SMS configuration for the Mobul ACE platform. Infobip serves as the **first fallback SMS provider** in the provider chain.
+
+> **Note:** As of December 2025, the system uses a three-provider architecture:
+> - **Primary Provider**: NotificationAPI (see [NOTIFICATIONAPI_MIGRATION_GUIDE.md](./NOTIFICATIONAPI_MIGRATION_GUIDE.md))
+> - **Fallback 1**: Infobip (this guide)
+> - **Fallback 2**: Twilio (see [TWILIO_SMS_MIGRATION_GUIDE.md](./TWILIO_SMS_MIGRATION_GUIDE.md))
 
 ## Architecture
 
-The system now uses a unified SMS provider abstraction layer that supports:
+The SMS system uses a provider abstraction layer with the following fallback chain:
 
-- **Infobip** - Primary SMS provider (recommended)
-- **Twilio** - Fallback SMS provider (optional)
+```
+NotificationAPI (Primary)
+    ↓ on failure
+Infobip (Fallback 1)
+    ↓ on failure
+Twilio (Fallback 2)
+```
 
-The provider selection is configured globally through the `sms_provider_settings` database table.
+## Infobip as Fallback Provider
 
-## Key Features
+Infobip is configured as the first fallback SMS provider. When NotificationAPI fails (API errors, rate limits, etc.), the system automatically falls back to Infobip.
 
-- **Automatic Fallback**: If Infobip fails, the system automatically tries Twilio
-- **Configurable**: Admins can switch providers or disable fallback via database settings
-- **Logging**: Each SMS logs which provider was used for analytics
-- **Cost Effective**: Infobip often offers better rates than Twilio
+### Benefits of Infobip
+- **Reliability**: Enterprise-grade SMS infrastructure
+- **Global Coverage**: Excellent international SMS delivery
+- **Cost Effective**: Competitive per-message pricing
+- **Rich Features**: Delivery reports, analytics, and more
 
-## Setup Instructions
+## Required Environment Variables
 
-### Step 1: Get Infobip API Credentials
+Configure these in Supabase Dashboard → Settings → Edge Functions → Secrets:
+
+```bash
+INFOBIP_API_KEY=your_api_key_here
+INFOBIP_BASE_URL=https://api.infobip.com  # Optional
+INFOBIP_SENDER_ID=YourSenderName
+```
+
+### How to Get Infobip Credentials
 
 1. Sign up at [Infobip](https://www.infobip.com)
 2. Go to your Infobip Dashboard
@@ -33,61 +52,7 @@ The provider selection is configured globally through the `sms_provider_settings
    - **Base URL**: Usually `https://api.infobip.com` (may vary by region)
    - **Sender ID**: Your registered sender name or phone number
 
-### Step 2: Set Environment Variables
-
-In Supabase Dashboard → Settings → Edge Functions → Secrets:
-
-```
-INFOBIP_API_KEY = your_infobip_api_key_here
-INFOBIP_BASE_URL = https://api.infobip.com
-INFOBIP_SENDER_ID = YourSenderName
-```
-
-**Note:** `INFOBIP_BASE_URL` is optional and defaults to `https://api.infobip.com`
-
-### Step 3: Run Database Migration
-
-Apply the SMS provider settings migration:
-
-```sql
--- The migration creates:
--- 1. sms_provider_settings table with default Infobip as primary
--- 2. Helper functions for viewing/updating settings
--- 3. Adds provider_used column to SMS log tables
-```
-
-### Step 4: Deploy Updated Functions
-
-```bash
-supabase functions deploy send-gift-card-sms
-supabase functions deploy send-sms-opt-in
-supabase functions deploy validate-environment
-```
-
-### Step 5: Verify Configuration
-
-Call the validation endpoint:
-
-```bash
-curl https://YOUR_PROJECT.supabase.co/functions/v1/validate-environment \
-  -H "Authorization: Bearer YOUR_ANON_KEY" | jq
-```
-
-Expected output:
-```json
-{
-  "success": true,
-  "smsProvider": {
-    "activeProvider": "infobip",
-    "primaryProvider": "infobip",
-    "fallbackEnabled": true,
-    "infobipAvailable": true,
-    "twilioAvailable": true
-  }
-}
-```
-
-## Managing SMS Provider Settings
+## Provider Settings
 
 ### View Current Settings
 
@@ -95,27 +60,31 @@ Expected output:
 SELECT * FROM get_sms_provider_settings();
 ```
 
-### Switch to Twilio as Primary
+### Make Infobip the Primary Provider
 
 ```sql
 SELECT update_sms_provider_settings(
-  p_primary_provider := 'twilio'
+  p_primary_provider := 'infobip',
+  p_fallback_provider_1 := 'notificationapi',
+  p_fallback_provider_2 := 'twilio'
 );
 ```
 
-### Switch Back to Infobip as Primary
+### Keep Infobip as Fallback 1 (Default)
 
 ```sql
 SELECT update_sms_provider_settings(
-  p_primary_provider := 'infobip'
+  p_primary_provider := 'notificationapi',
+  p_fallback_provider_1 := 'infobip',
+  p_fallback_provider_2 := 'twilio'
 );
 ```
 
-### Disable Fallback
+### Disable Infobip
 
 ```sql
 SELECT update_sms_provider_settings(
-  p_enable_fallback := false
+  p_infobip_enabled := false
 );
 ```
 
@@ -126,39 +95,6 @@ SELECT update_sms_provider_settings(
   p_infobip_sender_id := 'NewSenderName'
 );
 ```
-
-### View All Settings Directly
-
-```sql
-SELECT 
-  primary_provider,
-  enable_fallback,
-  infobip_enabled,
-  infobip_base_url,
-  infobip_sender_id,
-  twilio_enabled,
-  fallback_on_error,
-  updated_at
-FROM sms_provider_settings;
-```
-
-## Environment Variables Reference
-
-### Required for Infobip (Primary)
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `INFOBIP_API_KEY` | Your Infobip API key | `abc123...` |
-| `INFOBIP_BASE_URL` | API base URL (optional) | `https://api.infobip.com` |
-| `INFOBIP_SENDER_ID` | Sender name/number | `MyCompany` |
-
-### Required for Twilio (Fallback)
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `TWILIO_ACCOUNT_SID` | Twilio Account SID | `ACxxx...` |
-| `TWILIO_AUTH_TOKEN` | Twilio Auth Token | `xxx...` |
-| `TWILIO_FROM_NUMBER` | Twilio phone number | `+15551234567` |
 
 ## API Response Format
 
@@ -204,6 +140,22 @@ FROM sms_provider_settings;
 | 4 | EXPIRED | Message expired |
 | 5 | REJECTED | Message was rejected |
 
+## Testing Infobip
+
+### Test as Fallback
+
+1. Temporarily set invalid NotificationAPI credentials
+2. Send a test SMS
+3. Check logs for `[SMS-PROVIDER] Fallback infobip succeeded`
+4. Restore valid NotificationAPI credentials
+
+### Test as Primary
+
+1. Set Infobip as primary: `SELECT update_sms_provider_settings(p_primary_provider := 'infobip');`
+2. Send a test SMS
+3. Check logs for `[INFOBIP] SMS sent successfully`
+4. Reset to NotificationAPI if desired
+
 ## Monitoring & Logging
 
 ### View SMS Delivery Logs
@@ -218,6 +170,7 @@ SELECT
   sdl.twilio_message_sid as message_id,
   sdl.created_at
 FROM sms_delivery_log sdl
+WHERE sdl.provider_used = 'infobip'
 ORDER BY sdl.created_at DESC
 LIMIT 20;
 ```
@@ -234,6 +187,7 @@ SELECT
   sol.message_sid,
   sol.created_at
 FROM sms_opt_in_log sol
+WHERE sol.provider_used = 'infobip'
 ORDER BY sol.created_at DESC
 LIMIT 20;
 ```
@@ -261,6 +215,7 @@ SELECT
   created_at
 FROM sms_delivery_log
 WHERE delivery_status = 'failed'
+  AND provider_used = 'infobip'
 ORDER BY created_at DESC
 LIMIT 20;
 ```
@@ -285,12 +240,12 @@ LIMIT 20;
 2. Regenerate if necessary
 3. Update the environment variable
 
-### Error: "Both providers failed"
+### Error: "All providers failed"
 
-**Cause:** Both Infobip and Twilio failed to send
+**Cause:** NotificationAPI, Infobip, and Twilio all failed to send
 
 **Solution:**
-1. Check both provider credentials
+1. Check all provider credentials
 2. Verify phone number format (must be E.164: +15551234567)
 3. Check provider account status and balance
 4. Review logs for specific error messages
@@ -311,40 +266,74 @@ LIMIT 20;
 - Regional pricing varies
 - No monthly minimum
 
-### Twilio
-- $0.0079 per SMS (US)
-- Volume discounts available
-- Monthly phone number costs
-- Carrier lookup fees
-
-## Best Practices
-
-1. **Always configure both providers** for reliability
-2. **Enable fallback** for production environments
-3. **Monitor provider usage** to optimize costs
-4. **Test with both providers** before going live
-5. **Set up alerts** for high failure rates
+### When Infobip is Used
+- NotificationAPI API is down
+- NotificationAPI returns an error
+- NotificationAPI rate limit exceeded
+- NotificationAPI credentials invalid
 
 ## Files Reference
 
-### New Files Created
+### Infobip Client Library
+- `supabase/functions/_shared/infobip-client.ts`
 
-- `supabase/functions/_shared/infobip-client.ts` - Infobip client library
-- `supabase/functions/_shared/sms-provider.ts` - Provider abstraction layer
-- `supabase/migrations/[timestamp]_add_sms_provider_settings.sql` - Database migration
+### SMS Provider Abstraction
+- `supabase/functions/_shared/sms-provider.ts`
 
-### Files Modified
+### Functions Using SMS
+- `supabase/functions/send-gift-card-sms/index.ts`
+- `supabase/functions/send-sms-opt-in/index.ts`
 
-- `supabase/functions/send-gift-card-sms/index.ts` - Uses SMS provider abstraction
-- `supabase/functions/send-sms-opt-in/index.ts` - Uses SMS provider abstraction
-- `supabase/functions/validate-environment/index.ts` - Validates Infobip credentials
+## Database Tables
+
+### SMS Delivery Log
+```sql
+-- Provider tracking column
+ALTER TABLE sms_delivery_log 
+ADD COLUMN provider_used TEXT CHECK (provider_used IN ('notificationapi', 'infobip', 'twilio'));
+```
+
+### SMS Opt-In Log
+```sql
+-- Provider tracking column
+ALTER TABLE sms_opt_in_log 
+ADD COLUMN provider_used TEXT CHECK (provider_used IN ('notificationapi', 'infobip', 'twilio'));
+```
+
+## Migration History
+
+### Original: EZ Texting
+- Deprecated December 2025
+- Replaced by Twilio
+
+### December 2025: Twilio
+- Became primary SMS provider
+- Full integration with call tracking
+
+### December 2025: Infobip + Twilio
+- Infobip became primary provider
+- Twilio became fallback provider
+- Dual-provider architecture implemented
+
+### December 2025: NotificationAPI + Infobip + Twilio
+- NotificationAPI became primary provider
+- Infobip became fallback 1
+- Twilio became fallback 2
+- Three-provider architecture implemented
+
+## Related Documentation
+
+- [NotificationAPI Migration Guide](./NOTIFICATIONAPI_MIGRATION_GUIDE.md) - Primary SMS provider
+- [Twilio SMS Configuration Guide](./TWILIO_SMS_MIGRATION_GUIDE.md) - Fallback 2 provider
+- [Gift Card Provisioning Troubleshooting](./GIFT_CARD_PROVISIONING_TROUBLESHOOTING.md)
+- [Infobip SMS API](https://www.infobip.com/docs/api/channels/sms)
+- [Supabase Edge Functions](https://supabase.com/docs/guides/functions)
 
 ## Support Resources
 
 - [Infobip Documentation](https://www.infobip.com/docs/api)
 - [Infobip SMS API Reference](https://www.infobip.com/docs/api/channels/sms)
 - [Infobip Support](https://www.infobip.com/contact)
-- [Twilio Documentation](https://www.twilio.com/docs/sms)
 
 ## Migration Checklist
 
@@ -356,8 +345,6 @@ LIMIT 20;
 - [ ] Edge functions deployed
 - [ ] Validation endpoint returns healthy
 - [ ] Test SMS sent successfully via Infobip
-- [ ] Twilio configured as fallback (optional but recommended)
-- [ ] Fallback tested by simulating Infobip failure
+- [ ] Fallback tested by simulating NotificationAPI failure
 - [ ] Monitoring dashboards set up
 - [ ] Team trained on new provider settings
-

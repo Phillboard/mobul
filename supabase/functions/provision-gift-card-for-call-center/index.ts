@@ -90,12 +90,16 @@ serve(async (req) => {
     const conditionId = requestData.conditionId;
     const callSessionId = requestData.callSessionId;
 
-    console.log(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] Starting:`, {
+    console.log('='.repeat(60));
+    console.log(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] === REQUEST START ===`);
+    console.log('[CALL-CENTER-PROVISION] Request body:', JSON.stringify({
       redemptionCode,
-      hasPhone: !!deliveryPhone,
-      hasEmail: !!deliveryEmail,
+      deliveryPhone: deliveryPhone ? '***' + deliveryPhone.slice(-4) : null,
+      deliveryEmail: deliveryEmail ? '***@***' : null,
       conditionNumber,
-    });
+      conditionId,
+      callSessionId,
+    }, null, 2));
 
     // Validate inputs
     if (!redemptionCode) {
@@ -136,7 +140,10 @@ serve(async (req) => {
       .single();
 
     if (recipientError || !recipient) {
-      console.error('[CALL-CENTER-PROVISION] Recipient not found:', recipientError);
+      console.error('[CALL-CENTER-PROVISION] Recipient lookup failed:', {
+        error: recipientError,
+        code: redemptionCode,
+      });
       throw new Error('Invalid redemption code');
     }
 
@@ -144,7 +151,14 @@ serve(async (req) => {
     recipientId = recipient.id;
     campaignId = recipient.audiences[0]?.campaign_id;
 
-    console.log(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] Recipient found:`, recipient.id);
+    console.log('[CALL-CENTER-PROVISION] STEP 1 - Recipient found:', {
+      id: recipient.id,
+      name: `${recipient.first_name} ${recipient.last_name}`,
+      sms_opt_in_status: recipient.sms_opt_in_status,
+      verification_method: recipient.verification_method,
+      disposition: recipient.disposition,
+      campaign_id: campaignId,
+    });
 
     // =====================================================
     // STEP 2: Validate verification status for SMS delivery
@@ -207,24 +221,31 @@ serve(async (req) => {
     // If no config found, try to get from campaign_conditions (new schema)
     // Use specific conditionId if provided, otherwise fall back to first active condition
     if (!giftCardConfig) {
+      console.log('[CALL-CENTER-PROVISION] STEP 3b - No legacy config, checking campaign_conditions table');
       let conditionData: any = null;
       let conditionError: any = null;
 
       if (conditionId) {
         // Query specific condition by ID (include sms_template for delivery message)
+        console.log('[CALL-CENTER-PROVISION] Querying condition by ID:', conditionId);
         const result = await supabaseClient
           .from('campaign_conditions')
-          .select('brand_id, card_value, condition_number, sms_template')
+          .select('id, brand_id, card_value, condition_number, sms_template, condition_name, is_active')
           .eq('id', conditionId)
           .single();
         conditionData = result.data;
         conditionError = result.error;
-        console.log('[CALL-CENTER-PROVISION] Querying condition by ID:', conditionId);
+        console.log('[CALL-CENTER-PROVISION] Condition query result:', {
+          found: !!result.data,
+          data: result.data,
+          error: result.error,
+        });
       } else {
         // Fallback to first active condition for this campaign (include sms_template)
+        console.log('[CALL-CENTER-PROVISION] Querying first active condition for campaign:', campaignId);
         const result = await supabaseClient
           .from('campaign_conditions')
-          .select('brand_id, card_value, condition_number, sms_template')
+          .select('id, brand_id, card_value, condition_number, sms_template, condition_name, is_active')
           .eq('campaign_id', campaignId)
           .eq('is_active', true)
           .order('condition_number')
@@ -232,12 +253,28 @@ serve(async (req) => {
           .single();
         conditionData = result.data;
         conditionError = result.error;
-        console.log('[CALL-CENTER-PROVISION] Querying first active condition for campaign');
+        console.log('[CALL-CENTER-PROVISION] Condition query result:', {
+          found: !!result.data,
+          data: result.data,
+          error: result.error,
+        });
       }
 
+      // Log detailed diagnostic info
+      console.log('[CALL-CENTER-PROVISION] Condition analysis:', {
+        hasConditionData: !!conditionData,
+        brand_id: conditionData?.brand_id || 'NULL/MISSING',
+        card_value: conditionData?.card_value || 'NULL/MISSING',
+        condition_name: conditionData?.condition_name,
+        has_brand_id: !!conditionData?.brand_id,
+        has_card_value: !!conditionData?.card_value,
+      });
+
       if (conditionError || !conditionData?.brand_id) {
-        console.error('[CALL-CENTER-PROVISION] No gift card config in conditions:', conditionError);
-        console.error('[CALL-CENTER-PROVISION] Condition data:', conditionData);
+        console.error('[CALL-CENTER-PROVISION] === GIFT CARD CONFIG ERROR ===');
+        console.error('[CALL-CENTER-PROVISION] Query error:', conditionError);
+        console.error('[CALL-CENTER-PROVISION] Condition data:', JSON.stringify(conditionData, null, 2));
+        console.error('[CALL-CENTER-PROVISION] Likely cause: brand_id and card_value were not saved during campaign creation');
         throw new Error('No gift card configured for this campaign condition. Please set up a gift card brand and value in the campaign settings.');
       }
 
@@ -247,10 +284,14 @@ serve(async (req) => {
         sms_template: conditionData.sms_template || null,
       };
       
-      console.log('[CALL-CENTER-PROVISION] Using config from campaign_conditions:', giftCardConfig);
+      console.log('[CALL-CENTER-PROVISION] STEP 3 COMPLETE - Gift card config:', giftCardConfig);
     }
 
-    console.log('[CALL-CENTER-PROVISION] Gift card config:', giftCardConfig);
+    console.log('[CALL-CENTER-PROVISION] Final gift card config:', {
+      brand_id: giftCardConfig.brand_id,
+      denomination: giftCardConfig.denomination,
+      has_sms_template: !!giftCardConfig.sms_template,
+    });
 
     // =====================================================
     // STEP 4: Check if already provisioned for this condition
@@ -281,34 +322,41 @@ serve(async (req) => {
       conditionNumber: conditionNumber || 1,
     };
 
-    console.log('[CALL-CENTER-PROVISION] Calling unified provisioning:', provisionRequest);
+    console.log('[CALL-CENTER-PROVISION] STEP 5 - Calling unified provisioning');
+    console.log('[CALL-CENTER-PROVISION] Provision request:', JSON.stringify(provisionRequest, null, 2));
 
     // Use Supabase Functions invoke internally (server-to-server)
-    const provisionResponse = await fetch(
-      `${Deno.env.get('SUPABASE_URL')}/functions/v1/provision-gift-card-unified`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-        },
-        body: JSON.stringify(provisionRequest),
-      }
-    );
+    const unifiedUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/provision-gift-card-unified`;
+    console.log('[CALL-CENTER-PROVISION] Calling:', unifiedUrl);
+    
+    const provisionResponse = await fetch(unifiedUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+      body: JSON.stringify(provisionRequest),
+    });
+
+    console.log('[CALL-CENTER-PROVISION] Unified response status:', provisionResponse.status);
 
     if (!provisionResponse.ok) {
       const errorText = await provisionResponse.text();
-      console.error('[CALL-CENTER-PROVISION] Provisioning failed:', errorText);
+      console.error('[CALL-CENTER-PROVISION] === UNIFIED FUNCTION FAILED ===');
+      console.error('[CALL-CENTER-PROVISION] Status:', provisionResponse.status);
+      console.error('[CALL-CENTER-PROVISION] Response:', errorText);
       throw new Error(`Provisioning failed: ${errorText}`);
     }
 
     const provisionResult = await provisionResponse.json();
+    console.log('[CALL-CENTER-PROVISION] Unified response:', JSON.stringify(provisionResult, null, 2));
 
     if (!provisionResult.success) {
+      console.error('[CALL-CENTER-PROVISION] Unified function returned error:', provisionResult.error);
       throw new Error(provisionResult.error || 'Provisioning failed');
     }
 
-    console.log('[CALL-CENTER-PROVISION] Provisioning successful');
+    console.log('[CALL-CENTER-PROVISION] STEP 5 COMPLETE - Provisioning successful');
 
     // =====================================================
     // STEP 6: Send delivery notification (SMS or Email)

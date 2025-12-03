@@ -74,7 +74,7 @@ export function MethodNameStep({ initialData, onNext, onCancel, isEditMode, camp
     form.trigger();
   };
 
-  const campaignStatus = form.watch("campaign_status");
+  const watchedCampaignStatus = form.watch("campaign_status");
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -174,8 +174,8 @@ export function MethodNameStep({ initialData, onNext, onCancel, isEditMode, camp
             {/* Status indicator */}
             {selectedMethod === "self" && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <div className={`w-2 h-2 rounded-full ${campaignStatus === "mailed" ? "bg-green-500" : "bg-amber-500"}`} />
-                {campaignStatus === "mailed" 
+                <div className={`w-2 h-2 rounded-full ${watchedCampaignStatus === "mailed" ? "bg-green-500" : "bg-amber-500"}`} />
+                {watchedCampaignStatus === "mailed" 
                   ? "Campaign will activate immediately for call center processing"
                   : "Campaign will be saved as draft until you mail"}
               </div>

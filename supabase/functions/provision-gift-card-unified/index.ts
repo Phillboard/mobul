@@ -157,11 +157,20 @@ serve(async (req) => {
       costBasis = denomData?.cost_basis || denomination * 0.95; // Default 5% discount
     } else {
       // No inventory available, try Tillo API
-      console.log('[PROVISION] No inventory, purchasing from Tillo');
+      console.log('[PROVISION] No inventory, checking Tillo API...');
+      
+      // Check if Tillo is configured first
+      const tilloApiKey = Deno.env.get('TILLO_API_KEY');
+      const tilloSecretKey = Deno.env.get('TILLO_SECRET_KEY');
+      
+      if (!tilloApiKey || !tilloSecretKey) {
+        console.error('[PROVISION] No inventory and Tillo API not configured');
+        throw new Error('No gift cards available in inventory and Tillo API is not configured. Please upload gift card inventory or configure Tillo API credentials.');
+      }
       
       const tilloBrandCode = brand.tillo_brand_code || brand.brand_code;
       if (!tilloBrandCode) {
-        throw new Error('Brand does not have Tillo integration configured');
+        throw new Error('Brand does not have Tillo integration configured. Please add a Tillo brand code to this gift card brand, or upload inventory manually.');
       }
 
       try {
