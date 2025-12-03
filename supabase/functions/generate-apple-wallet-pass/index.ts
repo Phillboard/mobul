@@ -85,25 +85,33 @@ serve(async (req) => {
 
     // Generate unique serial number for this pass
     const serialNumber = `gc-${giftCard.id}-${Date.now()}`;
+    console.log('[DEBUG] Created serial number:', serialNumber);
 
     // Create pass.json structure
+    console.log('[DEBUG] Creating pass.json...');
     const passJson = createPassJson({
       giftCard,
       teamId,
       passTypeId,
       serialNumber,
     });
+    console.log('[DEBUG] pass.json created');
 
     // Parse the certificate
+    console.log('[DEBUG] Parsing certificate...');
     const { privateKey, certificate } = parseCertificate(certificateB64, password);
+    console.log('[DEBUG] Certificate parsed successfully');
 
     // Parse WWDR certificate if provided
     let wwdrCert: forge.pki.Certificate | undefined;
     if (wwdrCertB64) {
+      console.log('[DEBUG] Parsing WWDR certificate...');
       wwdrCert = parseWWDRCertificate(wwdrCertB64);
+      console.log('[DEBUG] WWDR certificate parsed');
     }
 
     // Create the .pkpass file with proper signing
+    console.log('[DEBUG] Creating pkpass file...');
     const pkpassBuffer = await createPkpassFile({
       passJson,
       privateKey,
@@ -114,7 +122,19 @@ serve(async (req) => {
     console.log('Apple Wallet pass generated successfully, size:', pkpassBuffer.length, 'bytes');
 
     // Convert to base64 for JSON response (Supabase functions.invoke doesn't handle binary well)
-    const base64Pass = btoa(String.fromCharCode(...pkpassBuffer));
+    // Use chunked conversion to avoid stack overflow with large buffers
+    console.log('[DEBUG] Converting to base64...');
+    let binaryString = '';
+    const chunkSize = 8192; // Process 8KB at a time
+    for (let i = 0; i < pkpassBuffer.length; i += chunkSize) {
+      const end = Math.min(i + chunkSize, pkpassBuffer.length);
+      const chunk = pkpassBuffer.subarray(i, end);
+      for (let j = 0; j < chunk.length; j++) {
+        binaryString += String.fromCharCode(chunk[j]);
+      }
+    }
+    const base64Pass = btoa(binaryString);
+    console.log('[DEBUG] Base64 conversion complete, length:', base64Pass.length);
 
     // Return as JSON with base64-encoded pass
     return new Response(
@@ -362,30 +382,41 @@ async function createPkpassFile({
   certificate: forge.pki.Certificate;
   wwdrCert?: forge.pki.Certificate;
 }): Promise<Uint8Array> {
+  console.log('[DEBUG] createPkpassFile: Starting...');
   const zip = new JSZip();
 
   // Add pass.json
   const passJsonString = JSON.stringify(passJson, null, 2);
   zip.addFile('pass.json', new TextEncoder().encode(passJsonString));
+  console.log('[DEBUG] createPkpassFile: Added pass.json');
 
   // Create default icons (simple colored square as placeholder)
   // In production, you should use actual brand logos
+  console.log('[DEBUG] createPkpassFile: Creating icons...');
   const iconPng = createSimpleIcon(29);
+  console.log('[DEBUG] createPkpassFile: icon.png created, size:', iconPng.length);
   const icon2xPng = createSimpleIcon(58);
+  console.log('[DEBUG] createPkpassFile: icon@2x.png created, size:', icon2xPng.length);
   const icon3xPng = createSimpleIcon(87);
+  console.log('[DEBUG] createPkpassFile: icon@3x.png created, size:', icon3xPng.length);
   
   zip.addFile('icon.png', iconPng);
   zip.addFile('icon@2x.png', icon2xPng);
   zip.addFile('icon@3x.png', icon3xPng);
 
   // Create logo images
+  console.log('[DEBUG] createPkpassFile: Creating logo images...');
   const logoPng = createSimpleIcon(160);
+  console.log('[DEBUG] createPkpassFile: logo.png created, size:', logoPng.length);
   const logo2xPng = createSimpleIcon(320);
+  console.log('[DEBUG] createPkpassFile: logo@2x.png created, size:', logo2xPng.length);
   
   zip.addFile('logo.png', logoPng);
   zip.addFile('logo@2x.png', logo2xPng);
+  console.log('[DEBUG] createPkpassFile: All images added to zip');
 
   // Create manifest.json with SHA1 hashes
+  console.log('[DEBUG] createPkpassFile: Creating manifest...');
   const manifest: Record<string, string> = {};
   
   // Hash all files
@@ -395,16 +426,22 @@ async function createPkpassFile({
   manifest['icon@3x.png'] = sha1Hash(icon3xPng);
   manifest['logo.png'] = sha1Hash(logoPng);
   manifest['logo@2x.png'] = sha1Hash(logo2xPng);
+  console.log('[DEBUG] createPkpassFile: Hashes calculated');
 
   const manifestString = JSON.stringify(manifest);
   zip.addFile('manifest.json', new TextEncoder().encode(manifestString));
+  console.log('[DEBUG] createPkpassFile: Manifest added');
 
   // Create PKCS#7 detached signature
+  console.log('[DEBUG] createPkpassFile: Creating PKCS#7 signature...');
   const signature = createPkcs7Signature(manifestString, privateKey, certificate, wwdrCert);
+  console.log('[DEBUG] createPkpassFile: Signature created, size:', signature.length);
   zip.addFile('signature', signature);
 
   // Generate the ZIP file
+  console.log('[DEBUG] createPkpassFile: Generating ZIP...');
   const pkpassBuffer = await zip.generateAsync({ type: 'uint8array' });
+  console.log('[DEBUG] createPkpassFile: ZIP generated, size:', pkpassBuffer.length);
   return pkpassBuffer;
 }
 
@@ -471,10 +508,24 @@ function createPkcs7Signature(
 
 /**
  * Calculate SHA1 hash (required by Apple for manifest)
+ * Processes data in chunks to avoid stack overflow with large arrays
  */
 function sha1Hash(data: Uint8Array): string {
   const md = forge.md.sha1.create();
-  md.update(forge.util.binary.raw.encode(data));
+  
+  // Process in chunks to avoid stack overflow with large data
+  const chunkSize = 32768; // 32KB chunks
+  for (let i = 0; i < data.length; i += chunkSize) {
+    const end = Math.min(i + chunkSize, data.length);
+    const chunk = data.subarray(i, end);
+    // Convert chunk to binary string manually to avoid forge.util.binary.raw.encode stack overflow
+    let binaryStr = '';
+    for (let j = 0; j < chunk.length; j++) {
+      binaryStr += String.fromCharCode(chunk[j]);
+    }
+    md.update(binaryStr);
+  }
+  
   return md.digest().toHex();
 }
 
@@ -490,10 +541,10 @@ function createSimpleIcon(size: number): Uint8Array {
   const height = size;
   
   // PNG signature
-  const signature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  const signature = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
   
-  // IHDR chunk
-  const ihdrData = [
+  // IHDR chunk data
+  const ihdrData = new Uint8Array([
     (width >> 24) & 0xFF, (width >> 16) & 0xFF, (width >> 8) & 0xFF, width & 0xFF,
     (height >> 24) & 0xFF, (height >> 16) & 0xFF, (height >> 8) & 0xFF, height & 0xFF,
     8, // bit depth
@@ -501,57 +552,85 @@ function createSimpleIcon(size: number): Uint8Array {
     0, // compression
     0, // filter
     0, // interlace
-  ];
-  const ihdrCrc = crc32([0x49, 0x48, 0x44, 0x52, ...ihdrData]);
-  const ihdr = [
-    0x00, 0x00, 0x00, 0x0D, // length
-    0x49, 0x48, 0x44, 0x52, // type "IHDR"
-    ...ihdrData,
-    (ihdrCrc >> 24) & 0xFF, (ihdrCrc >> 16) & 0xFF, (ihdrCrc >> 8) & 0xFF, ihdrCrc & 0xFF,
-  ];
+  ]);
   
-  // Create image data (purple pixels)
-  const rawData: number[] = [];
+  // Calculate CRC for IHDR
+  const ihdrForCrc = new Uint8Array(4 + ihdrData.length);
+  ihdrForCrc.set([0x49, 0x48, 0x44, 0x52], 0);
+  ihdrForCrc.set(ihdrData, 4);
+  const ihdrCrc = crc32Array(ihdrForCrc);
+  
+  // Build IHDR chunk
+  const ihdr = new Uint8Array(4 + 4 + ihdrData.length + 4);
+  ihdr.set([0x00, 0x00, 0x00, 0x0D], 0); // length
+  ihdr.set([0x49, 0x48, 0x44, 0x52], 4); // type "IHDR"
+  ihdr.set(ihdrData, 8);
+  ihdr.set([(ihdrCrc >> 24) & 0xFF, (ihdrCrc >> 16) & 0xFF, (ihdrCrc >> 8) & 0xFF, ihdrCrc & 0xFF], 8 + ihdrData.length);
+  
+  // Create image data (purple pixels) - preallocate for efficiency
+  const rawDataLength = height * (1 + width * 3); // filter byte + RGB for each pixel per row
+  const rawData = new Uint8Array(rawDataLength);
+  let idx = 0;
   for (let y = 0; y < height; y++) {
-    rawData.push(0); // Filter byte (none)
+    rawData[idx++] = 0; // Filter byte (none)
     for (let x = 0; x < width; x++) {
-      rawData.push(124); // R (purple-600)
-      rawData.push(58);  // G
-      rawData.push(237); // B
+      rawData[idx++] = 124; // R (purple-600)
+      rawData[idx++] = 58;  // G
+      rawData[idx++] = 237; // B
     }
   }
   
   // Compress with zlib/deflate
-  const deflated = deflateSync(new Uint8Array(rawData));
+  const deflated = deflateSyncArray(rawData);
   
-  // IDAT chunk
-  const idatCrc = crc32([0x49, 0x44, 0x41, 0x54, ...deflated]);
-  const idat = [
+  // Build IDAT chunk
+  const idatForCrc = new Uint8Array(4 + deflated.length);
+  idatForCrc.set([0x49, 0x44, 0x41, 0x54], 0);
+  idatForCrc.set(deflated, 4);
+  const idatCrc = crc32Array(idatForCrc);
+  
+  const idat = new Uint8Array(4 + 4 + deflated.length + 4);
+  idat.set([
     (deflated.length >> 24) & 0xFF, (deflated.length >> 16) & 0xFF, 
-    (deflated.length >> 8) & 0xFF, deflated.length & 0xFF,
-    0x49, 0x44, 0x41, 0x54, // type "IDAT"
-    ...deflated,
-    (idatCrc >> 24) & 0xFF, (idatCrc >> 16) & 0xFF, (idatCrc >> 8) & 0xFF, idatCrc & 0xFF,
-  ];
+    (deflated.length >> 8) & 0xFF, deflated.length & 0xFF
+  ], 0);
+  idat.set([0x49, 0x44, 0x41, 0x54], 4); // type "IDAT"
+  idat.set(deflated, 8);
+  idat.set([(idatCrc >> 24) & 0xFF, (idatCrc >> 16) & 0xFF, (idatCrc >> 8) & 0xFF, idatCrc & 0xFF], 8 + deflated.length);
   
   // IEND chunk
-  const iend = [
+  const iend = new Uint8Array([
     0x00, 0x00, 0x00, 0x00,
     0x49, 0x45, 0x4E, 0x44,
     0xAE, 0x42, 0x60, 0x82,
-  ];
+  ]);
   
-  return new Uint8Array([...signature, ...ihdr, ...idat, ...iend]);
+  // Combine all chunks without spread operator (avoids stack overflow)
+  const totalLength = signature.length + ihdr.length + idat.length + iend.length;
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  result.set(signature, offset); offset += signature.length;
+  result.set(ihdr, offset); offset += ihdr.length;
+  result.set(idat, offset); offset += idat.length;
+  result.set(iend, offset);
+  
+  return result;
 }
 
 /**
  * Simple deflate compression (uncompressed blocks for simplicity)
+ * Returns Uint8Array to avoid stack overflow with large data
  */
-function deflateSync(data: Uint8Array): number[] {
-  const result: number[] = [];
+function deflateSyncArray(data: Uint8Array): Uint8Array {
+  // Calculate output size: header(2) + blocks(5 bytes header per 65535 bytes + data) + adler(4)
+  const numBlocks = Math.ceil(data.length / 65535);
+  const outputSize = 2 + (numBlocks * 5) + data.length + 4;
+  const result = new Uint8Array(outputSize);
+  let resultIdx = 0;
   
   // Zlib header
-  result.push(0x78, 0x9C); // Default compression
+  result[resultIdx++] = 0x78;
+  result[resultIdx++] = 0x9C; // Default compression
   
   let offset = 0;
   while (offset < data.length) {
@@ -560,37 +639,37 @@ function deflateSync(data: Uint8Array): number[] {
     const isLast = offset + blockSize >= data.length;
     
     // Block header
-    result.push(isLast ? 0x01 : 0x00);
-    result.push(blockSize & 0xFF);
-    result.push((blockSize >> 8) & 0xFF);
-    result.push((~blockSize) & 0xFF);
-    result.push(((~blockSize) >> 8) & 0xFF);
+    result[resultIdx++] = isLast ? 0x01 : 0x00;
+    result[resultIdx++] = blockSize & 0xFF;
+    result[resultIdx++] = (blockSize >> 8) & 0xFF;
+    result[resultIdx++] = (~blockSize) & 0xFF;
+    result[resultIdx++] = ((~blockSize) >> 8) & 0xFF;
     
-    // Block data
-    for (let i = 0; i < blockSize; i++) {
-      result.push(data[offset + i]);
-    }
+    // Block data - use set() for efficiency
+    result.set(data.subarray(offset, offset + blockSize), resultIdx);
+    resultIdx += blockSize;
     
     offset += blockSize;
   }
   
   // Adler-32 checksum
   let a = 1, b = 0;
-  for (const byte of data) {
-    a = (a + byte) % 65521;
+  for (let i = 0; i < data.length; i++) {
+    a = (a + data[i]) % 65521;
     b = (b + a) % 65521;
   }
   const adler = (b << 16) | a;
-  result.push((adler >> 24) & 0xFF);
-  result.push((adler >> 16) & 0xFF);
-  result.push((adler >> 8) & 0xFF);
-  result.push(adler & 0xFF);
+  result[resultIdx++] = (adler >> 24) & 0xFF;
+  result[resultIdx++] = (adler >> 16) & 0xFF;
+  result[resultIdx++] = (adler >> 8) & 0xFF;
+  result[resultIdx++] = adler & 0xFF;
   
-  return result;
+  // Return only the used portion
+  return result.subarray(0, resultIdx);
 }
 
 /**
- * CRC32 calculation for PNG chunks
+ * CRC32 calculation for PNG chunks (number array version - kept for compatibility)
  */
 function crc32(data: number[]): number {
   let crc = 0xFFFFFFFF;
@@ -598,6 +677,20 @@ function crc32(data: number[]): number {
   
   for (const byte of data) {
     crc = table[(crc ^ byte) & 0xFF] ^ (crc >>> 8);
+  }
+  
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+/**
+ * CRC32 calculation for PNG chunks (Uint8Array version - more efficient)
+ */
+function crc32Array(data: Uint8Array): number {
+  let crc = 0xFFFFFFFF;
+  const table = getCrc32Table();
+  
+  for (let i = 0; i < data.length; i++) {
+    crc = table[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
   }
   
   return (crc ^ 0xFFFFFFFF) >>> 0;
