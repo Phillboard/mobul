@@ -1,48 +1,44 @@
 ---
-description: For analyzing campaign condition data models, reward triggers, and fulfillment workflows
+description: Defines the core model for campaign conditions, reward triggers, and gift card distribution logic
 ---
 
 
 # campaign-condition-model
 
-Campaign conditions govern reward distribution through a multi-stage verification system:
+## Condition Trigger System (Importance: 90)
+- Multiple condition types for reward triggers:
+  - Manual agent approval
+  - Call completion verification
+  - Form submission validation
+  - Time-based triggers
 
-Core Condition Types:
-1. Manual Agent Verification
-- Agent disposition triggers (interested, qualified, appointment) 
-- SMS opt-in requirement before reward issuance
-- Customizable verification skip rules with audit logging
+## Reward Distribution Logic (Importance: 85)
+- Campaign-specific reward validation rules
+- Gift card allocation based on condition completion
+- Multi-step verification requirements:
+  - SMS opt-in status
+  - Email verification
+  - Call disposition checks
 
-2. Form Submission
-- Lead capture with auto-validation
-- Field-level completion requirements
-- CRM integration triggers
+## Condition Chaining (Importance: 80)
+- Sequential condition dependencies
+- Parallel condition evaluation
+- Complex reward routing based on completion status
+- Automated trigger evaluation with fail-safes
 
-3. Time-Delayed Rewards 
-- Configurable delay periods after qualifying events
-- Prerequisite condition dependencies
-- Campaign-specific timeout rules
+## Time Delay Management (Importance: 75)
+- Configurable delay periods between conditions
+- Business hours awareness for trigger evaluation 
+- Campaign-specific waiting periods
+- Grace period handling for condition completion
 
-Reward Distribution Logic:
-- Hierarchical credit flow: Platform → Agency → Client → Campaign
-- Pool-based gift card inventory with brand/denomination mapping
-- Automatic Tillo API fallback when CSV inventory depleted
-- Real-time balance verification and threshold alerts
+## Verification Workflow (Importance: 85)
+- Multi-stage approval process
+- Role-based verification rules
+- Status transition tracking
+- Audit trail for condition evaluations
 
-Condition State Machine:
-```
-pending → in_progress → completed/failed
-         ↳ expired
-         ↳ cancelled
-```
-
-Verification Requirements:
-- SMS opt-in status validation
-- Campaign budget availability check
-- Pool inventory verification
-- Credit balance confirmation
-
-The model implements complex reward triggers with built-in delays, multi-step verification, and automated fulfillment logic while maintaining strict credit controls and inventory management.
+The model emphasizes secure reward distribution through a sophisticated condition evaluation system, with particular focus on verification accuracy and proper sequencing of reward triggers.
 
 $END$
 

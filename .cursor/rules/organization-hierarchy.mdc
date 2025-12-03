@@ -1,50 +1,50 @@
 ---
-description: Guidelines for implementing organizational hierarchy, permissions, and multi-tenant relationships in the direct mail marketing platform.
+description: Defines organizational hierarchy, multi-tenant relationships, and permission inheritance for the direct mail marketing platform
 ---
 
 
 # organization-hierarchy
 
-Multi-Tenant Data Model (Importance: 95/100)
+Multi-Tenant Organization Model (Importance: 95/100)
+- Four-tier hierarchy: Platform -> Agency -> Client -> Campaign
+- Strict unidirectional credit flow downward through hierarchy
+- Organizations can operate in multiple industry verticals (roofing, auto warranty)
+- Custom markup/pricing rules inherit down hierarchy levels
 
-Hierarchical Organization Structure:
-- Platform → Agency → Client → Campaign model
-- Organizations can operate as both agencies and direct clients
-- Strict one-way relationship flow (child entities cannot have multiple parents)
-- Organization status changes cascade to child entities
+Permission Inheritance System (Importance: 90/100)
+src/contexts/TenantContext.tsx:
+- Role-based access control with hierarchical inheritance
+- Permissions cascade down from agency to client level
+- Custom override capabilities for specific client permissions
+- Automatic client context switching with state persistence
 
-Role-Based Permissions:
-- Platform Admin: Full system access
-- Agency Owner: Gift card marketplace, pool management
-- Client Owner: Campaign creation, contact management 
-- Call Center: Redemption verification
-- Support: Time-limited impersonation capabilities
+Credit Account Management (Importance: 85/100)
+src/types/creditAccounts.ts:
+- Credit pools managed at each organizational tier
+- Automated credit allocation and reservation system
+- Campaign-level credit tracking tied to parent organization
+- Custom credit thresholds and alerts per organization level
 
-Client-Agency Relationships:
-- Agencies can manage multiple client organizations
-- Each client tied to single agency for billing/credits
-- Credits flow downward through hierarchy
-- Custom pricing inherits through organizational chain
+User Management Hierarchy (Importance: 80/100)
+src/hooks/useManageableUsers.ts:
+- Users can belong to multiple organizations with different roles
+- Role calculation based on organizational position
+- Cross-organization visibility rules
+- Client-specific user management capabilities
 
-Key Access Controls:
-- Campaign visibility scoped to owning organization
-- Contact lists isolated between clients
-- Analytics roll up through organization chain
-- Template sharing controlled by parent organization
+Organization Status Control (Importance: 75/100)
+supabase/functions/update-organization-status/index.ts:
+- Status transitions affect entire organizational branch
+- Automated status inheritance for child organizations
+- Custom validation rules for status changes
+- Impact analysis for organizational status updates
 
-Permission Inheritance:
-- Settings cascade from agency to client level
-- Mail provider configurations inherit downward
-- Brand access controlled at agency level
-- Credit allocations flow through hierarchy
-
-Organization Types:
-- Direct Client: Standalone organization
-- Agency: Manages multiple client organizations  
-- Platform Admin: System-level organization
-- Hybrid: Both agency and direct client capabilities
-
-This organizational model supports complex business relationships while maintaining strict data isolation and hierarchical control flows.
+Core Business Rules:
+1. Credits only flow downward in hierarchy
+2. Permissions inherit down but can be overridden
+3. Users can have different roles across organizations
+4. Status changes affect all child organizations
+5. Each tier has unique pricing and markup rules
 
 $END$
 

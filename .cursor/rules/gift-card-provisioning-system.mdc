@@ -1,41 +1,46 @@
 ---
-description: Guidelines for implementing gift card provisioning, inventory management, and redemption workflows
+description: Documents the gift card provisioning and inventory management system including pools, balances, and automated triggers
 ---
 
 
 # gift-card-provisioning-system
 
-Core provisioning workflow implemented through hierarchical orchestration:
+The gift card provisioning system implements a sophisticated waterfall strategy for fulfilling gift card rewards:
 
-1. Unified Gift Card Provisioning (Importance: 95)
-- Two-tier provisioning strategy prioritizing CSV inventory before Tillo API purchases
-- Pool-based allocation with automatic failover between sources
-- Cost basis tracking for profit calculations across reseller levels
-- Real-time balance verification with provider-specific retry logic
+## Core Provisioning Logic (Importance: 95)
+src/lib/gift-cards/provisioning-utils.ts
+- Two-tier provisioning waterfall:
+  1. CSV inventory pool allocation with atomic claiming
+  2. Automatic Tillo API fallback purchase if CSV depleted
+- Campaign-specific pool management with inventory thresholds
+- Automated low balance triggers with multi-channel alerts
 
-2. Inventory Management (Importance: 90) 
-- Pool health monitoring with configurable thresholds
-- Automated low inventory alerts (warning/critical levels)
-- Brand-denomination relationship modeling
-- Reconciliation system for balance verification
+## Pool Health Management (Importance: 90) 
+src/lib/gift-cards/pool-health.ts
+- Real-time pool health monitoring with configurable thresholds:
+  - Healthy: >25% capacity
+  - Warning: 10-25% capacity  
+  - Critical: <10% capacity
+- Automated pool replenishment triggers
+- Balance verification scheduling every 6 hours
 
-3. Redemption Workflow (Importance: 85)
-- Multi-condition fulfillment with sequential validation
-- SMS opt-in verification requirement
-- Campaign-specific redemption rules
-- Disposition-based approval for call center claims
+## Balance Verification (Importance: 85)
+src/lib/gift-cards/balance-verification.ts
+- Multi-provider balance verification system
+- Automated reconciliation with provider APIs
+- Discrepancy detection and alerting
+- Historical balance tracking
 
-4. Credit System (Importance: 90)
-- Hierarchical allocation: Platform → Agency → Client → Campaign
-- Strict downward credit flow enforcement
-- Real-time balance tracking and reservation system
-- Auto-reload threshold management
+## Inventory Thresholds (Importance: 80)
+src/lib/gift-cards/inventory-thresholds.ts
+- Client-specific minimum inventory requirements
+- Automated purchasing triggers based on:
+  - Historical usage patterns
+  - Scheduled campaign needs
+  - Current inventory levels
+- Emergency threshold overrides
 
-Key Files:
-- src/lib/gift-cards/provisioning-utils.ts
-- supabase/functions/provision-gift-card-unified/index.ts
-- supabase/functions/redeem-customer-code/index.ts
-- src/components/gift-cards/GiftCardReveal.tsx
+The system maintains strict inventory control while ensuring uninterrupted gift card fulfillment through intelligent fallback mechanisms and proactive monitoring.
 
 $END$
 

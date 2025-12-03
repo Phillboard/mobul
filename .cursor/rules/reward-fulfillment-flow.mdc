@@ -1,54 +1,53 @@
 ---
-description: Defines the reward fulfillment flow including SMS opt-in, verification steps, and multi-channel delivery
+description: Specification for implementing reward fulfillment flows including verification, delivery, and tracking of gift card rewards
 ---
 
 
 # reward-fulfillment-flow
 
-Core reward fulfillment system orchestrates a multi-step verification and delivery process:
+Core Reward Fulfillment Components:
 
-1. Verification Workflow (Importance: 95/100)
-- SMS opt-in requirement before reward issuance
-- Call center agent verification for specific campaigns
-- Multi-condition validation (form submission, call completion)
-- Sequential condition checking with dependencies
+1. Multi-Step Verification Workflow (90/100)
+src/components/campaigns/wizard/ConditionsStep.tsx
+- SMS opt-in verification requirement
+- Call center disposition validation
+- Form submission completion check
+- Multi-condition reward sequencing
+- Custom validation rules per campaign type
 
-2. Gift Card Provisioning (Importance: 90/100)
-- Two-tier provisioning strategy:
-  - Primary: CSV inventory allocation
-  - Fallback: Tillo API real-time purchase
-- Cost basis tracking across provisioning methods
-- Brand/denomination-specific inventory pools
-- Automated threshold monitoring and replenishment
-
-3. Delivery Channels (Importance: 85/100)
-- SMS delivery with configurable retry logic
-- Digital wallet integration (Apple/Google)
-- Email fallback for failed SMS
-- Real-time delivery status tracking
-
-4. Call Center Integration (Importance: 85/100)
-- Agent-assisted verification workflow
-- Disposition-based reward triggers
-- Real-time opt-in status monitoring
-- Skip logic with admin approval requirements
-
-5. Credit Management (Importance: 80/100)
-- Hierarchical credit system (Platform → Agency → Client)
-- Real-time balance verification
-- Campaign-specific credit reservations
-- Automated low balance alerts
-
-File Paths:
-```
-src/components/call-center/CallCenterRedemptionPanel.tsx
-src/hooks/useGiftCardProvisioning.ts
+2. Gift Card Provisioning Engine (95/100) 
 supabase/functions/provision-gift-card-unified/index.ts
-supabase/functions/send-sms-opt-in/index.ts
-supabase/functions/complete-condition/index.ts
-```
+- Two-tier provisioning strategy:
+  - CSV inventory allocation first
+  - Tillo API fallback purchase
+- Custom pricing tiers by entity type
+- Atomic claiming with duplicate prevention
+- Pool selection based on campaign rules
+- Real-time inventory validation
 
-The system emphasizes compliance and verification while maintaining efficient reward delivery through multiple channels. Credit management and inventory tracking ensure sustainable reward fulfillment operations.
+3. Delivery Status Management (85/100)
+src/lib/gift-cards/provisioning-utils.ts
+- Multi-channel delivery tracking
+- Status transition validation
+- Automated retry logic for failed deliveries 
+- Custom delivery rules per verification type
+
+4. Call Center Integration (80/100)
+src/components/agent/ConditionTriggers.tsx
+- Disposition-based reward triggers
+- SMS opt-in status verification
+- Multi-step qualification process
+- Agent-specific verification workflows
+
+Key Business Rules:
+- SMS opt-in required before reward delivery
+- Call dispositions must be verified before rewards
+- Rewards follow campaign-specific condition sequences 
+- Inventory verified in real-time before provisioning
+- Custom pricing tiers for different entity types
+- Atomic card claiming prevents duplicates
+
+The reward fulfillment system emphasizes verification integrity through multi-step validation, with particular focus on opt-in requirements and disposition verification before reward distribution.
 
 $END$
 
