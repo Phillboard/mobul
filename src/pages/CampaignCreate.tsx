@@ -1,7 +1,7 @@
 /**
- * CampaignCreate Page - Modern 4-step campaign creation wizard
+ * CampaignCreate Page - Modern 4-step campaign creation/edit wizard
  * 
- * NEW SIMPLIFIED FLOW:
+ * SIMPLIFIED FLOW:
  * 1. Method & Name - Campaign name + mailing method selection
  * 2. Setup - Audiences + Rewards configuration
  * 3. Design - Landing page, forms, and mailer (conditional)
@@ -11,15 +11,16 @@
  * - Modern card-based UI
  * - Contextual help with popovers
  * - Smart defaults and progressive disclosure
- * - 50% fewer steps than previous version
+ * - Supports both CREATE and EDIT modes
+ * - Edit mode pre-populates all fields from existing campaign
  */
 
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";

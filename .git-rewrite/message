@@ -1,5 +1,1 @@
-Add call center provision flow
-
-Implement Phase 1: add provision-gift-card-for-call-center edge function, create CallCenterRedemptionPanel UI, refactor CallCenterDashboard to host the panel, and wire up App routing and Sidebar entries for call_center users to provision gift cards.
-
-X-Lovable-Edit-ID: edt-53544b42-23bf-4bb8-9a1f-817b718fcfd0
+Changes

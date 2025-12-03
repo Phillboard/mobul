@@ -1296,6 +1296,7 @@ export type Database = {
           mailing_method: string | null
           name: string
           postage: Database["public"]["Enums"]["postage_class"] | null
+          rewards_enabled: boolean | null
           simulation_batch_id: string | null
           size: Database["public"]["Enums"]["template_size"]
           sms_opt_in_message: string | null
@@ -1323,6 +1324,7 @@ export type Database = {
           mailing_method?: string | null
           name: string
           postage?: Database["public"]["Enums"]["postage_class"] | null
+          rewards_enabled?: boolean | null
           simulation_batch_id?: string | null
           size: Database["public"]["Enums"]["template_size"]
           sms_opt_in_message?: string | null
@@ -1350,6 +1352,7 @@ export type Database = {
           mailing_method?: string | null
           name?: string
           postage?: Database["public"]["Enums"]["postage_class"] | null
+          rewards_enabled?: boolean | null
           simulation_batch_id?: string | null
           size?: Database["public"]["Enums"]["template_size"]
           sms_opt_in_message?: string | null

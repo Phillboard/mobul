@@ -1,11 +1,6 @@
-tree 4b8fd90490834f23f59e336c3a5bf5039bc284bf
-parent 1f3a18877a137098b865f3b644887ab3fe8a7db3
-parent 26162987f8625d6ec06ba40a65d34a2544684d00
-author gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763868423 +0000
-committer gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763868423 +0000
+tree 13a9802976ef46b91bd3b78632a5baab9565e597
+parent 2a6f335f4051fa5210f211eebcff482272b5f90f
+author gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763955123 +0000
+committer gpt-engineer-app[bot] <159125892+gpt-engineer-app[bot]@users.noreply.github.com> 1763955123 +0000
 
-Add call center provision flow
-
-Implement Phase 1: add provision-gift-card-for-call-center edge function, create CallCenterRedemptionPanel UI, refactor CallCenterDashboard to host the panel, and wire up App routing and Sidebar entries for call_center users to provision gift cards.
-
-X-Lovable-Edit-ID: edt-53544b42-23bf-4bb8-9a1f-817b718fcfd0
+Changes
