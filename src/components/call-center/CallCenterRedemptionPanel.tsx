@@ -464,9 +464,38 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           }
         }
 
-        // Check if already redeemed
-        if (recipient.approval_status === "redeemed") {
-          throw new Error("This code has already been redeemed");
+        // Check if a gift card was already provisioned for this recipient
+        const { data: existingCard, error: cardError } = await supabase
+          .from('gift_card_inventory')
+          .select(`
+            id,
+            card_code,
+            card_number,
+            denomination,
+            expiration_date,
+            assigned_at,
+            brand_id,
+            gift_card_brands (
+              id,
+              brand_name,
+              logo_url,
+              balance_check_url
+            )
+          `)
+          .eq('assigned_to_recipient_id', recipient.id)
+          .eq('status', 'assigned')
+          .order('assigned_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (existingCard) {
+          console.log('[CALL-CENTER] Found existing provisioned card for recipient:', existingCard.id);
+          // Return recipient with the existing card attached
+          return {
+            ...recipient,
+            _alreadyProvisioned: true,
+            _existingCard: existingCard,
+          } as RecipientData & { _alreadyProvisioned: boolean; _existingCard: typeof existingCard };
         }
         
         return recipient as RecipientData;
@@ -549,8 +578,55 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       console.log('[CALL-CENTER] Code not found in recipients or contacts');
       throw new Error("Code not found. Please verify the code and ensure the contact has been added to an active campaign.");
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setRecipient(data);
+      
+      // Check if this recipient already has a provisioned card
+      if (data._alreadyProvisioned && data._existingCard) {
+        console.log('[CALL-CENTER] Showing existing provisioned card');
+        const existingCard = data._existingCard;
+        const brand = existingCard.gift_card_brands;
+        
+        // Build result from existing card
+        const existingResult: ProvisionResult = {
+          recipient: {
+            id: data.id,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            phone: data.phone,
+            email: data.email,
+          },
+          giftCard: {
+            id: existingCard.id,
+            card_code: existingCard.card_code,
+            card_number: existingCard.card_number,
+            card_value: existingCard.denomination,
+            expiration_date: existingCard.expiration_date,
+            gift_card_pools: {
+              id: existingCard.id,
+              pool_name: brand?.brand_name || 'Gift Card',
+              card_value: existingCard.denomination,
+              provider: brand?.brand_name,
+              gift_card_brands: {
+                id: brand?.id || '',
+                brand_name: brand?.brand_name || 'Gift Card',
+                logo_url: brand?.logo_url || null,
+                balance_check_url: brand?.balance_check_url || null,
+              },
+            },
+          },
+        };
+        
+        setResult(existingResult);
+        setStep("complete");
+        
+        toast({
+          title: "Gift Card Already Provisioned",
+          description: "This customer already has a gift card. Showing their existing card details.",
+        });
+        return;
+      }
+      
       // NEW: Go to opt-in step first instead of contact
       setStep("optin");
       
@@ -584,10 +660,6 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         throw new Error("Missing required information");
       }
 
-      if (!phone) {
-        throw new Error("Please enter phone number");
-      }
-
       const provCampaign = recipient.audiences?.campaigns?.[0];
       const condition = provCampaign?.campaign_conditions?.find(
         c => c.id === selectedConditionId
@@ -602,6 +674,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       }
 
       // Pass IDs directly - recipient was already looked up on frontend
+      // SMS delivery is disabled for now, card will be displayed in UI
       const { data, error } = await supabase.functions.invoke("provision-gift-card-for-call-center", {
         body: {
           recipientId: recipient.id,
@@ -609,8 +682,6 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           brandId: condition.brand_id,
           denomination: condition.card_value,
           conditionId: selectedConditionId,
-          deliveryPhone: phone,
-          skipSmsDelivery: isSimulatedMode,
         }
       });
 
@@ -636,7 +707,38 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         throw new Error(data.message || data.error);
       }
       
-      return data as ProvisionResult;
+      // Transform the edge function response to match UI expected format
+      const transformedResult: ProvisionResult = {
+        recipient: {
+          id: recipient?.id || '',
+          first_name: recipient?.first_name || '',
+          last_name: recipient?.last_name || '',
+          phone: recipient?.phone || null,
+          email: recipient?.email || null,
+        },
+        giftCard: {
+          id: data.card?.id || '',
+          card_code: data.card?.cardCode || '',
+          card_number: data.card?.cardNumber || null,
+          card_value: data.card?.denomination || 0,
+          expiration_date: data.card?.expirationDate || null,
+          // Map to legacy structure for backward compatibility
+          gift_card_pools: {
+            id: data.card?.id || '',
+            pool_name: data.card?.brandName || 'Gift Card',
+            card_value: data.card?.denomination || 0,
+            provider: data.card?.brandName,
+            gift_card_brands: {
+              id: '',
+              brand_name: data.card?.brandName || 'Gift Card',
+              logo_url: data.card?.brandLogo || null,
+              balance_check_url: null,
+            },
+          },
+        },
+      };
+      
+      return transformedResult;
     },
     onSuccess: (data) => {
       setResult(data);
@@ -709,8 +811,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
 
     const details = `${brand?.brand_name || pool?.provider || "Gift Card"}
 Value: $${value.toFixed(2)}
-Code: ${card.card_code}
 ${card.card_number ? `Card Number: ${card.card_number}` : ""}
+Code: ${card.card_code}
 ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDateString()}` : ""}`;
 
     navigator.clipboard.writeText(details);
@@ -1478,21 +1580,21 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
 
               {/* Card Details */}
               <div className="space-y-3">
-                <div className="bg-muted p-4 rounded-lg">
-                  <div className="text-xs text-muted-foreground mb-1">Gift Card Code</div>
-                  <div className="font-mono text-xl font-bold tracking-wider">
-                    {result.giftCard.card_code}
-                  </div>
-                </div>
-
                 {result.giftCard.card_number && (
                   <div className="bg-muted p-4 rounded-lg">
-                    <div className="text-xs text-muted-foreground mb-1">Card Number</div>
-                    <div className="font-mono text-lg font-semibold">
+                    <div className="text-xs text-muted-foreground mb-1">Gift Card Number</div>
+                    <div className="font-mono text-xl font-bold tracking-wider">
                       {result.giftCard.card_number}
                     </div>
                   </div>
                 )}
+
+                <div className="bg-muted p-4 rounded-lg">
+                  <div className="text-xs text-muted-foreground mb-1">Gift Card Code</div>
+                  <div className="font-mono text-lg font-semibold">
+                    {result.giftCard.card_code}
+                  </div>
+                </div>
 
                 {result.giftCard.expiration_date && (
                   <div className="flex items-center gap-2 text-sm">

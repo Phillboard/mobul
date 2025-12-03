@@ -30,8 +30,8 @@ export default function TestRedemption() {
     
     try {
       const giftCardData = {
-        id: "6346948495275900",
-        card_code: "6346948495275900",
+        id: "13965731",
+        card_code: "13965731",
         card_number: "6346948495275900",
         card_value: 5,
         provider: "Starbucks",
@@ -74,8 +74,8 @@ export default function TestRedemption() {
     
     try {
       const giftCardData = {
-        id: "6346948495275900",
-        card_code: "6346948495275900",
+        id: "13965731",
+        card_code: "13965731",
         card_number: "6346948495275900",
         card_value: 5,
         provider: "Starbucks",
@@ -111,8 +111,10 @@ export default function TestRedemption() {
   };
 
   // Hardcoded Starbucks gift card for testing
+  // card_number = the 16-digit card number (shown on top)
+  // card_code = the redemption code (shown below)
   const testRedemption: GiftCardRedemption = {
-    card_code: "6346948495275900",
+    card_code: "13965731",
     card_number: "6346948495275900",
     card_value: 5,
     provider: "Starbucks",
@@ -184,12 +186,12 @@ export default function TestRedemption() {
           <h2 className="font-semibold text-gray-900 mb-3">Test Card Details</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">ID:</span>
-              <span className="font-mono text-gray-900">13965731</span>
+              <span className="text-gray-500">Card Number:</span>
+              <span className="font-mono text-gray-900">6346948495275900</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Code:</span>
-              <span className="font-mono text-gray-900">6346948495275900</span>
+              <span className="text-gray-500">Card Code:</span>
+              <span className="font-mono text-gray-900">13965731</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Value:</span>

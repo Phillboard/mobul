@@ -116,21 +116,23 @@ serve(async (req) => {
     const giftCardField = form.form_config.fields.find((f: any) => f.type === 'gift-card-code');
     const giftCardCode = giftCardField ? data[giftCardField.id] : null;
     
+    // Normalize gift card code early (remove dashes and spaces)
+    const normalizedCode = giftCardCode ? giftCardCode.replace(/[\s-]/g, '').toUpperCase() : null;
+    
     // NEW: Validate code belongs to campaign if form is campaign-linked
     let recipientId: string | null = null;
     if (form.campaigns && form.campaign_id) {
-      if (!giftCardCode) {
+      if (!normalizedCode) {
         return new Response(
           JSON.stringify({ success: false, error: 'Gift card code is required for this campaign' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
         );
       }
 
-      // Validate code belongs to this campaign
       const { data: recipient, error: recipientError } = await supabase
         .from('recipients')
         .select('id, campaign_id, gift_card_claimed')
-        .eq('redemption_code', giftCardCode.trim().toUpperCase())
+        .eq('redemption_code', normalizedCode)
         .eq('campaign_id', form.campaign_id)
         .single();
 
@@ -160,7 +162,7 @@ serve(async (req) => {
       }
 
       console.log('[FORM-SUBMIT] Valid recipient found:', recipientId);
-    } else if (!giftCardCode) {
+    } else if (!normalizedCode) {
       console.error('No gift card code provided. Field ID:', giftCardField?.id, 'Data keys:', Object.keys(data));
       return new Response(
         JSON.stringify({ success: false, error: 'Gift card code is required' }),
@@ -169,7 +171,6 @@ serve(async (req) => {
     }
 
     // TEST CODE: Only allow test code in development environment
-    const normalizedCode = giftCardCode.replace(/[\s-]/g, '').toUpperCase();
     const isDevelopment = Deno.env.get('ENVIRONMENT') === 'development' || Deno.env.get('SUPABASE_URL')?.includes('localhost');
     
     if (isDevelopment && normalizedCode === '12345678ABCD') {

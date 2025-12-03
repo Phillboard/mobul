@@ -8,7 +8,8 @@ import { z } from 'zod';
 export const giftCardCodeSchema = z.string()
   .min(4, "Code must be at least 4 characters")
   .max(20, "Code must be less than 20 characters")
-  .regex(/^[A-Za-z0-9]+$/, "Only letters and numbers allowed");
+  .regex(/^[A-Za-z0-9\-\s]+$/, "Only letters, numbers, dashes, and spaces allowed")
+  .transform((val) => val.replace(/[\s-]/g, '').toUpperCase()); // Normalize by removing dashes/spaces
 
 // Phone Number Validation
 export const phoneSchema = z.string()

@@ -29,8 +29,8 @@ export function GiftCardDisplay({ redemption, revealSettings, embedMode = false 
   const handleCopyAll = async () => {
     try {
       const fullInfo = [
-        `Gift Card Code: ${redemption.card_code}`,
         redemption.card_number ? `Card Number: ${redemption.card_number}` : null,
+        `Gift Card Code: ${redemption.card_code}`,
         redemption.expiration_date ? `Expires: ${new Date(redemption.expiration_date).toLocaleDateString()}` : null,
         `Value: $${redemption.card_value}`,
         `Brand: ${redemption.brand_name}`,
@@ -83,15 +83,15 @@ export function GiftCardDisplay({ redemption, revealSettings, embedMode = false 
           ${redemption.card_value.toFixed(2)}
         </div>
 
-        {/* Code with Copy Button - Cash App Style */}
+        {/* Card Number (Primary) with Copy Button - Cash App Style */}
         <div className={cn("bg-white/20 backdrop-blur rounded-lg", embedMode ? 'p-3' : 'p-4')}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className={cn("opacity-75 mb-1", embedMode ? 'text-[10px]' : 'text-xs')}>
-                Gift Card Code
+                Card Number
               </div>
               <div className={cn("font-mono font-semibold whitespace-nowrap overflow-x-auto", embedMode ? 'text-base' : 'text-lg')} style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
-                {redemption.card_code}
+                {redemption.card_number || redemption.card_code}
               </div>
             </div>
             <Button
@@ -115,11 +115,11 @@ export function GiftCardDisplay({ redemption, revealSettings, embedMode = false 
           </div>
         </div>
 
-        {/* Card Details */}
+        {/* Card Details - Code shown below */}
         <div className={cn("mt-3 space-y-1", embedMode ? 'text-xs' : 'text-sm')}>
-          {redemption.card_number && (
+          {redemption.card_code && redemption.card_number && (
             <div className="opacity-75" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
-              Card: {redemption.card_number.replace(/(\d{4})/g, "$1 ").trim()}
+              Code: {redemption.card_code}
             </div>
           )}
           {redemption.expiration_date && (

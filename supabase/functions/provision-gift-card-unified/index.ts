@@ -15,9 +15,10 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { getTilloClient } from '../_shared/tillo-client.ts';
 import { createErrorLogger, PROVISIONING_ERROR_CODES } from '../_shared/error-logger.ts';
 import type { ProvisioningErrorCode } from '../_shared/error-logger.ts';
+
+// NOTE: Tillo integration disabled for now - only using uploaded inventory
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -336,243 +337,155 @@ serve(async (req) => {
     let source: 'inventory' | 'tillo' = 'inventory';
     let costBasis: number | null = null;
     let inventoryCardId: string | null = null;
-    let tilloTransactionId: string | null = null;
-    let tilloOrderReference: string | null = null;
-
-    if (availableCards > 0) {
-      currentStep = STEPS.CLAIM_INVENTORY;
-      await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'started', {
-        availableCards,
-      });
-      
-      console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] Attempting to claim card from inventory...`);
-      
-      const { data: inventoryCard, error: inventoryError } = await supabaseClient
-        .rpc('claim_gift_card_from_inventory', {
-          p_brand_id: brandId,
-          p_denomination: denomination,
-          p_recipient_id: recipientId,
-          p_campaign_id: campaignId,
-        });
-
-      console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] Claim result:`, {
-        success: inventoryCard && inventoryCard.length > 0,
-        cardId: inventoryCard?.[0]?.card_id || null,
-        error: inventoryError?.message || null,
-      });
-
-      if (inventoryCard && inventoryCard.length > 0) {
-        cardResult = inventoryCard[0];
-        source = 'inventory';
-        inventoryCardId = cardResult.card_id;
-        
-        // Get cost from denominations table
-        const { data: denomData } = await supabaseClient
-          .from('gift_card_denominations')
-          .select('cost_basis, use_custom_pricing, client_price, agency_price')
-          .eq('brand_id', brandId)
-          .eq('denomination', denomination)
-          .single();
-        
-        costBasis = denomData?.cost_basis || denomination * 0.95;
-        
-        await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'completed', {
-          cardId: cardResult.card_id,
-          brandName: cardResult.brand_name,
-          costBasis,
-        });
-        
-        console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] ✓ Claimed card from inventory: ${cardResult.card_id}`);
-      } else {
-        // Inventory claim failed even though count showed available
-        await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'failed', {
-          error: inventoryError?.message || 'Race condition - card claimed by another process',
-          expectedAvailable: availableCards,
-        });
-        console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] ⚠ Inventory claim failed - falling back to Tillo`);
-      }
-    }
 
     // =====================================================
-    // STEP 7-9: TILLO FALLBACK (if no inventory)
+    // STEP 6: CLAIM FROM INVENTORY
+    // Using DIRECT SQL to bypass any RPC issues
     // =====================================================
-    if (!cardResult) {
-      // STEP 7: Check Tillo Configuration
-      currentStep = STEPS.CHECK_TILLO_CONFIG;
-      await logger.checkpoint(STEPS.CHECK_TILLO_CONFIG.number, STEPS.CHECK_TILLO_CONFIG.name, 'started');
-      
-      console.log(`[STEP ${STEPS.CHECK_TILLO_CONFIG.number}] No inventory - checking Tillo configuration...`);
-      
-      const tilloApiKey = Deno.env.get('TILLO_API_KEY');
-      const tilloSecretKey = Deno.env.get('TILLO_SECRET_KEY');
-      const tilloBaseUrl = Deno.env.get('TILLO_BASE_URL');
-      const tilloBrandCode = brand.tillo_brand_code || brand.brand_code;
-
-      const tilloConfig = {
-        hasApiKey: !!tilloApiKey,
-        hasSecretKey: !!tilloSecretKey,
-        apiKeyLength: tilloApiKey?.length || 0,
-        secretKeyLength: tilloSecretKey?.length || 0,
-        baseUrl: tilloBaseUrl || 'https://api.tillo.tech/v2',
-        tilloBrandCode,
-        hasBrandCode: !!tilloBrandCode,
-      };
-
-      console.log(`[STEP ${STEPS.CHECK_TILLO_CONFIG.number}] Tillo config:`, JSON.stringify({
-        ...tilloConfig,
-        apiKeyLength: tilloConfig.apiKeyLength, // Don't log actual key
-        secretKeyLength: tilloConfig.secretKeyLength,
-      }));
-
-      if (!tilloApiKey || !tilloSecretKey) {
-        await logger.checkpoint(STEPS.CHECK_TILLO_CONFIG.number, STEPS.CHECK_TILLO_CONFIG.name, 'failed', {
-          hasApiKey: !!tilloApiKey,
-          hasSecretKey: !!tilloSecretKey,
-          error: 'Tillo API credentials not configured',
-        });
-        await logger.logProvisioningError('GC-004', new Error('Tillo API not configured'), STEPS.CHECK_TILLO_CONFIG, {
-          hasApiKey: !!tilloApiKey,
-          hasSecretKey: !!tilloSecretKey,
-        });
-        throw new Error('No gift cards available in inventory and Tillo API is not configured. Please upload gift card inventory or configure Tillo API credentials in Supabase secrets.');
-      }
-
-      if (!tilloBrandCode) {
-        await logger.checkpoint(STEPS.CHECK_TILLO_CONFIG.number, STEPS.CHECK_TILLO_CONFIG.name, 'failed', {
-          error: 'Brand does not have Tillo code',
-          brandName: brand.brand_name,
-          brandCode: brand.brand_code,
-        });
-        await logger.logProvisioningError('GC-002', new Error('Brand missing Tillo code'), STEPS.CHECK_TILLO_CONFIG, {
-          brandName: brand.brand_name,
-        });
-        throw new Error(`Brand "${brand.brand_name}" does not have Tillo integration configured. Please add a tillo_brand_code to this gift card brand, or upload inventory manually.`);
-      }
-
-      await logger.checkpoint(STEPS.CHECK_TILLO_CONFIG.number, STEPS.CHECK_TILLO_CONFIG.name, 'completed', tilloConfig);
-      console.log(`[STEP ${STEPS.CHECK_TILLO_CONFIG.number}] ✓ Tillo configured with brand code: ${tilloBrandCode}`);
-
-      // STEP 8: Provision from Tillo
-      currentStep = STEPS.PROVISION_TILLO;
-      await logger.checkpoint(STEPS.PROVISION_TILLO.number, STEPS.PROVISION_TILLO.name, 'started', {
-        tilloBrandCode,
-        denomination,
-        currency: 'USD',
+    currentStep = STEPS.CLAIM_INVENTORY;
+    await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'started', {
+      availableCards,
+      brandId,
+      denomination,
+      denominationType: typeof denomination,
+    });
+    
+    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] Attempting DIRECT claim from inventory...`);
+    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] brandId=${brandId}, denomination=${denomination} (type: ${typeof denomination})`);
+    
+    // First, let's see what cards exist for this brand (any denomination)
+    const { data: allBrandCards, error: brandCardsError } = await supabaseClient
+      .from('gift_card_inventory')
+      .select('id, brand_id, denomination, status, card_code, expiration_date')
+      .eq('brand_id', brandId)
+      .eq('status', 'available')
+      .limit(10);
+    
+    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] All available cards for this brand:`, {
+      count: allBrandCards?.length || 0,
+      denominations: allBrandCards?.map(c => c.denomination),
+      sample: allBrandCards?.slice(0, 3).map(c => ({
+        id: c.id,
+        denom: c.denomination,
+        denomType: typeof c.denomination,
+        status: c.status,
+      })),
+      error: brandCardsError?.message,
+    });
+    
+    // Check for exact denomination match
+    const { data: exactMatch, error: exactError } = await supabaseClient
+      .from('gift_card_inventory')
+      .select('id, brand_id, denomination, status, card_code, card_number, expiration_date')
+      .eq('brand_id', brandId)
+      .eq('denomination', denomination)
+      .eq('status', 'available')
+      .is('assigned_to_recipient_id', null)
+      .limit(1)
+      .single();
+    
+    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] Exact match query result:`, {
+      found: !!exactMatch,
+      cardId: exactMatch?.id,
+      cardDenom: exactMatch?.denomination,
+      cardStatus: exactMatch?.status,
+      error: exactError?.message,
+      errorCode: exactError?.code,
+    });
+    
+    // Log to checkpoint for visibility in UI
+    await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'started', {
+      debugInfo: {
+        allBrandCardsCount: allBrandCards?.length || 0,
+        denominationsInInventory: allBrandCards?.map(c => Number(c.denomination)) || [],
+        requestedDenomination: denomination,
+        exactMatchFound: !!exactMatch,
+        exactMatchError: exactError?.message,
+      },
+    });
+    
+    if (exactError && exactError.code !== 'PGRST116') { // PGRST116 = no rows found
+      await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'failed', {
+        error: exactError.message,
+        errorCode: exactError.code,
+        hint: exactError.hint,
       });
-      
-      console.log(`[STEP ${STEPS.PROVISION_TILLO.number}] Calling Tillo API to provision card...`);
-      console.log(`[STEP ${STEPS.PROVISION_TILLO.number}] Request: brand=${tilloBrandCode}, amount=${denomination}, currency=USD`);
-      
-      const tilloStartTime = Date.now();
-      
-      try {
-        const tilloClient = getTilloClient();
-        const tilloCard = await tilloClient.provisionCard(
-          tilloBrandCode,
-          denomination,
-          'USD'
-        );
-
-        const tilloDuration = Date.now() - tilloStartTime;
-        
-        console.log(`[STEP ${STEPS.PROVISION_TILLO.number}] Tillo response received in ${tilloDuration}ms:`, {
-          transactionId: tilloCard.transactionId,
-          orderReference: tilloCard.orderReference,
-          hasCardCode: !!tilloCard.cardCode,
-          hasCardNumber: !!tilloCard.cardNumber,
-          hasExpiration: !!tilloCard.expirationDate,
-        });
-
-        await logger.checkpoint(STEPS.PROVISION_TILLO.number, STEPS.PROVISION_TILLO.name, 'completed', {
-          transactionId: tilloCard.transactionId,
-          orderReference: tilloCard.orderReference,
-          apiDurationMs: tilloDuration,
-        });
-
-        console.log(`[STEP ${STEPS.PROVISION_TILLO.number}] ✓ Tillo card provisioned: ${tilloCard.transactionId}`);
-
-        // STEP 9: Save Tillo card to inventory
-        currentStep = STEPS.SAVE_TILLO_CARD;
-        await logger.checkpoint(STEPS.SAVE_TILLO_CARD.number, STEPS.SAVE_TILLO_CARD.name, 'started');
-        
-        console.log(`[STEP ${STEPS.SAVE_TILLO_CARD.number}] Saving Tillo card to inventory...`);
-
-        const { data: newCard, error: insertError } = await supabaseClient
-          .from('gift_card_inventory')
-          .insert({
-            brand_id: brandId,
-            denomination: denomination,
-            card_code: tilloCard.cardCode,
-            card_number: tilloCard.cardNumber,
-            expiration_date: tilloCard.expirationDate,
-            status: 'assigned',
-            assigned_to_recipient_id: recipientId,
-            assigned_to_campaign_id: campaignId,
-            assigned_at: new Date().toISOString(),
-            notes: `Purchased from Tillo API - Transaction: ${tilloCard.transactionId}, Order: ${tilloCard.orderReference}`,
-          })
-          .select('id')
-          .single();
-
-        if (insertError) {
-          console.error(`[STEP ${STEPS.SAVE_TILLO_CARD.number}] ⚠ Failed to save card:`, insertError.message);
-          await logger.checkpoint(STEPS.SAVE_TILLO_CARD.number, STEPS.SAVE_TILLO_CARD.name, 'failed', {
-            error: insertError.message,
-            // Card still provisioned, just not saved
-          });
-        } else {
-          inventoryCardId = newCard.id;
-          await logger.checkpoint(STEPS.SAVE_TILLO_CARD.number, STEPS.SAVE_TILLO_CARD.name, 'completed', {
-            inventoryCardId: newCard.id,
-          });
-          console.log(`[STEP ${STEPS.SAVE_TILLO_CARD.number}] ✓ Card saved to inventory: ${newCard.id}`);
-        }
-
-        cardResult = {
-          card_id: newCard?.id,
-          card_code: tilloCard.cardCode,
-          card_number: tilloCard.cardNumber,
-          expiration_date: tilloCard.expirationDate,
-          brand_name: brand.brand_name,
-          brand_logo_url: brand.logo_url,
-        };
-
-        source = 'tillo';
-        tilloTransactionId = tilloCard.transactionId;
-        tilloOrderReference = tilloCard.orderReference;
-
-        // Get Tillo cost
-        const { data: denomData } = await supabaseClient
-          .from('gift_card_denominations')
-          .select('tillo_cost_per_card')
-          .eq('brand_id', brandId)
-          .eq('denomination', denomination)
-          .single();
-
-        costBasis = denomData?.tillo_cost_per_card || denomination;
-        
-      } catch (tilloError) {
-        const tilloDuration = Date.now() - tilloStartTime;
-        console.error(`[STEP ${STEPS.PROVISION_TILLO.number}] ✗ Tillo API failed after ${tilloDuration}ms:`, tilloError);
-        
-        await logger.checkpoint(STEPS.PROVISION_TILLO.number, STEPS.PROVISION_TILLO.name, 'failed', {
-          error: tilloError.message,
-          apiDurationMs: tilloDuration,
-          tilloBrandCode,
-        });
-        await logger.logProvisioningError('GC-005', tilloError, STEPS.PROVISION_TILLO, {
-          tilloBrandCode,
-          denomination,
-          apiDurationMs: tilloDuration,
-        });
-        await logger.logExternalError('Tillo', tilloError, {
-          tilloBrandCode,
-          denomination,
-        });
-        
-        throw new Error(`Tillo API provisioning failed: ${tilloError.message}`);
-      }
+      throw new Error(`Database error finding card: ${exactError.message}`);
     }
+    
+    if (!exactMatch) {
+      // No exact match - show what denominations ARE available
+      const availableDenoms = [...new Set(allBrandCards?.map(c => Number(c.denomination)) || [])];
+      await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'failed', {
+        error: `No $${denomination} cards available`,
+        availableDenominations: availableDenoms,
+        requestedDenomination: denomination,
+        brandId,
+      });
+      throw new Error(`No $${denomination} cards available for ${brand.brand_name}. Available denominations: ${availableDenoms.length > 0 ? '$' + availableDenoms.join(', $') : 'NONE'}`);
+    }
+    
+    // Now claim this specific card by updating it
+    const { data: claimedCard, error: claimError } = await supabaseClient
+      .from('gift_card_inventory')
+      .update({
+        status: 'assigned',
+        assigned_to_recipient_id: recipientId,
+        assigned_to_campaign_id: campaignId,
+        assigned_at: new Date().toISOString(),
+      })
+      .eq('id', exactMatch.id)
+      .eq('status', 'available') // Double-check still available
+      .select('id, card_code, card_number, expiration_date')
+      .single();
+    
+    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] Claim update result:`, {
+      success: !!claimedCard,
+      cardId: claimedCard?.id,
+      hasCode: !!claimedCard?.card_code,
+      error: claimError?.message,
+    });
+    
+    if (claimError || !claimedCard) {
+      await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'failed', {
+        error: claimError?.message || 'Update returned no rows (race condition?)',
+        attemptedCardId: exactMatch.id,
+      });
+      throw new Error(`Failed to claim card: ${claimError?.message || 'Card was claimed by another process'}`);
+    }
+    
+    // Build the card result
+    cardResult = {
+      card_id: claimedCard.id,
+      card_code: claimedCard.card_code,
+      card_number: claimedCard.card_number,
+      expiration_date: claimedCard.expiration_date,
+      brand_name: brand.brand_name,
+      brand_logo_url: brand.logo_url,
+    };
+    source = 'inventory';
+    inventoryCardId = claimedCard.id;
+    
+    // Get cost from denominations table
+    const { data: denomData } = await supabaseClient
+      .from('gift_card_denominations')
+      .select('cost_basis, use_custom_pricing, client_price, agency_price')
+      .eq('brand_id', brandId)
+      .eq('denomination', denomination)
+      .single();
+    
+    costBasis = denomData?.cost_basis || denomination * 0.95;
+    
+    await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'completed', {
+      cardId: cardResult.card_id,
+      cardCode: cardResult.card_code ? '***redacted***' : null,
+      brandName: cardResult.brand_name,
+      costBasis,
+    });
+    
+    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] ✓ Claimed card from inventory: ${cardResult.card_id}`);
+
+    // NOTE: Tillo fallback is disabled - only claiming from uploaded inventory
 
     // =====================================================
     // STEP 10: GET PRICING CONFIGURATION
@@ -618,53 +531,59 @@ serve(async (req) => {
     console.log(`[STEP ${STEPS.GET_PRICING.number}] ✓ Will bill: $${amountBilled} (cost: $${costBasis})`);
 
     // =====================================================
-    // STEP 11: RECORD BILLING TRANSACTION
+    // STEP 11: RECORD BILLING TRANSACTION (non-blocking)
     // =====================================================
     currentStep = STEPS.RECORD_BILLING;
     await logger.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'started', {
-      transactionType: source === 'inventory' ? 'purchase_from_inventory' : 'purchase_from_tillo',
       entityType: entity_type,
       amountBilled,
     });
     
     console.log(`[STEP ${STEPS.RECORD_BILLING.number}] Recording billing transaction...`);
 
-    const { data: ledgerId, error: billingRecordError } = await supabaseClient
-      .rpc('record_billing_transaction', {
-        p_transaction_type: source === 'inventory' ? 'purchase_from_inventory' : 'purchase_from_tillo',
-        p_billed_entity_type: entity_type,
-        p_billed_entity_id: entity_id,
-        p_campaign_id: campaignId,
-        p_recipient_id: recipientId,
-        p_brand_id: brandId,
-        p_denomination: denomination,
-        p_amount_billed: amountBilled,
-        p_cost_basis: costBasis,
-        p_inventory_card_id: inventoryCardId,
-        p_tillo_transaction_id: tilloTransactionId,
-        p_tillo_order_reference: tilloOrderReference,
-        p_metadata: JSON.stringify({
-          condition_number: conditionNumber,
-          source: source,
-          request_id: logger.requestId,
-        }),
-      });
+    let ledgerId: string | null = null;
+    try {
+      // Insert directly to avoid RPC signature issues
+      const { data: ledgerEntry, error: billingError } = await supabaseClient
+        .from('gift_card_billing_ledger')
+        .insert({
+          transaction_type: 'purchase_from_inventory',
+          billed_entity_type: entity_type,
+          billed_entity_id: entity_id,
+          campaign_id: campaignId,
+          recipient_id: recipientId,
+          brand_id: brandId,
+          denomination: denomination,
+          amount_billed: amountBilled,
+          cost_basis: costBasis,
+          inventory_card_id: inventoryCardId,
+          metadata: { source: 'inventory', request_id: logger.requestId },
+          billed_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
 
-    if (billingRecordError) {
-      console.error(`[STEP ${STEPS.RECORD_BILLING.number}] ✗ Billing failed:`, billingRecordError);
-      await logger.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'failed', {
-        error: billingRecordError.message,
-        errorCode: billingRecordError.code,
-      });
-      await logger.logProvisioningError('GC-007', billingRecordError, STEPS.RECORD_BILLING);
-      throw new Error(`Failed to record billing transaction: ${billingRecordError.message}`);
+      if (billingError) {
+        console.error(`[STEP ${STEPS.RECORD_BILLING.number}] ⚠ Billing failed (non-blocking):`, billingError.message);
+        await logger.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'failed', {
+          error: billingError.message,
+          errorCode: billingError.code,
+          hint: billingError.hint,
+          // Card still claimed - this is just billing
+        });
+        // Don't throw - card is already claimed
+      } else {
+        ledgerId = ledgerEntry?.id;
+        await logger.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'completed', {
+          ledgerId,
+          amountBilled,
+        });
+        console.log(`[STEP ${STEPS.RECORD_BILLING.number}] ✓ Billing recorded: ${ledgerId}`);
+      }
+    } catch (billingErr) {
+      console.error(`[STEP ${STEPS.RECORD_BILLING.number}] ⚠ Billing exception (non-blocking):`, billingErr);
+      // Don't throw - card is already claimed
     }
-
-    await logger.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'completed', {
-      ledgerId,
-      amountBilled,
-    });
-    console.log(`[STEP ${STEPS.RECORD_BILLING.number}] ✓ Billing recorded: ${ledgerId}`);
 
     const profit = costBasis ? amountBilled - costBasis : 0;
 

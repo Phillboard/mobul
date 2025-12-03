@@ -27,8 +27,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // TEST CODE: Only allow test code in development environment
+    // Normalize redemption code early (remove dashes and spaces)
     const normalizedCode = redemptionCode.replace(/[\s-]/g, '').toUpperCase();
+
+    // TEST CODE: Only allow test code in development environment
     const isDevelopment = Deno.env.get('ENVIRONMENT') === 'development' || Deno.env.get('SUPABASE_URL')?.includes('localhost');
     
     if (isDevelopment && normalizedCode === '12345678ABCD') {
@@ -78,18 +80,18 @@ Deno.serve(async (req) => {
           pool:gift_card_pools(card_value, provider, brand_id)
         )
       `)
-      .eq('redemption_code', redemptionCode.toUpperCase())
+      .eq('redemption_code', normalizedCode)
       .single();
 
     if (recipientError || !recipient) {
-      console.log('Recipient not found:', redemptionCode);
+      console.log('Recipient not found:', normalizedCode);
       
       // Log failed attempt
       await supabase.from('recipient_audit_log').insert({
         action: 'viewed',
         ip_address: req.headers.get('x-forwarded-for'),
         user_agent: req.headers.get('user-agent'),
-        metadata: { redemptionCode, campaignId, error: 'code_not_found' }
+        metadata: { redemptionCode: normalizedCode, campaignId, error: 'code_not_found' }
       });
       
       return Response.json(
