@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { GiftCardDisplay } from "@/components/ace-forms/GiftCardDisplay";
 import { GiftCardRedemption } from "@/types/aceForms";
 import { detectPlatform, getWalletName } from "@/lib/web/walletDetection";
-import { Smartphone, Apple, Chrome } from "lucide-react";
+import { Smartphone, Apple, Chrome, Bug, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Test Redemption Page
@@ -12,6 +15,100 @@ import { Smartphone, Apple, Chrome } from "lucide-react";
 export default function TestRedemption() {
   const platform = detectPlatform();
   const walletName = getWalletName();
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const [isTestingApple, setIsTestingApple] = useState(false);
+  const [isTestingGoogle, setIsTestingGoogle] = useState(false);
+
+  const addLog = (message: string) => {
+    setDebugLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${message}`]);
+  };
+
+  const testAppleWallet = async () => {
+    setIsTestingApple(true);
+    setDebugLog([]);
+    addLog("Starting Apple Wallet test...");
+    
+    try {
+      const giftCardData = {
+        id: "6346948495275900",
+        card_code: "6346948495275900",
+        card_number: "6346948495275900",
+        card_value: 5,
+        provider: "Starbucks",
+        brand_name: "Starbucks",
+      };
+      
+      addLog(`Calling generate-apple-wallet-pass with: ${JSON.stringify(giftCardData)}`);
+      
+      const { data, error } = await supabase.functions.invoke(
+        'generate-apple-wallet-pass',
+        { body: { giftCard: giftCardData } }
+      );
+      
+      if (error) {
+        addLog(`❌ Error: ${JSON.stringify(error)}`);
+        return;
+      }
+      
+      addLog(`Response received: ${JSON.stringify(data, null, 2)}`);
+      
+      if (data?.success && data?.pkpass) {
+        addLog(`✅ Success! Pass size: ${data.size} bytes`);
+        addLog(`Filename: ${data.filename}`);
+      } else if (data?.error) {
+        addLog(`❌ Server error: ${data.error}`);
+        if (data?.hint) addLog(`Hint: ${data.hint}`);
+        if (data?.requiredSecrets) addLog(`Required secrets: ${data.requiredSecrets.join(', ')}`);
+      }
+    } catch (err) {
+      addLog(`❌ Exception: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsTestingApple(false);
+    }
+  };
+
+  const testGoogleWallet = async () => {
+    setIsTestingGoogle(true);
+    setDebugLog([]);
+    addLog("Starting Google Wallet test...");
+    
+    try {
+      const giftCardData = {
+        id: "6346948495275900",
+        card_code: "6346948495275900",
+        card_number: "6346948495275900",
+        card_value: 5,
+        provider: "Starbucks",
+        brand_name: "Starbucks",
+      };
+      
+      addLog(`Calling generate-google-wallet-pass with: ${JSON.stringify(giftCardData)}`);
+      
+      const { data, error } = await supabase.functions.invoke(
+        'generate-google-wallet-pass',
+        { body: { giftCard: giftCardData } }
+      );
+      
+      if (error) {
+        addLog(`❌ Error: ${JSON.stringify(error)}`);
+        return;
+      }
+      
+      addLog(`Response received: ${JSON.stringify(data, null, 2)}`);
+      
+      if (data?.success && data?.url) {
+        addLog(`✅ Success! Save URL generated`);
+        addLog(`URL: ${data.url.substring(0, 100)}...`);
+      } else if (data?.error) {
+        addLog(`❌ Server error: ${data.error}`);
+        if (data?.hint) addLog(`Hint: ${data.hint}`);
+      }
+    } catch (err) {
+      addLog(`❌ Exception: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsTestingGoogle(false);
+    }
+  };
 
   // Hardcoded Starbucks gift card for testing
   const testRedemption: GiftCardRedemption = {
@@ -103,6 +200,49 @@ export default function TestRedemption() {
               <span className="text-gray-900">Starbucks</span>
             </div>
           </div>
+        </div>
+
+        {/* Debug Testing Section */}
+        <div className="bg-white/80 backdrop-blur rounded-xl p-6 shadow-sm border border-gray-100 space-y-4">
+          <div className="flex items-center gap-2">
+            <Bug className="w-5 h-5 text-orange-500" />
+            <h2 className="font-semibold text-gray-900">Debug Testing</h2>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button 
+              onClick={testAppleWallet} 
+              disabled={isTestingApple}
+              variant="outline"
+              className="flex-1"
+            >
+              {isTestingApple ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Testing...</>
+              ) : (
+                <><Apple className="w-4 h-4 mr-2" /> Test Apple Wallet</>
+              )}
+            </Button>
+            <Button 
+              onClick={testGoogleWallet} 
+              disabled={isTestingGoogle}
+              variant="outline"
+              className="flex-1"
+            >
+              {isTestingGoogle ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Testing...</>
+              ) : (
+                <><Chrome className="w-4 h-4 mr-2" /> Test Google Wallet</>
+              )}
+            </Button>
+          </div>
+          
+          {debugLog.length > 0 && (
+            <div className="bg-gray-900 rounded-lg p-4 max-h-64 overflow-y-auto">
+              <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">
+                {debugLog.join('\n')}
+              </pre>
+            </div>
+          )}
         </div>
 
         {/* Instructions */}
