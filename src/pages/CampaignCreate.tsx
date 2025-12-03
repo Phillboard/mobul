@@ -50,14 +50,98 @@ export default function CampaignCreate() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentClient } = useTenant();
+  const { id: campaignId } = useParams<{ id: string }>();
+  
+  // Edit mode detection
+  const isEditMode = !!campaignId;
+  
   const [currentStep, setCurrentStep] = useState(0);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [isDataLoaded, setIsDataLoaded] = useState(!isEditMode); // Skip loading for create mode
   const [formData, setFormData] = useState<Partial<CampaignFormData>>({
     name: "",
     mailing_method: undefined,
     utm_source: "directmail",
     utm_medium: "postcard",
   });
+
+  // Fetch existing campaign data when in edit mode
+  const { data: existingCampaign, isLoading: isLoadingCampaign } = useQuery({
+    queryKey: ["campaign-edit-data", campaignId],
+    queryFn: async () => {
+      if (!campaignId) return null;
+      
+      const { data, error } = await supabase
+        .from("campaigns")
+        .select("*")
+        .eq("id", campaignId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: isEditMode,
+  });
+
+  // Fetch existing conditions when in edit mode
+  const { data: existingConditions, isLoading: isLoadingConditions } = useQuery({
+    queryKey: ["campaign-conditions-edit", campaignId],
+    queryFn: async () => {
+      if (!campaignId) return [];
+      
+      const { data, error } = await supabase
+        .from("campaign_conditions")
+        .select("*")
+        .eq("campaign_id", campaignId)
+        .order("condition_number");
+
+      if (error) {
+        logger.warn("Failed to fetch conditions:", error);
+        return [];
+      }
+      return data || [];
+    },
+    enabled: isEditMode,
+  });
+
+  // Populate form data when campaign data is loaded
+  useEffect(() => {
+    if (isEditMode && existingCampaign && !isDataLoaded) {
+      const loadedFormData: Partial<CampaignFormData> = {
+        name: existingCampaign.name || "",
+        mailing_method: existingCampaign.mailing_method as any,
+        size: existingCampaign.size as any,
+        template_id: existingCampaign.template_id || undefined,
+        contact_list_id: existingCampaign.contact_list_id || undefined,
+        audience_id: existingCampaign.audience_id || undefined,
+        landing_page_id: existingCampaign.landing_page_id || undefined,
+        lp_mode: existingCampaign.lp_mode as any,
+        utm_source: existingCampaign.utm_source || "directmail",
+        utm_medium: existingCampaign.utm_medium || "postcard",
+        utm_campaign: existingCampaign.utm_campaign || undefined,
+        postage: existingCampaign.postage as any,
+        mail_date: existingCampaign.mail_date ? new Date(existingCampaign.mail_date) : undefined,
+        sms_opt_in_message: existingCampaign.sms_opt_in_message || undefined,
+        // Map conditions
+        conditions: existingConditions?.map(c => ({
+          id: c.id,
+          condition_number: c.condition_number,
+          condition_name: c.condition_name,
+          trigger_type: c.trigger_type,
+          brand_id: c.brand_id || undefined,
+          card_value: c.card_value || undefined,
+          sms_template: c.sms_template || undefined,
+          time_delay_hours: c.time_delay_hours || undefined,
+          crm_event_name: c.crm_event_name || undefined,
+          is_active: c.is_active,
+        })) || [],
+      };
+      
+      setFormData(loadedFormData);
+      setIsDataLoaded(true);
+      logger.info("Campaign data loaded for editing:", campaignId);
+    }
+  }, [isEditMode, existingCampaign, existingConditions, isDataLoaded, campaignId]);
 
   // Create campaign mutation
   const createCampaignMutation = useMutation({
