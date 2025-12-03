@@ -5,7 +5,8 @@ import {
   ShoppingCart, Globe, Activity, ListTodo, ChevronRight, ArrowLeft, FormInput,
   Gauge, BookOpen, List, Upload, FolderTree, Database, FileSearch, Rocket, TestTube,
   Megaphone, Headphones, ClipboardList, Shield, UserCog, ShieldAlert, CheckSquare,
-  PhoneCall, Target, Plug, Settings as SettingsIcon, Package, Building2, CreditCard, DollarSign
+  PhoneCall, Target, Plug, Settings as SettingsIcon, Package, Building2, CreditCard, DollarSign,
+  Bug
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
@@ -124,6 +125,7 @@ const navigationGroups: NavGroup[] = [
       { name: "Financial Reports", href: "/admin/financial-reports", icon: DollarSign, roles: ['admin'], keywords: ["finances", "revenue", "reports"], description: "Platform financial reports" },
       { name: "Demo Data", href: "/admin/demo-data", icon: Database, roles: ['admin'], keywords: ["demo", "test", "simulation", "seed", "generate"], description: "Generate demo data for testing" },
       { name: "Audit Log", href: "/admin/audit-log", icon: ShieldAlert, roles: ['admin'], keywords: ["audit", "logs", "history"], description: "User management audit trail" },
+      { name: "Error Logs", href: "/admin/error-logs", icon: Bug, roles: ['admin'], keywords: ["errors", "bugs", "debugging", "logs", "troubleshooting"], description: "System error logs" },
       { name: "Site Directory", href: "/admin/site-directory", icon: FileSearch, roles: ['admin'], keywords: ["pages", "routes", "navigation"], description: "All pages directory" },
     ]
   },

@@ -63,6 +63,7 @@ const AceFormPublic = lazy(() => import("./pages/AceFormPublic"));
 const AceFormAnalytics = lazy(() => import("./pages/AceFormAnalytics"));
 const AceFormsDocumentation = lazy(() => import("./pages/AceFormsDocumentation"));
 const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
+const ErrorLogs = lazy(() => import("./pages/ErrorLogs"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CookieConsent = lazy(() => import("./components/CookieConsent").then(m => ({ default: m.CookieConsent })));
@@ -254,6 +255,7 @@ const App = () => (
                   <Route path="/agencies" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
                   <Route path="/agency-management" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
                   <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
+                  <Route path="/admin/error-logs" element={<ProtectedRoute requiredRole="admin"><ErrorLogs /></ProtectedRoute>} />
                   <Route path="/admin/site-directory" element={<ProtectedRoute requiredRole="admin"><AdminSiteDirectory /></ProtectedRoute>} />
                   <Route path="/admin/demo-data" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
                   <Route path="/admin/organizations" element={<ProtectedRoute requiredRole="admin"><AdminOrganizationManagement /></ProtectedRoute>} />

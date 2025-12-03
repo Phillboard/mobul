@@ -11,6 +11,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { getTilloClient } from '../_shared/tillo-client.ts';
+import { createErrorLogger } from '../_shared/error-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -58,16 +59,25 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
-  try {
-    const {
-      campaignId,
-      recipientId,
-      brandId,
-      denomination,
-      conditionNumber,
-    }: ProvisionRequest = await req.json();
+  // Initialize error logger
+  const errorLogger = createErrorLogger('provision-gift-card-unified');
 
-    console.log('[PROVISION] Starting:', {
+  // Declare variables at function scope for error logging access
+  let campaignId: string | undefined;
+  let recipientId: string | undefined;
+  let brandId: string | undefined;
+  let denomination: number | undefined;
+  let conditionNumber: number | undefined;
+
+  try {
+    const requestData: ProvisionRequest = await req.json();
+    campaignId = requestData.campaignId;
+    recipientId = requestData.recipientId;
+    brandId = requestData.brandId;
+    denomination = requestData.denomination;
+    conditionNumber = requestData.conditionNumber;
+
+    console.log(`[PROVISION] [${errorLogger.requestId}] Starting:`, {
       campaignId,
       recipientId,
       brandId,
@@ -212,6 +222,12 @@ serve(async (req) => {
         costBasis = denomData?.tillo_cost_per_card || denomination; // Assume face value if not set
       } catch (tilloError) {
         console.error('[PROVISION] Tillo API failed:', tilloError);
+        // Log Tillo error
+        await errorLogger.logExternalError('Tillo', tilloError, {
+          brandId,
+          denomination,
+          tilloBrandCode,
+        });
         throw new Error(`Failed to provision from Tillo: ${tilloError.message}`);
       }
     }
@@ -310,7 +326,18 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error('[PROVISION] Error:', error);
+    console.error(`[PROVISION] [${errorLogger.requestId}] Error:`, error);
+
+    // Log error to database
+    await errorLogger.logError(error, {
+      campaignId,
+      recipientId,
+      metadata: {
+        brandId,
+        denomination,
+        conditionNumber,
+      },
+    });
 
     const result: ProvisionResult = {
       success: false,

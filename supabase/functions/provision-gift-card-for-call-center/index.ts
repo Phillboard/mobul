@@ -11,6 +11,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { createErrorLogger } from '../_shared/error-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -72,17 +73,24 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
-  try {
-    const {
-      redemptionCode,
-      deliveryPhone,
-      deliveryEmail,
-      conditionNumber,
-      conditionId,
-      callSessionId,
-    }: CallCenterProvisionRequest = await req.json();
+  // Initialize error logger
+  const errorLogger = createErrorLogger('provision-gift-card-for-call-center');
 
-    console.log('[CALL-CENTER-PROVISION] Starting:', {
+  // Declare variables at function scope for error logging access
+  let redemptionCode: string | undefined;
+  let recipientId: string | undefined;
+  let campaignId: string | undefined;
+
+  try {
+    const requestData: CallCenterProvisionRequest = await req.json();
+    redemptionCode = requestData.redemptionCode;
+    const deliveryPhone = requestData.deliveryPhone;
+    const deliveryEmail = requestData.deliveryEmail;
+    const conditionNumber = requestData.conditionNumber;
+    const conditionId = requestData.conditionId;
+    const callSessionId = requestData.callSessionId;
+
+    console.log(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] Starting:`, {
       redemptionCode,
       hasPhone: !!deliveryPhone,
       hasEmail: !!deliveryEmail,
@@ -132,7 +140,11 @@ serve(async (req) => {
       throw new Error('Invalid redemption code');
     }
 
-    console.log('[CALL-CENTER-PROVISION] Recipient found:', recipient.id);
+    // Store recipient and campaign IDs for error logging
+    recipientId = recipient.id;
+    campaignId = recipient.audiences[0]?.campaign_id;
+
+    console.log(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] Recipient found:`, recipient.id);
 
     // =====================================================
     // STEP 2: Validate verification status for SMS delivery
@@ -425,12 +437,39 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error('[CALL-CENTER-PROVISION] Error:', error);
+    console.error(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] Error:`, error);
+
+    // Log error to database
+    await errorLogger.logError(error, {
+      recipientId,
+      campaignId,
+      metadata: {
+        redemptionCode,
+      },
+    });
+
+    // Provide helpful error messages based on the error type
+    let errorMessage = error.message || 'Unknown error occurred';
+    let helpfulHint = '';
+
+    if (errorMessage.includes('No gift card configured')) {
+      helpfulHint = ' → Please configure a gift card brand and value in the campaign settings.';
+    } else if (errorMessage.includes('Provisioning failed')) {
+      helpfulHint = ' → Check that you have gift cards in inventory OR Tillo API configured. Go to Settings → Gift Cards to manage inventory.';
+    } else if (errorMessage.includes('not configured')) {
+      helpfulHint = ' → Please contact your administrator to configure the required API credentials.';
+    } else if (errorMessage.includes('Recipient verification required')) {
+      helpfulHint = ' → Customer must opt-in via SMS, verify via email, or you must skip verification with a valid disposition.';
+    } else if (errorMessage.includes('already been provisioned')) {
+      helpfulHint = ' → This customer has already received a gift card for this campaign.';
+    } else if (errorMessage.includes('Invalid redemption code')) {
+      helpfulHint = ' → Please verify the redemption code and ensure the customer is in an active campaign.';
+    }
 
     const result: ProvisionResult = {
       success: false,
-      error: error.message || 'Unknown error occurred',
-      message: error.message || 'Provisioning failed',
+      error: errorMessage + helpfulHint,
+      message: errorMessage + helpfulHint,
     };
 
     return new Response(JSON.stringify(result), {
