@@ -1,0 +1,340 @@
+[33mb412124[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m merged commits
+[33m7c7e840[m fixes
+[33m4d9df19[m git massive update
+[33mbc008ed[m git
+[33m800389b[m git updates
+[33maa8255e[m Add Keys/ to .gitignore and remove from tracking
+[33m5963c0b[m comprehensive overhaul and cleanup
+[33m5d9a3cc[m sms and credits
+[33m490cd8d[m finishing touches
+[33m6452198[m campaign and sql fixes
+[33m4538bc4[m campaign fixes
+[33mbc35b25[m vercel quick deploy
+[33m42b3ca0[m Trigger Vercel rebuild
+[33mfde4433[m campaign fixes
+[33m9e41e57[m campaign fixes
+[33mea9ead4[m Fix build: Add missing BrandPoolsView component and gift card hooks
+[33maaff532[m Merge branch 'main' of https://github.com/Phillboard/mobul
+[33m4913bec[m Manual updates: campaign conditions, call center, and gift card improvements
+[33mf899ca1[m Fix supabase local setup
+[33mfaad1bd[m Changes
+[33m1036773[m call center permissions
+[33m91312af[m audit
+[33md089dfd[m Redemption system updates
+[33m03bd873[m landing page builder additions and improvements
+[33m44faa09[m Huge update to gift card system Huge Updates to entire system
+[33m771e9a7[m audience rewards step cleanup
+[33m7ebe475[m audience rewards step cleanup
+[33m9e0ec9e[m gc cleanup
+[33m1696882[m Tons of cleanup tasks and new documentation
+[33mf1f4007[m Merge branch 'main' of https://github.com/Phillboard/mobul
+[33m48a4a87[m Simulated data and GC system updates
+[33m17381e9[m Finished local system migration
+[33m6cadb85[m Switch to new supabase
+[33m71d630c[m Changes
+[33mac587f8[m merges
+[33me40841b[m merges
+[33m2fb6828[m merge
+[33m2c47167[m merges
+[33m3e516fe[m merge
+[33mb69832a[m Remove .env files from tracking
+[33mb40f0b3[m Merge branch 'main' of https://github.com/Phillboard/mobul
+[33m356cec2[m env removed
+[33m5e44e30[m supabase migration files added
+[33m010c4ee[m Fix edge function build errors
+[33m843c37c[m Changes
+[33m32006e0[m Export Lovable Cloud data
+[33meee0fb5[m Changes
+[33mc9dd269[m Fix Campaigns columnFilters bug
+[33m67c8079[m Changes
+[33me1d1074[m Export project to GitHub
+[33m77d4e6f[m Changes
+[33mae10d45[m migratin files added
+[33m63117a5[m migrations sql and scripts implemented
+[33m911d114[m New Components Created (11) Component	Purpose GlobalSearch	Cmd+K command palette for quick navigation KeyboardShortcutsHelp	Help dialog showing all shortcuts (press ?) TagSelector	Universal tagging for campaigns/contacts CommentsSection	Notes with @mention support CampaignCalendar	Monthly view of campaign schedules CampaignStatusBadge	Color-coded status badges CampaignQuickActions	Dropdown with common actions CloneCampaignDialog	Clone campaigns with options BrandManagementDialog	Upload brand logos & manage details BulkInviteDialog	Invite multiple users via CSV ScriptEditor (enhanced)	17 merge fields with live preview ew Services (1) zapierTriggers.ts - 25+ trigger event types Database Migrations (2) Tags system with RLS policies Comments system with @mentions Key Features Delivered: ✅ Dark Mode (already existed) ✅ Gift Card Brand Logo Upload ✅ Extended Zapier Triggers (25+ events) ✅ Feature Flags (25+ flags) ✅ Tags System ✅ Keyboard Shortcuts ✅ Global Search (Cmd+K) ✅ Dynamic Call Script Merge Fields ✅ Campaign Cloning ✅ Bulk User Invites ✅ Comments/Notes with @mentions ✅ Campaign Calendar View ✅ Status Badges with Colors ✅ Quick Actions Menu
+[33mcba10ed[m audit implementation complete 70%
+[33m9d42897[m major refactor
+[33m2902e0f[m campaign wizard updates
+[33mf93e567[m contacts system overhaul complete
+[33m0e2978b[m campaign wizard updates
+[33m8392401[m campaign wizard improvements
+[33m20c900a[m fixes for call center redemption panel and added new steps for the redemption workflow fixed quote marks
+[33m092e2b1[m Reworked gift card provisioning system, organization hierarchy, and reward fulfillment flow
+[33m66fa008[m cursor rules for campaign condition model, gift card provisioning system, organization hierarchy, and reward fulfillment flow
+[33mbdff7ef[m big cleaning
+[33mab19680[m giga updates
+[33mf96a0d5[m Cleanup of old docs CLEANING UP SQL scripts
+[33ma2e6307[m fixes for call center redemption panel and added new steps for the redemption workflow
+[33m0a38ab3[m feat: Enhanced campaign wizard with SMS opt-in and gift card email delivery
+[33md6193cf[m feat: Add contact list selection option to Codes step
+[33ma8ab53c[m fix: Convert campaign wizard from dialog popup to full page view
+[33m79f344c[m chore: Install papaparse and types for CSV parsing in CodesUploadStep
+[33m8eff12d[m feat: Add multi-condition builder and form selection to campaign wizard
+[33mb68cab7[m fix: Switch campaign creation to use new wizard instead of old form
+[33mb205741[m feat: Complete campaign system redesign with atomic claiming and enhanced workflows
+[33m26423f3[m chore: codebase cleanup - remove 13 unnecessary files
+[33m123175e[m feat: customizable SMS/email message templates system
+[33m0dbf79c[m docs: path to 10/10 achievement summary - 9/10 reached!
+[33m3647d19[m feat: foundations for 10/10 - error tracking, retry logic, code style
+[33m3ec375d[m feat: complete autonomous development fixes
+[33m86ce016[m docs: add comprehensive project status report
+[33mc8e9e46[m fix: completely rebuild enrich-demo-data to be simple and reliable
+[33m13da982[m fix: filter campaigns in JavaScript to avoid query syntax issues
+[33m2780915[m fix: correct Supabase query syntax for null check
+[33m8e786d7[m feat: add UI button to link campaigns to audiences - Add one-click button to generate complete analytics data
+[33m4ea794e[m Link campaigns to audiences
+[33m36558ee[m Changes
+[33m9b4cb63[m fix: add complete analytics data generation for campaigns
+[33m22cf536[m feat: comprehensive demo data generation system
+[33m5d4b9be[m refactor: comprehensive code quality improvements
+[33m5a2971c[m feat: MVP verification system + comprehensive code refactoring
+[33mf89c223[m Fix campaign recipient mapping
+[33mbc6f987[m Changes
+[33mbfd366a[m Finish table standardization
+[33m0bb5465[m Changes
+[33m6259e16[m Migrate Agency companies table
+[33m2d823fb[m Changes
+[33m13b8257[m Migrate contact lists to table
+[33m89f4ce7[m Changes
+[33m632e3ae[m Implement table infra Phase 1
+[33mf0dec1a[m Changes
+[33mead50ae[m Revamp to 2-column layout
+[33m539058d[m Changes
+[33m80add61[m Consolidate call center types
+[33maf751f7[m Changes
+[33mcd70b25[m Consolidate call center hub
+[33m505101d[m Changes
+[33m0b5b50f[m Implement call center scripts UI
+[33m9a20276[m Changes
+[33m51cf008[m Fix form submit issue
+[33m2ce658d[m Changes
+[33m4b13a07[m Fix useFieldArray desync
+[33mbe49e19[m Changes
+[33m8bb84f1[m Fix auto-save loop
+[33m94c3e26[m Changes
+[33m8519490[m Refine ACE Forms UX polish
+[33meae7d99[m Changes
+[33m67eab10[m Fix ace forms state bug Phase1
+[33m6ff0970[m Changes
+[33me1e5fa3[m Fix docs editor save error
+[33m67db11b[m Changes
+[33m0ed199e[m Convert editor to full page
+[33m1e8b6bc[m Changes
+[33mee77d22[m Add admin markdown editor
+[33m09cfe5f[m Changes
+[33mf49cbbd[m Enhance MarkdownRenderer styles
+[33m451db1c[m Changes
+[33m82812fb[m Fix docs layout overlap
+[33m3e1a0d8[m Changes
+[33m3748da5[m Improve docs routing and layout
+[33m5dcee7b[m Changes
+[33mb65af4f[m Fix 404 in docs routes
+[33m486b9cd[m Changes
+[33mb5afcce[m Update docs loading to markdown
+[33m6ff6600[m Changes
+[33m5fdf58e[m Extend sidebar to docs
+[33ma6a57b7[m Changes
+[33m0bd5678[m Add remaining docs and adjust UI
+[33m927c17b[m Changes
+[33mc689036[m Add remaining docs files
+[33mbb451be[m Changes
+[33m3b56953[m Create 28 docs markdown files
+[33m5999d73[m Changes
+[33mdf6d269[m Redesign navigation theme
+[33mb640c51[m Changes
+[33mdc927fd[m Fix broken admin menu
+[33mb64b5d8[m Changes
+[33m6aea7d4[m Redesign navigation menu
+[33mfee7780[m Changes
+[33mc82e037[m Add admin site directory
+[33m40c785c[m Changes
+[33m99209ca[m Fix RLS on clients view
+[33m48b0942[m Changes
+[33mdb9e55a[m Hide Dr Phillip toggle
+[33m414bed4[m Changes
+[33m6f01b01[m Fix org policy recursion
+[33md02e4a7[m Changes
+[33m529f964[m Fix org assignment RLS
+[33m44817ca[m Changes
+[33m2c7660b[m Implement enterprise user mgmt
+[33mecd8c49[m Changes
+[33m29bb8ac[m Fix handle users without roles
+[33m78dc238[m Changes
+[33m9e82265[m Fix manage users join logic
+[33mc0664cd[m Changes
+[33m9c6c40d[m Fix deep type error
+[33m66f1c09[m Changes
+[33m894efc7[m Fix multiple roles bug
+[33m3b5c3f2[m Changes
+[33m47bd1c1[m Fix user role typing
+[33mdafc938[m Changes
+[33me264fc6[m Rework user invites
+[33m2562f9a[m Changes
+[33md19191e[m Enable admin view for users
+[33m8b226f8[m Changes
+[33m73c212b[m Fix form builder crash on load
+[33m66d2221[m Changes
+[33m6ee9d49[m Refactor internal state
+[33m69b62cf[m Changes
+[33m89c394c[m Fix undo redo and revealsettings
+[33m9e086c0[m Changes
+[33maae5db5[m Add conditional logic phase
+[33m1b60037[m Changes
+[33m3d40fe4[m Fix undo/redo & reveal settings
+[33m71df56c[m Changes
+[33mf3cf921[m Fix scrolling and wallet default
+[33m0fc5b95[m Changes
+[33m696677c[m Enhance ACE Forms builder audit
+[33m7dcc2cc[m Changes
+[33m188e366[m Fix remove onTabChange prop
+[33mb8c8b9d[m Changes
+[33mbf5cf45[m Complete ACE Forms builder MVP
+[33md807443[m Changes
+[33mb0115eb[m Enhance ACE form design
+[33mc6eccb5[m Changes
+[33m48ec436[m Improve gift card UX and embeds
+[33m37d1df7[m Changes
+[33m129e85b[m Fix test gift card flow
+[33mffd17e3[m Changes
+[33mbe4dffc[m Add test code 1234-5678-abcd
+[33mfb92fdf[m Changes
+[33m3eaada6[m Fix edit and public routes
+[33m000bf12[m Changes
+[33m43797ff[m Fix public form route and access
+[33mdfc4829[m Changes
+[33mb63861c[m ACE Forms route fixes
+[33m2acbf49[m Changes
+[33m362b326[m Fix ace-forms nav to builder
+[33mc90c842[m Changes
+[33m494a859[m Fix campaign creation schema
+[33m31ec38d[m Changes
+[33m116fc7b[m Fix campaign tokens on create
+[33m01f5769[m Changes
+[33m66773f3[m Implement campaign create page
+[33m1e3ce42[m Changes
+[33me2fe006[m Migrate to Contacts Lists
+[33md296674[m Changes
+[33m2f514dc[m Redesign Campaign Wizard
+[33m9f9040b[m Changes
+[33m539dff2[m Add mail provider schema UI
+[33m300f467[m Changes
+[33m81a8801[m Add ACE Forms new route
+[33mc1fc33f[m Changes
+[33m3191c23[m Improve data gen correctness
+[33mc8d2936[m Changes
+[33m3e30ac7[m Fix lp_mode values
+[33m855c7e1[m Changes
+[33m264f1b5[m Enhance data simulation edge
+[33m797deba[m Changes
+[33m0551504[m Fix edge func RLS issue
+[33mda35611[m Changes
+[33m26afd08[m Improve simulation robustness
+[33m8ad52e9[m Changes
+[33m79dcd2e[m Enhance data simulation engine
+[33mde35724[m Changes
+[33mda2db45[m Add brand selection control
+[33md0c5f67[m Changes
+[33mae668ed[m Bulletproof data engine
+[33m978f728[m Changes
+[33m5b83948[m Add database reset flow
+[33m6202f4a[m Changes
+[33me03d08d[m Implement simulate dashboard UI
+[33m406dc4f[m Changes
+[33m99a3029[m Fix admin route perms
+[33m9e69435[m Changes
+[33ma570336[m Fix admin access issue
+[33m6a17ea4[m Changes
+[33m6aa0ea8[m Add enrich-demo-data trigger
+[33mfcb611b[m Changes
+[33m4be7340[m Implement data simulation plan
+[33m953beeb[m Changes
+[33m999746d[m Reorganize nav into Call Center
+[33mbecbd7a[m Changes
+[33m875cd83[m Enrich and sanitize data
+[33m4e82fcd[m Changes
+[33m2cd5ad7[m Fix QR code generation flow
+[33m6ae0136[m Changes
+[33m2a7f0ad[m Reduce layout vertical padding
+[33m8e3e542[m Changes
+[33m5e900c3[m Unify library pages UI
+[33m8357673[m Changes
+[33mf77f81e[m Migrate to new mail types
+[33md60bba1[m Changes
+[33m97b7083[m Complete mail rename migration
+[33m679a70f[m Changes
+[33m5108b56[m Rename templates to mail
+[33m804eb29[m Changes
+[33m5ea4f6a[m Rename Templates to Mail plan
+[33m8763e3c[m Changes
+[33meafed82[m Fix lists view route and counts
+[33mcb18074[m Changes
+[33me675fc3[m Fix contact column debounce
+[33ma5b18fe[m Changes
+[33m05213ec[m Fix column selector flicker
+[33m0a270b9[m Changes
+[33m4e2be11[m Fix contact column selector UI
+[33md075fba[m Changes
+[33mb025d59[m Migrate more tables to TanStack
+[33ma960236[m Changes
+[33m175031e[m Migrate more tables to TanStack
+[33m83071a9[m Changes
+[33mff2f42c[m Migrate remaining tables
+[33m4a43502[m Changes
+[33m38959ce[m Phase 2 prep complete
+[33m41af93b[m Changes
+[33mb481794[m Phase 1 quick wins implement
+[33md2543d0[m Changes
+[33m153710e[m Redesign contacts table TanStack
+[33m082e31e[m Changes
+[33m00c10b3[m Fix column selector glitches
+[33me1d3d47[m Changes
+[33mda7a466[m Fix column sync loop
+[33m0569443[m Changes
+[33m16ebb58[m Improve column selector UX
+[33mfab2fcf[m Changes
+[33me473f7f[m Fix column selector race
+[33mcc9b7de[m Changes
+[33m58638c4[m Enhance contacts system
+[33me9f0ad2[m Changes
+[33m73184e3[m Enhance contacts features
+[33m0f57f9f[m Changes
+[33mc3a99e9[m Fix duplicate list membership
+[33m633d793[m Changes
+[33mc8ca2cd[m Seed demo data button
+[33m5b3a64f[m Changes
+[33md317d22[m Add customer_code to Contacts
+[33mab5d50e[m Changes
+[33m7c0f6ca[m Show seed button to all users
+[33mf6844e8[m Changes
+[33mbc46670[m Seed demo data for admins
+[33m7a897b0[m Changes
+[33mf569eb4[m Add admin seed button
+[33m1a0f809[m Changes
+[33mdbfd573[m Reorganize marketing menu
+[33mdeb5864[m Changes
+[33mcdad875[m Add Contacts system scaffold
+[33mbdc3dd0[m Changes
+[33me4b9ba2[m Redesign contacts flow CRM
+[33m510ef74[m Changes
+[33mf661b3c[m Consolidate admin sections
+[33mfa2d81e[m Changes
+[33m94e5cdb[m Remove CRM cleanup and seed data
+[33m93c2102[m Changes
+[33m63e88a2[m Remove AI landing pages system
+[33m3bea14d[m Changes
+[33maa08528[m Merge pull request #6 from Phillboard/claude/code-review-broken-links-01T8Qbkazg3wobHh3Pvktja7
+[33m939be54[m Remove all AI landing page generation code - starting fresh
+[33m0052ebd[m Merge pull request #5 from Phillboard/claude/code-review-broken-links-01T8Qbkazg3wobHh3Pvktja7
+[33m0be5a2c[m Upgrade AI landing page generator to Claude 4.5 Sonnet with major improvements
+[33m59ce4cf[m Merge pull request #4 from Phillboard/claude/code-review-broken-links-01T8Qbkazg3wobHh3Pvktja7
+[33m63f83d1[m Add comprehensive code review and URL analysis reports
+[33m76fd9b4[m Merge pull request #3 from Phillboard/fix/disable-any-lint
+[33m4e8b291[m Merge branch 'main' into fix/disable-any-lint
+[33me65ae01[m Switch to GrapesJS for templates
+[33ma353bb9[m Changes
+[33m3b1b8e4[m Fix Ace Forms layout
+[33md0562ac[m Changes
+[33mbd1e16f[m Merge pull request #2 from Phillboard/fix/disable-any-lint
+[33mf76634e[m Fix doc and auth issues
+[33m78a7d02[m Changes
+[33m836a4bd[m Merge pull request #1 from Phillboard/fix/disable-any-lint
