@@ -1,6 +1,0 @@
-Fix Ace Forms layout
-
-Wrap Ace Forms with main Layout to show main menu
-Replace AceFormsLayout usage with standard Layout in AceForms.tsx, remove AceFormsLayout import, and add Layout import accordingly to render the main navigation.
-
-X-Lovable-Edit-ID: edt-01c0b747-14b3-4aca-9cb2-db975f9f2a46

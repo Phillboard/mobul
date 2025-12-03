@@ -44,6 +44,8 @@ interface SummaryStepProps {
   onConfirm: () => void;
   isCreating?: boolean;
   onSaveDraft?: () => void;
+  isEditMode?: boolean;
+  campaignStatus?: string;
 }
 
 export function SummaryStep({
@@ -54,6 +56,8 @@ export function SummaryStep({
   onConfirm,
   isCreating,
   onSaveDraft,
+  isEditMode,
+  campaignStatus,
 }: SummaryStepProps) {
   const validation = useCampaignValidation(formData, clientId);
   const isSelfMailer = formData.mailing_method === 'self';
@@ -130,9 +134,9 @@ export function SummaryStep({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Review & Create Campaign</h2>
+        <h2 className="text-2xl font-bold">{isEditMode ? "Review & Save Changes" : "Review & Create Campaign"}</h2>
         <p className="text-muted-foreground mt-2">
-          Review all campaign details before creating. Click any section to expand.
+          Review all campaign details before {isEditMode ? "saving" : "creating"}. Click any section to expand.
         </p>
       </div>
 
@@ -515,7 +519,9 @@ export function SummaryStep({
       <div className="bg-muted/50 p-4 rounded-lg border">
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Mail className="h-4 w-4" />
-          {isSelfMailer ? (
+          {isEditMode ? (
+            <>Your changes will be saved. The campaign status will remain unchanged.</>
+          ) : isSelfMailer ? (
             <>This campaign will be created and ready for activation. Once active, call center agents can validate codes and provision gift cards.</>
           ) : (
             <>This campaign will be created as a <strong className="text-foreground">draft</strong>. You can review and make changes before activating.</>
@@ -528,7 +534,7 @@ export function SummaryStep({
           Back
         </Button>
         <div className="flex gap-2">
-          {onSaveDraft && (
+          {onSaveDraft && !isEditMode && (
             <Button type="button" variant="outline" onClick={onSaveDraft} disabled={isCreating}>
               Save as Draft
             </Button>
@@ -542,12 +548,12 @@ export function SummaryStep({
             {isCreating ? (
               <>
                 <Printer className="h-4 w-4 mr-2 animate-pulse" />
-                Creating Campaign...
+                {isEditMode ? "Saving Changes..." : "Creating Campaign..."}
               </>
             ) : (
               <>
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                Create Campaign
+                {isEditMode ? "Save Changes" : "Create Campaign"}
               </>
             )}
           </Button>

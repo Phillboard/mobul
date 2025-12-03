@@ -5,7 +5,6 @@ import { Mail } from "lucide-react";
 import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
 import { CampaignProofDialog } from "./CampaignProofDialog";
 import { DeleteCampaignDialog } from "./DeleteCampaignDialog";
-import { EditCampaignDialog } from "./EditCampaignDialog";
 import { CampaignCard } from "./CampaignCard";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +28,6 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
   } | null>(null);
   const [proofCampaignId, setProofCampaignId] = useState<string | null>(null);
   const [deleteCampaignId, setDeleteCampaignId] = useState<string | null>(null);
-  const [editCampaignId, setEditCampaignId] = useState<string | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const navigate = useNavigate();
@@ -221,7 +219,7 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
         onViewAnalytics: (id) => navigate(`/analytics/${id}`),
         onReviewProof: (id) => setProofCampaignId(id),
         onSubmitToVendor: (id) => submitToVendorMutation.mutate(id),
-        onEdit: (id) => setEditCampaignId(id),
+        onEdit: (id) => navigate(`/campaigns/${id}/edit`),
         onDuplicate: (id) => duplicateCampaignMutation.mutate(id),
         onDelete: (id) => setDeleteCampaignId(id),
       }),
@@ -292,7 +290,7 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
               onViewAnalytics={() => navigate(`/analytics/${campaign.id}`)}
               onReviewProof={() => setProofCampaignId(campaign.id)}
               onSubmitToVendor={() => submitToVendorMutation.mutate(campaign.id)}
-              onEdit={() => setEditCampaignId(campaign.id)}
+              onEdit={() => navigate(`/campaigns/${campaign.id}/edit`)}
               onDuplicate={() => duplicateCampaignMutation.mutate(campaign.id)}
               onDelete={() => setDeleteCampaignId(campaign.id)}
               getStatusColor={getStatusColor}
@@ -337,14 +335,6 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
         onOpenChange={(open) => !open && setDeleteCampaignId(null)}
         campaignId={deleteCampaignId}
         onConfirm={() => deleteCampaignMutation.mutate(deleteCampaignId)}
-      />
-    )}
-    
-    {editCampaignId && (
-      <EditCampaignDialog
-        open={!!editCampaignId}
-        onOpenChange={(open) => !open && setEditCampaignId(null)}
-        campaignId={editCampaignId}
       />
     )}
     </>

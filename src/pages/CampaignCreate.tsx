@@ -143,11 +143,99 @@ export default function CampaignCreate() {
     }
   }, [isEditMode, existingCampaign, existingConditions, isDataLoaded, campaignId]);
 
-  // Create campaign mutation
-  const createCampaignMutation = useMutation({
+  // Create or Update campaign mutation
+  const saveCampaignMutation = useMutation({
     mutationFn: async (data: Partial<CampaignFormData>) => {
       if (!currentClient) throw new Error("No client selected");
 
+      // ========== EDIT MODE: Update existing campaign ==========
+      if (isEditMode && campaignId) {
+        // Build update object
+        const updates: any = {
+          name: data.name,
+          template_id: data.template_id || null,
+          size: data.size || "4x6",
+          postage: data.postage || "standard",
+          mail_date: data.mail_date ? new Date(data.mail_date).toISOString() : null,
+          landing_page_id: data.landing_page_id || null,
+          lp_mode: data.lp_mode as any || "bridge",
+          utm_source: data.utm_source || null,
+          utm_medium: data.utm_medium || null,
+          utm_campaign: data.utm_campaign || null,
+          mailing_method: data.mailing_method || "self",
+          sms_opt_in_message: data.sms_opt_in_message || null,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Update campaign
+        const { data: campaign, error: updateError } = await supabase
+          .from("campaigns")
+          .update(updates)
+          .eq("id", campaignId)
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+
+        logger.info(`Campaign updated: ${campaign.id}`);
+
+        // Update conditions - delete existing and recreate
+        if (data.conditions && data.conditions.length > 0) {
+          // Delete existing conditions
+          await supabase
+            .from("campaign_conditions")
+            .delete()
+            .eq("campaign_id", campaignId);
+
+          // Insert new conditions
+          const conditionsToInsert = data.conditions.map((condition: any, index: number) => ({
+            campaign_id: campaignId,
+            condition_number: condition.condition_number || index + 1,
+            condition_name: condition.condition_name,
+            trigger_type: condition.trigger_type,
+            time_delay_hours: condition.time_delay_hours,
+            crm_event_name: condition.crm_event_name,
+            is_active: condition.is_active !== false,
+            brand_id: condition.brand_id || null,
+            card_value: condition.card_value || null,
+            sms_template: condition.sms_template || null,
+          }));
+
+          const { error: conditionsError } = await supabase
+            .from("campaign_conditions")
+            .insert(conditionsToInsert);
+
+          if (conditionsError) {
+            logger.error("Failed to update conditions:", conditionsError);
+            throw conditionsError;
+          }
+
+          // Update gift card configs
+          await supabase
+            .from("campaign_gift_card_config")
+            .delete()
+            .eq("campaign_id", campaignId);
+
+          const giftCardConfigs = data.conditions
+            .filter((condition: any) => condition.brand_id && condition.card_value)
+            .map((condition: any, index: number) => ({
+              campaign_id: campaignId,
+              condition_number: condition.condition_number || index + 1,
+              brand_id: condition.brand_id,
+              denomination: condition.card_value,
+            }));
+
+          if (giftCardConfigs.length > 0) {
+            await supabase
+              .from("campaign_gift_card_config")
+              .insert(giftCardConfigs);
+          }
+        }
+
+        return campaign;
+      }
+
+      // ========== CREATE MODE: Create new campaign ==========
       let audienceId = null;
 
       // If contact list selected, create audience and recipients
@@ -178,7 +266,6 @@ export default function CampaignCreate() {
         audienceId = audience.id;
 
         // Get contacts from list - include unique_code from list membership AND customer_code as fallback
-        // This allows same contact to have different codes in different lists/campaigns
         const { data: listMembers, error: membersError } = await supabase
           .from("contact_list_members")
           .select("unique_code, contact:contacts(id, first_name, last_name, email, phone, address, address2, city, state, zip, customer_code)")
@@ -187,17 +274,8 @@ export default function CampaignCreate() {
         if (membersError) throw membersError;
 
         // Create recipients for contacts
-        // CRITICAL: ALWAYS create recipients for EVERY contact in the list
-        // Each campaign needs its own recipients linked to its audience
-        // The same code CAN appear in multiple campaigns (via compound unique constraint)
-        // 
-        // Priority for redemption code:
-        // 1. LIST-LEVEL unique_code (from contact_list_members)
-        // 2. CONTACT-LEVEL customer_code (fallback)
-        // 3. Auto-generated code (only if no code exists)
         if (listMembers && listMembers.length > 0) {
           const recipients = listMembers.map((member: any) => {
-            // Priority: list-level unique_code > contact-level customer_code > auto-generate
             const code = member.unique_code || member.contact?.customer_code;
             const redemptionCode = code || crypto.randomUUID().replace(/-/g, '').substring(0, 12).toUpperCase();
 
@@ -229,16 +307,11 @@ export default function CampaignCreate() {
       }
 
       // Determine initial status based on mailing status selection
-      // Valid campaign_status enum values: draft, proofed, in_production, mailed, completed
-      // NOTE: Database constraint allows self-mailers to use 'mailed' status without landing page
       const isSelfMailer = data.mailing_method === "self";
-      const hasBeenMailed = data.campaign_status === "mailed";
-      // Self-mailers who marked as mailed can go directly to 'mailed' status
+      const hasBeenMailed = (data as any).campaign_status === "mailed";
       const initialStatus = (isSelfMailer && hasBeenMailed) ? "mailed" : "draft";
 
       // Create campaign
-      // Note: size is an enum (4x6, 6x9, 6x11, letter, trifold) - use "4x6" default for self-mailers
-      // The UI hides these fields for self-mailers anyway
       const { data: campaign, error: campaignError } = await supabase
         .from("campaigns")
         .insert([{
@@ -268,7 +341,6 @@ export default function CampaignCreate() {
 
       // Create conditions if any
       if (data.conditions && data.conditions.length > 0) {
-        // Insert conditions with brand_id and card_value for gift card configuration
         const conditionsToInsert = data.conditions.map((condition: any, index: number) => ({
           campaign_id: campaign.id,
           condition_number: condition.condition_number || index + 1,
@@ -277,10 +349,8 @@ export default function CampaignCreate() {
           time_delay_hours: condition.time_delay_hours,
           crm_event_name: condition.crm_event_name,
           is_active: condition.is_active !== false,
-          // Gift card configuration - stored directly on condition
           brand_id: condition.brand_id || null,
           card_value: condition.card_value || null,
-          // SMS delivery message template
           sms_template: condition.sms_template || null,
         }));
 
@@ -295,8 +365,6 @@ export default function CampaignCreate() {
 
         logger.info(`Created ${conditionsToInsert.length} campaign conditions`);
 
-        // Also create campaign_gift_card_config entries for call center provisioning
-        // This provides a dedicated table for quick gift card lookup during redemption
         const giftCardConfigs = data.conditions
           .filter((condition: any) => condition.brand_id && condition.card_value)
           .map((condition: any, index: number) => ({
@@ -312,8 +380,7 @@ export default function CampaignCreate() {
             .insert(giftCardConfigs);
 
           if (configError) {
-            // Log but don't throw - campaign is already created
-            logger.warn("Failed to create gift card config (table may not exist yet):", configError);
+            logger.warn("Failed to create gift card config:", configError);
           } else {
             logger.info(`Created ${giftCardConfigs.length} gift card configurations`);
           }
@@ -342,19 +409,29 @@ export default function CampaignCreate() {
     },
     onSuccess: (campaign) => {
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      const isReadyForCallCenter = campaign.status === "mailed";
-      toast({
-        title: isReadyForCallCenter ? "Campaign Ready!" : "Campaign Created!",
-        description: isReadyForCallCenter 
-          ? "Your campaign is ready. Call center agents can validate codes and provision gift cards."
-          : "Your campaign has been created as a draft.",
-      });
-      navigate(`/campaigns/${campaign.id}`);
+      queryClient.invalidateQueries({ queryKey: ["campaign-edit-data", campaignId] });
+      queryClient.invalidateQueries({ queryKey: ["campaign-conditions-edit", campaignId] });
+      
+      if (isEditMode) {
+        toast({
+          title: "Campaign Updated!",
+          description: "Your changes have been saved successfully.",
+        });
+        navigate(`/campaigns/${campaignId}`);
+      } else {
+        const isReadyForCallCenter = campaign.status === "mailed";
+        toast({
+          title: isReadyForCallCenter ? "Campaign Ready!" : "Campaign Created!",
+          description: isReadyForCallCenter 
+            ? "Your campaign is ready. Call center agents can validate codes and provision gift cards."
+            : "Your campaign has been created as a draft.",
+        });
+        navigate(`/campaigns/${campaign.id}`);
+      }
     },
     onError: (error: any) => {
-      logger.error("Failed to create campaign:", error);
-      // Extract meaningful error message from various error formats
-      let errorMessage = "Failed to create campaign";
+      logger.error(`Failed to ${isEditMode ? 'update' : 'create'} campaign:`, error);
+      let errorMessage = `Failed to ${isEditMode ? 'update' : 'create'} campaign`;
       if (error instanceof Error) {
         errorMessage = error.message;
       } else if (error?.message) {
@@ -365,7 +442,7 @@ export default function CampaignCreate() {
         errorMessage = error;
       }
       toast({
-        title: "Creation Failed",
+        title: isEditMode ? "Update Failed" : "Creation Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -412,6 +489,9 @@ export default function CampaignCreate() {
     saveDraftMutation.mutate();
   }, [saveDraftMutation]);
 
+  // Loading state for edit mode
+  const isLoading = isEditMode && (isLoadingCampaign || isLoadingConditions || !isDataLoaded);
+
   if (!currentClient) {
     return (
       <Layout>
@@ -419,9 +499,23 @@ export default function CampaignCreate() {
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Please select a client to create a campaign.
+              Please select a client to {isEditMode ? "edit" : "create"} a campaign.
             </AlertDescription>
           </Alert>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show loading state while fetching campaign data in edit mode
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading campaign data...</p>
+          </div>
         </div>
       </Layout>
     );
@@ -437,11 +531,15 @@ export default function CampaignCreate() {
   };
 
   const handleClose = () => {
-    navigate("/campaigns");
+    if (isEditMode) {
+      navigate(`/campaigns/${campaignId}`);
+    } else {
+      navigate("/campaigns");
+    }
   };
 
-  const handleCreateCampaign = () => {
-    createCampaignMutation.mutate(formData);
+  const handleSaveCampaign = () => {
+    saveCampaignMutation.mutate(formData);
   };
 
   const handleStepClick = (targetStep: number) => {
@@ -450,6 +548,9 @@ export default function CampaignCreate() {
       setCurrentStep(targetStep);
     }
   };
+
+  // Get campaign status for field-level edit restrictions
+  const campaignStatus = existingCampaign?.status || "draft";
 
   // Render the appropriate step
   const renderStep = () => {
@@ -461,6 +562,8 @@ export default function CampaignCreate() {
             initialData={formData}
             onNext={handleNext}
             onCancel={handleClose}
+            isEditMode={isEditMode}
+            campaignStatus={campaignStatus}
           />
         );
       
@@ -472,6 +575,8 @@ export default function CampaignCreate() {
             initialData={formData}
             onNext={handleNext}
             onBack={handleBack}
+            isEditMode={isEditMode}
+            campaignStatus={campaignStatus}
           />
         );
       
@@ -483,6 +588,8 @@ export default function CampaignCreate() {
             initialData={formData}
             onNext={handleNext}
             onBack={handleBack}
+            isEditMode={isEditMode}
+            campaignStatus={campaignStatus}
           />
         );
       
@@ -494,9 +601,11 @@ export default function CampaignCreate() {
             clientId={currentClient.id}
             recipientCount={formData.recipient_count || 0}
             onBack={handleBack}
-            onConfirm={handleCreateCampaign}
-            isCreating={createCampaignMutation.isPending}
-            onSaveDraft={handleSaveDraft}
+            onConfirm={handleSaveCampaign}
+            isCreating={saveCampaignMutation.isPending}
+            onSaveDraft={isEditMode ? undefined : handleSaveDraft}
+            isEditMode={isEditMode}
+            campaignStatus={campaignStatus}
           />
         );
       
@@ -517,9 +626,9 @@ export default function CampaignCreate() {
               onClick={handleClose}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Campaigns
+              {isEditMode ? "Back to Campaign" : "Back to Campaigns"}
             </Button>
-            <h1 className="text-2xl font-bold">Create Campaign</h1>
+            <h1 className="text-2xl font-bold">{isEditMode ? "Edit Campaign" : "Create Campaign"}</h1>
           </div>
         </div>
 

@@ -42,9 +42,11 @@ interface MethodNameStepProps {
   initialData: Partial<CampaignFormData>;
   onNext: (data: Partial<CampaignFormData>) => void;
   onCancel: () => void;
+  isEditMode?: boolean;
+  campaignStatus?: string;
 }
 
-export function MethodNameStep({ initialData, onNext, onCancel }: MethodNameStepProps) {
+export function MethodNameStep({ initialData, onNext, onCancel, isEditMode, campaignStatus }: MethodNameStepProps) {
   // ACE fulfillment temporarily disabled - defaulting to "self"
   const [selectedMethod, setSelectedMethod] = useState<MailingMethod | null>(
     initialData.mailing_method || "self"

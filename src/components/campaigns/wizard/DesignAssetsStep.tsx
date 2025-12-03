@@ -41,6 +41,8 @@ interface DesignAssetsStepProps {
   initialData: Partial<CampaignFormData>;
   onNext: (data: Partial<CampaignFormData>) => void;
   onBack: () => void;
+  isEditMode?: boolean;
+  campaignStatus?: string;
 }
 
 export function DesignAssetsStep({
@@ -48,6 +50,8 @@ export function DesignAssetsStep({
   initialData,
   onNext,
   onBack,
+  isEditMode,
+  campaignStatus,
 }: DesignAssetsStepProps) {
   const { toast } = useToast();
   const isAceFulfillment = initialData.mailing_method === 'ace_fulfillment';

@@ -46,6 +46,8 @@ interface AudiencesRewardsStepProps {
   initialData: Partial<CampaignFormData>;
   onNext: (data: Partial<CampaignFormData>) => void;
   onBack: () => void;
+  isEditMode?: boolean;
+  campaignStatus?: string;
 }
 
 export function AudiencesRewardsStep({
@@ -53,6 +55,8 @@ export function AudiencesRewardsStep({
   initialData,
   onNext,
   onBack,
+  isEditMode,
+  campaignStatus,
 }: AudiencesRewardsStepProps) {
   const { toast } = useToast();
   const { currentUser } = useTenant();
