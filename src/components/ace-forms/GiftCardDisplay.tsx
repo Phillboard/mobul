@@ -158,8 +158,8 @@ export function GiftCardDisplay({ redemption, revealSettings, embedMode = false 
         )}
       </div>
 
-      {/* Instructions - Collapsed by default in embed mode */}
-      {!embedMode && (redemption.usage_restrictions || redemption.redemption_instructions) && (
+      {/* Instructions - Show based on revealSettings, default to true */}
+      {!embedMode && revealSettings?.showInstructions !== false && (
         <div className="mt-4">
           <GiftCardInstructions
             instructions={redemption.redemption_instructions}
