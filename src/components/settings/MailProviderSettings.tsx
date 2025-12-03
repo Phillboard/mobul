@@ -219,15 +219,15 @@ export function MailProviderSettings() {
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="select-org-for-client">Organization (Optional)</Label>
-                        <Select value={selectedOrgId} onValueChange={(value) => {
-                          setSelectedOrgId(value);
+                        <Select value={selectedOrgId || 'all'} onValueChange={(value) => {
+                          setSelectedOrgId(value === 'all' ? '' : value);
                           setSelectedClientId(''); // Reset client selection
                         }}>
                           <SelectTrigger id="select-org-for-client">
                             <SelectValue placeholder="Filter by organization..." />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All Organizations</SelectItem>
+                            <SelectItem value="all">All Organizations</SelectItem>
                             {(allOrganizations || organizations).map((org) => (
                               <SelectItem key={org.id} value={org.id}>
                                 {org.name}

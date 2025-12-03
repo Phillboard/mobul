@@ -40,7 +40,8 @@ export function useSmartCSVParser() {
           transformHeader: options.trimHeaders ? (header: string) => header.trim() : undefined,
           complete: (results) => {
             try {
-              const headers = results.meta.fields || [];
+              // Filter out empty headers - CSV files can have empty column names from trailing commas
+              const headers = (results.meta.fields || []).filter(h => h && h.trim() !== '');
               let rows = results.data as Record<string, any>[];
 
               // Limit rows if maxRows specified

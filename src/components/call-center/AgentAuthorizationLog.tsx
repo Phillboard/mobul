@@ -27,7 +27,7 @@ export function AgentAuthorizationLog() {
           )
         `)
         .eq("performed_by_user_id", user?.id)
-        .in("action", ["redeemed", "gift_card_provisioned"])
+        .in("action", ["redeemed", "gift_card_assigned"])
         .order("created_at", { ascending: false })
         .limit(5);
 

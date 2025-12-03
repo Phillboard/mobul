@@ -35,12 +35,47 @@ interface ImportSummary {
   successful: number;
   failed: number;
   skipped: number;
-  errors: Array<{ row: number; error: string; data?: any }>;
+  errors: Array<{ row: number; error: string; code?: string; data?: any }>;
+}
+
+// Validation regex matching database constraint: ^[A-Za-z0-9][A-Za-z0-9\-_]+$
+const UNIQUE_CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9\-_]+$/;
+
+// Validate unique code format
+function validateUniqueCodeFormat(code: string): { valid: boolean; reason: string } {
+  if (!code || code.trim() === '') {
+    return { valid: false, reason: 'Empty or missing code' };
+  }
+  
+  const trimmedCode = code.trim();
+  
+  if (trimmedCode.length < 3) {
+    return { valid: false, reason: `Too short (${trimmedCode.length} chars, minimum 3)` };
+  }
+  
+  if (trimmedCode.length > 50) {
+    return { valid: false, reason: `Too long (${trimmedCode.length} chars, maximum 50)` };
+  }
+  
+  if (!UNIQUE_CODE_PATTERN.test(trimmedCode)) {
+    if (!/^[A-Za-z0-9]/.test(trimmedCode)) {
+      return { valid: false, reason: 'Must start with a letter or number' };
+    }
+    // Find the first invalid character
+    const invalidChar = trimmedCode.split('').find(c => !/[A-Za-z0-9\-_]/.test(c));
+    return { valid: false, reason: `Contains invalid character: "${invalidChar}"` };
+  }
+  
+  return { valid: true, reason: '' };
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders 
+    });
   }
 
   try {
@@ -109,6 +144,7 @@ serve(async (req) => {
           summary.errors.push({
             row: rowNumber,
             error: 'Missing unique_code',
+            code: '',
             data: row,
           });
           summary.failed++;
@@ -117,6 +153,19 @@ serve(async (req) => {
 
         // Normalize the unique code
         const uniqueCode = String(row.unique_code).trim().toUpperCase();
+
+        // Validate unique code format
+        const codeValidation = validateUniqueCodeFormat(uniqueCode);
+        if (!codeValidation.valid) {
+          summary.errors.push({
+            row: rowNumber,
+            error: `Invalid code format: ${codeValidation.reason}`,
+            code: uniqueCode,
+            data: row,
+          });
+          summary.failed++;
+          continue;
+        }
 
         // Check if contact already exists with this code
         const { data: existingContact, error: checkError } = await supabase
@@ -198,9 +247,21 @@ serve(async (req) => {
 
         if (insertError) {
           console.error(`Error inserting contact for row ${rowNumber}:`, insertError);
+          
+          // Provide better error messages for common constraint violations
+          let friendlyError = insertError.message;
+          if (insertError.message.includes('customer_code_format_check')) {
+            friendlyError = `Invalid code format: must be 3-50 chars, start with letter/number, contain only letters, numbers, dashes, underscores`;
+          } else if (insertError.message.includes('duplicate key') || insertError.message.includes('unique constraint')) {
+            friendlyError = `Duplicate code: "${uniqueCode}" already exists`;
+          } else if (insertError.message.includes('violates check constraint')) {
+            friendlyError = `Data validation failed: ${insertError.message}`;
+          }
+          
           summary.errors.push({
             row: rowNumber,
-            error: insertError.message,
+            error: friendlyError,
+            code: uniqueCode,
             data: row,
           });
           summary.failed++;
@@ -276,13 +337,29 @@ serve(async (req) => {
       }
     }
 
+    // Determine overall success (some rows can fail but import still "succeeds" if some work)
+    const overallSuccess = summary.successful > 0 || summary.errors.length === 0;
+    
     return new Response(
       JSON.stringify({
-        success: true,
+        success: overallSuccess,
+        successful: summary.successful,
+        failed: summary.failed,
+        skipped: summary.skipped,
         summary,
         imported_count: importedContactIds.length,
+        // Include first few errors in top-level for easier access
+        ...(summary.errors.length > 0 && {
+          first_errors: summary.errors.slice(0, 5).map(e => ({
+            row: e.row,
+            error: e.error,
+            code: e.code,
+          })),
+          total_errors: summary.errors.length,
+        }),
       }),
       {
+        // Use 200 even with some failures - it's partial success
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
@@ -290,10 +367,22 @@ serve(async (req) => {
   } catch (error) {
     console.error('Import function error:', error);
     
+    // Provide better error messages for common issues
+    let errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    if (errorMessage.includes('authorization')) {
+      errorMessage = 'Authentication failed. Please log in again.';
+    } else if (errorMessage.includes('No access')) {
+      errorMessage = 'You do not have permission to import contacts for this client.';
+    }
+    
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
+        successful: 0,
+        failed: 0,
+        skipped: 0,
       }),
       {
         status: 400,

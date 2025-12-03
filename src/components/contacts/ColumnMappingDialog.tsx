@@ -10,7 +10,7 @@ interface ColumnMappingDialogProps {
 
 // Standard contact fields that can be mapped to
 const CONTACT_FIELDS = [
-  { value: '', label: 'Skip this column', group: 'Action' },
+  { value: 'skip', label: 'Skip this column', group: 'Action' },
   { value: 'customer_code', label: 'Unique Code (Required)', group: 'Required', required: true },
   { value: 'first_name', label: 'First Name', group: 'Basic Info' },
   { value: 'last_name', label: 'Last Name', group: 'Basic Info' },
@@ -41,6 +41,9 @@ export function ColumnMappingDialog({
 }: ColumnMappingDialogProps) {
   // Get already mapped fields to prevent duplicates
   const mappedFields = new Set(Object.values(detectedMappings).filter(v => v));
+  
+  // Filter out empty headers to prevent SelectItem value errors
+  const validHeaders = csvHeaders.filter(header => header && header.trim() !== '');
 
   return (
     <div className="space-y-4">
@@ -49,8 +52,8 @@ export function ColumnMappingDialog({
       </div>
 
       <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-        {csvHeaders.map((header, index) => {
-          const currentMapping = detectedMappings[header] || '';
+        {validHeaders.map((header, index) => {
+          const currentMapping = detectedMappings[header] || 'skip';
           const isRequired = currentMapping === 'customer_code';
 
           return (
@@ -86,7 +89,7 @@ export function ColumnMappingDialog({
                             {group}
                           </div>
                           {groupFields.map((field) => {
-                            const isDisabled = field.value !== '' && 
+                            const isDisabled = field.value !== 'skip' && 
                                              field.value !== currentMapping && 
                                              mappedFields.has(field.value);
                             

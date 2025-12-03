@@ -145,7 +145,7 @@ export function SmartCSVImporter({ onImportComplete, onCancel }: SmartCSVImporte
         }
         else {
           // Default to skipping unknown columns
-          initialMappings[header] = '';
+          initialMappings[header] = 'skip';
         }
       });
       
@@ -213,7 +213,7 @@ export function SmartCSVImporter({ onImportComplete, onCancel }: SmartCSVImporte
 
         // Apply column mappings
         Object.entries(columnMappings).forEach(([csvColumn, targetField]) => {
-          if (targetField && row[csvColumn] !== undefined) {
+          if (targetField && targetField !== 'skip' && row[csvColumn] !== undefined) {
             mappedRow[targetField] = row[csvColumn];
           }
         });
@@ -510,10 +510,13 @@ export function SmartCSVImporter({ onImportComplete, onCancel }: SmartCSVImporte
 
               <div className="space-y-3">
                 <Select
-                  value={createNewList ? 'new' : selectedListId}
+                  value={createNewList ? 'new' : (selectedListId || 'none')}
                   onValueChange={(value) => {
                     if (value === 'new') {
                       setCreateNewList(true);
+                      setSelectedListId('');
+                    } else if (value === 'none') {
+                      setCreateNewList(false);
                       setSelectedListId('');
                     } else {
                       setCreateNewList(false);
@@ -525,8 +528,8 @@ export function SmartCSVImporter({ onImportComplete, onCancel }: SmartCSVImporte
                     <SelectValue placeholder="Select a list (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No list</SelectItem>
-                    {contactLists?.map((list) => (
+                    <SelectItem value="none">No list</SelectItem>
+                    {contactLists?.filter(list => list.id && list.id.trim() !== '').map((list) => (
                       <SelectItem key={list.id} value={list.id}>
                         {list.name} ({list.contact_count || 0} contacts)
                       </SelectItem>

@@ -3,15 +3,18 @@
  * 
  * Checks balances for cards in gift_card_inventory table
  * Supports multiple balance check methods per brand:
- * - tillo_api: Use Tillo's balance check API
+ * - tillo_api: Use Tillo's balance check API (auto-detected for Tillo brands)
  * - other_api: Generic API with configurable endpoint
  * - manual: Requires manual balance entry (returns info only)
  * - none: Balance checking not supported
+ * 
+ * Smart Detection: If balance_check_method is not set, the function will
+ * automatically use Tillo API for brands with provider='tillo' or tillo_brand_code set.
  */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { createHmac } from "https://deno.land/std@0.177.0/node/crypto.ts";
+import { TilloClient, createTilloClientFromEnv } from "../_shared/tillo-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,10 +28,12 @@ interface BalanceCheckResult {
 }
 
 interface BrandConfig {
-  balance_check_method: string;
+  balance_check_method: string | null;
   balance_check_api_endpoint?: string;
   balance_check_config?: Record<string, any>;
   tillo_brand_code?: string;
+  provider?: string;
+  brand_code?: string;
 }
 
 interface InventoryCard {
@@ -40,59 +45,59 @@ interface InventoryCard {
   gift_card_brands: BrandConfig;
 }
 
-// Generate Tillo HMAC signature
-function generateTilloSignature(secretKey: string, timestamp: number, body?: string): string {
-  const message = body ? `${timestamp}${body}` : timestamp.toString();
-  return createHmac("sha256", secretKey)
-    .update(message)
-    .digest("base64");
+// Cached Tillo client instance
+let tilloClient: TilloClient | null = null;
+
+/**
+ * Get or create a Tillo client using global environment variables
+ */
+function getTilloClient(): TilloClient | null {
+  if (tilloClient) return tilloClient;
+  
+  try {
+    tilloClient = createTilloClientFromEnv();
+    return tilloClient;
+  } catch (error) {
+    console.warn("Tillo client not available:", error.message);
+    return null;
+  }
 }
 
-// Check balance using Tillo API
+/**
+ * Check balance using Tillo API with global credentials
+ * Uses the shared TilloClient which reads from environment variables
+ */
 async function checkTilloBalance(
   cardCode: string,
-  config: Record<string, any>
+  brandCode: string
 ): Promise<BalanceCheckResult> {
   try {
-    const { apiKey, secretKey } = config;
+    const client = getTilloClient();
     
-    if (!apiKey || !secretKey) {
+    if (!client) {
       return {
         balance: null,
         status: "error",
-        error: "Missing Tillo API credentials in brand configuration",
+        error: "Tillo API credentials not configured. Set TILLO_API_KEY and TILLO_SECRET_KEY environment variables.",
       };
     }
 
-    const timestamp = Date.now();
-    const signature = generateTilloSignature(secretKey, timestamp);
-
-    const response = await fetch("https://api.tillo.tech/v2/balance", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "API-Key": apiKey,
-        "Signature": signature,
-        "Timestamp": timestamp.toString(),
-      },
-      body: JSON.stringify({ code: cardCode }),
-    });
-
-    const data = await response.json();
-
-    if (data.code === "000") {
-      return {
-        balance: data.data?.balance?.amount ?? 0,
-        status: "success",
-      };
-    } else {
+    if (!brandCode) {
       return {
         balance: null,
         status: "error",
-        error: data.message || `Tillo error code: ${data.code}`,
+        error: "Brand code is required for Tillo balance check",
       };
     }
+
+    console.log(`[BALANCE-CHECK] Checking balance via Tillo API for brand: ${brandCode}`);
+    
+    const result = await client.checkBalance(cardCode, brandCode);
+    
+    return {
+      balance: result.balance,
+      status: "success",
+    };
   } catch (error: any) {
     console.error("Tillo balance check error:", error);
     return {
@@ -173,19 +178,42 @@ async function checkGenericApiBalance(
   }
 }
 
-// Main balance check orchestrator
+/**
+ * Main balance check orchestrator with smart Tillo detection
+ * 
+ * If balance_check_method is not explicitly set, the function will:
+ * - Use Tillo API if provider='tillo' OR tillo_brand_code is set
+ * - Fall back to manual for non-Tillo brands
+ */
 async function checkCardBalance(
   card: InventoryCard
 ): Promise<BalanceCheckResult> {
   const brand = card.gift_card_brands;
-  const method = brand.balance_check_method || "manual";
+  
+  // Smart detection: Check if this is a Tillo-supported brand
+  const isTilloBrand = brand.provider === 'tillo' || !!brand.tillo_brand_code;
+  
+  // Determine the balance check method
+  // If not explicitly set, auto-detect based on brand configuration
+  let method = brand.balance_check_method;
+  if (!method) {
+    method = isTilloBrand ? 'tillo_api' : 'manual';
+    console.log(`[BALANCE-CHECK] Auto-detected method '${method}' for brand (provider: ${brand.provider}, tillo_code: ${brand.tillo_brand_code})`);
+  }
 
   switch (method) {
-    case "tillo_api":
-      return await checkTilloBalance(
-        card.card_code,
-        brand.balance_check_config || {}
-      );
+    case "tillo_api": {
+      // Get the brand code to use for Tillo API
+      const brandCode = brand.tillo_brand_code || brand.brand_code;
+      if (!brandCode) {
+        return {
+          balance: null,
+          status: "error",
+          error: "Brand missing tillo_brand_code or brand_code for Tillo balance check",
+        };
+      }
+      return await checkTilloBalance(card.card_code, brandCode);
+    }
 
     case "other_api":
       if (!brand.balance_check_api_endpoint) {
@@ -244,6 +272,7 @@ serve(async (req) => {
     }
 
     // Build query for inventory cards
+    // Fetch brand fields needed for smart Tillo detection
     let query = supabaseClient
       .from("gift_card_inventory")
       .select(`
@@ -256,7 +285,9 @@ serve(async (req) => {
           balance_check_method,
           balance_check_api_endpoint,
           balance_check_config,
-          tillo_brand_code
+          tillo_brand_code,
+          provider,
+          brand_code
         )
       `)
       .not("card_code", "is", null)
@@ -334,6 +365,11 @@ serve(async (req) => {
           })
           .eq("id", card.id);
 
+        // Determine the actual method used for balance check (for audit)
+        const brand = card.gift_card_brands;
+        const isTilloBrand = brand.provider === 'tillo' || !!brand.tillo_brand_code;
+        const methodUsed = brand.balance_check_method || (isTilloBrand ? 'tillo_api' : 'manual');
+        
         // Record in history
         await supabaseClient
           .from("gift_card_inventory_balance_history")
@@ -341,7 +377,7 @@ serve(async (req) => {
             inventory_card_id: card.id,
             previous_balance: card.current_balance,
             new_balance: balanceResult.balance,
-            check_method: card.gift_card_brands.balance_check_method || "unknown",
+            check_method: methodUsed,
             check_status: balanceResult.status,
             error_message: balanceResult.error,
             checked_by_user_id: userId || null,

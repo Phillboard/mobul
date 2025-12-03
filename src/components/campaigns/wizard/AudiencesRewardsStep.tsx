@@ -9,7 +9,7 @@
  */
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +40,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils/utils";
 import { useToast } from "@/hooks/use-toast";
 import { SimpleBrandDenominationSelector } from "@/components/gift-cards/SimpleBrandDenominationSelector";
+import { CreateListWithCSVDialog } from "./CreateListWithCSVDialog";
 
 interface AudiencesRewardsStepProps {
   clientId: string;
@@ -60,6 +61,7 @@ export function AudiencesRewardsStep({
 }: AudiencesRewardsStepProps) {
   const { toast } = useToast();
   const { currentUser } = useTenant();
+  const queryClient = useQueryClient();
   const isAdmin = currentUser?.role === 'platform_admin';
   
   const [selectedListId, setSelectedListId] = useState<string>(
@@ -69,6 +71,7 @@ export function AudiencesRewardsStep({
     initialData.conditions || []
   );
   const [showTracking, setShowTracking] = useState(false);
+  const [showCreateListDialog, setShowCreateListDialog] = useState(false);
 
   // Tracking settings state
   const [trackingSettings, setTrackingSettings] = useState({
@@ -215,6 +218,18 @@ export function AudiencesRewardsStep({
     setSelectedConditions(selectedConditions.filter((_, i) => i !== index));
   };
 
+  // Handle new list creation from CSV import
+  const handleListCreated = (listId: string, listName: string) => {
+    // Refresh the contact lists query
+    queryClient.invalidateQueries({ queryKey: ["contact-lists", clientId] });
+    // Auto-select the newly created list
+    setSelectedListId(listId);
+    toast({
+      title: "List Created",
+      description: `"${listName}" has been created and selected for this campaign`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -311,7 +326,12 @@ export function AudiencesRewardsStep({
                   </Alert>
                 )}
 
-                <Button variant="outline" className="w-full" size="sm">
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  size="sm"
+                  onClick={() => setShowCreateListDialog(true)}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Create New List
                 </Button>
@@ -325,7 +345,7 @@ export function AudiencesRewardsStep({
                     Create your first list to get started
                   </p>
                 </div>
-                <Button size="sm">
+                <Button size="sm" onClick={() => setShowCreateListDialog(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create Contact List
                 </Button>
@@ -600,6 +620,14 @@ export function AudiencesRewardsStep({
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
+
+      {/* Create List with CSV Dialog */}
+      <CreateListWithCSVDialog
+        open={showCreateListDialog}
+        onOpenChange={setShowCreateListDialog}
+        clientId={clientId}
+        onListCreated={handleListCreated}
+      />
     </div>
   );
 }

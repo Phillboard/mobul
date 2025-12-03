@@ -142,5 +142,3 @@ EXCEPTION
 END;
 $claim_atomic$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION claim_card_atomic IS 'Atomically claims a gift card for a recipient, updates pool stats, and charges client credits';
-

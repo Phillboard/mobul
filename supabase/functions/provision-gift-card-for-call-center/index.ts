@@ -199,7 +199,7 @@ serve(async (req) => {
     // STEP 3: Get campaign and condition details
     // =====================================================
     
-    const campaignId = recipient.audiences[0]?.campaign_id;
+    // campaignId was already assigned in STEP 1 (line 155)
     if (!campaignId) {
       throw new Error('Recipient is not associated with a campaign');
     }
@@ -289,30 +289,6 @@ serve(async (req) => {
         console.error('[CALL-CENTER-PROVISION] Condition data found:', JSON.stringify(conditionData, null, 2));
         console.error('[CALL-CENTER-PROVISION] Likely cause: brand_id and card_value were not saved during campaign creation');
         
-<<<<<<< Current (Your changes)
-        // Try the RPC function as a fallback
-        if (conditionId) {
-          console.log('[CALL-CENTER-PROVISION] Trying RPC fallback for condition:', conditionId);
-          const { data: rpcResult, error: rpcError } = await supabaseClient
-            .rpc('get_condition_gift_card_config', { p_condition_id: conditionId });
-          
-          if (!rpcError && rpcResult && rpcResult.length > 0 && rpcResult[0].brand_id) {
-            console.log('[CALL-CENTER-PROVISION] RPC fallback succeeded:', rpcResult[0]);
-            conditionData = {
-              id: rpcResult[0].condition_id,
-              brand_id: rpcResult[0].brand_id,
-              card_value: rpcResult[0].card_value,
-              condition_number: rpcResult[0].condition_number,
-              sms_template: rpcResult[0].sms_template,
-              condition_name: rpcResult[0].condition_name,
-            };
-          } else {
-            console.error('[CALL-CENTER-PROVISION] RPC fallback also failed:', rpcError);
-            throw new Error(`No gift card configured for campaign ${campaignId}, condition ${conditionId || 'first active'}. Please configure a gift card brand and value in campaign settings.`);
-          }
-        } else {
-          throw new Error(`No gift card configured for campaign ${campaignId}. Please configure a gift card brand and value in campaign settings.`);
-=======
         // ENHANCED: Try to find ALL conditions for this campaign for diagnostic purposes
         console.log('[CALL-CENTER-PROVISION] === DIAGNOSTIC: Fetching ALL conditions for campaign ===');
         const { data: allConditions, error: allCondError } = await supabaseClient
@@ -367,7 +343,6 @@ serve(async (req) => {
               `Found ${conditionCount} total conditions, ${activeCount} active, ${withBrandCount} with brand_id. ` +
               `Please edit the campaign and configure a gift card brand and value for each condition.`);
           }
->>>>>>> Incoming (Background Agent changes)
         }
       }
 

@@ -19,6 +19,7 @@ import { useGiftCardBrandsWithDenominations } from "@/hooks/useGiftCardBrands";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminIndividualCardsView } from "@/components/gift-cards/AdminIndividualCardsView";
+import { ExpandableInventoryRow } from "@/components/gift-cards/ExpandableInventoryRow";
 
 export default function AdminGiftCardMarketplace() {
   const [addBrandDialogOpen, setAddBrandDialogOpen] = useState(false);
@@ -26,6 +27,18 @@ export default function AdminGiftCardMarketplace() {
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<{id: string, name: string, logoUrl?: string} | null>(null);
   const [selectedBrandDenom, setSelectedBrandDenom] = useState<{brandId: string, denomination: number} | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  // Toggle row expansion
+  const toggleRowExpansion = (key: string) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(key)) {
+      newExpanded.delete(key);
+    } else {
+      newExpanded.add(key);
+    }
+    setExpandedRows(newExpanded);
+  };
 
   // Fetch all brands with their denominations
   const { data: brandsWithDenoms, isLoading: brandsLoading } = useGiftCardBrandsWithDenominations(false);
@@ -293,60 +306,52 @@ export default function AdminGiftCardMarketplace() {
             <Card>
               <CardHeader>
                 <CardTitle>CSV Inventory Summary</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Click on a row to expand and view individual cards. Select cards to delete them.
+                </p>
               </CardHeader>
               <CardContent>
                 {inventorySummary && inventorySummary.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Brand</TableHead>
-                        <TableHead>Denomination</TableHead>
-                        <TableHead className="text-right">Available</TableHead>
-                        <TableHead className="text-right">Assigned</TableHead>
-                        <TableHead className="text-right">Delivered</TableHead>
-                        <TableHead className="text-right">Total Value</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {inventorySummary.map((item, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {item.logo_url && (
-                                <img src={item.logo_url} alt={item.brand_name} className="h-6 w-auto object-contain" />
-                              )}
-                              <span className="font-medium">{item.brand_name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">${item.denomination}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            <Badge variant={item.available > 50 ? "default" : item.available > 10 ? "secondary" : "destructive"}>
-                              {item.available}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.assigned}</TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.delivered}</TableCell>
-                          <TableCell className="text-right font-semibold">{formatCurrency(item.total_value)}</TableCell>
-                          <TableCell>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => {
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-8"></TableHead>
+                          <TableHead>Brand</TableHead>
+                          <TableHead>Denomination</TableHead>
+                          <TableHead className="text-right">Available</TableHead>
+                          <TableHead className="text-right">Assigned</TableHead>
+                          <TableHead className="text-right">Delivered</TableHead>
+                          <TableHead className="text-right">Total Value</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {inventorySummary.map((item) => {
+                          const rowKey = `${item.brand_id}-${item.denomination}`;
+                          return (
+                            <ExpandableInventoryRow
+                              key={rowKey}
+                              brandId={item.brand_id}
+                              brandName={item.brand_name}
+                              logoUrl={item.logo_url}
+                              denomination={item.denomination}
+                              available={item.available}
+                              assigned={item.assigned}
+                              delivered={item.delivered}
+                              totalValue={item.total_value}
+                              isExpanded={expandedRows.has(rowKey)}
+                              onToggle={() => toggleRowExpansion(rowKey)}
+                              onUploadClick={() => {
                                 setSelectedBrandDenom({ brandId: item.brand_id, denomination: item.denomination });
                                 setUploadDialogOpen(true);
                               }}
-                            >
-                              <Upload className="h-3 w-3 mr-1" />
-                              Add More
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                            />
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
                 ) : (
                   <div className="text-center py-12 text-muted-foreground">
                     <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
