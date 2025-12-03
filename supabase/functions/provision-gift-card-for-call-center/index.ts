@@ -485,7 +485,17 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] Error:`, error);
+    console.error('='.repeat(60));
+    console.error(`[CALL-CENTER-PROVISION] [${errorLogger.requestId}] === ERROR ===`);
+    console.error('[CALL-CENTER-PROVISION] Error type:', error?.constructor?.name);
+    console.error('[CALL-CENTER-PROVISION] Error message:', error?.message);
+    console.error('[CALL-CENTER-PROVISION] Error stack:', error?.stack);
+    console.error('[CALL-CENTER-PROVISION] Context:', {
+      redemptionCode,
+      recipientId,
+      campaignId,
+    });
+    console.error('='.repeat(60));
 
     // Log error to database
     await errorLogger.logError(error, {
