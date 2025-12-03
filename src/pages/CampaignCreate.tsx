@@ -341,6 +341,18 @@ export default function CampaignCreate() {
 
       // Create conditions if any
       if (data.conditions && data.conditions.length > 0) {
+        // ENHANCED: Log incoming condition data for debugging
+        logger.info('[CAMPAIGN-CREATE] Received conditions from wizard:', {
+          count: data.conditions.length,
+          conditions: data.conditions.map((c: any) => ({
+            name: c.condition_name,
+            brand_id: c.brand_id,
+            card_value: c.card_value,
+            hasBrand: !!c.brand_id,
+            hasValue: !!c.card_value,
+          })),
+        });
+
         const conditionsToInsert = data.conditions.map((condition: any, index: number) => ({
           campaign_id: campaign.id,
           condition_number: condition.condition_number || index + 1,
@@ -353,6 +365,17 @@ export default function CampaignCreate() {
           card_value: condition.card_value || null,
           sms_template: condition.sms_template || null,
         }));
+
+        // ENHANCED: Log what we're actually inserting
+        logger.info('[CAMPAIGN-CREATE] Inserting conditions:', {
+          count: conditionsToInsert.length,
+          conditions: conditionsToInsert.map((c: any) => ({
+            condition_number: c.condition_number,
+            condition_name: c.condition_name,
+            brand_id: c.brand_id,
+            card_value: c.card_value,
+          })),
+        });
 
         const { error: conditionsError } = await supabase
           .from("campaign_conditions")

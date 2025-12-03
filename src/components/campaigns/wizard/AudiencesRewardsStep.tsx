@@ -113,9 +113,9 @@ export function AudiencesRewardsStep({
       return;
     }
 
-    // Validate conditions if any exist
+    // Validate conditions if any exist - STRICT VALIDATION
     if (selectedConditions.length > 0) {
-      const missingNames = selectedConditions.filter((c) => !c.condition_name.trim());
+      const missingNames = selectedConditions.filter((c) => !c.condition_name || !c.condition_name.trim());
       if (missingNames.length > 0) {
         toast({
           title: "Condition Name Required",
@@ -125,12 +125,34 @@ export function AudiencesRewardsStep({
         return;
       }
 
-      const missingPools = selectedConditions.filter((c) => !c.brand_id || !c.card_value);
-      if (missingPools.length > 0) {
+      // ENHANCED: Strict validation for gift card brand and value
+      const missingBrand = selectedConditions.filter((c) => !c.brand_id || c.brand_id === "" || c.brand_id === null);
+      const missingValue = selectedConditions.filter((c) => !c.card_value || c.card_value === 0 || c.card_value === null);
+      
+      if (missingBrand.length > 0 || missingValue.length > 0) {
+        const issues = [];
+        if (missingBrand.length > 0) {
+          issues.push(`${missingBrand.length} condition(s) missing brand selection`);
+        }
+        if (missingValue.length > 0) {
+          issues.push(`${missingValue.length} condition(s) missing denomination`);
+        }
+        
         toast({
-          title: "Gift Card Required",
-          description: "Please select a gift card reward for all conditions",
+          title: "Incomplete Gift Card Configuration",
+          description: `All conditions must have both a brand AND a value selected. ${issues.join(', ')}.`,
           variant: "destructive",
+        });
+        
+        // Log for debugging
+        console.error('[AudiencesRewardsStep] Validation failed:', {
+          conditions: selectedConditions.map(c => ({
+            name: c.condition_name,
+            brand_id: c.brand_id,
+            card_value: c.card_value,
+            hasBrand: !!c.brand_id && c.brand_id !== "",
+            hasValue: !!c.card_value && c.card_value !== 0,
+          })),
         });
         return;
       }
@@ -138,6 +160,18 @@ export function AudiencesRewardsStep({
       // Note: Inventory validation happens at provisioning time
       // CSV inventory is used first, then Tillo API as fallback
       // No need to block campaign creation here
+      
+      // Log success for debugging
+      console.log('[AudiencesRewardsStep] Validation passed:', {
+        conditionCount: selectedConditions.length,
+        allHaveBrand: selectedConditions.every(c => c.brand_id),
+        allHaveValue: selectedConditions.every(c => c.card_value),
+        conditions: selectedConditions.map(c => ({
+          name: c.condition_name,
+          brand_id: c.brand_id,
+          card_value: c.card_value,
+        })),
+      });
     }
 
     onNext({

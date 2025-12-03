@@ -263,7 +263,11 @@ serve(async (req) => {
         });
       }
 
-      // Log detailed diagnostic info
+      // Log detailed diagnostic info - COMPREHENSIVE LOGGING
+      console.log('[CALL-CENTER-PROVISION] === CONDITION ANALYSIS START ===');
+      console.log('[CALL-CENTER-PROVISION] Campaign ID:', campaignId);
+      console.log('[CALL-CENTER-PROVISION] Condition ID requested:', conditionId || 'not specified (using first active)');
+      console.log('[CALL-CENTER-PROVISION] Full condition data:', JSON.stringify(conditionData, null, 2));
       console.log('[CALL-CENTER-PROVISION] Condition analysis:', {
         hasConditionData: !!conditionData,
         brand_id: conditionData?.brand_id || 'NULL/MISSING',
@@ -271,7 +275,11 @@ serve(async (req) => {
         condition_name: conditionData?.condition_name,
         has_brand_id: !!conditionData?.brand_id,
         has_card_value: !!conditionData?.card_value,
+        is_active: conditionData?.is_active,
+        raw_brand_id_type: typeof conditionData?.brand_id,
+        raw_card_value_type: typeof conditionData?.card_value,
       });
+      console.log('[CALL-CENTER-PROVISION] === CONDITION ANALYSIS END ===');
 
       if (conditionError || !conditionData?.brand_id) {
         console.error('[CALL-CENTER-PROVISION] === GIFT CARD CONFIG ERROR ===');
@@ -281,6 +289,7 @@ serve(async (req) => {
         console.error('[CALL-CENTER-PROVISION] Condition data found:', JSON.stringify(conditionData, null, 2));
         console.error('[CALL-CENTER-PROVISION] Likely cause: brand_id and card_value were not saved during campaign creation');
         
+<<<<<<< Current (Your changes)
         // Try the RPC function as a fallback
         if (conditionId) {
           console.log('[CALL-CENTER-PROVISION] Trying RPC fallback for condition:', conditionId);
@@ -303,6 +312,62 @@ serve(async (req) => {
           }
         } else {
           throw new Error(`No gift card configured for campaign ${campaignId}. Please configure a gift card brand and value in campaign settings.`);
+=======
+        // ENHANCED: Try to find ALL conditions for this campaign for diagnostic purposes
+        console.log('[CALL-CENTER-PROVISION] === DIAGNOSTIC: Fetching ALL conditions for campaign ===');
+        const { data: allConditions, error: allCondError } = await supabaseClient
+          .from('campaign_conditions')
+          .select('id, brand_id, card_value, condition_number, condition_name, is_active')
+          .eq('campaign_id', campaignId);
+        
+        console.log('[CALL-CENTER-PROVISION] All conditions for campaign:', JSON.stringify(allConditions, null, 2));
+        console.log('[CALL-CENTER-PROVISION] All conditions error:', allCondError);
+        
+        // Check if any condition has brand_id set
+        const conditionWithBrand = allConditions?.find(c => c.brand_id && c.card_value);
+        if (conditionWithBrand) {
+          console.log('[CALL-CENTER-PROVISION] Found condition with valid config:', conditionWithBrand);
+          conditionData = conditionWithBrand;
+        } else {
+          // Try the RPC function as a fallback
+          if (conditionId) {
+            console.log('[CALL-CENTER-PROVISION] Trying RPC fallback for condition:', conditionId);
+            const { data: rpcResult, error: rpcError } = await supabaseClient
+              .rpc('get_condition_gift_card_config', { p_condition_id: conditionId });
+            
+            if (!rpcError && rpcResult && rpcResult.length > 0 && rpcResult[0].brand_id) {
+              console.log('[CALL-CENTER-PROVISION] RPC fallback succeeded:', rpcResult[0]);
+              conditionData = {
+                id: rpcResult[0].condition_id,
+                brand_id: rpcResult[0].brand_id,
+                card_value: rpcResult[0].card_value,
+                condition_number: rpcResult[0].condition_number,
+                sms_template: rpcResult[0].sms_template,
+                condition_name: rpcResult[0].condition_name,
+              };
+            } else {
+              console.error('[CALL-CENTER-PROVISION] RPC fallback also failed:', rpcError);
+              
+              // Provide detailed error about what we found
+              const conditionCount = allConditions?.length || 0;
+              const activeCount = allConditions?.filter(c => c.is_active)?.length || 0;
+              const withBrandCount = allConditions?.filter(c => c.brand_id)?.length || 0;
+              
+              throw new Error(`No gift card configured for campaign ${campaignId}, condition ${conditionId || 'first active'}. ` +
+                `Found ${conditionCount} total conditions, ${activeCount} active, ${withBrandCount} with brand_id. ` +
+                `Please edit the campaign and configure a gift card brand and value for each condition.`);
+            }
+          } else {
+            // Provide detailed error about what we found
+            const conditionCount = allConditions?.length || 0;
+            const activeCount = allConditions?.filter(c => c.is_active)?.length || 0;
+            const withBrandCount = allConditions?.filter(c => c.brand_id)?.length || 0;
+            
+            throw new Error(`No gift card configured for campaign ${campaignId}. ` +
+              `Found ${conditionCount} total conditions, ${activeCount} active, ${withBrandCount} with brand_id. ` +
+              `Please edit the campaign and configure a gift card brand and value for each condition.`);
+          }
+>>>>>>> Incoming (Background Agent changes)
         }
       }
 
