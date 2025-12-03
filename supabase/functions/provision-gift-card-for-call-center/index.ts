@@ -199,20 +199,20 @@ serve(async (req) => {
       let conditionError: any = null;
 
       if (conditionId) {
-        // Query specific condition by ID
+        // Query specific condition by ID (include sms_template for delivery message)
         const result = await supabaseClient
           .from('campaign_conditions')
-          .select('brand_id, card_value, condition_number')
+          .select('brand_id, card_value, condition_number, sms_template')
           .eq('id', conditionId)
           .single();
         conditionData = result.data;
         conditionError = result.error;
         console.log('[CALL-CENTER-PROVISION] Querying condition by ID:', conditionId);
       } else {
-        // Fallback to first active condition for this campaign
+        // Fallback to first active condition for this campaign (include sms_template)
         const result = await supabaseClient
           .from('campaign_conditions')
-          .select('brand_id, card_value, condition_number')
+          .select('brand_id, card_value, condition_number, sms_template')
           .eq('campaign_id', campaignId)
           .eq('is_active', true)
           .order('condition_number')
@@ -232,6 +232,7 @@ serve(async (req) => {
       giftCardConfig = {
         brand_id: conditionData.brand_id,
         denomination: conditionData.card_value || 25,
+        sms_template: conditionData.sms_template || null,
       };
       
       console.log('[CALL-CENTER-PROVISION] Using config from campaign_conditions:', giftCardConfig);
@@ -306,7 +307,22 @@ serve(async (req) => {
 
     try {
       if (deliveryMethod === 'sms' && deliveryPhone) {
-        // Send SMS
+        // Prepare SMS message from template
+        let customMessage = giftCardConfig?.sms_template;
+        
+        // Replace template variables if we have a template
+        if (customMessage) {
+          customMessage = customMessage
+            .replace(/\{first_name\}/gi, recipient.first_name || '')
+            .replace(/\{last_name\}/gi, recipient.last_name || '')
+            .replace(/\{value\}/g, provisionResult.card.denomination.toString())
+            .replace(/\$\{value\}/g, provisionResult.card.denomination.toString())
+            .replace(/\{provider\}/gi, provisionResult.card.brandName || 'Gift Card')
+            .replace(/\{company\}/gi, provisionResult.card.brandName || 'us')
+            .replace(/\{link\}/gi, provisionResult.card.cardCode); // Simplified - replace with actual redemption link if available
+        }
+        
+        // Send SMS with correct parameters
         const smsResponse = await fetch(
           `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-gift-card-sms`,
           {
@@ -316,18 +332,21 @@ serve(async (req) => {
               'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
             },
             body: JSON.stringify({
-              to: deliveryPhone,
+              deliveryId: `call_center_${Date.now()}`, // Temporary ID for logging
+              giftCardCode: provisionResult.card.cardCode,
+              giftCardValue: provisionResult.card.denomination,
+              recipientPhone: deliveryPhone,
               recipientName: `${recipient.first_name} ${recipient.last_name}`,
-              cardCode: provisionResult.card.cardCode,
-              brandName: provisionResult.card.brandName,
-              amount: provisionResult.card.denomination,
-              campaignId: campaignId,
+              customMessage: customMessage || undefined,
+              recipientId: recipient.id,
+              giftCardId: provisionResult.card.id || null,
             }),
           }
         );
 
         if (!smsResponse.ok) {
-          console.error('[CALL-CENTER-PROVISION] SMS delivery failed');
+          const errorText = await smsResponse.text();
+          console.error('[CALL-CENTER-PROVISION] SMS delivery failed:', errorText);
         } else {
           console.log('[CALL-CENTER-PROVISION] SMS sent successfully');
         }

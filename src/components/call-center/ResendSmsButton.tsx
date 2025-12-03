@@ -28,16 +28,32 @@ export function ResendSmsButton({
 
   const resendSms = useMutation({
     mutationFn: async () => {
-      const smsMessage = `Your ${brandName || "Gift Card"} is ready!\n\nCode: ${giftCardCode}\n${cardNumber ? `Card: ${cardNumber}\n` : ""}Value: $${giftCardValue}\n\nRedeem at the store`;
+      // Fetch recipient's condition template for personalized message
+      const { data: recipient } = await supabase
+        .from('recipients')
+        .select(`
+          first_name,
+          last_name,
+          audiences!inner(
+            campaigns!inner(
+              campaign_conditions(sms_template)
+            )
+          )
+        `)
+        .eq('id', recipientId)
+        .single();
 
-      // Create SMS delivery log entry
+      // Get sms_template from the first condition (if available)
+      const smsTemplate = recipient?.audiences?.[0]?.campaigns?.[0]?.campaign_conditions?.[0]?.sms_template;
+      
+      // Create SMS delivery log entry (needed for send-gift-card-sms)
       const { data: smsLogEntry, error: logError } = await supabase
         .from('sms_delivery_log')
         .insert({
           recipient_id: recipientId,
           gift_card_id: giftCardId,
           phone_number: recipientPhone,
-          message_body: smsMessage,
+          message_body: 'Resending gift card...',
           delivery_status: 'pending',
           retry_count: 0,
         })
@@ -46,14 +62,30 @@ export function ResendSmsButton({
 
       if (logError) throw logError;
 
-      // Send SMS via edge function
+      // Prepare custom message from template if available
+      let customMessage = smsTemplate;
+      if (customMessage) {
+        customMessage = customMessage
+          .replace(/\{first_name\}/gi, recipient.first_name || '')
+          .replace(/\{last_name\}/gi, recipient.last_name || '')
+          .replace(/\{value\}/g, giftCardValue.toString())
+          .replace(/\$\{value\}/g, giftCardValue.toString())
+          .replace(/\{provider\}/gi, brandName || 'Gift Card')
+          .replace(/\{company\}/gi, brandName || 'us')
+          .replace(/\{link\}/gi, giftCardCode);
+      }
+
+      // Send SMS via edge function with correct parameters
       const { error: smsError } = await supabase.functions.invoke('send-gift-card-sms', {
         body: {
           deliveryId: smsLogEntry.id,
-          phone: recipientPhone,
-          message: smsMessage,
-          recipientId,
-          giftCardId,
+          giftCardCode: giftCardCode,
+          giftCardValue: giftCardValue,
+          recipientPhone: recipientPhone,
+          recipientName: recipient.first_name || '',
+          customMessage: customMessage || undefined,
+          recipientId: recipientId,
+          giftCardId: giftCardId,
         },
       });
 

@@ -167,13 +167,14 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     
     setIsSendingOptIn(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-sms-opt-in', {
+      const { data, error} = await supabase.functions.invoke('send-sms-opt-in', {
         body: {
           recipient_id: recipient.id,
           campaign_id: campaign.id,
           call_session_id: callSessionId,
           phone: cellPhone,
           client_name: clientName,
+          custom_message: (campaign as any).sms_opt_in_message || undefined, // Pass campaign's custom opt-in message
         }
       });
       
@@ -315,6 +316,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
               name,
               status,
               client_id,
+              sms_opt_in_message,
               clients (id, name),
               campaign_conditions (*),
               campaign_gift_card_config (*)
@@ -511,9 +513,12 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     setCellPhone("");
     setCallSessionId(null);
     setPhone("");
-    setEmail("");
     setSelectedConditionId("");
     setResult(null);
+    setVerificationMethod("sms");
+    setShowSkipDisposition(false);
+    setSelectedDisposition("");
+    setEmailVerificationSent(false);
   };
 
   const copyAllDetails = () => {
