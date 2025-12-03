@@ -92,10 +92,7 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
   const handleAppleWallet = async (giftCard: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke(
       'generate-apple-wallet-pass',
-      { 
-        body: { giftCard },
-        // Important: we need the raw response for binary data
-      }
+      { body: { giftCard } }
     );
 
     if (error) {
@@ -111,18 +108,26 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
       throw new Error(data.error);
     }
 
-    // The response should be a .pkpass file (binary)
-    // For Supabase functions, we need to handle this specially
-    // The function returns the binary directly with Content-Type: application/vnd.apple.pkpass
+    // Check for success response with base64 pkpass
+    if (!data || !data.success || !data.pkpass) {
+      throw new Error('Invalid response from server');
+    }
+
+    // Decode base64 to binary
+    const binaryString = atob(data.pkpass);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
     
     // Create download link
-    const blob = new Blob([data], { type: 'application/vnd.apple.pkpass' });
+    const blob = new Blob([bytes], { type: 'application/vnd.apple.pkpass' });
     const url = URL.createObjectURL(blob);
     
     // Create a temporary link and trigger download
     const link = document.createElement('a');
     link.href = url;
-    link.download = `giftcard-${giftCard.id}.pkpass`;
+    link.download = data.filename || `giftcard-${giftCard.id}.pkpass`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

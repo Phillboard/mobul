@@ -113,14 +113,24 @@ serve(async (req) => {
 
     console.log('Apple Wallet pass generated successfully, size:', pkpassBuffer.length, 'bytes');
 
-    // Return the .pkpass file as a download
-    return new Response(pkpassBuffer, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/vnd.apple.pkpass',
-        'Content-Disposition': `attachment; filename="giftcard-${giftCard.id}.pkpass"`,
-      },
-    });
+    // Convert to base64 for JSON response (Supabase functions.invoke doesn't handle binary well)
+    const base64Pass = btoa(String.fromCharCode(...pkpassBuffer));
+
+    // Return as JSON with base64-encoded pass
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        pkpass: base64Pass,
+        filename: `giftcard-${giftCard.id}.pkpass`,
+        size: pkpassBuffer.length,
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
   } catch (error) {
     console.error('Apple Wallet error:', error);
