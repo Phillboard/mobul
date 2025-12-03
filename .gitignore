@@ -20,6 +20,9 @@ dist-ssr
 .env.production.local
 .env.*.local
 
+# API Keys and Credentials
+Keys/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
