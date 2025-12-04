@@ -22,7 +22,7 @@ export function GiftCardInstructions({
     <Accordion type="single" collapsible className="w-full" defaultValue="instructions">
       <AccordionItem value="instructions">
         <AccordionTrigger>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-gray-800">
             <AlertCircle className="w-4 h-4" />
             <span className="font-semibold">How to Use Your Gift Card</span>
           </div>
@@ -31,11 +31,11 @@ export function GiftCardInstructions({
           <div className="space-y-6 text-sm">
             {/* Digital Wallet Section */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-base font-semibold">
+              <div className="flex items-center gap-2 text-base font-semibold text-gray-800">
                 <Smartphone className="w-5 h-5 text-primary" />
                 <span>Option 1: Add to Digital Wallet (Recommended)</span>
               </div>
-              <div className="pl-7 space-y-2 text-muted-foreground">
+              <div className="pl-7 space-y-2 text-gray-600">
                 <div className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                   <p>Tap <strong>"Add to Apple Wallet"</strong> or <strong>"Add to Google Wallet"</strong> button above</p>
@@ -53,11 +53,11 @@ export function GiftCardInstructions({
 
             {/* Online Use Section */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-base font-semibold">
+              <div className="flex items-center gap-2 text-base font-semibold text-gray-800">
                 <Globe className="w-5 h-5 text-primary" />
                 <span>Option 2: Use Code Online</span>
               </div>
-              <div className="pl-7 space-y-2 text-muted-foreground">
+              <div className="pl-7 space-y-2 text-gray-600">
                 <div className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                   <p>Visit {storeUrl || `the ${brandName} website`}</p>
@@ -75,11 +75,11 @@ export function GiftCardInstructions({
 
             {/* In-Store Section */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-base font-semibold">
+              <div className="flex items-center gap-2 text-base font-semibold text-gray-800">
                 <Store className="w-5 h-5 text-primary" />
                 <span>Option 3: Use In-Store</span>
               </div>
-              <div className="pl-7 space-y-2 text-muted-foreground">
+              <div className="pl-7 space-y-2 text-gray-600">
                 <div className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                   <p>Show the QR code to the cashier to scan at register</p>
@@ -98,22 +98,22 @@ export function GiftCardInstructions({
             {/* Custom Instructions */}
             {displayInstructions && (
               <div className="pt-4 border-t">
-                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                <h4 className="font-semibold mb-2 flex items-center gap-2 text-gray-800">
                   <AlertCircle className="w-4 h-4" />
                   Additional Information
                 </h4>
-                <p className="text-muted-foreground whitespace-pre-wrap">{displayInstructions}</p>
+                <p className="text-gray-600 whitespace-pre-wrap">{displayInstructions}</p>
               </div>
             )}
 
             {/* Important Notes */}
             {restrictions && restrictions.length > 0 && (
               <div className="pt-4 border-t">
-                <h4 className="font-semibold mb-2 flex items-center gap-2 text-amber-600">
+                <h4 className="font-semibold mb-2 flex items-center gap-2 text-amber-700">
                   <AlertCircle className="w-4 h-4" />
                   Important Notes
                 </h4>
-                <ul className="list-disc list-inside space-y-1.5 text-muted-foreground">
+                <ul className="list-disc list-inside space-y-1.5 text-gray-600">
                   {restrictions.map((restriction, i) => (
                     <li key={i}>{restriction}</li>
                   ))}
@@ -122,9 +122,9 @@ export function GiftCardInstructions({
             )}
 
             {/* Pro Tips */}
-            <div className="pt-4 border-t bg-muted/30 -mx-4 px-4 py-3 rounded-lg">
-              <h4 className="font-semibold mb-2 text-sm">💡 Pro Tips</h4>
-              <ul className="space-y-1.5 text-xs text-muted-foreground">
+            <div className="pt-4 border-t bg-gray-100 -mx-4 px-4 py-3 rounded-lg">
+              <h4 className="font-semibold mb-2 text-sm text-gray-800">💡 Pro Tips</h4>
+              <ul className="space-y-1.5 text-xs text-gray-600">
                 <li>• Screenshot or save this page for backup access to your code</li>
                 <li>• Check the expiration date (if applicable) before using</li>
                 <li>• Some retailers require full balance to be used in one transaction</li>
