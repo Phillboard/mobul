@@ -89,7 +89,16 @@ serve(
           .eq('is_active', true);
 
         // Check for billing issues (simplified)
-        const hasUnresolvedBilling = false; // TODO: Implement actual check
+        // Check for unresolved billing issues
+        const { data: billingIssues } = await supabaseClient
+          .from('billing_transactions')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .eq('status', 'failed')
+          .is('resolved_at', null)
+          .limit(1);
+        
+        const hasUnresolvedBilling = (billingIssues && billingIssues.length > 0) || false;
 
         const archiveValidation = validateArchiveOperation(
           organizationType,

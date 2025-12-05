@@ -630,9 +630,138 @@ async function sellCardsToClient(
 
 ---
 
+## Troubleshooting Common Issues
+
+### Error: "400 Bad Request" from provision-gift-card-for-call-center
+
+This error typically indicates a configuration or inventory issue.
+
+**Diagnostic Steps:**
+
+1. **Check Campaign Configuration:**
+   ```sql
+   SELECT 
+     c.campaign_name,
+     cc.condition_name,
+     cc.brand_id,
+     cc.card_value,
+     gb.brand_name
+   FROM campaigns c
+   LEFT JOIN campaign_conditions cc ON cc.campaign_id = c.id
+   LEFT JOIN gift_card_brands gb ON gb.id = cc.brand_id
+   WHERE c.id = 'YOUR_CAMPAIGN_ID';
+   ```
+   
+   **Expected:** Condition has `brand_id` (not NULL) and `card_value` > 0
+
+2. **Check Gift Card Inventory:**
+   ```sql
+   SELECT 
+     brand_id,
+     denomination,
+     COUNT(*) FILTER (WHERE status = 'available') as available,
+     COUNT(*) as total
+   FROM gift_card_inventory
+   GROUP BY brand_id, denomination;
+   ```
+   
+   **Expected:** At least one available card matching campaign configuration
+
+**Common Fixes:**
+
+- **No Gift Card Configured**: Edit campaign → Conditions tab → Set brand and value
+- **No Inventory**: Upload CSV cards OR configure Tillo API credentials
+- **Verification Required**: Customer must complete SMS opt-in first
+
+### Error Code Reference
+
+| Code | Description | Solution |
+|------|-------------|----------|
+| GC-001 | Missing brand_id/card_value | Edit campaign condition settings |
+| GC-002 | Brand not found | Check brand exists and is enabled |
+| GC-003 | No inventory available | Upload cards or configure Tillo |
+| GC-004 | Tillo API not configured | Add Tillo credentials to Supabase |
+| GC-005 | Tillo API call failed | Check Tillo account status |
+| GC-006 | Insufficient credits | Allocate more credits to account |
+| GC-007 | Billing transaction failed | Check database connection |
+| GC-008 | Campaign billing not configured | Set up billing entity |
+| GC-009 | Verification required | Complete SMS opt-in or skip verification |
+| GC-010 | Already provisioned | Customer already received gift card |
+| GC-011 | Invalid redemption code | Verify code exists in system |
+| GC-012 | Missing parameters | Check API request format |
+| GC-013 | Database function error | Check migration status |
+| GC-014 | Delivery notification failed | Check SMS/email configuration |
+| GC-015 | Unknown error | Check function logs for details |
+
+### Provisioning Trace Logging
+
+To debug provisioning issues, check the trace logs:
+
+```sql
+-- Recent provisioning attempts
+SELECT * FROM gift_card_provisioning_trace
+WHERE created_at > NOW() - INTERVAL '1 hour'
+ORDER BY created_at DESC;
+
+-- Failed attempts with error details
+SELECT 
+  request_id,
+  step_name,
+  error_code,
+  error_message,
+  created_at
+FROM gift_card_provisioning_trace
+WHERE status = 'failed'
+  AND created_at > NOW() - INTERVAL '24 hours'
+ORDER BY created_at DESC;
+```
+
+### Environment Variables Quick Reference
+
+**Required for SMS (Twilio):**
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_FROM_NUMBER`
+
+**Optional for Gift Card API (Tillo):**
+- `TILLO_API_KEY`
+- `TILLO_SECRET_KEY`
+
+**Optional for Support Info:**
+- `COMPANY_NAME`
+- `SUPPORT_PHONE_NUMBER`
+- `SUPPORT_EMAIL`
+
+### Monitoring & Logs
+
+**View Real-Time Logs:**
+```bash
+# Gift Card Provisioning
+supabase functions logs provision-gift-card-for-call-center --tail
+supabase functions logs provision-gift-card-unified --tail
+
+# SMS Delivery
+supabase functions logs send-gift-card-sms --tail
+supabase functions logs send-sms-opt-in --tail
+```
+
+**Success Indicators:**
+- `[PROVISION] Success`
+- `[TWILIO] SMS sent successfully, SID: SMxxxxxx`
+- No error codes in logs
+
+**Error Indicators:**
+- `No gift card configured`
+- `No available gift cards in pool`
+- `Tillo API error`
+- `SMS service not configured`
+
+---
+
 ## Related Documentation
 
 - [Campaigns](/admin/docs/features/campaigns)
 - [Call Center Guide](/admin/docs/user-guides/call-center-guide)
 - [Redemption Workflows](/admin/docs/features/campaign-lifecycle)
 - [SMS Delivery](/admin/docs/developer-guide/edge-functions)
+- [Troubleshooting Guide](/admin/docs/troubleshooting/gift-cards) (Comprehensive)

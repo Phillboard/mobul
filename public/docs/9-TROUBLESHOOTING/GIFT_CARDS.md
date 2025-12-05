@@ -1,85 +1,114 @@
-# Gift Card Provisioning Troubleshooting Guide
+# Gift Card System Troubleshooting
+
+## Overview
+
+Comprehensive troubleshooting guide for gift card provisioning, delivery, and common errors.
+
+---
 
 ## Common Error Messages & Solutions
 
 ### Error: "400 Bad Request" from provision-gift-card-for-call-center
 
-This is the error you're seeing in the browser console. Here's how to diagnose and fix it:
+This is the most common error. Here's how to diagnose and fix it:
 
 #### Possible Causes & Solutions
 
-1. **No Gift Cards in Inventory AND No Tillo API Configured**
+**1. No Gift Cards in Inventory AND No Tillo API Configured**
 
-   **Error Message in Logs:**
+**Error Message in Logs:**
+```
+No gift card configured for this campaign condition
+```
+
+**Solution - Choose ONE:**
+
+**Option A: Upload Gift Card Inventory (Recommended for Testing)**
+
+1. Go to Settings → Gift Cards → Upload Cards
+2. Create a CSV file with this format:
+   ```csv
+   card_code,card_number,expiration_date
+   CODE123,1234567890123456,2025-12-31
+   CODE456,1234567890123457,2025-12-31
+   CODE789,1234567890123458,2025-12-31
    ```
-   No gift card configured for this campaign condition
-   ```
+3. Upload the CSV for your brand/denomination
+4. Verify cards show as "Available" in the pool
 
-   **Solution:**
-   Choose ONE of these options:
+**Option B: Configure Tillo API (For Production)**
 
-   **Option A: Upload Gift Card Inventory (Recommended for Testing)**
-   
-   1. Go to Settings → Gift Cards → Upload Cards
-   2. Create a CSV file with this format:
-      ```csv
-      card_code,card_number,expiration_date
-      CODE123,1234567890123456,2025-12-31
-      CODE456,1234567890123457,2025-12-31
-      CODE789,1234567890123458,2025-12-31
-      ```
-   3. Upload the CSV for your brand/denomination
-   4. Verify cards show as "Available" in the pool
+1. Go to Supabase Dashboard → Settings → Edge Functions → Secrets
+2. Add Tillo credentials:
+   - `TILLO_API_KEY` = your_api_key
+   - `TILLO_SECRET_KEY` = your_secret_key
+3. In Settings → Gift Cards → Brands
+4. Edit your brand and add the `tillo_brand_code`
+5. Set cost per card for automatic provisioning
 
-   **Option B: Configure Tillo API (For Production)**
-   
-   1. Go to Supabase Dashboard → Settings → Edge Functions → Secrets
-   2. Add Tillo credentials:
-      - `TILLO_API_KEY` = your_api_key
-      - `TILLO_SECRET_KEY` = your_secret_key
-   3. In Settings → Gift Cards → Brands
-   4. Edit your brand and add the `tillo_brand_code`
-   5. Set cost per card for automatic provisioning
+**2. Campaign Has No Gift Card Configured**
 
-2. **Campaign Has No Gift Card Configured**
+**Error Message:**
+```
+No gift card configured for this campaign condition
+```
 
-   **Error Message:**
-   ```
-   No gift card configured for this campaign condition
-   ```
+**Solution:**
+1. Go to Campaigns → Select your campaign
+2. Click "Edit Campaign"
+3. Go to "Conditions" tab
+4. For each condition, set:
+   - Gift Card Brand (e.g., "Amazon")
+   - Card Value (e.g., 25)
+5. Save the campaign
 
-   **Solution:**
-   1. Go to Campaigns → Select your campaign
-   2. Click "Edit Campaign"
-   3. Go to "Conditions" tab
-   4. For each condition, set:
-      - Gift Card Brand (e.g., "Amazon")
-      - Card Value (e.g., 25)
-   5. Save the campaign
+**3. Recipient Not Opted In**
 
-3. **Recipient Not Opted In**
+**Error Message:**
+```
+Recipient verification required
+```
 
-   **Error Message:**
-   ```
-   Recipient verification required
-   ```
+**Solution:**
+- Customer must complete SMS opt-in by replying "YES"
+- OR use "Verify via Email" option
+- OR use "Skip Verification" with valid disposition
 
-   **Solution:**
-   - Customer must complete SMS opt-in by replying "YES"
-   - OR use "Verify via Email" option
-   - OR use "Skip Verification" with valid disposition
+**4. Gift Card Already Provisioned**
 
-4. **Gift Card Already Provisioned**
+**Error Message:**
+```
+Gift card has already been provisioned for this recipient and condition
+```
 
-   **Error Message:**
-   ```
-   Gift card has already been provisioned for this recipient and condition
-   ```
+**Solution:**
+- This customer already received a gift card
+- Check the database: `gift_card_billing_ledger` table
+- If this is an error, contact admin to reset
 
-   **Solution:**
-   - This customer already received a gift card
-   - Check the database: `gift_card_billing_ledger` table
-   - If this is an error, contact admin to reset
+---
+
+## Error Code Reference
+
+Complete reference for all gift card error codes:
+
+| Code | Description | Can Retry | Needs Campaign Edit | Action Required |
+|------|-------------|-----------|---------------------|-----------------|
+| GC-001 | Missing brand_id/card_value | No | Yes | Edit campaign condition settings |
+| GC-002 | Brand not found | No | Yes | Enable brand or select different one |
+| GC-003 | No inventory available | Yes | No | Upload cards or wait for restocking |
+| GC-004 | Tillo API not configured | No | No | Add Tillo credentials to Supabase |
+| GC-005 | Tillo API call failed | Yes | No | Check Tillo account status and balance |
+| GC-006 | Insufficient credits | No | No | Allocate more credits to account |
+| GC-007 | Billing transaction failed | No | No | Contact support - database issue |
+| GC-008 | Campaign billing not configured | No | Yes | Configure billing entity for campaign |
+| GC-009 | Verification required | Yes | No | Complete SMS opt-in or skip verification |
+| GC-010 | Already provisioned | No | No | Customer already received gift card |
+| GC-011 | Invalid redemption code | Yes | No | Verify code exists and spelling correct |
+| GC-012 | Missing parameters | Yes | No | Check API request includes all fields |
+| GC-013 | Database function error | No | No | Check migrations applied correctly |
+| GC-014 | Delivery notification failed | Yes | No | Check SMS/email provider configuration |
+| GC-015 | Unknown error | Yes | No | Check function logs for specific details |
 
 ---
 
@@ -134,21 +163,19 @@ WHERE c.id = 'YOUR_CAMPAIGN_ID';
 ```sql
 -- Check if you have available cards
 SELECT 
-  gcp.pool_name,
-  gcp.card_value,
-  gcp.provider,
-  gcp.available_cards,
-  gcp.total_cards,
-  gb.brand_name
-FROM gift_card_pools gcp
-JOIN gift_card_brands gb ON gb.id = gcp.brand_id
-WHERE gcp.available_cards > 0
-ORDER BY gcp.created_at DESC;
+  gi.denomination,
+  gb.brand_name,
+  COUNT(*) FILTER (WHERE gi.status = 'available') as available,
+  COUNT(*) as total
+FROM gift_card_inventory gi
+JOIN gift_card_brands gb ON gb.id = gi.brand_id
+GROUP BY gi.denomination, gb.brand_name
+ORDER BY gb.brand_name, gi.denomination;
 ```
 
 **Expected Results:**
-- At least one pool with `available_cards > 0`
-- Matching `card_value` to your campaign condition
+- At least one brand-denomination with `available > 0`
+- Matching your campaign condition's brand and value
 
 **If No Available Cards:**
 
@@ -286,7 +313,7 @@ WHERE c.id = 'YOUR_CAMPAIGN_ID';
 ### Required for SMS (Twilio)
 
 ```
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_ACCOUNT_SID=ACxxxxx...
 TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 TWILIO_FROM_NUMBER=+15551234567
 ```
@@ -375,7 +402,84 @@ supabase functions logs provision-gift-card-unified --tail
 
 ---
 
-## Need Help?
+## Migration Guide: Pool-Based to Marketplace
+
+### Old System (Deprecated)
+- **gift_card_pools** table - Managed inventory in "pools"
+- Each pool had a brand, denomination, and inventory count
+- Pools belonged to specific clients
+- Complex pool management UI
+
+### New System (Current)
+- **gift_card_brands** - Master catalog of available brands
+- **gift_card_denominations** - Denominations available per brand
+- **gift_card_inventory** - Uploaded gift card codes
+- **client_available_gift_cards** - Enabled brand-denomination pairs per client
+- **campaign_gift_card_config** - Links campaigns to specific brand-denominations
+
+### Migration Impact
+
+If you see references to `gift_card_pools` in error messages:
+- The system has been migrated to the marketplace model
+- Use `gift_card_inventory` instead
+- Query by `brand_id` + `denomination` instead of `pool_id`
+
+---
+
+## Advanced Diagnostics
+
+### Provisioning Trace Analysis
+
+```sql
+-- View complete provisioning trace for a request
+SELECT 
+  request_id,
+  step_number,
+  step_name,
+  status,
+  duration_ms,
+  error_code,
+  error_message
+FROM gift_card_provisioning_trace
+WHERE request_id = 'req_xxxxx'
+ORDER BY step_number;
+
+-- Find most common failures
+SELECT 
+  error_code,
+  error_message,
+  COUNT(*) as occurrence_count
+FROM gift_card_provisioning_trace
+WHERE status = 'failed'
+  AND created_at > NOW() - INTERVAL '7 days'
+GROUP BY error_code, error_message
+ORDER BY occurrence_count DESC
+LIMIT 10;
+```
+
+### Monitoring Views
+
+```sql
+-- Provisioning health (last 24 hours)
+SELECT * FROM v_provisioning_health_hourly
+WHERE hour > NOW() - INTERVAL '24 hours';
+
+-- Top failures
+SELECT * FROM v_top_provisioning_failures;
+
+-- Campaign-specific stats
+SELECT * FROM v_campaign_provisioning_stats
+WHERE campaign_id = 'YOUR_CAMPAIGN_ID';
+
+-- Active issues requiring attention
+SELECT * FROM v_active_provisioning_issues;
+```
+
+---
+
+## Support Resources
+
+### Need Help?
 
 1. **Check Logs First**: Most errors are visible in function logs
 2. **Run Diagnostic SQL**: Use the queries above
@@ -383,9 +487,13 @@ supabase functions logs provision-gift-card-unified --tail
 4. **Test with Known Good Data**: Try with a test customer and test inventory
 5. **Contact Support**: Provide error logs and diagnostic query results
 
-## Related Documentation
+### Related Documentation
 
-- [Twilio SMS Migration Guide](./TWILIO_SMS_MIGRATION_GUIDE.md)
-- [Gift Card System Implementation](./GIFT_CARD_SYSTEM_IMPLEMENTATION_COMPLETE.md)
-- [Call Center Permissions](./CALL_CENTER_PERMISSIONS_FIX_COMPLETE.md)
+- [Gift Card Features Guide](../3-FEATURES/GIFT_CARDS.md)
+- [Call Center Guide](../6-USER-GUIDES/CALL_CENTER_GUIDE.md)
+- [Edge Functions API](../5-API-REFERENCE/EDGE_FUNCTIONS.md)
+- [Testing Guide](../4-DEVELOPER-GUIDE/TESTING.md)
 
+---
+
+**Last Updated:** December 4, 2024

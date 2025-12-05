@@ -86,6 +86,23 @@ Complete documentation for the Direct Mail Marketing Platform with API-first arc
 - [Brand Management](7-IMPLEMENTATION/BRAND_MANAGEMENT_IMPLEMENTATION_COMPLETE.md) - Brand system
 - [Brand Testing](7-IMPLEMENTATION/BRAND_MANAGEMENT_TESTING_GUIDE.md) - Testing guide
 
+### 8. Operations ⭐ NEW
+- [Operations Index](8-OPERATIONS/INDEX.md) - Complete operations guide
+- [Edge Function Deployment](8-OPERATIONS/EDGE_FUNCTION_DEPLOYMENT.md) - Function deployment
+- [Monitoring Setup](8-OPERATIONS/MONITORING_SETUP.md) - System monitoring
+- [Security Hardening](8-OPERATIONS/SECURITY_HARDENING.md) - Production security
+- [Backup Procedures](8-OPERATIONS/BACKUP_PROCEDURES.md) - Backup and restore
+- [Disaster Recovery](8-OPERATIONS/DISASTER_RECOVERY.md) - DR procedures
+- [Wallet Pass Setup](8-OPERATIONS/WALLET_PASS_SETUP.md) - Wallet integration
+- [Performance Guide](8-OPERATIONS/PERFORMANCE_GUIDE.md) - Optimization
+
+### 9. Troubleshooting ⭐ NEW
+- [Troubleshooting Index](9-TROUBLESHOOTING/INDEX.md) - Quick problem resolution
+- [Gift Cards](9-TROUBLESHOOTING/GIFT_CARDS.md) - Gift card error codes and fixes
+- [SMS Delivery](9-TROUBLESHOOTING/SMS_DELIVERY.md) - SMS provider issues
+- [Permissions](9-TROUBLESHOOTING/PERMISSIONS.md) - Access and permission errors
+- [Common Errors](9-TROUBLESHOOTING/COMMON_ERRORS.md) - Platform-wide error reference
+
 ---
 
 ## 🎯 Common Tasks
@@ -120,6 +137,8 @@ supabase functions logs --tail
 - **Deploying?** → [Implementation Guides](#7-implementation-guides-)
 - **Learning system?** → [Architecture](#2-architecture)
 - **Training users?** → [User Guides](#6-user-guides)
+- **Running production?** → [Operations](#8-operations-)
+- **Having issues?** → [Troubleshooting](#9-troubleshooting-)
 
 ---
 
@@ -131,8 +150,8 @@ supabase functions logs --tail
 
 ---
 
-**Last Updated**: December 2, 2025  
-**Documentation Version**: 2.0 (API-First)
+**Last Updated**: December 4, 2024  
+**Documentation Version**: 2.1 (API-First + Operations + Troubleshooting)
 
 *Complete documentation index for ACE Engage Direct Mail Marketing Platform.*
 

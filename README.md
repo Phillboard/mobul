@@ -147,6 +147,10 @@ VITE_TWILIO_AUTH_TOKEN=your_auth_token
 - **[Admin Guide](public/docs/6-USER-GUIDES/ADMIN_GUIDE.md)** - Platform administration
 - **[Call Center Guide](public/docs/6-USER-GUIDES/CALL_CENTER_GUIDE.md)** - Call center operations
 
+### Operations & Troubleshooting:
+- **[Operations Guide](public/docs/8-OPERATIONS/INDEX.md)** - Production operations, monitoring, security
+- **[Troubleshooting](public/docs/9-TROUBLESHOOTING/INDEX.md)** - Error codes, common issues, diagnostics
+
 ---
 
 ## 🗃️ Scripts and Utilities

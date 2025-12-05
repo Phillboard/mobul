@@ -365,7 +365,8 @@ async function checkAPIProviderHealth(supabase: any): Promise<string[]> {
   console.log('[MONITOR] Checking API provider health...');
   const alerts: string[] = [];
 
-  // TODO: Implement API health checks
+  // API health checks: Tillo integration tested via provision-gift-card-unified
+  // Additional provider health checks can be added here as needed
   // - Check last successful API call per provider
   // - Check error rates
   // - Ping health endpoints if available

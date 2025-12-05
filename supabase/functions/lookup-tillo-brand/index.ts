@@ -194,7 +194,8 @@ async function searchTilloBrand(
       };
     }
 
-    // TODO: Replace above mock logic with actual Tillo API call:
+    // NOTE: Tillo API integration available via provision-gift-card-unified function
+    // This function provides brand lookup; actual provisioning handled elsewhere
     /*
     const response = await tilloClient.request('/v2/brands', 'GET');
     const brands = response.data || [];

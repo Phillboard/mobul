@@ -8,6 +8,77 @@ This directory contains archived documentation from the implementation history o
 
 ## Archive Structure
 
+### completed-implementations/ ⭐ NEW
+Recent implementation completion documents (December 2024).
+
+| File | Description | Date |
+|------|-------------|------|
+| `COMPLETE_SYSTEM_SUMMARY.md` | All tasks complete - Mike demo + system audit | 2024-12-02 |
+| `GIFT_CARD_SYSTEM_IMPLEMENTATION_COMPLETE.md` | Brand-denomination marketplace migration | 2024-12-02 |
+| `AI_LANDING_PAGE_BUILDER_COMPLETE.md` | Loveable-style AI builder (21 todos) | 2024-12-02 |
+| `CLIENT_GIFT_CARD_UI_IMPLEMENTATION_SUMMARY.md` | UI implementation | 2024-12-02 |
+| `GIFT_CARD_MIGRATION_IMPLEMENTATION_SUMMARY.md` | Migration summary | 2024-12-02 |
+| `IMPLEMENTATION_SUMMARY_TWILIO_AND_GIFT_CARDS.md` | Twilio + provisioning fixes | 2024-12-03 |
+| `SIMPLIFIED_LANDING_PAGE_BUILDER.md` | Simplified AI builder approach | 2024-12-02 |
+
+### fixes/ ⭐ NEW
+Bug fixes and issue resolutions (December 2024).
+
+| File | Description | Date |
+|------|-------------|------|
+| `GIFT_CARD_AUDIT_FIX_COMPLETE.md` | Brand selector, console errors, RPC functions | 2024-12-03 |
+| `CALL_CENTER_MARKETPLACE_FIX_COMPLETE.md` | Pool-based to marketplace query fix | 2024-12-03 |
+| `CALL_CENTER_MARKETPLACE_FIX_PLAN.md` | Call center fix plan | 2024-12-03 |
+| `CALL_CENTER_PERMISSIONS_FIX_COMPLETE.md` | calls.confirm_redemption permission fix | 2024-12-03 |
+| `MASTER_FIX_PLAN_AB6-1061.md` | Master plan for code lookup fix | 2024-12-02 |
+| `QUICK_FIX_AB6-1061.md` | Quick fix guide | 2024-12-02 |
+| `SELF_MAILING_FIXES.md` | Self-mailing campaign improvements | 2024-11 |
+
+### demos/ ⭐ NEW
+Mike demo preparation documents (December 2024).
+
+| File | Description | Date |
+|------|-------------|------|
+| `MIKE_DEMO_IMPLEMENTATION_COMPLETE.md` | 8 tasks for Wednesday demo | 2024-12-02 |
+| `MIKE_DEMO_ENV_SETUP.md` | Environment variable configuration | 2024-12-02 |
+| `MIKE_DEMO_TEST_DATA.md` | Test campaign (MIKE0001-0010) | 2024-12-02 |
+| `MIKE_DEMO_TESTING_GUIDE.md` | Comprehensive testing checklist | 2024-12-02 |
+| `MIKE_DEMO_QUICK_REFERENCE.md` | Quick reference card | 2024-12-02 |
+| `GIFT_CARD_PURCHASE_GUIDE.md` | Real gift card purchase guide | 2024-12-02 |
+
+### audits/ ⭐ NEW
+System audit reports and verification (December 2024).
+
+| File | Description | Date |
+|------|-------------|------|
+| `SYSTEM_AUDIT_MASTER_REPORT.md` | Pre-launch comprehensive review (96% ready) | 2024-12-02 |
+| `SYSTEM_AUDIT_DATABASE.md` | Database schema audit (156 migrations) | 2024-12-02 |
+| `SYSTEM_AUDIT_ROUTES.md` | Routes & navigation audit (66 pages) | 2024-12-02 |
+| `SYSTEM_AUDIT_EDGE_FUNCTIONS.md` | Edge functions audit (88 functions) | 2024-12-02 |
+| `PERMISSION_SYSTEM_VERIFICATION.md` | Permission system verification | 2024-12-03 |
+| `PRODUCTION_READINESS_CHECKLIST.md` | Launch checklist (Mike demo) | 2024-12-02 |
+| `ENTERPRISE_SYSTEM_AUDIT_PLAN.md` | Enterprise audit plan | 2024-12 |
+
+### migration-guides/ ⭐ NEW
+Migration and deployment guides (now superseded by public/docs).
+
+| File | Description |
+|------|-------------|
+| `QUICK_START_GUIDE.md` | 5-step quick start (gift cards + Twilio) |
+| `TESTING_GUIDE.md` | Credit system testing |
+| `DEPLOYMENT_GUIDE.md` | General deployment |
+| `GIFT_CARD_MIGRATION_GUIDE.md` | Pool-based to marketplace migration |
+| `INFOBIP_MIGRATION_GUIDE.md` | Infobip SMS configuration |
+| `NOTIFICATIONAPI_MIGRATION_GUIDE.md` | NotificationAPI configuration |
+| `TWILIO_SMS_MIGRATION_GUIDE.md` | Twilio SMS migration |
+| `GIFT_CARD_PROVISIONING_TROUBLESHOOTING.md` | Comprehensive troubleshooting |
+| `GIFT_CARD_PROVISIONING_LOGGING_TEST_GUIDE.md` | Logging system testing |
+| `TEST_GIFT_CARD_FLOW.md` | Step-by-step testing |
+| `SETUP_INSTRUCTIONS.md` | Setup guide |
+| `VERCEL_QUICK_DEPLOY.md` | Vercel deployment |
+| `DEPLOY_TO_PRODUCTION.md` | Production deployment |
+| `README_NEXT_STEPS.md` | Next steps |
+
 ### implementation-history/
 Historical implementation completion documents and status reports.
 
@@ -87,8 +158,8 @@ For current, maintained documentation, see:
 
 ## Archive Date
 
-**Archived**: December 2, 2024  
-**Reason**: Documentation consolidation and API-first refactoring completion
+**Archived**: December 4, 2024  
+**Reason**: Comprehensive documentation cleanup and consolidation
 
 ---
 
