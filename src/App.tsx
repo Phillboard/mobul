@@ -159,8 +159,8 @@ const App = () => (
 
                   {/* Protected Routes */}
                   {/* Help Center - User-Friendly Documentation */}
-                  <Route path="/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
-                  <Route path="/help/:category/:slug" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
+                  <Route path="/help" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
+                  <Route path="/help/:category/:slug" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                   <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                   <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                   <Route path="/platform" element={<ProtectedRoute requiredRole="admin"><PlatformDashboard /></ProtectedRoute>} />
