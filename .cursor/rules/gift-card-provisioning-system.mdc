@@ -1,46 +1,56 @@
 ---
-description: Documents the gift card provisioning and inventory management system including pools, balances, and automated triggers
+description: Documentation and implementation guide for gift card provisioning, pool management, and balance verification systems
 ---
 
 
 # gift-card-provisioning-system
 
-The gift card provisioning system implements a sophisticated waterfall strategy for fulfilling gift card rewards:
+## Core Provisioning Logic
+`src/lib/gift-cards/provisioning-utils.ts`
+Implements waterfall provisioning strategy with two-step allocation:
+1. CSV inventory pool claim attempt
+2. Automatic Tillo API purchase fallback
+Importance Score: 95/100
 
-## Core Provisioning Logic (Importance: 95)
-src/lib/gift-cards/provisioning-utils.ts
-- Two-tier provisioning waterfall:
-  1. CSV inventory pool allocation with atomic claiming
-  2. Automatic Tillo API fallback purchase if CSV depleted
-- Campaign-specific pool management with inventory thresholds
-- Automated low balance triggers with multi-channel alerts
+## Pool Management System
+`src/components/gift-cards/PoolInventoryWidget.tsx`
+- Real-time inventory threshold monitoring
+- Utilization calculation across denominations
+- Low stock alerting with configurable thresholds
+- Pool health status tracking (healthy/low/empty)
+Importance Score: 85/100
 
-## Pool Health Management (Importance: 90) 
-src/lib/gift-cards/pool-health.ts
-- Real-time pool health monitoring with configurable thresholds:
-  - Healthy: >25% capacity
-  - Warning: 10-25% capacity  
-  - Critical: <10% capacity
-- Automated pool replenishment triggers
-- Balance verification scheduling every 6 hours
+## Balance Verification Engine 
+`src/components/gift-cards/IndividualCardDetailDialog.tsx`
+- Multi-provider balance checking (Tillo, CSV, API)
+- Balance history tracking with change detection
+- Provider-specific error handling
+- Custom validation rules for updates
+Importance Score: 80/100
 
-## Balance Verification (Importance: 85)
-src/lib/gift-cards/balance-verification.ts
-- Multi-provider balance verification system
-- Automated reconciliation with provider APIs
-- Discrepancy detection and alerting
-- Historical balance tracking
+## Inventory Upload Processing
+`src/hooks/useInventoryUpload.ts`
+- CSV-based batch uploads with duplicate detection
+- Cost basis tracking per denomination
+- Batch status management
+- Deletion rules for unused cards only
+Importance Score: 75/100
 
-## Inventory Thresholds (Importance: 80)
-src/lib/gift-cards/inventory-thresholds.ts
-- Client-specific minimum inventory requirements
-- Automated purchasing triggers based on:
-  - Historical usage patterns
-  - Scheduled campaign needs
-  - Current inventory levels
-- Emergency threshold overrides
+## Edge Function Integration
+`supabase/functions/provision-gift-card-unified/index.ts`
+- Unified provisioning workflow
+- Credit availability validation
+- Atomic inventory locking
+- Structured error handling with business codes
+Importance Score: 90/100
 
-The system maintains strict inventory control while ensuring uninterrupted gift card fulfillment through intelligent fallback mechanisms and proactive monitoring.
+## Key Business Rules
+1. Gift cards must be provisioned from CSV inventory before API purchase
+2. Pool health thresholds: Low < 15%, Empty < 5%
+3. Balance verification required every 24 hours
+4. Cost basis must be tracked per denomination
+5. Only unused cards can be removed from inventory
+6. Credit validation required before provisioning
 
 $END$
 

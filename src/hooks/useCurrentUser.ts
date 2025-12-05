@@ -30,21 +30,38 @@ export function useCurrentUser() {
         throw new Error("Not authenticated");
       }
 
-      // Get user role
-      const { data: roleData, error: roleError } = await supabase
+      // Get user roles (user may have multiple roles)
+      const { data: rolesData, error: roleError } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id)
-        .single();
+        .eq("user_id", user.id);
 
-      if (roleError && roleError.code !== 'PGRST116') {
-        console.error("Error fetching user role:", roleError);
+      if (roleError) {
+        console.error("Error fetching user roles:", roleError);
+      }
+
+      // Role hierarchy - return highest privilege role
+      const roleHierarchy: Record<string, number> = {
+        admin: 1,
+        tech_support: 2,
+        agency_owner: 3,
+        company_owner: 4,
+        developer: 5,
+        call_center: 6
+      };
+
+      let highestRole = "user";
+      if (rolesData && rolesData.length > 0) {
+        const sortedRoles = rolesData
+          .map(r => r.role)
+          .sort((a, b) => (roleHierarchy[a] || 999) - (roleHierarchy[b] || 999));
+        highestRole = sortedRoles[0];
       }
 
       const currentUser: CurrentUser = {
         id: user.id,
         email: user.email || "",
-        role: roleData?.role || "user",
+        role: highestRole,
       };
 
       return currentUser;

@@ -216,7 +216,8 @@ export async function logAuditEvent(
   action: string,
   resourceType: string,
   resourceId: string,
-  metadata?: any
+  metadata?: any,
+  req?: Request
 ): Promise<void> {
   try {
     await supabase.from('audit_log').insert({
@@ -225,8 +226,8 @@ export async function logAuditEvent(
       resource_type: resourceType,
       resource_id: resourceId,
       metadata: metadata || {},
-      ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null,
-      user_agent: req.headers.get('user-agent') || null
+      ip_address: req?.headers.get('x-forwarded-for') || req?.headers.get('x-real-ip') || null,
+      user_agent: req?.headers.get('user-agent') || null,
       created_at: new Date().toISOString(),
     });
   } catch (error) {

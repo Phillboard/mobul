@@ -1,50 +1,58 @@
 ---
-description: Defines organizational hierarchy, multi-tenant relationships, and permission inheritance for the direct mail marketing platform
+description: Technical documentation for organization hierarchy and multi-tenant data models in B2B gift card campaign management
 ---
 
 
 # organization-hierarchy
 
-Multi-Tenant Organization Model (Importance: 95/100)
-- Four-tier hierarchy: Platform -> Agency -> Client -> Campaign
-- Strict unidirectional credit flow downward through hierarchy
-- Organizations can operate in multiple industry verticals (roofing, auto warranty)
-- Custom markup/pricing rules inherit down hierarchy levels
+Multi-tier organization structure with the following hierarchy:
 
-Permission Inheritance System (Importance: 90/100)
-src/contexts/TenantContext.tsx:
-- Role-based access control with hierarchical inheritance
-- Permissions cascade down from agency to client level
-- Custom override capabilities for specific client permissions
-- Automatic client context switching with state persistence
+Platform
+└─ Agency
+   └─ Client
+      └─ Campaign
 
-Credit Account Management (Importance: 85/100)
-src/types/creditAccounts.ts:
-- Credit pools managed at each organizational tier
-- Automated credit allocation and reservation system
-- Campaign-level credit tracking tied to parent organization
-- Custom credit thresholds and alerts per organization level
+Key Components:
 
-User Management Hierarchy (Importance: 80/100)
-src/hooks/useManageableUsers.ts:
-- Users can belong to multiple organizations with different roles
-- Role calculation based on organizational position
-- Cross-organization visibility rules
-- Client-specific user management capabilities
+1. Credit Flow Management (Importance Score: 95)
+- Unidirectional credit movement from Platform → Agency → Client → Campaign
+- Credit pool inheritance with allocation tracking
+- Balance monitoring and threshold alerts at each level
+- Atomic credit operations with audit logging
 
-Organization Status Control (Importance: 75/100)
-supabase/functions/update-organization-status/index.ts:
-- Status transitions affect entire organizational branch
-- Automated status inheritance for child organizations
-- Custom validation rules for status changes
-- Impact analysis for organizational status updates
+2. Role-Based Permissions (Importance Score: 90)
+- Hierarchical permission inheritance system
+- Role capabilities:
+  - Platform Admin: Full system access
+  - Agency Owner: Gift card management, client creation
+  - Client Owner: Campaign management, budget control
+  - Call Center: Redemption workflows
+- Cross-organization access controls with audit trails
+
+3. Client-Agency Relationships (Importance Score: 85)
+- One-to-many agency-client mapping
+- Shared resource pools between agencies and clients
+- Custom pricing rules per relationship
+- White-label configuration options
+
+4. Resource Inheritance Rules (Importance Score: 80)
+- Gift card pool access inheritance
+- Template sharing with override capabilities 
+- Brand access controls with agency restrictions
+- Campaign asset inheritance model
+
+5. Multi-Tenant Data Model (Importance Score: 75)
+- Organization-specific data isolation
+- Shared resource management
+- Cross-organization reporting capabilities
+- Tenant-specific configuration storage
 
 Core Business Rules:
 1. Credits only flow downward in hierarchy
-2. Permissions inherit down but can be overridden
-3. Users can have different roles across organizations
-4. Status changes affect all child organizations
-5. Each tier has unique pricing and markup rules
+2. Permissions inherit downward with override capability
+3. Resources can be shared laterally between same-level entities
+4. Organizations can have custom pricing and markup rules
+5. Each level maintains independent audit trails
 
 $END$
 

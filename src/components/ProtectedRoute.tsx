@@ -19,7 +19,7 @@ export function ProtectedRoute({
   requiredPermissions,
   requireAllPermissions = false 
 }: ProtectedRouteProps) {
-  const { user, loading, hasRole, hasPermission, hasAnyPermission, permissions } = useAuth();
+  const { user, loading, hasRole, hasPermission, hasAnyPermission } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {

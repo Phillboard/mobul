@@ -73,7 +73,7 @@ export function DocumentationSidebar() {
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-1 space-y-1 pl-4">
             {category.pages.map((page: any) => {
-              const href = `/admin/docs/${category.slug}/${page.slug}`;
+              const href = `/docs/${category.slug}/${page.slug}`;
               const isActive = location.pathname === href;
 
               return (

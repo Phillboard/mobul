@@ -146,7 +146,7 @@ export default function DocEditorPage() {
       });
       
       // Navigate back to the document view
-      navigate(`/admin/docs/${category}/${slug}`);
+      navigate(`/docs/${category}/${slug}`);
     } catch (error) {
       console.error("Error saving document:", error);
       toast({
@@ -204,7 +204,7 @@ export default function DocEditorPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(`/admin/docs/${category}/${slug}`)}
+              onClick={() => navigate(`/docs/${category}/${slug}`)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Document

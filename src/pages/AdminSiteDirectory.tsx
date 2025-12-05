@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, ExternalLink, Lock, Users, Shield } from "lucide-react";
+import { Search, ExternalLink, Lock, Users, Shield, BookOpen, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface RouteInfo {
@@ -71,7 +71,9 @@ const routes: RouteInfo[] = [
   // Administration
   { path: "/users", name: "User Management", category: "Administration", auth: "protected", requiredPermissions: ["users.view", "users.manage"], description: "Manage platform users" },
   { path: "/admin/integrations", name: "Integrations", category: "Administration", auth: "protected", requiredPermissions: ["api.view"], description: "API & webhook management" },
-  { path: "/admin/docs", name: "Documentation", category: "Administration", auth: "protected", description: "Platform documentation viewer" },
+  { path: "/docs", name: "Documentation", category: "Documentation", auth: "protected", description: "Role-based platform documentation" },
+  { path: "/docs?tab=manage", name: "Manage Documentation", category: "Documentation", auth: "protected", requiredRole: "admin", description: "Edit and manage documentation (admin only)" },
+  { path: "/docs?tab=analytics", name: "Documentation Analytics", category: "Documentation", auth: "protected", requiredRole: "admin", description: "View documentation usage analytics" },
   { path: "/admin/system-health", name: "System Health", category: "Administration", auth: "protected", requiredPermissions: ["analytics.view"], description: "System monitoring dashboard" },
   { path: "/admin/demo-data-generator", name: "Demo Data Generator", category: "Administration", auth: "protected", requiredRole: "admin", description: "Generate realistic test data for clients" },
   
@@ -181,6 +183,120 @@ export default function AdminSiteDirectory() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Technical Documentation - Admin Only */}
+        <Card className="border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Technical Documentation
+              <Badge variant="secondary">Admin Only</Badge>
+            </CardTitle>
+            <CardDescription>
+              Complete platform documentation and developer guides
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">Getting Started</h4>
+                <div className="space-y-1 pl-2">
+                  <Link to="/docs/getting-started/quickstart" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Quick Start Guide
+                  </Link>
+                  <Link to="/docs/getting-started/overview" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Platform Overview
+                  </Link>
+                  <Link to="/docs/getting-started/first-campaign" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    First Campaign Guide
+                  </Link>
+                  <Link to="/docs/getting-started/terminology" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Terminology
+                  </Link>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">Architecture</h4>
+                <div className="space-y-1 pl-2">
+                  <Link to="/docs/architecture/architecture-overview" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    System Architecture
+                  </Link>
+                  <Link to="/docs/architecture/data-model" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Database Schema
+                  </Link>
+                  <Link to="/docs/architecture/security" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Security & RLS
+                  </Link>
+                  <Link to="/docs/architecture/scalability" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Scalability
+                  </Link>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">Developer Guide</h4>
+                <div className="space-y-1 pl-2">
+                  <Link to="/docs/developer-guide/setup" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Development Setup
+                  </Link>
+                  <Link to="/docs/developer-guide/edge-functions" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Edge Functions
+                  </Link>
+                  <Link to="/docs/developer-guide/database" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Database Guide
+                  </Link>
+                  <Link to="/docs/developer-guide/testing" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Testing Guide
+                  </Link>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">API Reference</h4>
+                <div className="space-y-1 pl-2">
+                  <Link to="/docs/api-reference/edge-functions-api" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Edge Functions API
+                  </Link>
+                  <Link to="/docs/api-reference/rest-api" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    REST API Reference
+                  </Link>
+                  <Link to="/docs/api-reference/authentication" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Authentication
+                  </Link>
+                  <Link to="/docs/api-reference/webhooks" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <ExternalLink className="h-3 w-3" />
+                    Webhooks
+                  </Link>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-border">
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/docs?tab=manage">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage All Documentation
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Search */}
         <Card>

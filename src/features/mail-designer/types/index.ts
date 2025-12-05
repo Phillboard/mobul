@@ -1,0 +1,140 @@
+import { Database } from '@core/services/supabase';
+
+// Main mail piece type from database
+export type MailPiece = Database["public"]["Tables"]["templates"]["Row"];
+export type MailPieceInsert = Database["public"]["Tables"]["templates"]["Insert"];
+export type MailPieceUpdate = Database["public"]["Tables"]["templates"]["Update"];
+
+// Mail size options
+export type MailSize = "4x6" | "6x9" | "6x11" | "letter" | "trifold";
+
+// Extended mail piece with relations
+export interface MailPieceWithRelations extends MailPiece {
+  clients?: {
+    id: string;
+    name: string;
+  };
+  campaigns?: Array<{
+    id: string;
+    name: string;
+    status: string;
+  }>;
+}
+
+// Canvas data structure for mail design
+export interface CanvasData {
+  version: number;
+  canvasSize: {
+    width: number;
+    height: number;
+  };
+  layers: CanvasLayer[];
+}
+
+// Layer types
+export type CanvasLayer = 
+  | TextLayer
+  | ImageLayer
+  | ShapeLayer
+  | QRCodeLayer
+  | MergeFieldLayer;
+
+// Base layer properties
+export interface BaseLayer {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  opacity?: number;
+  visible?: boolean;
+  locked?: boolean;
+  name?: string;
+}
+
+// Text layer
+export interface TextLayer extends BaseLayer {
+  type: "text";
+  text: string;
+  fontSize: number;
+  fontFamily: string;
+  fontWeight?: "normal" | "bold" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
+  fill: string;
+  align?: "left" | "center" | "right" | "justify";
+  lineHeight?: number;
+  letterSpacing?: number;
+}
+
+// Image layer
+export interface ImageLayer extends BaseLayer {
+  type: "image";
+  src: string;
+  alt?: string;
+  fit?: "cover" | "contain" | "fill" | "none";
+}
+
+// Shape layer (rectangle, circle, etc.)
+export interface ShapeLayer extends BaseLayer {
+  type: "rect" | "circle" | "ellipse" | "polygon";
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  radius?: number; // for circles
+  cornerRadius?: number; // for rounded rectangles
+}
+
+// QR Code layer
+export interface QRCodeLayer extends BaseLayer {
+  type: "qr_code";
+  data: string; // URL or data to encode
+  foregroundColor?: string;
+  backgroundColor?: string;
+  errorCorrectionLevel?: "L" | "M" | "Q" | "H";
+}
+
+// Merge field layer (for personalization)
+export interface MergeFieldLayer extends BaseLayer {
+  type: "merge_field";
+  fieldName: string;
+  defaultValue?: string;
+  fontSize: number;
+  fontFamily: string;
+  fontWeight?: "normal" | "bold";
+  fill: string;
+  align?: "left" | "center" | "right";
+}
+
+// Mail piece dimensions (300 DPI for print)
+export const MAIL_DIMENSIONS: Record<MailSize, { width: number; height: number }> = {
+  "4x6": { width: 1200, height: 1800 },    // 4"x6" at 300 DPI
+  "6x9": { width: 1800, height: 2700 },    // 6"x9" at 300 DPI
+  "6x11": { width: 1800, height: 3300 },   // 6"x11" at 300 DPI
+  "letter": { width: 2550, height: 3300 }, // 8.5"x11" at 300 DPI
+  "trifold": { width: 2550, height: 3300 }, // 8.5"x11" trifold at 300 DPI
+};
+
+// Merge fields available for personalization
+export const MERGE_FIELDS = [
+  { value: "{{first_name}}", label: "First Name" },
+  { value: "{{last_name}}", label: "Last Name" },
+  { value: "{{full_name}}", label: "Full Name" },
+  { value: "{{email}}", label: "Email" },
+  { value: "{{phone}}", label: "Phone" },
+  { value: "{{company}}", label: "Company" },
+  { value: "{{address1}}", label: "Address Line 1" },
+  { value: "{{address2}}", label: "Address Line 2" },
+  { value: "{{city}}", label: "City" },
+  { value: "{{state}}", label: "State" },
+  { value: "{{zip}}", label: "ZIP Code" },
+  { value: "{{purl}}", label: "Personal URL" },
+  { value: "{{qr_code}}", label: "QR Code" },
+  { value: "{{customer_code}}", label: "Customer Code" },
+  { value: "{{redemption_code}}", label: "Redemption Code" },
+  { value: "{{event_name}}", label: "Event Name" },
+  { value: "{{event_date}}", label: "Event Date" },
+  { value: "{{event_time}}", label: "Event Time" },
+  { value: "{{venue_name}}", label: "Venue Name" },
+  { value: "{{expiry_date}}", label: "Expiry Date" },
+];

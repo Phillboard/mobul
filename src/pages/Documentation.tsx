@@ -34,9 +34,9 @@ export default function Documentation() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Documentation</h1>
+            <h1 className="text-3xl font-bold">Help Center</h1>
             <p className="text-muted-foreground mt-2">
-              Knowledge base, help resources, and system documentation
+              Guides, tutorials, and support resources for your role
             </p>
           </div>
           {isAdmin && activeTab === "manage" && <SeedDocsButton />}
@@ -46,7 +46,7 @@ export default function Documentation() {
           <TabsList className={isAdmin ? "grid w-full grid-cols-4" : "grid w-full grid-cols-1"}>
             <TabsTrigger value="docs">
               <BookOpen className="h-4 w-4 mr-2" />
-              Documentation
+              Browse
             </TabsTrigger>
             {isAdmin && (
               <>

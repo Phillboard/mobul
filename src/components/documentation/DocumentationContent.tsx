@@ -21,14 +21,14 @@ export function DocumentationContent() {
     return (
       <div className="flex-1 p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-4">Documentation</h1>
+          <h1 className="text-4xl font-bold mb-4">Help Center</h1>
           <p className="text-lg text-muted-foreground mb-8">
-            Welcome to the Mobul ACE Platform documentation. Select a topic from the sidebar to get started.
+            Welcome to the Mobul ACE Help Center. Select a topic from the sidebar to get started.
           </p>
           
           <div className="grid gap-6 md:grid-cols-2">
             <Link
-              to="/admin/docs/getting-started/quickstart"
+              to="/docs/getting-started/quickstart"
               className="group p-6 border-2 border-border bg-card rounded-lg hover:shadow-lg hover:border-primary/50 transition-all duration-200"
             >
               <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Getting Started</h3>
@@ -38,7 +38,7 @@ export function DocumentationContent() {
             </Link>
             
             <Link
-              to="/admin/docs/features/campaigns"
+              to="/docs/features/campaigns"
               className="group p-6 border-2 border-border bg-card rounded-lg hover:shadow-lg hover:border-primary/50 transition-all duration-200"
             >
               <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Features</h3>
@@ -48,7 +48,7 @@ export function DocumentationContent() {
             </Link>
             
             <Link
-              to="/admin/docs/api-reference/rest-api"
+              to="/docs/api-reference/rest-api"
               className="group p-6 border-2 border-border bg-card rounded-lg hover:shadow-lg hover:border-primary/50 transition-all duration-200"
             >
               <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">API Reference</h3>
@@ -58,7 +58,7 @@ export function DocumentationContent() {
             </Link>
             
             <Link
-              to="/admin/docs/developer-guide/setup"
+              to="/docs/developer-guide/setup"
               className="group p-6 border-2 border-border bg-card rounded-lg hover:shadow-lg hover:border-primary/50 transition-all duration-200"
             >
               <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Developer Guide</h3>
@@ -93,7 +93,7 @@ export function DocumentationContent() {
             <FileQuestion className="h-4 w-4" />
             <AlertDescription>
               Documentation page not found. Please check the URL or return to the{" "}
-              <Link to="/admin/docs" className="underline">documentation home</Link>.
+              <Link to="/docs" className="underline">help center</Link>.
             </AlertDescription>
           </Alert>
         </div>
@@ -116,7 +116,7 @@ export function DocumentationContent() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate(`/admin/docs/${category}/${slug}/edit`)}
+                onClick={() => navigate(`/docs/${category}/${slug}/edit`)}
               >
                 <Pencil className="h-4 w-4 mr-2" />
                 Edit
@@ -138,9 +138,9 @@ export function DocumentationContent() {
 
           <div className="mt-8 pt-8 border-t border-border">
             <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/docs">
+              <Link to="/docs">
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                Back to Documentation
+                Back to Help Center
               </Link>
             </Button>
           </div>

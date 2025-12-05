@@ -56,9 +56,19 @@ export function formatDenomination(denomination: number): string {
 export async function getBillingEntity(
   campaignId: string
 ): Promise<{ type: 'client' | 'agency'; id: string; name: string }> {
-  // This would typically call the database function
-  // For now, return a placeholder
-  throw new Error('Not implemented - should call get_billing_entity_for_campaign RPC');
+  const { data, error } = await supabase.rpc('get_billing_entity_for_campaign', {
+    p_campaign_id: campaignId,
+  });
+
+  if (error || !data || data.length === 0) {
+    throw new Error(`No billing entity found for campaign: ${campaignId}`);
+  }
+
+  return {
+    type: data[0].entity_type,
+    id: data[0].entity_id,
+    name: data[0].entity_name,
+  };
 }
 
 /**

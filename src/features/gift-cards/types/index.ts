@@ -1,97 +1,210 @@
 /**
  * Gift Card Type Definitions
- * Consolidated type definitions for gift card features
+ * Updated for new brand-denomination system
  */
-
-export type PoolHealth = 'healthy' | 'warning' | 'critical';
-export type CardStatus = 'available' | 'claimed' | 'delivered' | 'redeemed' | 'expired' | 'failed';
-export type PurchaseMethod = 'manual' | 'api';
-
-export interface GiftCardPool {
-  id: string;
-  pool_name: string;
-  brand_id: string | null;
-  client_id: string | null;
-  is_master_pool: boolean | null;
-  card_value: number;
-  total_cards: number | null;
-  available_cards: number | null;
-  claimed_cards: number | null;
-  delivered_cards: number | null;
-  failed_cards: number | null;
-  provider: string | null;
-  purchase_method: PurchaseMethod | null;
-  low_stock_threshold: number | null;
-  sale_price_per_card: number | null;
-  markup_percentage: number | null;
-  available_for_purchase: boolean | null;
-  min_purchase_quantity: number | null;
-  auto_balance_check: boolean | null;
-  balance_check_frequency_hours: number | null;
-  last_auto_balance_check: string | null;
-  api_provider: string | null;
-  api_config: Record<string, any> | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
-
-export interface GiftCard {
-  id: string;
-  pool_id: string;
-  brand_id: string | null;
-  card_code: string;
-  card_number: string | null;
-  status: CardStatus | null;
-  current_balance: number | null;
-  expiration_date: string | null;
-  claimed_at: string | null;
-  claimed_by_recipient_id: string | null;
-  claimed_by_call_session_id: string | null;
-  delivered_at: string | null;
-  delivery_method: string | null;
-  delivery_address: string | null;
-  balance_check_status: string | null;
-  last_balance_check: string | null;
-  notes: string | null;
-  tags: any | null;
-  created_at: string | null;
-}
 
 export interface GiftCardBrand {
   id: string;
   brand_name: string;
   brand_code: string;
-  provider: string;
-  category: string | null;
-  logo_url: string | null;
-  balance_check_enabled: boolean | null;
-  balance_check_url: string | null;
-  typical_denominations: any | null;
-  is_active: boolean | null;
-  created_at: string | null;
+  tillo_brand_code?: string;
+  provider?: string;
+  logo_url?: string;
+  category?: string;
+  is_enabled_by_admin: boolean;
+  balance_check_enabled?: boolean;
+  balance_check_url?: string;
+  balance_check_method?: 'tillo_api' | 'manual' | 'other_api' | 'none';
+  balance_check_api_endpoint?: string;
+  balance_check_config?: Record<string, any>;
+  is_active?: boolean;
+  created_at: string;
+  updated_at?: string;
+  // New optional metadata fields
+  website_url?: string;
+  description?: string;
+  terms_url?: string;
+  brand_colors?: {
+    primary?: string;
+    secondary?: string;
+  };
+  metadata_source?: 'auto_lookup' | 'manual' | 'tillo';
 }
 
-export interface PoolStats {
-  totalValue: number;
-  availableValue: number;
-  claimedValue: number;
-  deliveredValue: number;
-  utilizationRate: number;
-  health: PoolHealth;
-}
-
-export interface AdminCardSale {
+export interface GiftCardDenomination {
   id: string;
-  master_pool_id: string | null;
-  buyer_client_id: string | null;
-  buyer_pool_id: string | null;
-  quantity: number;
-  price_per_card: number;
-  cost_per_card: number | null;
-  total_amount: number;
-  profit: number | null;
-  sale_date: string | null;
-  sold_by_user_id: string | null;
-  notes: string | null;
-  created_at: string | null;
+  brand_id: string;
+  denomination: number;
+  is_enabled_by_admin: boolean;
+  admin_cost_per_card?: number;
+  tillo_cost_per_card?: number;
+  last_tillo_price_check?: string;
+  created_at: string;
+  updated_at: string;
 }
+
+export interface GiftCardInventory {
+  id: string;
+  brand_id: string;
+  denomination: number;
+  card_code: string;
+  card_number?: string;
+  expiration_date?: string;
+  status: 'available' | 'assigned' | 'delivered' | 'expired';
+  uploaded_at: string;
+  uploaded_by_user_id?: string;
+  upload_batch_id?: string;
+  assigned_to_recipient_id?: string;
+  assigned_to_campaign_id?: string;
+  assigned_at?: string;
+  delivered_at?: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface ClientAvailableGiftCard {
+  id: string;
+  client_id: string;
+  brand_id: string;
+  denomination: number;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgencyAvailableGiftCard {
+  id: string;
+  agency_id: string;
+  brand_id: string;
+  denomination: number;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GiftCardBillingLedger {
+  id: string;
+  transaction_type: 'purchase_from_inventory' | 'purchase_from_tillo' | 'refund';
+  billed_entity_type: 'client' | 'agency';
+  billed_entity_id: string;
+  campaign_id?: string;
+  recipient_id?: string;
+  brand_id: string;
+  denomination: number;
+  amount_billed: number;
+  cost_basis?: number;
+  profit: number;
+  inventory_card_id?: string;
+  tillo_transaction_id?: string;
+  tillo_order_reference?: string;
+  billed_at: string;
+  metadata?: Record<string, any>;
+  notes?: string;
+}
+
+export interface CampaignGiftCardConfig {
+  id: string;
+  campaign_id: string;
+  brand_id: string;
+  denomination: number;
+  condition_number: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Extended types with relations
+export interface GiftCardInventoryWithBrand extends GiftCardInventory {
+  gift_card_brands: GiftCardBrand;
+}
+
+export interface ClientAvailableGiftCardWithBrand extends ClientAvailableGiftCard {
+  gift_card_brands: GiftCardBrand;
+}
+
+export interface BillingLedgerWithRelations extends GiftCardBillingLedger {
+  gift_card_brands?: GiftCardBrand;
+  campaigns?: { name: string };
+  recipients?: { first_name: string; last_name: string };
+  gift_card_inventory?: GiftCardInventory;
+}
+
+export interface CampaignGiftCardConfigWithBrand extends CampaignGiftCardConfig {
+  gift_card_brands: GiftCardBrand;
+}
+
+// Legacy types (deprecated - for backward compatibility)
+/** @deprecated Use GiftCardInventory instead */
+export interface GiftCard {
+  id: string;
+  pool_id?: string;
+  card_code: string;
+  card_number?: string;
+  status: string;
+  claimed_at?: string;
+  delivered_at?: string;
+}
+
+/** @deprecated Use GiftCardBillingLedger instead */
+export interface GiftCardDelivery {
+  id: string;
+  gift_card_id: string;
+  recipient_id: string;
+  campaign_id: string;
+  delivery_method: string;
+  delivery_status: string;
+  delivered_at?: string;
+}
+
+// Brand Lookup Types
+export interface BrandLookupResult {
+  found: boolean;
+  logoUrl?: string;
+  website?: string;
+  category?: string;
+  description?: string;
+  colors?: {
+    primary?: string;
+    secondary?: string;
+  };
+  source: 'popular_db' | 'clearbit' | 'not_found';
+}
+
+export interface TilloBrandSearchResult {
+  found: boolean;
+  tillo_brand_code?: string;
+  brand_name?: string;
+  denominations?: number[];
+  costs?: Array<{
+    denomination: number;
+    cost: number;
+  }>;
+}
+
+export interface BrandFormData {
+  brand_name: string;
+  brand_code?: string;
+  logo_url: string;
+  website_url?: string;
+  category?: string;
+  description?: string;
+  terms_url?: string;
+  brand_colors?: {
+    primary?: string;
+    secondary?: string;
+  };
+  tillo_brand_code?: string;
+  metadata_source: 'auto_lookup' | 'manual' | 'tillo';
+  // Balance check configuration
+  balance_check_method?: 'tillo_api' | 'manual' | 'other_api' | 'none';
+  balance_check_url?: string;
+  balance_check_api_endpoint?: string;
+  balance_check_config?: {
+    apiKey?: string;
+    secretKey?: string;
+    headers?: Record<string, string>;
+    bodyTemplate?: Record<string, any>;
+    responseBalancePath?: string;
+  };
+}
+
+export type BalanceCheckMethod = 'tillo_api' | 'manual' | 'other_api' | 'none';

@@ -155,13 +155,12 @@ const App = () => (
                   <Route path="/api" element={<Navigate to="/admin/integrations?tab=api" replace />} />
                   <Route path="/zapier" element={<Navigate to="/admin/integrations?tab=zapier" replace />} />
                   <Route path="/zapier-templates" element={<Navigate to="/admin/integrations?tab=zapier" replace />} />
-                  <Route path="/admin/docs/manage" element={<Navigate to="/admin/docs?tab=manage" replace />} />
-
                   {/* Protected Routes */}
-                  {/* Help Center - User-Friendly Documentation */}
-                  <Route path="/help" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
-                  <Route path="/help/:category/:slug" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                   <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+                  
+                  {/* Help redirects to docs */}
+                  <Route path="/help" element={<Navigate to="/docs" replace />} />
+                  <Route path="/help/:category/:slug" element={<Navigate to="/docs/:category/:slug" replace />} />
                   <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                   <Route path="/platform" element={<ProtectedRoute requiredRole="admin"><PlatformDashboard /></ProtectedRoute>} />
                   
@@ -238,10 +237,14 @@ const App = () => (
                   <Route path="/admin/system-health" element={<ProtectedRoute><SystemHealth /></ProtectedRoute>} />
                   <Route path="/admin/demo-data-generator" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
                   <Route path="/admin/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
-                   <Route path="/admin/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
-                   <Route path="/admin/docs/:category" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
-                   <Route path="/admin/docs/:category/:slug" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
-                   <Route path="/admin/docs/:category/:slug/edit" element={<ProtectedRoute requiredRole="admin"><DocEditorPage /></ProtectedRoute>} />
+                  
+                  {/* Documentation editor */}
+                  <Route path="/docs/:category/:slug/edit" element={<ProtectedRoute requiredRole="admin"><DocEditorPage /></ProtectedRoute>} />
+                  
+                  {/* Redirect old /admin/docs to new /docs */}
+                  <Route path="/admin/docs" element={<Navigate to="/docs" replace />} />
+                  <Route path="/admin/docs/:category/:slug" element={<Navigate to="/docs/:category/:slug" replace />} />
+                  
                   <Route path="/users" element={<ProtectedRoute requiredPermissions={['users.view', 'users.manage']}><UserManagement /></ProtectedRoute>} />
                   <Route path="/user-management" element={<ProtectedRoute requiredPermissions={['users.manage']}><UserManagement /></ProtectedRoute>} />
                   

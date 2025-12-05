@@ -134,7 +134,7 @@ const navigationGroups: NavGroup[] = [
 export function Sidebar() {
   const location = useLocation();
   const isOnSettingsPage = location.pathname.startsWith('/settings');
-  const isDocsPage = location.pathname.startsWith('/admin/docs');
+  const isDocsPage = location.pathname.startsWith('/docs');
   const { user, hasAnyPermission, roles } = useAuth();
   const { currentOrg } = useTenant();
   const { open, state } = useSidebar();
@@ -240,7 +240,7 @@ export function Sidebar() {
                   <ArrowLeft className="h-4 w-4" />
                   Back to Main Menu
                 </Link>
-                <h2 className="text-lg font-semibold">Documentation</h2>
+                <h2 className="text-lg font-semibold">Help Center</h2>
               </>
             ) : (
               <Link to="/">
@@ -336,9 +336,9 @@ export function Sidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <NavLink to="/admin/docs" className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent font-medium">
+              <NavLink to="/docs" className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent font-medium">
                 <BookOpen className="h-4 w-4" />
-                {!collapsed && <span>Documentation</span>}
+                {!collapsed && <span>Help</span>}
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>

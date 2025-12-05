@@ -1,44 +1,50 @@
 ---
-description: Defines the core model for campaign conditions, reward triggers, and gift card distribution logic
+description: Defines campaign condition models, trigger evaluation logic, and reward distribution rules for marketing campaigns
 ---
 
 
 # campaign-condition-model
 
-## Condition Trigger System (Importance: 90)
-- Multiple condition types for reward triggers:
-  - Manual agent approval
-  - Call completion verification
-  - Form submission validation
-  - Time-based triggers
+Core Business Logic Components:
 
-## Reward Distribution Logic (Importance: 85)
-- Campaign-specific reward validation rules
-- Gift card allocation based on condition completion
-- Multi-step verification requirements:
-  - SMS opt-in status
-  - Email verification
-  - Call disposition checks
+1. Condition Evaluation Engine
+Path: src/components/campaigns/wizard/ConditionsStep.tsx
+- Multi-stage condition evaluation with sequential and parallel triggers
+- Condition types: form_submission, call_verification, code_scan, time_delay
+- Complex reward distribution rules based on condition combinations
+- Time-based delays and multi-step verification workflows
+Importance Score: 90/100
 
-## Condition Chaining (Importance: 80)
-- Sequential condition dependencies
-- Parallel condition evaluation
-- Complex reward routing based on completion status
-- Automated trigger evaluation with fail-safes
+2. Reward Distribution Logic
+Path: src/lib/campaign/conditionUtils.ts
+- Manages gift card allocation based on satisfied conditions
+- Implements hold periods for reward distribution
+- Handles partial completion scenarios
+- Enforces maximum attempts and cooldown periods
+Importance Score: 85/100
 
-## Time Delay Management (Importance: 75)
-- Configurable delay periods between conditions
-- Business hours awareness for trigger evaluation 
-- Campaign-specific waiting periods
-- Grace period handling for condition completion
+3. Campaign Condition Model
+Path: src/types/campaignConditions.ts
+Key data structures:
+```typescript
+type CampaignCondition = {
+  type: ConditionType
+  sequence: number
+  delayHours?: number
+  requiresVerification: boolean
+  rewardAmount: number
+  maxAttempts: number
+  cooldownHours: number
+}
+```
+Importance Score: 95/100
 
-## Verification Workflow (Importance: 85)
-- Multi-stage approval process
-- Role-based verification rules
-- Status transition tracking
-- Audit trail for condition evaluations
-
-The model emphasizes secure reward distribution through a sophisticated condition evaluation system, with particular focus on verification accuracy and proper sequencing of reward triggers.
+Key Business Rules:
+- Conditions can be sequential or parallel
+- Time delays enforce minimum waiting periods between steps
+- Verification requirements for specific condition types
+- Maximum attempt limits with cooldown periods
+- Reward amounts tied to specific condition completion
 
 $END$
 

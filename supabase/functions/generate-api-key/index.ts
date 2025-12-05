@@ -33,6 +33,17 @@ serve(async (req) => {
       throw new Error('Missing required fields: client_id, name');
     }
 
+    // Verify user has access to this client
+    const { data: clientAccess, error: accessError } = await supabaseClient
+      .rpc('user_can_access_client', { 
+        _user_id: user.id, 
+        _client_id: client_id 
+      });
+
+    if (accessError || !clientAccess) {
+      throw new Error('You do not have permission to create API keys for this client');
+    }
+
     // Generate a cryptographically secure API key
     const randomBytes = new Uint8Array(32);
     crypto.getRandomValues(randomBytes);

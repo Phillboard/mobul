@@ -10,46 +10,51 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Core Business Logic Organization:
+Gift Card Campaign Management Platform implementing complex reward distribution and redemption workflows across multiple business verticals.
 
-Campaign Management System (85/100)
-- Multi-step campaign creation with audience selection, rewards configuration
-- Complex reward triggering conditions (manual approval, call completion, form submissions)
-- SMS opt-in compliance and message templating
-- Integration with gift card inventory tracking
+Core Business Components:
 
-Gift Card Provisioning Pipeline (90/100)
-- Two-tier provisioning system (CSV inventory → Tillo API fallback)
-- Multi-level credit management (platform/agency/client) 
-- Custom pricing rules and profit calculations
-- Automated pool selection based on campaign parameters
-- Real-time balance verification and reconciliation
+1. Campaign Creation & Management (Importance: 90)
+- Four-stage campaign workflow with audience selection and reward configuration
+- Industry-specific templates for roofing and auto warranty sectors
+- Multi-condition reward triggers with sequential validation
+- Integration with mail tracking and delivery status monitoring
+File: src/components/campaigns/wizard/AudiencesRewardsStep.tsx
 
-Call Center Operations (85/100)
-- Multi-step verification workflow for reward distribution
-- SMS opt-in status tracking and compliance
-- Disposition-based reward triggering
-- Call center analytics and performance tracking
+2. Gift Card Provisioning System (Importance: 95)
+- Unified provisioning workflow with provider fallback logic
+- Pool-based inventory management with real-time balance tracking
+- Denomination-specific pricing and markup calculations
+- Multi-provider integration (Tillo, CSV inventory)
+File: supabase/functions/provision-gift-card-unified/index.ts
 
-Industry Vertical Management (80/100) 
-- Specialized workflows for roofing and auto warranty verticals
-- Industry-specific form templates and validation rules
-- Custom data models for vertical-specific attributes
-- Campaign templates tailored to industry requirements
+3. Credit Management System (Importance: 85)
+- Hierarchical credit allocation: Platform → Agency → Client → Campaign
+- Real-time credit validation against campaign requirements
+- Automated billing and reconciliation workflows
+- Credit reservation system for pending operations
+File: src/components/admin/CreditBalanceWidget.tsx
 
-Credit System Architecture (90/100)
-- Hierarchical credit flow (Platform → Agency → Client → Campaign)
-- Unidirectional credit movement enforcement
-- Atomic credit transfer operations
-- Custom authorization rules for movement between tiers
+4. Call Center Operations (Importance: 80)
+- Agent-driven reward validation workflow
+- Multi-step verification process with script management
+- Real-time opt-in status tracking and SMS integration
+- Custom disposition tracking with reward triggers
+File: src/components/call-center/CallCenterGiftCardProvisioning.tsx
 
-Key Integration Points:
-- Tillo API for gift card procurement
-- SMS gateway for opt-in verification 
-- Call center systems for disposition tracking
-- Multi-provider mail fulfillment services
+5. Landing Page Generation (Importance: 75)
+- AI-powered content generation with industry context
+- Dynamic form building with reward condition integration
+- Conversion tracking and analytics generation
+- Mobile wallet pass integration for digital gift cards
+File: src/components/ace-forms/GiftCardReveal.tsx
 
-The system emphasizes accurate financial transactions, proper verification sequences, and maintaining data integrity across multiple organizational hierarchies while supporting industry-specific campaign workflows.
+Domain-Specific Features:
+- Industry-targeted campaign templates
+- Sophisticated reward condition management
+- Multi-tenant credit allocation system
+- Provider-agnostic gift card fulfillment
+- Compliance-focused audit logging
 
 $END$
 

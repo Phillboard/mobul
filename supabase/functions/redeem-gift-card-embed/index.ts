@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { checkRateLimit, createRateLimitResponse } from '../_shared/rate-limiter.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,18 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Apply rate limiting: 10 attempts per IP per 5 minutes to prevent brute force
+    const rateLimitResult = await checkRateLimit(
+      supabase,
+      req,
+      { maxRequests: 10, windowMs: 5 * 60 * 1000 },
+      'redeem-gift-card-embed'
+    );
+
+    if (!rateLimitResult.allowed) {
+      return createRateLimitResponse(rateLimitResult, corsHeaders);
+    }
 
     const { code } = await req.json();
 
