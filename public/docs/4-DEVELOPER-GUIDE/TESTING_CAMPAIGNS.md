@@ -46,7 +46,8 @@ Click **Next** →
 2. Fill in:
    - Condition Name: `Call Completed`
    - Trigger Type: `Manual Agent` (or `call_completed`)
-   - Gift Card Pool: `Test Amazon $25 Pool`
+   - Gift Card Brand: `Amazon`
+   - Denomination: `$25`
    - SMS Template: `Congratulations! Your reward code is: {{card_code}}`
 
 Click **Next** →
@@ -320,7 +321,7 @@ LIMIT 1;
 | 1 | Campaign Creation | ⬜ | Via wizard |
 | 2 | Audience & Recipients | ⬜ | 10 test contacts |
 | 3 | Condition Configuration | ⬜ | Call completed trigger |
-| 4 | Reward Configuration | ⬜ | Linked to gift card pool |
+| 4 | Reward Configuration | ⬜ | Linked to gift card brand |
 | 5 | Condition Trigger | ⬜ | Manual or API |
 | 6 | Gift Card Provisioning | ⬜ | From pool |
 | 7 | SMS Delivery | ⬜ | Via Twilio |
@@ -347,8 +348,8 @@ LIMIT 1;
 **Symptoms:** Condition triggers but no card claimed
 
 **Solutions:**
-1. Verify pool has `available_cards > 0`
-2. Check gift cards have `status = 'available'`
+1. Verify gift card inventory has available cards
+2. Check condition has valid brand_id and card_value
 3. Review edge function logs in Supabase
 4. Check condition is properly configured
 

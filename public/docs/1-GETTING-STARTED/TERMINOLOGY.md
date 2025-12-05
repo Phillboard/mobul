@@ -121,28 +121,34 @@ When a recipient completes and submits a lead form on the bridge page.
 
 ## Gift Card Terms
 
-### Gift Card Pool
-A collection of gift cards from a specific brand (e.g., "Amazon $10 Pool") reserved for campaign rewards.
-
 ### Gift Card Brand
-The retailer or brand of the gift card (Amazon, Visa, Target, Starbucks, etc.).
+The retailer or brand of the gift card (Amazon, Visa, Target, Starbucks, etc.). Managed through the Tillo gift card API.
+
+### Gift Card Denomination
+The dollar amount of the gift card (e.g., $5, $10, $25, $50). Each brand has specific denominations available.
+
+### Gift Card Inventory
+The collection of gift cards available for provisioning. Managed as credits that are converted to actual gift cards when needed.
 
 ### Gift Card Code
 The unique alphanumeric code used to redeem a gift card at the brand's website or in-store.
 
 ### Provisioning
-The process of assigning a gift card from a pool to a specific recipient when they meet a campaign condition.
+The process of issuing a gift card to a recipient when they meet a campaign condition. The system calls the Tillo API to obtain a unique card code.
 
 ### Redemption
-When a recipient claims and uses their gift card code.
+When a recipient claims and uses their gift card code at the brand's website or store.
 
 ### Gift Card Status
 Lifecycle of a gift card:
-- **Available**: In pool, not assigned
-- **Reserved**: Set aside for campaign but not yet assigned
-- **Claimed**: Assigned to recipient
+- **Pending**: Requested but not yet provisioned
+- **Provisioned**: Card code obtained from Tillo
 - **Delivered**: Code sent via SMS or email
 - **Redeemed**: Recipient used the code
+- **Failed**: Provisioning failed (insufficient inventory, API error)
+
+### Credits
+Platform currency used to purchase gift cards. Agencies/clients purchase credits, which are deducted when gift cards are provisioned.
 
 ### Delivery Method
 How gift card codes are sent to recipients:

@@ -32,8 +32,8 @@ The demo data system allows you to generate realistic dummy data across all syst
 - 8 Fake gift card brands (DemoCoffee, FakeRetail, etc.)
 - 2 Demo organizations
 - 10 Demo clients
-- 80 Gift card pools (8 brands × 10 clients)
-- ~8,000 Fake gift cards
+- Gift card denominations per brand
+- ~8,000 Fake gift card inventory items
 - 500 Test contacts
 - 50 Contact lists
 

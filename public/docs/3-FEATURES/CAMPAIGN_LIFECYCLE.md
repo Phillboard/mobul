@@ -77,7 +77,7 @@ Every campaign in the Mobul ACE Platform progresses through a 7-stage lifecycle 
 
 **Characteristics:**
 - Recipients generated with unique redemption tokens
-- Gift card pools reserved (if applicable)
+- Gift card inventory verified (if applicable)
 - Tracked phone numbers assigned (if applicable)
 - Ready for mail vendor submission
 
@@ -113,9 +113,9 @@ const recipients = contacts.map(contact => ({
 
 await supabase.from('recipients').insert(recipients);
 
-// Reserve gift card inventory
+// Verify gift card inventory availability
 if (campaign.hasGiftCardRewards) {
-  await reserveGiftCardPool(campaign.id, pool_id, recipients.length);
+  await verifyGiftCardInventory(campaign.id, recipients.length);
 }
 
 // Update campaign status
@@ -310,27 +310,27 @@ async function evaluateCampaignConditions(callSessionId: string) {
 
 ```typescript
 async function provisionGiftCard(campaignId: string, conditionNumber: number, recipientId: string) {
-  // Get reward config
+  // Get reward config with brand and denomination
   const { data: config } = await supabase
     .from('campaign_reward_configs')
-    .select('*, pool:gift_card_pools(*)')
+    .select('*, brand:gift_card_brands(*)')
     .eq('campaign_id', campaignId)
     .eq('condition_number', conditionNumber)
     .single();
   
-  // Claim available gift card
-  const { data: giftCard } = await supabase
-    .from('gift_cards')
-    .update({ 
-      status: 'claimed',
-      recipient_id: recipientId,
-      claimed_at: new Date(),
-    })
-    .eq('pool_id', config.gift_card_pool_id)
-    .eq('status', 'available')
-    .limit(1)
-    .select()
-    .single();
+  // Call unified provisioning edge function
+  const { data: giftCard } = await supabase.functions.invoke(
+    'provision-gift-card-unified',
+    {
+      body: {
+        campaignId,
+        recipientId,
+        brandId: config.brand_id,
+        denomination: config.card_value,
+        conditionNumber,
+      },
+    }
+  );
   
   // Send SMS with code
   const { data: recipient } = await supabase
@@ -344,15 +344,6 @@ async function provisionGiftCard(campaignId: string, conditionNumber: number, re
     .replace('{{code}}', giftCard.code);
   
   await sendSMS(recipient.phone, message);
-  
-  // Update gift card status
-  await supabase
-    .from('gift_cards')
-    .update({ 
-      status: 'delivered',
-      delivered_at: new Date(),
-    })
-    .eq('id', giftCard.id);
 }
 ```
 

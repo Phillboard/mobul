@@ -4,88 +4,55 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, FileText } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, FileText, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { cn } from '@/lib/utils/utils';
-
-const docsStructure = [
-  {
-    category: "Getting Started",
-    slug: "getting-started",
-    pages: [
-      { title: "Quick Start", slug: "quickstart" },
-      { title: "Platform Overview", slug: "overview" },
-      { title: "First Campaign", slug: "first-campaign" },
-      { title: "Terminology", slug: "terminology" },
-    ],
-  },
-  {
-    category: "Architecture",
-    slug: "architecture",
-    pages: [
-      { title: "System Architecture", slug: "architecture-overview" },
-      { title: "Data Model", slug: "data-model" },
-      { title: "Security", slug: "security" },
-      { title: "Scalability", slug: "scalability" },
-    ],
-  },
-  {
-    category: "Features",
-    slug: "features",
-    pages: [
-      { title: "Campaigns", slug: "campaigns" },
-      { title: "Campaign Lifecycle", slug: "campaign-lifecycle" },
-      { title: "Audiences", slug: "audiences" },
-      { title: "Gift Cards", slug: "gift-cards" },
-      { title: "PURLs & QR Codes", slug: "purl-qr-codes" },
-      { title: "Landing Pages", slug: "landing-pages" },
-      { title: "Analytics", slug: "analytics" },
-      { title: "Lead Marketplace", slug: "lead-marketplace" },
-    ],
-  },
-  {
-    category: "Developer Guide",
-    slug: "developer-guide",
-    pages: [
-      { title: "Setup", slug: "setup" },
-      { title: "Edge Functions", slug: "edge-functions" },
-      { title: "Database", slug: "database" },
-      { title: "Event Tracking", slug: "event-tracking" },
-    ],
-  },
-  {
-    category: "API Reference",
-    slug: "api-reference",
-    pages: [
-      { title: "REST API", slug: "rest-api" },
-      { title: "Webhooks", slug: "webhooks" },
-      { title: "Authentication", slug: "authentication" },
-      { title: "Examples", slug: "examples" },
-    ],
-  },
-  {
-    category: "User Guides",
-    slug: "user-guides",
-    pages: [
-      { title: "Admin Guide", slug: "admin-guide" },
-      { title: "Agency Guide", slug: "agency-guide" },
-      { title: "Client Guide", slug: "client-guide" },
-      { title: "Call Center Guide", slug: "call-center-guide" },
-    ],
-  },
-];
+import { useDocumentationPermissions } from "@/hooks/useDocumentationPermissions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function DocumentationSidebar() {
   const location = useLocation();
-  const [openCategories, setOpenCategories] = useState<string[]>(
-    docsStructure.map((cat) => cat.slug)
-  );
+  const { data: docsStructure, isLoading, error } = useDocumentationPermissions();
+  const [openCategories, setOpenCategories] = useState<string[]>([]);
+
+  // Auto-expand all categories when data loads
+  useEffect(() => {
+    if (docsStructure) {
+      setOpenCategories(docsStructure.map((cat) => cat.slug));
+    }
+  }, [docsStructure]);
 
   const toggleCategory = (slug: string) => {
     setOpenCategories((prev) =>
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="m-2">
+        <AlertDescription>
+          Failed to load documentation. Please refresh the page.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!docsStructure || docsStructure.length === 0) {
+    return (
+      <div className="p-4 text-sm text-muted-foreground text-center">
+        No documentation available for your role.
+      </div>
+    );
+  }
 
   return (
     <nav className="space-y-2">
@@ -105,13 +72,13 @@ export function DocumentationSidebar() {
             />
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-1 space-y-1 pl-4">
-            {category.pages.map((page) => {
+            {category.pages.map((page: any) => {
               const href = `/admin/docs/${category.slug}/${page.slug}`;
               const isActive = location.pathname === href;
 
               return (
                 <Link
-                  key={page.slug}
+                  key={page.id || page.slug}
                   to={href}
                   className={cn(
                     "flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors",

@@ -65,8 +65,9 @@ Run the seed script to create test organizations, clients, and gift cards:
 
 This will create:
 - Gift card brands (Amazon, Starbucks, etc.)
+- Gift card denominations ($5, $10, $25)
 - Test organization & client
-- Test gift card pool with 20 cards
+- Test gift card inventory
 - Test contact list with 10 contacts
 - Test template
 
@@ -120,7 +121,7 @@ await window.verifyMVP()
 ✅ Database Tables: All critical tables exist
 ✅ Organizations & Clients: Found test data
 ✅ User Setup: User logged in with role
-✅ Gift Cards: Pools with available cards
+✅ Gift Cards: Brands and inventory available
 ✅ Contacts: Test contacts and lists exist
 ✅ Environment Config: All required vars set
 ```
@@ -148,8 +149,9 @@ Go to: **/campaigns/new**
 - Configure condition:
   - Condition Name: "Call Completed"
   - Trigger Type: "Manual Agent"
-- Link gift card pool:
-  - Pool: "Test Amazon $25 Pool"
+- Configure gift card reward:
+  - Brand: Amazon
+  - Denomination: $25
   - SMS Template: "Your reward: {{card_code}}"
 
 **Step 4 - Delivery:**
@@ -218,7 +220,7 @@ npx supabase db reset
 
 ### Issue: No gift cards available
 
-**Solution:** Run seed script `scripts/sql/seed-mvp-test-data.sql`
+**Solution:** Run seed script `scripts/sql/seed-mvp-test-data.sql` or purchase gift card credits through the Credits & Billing page.
 
 ### Issue: SMS not sending
 
@@ -258,7 +260,7 @@ Your MVP is ready when:
 
 - All database tables exist with test data
 - Environment variables configured
-- Gift card pool has available cards
+- Gift card inventory has available cards
 - Can create campaign through wizard
 - Conditions trigger gift card provisioning
 - SMS delivery works
@@ -272,7 +274,7 @@ Your MVP is ready when:
 Once MVP is working:
 
 1. **Import Real Contacts:** Use CSV import
-2. **Create Real Gift Card Pools:** Purchase from vendors
+2. **Purchase Gift Card Inventory:** Buy credits and provision cards from marketplace
 3. **Design Templates:** Use mail designer
 4. **Set Up Call Tracking:** Configure Twilio webhooks
 5. **Test Full Workflow:** End-to-end campaign
@@ -293,14 +295,15 @@ Once MVP is working:
 ### Key Tables
 - `campaigns` - Campaign data
 - `recipients` - Campaign recipients with tokens
-- `gift_card_pools` - Gift card inventory
-- `gift_cards` - Individual cards
+- `gift_card_brands` - Gift card brand information
+- `gift_card_denominations` - Gift card denomination amounts
+- `gift_card_inventory` - Available gift card inventory
 - `campaign_conditions` - Trigger conditions
 - `campaign_reward_configs` - Reward settings
 
 ### Key Functions
 - `evaluate-conditions` - Process triggers
-- `claim-and-provision-card` - Get card from pool
-- `send-gift-card-sms` - Send via Twilio
+- `provision-gift-card` - Provision gift card from inventory
+- `send-sms` - Send via Twilio
 - `handle-purl` - Track PURL visits
 

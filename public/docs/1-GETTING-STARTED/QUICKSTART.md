@@ -1,115 +1,212 @@
 # Quick Start Guide
 
-Get up and running with Mobul ACE Platform in 5 minutes.
+Get up and running with Mobul ACE Platform in minutes. This guide is organized by role - find your section below.
 
-## Prerequisites
+---
 
-Before you begin, ensure you have:
-- A Mobul ACE Platform account (agency or client access)
-- Basic understanding of direct mail marketing concepts
-- Contact data ready for import (CSV format recommended)
+## For Platform Administrators
 
-## Step 1: Access the Platform
+If you're an admin setting up the platform for the first time:
 
-1. Navigate to your Mobul ACE Platform URL
-2. Log in with your credentials
-3. You'll be directed to your Dashboard
+### Step 1: Access Admin Dashboard
 
-## Step 2: Set Up Your Profile
+1. Log in with your admin credentials
+2. Navigate to **Admin** → **Platform Overview** to see system-wide stats
+3. Check **Admin** → **System Health** to verify all services are operational
 
-1. Click on **Settings** in the sidebar
-2. Complete your organization/client profile:
-   - Business name
-   - Industry type (roofing, real estate investing, auto service, etc.)
-   - Logo upload
-   - Brand colors
+### Step 2: Create Organizations
 
-## Step 3: Import Your First Audience
+1. Go to **Admin** → **Organizations**
+2. Click **Create Organization**
+3. Set organization type:
+   - **Agency** - For marketing agencies managing multiple clients
+   - **Direct Client** - For businesses managing their own campaigns
+4. Fill in organization details and save
 
-1. Navigate to **Contacts** in the sidebar
-2. Click **Import Contacts**
-3. Upload a CSV file with at least:
-   - Name
-   - Address
-   - City, State, ZIP
-   - (Optional) Phone, Email
-4. Review the import preview
-5. Click **Confirm Import**
+### Step 3: Set Up Gift Card Marketplace
 
-## Step 4: Create Your First Campaign
+1. Navigate to **Admin** → **Platform Inventory**
+2. Add gift card brands and denominations available on the platform
+3. Configure pricing and availability
+4. Use **Admin** → **Gift Card Brands** to manage brand settings
 
-1. Navigate to **Campaigns** → **Create Campaign**
-2. Fill in basic details:
-   - Campaign name
-   - Select your imported contact list
-   - Choose mail piece size (4x6 postcard recommended for first campaign)
-3. Select or design a mail template
-4. Configure tracking (PURL and QR code automatically generated)
-5. Review and submit
+### Step 4: Invite Users
 
-## Step 5: Monitor Results
+1. Go to **Admin** → **User Management**
+2. Click **Invite User**
+3. Enter email and select appropriate role:
+   - **Agency Owner** - Can manage clients and create campaigns
+   - **Company Owner** - Client users who view their campaigns
+   - **Call Center Agent** - Handle redemption calls
 
-1. Return to **Dashboard** to see campaign metrics
-2. Track:
-   - Mail delivery status
-   - Landing page visits
-   - Call tracking (if configured)
-   - Gift card redemptions (if enabled)
+---
+
+## For Agency Owners
+
+If you manage multiple clients and their campaigns:
+
+### Step 1: Access Your Dashboard
+
+1. Log in with your agency credentials
+2. You'll land on your **Dashboard** with key metrics
+3. Navigate using the sidebar menu
+
+### Step 2: Manage Clients
+
+1. Go to **Agency** → **Client Management**
+2. View all your clients and their campaign status
+3. Click on a client to switch context and manage their campaigns
+
+### Step 3: Create Your First Campaign
+
+1. Navigate to **Campaigns** → **All Campaigns**
+2. Click **Create Campaign**
+3. Fill in campaign details:
+   - **Campaign Name** - Descriptive name (e.g., "Spring 2024 Roof Promo")
+   - **Recipients** - Select a contact list or segment
+4. Optionally configure:
+   - Mail piece template from **Campaigns** → **Mail Library**
+   - Landing page from **Campaigns** → **Landing Pages**
+   - Gift card rewards in the campaign wizard
+
+### Step 4: Import Contacts
+
+1. Navigate to **Audience** → **Import Contacts**
+2. Upload your CSV file with required columns:
+   - First Name, Last Name (or Full Name)
+   - Address, City, State, ZIP
+   - Optional: Phone, Email
+3. Map columns and confirm import
+4. View contacts in **Audience** → **Contacts**
+
+### Step 5: Manage Rewards
+
+1. Go to **Rewards** → **Gift Card Inventory** to view available gift cards
+2. Use **Rewards** → **Credits & Billing** to manage your credit balance
+3. Credits are used when gift cards are provisioned to campaign recipients
+
+---
+
+## For Clients (Company Owners)
+
+If you're a client viewing your campaigns:
+
+### Step 1: Access Your Dashboard
+
+1. Log in with your client credentials
+2. Your **Dashboard** shows campaign performance at a glance
+3. Key metrics: mail delivered, responses, redemptions
+
+### Step 2: View Your Campaigns
+
+1. Navigate to **Campaigns** → **All Campaigns**
+2. Click on any campaign to see detailed analytics
+3. Track progress through campaign lifecycle stages
+
+### Step 3: Manage Your Contacts
+
+1. Go to **Audience** → **Contacts** to view your contact database
+2. Use **Audience** → **Lists & Segments** to organize contacts
+3. Import new contacts via **Audience** → **Import Contacts**
+
+### Step 4: Check Your Account
+
+1. Navigate to **My Account** → **Billing** for invoices and payment history
+2. View **My Account** → **My Gift Cards** to see provisioned rewards
+
+---
+
+## For Call Center Agents
+
+If you handle customer redemption calls:
+
+### Step 1: Access Redemption Center
+
+1. Log in with your call center credentials
+2. Navigate to **Call Center** → **Redemption Center**
+3. This is your primary workspace for processing redemptions
+
+### Step 2: Look Up Customer Codes
+
+1. In the Redemption Center, enter the customer's unique code
+2. The system will display:
+   - Customer information
+   - Campaign details
+   - Gift card eligibility
+   - Redemption status
+
+### Step 3: Process Redemptions
+
+1. Verify customer identity
+2. Confirm eligibility requirements are met
+3. Click **Confirm Redemption** to provision the gift card
+4. The customer will receive their gift card via SMS
+
+### Step 4: Use Call Scripts
+
+1. Access **Call Center** → **Call Scripts** for conversation guides
+2. Follow scripts for consistent customer experience
+3. Scripts include common objections and responses
+
+---
+
+## Common Tasks Reference
+
+### Creating a Campaign
+
+| Step | Navigation | Action |
+|------|------------|--------|
+| 1 | Campaigns → All Campaigns | Click "Create Campaign" |
+| 2 | Campaign Wizard | Enter name, select recipients |
+| 3 | Campaign Wizard | Choose mail template (optional) |
+| 4 | Campaign Wizard | Configure tracking and rewards |
+| 5 | Campaign Wizard | Review and submit |
+
+### Importing Contacts
+
+| Step | Navigation | Action |
+|------|------------|--------|
+| 1 | Audience → Import Contacts | Upload CSV file |
+| 2 | Column Mapping | Map CSV columns to fields |
+| 3 | Preview | Review import preview |
+| 4 | Confirm | Click "Confirm Import" |
+
+### Managing Gift Cards
+
+| Role | Navigation | What You Can Do |
+|------|------------|-----------------|
+| Admin | Admin → Platform Inventory | Manage marketplace inventory |
+| Admin | Admin → Gift Card Brands | Configure brand settings |
+| Agency | Rewards → Gift Card Inventory | View/manage client inventory |
+| Agency | Rewards → Credits & Billing | Purchase credits |
+| Client | My Account → My Gift Cards | View provisioned cards |
+
+---
+
+## Key Concepts
+
+| Term | Definition |
+|------|------------|
+| **PURL** | Personalized URL unique to each recipient for tracking |
+| **Bridge Page** | Landing page shown when recipient scans QR or visits PURL |
+| **Audience** | Contact list targeted by a campaign |
+| **Redemption** | Process where recipients claim gift card rewards |
+| **Provisioning** | System assigns a gift card to an eligible recipient |
+| **Credits** | Platform currency used to purchase gift cards |
+
+---
+
+## Getting Help
+
+- **Documentation**: Browse guides in the sidebar navigation
+- **Support**: Contact your account manager or agency
+- **Training**: Request live training sessions through support
+
+---
 
 ## Next Steps
 
 - [Create Your First Campaign →](/admin/docs/getting-started/first-campaign)
 - [Understanding Audiences →](/admin/docs/features/audiences)
 - [Platform Overview →](/admin/docs/getting-started/overview)
-
-## Getting Help
-
-- **Documentation**: Browse comprehensive guides in the Documentation section
-- **Support**: Contact your account manager
-- **Training**: Request live training sessions
-
-## Key Concepts to Understand
-
-- **PURL**: Personalized URL unique to each recipient
-- **Bridge Page**: Landing page recipients see after scanning QR or visiting PURL
-- **Audience**: Your contact list for targeting campaigns
-- **Redemption**: Process where recipients claim gift card rewards
-
-## Common First-Time Tasks
-
-### Upload a Template
-1. Navigate to **Mail** → **Mail Library**
-2. Click **Create New**
-3. Use the visual designer or upload existing artwork
-
-### Set Up Call Tracking
-1. Go to **Call Center** → **Phone Numbers**
-2. Purchase or provision tracking numbers
-3. Assign to campaigns for call attribution
-
-### Configure Gift Card Rewards
-1. Navigate to **Rewards & Fulfillment**
-2. Purchase gift card inventory
-3. Create reward pools for campaign incentives
-
-## Performance Tips
-
-- Start with small test campaigns (100-500 pieces)
-- Use high-quality contact data with verified addresses
-- Test multiple creative variants
-- Monitor analytics daily during first campaign
-- Follow up on engaged leads quickly
-
-## Recommended First Campaign Setup
-
-| Setting | Recommended Value |
-|---------|------------------|
-| Mail Size | 4x6 Postcard |
-| Postage | Standard (First Class) |
-| Audience Size | 100-500 contacts |
-| Landing Page | Bridge page with lead form |
-| Tracking | PURL + QR Code enabled |
-| Call Tracking | Optional (recommended for phone-based businesses) |
-| Gift Cards | Optional (test without first) |
-
-Start simple, measure results, then scale and optimize!
+- [Gift Card System →](/admin/docs/features/gift-cards)

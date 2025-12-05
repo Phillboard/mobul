@@ -173,10 +173,10 @@ SET audience_id = (
 WHERE audience_id IS NULL;
 ```
 
-#### Populate Gift Card Pools:
+#### Populate Gift Card Inventory:
 - Navigate to /admin/data-simulation
 - Use "Generate Demo Data" feature
-- Or upload cards manually via CSV
+- Or purchase gift cards via Credits & Billing
 
 ### Step 7: Run MVP Verification (5 minutes)
 

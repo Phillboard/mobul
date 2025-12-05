@@ -13,9 +13,9 @@ Before creating your first campaign, ensure you have:
 
 ## Step 1: Navigate to Campaign Creation
 
-1. Click **Campaigns** in the main navigation
+1. Click **Campaigns** → **All Campaigns** in the sidebar navigation
 2. Click **Create Campaign** button (top-right)
-3. You'll be taken to the campaign creation page
+3. You'll be taken to the campaign creation wizard
 
 ## Step 2: Campaign Basics
 
@@ -135,10 +135,11 @@ Incentivize engagement with automated gift card rewards:
 - Reward: $10 Visa gift card
 - Delivery: SMS (call center provides at end of call)
 
-### Select Gift Card Pool
-1. Choose from available gift card inventory
-2. Ensure sufficient quantity for campaign size
-3. System will reserve cards when campaign launches
+### Select Gift Card Brand & Denomination
+1. Choose a gift card brand (e.g., Amazon, Starbucks, Visa)
+2. Select the denomination amount (e.g., $5, $10, $25)
+3. Ensure sufficient inventory for campaign size
+4. System will reserve cards when campaign launches
 
 ## Step 7: Review Campaign
 
@@ -208,7 +209,7 @@ Key metrics to watch:
 Enable notifications for:
 - First landing page visit
 - First call received
-- Gift card pool running low
+- Gift card inventory running low
 - Campaign milestone reached (10%, 50%, 100% delivered)
 
 ### Daily Monitoring Tasks

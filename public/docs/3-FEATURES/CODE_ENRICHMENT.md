@@ -24,7 +24,7 @@ Before starting, ensure you have:
 - Mail already physically sent to customers
 - CSV file with your customer codes ready
 - Landing page or form ready for customers
-- Gift card pool set up (if offering rewards)
+- Gift card credits purchased (if offering rewards)
 
 ---
 
@@ -34,14 +34,14 @@ Before starting, ensure you have:
 
 1. **Log in** to your account at your platform URL
 2. **Select your client** from the dropdown (top navigation)
-3. Navigate to **Contacts** page
+3. Navigate to **Audience** → **Contacts** in the sidebar
 
 ---
 
 ### Step 2: Upload Customer Codes (10 minutes)
 
 **Current Method (Manual Import):**
-1. Go to: **Contacts** → **Import Contacts**
+1. Go to: **Audience** → **Import Contacts**
 2. Download the CSV template
 3. Fill in your customer codes:
    ```csv
@@ -82,8 +82,8 @@ Before starting, ensure you have:
 ### Step 3: Create Landing Page (15 minutes)
 
 **Option A: Use Existing Landing Page Editor**
-1. Go to: **Landing Pages** → **New Landing Page**
-2. Choose **"Visual Editor"** (GrapesJS)
+1. Go to: **Campaigns** → **Landing Pages**
+2. Click **New Landing Page** and choose **"Visual Editor"** (GrapesJS)
 3. Design your page:
    - Add hero section with your offer
    - Add form with these fields:
@@ -108,7 +108,7 @@ Before starting, ensure you have:
 
 ### Step 4: Create Campaign (10 minutes)
 
-1. Go to: **Campaigns** → **New Campaign**
+1. Go to: **Campaigns** → **All Campaigns** → **Create Campaign**
 
 2. **Step 1: Setup**
    - Name: "Q4 Direct Mail Campaign"
@@ -123,7 +123,7 @@ Before starting, ensure you have:
 4. **Step 3: Tracking & Rewards**
    - Link Landing Page: Select your page
    - Add Condition: "Form Submission"
-   - Link Gift Card Pool: Choose your pool
+   - Select Gift Card Brand & Denomination
    - SMS Template: "Thank you! Your gift card: {{card_code}}"
 
 5. **Step 4: Delivery**
@@ -206,7 +206,7 @@ Last Activity: Today 2:34 PM           ← UPDATED!
 
 **Export Options:**
 
-1. Go to: **Contacts** page
+1. Go to: **Audience** → **Contacts**
 
 2. Click **"Export"** button
 

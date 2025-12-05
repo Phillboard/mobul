@@ -19,7 +19,7 @@ All other settings have smart defaults and can be configured later.
 
 ### Campaign Creation Form
 
-Navigate to **Campaigns** → **Create Campaign**
+Navigate to **Campaigns** → **All Campaigns** → **Create Campaign**
 
 #### Essential Fields
 
@@ -61,7 +61,7 @@ Further refine recipients by applying tags:
 **Gift Card Rewards**
 - **Enable Gift Card Rewards** - Incentivize engagement
 - **Campaign Conditions** - Define qualification criteria
-- **Gift Card Pool** - Assign reward inventory
+- **Gift Card Brand & Denomination** - Select brand and value
 - **SMS Template** - Delivery notification message
 
 **Delivery Settings**
@@ -91,7 +91,7 @@ Campaigns progress through 7 distinct statuses:
 ### 3. Approved
 - Ready for mailing
 - Recipients generated with unique tokens
-- Gift card pools reserved (if applicable)
+- Gift card inventory reserved (if applicable)
 - Awaiting print vendor submission
 
 ### 4. Mailed
@@ -160,13 +160,14 @@ Define qualification criteria for gift card rewards:
 
 ### Reward Configuration
 
-Link gift card pools to campaign conditions:
+Link gift card brands to campaign conditions:
 
 ```json
 {
   "campaign_id": "...",
   "condition_number": 1,
-  "gift_card_pool_id": "...",
+  "brand_id": "...",
+  "card_value": 25.00,
   "reward_description": "$25 Amazon Gift Card",
   "sms_template": "Thanks for scheduling! Your $25 Amazon gift card: {{code}}"
 }
@@ -214,7 +215,7 @@ Admin/agency owner actions:
 
 Transition from Approved → Mailed:
 - Send campaign data to print vendor API
-- Reserve gift card inventory
+- Verify gift card inventory availability
 - Lock campaign for editing
 - Track mail submission
 

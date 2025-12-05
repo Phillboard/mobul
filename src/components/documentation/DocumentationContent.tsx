@@ -29,40 +29,40 @@ export function DocumentationContent() {
           <div className="grid gap-6 md:grid-cols-2">
             <Link
               to="/admin/docs/getting-started/quickstart"
-              className="p-6 border border-border rounded-lg hover:border-primary transition-colors"
+              className="group p-6 border-2 border-border bg-card rounded-lg hover:shadow-lg hover:border-primary/50 transition-all duration-200"
             >
-              <h3 className="text-xl font-semibold mb-2">Getting Started</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Getting Started</h3>
+              <p className="text-muted-foreground text-sm">
                 Quick start guide to get up and running
               </p>
             </Link>
             
             <Link
               to="/admin/docs/features/campaigns"
-              className="p-6 border border-border rounded-lg hover:border-primary transition-colors"
+              className="group p-6 border-2 border-border bg-card rounded-lg hover:shadow-lg hover:border-primary/50 transition-all duration-200"
             >
-              <h3 className="text-xl font-semibold mb-2">Features</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Features</h3>
+              <p className="text-muted-foreground text-sm">
                 Learn about all platform features
               </p>
             </Link>
             
             <Link
               to="/admin/docs/api-reference/rest-api"
-              className="p-6 border border-border rounded-lg hover:border-primary transition-colors"
+              className="group p-6 border-2 border-border bg-card rounded-lg hover:shadow-lg hover:border-primary/50 transition-all duration-200"
             >
-              <h3 className="text-xl font-semibold mb-2">API Reference</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">API Reference</h3>
+              <p className="text-muted-foreground text-sm">
                 Complete API documentation
               </p>
             </Link>
             
             <Link
               to="/admin/docs/developer-guide/setup"
-              className="p-6 border border-border rounded-lg hover:border-primary transition-colors"
+              className="group p-6 border-2 border-border bg-card rounded-lg hover:shadow-lg hover:border-primary/50 transition-all duration-200"
             >
-              <h3 className="text-xl font-semibold mb-2">Developer Guide</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">Developer Guide</h3>
+              <p className="text-muted-foreground text-sm">
                 Development environment setup
               </p>
             </Link>

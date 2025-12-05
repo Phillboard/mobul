@@ -71,14 +71,16 @@ GET /v1/recipients/:token
 
 ## Gift Cards API
 
-### Claim Gift Card
+### Provision Gift Card
 
 ```
-POST /v1/gift-cards/claim
+POST /v1/gift-cards/provision
 
 {
-  "pool_id": "...",
-  "recipient_id": "..."
+  "brand_id": "...",
+  "denomination": 25,
+  "recipient_id": "...",
+  "campaign_id": "..."
 }
 ```
 

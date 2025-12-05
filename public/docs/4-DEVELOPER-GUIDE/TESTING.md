@@ -10,7 +10,7 @@ Before testing:
 - [ ] All edge functions deployed
 - [ ] Database migrations run
 - [ ] Environment variables configured
-- [ ] Demo data populated (campaigns, contacts, gift card pools)
+- [ ] Demo data populated (campaigns, contacts, gift card inventory)
 
 ---
 
@@ -64,9 +64,9 @@ ORDER BY sent_at DESC LIMIT 5;
 **Test Scenario:** Trigger low inventory alert
 
 **Steps:**
-1. Navigate to `/gift-cards`
-2. Find a pool with low inventory (< 10 cards)
-3. Or manually trigger by claiming cards
+1. Navigate to **Rewards** → **Gift Card Inventory**
+2. Find a brand/denomination with low inventory (< 10 cards)
+3. Or manually trigger by provisioning cards
 4. Check admin email (ALERT_EMAIL_RECIPIENTS)
 
 **Expected Results:**
@@ -240,25 +240,25 @@ HAVING COUNT(*) OVER (PARTITION BY gc.id) > 1;
 - Each card claimed only once
 - Pool counts accurate
 
-### 4.2 Pool Count Accuracy
+### 4.2 Inventory Count Accuracy
 
 **Verification:**
 ```sql
--- Verify pool math is correct
+-- Verify inventory counts are correct
 SELECT 
-  pool_name,
-  total_cards,
-  available_cards,
-  claimed_cards,
-  delivered_cards,
-  failed_cards,
-  (available_cards + claimed_cards + delivered_cards + failed_cards) as calculated_total,
-  total_cards = (available_cards + claimed_cards + delivered_cards + failed_cards) as counts_match
-FROM gift_card_pools
-WHERE total_cards > 0
-ORDER BY pool_name;
+  gb.brand_name,
+  gd.denomination,
+  COUNT(*) FILTER (WHERE gi.status = 'available') as available_count,
+  COUNT(*) FILTER (WHERE gi.status = 'provisioned') as provisioned_count,
+  COUNT(*) FILTER (WHERE gi.status = 'delivered') as delivered_count,
+  COUNT(*) as total_count
+FROM gift_card_inventory gi
+JOIN gift_card_brands gb ON gi.brand_id = gb.id
+JOIN gift_card_denominations gd ON gi.denomination_id = gd.id
+GROUP BY gb.brand_name, gd.denomination
+ORDER BY gb.brand_name, gd.denomination;
 
--- All rows should have counts_match = true
+-- All counts should be accurate
 ```
 
 ---

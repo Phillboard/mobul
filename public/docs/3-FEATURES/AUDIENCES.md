@@ -138,11 +138,12 @@ Dynamic rule-based groups that auto-update based on contact criteria.
 ### Creating Segments
 
 **UI Builder:**
-1. Navigate to **Contacts** → **Segments** → **Create Segment**
-2. Name the segment
-3. Add filter conditions
-4. Preview matching contacts
-5. Save segment
+1. Navigate to **Audience** → **Lists & Segments**
+2. Click **Create** → **Dynamic Segment**
+3. Name the segment
+4. Add filter conditions
+5. Preview matching contacts
+6. Save segment
 
 **SQL Query Generation:**
 ```typescript
@@ -268,7 +269,7 @@ Auto-calculated metric reflecting contact engagement.
 ### CSV Import Process
 
 1. **Upload CSV File**
-   - Navigate to **Contacts** → **Import**
+   - Navigate to **Audience** → **Import Contacts**
    - Select CSV file
    - Choose import type (update existing or create new)
 

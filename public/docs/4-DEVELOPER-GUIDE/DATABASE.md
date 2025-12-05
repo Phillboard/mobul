@@ -30,8 +30,9 @@ Comprehensive guide to database operations, migrations, RLS policies, and Postgr
 
 **Gift Cards:**
 - `gift_card_brands` - Available brands
-- `gift_card_pools` - Inventory pools
-- `gift_cards` - Individual card codes
+- `gift_card_denominations` - Denomination amounts per brand
+- `gift_card_inventory` - Available card inventory
+- `gift_card_provisioning_trace` - Provisioning audit log
 
 **Tracking:**
 - `call_sessions` - Inbound call tracking
