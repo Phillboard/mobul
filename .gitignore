@@ -22,6 +22,11 @@ dist-ssr
 
 # API Keys and Credentials
 Keys/
+temp-google-wallet-secret.json
+*.p12
+*.key
+*.pem
+*.csr
 
 # Editor directories and files
 .vscode/*
