@@ -68,7 +68,6 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CookieConsent = lazy(() => import("./components/CookieConsent").then(m => ({ default: m.CookieConsent })));
 const Documentation = lazy(() => import("./pages/Documentation"));
-const HelpCenter = lazy(() => import("./pages/HelpCenter"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const PlatformDashboard = lazy(() => import("./pages/PlatformDashboard").then(m => ({ default: m.PlatformDashboard })));
 const SystemHealth = lazy(() => import("./pages/SystemHealth"));
