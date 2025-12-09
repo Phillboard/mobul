@@ -1,58 +1,52 @@
 ---
-description: Technical documentation for organization hierarchy and multi-tenant data models in B2B gift card campaign management
+description: Specification for analyzing organization relationships, roles, permissions, and client-agency hierarchies
 ---
 
 
 # organization-hierarchy
 
-Multi-tier organization structure with the following hierarchy:
+Multi-Tenant Organization Model
+Importance Score: 95
 
-Platform
-└─ Agency
-   └─ Client
-      └─ Campaign
+1. Hierarchical Structure
+- Platform (Root) → Agencies → Clients → Campaigns
+- Strict downward permission inheritance
+- Cross-tenant isolation with admin override capabilities
+- Organization-specific configuration inheritance
 
-Key Components:
+2. Credit Management Hierarchy
+Importance Score: 90
+- Credit pools cascade downward through organization levels
+- Agency-level markup and margin configuration
+- Client credit allocation with threshold monitoring
+- Campaign-specific budget restrictions
 
-1. Credit Flow Management (Importance Score: 95)
-- Unidirectional credit movement from Platform → Agency → Client → Campaign
-- Credit pool inheritance with allocation tracking
-- Balance monitoring and threshold alerts at each level
-- Atomic credit operations with audit logging
+3. Role-Based Permissions
+Importance Score: 85
+- Granular feature access control per organization level
+- Role inheritance with override capabilities
+- Organization-specific role customization
+- Permission conflict resolution system
 
-2. Role-Based Permissions (Importance Score: 90)
-- Hierarchical permission inheritance system
-- Role capabilities:
-  - Platform Admin: Full system access
-  - Agency Owner: Gift card management, client creation
-  - Client Owner: Campaign management, budget control
-  - Call Center: Redemption workflows
-- Cross-organization access controls with audit trails
-
-3. Client-Agency Relationships (Importance Score: 85)
-- One-to-many agency-client mapping
-- Shared resource pools between agencies and clients
-- Custom pricing rules per relationship
-- White-label configuration options
-
-4. Resource Inheritance Rules (Importance Score: 80)
-- Gift card pool access inheritance
-- Template sharing with override capabilities 
-- Brand access controls with agency restrictions
-- Campaign asset inheritance model
-
-5. Multi-Tenant Data Model (Importance Score: 75)
-- Organization-specific data isolation
+4. Client-Agency Relationships
+Importance Score: 80
+- Multi-agency client support
+- Agency-specific client configurations
 - Shared resource management
-- Cross-organization reporting capabilities
-- Tenant-specific configuration storage
+- Cross-agency isolation enforcement
 
-Core Business Rules:
-1. Credits only flow downward in hierarchy
-2. Permissions inherit downward with override capability
-3. Resources can be shared laterally between same-level entities
-4. Organizations can have custom pricing and markup rules
-5. Each level maintains independent audit trails
+Key Business Rules:
+1. Credits can only flow downward in hierarchy
+2. Agencies can manage multiple clients
+3. Clients inherit agency configurations with override options
+4. Resource access requires explicit organization membership
+5. Admin mode allows cross-organization operations
+
+Core File Paths:
+/src/core/auth/organizationPermissions.ts
+/src/features/organizations/types/hierarchy.ts
+/src/features/auth/hooks/useOrganizationContext.ts
+/src/features/permissions/utils/inheritanceRules.ts
 
 $END$
 

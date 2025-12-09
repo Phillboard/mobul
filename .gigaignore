@@ -1,0 +1,421 @@
+# ============================================
+# AGGRESSIVE .gigaignore - Target: 400 files MAX
+# Current: 835 → Need to exclude 435 more files
+# ============================================
+
+# Dependencies and build outputs
+node_modules/
+dist/
+dist-ssr/
+.vercel/
+bun.lockb
+package-lock.json
+
+# Documentation (keep Knowledgebase)
+docs/
+docs-archive/
+public/docs/
+*.md
+*.txt
+
+# Database migrations (194 files)
+supabase/migrations/
+
+# Scripts directory (95 files)
+scripts/
+
+# ALL Supabase Edge Functions (111 files - rarely need to edit)
+supabase/functions/
+
+# Supabase config and temp
+supabase/.temp/
+supabase/config.toml
+
+# ALL Image assets
+assets/
+src/assets/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.svg
+*.webp
+
+# ============================================
+# EXCLUDE NON-CRITICAL FEATURES (~200+ files)
+# ============================================
+
+# ACE Forms builder (not core campaign flow)
+src/features/ace-forms/
+src/components/ace-forms/
+
+# Landing page designer (secondary feature)
+src/features/landing-pages/
+src/components/landing-pages/
+
+# Mail designer (secondary feature)
+src/features/mail-designer/
+src/components/mail/
+
+# Activities/Tasks (secondary feature)
+src/features/activities/
+src/components/activities/
+
+# Analytics (view-only, not critical for campaign creation)
+src/features/analytics/
+src/components/analytics/
+
+# Admin demo/testing features
+src/features/admin/demo/
+src/lib/demo/
+
+# Documentation features (not core)
+src/features/documentation/
+src/components/documentation/
+
+# Onboarding (one-time use)
+src/features/onboarding/
+src/components/onboarding/
+
+# ============================================
+# EXCLUDE MOST PAGES (~40 files saved)
+# ============================================
+
+# Keep critical pages, exclude secondary ones
+src/pages/AceForm*.tsx
+src/pages/AIGenerateFlow.tsx
+src/pages/AILandingPageCreate.tsx
+src/pages/Admin*.tsx
+src/pages/APIDocumentation.tsx
+src/pages/Activities.tsx
+src/pages/LandingPage*.tsx
+src/pages/Mail*.tsx
+src/pages/GrapesJS*.tsx
+src/pages/Documentation.tsx
+src/pages/DocEditorPage.tsx
+src/pages/ErrorLogs.tsx
+src/pages/PlatformDashboard.tsx
+src/pages/PrivacyPolicy.tsx
+src/pages/TermsOfService.tsx
+src/pages/SystemHealth.tsx
+src/pages/Tasks.tsx
+src/pages/admin/
+
+# ============================================
+# EXCLUDE SOME HOOKS (~30 files saved)
+# ============================================
+
+src/hooks/useAceForms.ts
+src/hooks/useActivities.ts
+src/hooks/useDrPhillipPreference.ts
+src/hooks/useFormBuilderRHF.ts
+src/hooks/useFormContext.ts
+src/hooks/useFormSubmissionRateLimit.ts
+src/hooks/useLandingPageAnalytics.ts
+src/hooks/useLandingPages.ts
+src/hooks/useMailProviderSettings.ts
+src/hooks/useMarkdownDocs.ts
+src/hooks/useDocumentation.ts
+src/hooks/useDocumentationPermissions.ts
+src/hooks/useTasks.ts
+src/hooks/useVisualEditor.ts
+src/hooks/__tests__/
+
+# ============================================
+# EXCLUDE MORE UI COMPONENTS (~35 files saved)
+# ============================================
+
+# Exclude all except absolutely essential UI
+src/components/ui/aspect-ratio.tsx
+src/components/ui/avatar.tsx
+src/components/ui/breadcrumb.tsx
+src/components/ui/calendar.tsx
+src/components/ui/carousel.tsx
+src/components/ui/chart.tsx
+src/components/ui/collapsible.tsx
+src/components/ui/command.tsx
+src/components/ui/context-menu.tsx
+src/components/ui/drawer.tsx
+src/components/ui/floating-input.tsx
+src/components/ui/hover-card.tsx
+src/components/ui/input-otp.tsx
+src/components/ui/loading-card.tsx
+src/components/ui/loading-page.tsx
+src/components/ui/menubar.tsx
+src/components/ui/navigation-menu.tsx
+src/components/ui/pagination.tsx
+src/components/ui/popover.tsx
+src/components/ui/progress.tsx
+src/components/ui/radio-group.tsx
+src/components/ui/resizable.tsx
+src/components/ui/scroll-area.tsx
+src/components/ui/shimmer-skeleton.tsx
+src/components/ui/skeleton.tsx
+src/components/ui/slider.tsx
+src/components/ui/sonner.tsx
+src/components/ui/toast.tsx
+src/components/ui/toaster.tsx
+src/components/ui/toggle-group.tsx
+src/components/ui/toggle.tsx
+src/components/ui/tooltip.tsx
+src/components/ui/use-toast.ts
+
+# ============================================
+# EXCLUDE DUPLICATE COMPONENTS (~150 files saved)
+# Keep src/features/* versions only, exclude src/components/* duplicates
+# ============================================
+
+src/components/admin/
+src/components/agency/
+src/components/agent/
+src/components/api/
+src/components/audiences/
+src/components/call-center/
+src/components/campaigns/
+src/components/contacts/
+src/components/dashboard/
+src/components/email/
+src/components/gift-cards/
+src/components/settings/
+src/components/shared/
+src/components/layout/
+src/components/monitoring/
+src/components/ErrorBoundaries/
+src/components/ErrorBoundary.tsx
+src/components/PermissionGate.tsx
+src/components/ProtectedRoute.tsx
+src/components/NavLink.tsx
+src/components/CookieConsent.tsx
+src/components/DrPhillipChat.tsx
+src/components/DrPhillipChatWrapper.tsx
+
+# ============================================
+# EXCLUDE MOST PAGES (~40 more files saved)
+# ============================================
+
+src/pages/AcceptInvite.tsx
+src/pages/AgencyManagement.tsx
+src/pages/AudienceDetail.tsx
+src/pages/Auth.tsx
+src/pages/CallCenterRedemption.tsx
+src/pages/CallCenterScripts.tsx
+src/pages/CampaignAnalytics.tsx
+src/pages/ContactDetail.tsx
+src/pages/ContactImport.tsx
+src/pages/ContactLists.tsx
+src/pages/contacts/
+src/pages/CreditsBilling.tsx
+src/pages/Dashboard.tsx
+src/pages/EditPoolPricing.tsx
+src/pages/EmbedGiftCard.tsx
+src/pages/GiftCardManager.tsx
+src/pages/GiftCardReveal.tsx
+src/pages/Integrations.tsx
+src/pages/Index.tsx
+src/pages/NotFound.tsx
+src/pages/PoolDetail.tsx
+src/pages/PublicLandingPage.tsx
+src/pages/PublicRedemption.tsx
+src/pages/PurchaseGiftCard.tsx
+src/pages/PURLLandingPage.tsx
+src/pages/RecipientDetail.tsx
+src/pages/RecordPurchase.tsx
+src/pages/Settings.tsx
+src/pages/TeamManagement.tsx
+src/pages/TestRedemption.tsx
+src/pages/UnifiedLandingPageEditor.tsx
+src/pages/UserManagement.tsx
+
+# ============================================
+# EXCLUDE MOST LIB UTILS (~60 files saved)
+# ============================================
+
+src/lib/ai/
+src/lib/auth/
+src/lib/campaign/
+src/lib/conditions/
+src/lib/config/
+src/lib/demo-data-generators.ts
+src/lib/errorLogger.ts
+src/lib/export/
+src/lib/gift-cards/
+src/lib/landing-pages/
+src/lib/performance/
+src/lib/request-tracer.ts
+src/lib/services/
+src/lib/system/
+src/lib/templates/
+src/lib/tillo/
+src/lib/utils/
+src/lib/validation/
+src/lib/web/
+src/lib/__tests__/
+
+# ============================================
+# EXCLUDE MOST HOOKS (~50 files saved)
+# ============================================
+
+src/hooks/use-mobile.tsx
+src/hooks/use-toast.ts
+src/hooks/useAPIKeys.ts
+src/hooks/useBrandLookup.ts
+src/hooks/useCallAnalytics.ts
+src/hooks/useCallCenterScripts.ts
+src/hooks/useCallTracking.ts
+src/hooks/useCanAccessClient.ts
+src/hooks/useClientAvailableGiftCards.ts
+src/hooks/useClientGiftCards.ts
+src/hooks/useClientScopedQuery.ts
+src/hooks/useContactExport.ts
+src/hooks/useContactLists.ts
+src/hooks/useContacts.ts
+src/hooks/useContactTags.ts
+src/hooks/useCreditManagement.enhanced.ts
+src/hooks/useCreditManagement.ts
+src/hooks/useCRMIntegrations.ts
+src/hooks/useCurrentUser.ts
+src/hooks/useCustomFieldDefinitions.ts
+src/hooks/useDashboardData.ts
+src/hooks/useDebounce.ts
+src/hooks/useDenominationPricing.ts
+src/hooks/useEnhancedAnalytics.ts
+src/hooks/useFeatureFlags.ts
+src/hooks/useGiftCardBilling.ts
+src/hooks/useGiftCardBrands.ts
+src/hooks/useGiftCardCostEstimate.ts
+src/hooks/useGiftCardDenominations.ts
+src/hooks/useGiftCardPools.ts
+src/hooks/useGiftCardProvisioning.ts
+src/hooks/useGiftCards.ts
+src/hooks/useIndividualCardInventory.ts
+src/hooks/useInventoryUpload.ts
+src/hooks/useInvitableRoles.ts
+src/hooks/useKeyboardShortcuts.ts
+src/hooks/useListPreview.ts
+src/hooks/useManageableUsers.ts
+src/hooks/useManageableUsersPaginated.ts
+src/hooks/useMenuItemCounts.ts
+src/hooks/useMenuSearch.ts
+src/hooks/useMessageTemplates.ts
+src/hooks/useOptInStatus.ts
+src/hooks/usePaginatedRecipients.ts
+src/hooks/usePermissions.ts
+src/hooks/usePoolInventory.ts
+src/hooks/useRecipientEnrichment.ts
+src/hooks/useSettingsTabs.ts
+src/hooks/useSimplifiedGiftCardSelection.ts
+src/hooks/useSmartCSVParser.ts
+src/hooks/useTablePreferences.ts
+src/hooks/useTags.ts
+src/hooks/useTilloBrandSync.ts
+src/hooks/useTwilioNumbers.ts
+src/hooks/useUndo.ts
+src/hooks/useUserRole.ts
+src/hooks/useWebhooks.ts
+src/hooks/useZapierConnections.ts
+
+# ============================================
+# EXCLUDE MORE TYPES (~10 files saved)
+# ============================================
+
+src/types/aceForms.ts
+src/types/api-responses.ts
+src/types/demo.ts
+src/types/events.ts
+src/types/grapesjs.ts
+src/types/json-schemas.ts
+src/types/landingPages.ts
+src/types/mail.ts
+
+# ============================================
+# EXCLUDE CONFIGS & INTEGRATIONS
+# ============================================
+
+src/config/
+src/integrations/supabase/types.ts
+src/app/routes/
+
+# ============================================
+# EXCLUDE SHARED UTILS (~20 files saved)
+# ============================================
+
+src/shared/components/
+src/shared/hooks/
+src/shared/utils/
+
+# ============================================
+# OTHER EXCLUDES
+# ============================================
+
+# API Keys and Credentials
+Keys/
+*.p12
+*.key
+*.pem
+*.csr
+*.json.key
+temp-google-wallet-secret.json
+mobul-479120-aee75b7156b5.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+*.sw?
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Build configs
+openssl_min.cnf
+
+# Shell scripts
+*.bat
+*.ps1
+*.sh
+
+# Lock files
+*.local
+
+# Test files
+src/test/
+__tests__/
+
+# Config files
+tailwind.config.ts
+postcss.config.js
+vite.config.ts
+vitest.config.ts
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
+components.json
+vercel.json
+eslint.config.js
+
+# Terminals
+terminals/
+
+# Other
+pass.cer
+wallet_pass.csr
+wallet_pass.key
+wallet_pass.p12
+wallet_pass.pem
+openssl_min.cnf
+index.html
+.prettierrc
+

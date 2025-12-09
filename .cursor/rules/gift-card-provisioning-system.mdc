@@ -1,56 +1,51 @@
 ---
-description: Documentation and implementation guide for gift card provisioning, pool management, and balance verification systems
+description: Documents the gift card provisioning, inventory management, and balance verification systems
 ---
 
 
 # gift-card-provisioning-system
 
-## Core Provisioning Logic
-`src/lib/gift-cards/provisioning-utils.ts`
-Implements waterfall provisioning strategy with two-step allocation:
-1. CSV inventory pool claim attempt
-2. Automatic Tillo API purchase fallback
-Importance Score: 95/100
+Gift Card Provisioning Core Components:
 
-## Pool Management System
-`src/components/gift-cards/PoolInventoryWidget.tsx`
-- Real-time inventory threshold monitoring
-- Utilization calculation across denominations
-- Low stock alerting with configurable thresholds
-- Pool health status tracking (healthy/low/empty)
-Importance Score: 85/100
-
-## Balance Verification Engine 
-`src/components/gift-cards/IndividualCardDetailDialog.tsx`
-- Multi-provider balance checking (Tillo, CSV, API)
-- Balance history tracking with change detection
+## Provisioning Waterfall (src/features/gift-cards/utils/provisioning-utils.ts)
+Importance: 95/100
+- Two-phase provisioning logic:
+  1. CSV inventory check and allocation
+  2. Real-time API provisioning fallback 
+- Atomic claiming with inventory locking
+- Balance verification scheduling
 - Provider-specific error handling
-- Custom validation rules for updates
-Importance Score: 80/100
 
-## Inventory Upload Processing
-`src/hooks/useInventoryUpload.ts`
-- CSV-based batch uploads with duplicate detection
-- Cost basis tracking per denomination
-- Batch status management
-- Deletion rules for unused cards only
-Importance Score: 75/100
+## Pool Management (src/features/gift-cards/hooks/useGiftCardPool.ts) 
+Importance: 90/100
+- Multi-source inventory tracking
+- Low balance thresholds and alerts
+- Automated balance verification scheduling
+- Provider-specific balance check integration
+- Pool utilization analytics
 
-## Edge Function Integration
-`supabase/functions/provision-gift-card-unified/index.ts`
-- Unified provisioning workflow
-- Credit availability validation
-- Atomic inventory locking
-- Structured error handling with business codes
-Importance Score: 90/100
+## Card Delivery System (src/features/campaigns/services/giftCardDelivery.ts)
+Importance: 85/100
+- Condition-based release triggers
+- Sequential reward delivery workflow
+- Delivery retry logic
+- Status tracking and reconciliation
+- Provider delivery confirmation hooks
 
-## Key Business Rules
-1. Gift cards must be provisioned from CSV inventory before API purchase
-2. Pool health thresholds: Low < 15%, Empty < 5%
-3. Balance verification required every 24 hours
-4. Cost basis must be tracked per denomination
-5. Only unused cards can be removed from inventory
-6. Credit validation required before provisioning
+## Balance Verification Engine (src/features/gift-cards/services/balanceCheck.ts)
+Importance: 85/100
+- Scheduled verification runs
+- Provider-specific balance APIs
+- Discrepancy detection
+- Auto-reconciliation logic
+- Historical balance tracking
+
+Core Business Rules:
+1. Cards must be verified before campaign assignment
+2. Pools maintain minimum balance thresholds
+3. Balance checks run on configurable schedules
+4. Failed deliveries trigger automated retries
+5. Inventory sources follow strict priority order
 
 $END$
 

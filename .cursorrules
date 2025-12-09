@@ -10,51 +10,48 @@
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Gift Card Campaign Management Platform implementing complex reward distribution and redemption workflows across multiple business verticals.
+Campaign Management & Gift Card Distribution System
 
 Core Business Components:
 
-1. Campaign Creation & Management (Importance: 90)
-- Four-stage campaign workflow with audience selection and reward configuration
-- Industry-specific templates for roofing and auto warranty sectors
-- Multi-condition reward triggers with sequential validation
-- Integration with mail tracking and delivery status monitoring
-File: src/components/campaigns/wizard/AudiencesRewardsStep.tsx
+Campaign Creation Workflow
+Importance Score: 95
+- Multi-stage campaign validation engine
+- Condition-based reward trigger system 
+- Gift card pool allocation logic
+- Recipient code generation and validation
+- Mailing method selection with fulfillment rules
 
-2. Gift Card Provisioning System (Importance: 95)
-- Unified provisioning workflow with provider fallback logic
-- Pool-based inventory management with real-time balance tracking
-- Denomination-specific pricing and markup calculations
-- Multi-provider integration (Tillo, CSV inventory)
-File: supabase/functions/provision-gift-card-unified/index.ts
+Credit Management System
+Importance Score: 90
+- Hierarchical credit flow (Platform → Agency → Client → Campaign)
+- Atomic credit operations with reservation system
+- Multi-source provisioning (CSV/API/Buffer)
+- Threshold-based alerts and monitoring
+- Budget validation against available credits
 
-3. Credit Management System (Importance: 85)
-- Hierarchical credit allocation: Platform → Agency → Client → Campaign
-- Real-time credit validation against campaign requirements
-- Automated billing and reconciliation workflows
-- Credit reservation system for pending operations
-File: src/components/admin/CreditBalanceWidget.tsx
+Gift Card Operations
+Importance Score: 85
+- Brand-denomination configuration management
+- Multi-provider inventory tracking
+- Real-time availability verification
+- Provider-specific delivery workflows
+- Balance checking and reconciliation
 
-4. Call Center Operations (Importance: 80)
-- Agent-driven reward validation workflow
-- Multi-step verification process with script management
-- Real-time opt-in status tracking and SMS integration
-- Custom disposition tracking with reward triggers
-File: src/components/call-center/CallCenterGiftCardProvisioning.tsx
+Key Integration Points:
+- Tillo API for gift card provisioning
+- PostGrid for mail fulfillment
+- CRM systems for recipient data
+- Zapier for event automation
 
-5. Landing Page Generation (Importance: 75)
-- AI-powered content generation with industry context
-- Dynamic form building with reward condition integration
-- Conversion tracking and analytics generation
-- Mobile wallet pass integration for digital gift cards
-File: src/components/ace-forms/GiftCardReveal.tsx
+Business Rules:
+1. Credits flow downward only through organization hierarchy
+2. Campaigns require validated gift card inventory before activation
+3. Reward conditions must follow sequential evaluation rules
+4. Each tenant maintains isolated credit pools
+5. Gift cards require multi-step verification before delivery
 
-Domain-Specific Features:
-- Industry-targeted campaign templates
-- Sophisticated reward condition management
-- Multi-tenant credit allocation system
-- Provider-agnostic gift card fulfillment
-- Compliance-focused audit logging
+The system implements sophisticated campaign orchestration with integrated reward distribution, maintaining strict budget controls and inventory management across multiple providers and tenants.
 
 $END$
 

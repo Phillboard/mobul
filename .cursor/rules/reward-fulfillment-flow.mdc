@@ -1,63 +1,58 @@
 ---
-description: Documents the end-to-end reward fulfillment workflow including validation, provisioning, and delivery tracking
+description: Specifies the reward fulfillment workflow including SMS opt-in, verification, and delivery processes
 ---
 
 
 # reward-fulfillment-flow
 
-Core Reward Fulfillment Components:
+## Core Fulfillment Components
 
-1. Gift Card Provisioning Workflow
-Path: src/components/campaigns/wizard/DeliveryFulfillmentStep.tsx
-- Multi-stage provisioning with fallback logic:
-  1. Check CSV inventory pools
-  2. Attempt API provider purchase
-  3. Manual provisioning fallback
-- Status tracking through entire fulfillment cycle
-- Integration with multiple card providers
-Importance Score: 95/100
+1. Reward Delivery Orchestration
+`src/features/gift-cards/components/PoolDetailDialog.tsx`
+Importance: 95/100
+- Multi-step verification workflow before reward release
+- SMS opt-in requirement checking
+- Automated balance verification before delivery
+- Delivery method selection (SMS/email) based on opt-in status
+- Retry logic for failed deliveries with exponential backoff
 
-2. SMS Opt-In Management
-Path: src/components/call-center/OptInStatusIndicator.tsx
-- TCPA compliance validation for SMS delivery
-- Real-time opt-in status tracking
-- Multi-channel verification (call center, web form)
-- Automatic retry logic for failed verifications
-Importance Score: 85/100
+2. Verification Pipeline 
+`src/features/verification/VerificationWorkflow.tsx`
+Importance: 90/100
+- Phone number verification through PIN codes
+- Email verification through magic links
+- Multi-channel verification aggregation
+- Fraud prevention rules and velocity checks
+- Contact method preference management
 
-3. Call Center Verification Workflow
-Path: src/components/agent/CallVerificationDialog.tsx
-- Sequential condition validation:
-  1. Code verification
-  2. Identity confirmation
-  3. Opt-in collection
-  4. Reward qualification
-- Script-guided agent workflow
-- Real-time reward status updates
-Importance Score: 90/100
+3. Reward Pool Management
+`src/features/gift-cards/hooks/useGiftCardPool.ts` 
+Importance: 85/100
+- Atomic card claiming from inventory pools
+- Provider fallback logic (CSV → API)
+- Low balance alerting and replenishment
+- Usage analytics and delivery success rates
+- Pool health monitoring and maintenance
 
-4. Reward Distribution Engine
-Path: supabase/functions/provision-gift-card-unified/index.ts
-- Atomic reward claiming from inventory pools
-- Credit validation and allocation
-- Audit trail generation
-- Multi-channel delivery orchestration
-Importance Score: 95/100
+## Business Rules
 
-5. Fulfillment Monitoring System
-Path: src/components/analytics/FulfillmentMetrics.tsx
-- Real-time fulfillment success tracking
-- Provider-specific error monitoring
-- Delivery rate analysis
-- Automated retry scheduling
-Importance Score: 80/100
+1. Delivery Requirements:
+- Valid SMS opt-in must exist for text delivery
+- Email verification required for email delivery
+- Contact method must match campaign settings
+- No duplicate rewards within 24 hours
 
-Key Business Rules:
-1. SMS opt-in required before digital reward delivery
-2. Call center verification must follow approved script workflow
-3. Gift cards allocated only after all conditions satisfied
-4. Audit trail required for all reward transactions
-5. Multi-stage validation before final reward release
+2. Verification Rules:
+- Phone verification expires after 30 days
+- Maximum 3 verification attempts per day
+- Verification must complete within 48 hours
+- Geographic restrictions based on campaign settings
+
+3. Pool Management:
+- Minimum 10% buffer inventory required
+- Auto-replenishment at 25% threshold
+- Maximum 3 simultaneous pools per brand
+- Automatic pool rotation every 30 days
 
 $END$
 

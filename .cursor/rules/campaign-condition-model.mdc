@@ -1,50 +1,46 @@
 ---
-description: Defines campaign condition models, trigger evaluation logic, and reward distribution rules for marketing campaigns
+description: Defines business logic for campaign reward conditions, triggers, and gift card distribution workflows
 ---
 
 
 # campaign-condition-model
 
-Core Business Logic Components:
+Core Components:
 
-1. Condition Evaluation Engine
-Path: src/components/campaigns/wizard/ConditionsStep.tsx
-- Multi-stage condition evaluation with sequential and parallel triggers
-- Condition types: form_submission, call_verification, code_scan, time_delay
-- Complex reward distribution rules based on condition combinations
-- Time-based delays and multi-step verification workflows
-Importance Score: 90/100
+1. Condition Trigger Engine (90/100)
+- Sequential reward condition evaluation with dependency tracking
+- Time-based delay support (minutes to days)
+- Multi-step verification requirements
+- Agent-based manual triggers
+- Event-driven automatic triggers (call completion, form submission)
 
-2. Reward Distribution Logic
-Path: src/lib/campaign/conditionUtils.ts
-- Manages gift card allocation based on satisfied conditions
-- Implements hold periods for reward distribution
-- Handles partial completion scenarios
-- Enforces maximum attempts and cooldown periods
-Importance Score: 85/100
+2. Gift Card Distribution Rules (85/100)
+- Pool-based allocation with inventory verification
+- Real-time balance checking before distribution 
+- Provider fallback logic (CSV → API)
+- Delivery status tracking through completion
+- Failure retry logic with configurable attempts
 
-3. Campaign Condition Model
-Path: src/types/campaignConditions.ts
-Key data structures:
-```typescript
-type CampaignCondition = {
-  type: ConditionType
-  sequence: number
-  delayHours?: number
-  requiresVerification: boolean
-  rewardAmount: number
-  maxAttempts: number
-  cooldownHours: number
-}
-```
-Importance Score: 95/100
+3. Condition Validation Framework (80/100)
+- Pre-publish validation of complete condition chains
+- Resource availability verification (gift cards, SMS credits)
+- Time window validation for sequential conditions
+- Recipient list compatibility checks
+- Reward value limit enforcement
 
-Key Business Rules:
-- Conditions can be sequential or parallel
-- Time delays enforce minimum waiting periods between steps
-- Verification requirements for specific condition types
-- Maximum attempt limits with cooldown periods
-- Reward amounts tied to specific condition completion
+4. Reward Delivery Orchestration (75/100)
+- Asynchronous reward queuing system
+- Delivery method selection (email, SMS, API)
+- Status tracking through completion
+- Failed delivery handling and retries
+- Audit trail maintenance
+
+Key Domain Rules:
+1. Conditions must form valid sequential chains
+2. Rewards require verified inventory before campaign activation
+3. Time delays between conditions must meet minimum/maximum thresholds
+4. Manual verification requires specific agent permissions
+5. Gift card pools must maintain safety thresholds
 
 $END$
 
