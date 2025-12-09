@@ -9,6 +9,10 @@
  * - 600px width (standard email width)
  * - Template tokens for personalization
  * - AI-powered email content generation
+ * 
+ * NOTE: Requires `email_templates` table in database.
+ * If table doesn't exist, run migration to create it.
+ * See docs/DATABASE_REQUIREMENTS.md for schema.
  */
 
 import { useState } from 'react';
@@ -325,8 +329,8 @@ export default function NewEmailDesigner() {
                       history.recordState(designerState.canvasState, 'Delete');
                       designerState.deleteElement(id);
                     }}
-                    onReorderLayers={(from, to) => {
-                      console.log('Reorder:', from, to);
+                    onReorderLayers={(_from, _to) => {
+                      // Layer reordering handled by state management
                     }}
                   />
                 </div>

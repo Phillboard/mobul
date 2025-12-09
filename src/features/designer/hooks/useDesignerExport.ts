@@ -35,7 +35,7 @@ export interface UseDesignerExportReturn {
   exportToPDF: (options?: Partial<PDFExportOptions>) => Promise<Blob>;
   exportToHTML: (options?: Partial<HTMLExportOptions>) => Promise<string>;
   exportToImage: (options?: Partial<ImageExportOptions>) => Promise<Blob>;
-  exportAs: (format: ExportFormat, options?: any) => Promise<Blob | string>;
+  exportAs: (format: ExportFormat, options?: Partial<PDFExportOptions | HTMLExportOptions | ImageExportOptions>) => Promise<Blob | string>;
 
   // Preview
   generatePreview: (tokenData?: Record<string, string>) => Promise<string>;
@@ -82,8 +82,8 @@ export function useDesignerExport(
       const blob = await exportToPDF(canvasState, defaultOptions);
       setLastExportedBlob(blob);
       return blob;
-    } catch (error: any) {
-      const errorMsg = error.message || 'PDF export failed';
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'PDF export failed';
       setExportError(errorMsg);
       throw error;
     } finally {
@@ -116,8 +116,8 @@ export function useDesignerExport(
       const minified = minifyHTML(html);
       setLastExportedHTML(minified);
       return minified;
-    } catch (error: any) {
-      const errorMsg = error.message || 'HTML export failed';
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'HTML export failed';
       setExportError(errorMsg);
       throw error;
     } finally {
@@ -182,8 +182,8 @@ export function useDesignerExport(
 
       setLastExportedBlob(blob);
       return blob;
-    } catch (error: any) {
-      const errorMsg = error.message || 'Image export failed';
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Image export failed';
       setExportError(errorMsg);
       throw error;
     } finally {
@@ -196,7 +196,7 @@ export function useDesignerExport(
    */
   const exportAs = useCallback(async (
     format: ExportFormat,
-    options: any = {}
+    options: Partial<PDFExportOptions | HTMLExportOptions | ImageExportOptions> = {}
   ): Promise<Blob | string> => {
     switch (format) {
       case 'pdf':
@@ -275,8 +275,8 @@ export function useDesignerExport(
 
       // Cleanup
       setTimeout(() => URL.revokeObjectURL(url), 100);
-    } catch (error: any) {
-      const errorMsg = error.message || 'Download failed';
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Download failed';
       setExportError(errorMsg);
       throw error;
     }

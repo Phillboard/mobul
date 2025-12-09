@@ -29,7 +29,6 @@ const PURLLandingPage = lazy(() => import("./pages/PURLLandingPage"));
 const AudienceDetail = lazy(() => import("./pages/AudienceDetail"));
 const RecipientDetail = lazy(() => import("./pages/RecipientDetail"));
 const Mail = lazy(() => import("./pages/Mail"));
-const MailDesigner = lazy(() => import("./pages/MailDesigner"));
 const NewMailDesigner = lazy(() => import("./pages/NewMailDesigner"));
 const NewLandingPageDesigner = lazy(() => import("./pages/NewLandingPageDesigner"));
 const NewEmailDesigner = lazy(() => import("./pages/NewEmailDesigner"));
@@ -48,7 +47,6 @@ const EmbedGiftCard = lazy(() => import("./pages/EmbedGiftCard"));
 const AgencyManagement = lazy(() => import("./pages/AgencyManagement"));
 const CallCenterRedemption = lazy(() => import("./pages/CallCenterRedemption"));
 const CallCenterScripts = lazy(() => import("./pages/CallCenterScripts"));
-const GrapesJSLandingPageEditor = lazy(() => import("./pages/GrapesJSLandingPageEditor"));
 const Contacts = lazy(() => import("./pages/Contacts"));
 const ContactDetail = lazy(() => import("./pages/ContactDetail"));
 const ContactLists = lazy(() => import("./pages/ContactLists"));
@@ -180,19 +178,24 @@ const App = () => (
                   
                   {/* Mail & Landing Pages */}
                   <Route path="/mail" element={<ProtectedRoute><Mail /></ProtectedRoute>} />
-                  <Route path="/mail-designer/:id" element={<ProtectedRoute><MailDesigner /></ProtectedRoute>} />
+                  {/* Both routes use the new AI-first designer */}
+                  <Route path="/mail-designer/:id" element={<ProtectedRoute><NewMailDesigner /></ProtectedRoute>} />
                   <Route path="/new-mail-designer/:id" element={<ProtectedRoute><NewMailDesigner /></ProtectedRoute>} />
                   <Route path="/new-landing-designer/:id" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
                   <Route path="/new-email-designer/:id" element={<ProtectedRoute><NewEmailDesigner /></ProtectedRoute>} />
+                  <Route path="/email-designer/:id" element={<ProtectedRoute><NewEmailDesigner /></ProtectedRoute>} />
                   {/* Redirects from old template routes */}
                   <Route path="/templates" element={<Navigate to="/mail" replace />} />
-                  <Route path="/template-builder/:id" element={<Navigate to="/mail-designer/:id" replace />} />
+                  <Route path="/template-builder/:id" element={<ProtectedRoute><NewMailDesigner /></ProtectedRoute>} />
                   
                   {/* Landing Page Builder - Simple Routes */}
                   <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
                   <Route path="/landing-pages/create" element={<ProtectedRoute><LandingPageCreate /></ProtectedRoute>} />
                   <Route path="/landing-pages/new" element={<ProtectedRoute><LandingPageEditor /></ProtectedRoute>} />
                   <Route path="/landing-pages/:id/editor" element={<ProtectedRoute><LandingPageEditor /></ProtectedRoute>} />
+                  {/* Canvas-based visual editor (alternative to AI chat editor) */}
+                  <Route path="/landing-pages/new/canvas" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
+                  <Route path="/landing-pages/:id/canvas" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
                   
                   {/* Legacy routes redirect to new simple flow */}
                   <Route path="/landing-pages/new/visual-editor" element={<Navigate to="/landing-pages/create" replace />} />

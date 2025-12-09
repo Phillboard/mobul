@@ -6,8 +6,6 @@ Each phase has one or more prompts. Copy and paste into Cursor chat.
 
 ## PHASE 1: Foundation & Terminology
 
-**One prompt for the whole phase:**
-
 ```
 Read PLATFORM_DICTIONARY.md thoroughly - this defines ALL our terminology.
 
@@ -28,8 +26,6 @@ Update LAUNCH_PROGRESS.md as you complete each task.
 ---
 
 ## PHASE 2: OAuth Integration
-
-**One prompt for the whole phase:**
 
 ```
 Execute Phase 2 of LAUNCH_PRD.md - OAuth Integration.
@@ -64,8 +60,6 @@ Update LAUNCH_PROGRESS.md as you complete each task.
 ---
 
 ## PHASE 3: AI-First Designer System
-
-**This is the biggest phase. Break into multiple prompts:**
 
 ### Prompt 3A: Remove GrapesJS
 
@@ -304,8 +298,6 @@ Update LAUNCH_PROGRESS.md as you complete each task.
 
 ## PHASE 4: Code Review & Cleanup
 
-**One prompt:**
-
 ```
 Execute Phase 4 of LAUNCH_PRD.md - Code Review & Cleanup.
 
@@ -355,8 +347,6 @@ Update LAUNCH_PROGRESS.md as you complete each task.
 
 ## PHASE 5: Production Readiness
 
-**One prompt:**
-
 ```
 Execute Phase 5 of LAUNCH_PRD.md - Production Readiness.
 
@@ -401,54 +391,164 @@ Update LAUNCH_PROGRESS.md with final status.
 
 ---
 
-## TIPS FOR SUCCESS
+## VERIFICATION: Final System Check
 
-1. **Start new chat for each phase** - Prevents context overflow
+**Run this AFTER completing all 5 phases:**
 
+```
+Run comprehensive verification per VERIFICATION_PLAN.md.
+
+Execute ALL these checks:
+
+1. BUILD & TYPES
+   npm run build && npx tsc --noEmit && npm run lint
+   Report: pass/fail, error counts
+
+2. GRAPESJS REMOVED
+   grep -ri "grapesjs" src/ package.json
+   Report: any remnants found
+
+3. SECRETS CHECK
+   Search for sk_live, api_key=, password=, secret= in src/ and supabase/
+   Report: any hardcoded secrets (excluding env references)
+
+4. TERMINOLOGY (per PLATFORM_DICTIONARY.md)
+   - "Agency" used correctly
+   - "Client" not confused with "customer"
+   - "Unique Code" consistent
+   - Roles match dictionary
+   Report: any violations
+
+5. DESIGNER SYSTEM
+   Verify these files exist in src/features/designer/:
+   - types/designer.ts
+   - utils/tokenParser.ts
+   - hooks/useDesignerState.ts
+   - hooks/useDesignerHistory.ts
+   - hooks/useDesignerAI.ts
+   - components/DesignerCanvas.tsx
+   - components/BackgroundUploader.tsx
+   - components/ElementLibrary.tsx
+   - components/TokenInserter.tsx
+   - components/DesignerAIChat.tsx
+   Report: which exist, which missing
+
+6. TEMPLATE TOKENS
+   Verify tokenParser.ts has ALL 8 tokens:
+   {{first_name}}, {{last_name}}, {{full_name}}, {{unique_code}},
+   {{company_name}}, {{purl}}, {{qr_code}}, {{gift_card_amount}}
+   Report: which defined, which missing
+
+7. OAUTH
+   Verify in AuthContext.tsx: signInWithGoogle, signInWithApple
+   Verify AuthCallback.tsx exists
+   Verify Auth.tsx has OAuth buttons
+   Verify /auth/callback route exists
+   Report: implementation status
+
+8. EDGE FUNCTIONS (spot check 5)
+   provision-gift-card-unified, validate-redemption-code,
+   send-gift-card-sms, submit-lead-form, handle-purl
+   Check each for: CORS, auth, validation, error handling
+   Report: issues found
+
+9. DOCUMENTATION
+   Verify exist: README.md, PLATFORM_DICTIONARY.md,
+   docs/OAUTH_SETUP.md, docs/ENVIRONMENT_SETUP.md
+   Report: which exist, completeness
+
+10. DEPENDENCIES
+    npm audit && npx depcheck
+    Report: vulnerabilities, unused deps
+
+11. GITIGNORE
+    Must include: .env*, *.key, *.pem, *.p12, node_modules/, dist/
+    Report: what's missing
+
+Fix any issues found immediately.
+
+OUTPUT FORMAT:
+# VERIFICATION REPORT
+
+## Summary
+- Build: PASS/FAIL
+- Types: X errors
+- Lint: X errors
+
+## Critical Issues (MUST FIX)
+1. [issue]
+
+## Warnings (SHOULD FIX)
+1. [warning]
+
+## Component Status
+### Designer: X/10 complete
+### OAuth: X/4 complete
+### Docs: X/4 complete
+
+## Security: [PASS/ISSUES]
+
+## LAUNCH READY: YES/NO
+Blocking issues: [list]
+```
+
+---
+
+## AFTER VERIFICATION
+
+### If Issues Found:
+```
+Fix all CRITICAL issues from the verification report.
+Re-run verification to confirm fixes.
+Update LAUNCH_PROGRESS.md.
+```
+
+### If Verification Passes:
+```
+Create LAUNCH_READY.md with:
+1. All systems verified summary
+2. Known limitations
+3. Manual steps required (OAuth provider config)
+4. Go-live checklist
+5. Rollback procedure
+```
+
+---
+
+## TIPS
+
+1. **Start new chat for each phase** - prevents context overflow
 2. **Check LAUNCH_PROGRESS.md** between sessions
-
-3. **If Cursor goes off track:**
-```
-Stop. Re-read LAUNCH_PRD.md Phase [X] Task [X.X]. Execute only that task.
-```
-
-4. **To continue after completion:**
-```
-Continue with the next task in the current phase.
-```
-
-5. **To check status:**
-```
-Show current progress from LAUNCH_PROGRESS.md
-```
+3. **If Cursor goes off track**: "Stop. Re-read LAUNCH_PRD.md Phase X Task X.X"
+4. **To continue**: "Continue with the next task"
+5. **To check status**: "Show current progress from LAUNCH_PROGRESS.md"
 
 ---
 
-## MANUAL STEPS (You must do these)
+## MANUAL STEPS (You Must Do)
 
-After Cursor completes the code:
+### After Code Complete:
 
-### OAuth Setup (Supabase Dashboard)
-1. Go to Authentication → Providers
-2. Enable Google, add Client ID and Secret
-3. Enable Apple, add Service ID and credentials
-4. Set redirect URL
+**Supabase Dashboard:**
+- Enable Google OAuth provider
+- Enable Apple OAuth provider  
+- Set redirect URLs
+- Add secrets
 
-### Google Cloud Console
-1. Create OAuth credentials
-2. Configure consent screen
-3. Add authorized domains
+**Google Cloud Console:**
+- Create OAuth credentials
+- Configure consent screen
 
-### Apple Developer Console
-1. Create App ID with Sign in with Apple
-2. Create Services ID
-3. Generate private key
+**Apple Developer Console:**
+- Create App ID
+- Create Services ID
+- Generate private key
 
-### Production Deploy
-1. Set all environment variables
-2. Configure domain
-3. Test OAuth flows manually
+**Production:**
+- Set environment variables
+- Configure domain
+- Test OAuth flows manually
 
 ---
 
-*Copy the prompt for each phase into Cursor and let it execute. Approve changes as needed.*
+*Copy prompts in order. Let Cursor execute. Approve changes. Repeat.*

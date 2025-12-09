@@ -1,3 +1,12 @@
+/**
+ * @deprecated LEGACY FILE - Use src/features/settings/components/BillingSettings.tsx instead
+ * 
+ * This file is a duplicate and should not be used for new development.
+ * Scheduled for removal after full migration to feature-based architecture.
+ * 
+ * @see src/features/settings/components/BillingSettings.tsx
+ */
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,11 +23,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+/** @deprecated Use the version from src/features/settings/components/ */
 export function BillingSettings() {
   const { roles, hasPermission } = useAuth();
   const { currentClient, currentOrg } = useTenant();
 
-  // Note: This is a legacy duplicate - prefer src/features/settings/components/BillingSettings.tsx
   const isAdmin = roles.some(r => r.role === 'admin');
   const isAgencyOwner = roles.some(r => r.role === 'agency_owner');
   const isCompanyOwner = roles.some(r => r.role === 'company_owner');

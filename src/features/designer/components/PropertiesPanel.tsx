@@ -266,7 +266,7 @@ function TextProperties({
   element,
   onUpdate,
 }: {
-  element: any;
+  element: DesignElement;
   onUpdate: (id: string, updates: ElementUpdate) => void;
 }) {
   return (
@@ -403,7 +403,7 @@ function ImageProperties({
   element,
   onUpdate,
 }: {
-  element: any;
+  element: DesignElement;
   onUpdate: (id: string, updates: ElementUpdate) => void;
 }) {
   return (
@@ -461,7 +461,7 @@ function ShapeProperties({
   element,
   onUpdate,
 }: {
-  element: any;
+  element: DesignElement;
   onUpdate: (id: string, updates: ElementUpdate) => void;
 }) {
   return (
@@ -562,7 +562,7 @@ function TokenProperties({
   element,
   onUpdate,
 }: {
-  element: any;
+  element: DesignElement;
   onUpdate: (id: string, updates: ElementUpdate) => void;
 }) {
   return (

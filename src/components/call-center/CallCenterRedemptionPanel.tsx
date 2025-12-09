@@ -1,3 +1,12 @@
+/**
+ * @deprecated LEGACY FILE - Use src/features/call-center/components/CallCenterRedemptionPanel.tsx instead
+ * 
+ * This file is a duplicate maintained for backwards compatibility.
+ * New development should use the feature-based version.
+ * 
+ * @see src/features/call-center/components/CallCenterRedemptionPanel.tsx
+ */
+
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

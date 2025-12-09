@@ -1,3 +1,10 @@
+/**
+ * @deprecated LEGACY FILE - Use src/features/campaigns/components/campaignsColumns.tsx instead
+ * 
+ * This file is a duplicate maintained for backwards compatibility.
+ * New development should use the feature-based version.
+ */
+
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";

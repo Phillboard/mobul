@@ -5,6 +5,7 @@
  * Organized by categories: Text, Images, Shapes, Special.
  */
 
+import { useCallback } from 'react';
 import { Type, Image, Square, Circle, QrCode, Sparkles, RectangleHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

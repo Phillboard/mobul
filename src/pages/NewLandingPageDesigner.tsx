@@ -66,8 +66,11 @@ export default function NewLandingPageDesigner() {
   // Initialize designer with landing page preset
   const config = DESIGNER_PRESETS['landing-page'];
 
-  const initialState = landingPage?.canvas_state
-    ? JSON.parse(landingPage.canvas_state)
+  // Use visual_editor_state column (existing in DB schema)
+  const initialState = landingPage?.visual_editor_state
+    ? (typeof landingPage.visual_editor_state === 'string' 
+        ? JSON.parse(landingPage.visual_editor_state) 
+        : landingPage.visual_editor_state)
     : undefined;
 
   const designerState = useDesignerState({
@@ -97,15 +100,17 @@ export default function NewLandingPageDesigner() {
    */
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const canvasStateJSON = JSON.stringify(designerState.canvasState);
+      // Store canvas state in visual_editor_state (existing DB column)
+      const visualEditorState = designerState.canvasState;
 
       if (id === 'new' || !landingPage) {
         const { data, error } = await supabase
           .from('landing_pages')
           .insert({
             name: 'Untitled Landing Page',
-            canvas_state: canvasStateJSON,
-            is_published: false,
+            visual_editor_state: visualEditorState,
+            editor_type: 'canvas',
+            published: false,
           })
           .select()
           .single();
@@ -116,7 +121,8 @@ export default function NewLandingPageDesigner() {
         const { data, error } = await supabase
           .from('landing_pages')
           .update({
-            canvas_state: canvasStateJSON,
+            visual_editor_state: visualEditorState,
+            editor_type: 'canvas',
             updated_at: new Date().toISOString(),
           })
           .eq('id', id)
@@ -137,7 +143,7 @@ export default function NewLandingPageDesigner() {
       });
 
       if (id === 'new') {
-        navigate(`/landing-page-designer/${data.id}`);
+        navigate(`/landing-pages/${data.id}/canvas`);
       }
     },
   });
@@ -368,8 +374,8 @@ export default function NewLandingPageDesigner() {
                       history.recordState(designerState.canvasState, 'Delete');
                       designerState.deleteElement(id);
                     }}
-                    onReorderLayers={(from, to) => {
-                      console.log('Reorder:', from, to);
+                    onReorderLayers={(_from, _to) => {
+                      // Layer reordering handled by state management
                     }}
                   />
                 </div>

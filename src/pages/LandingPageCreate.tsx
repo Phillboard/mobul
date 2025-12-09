@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Code2, ArrowRight } from "lucide-react";
+import { Sparkles, Code2, ArrowRight, Palette } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
 
 export default function LandingPageCreate() {
@@ -31,8 +31,8 @@ export default function LandingPageCreate() {
           </p>
         </div>
 
-        {/* Two Simple Options */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        {/* Three Options */}
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {/* AI Builder */}
           <Card 
             className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
@@ -42,20 +42,48 @@ export default function LandingPageCreate() {
               <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4">
                 <Sparkles className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-2xl">Use AI Builder</CardTitle>
-              <CardDescription className="text-base">
-                Describe your page and let AI build it around your form
+              <CardTitle className="text-xl">AI Builder</CardTitle>
+              <CardDescription className="text-sm">
+                Describe your page, AI generates it
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <ul className="space-y-2 text-xs text-muted-foreground">
                 <li>✨ Describe what you want</li>
-                <li>📎 Optionally attach your mailer</li>
-                <li>🎯 AI wraps your form automatically</li>
+                <li>📎 Attach your mailer</li>
+                <li>🎯 AI generates HTML</li>
                 <li>⚡ Ready in seconds</li>
               </ul>
-              <Button className="w-full mt-4" size="lg">
+              <Button className="w-full mt-4" size="sm">
                 Start with AI
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Canvas Editor */}
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all hover:border-primary"
+            onClick={() => navigate('/landing-pages/new/canvas')}
+          >
+            <CardHeader>
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center mb-4">
+                <Palette className="h-8 w-8 text-white" />
+              </div>
+              <CardTitle className="text-xl">Canvas Editor</CardTitle>
+              <CardDescription className="text-sm">
+                Drag-and-drop visual design
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li>🎨 Drag-drop elements</li>
+                <li>📐 Pixel-perfect control</li>
+                <li>🔤 Template tokens</li>
+                <li>🤖 AI design assistant</li>
+              </ul>
+              <Button className="w-full mt-4" variant="secondary" size="sm">
+                Open Canvas
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </CardContent>
@@ -70,19 +98,19 @@ export default function LandingPageCreate() {
               <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4">
                 <Code2 className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-2xl">Use Manual Editor</CardTitle>
-              <CardDescription className="text-base">
-                Code and design with live preview
+              <CardTitle className="text-xl">Code Editor</CardTitle>
+              <CardDescription className="text-sm">
+                Write HTML with live preview
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>💻 Code editor with AI assistant</li>
-                <li>👁️ Live preview as you build</li>
-                <li>🎨 Full control over design</li>
-                <li>🚀 Deploy when ready</li>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li>💻 Full HTML control</li>
+                <li>👁️ Live preview</li>
+                <li>🔧 For developers</li>
+                <li>🚀 Maximum flexibility</li>
               </ul>
-              <Button className="w-full mt-4" variant="outline" size="lg">
+              <Button className="w-full mt-4" variant="outline" size="sm">
                 Start Coding
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

@@ -290,6 +290,12 @@ export default function LandingPageEditor() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          {existingPageId && (
+            <Button variant="outline" size="sm" onClick={() => navigate(`/landing-pages/${existingPageId}/canvas`)}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Canvas Editor
+            </Button>
+          )}
           {html && (
             <Button variant="outline" size="sm" onClick={handleStartOver}>
               <RotateCcw className="h-4 w-4 mr-2" />
