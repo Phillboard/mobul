@@ -338,7 +338,7 @@ const ALERT_THRESHOLDS = {
 
 ## Related Documentation
 
-- [Database Operations](/admin/docs/developer-guide/database)
-- [Edge Functions](/admin/docs/developer-guide/edge-functions)
-- [Security Architecture](/admin/docs/architecture/security)
-- [Monitoring & Alerts](/admin/docs/features/analytics)
+- [Database Operations](/docs/developer-guide/database)
+- [Edge Functions](/docs/developer-guide/edge-functions)
+- [Security Architecture](/docs/architecture/security)
+- [Monitoring & Alerts](/docs/features/analytics)

@@ -342,8 +342,8 @@ Client users see only their campaigns:
 
 ## Related Documentation
 
-- [Campaign Lifecycle](/admin/docs/features/campaign-lifecycle)
-- [Audiences & Recipients](/admin/docs/features/audiences)
-- [Gift Card Rewards](/admin/docs/features/gift-cards)
-- [Landing Pages](/admin/docs/features/landing-pages)
-- [Analytics & Reporting](/admin/docs/features/analytics)
+- [Campaign Lifecycle](/docs/features/campaign-lifecycle)
+- [Audiences & Recipients](/docs/features/audiences)
+- [Gift Card Rewards](/docs/features/gift-cards)
+- [Landing Pages](/docs/features/landing-pages)
+- [Analytics & Reporting](/docs/features/analytics)

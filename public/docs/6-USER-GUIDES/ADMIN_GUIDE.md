@@ -262,7 +262,7 @@ Use demo data for:
 
 ## Related Documentation
 
-- [Security →](/admin/docs/architecture/security)
-- [Data Model →](/admin/docs/architecture/data-model)
-- [Deployment →](/admin/docs/developer-guide/deployment)
-- [Operations →](/admin/docs/operations/index)
+- [Security →](/docs/architecture/security)
+- [Data Model →](/docs/architecture/data-model)
+- [Deployment →](/docs/developer-guide/deployment)
+- [Operations →](/docs/operations/operations-index)

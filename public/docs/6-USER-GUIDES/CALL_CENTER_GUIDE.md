@@ -320,6 +320,6 @@ Monitor your performance:
 
 ## Related Documentation
 
-- [Gift Cards →](/admin/docs/features/gift-cards)
-- [Campaigns →](/admin/docs/features/campaigns)
-- [Troubleshooting Gift Cards →](/admin/docs/troubleshooting/gift-cards)
+- [Gift Cards →](/docs/features/gift-cards)
+- [Campaigns →](/docs/features/campaigns)
+- [Troubleshooting Gift Cards →](/docs/troubleshooting/troubleshooting-gift-cards)

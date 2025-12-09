@@ -1,6 +1,16 @@
 /**
  * Gift Card Type Definitions
- * Updated for new brand-denomination system
+ * 
+ * **Gift Card System per PLATFORM_DICTIONARY.md:**
+ * - **Gift Card Brand:** The merchant brand (Amazon, Visa, Target, etc.)
+ * - **Denomination:** The dollar value of a gift card ($25, $50, $100)
+ * - **Brand-Denomination:** Specific combination of brand and value (e.g., "Amazon $25")
+ * - **Gift Card Pool:** Inventory of gift cards available for a Client
+ * - **Provisioning:** Process of allocating and delivering a gift card to a Recipient
+ *   Waterfall: CSV inventory → API (Tillo) → Buffer pool
+ * 
+ * @see PLATFORM_DICTIONARY.md for complete definitions
+ * @see src/lib/terminology.ts for constants
  */
 
 export interface GiftCardBrand {

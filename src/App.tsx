@@ -18,6 +18,7 @@ import { Loader2 } from "lucide-react";
 // Core pages (loaded immediately)
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 
 // Lazy-loaded pages
@@ -29,6 +30,9 @@ const AudienceDetail = lazy(() => import("./pages/AudienceDetail"));
 const RecipientDetail = lazy(() => import("./pages/RecipientDetail"));
 const Mail = lazy(() => import("./pages/Mail"));
 const MailDesigner = lazy(() => import("./pages/MailDesigner"));
+const NewMailDesigner = lazy(() => import("./pages/NewMailDesigner"));
+const NewLandingPageDesigner = lazy(() => import("./pages/NewLandingPageDesigner"));
+const NewEmailDesigner = lazy(() => import("./pages/NewEmailDesigner"));
 const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
 const APIDocumentation = lazy(() => import("./pages/APIDocumentation"));
 const GiftCards = lazy(() => import("./pages/GiftCards"));
@@ -133,6 +137,7 @@ const App = () => (
                   <Route path="/embed/gift-card" element={<EmbedGiftCard />} />
                   <Route path="/embed/gift-card/:campaignId" element={<EmbedGiftCard />} />
                   <Route path="/auth" element={<Auth />} />
+                  <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<TermsOfService />} />
                   <Route path="/f/:formSlug" element={<AceFormPublic />} />
@@ -176,6 +181,9 @@ const App = () => (
                   {/* Mail & Landing Pages */}
                   <Route path="/mail" element={<ProtectedRoute><Mail /></ProtectedRoute>} />
                   <Route path="/mail-designer/:id" element={<ProtectedRoute><MailDesigner /></ProtectedRoute>} />
+                  <Route path="/new-mail-designer/:id" element={<ProtectedRoute><NewMailDesigner /></ProtectedRoute>} />
+                  <Route path="/new-landing-designer/:id" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
+                  <Route path="/new-email-designer/:id" element={<ProtectedRoute><NewEmailDesigner /></ProtectedRoute>} />
                   {/* Redirects from old template routes */}
                   <Route path="/templates" element={<Navigate to="/mail" replace />} />
                   <Route path="/template-builder/:id" element={<Navigate to="/mail-designer/:id" replace />} />

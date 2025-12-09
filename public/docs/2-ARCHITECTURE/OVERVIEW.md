@@ -394,7 +394,6 @@ USING (
 
 ## Related Documentation
 
-- [Data Model →](/admin/docs/architecture/data-model)
-- [Security Model →](/admin/docs/architecture/security)
-- [Tech Stack →](/admin/docs/architecture/tech-stack)
-- [Scalability →](/admin/docs/architecture/scalability)
+- [Data Model →](/docs/architecture/data-model)
+- [Security Model →](/docs/architecture/security)
+- [Scalability →](/docs/architecture/scalability)

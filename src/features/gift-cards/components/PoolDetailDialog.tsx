@@ -49,6 +49,7 @@ import { PoolCardsTable } from "./PoolCardsTable";
 import { PoolBalanceHistory } from "./PoolBalanceHistory";
 import { PoolSettings } from "./PoolSettings";
 import { AutoPopulatePoolButton } from "./AutoPopulatePoolButton";
+import { USER_ROLES } from '@/lib/terminology';
 
 interface PoolDetailDialogProps {
   poolId: string | null;
@@ -78,7 +79,7 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
     },
   });
 
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === USER_ROLES.ADMIN;
 
   // Fetch pool details with brand info
   const { data: pool, isLoading: poolLoading } = useQuery({

@@ -37,7 +37,8 @@ export type CanvasLayer =
   | ImageLayer
   | ShapeLayer
   | QRCodeLayer
-  | MergeFieldLayer;
+  | TemplateTokenLayer
+  | MergeFieldLayer; // Legacy support
 
 // Base layer properties
 export interface BaseLayer {
@@ -94,7 +95,20 @@ export interface QRCodeLayer extends BaseLayer {
   errorCorrectionLevel?: "L" | "M" | "Q" | "H";
 }
 
-// Merge field layer (for personalization)
+// Template token layer (for personalization)
+// TERMINOLOGY: Use "template_token" not "merge_field" (see PLATFORM_DICTIONARY.md)
+export interface TemplateTokenLayer extends BaseLayer {
+  type: "template_token";
+  tokenName: string; // e.g., "{{first_name}}", "{{unique_code}}"
+  defaultValue?: string;
+  fontSize: number;
+  fontFamily: string;
+  fontWeight?: "normal" | "bold";
+  fill: string;
+  align?: "left" | "center" | "right";
+}
+
+// Legacy: @deprecated Use TemplateTokenLayer instead
 export interface MergeFieldLayer extends BaseLayer {
   type: "merge_field";
   fieldName: string;
@@ -115,26 +129,40 @@ export const MAIL_DIMENSIONS: Record<MailSize, { width: number; height: number }
   "trifold": { width: 2550, height: 3300 }, // 8.5"x11" trifold at 300 DPI
 };
 
-// Merge fields available for personalization
-export const MERGE_FIELDS = [
+/**
+ * STANDARD TEMPLATE TOKENS
+ * 
+ * TERMINOLOGY: Use "template_token" not "merge_field" (see PLATFORM_DICTIONARY.md)
+ * These are the approved personalization variables for mail, landing pages, and emails.
+ * 
+ * @see src/lib/terminology.ts for constants version
+ * @see PLATFORM_DICTIONARY.md for complete definitions
+ */
+export const TEMPLATE_TOKENS = [
   { value: "{{first_name}}", label: "First Name" },
   { value: "{{last_name}}", label: "Last Name" },
   { value: "{{full_name}}", label: "Full Name" },
+  { value: "{{unique_code}}", label: "Unique Code" }, // PREFERRED over customer_code/redemption_code
+  { value: "{{company_name}}", label: "Company Name" },
+  { value: "{{purl}}", label: "Personal URL" },
+  { value: "{{qr_code}}", label: "QR Code" },
+  { value: "{{gift_card_amount}}", label: "Gift Card Amount" },
+  // Additional context fields
   { value: "{{email}}", label: "Email" },
   { value: "{{phone}}", label: "Phone" },
-  { value: "{{company}}", label: "Company" },
   { value: "{{address1}}", label: "Address Line 1" },
   { value: "{{address2}}", label: "Address Line 2" },
   { value: "{{city}}", label: "City" },
   { value: "{{state}}", label: "State" },
   { value: "{{zip}}", label: "ZIP Code" },
-  { value: "{{purl}}", label: "Personal URL" },
-  { value: "{{qr_code}}", label: "QR Code" },
-  { value: "{{customer_code}}", label: "Customer Code" },
-  { value: "{{redemption_code}}", label: "Redemption Code" },
-  { value: "{{event_name}}", label: "Event Name" },
-  { value: "{{event_date}}", label: "Event Date" },
-  { value: "{{event_time}}", label: "Event Time" },
-  { value: "{{venue_name}}", label: "Venue Name" },
-  { value: "{{expiry_date}}", label: "Expiry Date" },
-];
+] as const;
+
+/**
+ * @deprecated Use TEMPLATE_TOKENS instead
+ * Legacy constant kept for backward compatibility
+ */
+export const MERGE_FIELDS = [
+  ...TEMPLATE_TOKENS,
+  { value: "{{customer_code}}", label: "Customer Code (legacy - use unique_code)" },
+  { value: "{{redemption_code}}", label: "Redemption Code (legacy - use unique_code)" },
+] as const;

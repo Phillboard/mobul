@@ -276,7 +276,7 @@ Database function callable via API for complex operations.
 
 ## Related Documentation
 
-- [Platform Overview →](/admin/docs/getting-started/overview)
-- [Campaign Lifecycle →](/admin/docs/features/campaign-lifecycle)
-- [Data Model →](/admin/docs/architecture/data-model)
-- [API Reference →](/admin/docs/api-reference/rest-api)
+- [Platform Overview →](/docs/getting-started/overview)
+- [Campaign Lifecycle →](/docs/features/campaign-lifecycle)
+- [Data Model →](/docs/architecture/data-model)
+- [API Reference →](/docs/api-reference/rest-api)

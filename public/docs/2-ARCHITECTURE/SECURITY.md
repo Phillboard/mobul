@@ -494,7 +494,7 @@ Contact: security@mobulace.com
 
 ## Related Documentation
 
-- [Architecture Overview →](/admin/docs/architecture/overview)
-- [Data Model →](/admin/docs/architecture/data-model)
-- [API Authentication →](/admin/docs/api-reference/authentication)
-- [User Management →](/admin/docs/user-guides/admin-guide)
+- [Architecture Overview →](/docs/architecture/architecture-overview)
+- [Data Model →](/docs/architecture/data-model)
+- [API Authentication →](/docs/api-reference/authentication)
+- [User Management →](/docs/user-guides/admin-guide)

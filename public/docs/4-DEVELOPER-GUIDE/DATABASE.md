@@ -93,6 +93,6 @@ USING (
 
 ## Related Documentation
 
-- [Development Setup](/admin/docs/developer-guide/setup)
-- [Edge Functions](/admin/docs/developer-guide/edge-functions)
-- [Security Architecture](/admin/docs/architecture/security)
+- [Development Setup](/docs/developer-guide/setup)
+- [Edge Functions](/docs/developer-guide/edge-functions)
+- [Security Architecture](/docs/architecture/security)

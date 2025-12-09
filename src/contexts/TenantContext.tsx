@@ -3,13 +3,33 @@ import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { useAuth } from './AuthContext';
 
+/**
+ * Organization entity
+ * 
+ * Per PLATFORM_DICTIONARY.md:
+ * - 'platform' = ACE Engage itself (top-level)
+ * - 'agency' = Marketing agency/reseller using ACE Engage
+ * 
+ * Note: 'internal' is legacy, should be 'platform'
+ */
 interface Organization {
   id: string;
   name: string;
-  type: 'internal' | 'agency';
+  type: 'internal' | 'agency' | 'platform'; // 'internal' is legacy for 'platform'
   settings_json: any;
 }
 
+/**
+ * Client entity
+ * 
+ * Per PLATFORM_DICTIONARY.md:
+ * A business that the Agency serves. The end customer of the Agency.
+ * Example: "Joe's Auto Dealership" (client of ABC Marketing Agency)
+ * 
+ * NOT to be confused with:
+ * - Customer (person who receives mail)
+ * - API client (software)
+ */
 interface Client {
   id: string;
   org_id: string;

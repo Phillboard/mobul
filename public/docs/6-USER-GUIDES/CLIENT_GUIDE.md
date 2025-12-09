@@ -253,7 +253,7 @@ Once a campaign is in production, changes are limited. Contact your agency or su
 
 ## Related Documentation
 
-- [Campaigns →](/admin/docs/features/campaigns)
-- [Contacts →](/admin/docs/features/audiences)
-- [Gift Cards →](/admin/docs/features/gift-cards)
-- [Analytics →](/admin/docs/features/analytics)
+- [Campaigns →](/docs/features/campaigns)
+- [Contacts →](/docs/features/audiences)
+- [Gift Cards →](/docs/features/gift-cards)
+- [Analytics →](/docs/features/analytics)

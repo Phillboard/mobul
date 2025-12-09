@@ -5,6 +5,7 @@ import { useTenant } from '@app/providers/TenantProvider';
 import { CreditCard, DollarSign, Download, TrendingUp, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { USER_ROLES } from '@/lib/terminology';
 import {
   Table,
   TableBody,
@@ -18,9 +19,9 @@ export function BillingSettings() {
   const { roles, hasPermission } = useAuth();
   const { currentClient, currentOrg } = useTenant();
 
-  const isAdmin = roles.some(r => r.role === 'admin');
-  const isAgencyOwner = roles.some(r => r.role === 'agency_owner');
-  const isCompanyOwner = roles.some(r => r.role === 'company_owner');
+  const isAdmin = roles.some(r => r.role === USER_ROLES.ADMIN);
+  const isAgencyOwner = roles.some(r => r.role === USER_ROLES.AGENCY_OWNER);
+  const isCompanyOwner = roles.some(r => r.role === USER_ROLES.CLIENT_OWNER);
   const canViewBilling = hasPermission('settings.billing');
 
   if (!canViewBilling) {

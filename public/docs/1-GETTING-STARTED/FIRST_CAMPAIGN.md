@@ -257,10 +257,10 @@ After your first campaign, analyze results:
 
 ## Next Steps
 
-- [Understanding Campaign Lifecycle →](/admin/docs/features/campaign-lifecycle)
-- [Landing Page Best Practices →](/admin/docs/features/landing-pages)
-- [Analytics Deep Dive →](/admin/docs/features/analytics)
-- [Gift Card Strategy →](/admin/docs/features/gift-cards)
+- [Understanding Campaign Lifecycle →](/docs/features/campaign-lifecycle)
+- [Landing Page Best Practices →](/docs/features/landing-pages)
+- [Analytics Deep Dive →](/docs/features/analytics)
+- [Gift Card Strategy →](/docs/features/gift-cards)
 
 ## Getting Help
 

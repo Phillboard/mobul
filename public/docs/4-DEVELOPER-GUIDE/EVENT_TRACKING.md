@@ -64,5 +64,5 @@ await supabase.from('events').insert({
 
 ## Related Documentation
 
-- [Analytics](/admin/docs/features/analytics)
-- [Campaign Lifecycle](/admin/docs/features/campaign-lifecycle)
+- [Analytics](/docs/features/analytics)
+- [Campaign Lifecycle](/docs/features/campaign-lifecycle)

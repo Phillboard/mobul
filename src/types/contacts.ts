@@ -26,7 +26,7 @@ export interface ContactListWithCount extends ContactList {
 }
 
 export interface ContactFormData {
-  customer_code: string; // Required unique code (also referred to as unique_code)
+  customer_code: string; // Required unique code - database uses customer_code, prefer unique_code in UI/code (see PLATFORM_DICTIONARY.md)
   first_name?: string;
   last_name?: string;
   email?: string;

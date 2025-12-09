@@ -486,7 +486,7 @@ JavaScript for client websites:
 
 ## Related Documentation
 
-- [Landing Pages](/admin/docs/features/landing-pages)
-- [Campaign Tracking](/admin/docs/features/analytics)
-- [Event Tracking](/admin/docs/developer-guide/event-tracking)
-- [Campaign Management](/admin/docs/features/campaigns)
+- [Landing Pages](/docs/features/landing-pages)
+- [Campaign Tracking](/docs/features/analytics)
+- [Event Tracking](/docs/developer-guide/event-tracking)
+- [Campaign Management](/docs/features/campaigns)

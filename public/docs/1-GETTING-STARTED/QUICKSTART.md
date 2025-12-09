@@ -206,7 +206,7 @@ If you handle customer redemption calls:
 
 ## Next Steps
 
-- [Create Your First Campaign →](/admin/docs/getting-started/first-campaign)
-- [Understanding Audiences →](/admin/docs/features/audiences)
-- [Platform Overview →](/admin/docs/getting-started/overview)
-- [Gift Card System →](/admin/docs/features/gift-cards)
+- [Create Your First Campaign →](/docs/getting-started/first-campaign)
+- [Understanding Audiences →](/docs/features/audiences)
+- [Platform Overview →](/docs/getting-started/overview)
+- [Gift Card System →](/docs/features/gift-cards)

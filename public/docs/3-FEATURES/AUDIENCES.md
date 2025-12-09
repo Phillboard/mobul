@@ -450,7 +450,7 @@ const { data: timeline } = await supabase
 
 ## Related Documentation
 
-- [Campaigns](/admin/docs/features/campaigns)
-- [Campaign Lifecycle](/admin/docs/features/campaign-lifecycle)
-- [Gift Card Rewards](/admin/docs/features/gift-cards)
-- [Lead Marketplace](/admin/docs/features/lead-marketplace)
+- [Campaigns](/docs/features/campaigns)
+- [Campaign Lifecycle](/docs/features/campaign-lifecycle)
+- [Gift Card Rewards](/docs/features/gift-cards)
+- [Lead Marketplace](/docs/features/lead-marketplace)

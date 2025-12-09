@@ -75,8 +75,10 @@ export function getLayerTypeName(type: string): string {
       return 'Shape';
     case 'qr_code':
       return 'QR Code';
+    case 'template_token':
+      return 'Template Token';
     case 'merge_field':
-      return 'Merge Field';
+      return 'Merge Field (legacy)';
     default:
       return type;
   }
@@ -195,8 +197,10 @@ export function validateLayer(layer: CanvasLayer): boolean {
       return true;
     case 'qr_code':
       return !!layer.data;
+    case 'template_token':
+      return !!layer.tokenName;
     case 'merge_field':
-      return !!layer.fieldName;
+      return !!layer.fieldName; // legacy
     default:
       return true;
   }

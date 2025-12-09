@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
 import { supabase } from '@core/services/supabase';
+import { USER_ROLES } from '@/lib/terminology';
 import {
   useReactTable,
   getCoreRowModel,
@@ -44,8 +45,8 @@ export function SecuritySettings() {
   const [searchQuery, setSearchQuery] = useState("");
     const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
 
-  const isAdmin = roles.some(r => r.role === 'admin');
-  const isTechSupport = roles.some(r => r.role === 'tech_support');
+  const isAdmin = roles.some(r => r.role === USER_ROLES.ADMIN);
+  const isTechSupport = roles.some(r => r.role === USER_ROLES.TECH_SUPPORT);
   const canViewSecurity = hasPermission('platform.security.manage') || hasPermission('settings.security.view');
 
   useEffect(() => {

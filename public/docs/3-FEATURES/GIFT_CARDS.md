@@ -760,8 +760,8 @@ supabase functions logs send-sms-opt-in --tail
 
 ## Related Documentation
 
-- [Campaigns](/admin/docs/features/campaigns)
-- [Call Center Guide](/admin/docs/user-guides/call-center-guide)
-- [Redemption Workflows](/admin/docs/features/campaign-lifecycle)
-- [SMS Delivery](/admin/docs/developer-guide/edge-functions)
-- [Troubleshooting Guide](/admin/docs/troubleshooting/gift-cards) (Comprehensive)
+- [Campaigns](/docs/features/campaigns)
+- [Call Center Guide](/docs/user-guides/call-center-guide)
+- [Redemption Workflows](/docs/features/campaign-lifecycle)
+- [SMS Delivery](/docs/developer-guide/edge-functions)
+- [Troubleshooting Guide](/docs/troubleshooting/troubleshooting-gift-cards)

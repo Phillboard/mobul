@@ -171,11 +171,11 @@ Six primary roles with granular permissions:
 
 New to Mobul ACE? Follow this learning path:
 
-1. [Quick Start Guide →](/admin/docs/getting-started/quickstart)
-2. [Create Your First Campaign →](/admin/docs/getting-started/first-campaign)
-3. [Key Terminology →](/admin/docs/getting-started/terminology)
-4. [Campaign Lifecycle →](/admin/docs/features/campaign-lifecycle)
-5. [Analytics Overview →](/admin/docs/features/analytics)
+1. [Quick Start Guide →](/docs/getting-started/quickstart)
+2. [Create Your First Campaign →](/docs/getting-started/first-campaign)
+3. [Key Terminology →](/docs/getting-started/terminology)
+4. [Campaign Lifecycle →](/docs/features/campaign-lifecycle)
+5. [Analytics Overview →](/docs/features/analytics)
 
 ## Platform Strengths
 
@@ -202,7 +202,7 @@ Target homeowners by service area, drive phone inquiries, track call outcomes, r
 
 ## Next Steps
 
-- [Architecture Overview →](/admin/docs/architecture/overview)
-- [Database Schema →](/admin/docs/architecture/data-model)
-- [Feature Documentation →](/admin/docs/features/campaigns)
-- [API Reference →](/admin/docs/api-reference/rest-api)
+- [Architecture Overview →](/docs/architecture/architecture-overview)
+- [Database Schema →](/docs/architecture/data-model)
+- [Feature Documentation →](/docs/features/campaigns)
+- [API Reference →](/docs/api-reference/rest-api)

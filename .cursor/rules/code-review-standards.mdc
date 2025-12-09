@@ -1,0 +1,71 @@
+---
+description: Code Review Standards - How to perform system audits
+globs: ["**/*.ts", "**/*.tsx"]
+---
+
+# Code Review Standards
+
+When reviewing code during Phase 2, apply these standards:
+
+## TypeScript Quality Checklist
+
+For every file reviewed:
+1. **No `any` types** - Replace with proper types or `unknown`
+2. **No type assertions** without documentation why
+3. **All functions have return types** - Explicit, not inferred
+4. **All parameters typed** - No implicit any
+5. **Interfaces over types** for objects (prefer `interface` keyword)
+6. **Proper null handling** - No `!` assertions, use proper checks
+
+## Error Handling Checklist
+
+1. **All async functions** have try/catch
+2. **Errors are typed** - Not caught as `any`
+3. **User-facing errors** show toast/message
+4. **Errors are logged** with context
+5. **No swallowed errors** - Empty catch blocks
+
+## React Component Checklist
+
+1. **Props interface defined** and exported if reused
+2. **Loading states handled** - Skeleton or spinner
+3. **Error states handled** - Error message or boundary
+4. **Empty states handled** - Helpful message
+5. **Accessibility** - Labels, ARIA where needed
+6. **No inline functions in JSX** where performance matters
+
+## Hook Quality Checklist
+
+1. **Proper dependencies** in useEffect/useMemo/useCallback
+2. **Cleanup functions** in useEffect where needed
+3. **Query keys are unique** and follow conventions
+4. **Mutations invalidate** correct queries
+5. **Error handling** in async operations
+
+## Edge Function Checklist
+
+1. **CORS headers** in response
+2. **Auth check** at start (unless public)
+3. **Input validation** with schema (Zod)
+4. **Consistent error format** - `{ error: string, code: string }`
+5. **Proper status codes** - 400, 401, 403, 404, 500
+6. **No secrets logged**
+7. **Request ID** for tracing
+
+## Review Output Format
+
+After reviewing a file, report:
+
+```
+📝 Reviewed: [filename]
+
+Issues Found:
+- [severity] [description] - LINE [number]
+
+Fixes Applied:
+- [what was fixed]
+
+Status: ✅ Clean / ⚠️ Needs Attention / ❌ Critical Issues
+```
+
+$END$

@@ -655,7 +655,7 @@ call_sessions.recipient_id → recipients.id
 
 ## Related Documentation
 
-- [Architecture Overview →](/admin/docs/architecture/overview)
-- [Security Model →](/admin/docs/architecture/security)
-- [Scalability →](/admin/docs/architecture/scalability)
-- [API Reference →](/admin/docs/api-reference/rest-api)
+- [Architecture Overview →](/docs/architecture/architecture-overview)
+- [Security Model →](/docs/architecture/security)
+- [Scalability →](/docs/architecture/scalability)
+- [API Reference →](/docs/api-reference/rest-api)

@@ -441,7 +441,7 @@ Track recipient journey across touchpoints:
 
 ## Related Documentation
 
-- [Campaigns](/admin/docs/features/campaigns)
-- [Campaign Lifecycle](/admin/docs/features/campaign-lifecycle)
-- [Event Tracking](/admin/docs/developer-guide/event-tracking)
-- [REST API](/admin/docs/api-reference/rest-api)
+- [Campaigns](/docs/features/campaigns)
+- [Campaign Lifecycle](/docs/features/campaign-lifecycle)
+- [Event Tracking](/docs/developer-guide/event-tracking)
+- [REST API](/docs/api-reference/rest-api)

@@ -1,22 +1,18 @@
+/**
+ * GrapesJSLandingPageEditor - LEGACY FILE - SCHEDULED FOR REMOVAL
+ * 
+ * TODO Phase 3: Delete this file entirely and replace with new LandingPageDesigner
+ * See: LAUNCH_PRD.md Phase 3E Task 3.25
+ * 
+ * This file uses removed GrapesJS dependencies and will not work after Phase 3A cleanup.
+ * DO NOT USE - Placeholder until new designer is complete.
+ */
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import StudioEditor from "@grapesjs/studio-sdk/react";
-import { 
-  tableComponent, 
-  fsLightboxComponent, 
-  lightGalleryComponent, 
-  swiperComponent, 
-  iconifyComponent, 
-  accordionComponent, 
-  flexComponent, 
-  rteProseMirror, 
-  canvasFullSize, 
-  canvasEmptyState, 
-  canvasGridMode, 
-  layoutSidebarButtons, 
-  youtubeAssetProvider 
-} from '@grapesjs/studio-sdk-plugins';
-import "@grapesjs/studio-sdk/style";
+// import StudioEditor from "@grapesjs/studio-sdk/react"; // REMOVED - Phase 3
+// All GrapesJS plugins removed - Phase 3
+// import "@grapesjs/studio-sdk/style"; // REMOVED - Phase 3
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";

@@ -1,16 +1,30 @@
+/**
+ * MailDesigner - LEGACY FILE - NEEDS REFACTORING
+ * 
+ * TODO Phase 3: Replace this GrapesJS-based designer with new AI-first designer
+ * See: LAUNCH_PRD.md Phase 3 - AI-First Designer System
+ * 
+ * This file uses removed dependencies and will not work after Phase 3A cleanup.
+ * DO NOT USE - Placeholder until new designer is complete.
+ */
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import grapesjs, { Editor } from "grapesjs";
-import gjsBasicBlocks from "grapesjs-blocks-basic";
-import { mailGrapesJSConfig } from "@/config/grapesjs-mail.config";
+// import grapesjs, { Editor } from "grapesjs"; // REMOVED - Phase 3
+// import gjsBasicBlocks from "grapesjs-blocks-basic"; // REMOVED - Phase 3
+// import { mailGrapesJSConfig } from "@/config/grapesjs-mail.config"; // REMOVED - Phase 3
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Save, Eye, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logger } from '@/lib/services/logger';
-import type { GrapesJSData } from "@/types/grapesjs";
+// import type { GrapesJSData } from "@/types/grapesjs"; // REMOVED - Phase 3
+
+// Temporary type until new designer is built
+type GrapesJSData = any;
+type Editor = any;
 
 export default function MailDesigner() {
   const { id } = useParams();

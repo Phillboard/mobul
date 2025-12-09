@@ -564,7 +564,7 @@ supabase gen types typescript --local > src/integrations/supabase/types.ts
 
 ## Related Documentation
 
-- [Edge Functions](/admin/docs/developer-guide/edge-functions)
-- [Database Operations](/admin/docs/developer-guide/database)
-- [Event Tracking](/admin/docs/developer-guide/event-tracking)
-- [Architecture Overview](/admin/docs/architecture/overview)
+- [Edge Functions](/docs/developer-guide/edge-functions)
+- [Database Operations](/docs/developer-guide/database)
+- [Event Tracking](/docs/developer-guide/event-tracking)
+- [Architecture Overview](/docs/architecture/architecture-overview)

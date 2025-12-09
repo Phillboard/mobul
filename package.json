@@ -12,8 +12,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.17.0",
-    "@grapesjs/studio-sdk": "^1.0.56",
-    "@grapesjs/studio-sdk-plugins": "^1.0.30",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^3.10.0",
     "cheerio": "^1.0.0-rc.12",
@@ -65,9 +63,6 @@
     "embla-carousel-react": "^8.6.0",
     "fabric": "^6.9.0",
     "framer-motion": "^12.23.24",
-    "grapesjs": "^0.21.10",
-    "grapesjs-blocks-basic": "^1.0.2",
-    "grapesjs-preset-webpage": "^1.0.3",
     "gray-matter": "^4.0.3",
     "immer": "^11.0.0",
     "input-otp": "^1.4.2",

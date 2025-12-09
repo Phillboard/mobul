@@ -96,6 +96,6 @@ POST /v1/gift-cards/provision
 
 ## Related Documentation
 
-- [Authentication](/admin/docs/api-reference/authentication)
-- [Webhooks](/admin/docs/api-reference/webhooks)
-- [Examples](/admin/docs/api-reference/examples)
+- [Authentication](/docs/api-reference/authentication)
+- [Webhooks](/docs/api-reference/webhooks)
+- [Examples](/docs/api-reference/examples)

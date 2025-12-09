@@ -1,0 +1,102 @@
+---
+description: Security Audit Rules - Standards for Phase 4 security review
+globs: ["**/*.ts", "**/supabase/functions/**"]
+---
+
+# Security Audit Standards
+
+## Secrets Detection
+
+Search for these patterns and flag if found:
+
+```
+NEVER IN CODE:
+- API keys (sk_live_, pk_live_, api_key=, apiKey:)
+- Passwords (password=, pwd=)
+- Tokens (token=, bearer)
+- Connection strings with credentials
+- Private keys (-----BEGIN PRIVATE KEY-----)
+- AWS credentials (AKIA)
+```
+
+## Input Validation Rules
+
+Every endpoint must:
+1. Define expected input schema with Zod
+2. Validate before processing
+3. Return 400 with details for invalid input
+4. Never trust client-provided IDs without verification
+
+Example pattern:
+```typescript
+const schema = z.object({
+  id: z.string().uuid(),
+  amount: z.number().positive(),
+});
+
+const parsed = schema.safeParse(body);
+if (!parsed.success) {
+  return new Response(
+    JSON.stringify({ error: 'Invalid input', details: parsed.error }),
+    { status: 400 }
+  );
+}
+```
+
+## Authentication Requirements
+
+Public endpoints (no auth needed):
+- Webhook receivers (use signature validation)
+- Public form submissions
+- PURL landing pages
+- Redemption code validation
+
+All other endpoints MUST:
+1. Extract JWT from Authorization header
+2. Verify JWT with Supabase
+3. Check user has required role/permission
+4. Verify tenant access for multi-tenant data
+
+## SQL Injection Prevention
+
+NEVER:
+```typescript
+// BAD - SQL injection risk
+const query = `SELECT * FROM users WHERE id = '${userId}'`;
+```
+
+ALWAYS:
+```typescript
+// GOOD - Parameterized query
+const { data } = await supabase
+  .from('users')
+  .select('*')
+  .eq('id', userId);
+```
+
+## XSS Prevention
+
+Flag any use of:
+- `dangerouslySetInnerHTML` - Verify content is sanitized
+- Direct DOM manipulation with `.innerHTML`
+- User content rendered without escaping
+
+## Sensitive Data Logging
+
+NEVER log:
+- Full credit card numbers
+- Passwords
+- Full API keys (only last 4 chars)
+- Gift card codes (mask middle digits)
+- Social security numbers
+- Full addresses for PII
+
+## Rate Limiting Requirements
+
+Public endpoints MUST have rate limiting:
+- Form submissions: 10/minute per IP
+- Authentication: 5/minute per IP
+- API endpoints: 100/minute per user
+- Webhooks: 1000/minute per source
+
+$END$

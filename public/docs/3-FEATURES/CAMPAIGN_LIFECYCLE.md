@@ -470,7 +470,7 @@ Admins can manually complete campaigns:
 
 ## Related Documentation
 
-- [Campaigns Overview](/admin/docs/features/campaigns)
-- [Approval Workflows](/admin/docs/user-guides/admin-guide)
-- [Gift Card Provisioning](/admin/docs/features/gift-cards)
-- [Analytics & Reporting](/admin/docs/features/analytics)
+- [Campaigns Overview](/docs/features/campaigns)
+- [Approval Workflows](/docs/user-guides/admin-guide)
+- [Gift Card Provisioning](/docs/features/gift-cards)
+- [Analytics & Reporting](/docs/features/analytics)

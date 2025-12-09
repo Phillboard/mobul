@@ -10,6 +10,7 @@ import { CreateAPIKeyDialog } from "@/components/api/CreateAPIKeyDialog";
 import { useState } from "react";
 import { useToast } from '@shared/hooks';
 import { format } from "date-fns";
+import { USER_ROLES } from '@/lib/terminology';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,8 +31,8 @@ export function APISettings() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
 
-  const isAdmin = roles.some(r => r.role === 'admin');
-  const isDeveloper = roles.some(r => r.role === 'developer');
+  const isAdmin = roles.some(r => r.role === USER_ROLES.ADMIN);
+  const isDeveloper = roles.some(r => r.role === USER_ROLES.DEVELOPER);
   const canManageAPI = hasPermission('platform.api.manage') || hasPermission('settings.api');
 
   const handleCopyKey = (keyPrefix: string) => {

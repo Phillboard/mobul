@@ -67,5 +67,5 @@ if (signature !== expectedSignature) {
 
 ## Related Documentation
 
-- [REST API](/admin/docs/api-reference/rest-api)
-- [Edge Functions](/admin/docs/developer-guide/edge-functions)
+- [REST API](/docs/api-reference/rest-api)
+- [Edge Functions](/docs/developer-guide/edge-functions)

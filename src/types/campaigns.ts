@@ -2,7 +2,20 @@
  * Campaign Type Definitions
  * 
  * Centralized types for campaigns, related entities, and business logic.
- * Used throughout the application for type safety and consistency.
+ * 
+ * **Campaign per PLATFORM_DICTIONARY.md:**
+ * A single direct mail marketing initiative with defined audience, design, and rewards.
+ * Contains: Recipients (Customers who receive mail), mail design, gift card configuration, conditions.
+ * 
+ * **Lifecycle:** Draft → Scheduled → In Progress → Completed
+ * 
+ * **Recipient:** A Customer who is part of a specific Campaign with a unique_code for tracking.
+ * 
+ * **Condition:** A trigger rule that determines when rewards are given
+ * (form submission, QR scan, call completed, time delay).
+ * 
+ * @see PLATFORM_DICTIONARY.md for complete definitions
+ * @see src/lib/terminology.ts for constants
  */
 
 import { Database } from "@/integrations/supabase/types";

@@ -287,7 +287,7 @@ Configure how clients are billed:
 
 ## Related Documentation
 
-- [Campaigns →](/admin/docs/features/campaigns)
-- [Gift Cards →](/admin/docs/features/gift-cards)
-- [Admin Guide →](/admin/docs/user-guides/admin-guide)
-- [Client Guide →](/admin/docs/user-guides/client-guide)
+- [Campaigns →](/docs/features/campaigns)
+- [Gift Cards →](/docs/features/gift-cards)
+- [Admin Guide →](/docs/user-guides/admin-guide)
+- [Client Guide →](/docs/user-guides/client-guide)

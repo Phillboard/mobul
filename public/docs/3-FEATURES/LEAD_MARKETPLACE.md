@@ -536,7 +536,7 @@ Response:
 
 ## Related Documentation
 
-- [Campaigns](/admin/docs/features/campaigns)
-- [Audiences](/admin/docs/features/audiences)
-- [Analytics](/admin/docs/features/analytics)
-- [REST API](/admin/docs/api-reference/rest-api)
+- [Campaigns](/docs/features/campaigns)
+- [Audiences](/docs/features/audiences)
+- [Analytics](/docs/features/analytics)
+- [REST API](/docs/api-reference/rest-api)

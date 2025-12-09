@@ -551,7 +551,7 @@ All landing pages served over HTTPS:
 
 ## Related Documentation
 
-- [PURLs & QR Codes](/admin/docs/features/purl-qr-codes)
-- [Campaign Management](/admin/docs/features/campaigns)
-- [Gift Card Rewards](/admin/docs/features/gift-cards)
-- [Analytics](/admin/docs/features/analytics)
+- [PURLs & QR Codes](/docs/features/purl-qr-codes)
+- [Campaign Management](/docs/features/campaigns)
+- [Gift Card Rewards](/docs/features/gift-cards)
+- [Analytics](/docs/features/analytics)
