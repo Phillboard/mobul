@@ -3,9 +3,9 @@
 > **✅ API-FIRST ARCHITECTURE:** Fully refactored with edge functions, business rules, and comprehensive security.  
 > **📚 Complete Documentation:** See [API_FIRST_MASTER_INDEX.md](API_FIRST_MASTER_INDEX.md) for API reference and deployment guides.
 
-**Version:** 2.0.0  
-**Status:** 🚀 Production Ready (API-First)  
-**Tech Stack:** React 18 + TypeScript + Supabase Edge Functions + Shadcn UI
+**Version:** 3.0.0  
+**Status:** 🚀 Production Ready (OAuth + AI Designer)  
+**Tech Stack:** React 18 + TypeScript + Supabase + Shadcn UI + Gemini AI
 
 ---
 
@@ -14,13 +14,15 @@
 ACE Engage is a **complete direct mail marketing platform** with API-first architecture, featuring gift card rewards, campaign management, and comprehensive analytics.
 
 ### Core Features:
+- ✅ **OAuth Authentication** - Google & Apple Sign-In
+- ✅ **AI-First Designer** - Unified design system for mail, landing pages, emails
 - ✅ **Campaign Management** - Budget validation & real-time tracking
 - ✅ **Gift Card System** - Brand-denomination marketplace with unified provisioning
-- ✅ **Contact Management** - CRM with data enrichment
-- ✅ **Landing Pages** - AI-powered page generation
+- ✅ **Contact Management** - CRM with data enrichment & template tokens
+- ✅ **Landing Pages** - AI-powered generation with conversation-based design
 - ✅ **Call Center** - SMS opt-in compliant gift card delivery
 - ✅ **Analytics** - Complete billing and performance tracking
-- ✅ **API-First** - All business logic server-side with edge functions
+- ✅ **API-First** - 66 edge functions with server-side business logic
 
 ---
 
@@ -30,7 +32,9 @@ ACE Engage is a **complete direct mail marketing platform** with API-first archi
 - Node.js 18+
 - Supabase CLI (`npm install -g supabase`)
 - Supabase account
+- Gemini API key (for AI features)
 - Twilio account (for SMS)
+- Google/Apple OAuth credentials (optional)
 
 ### Setup (10 minutes):
 
@@ -41,8 +45,9 @@ cd mobul
 npm install --legacy-peer-deps
 
 # 2. Configure environment
-cp .env.example .env
-# Add your Supabase and Twilio credentials
+cp .env.example .env.local
+# Add your Supabase, Gemini, and Twilio credentials
+# See docs/ENVIRONMENT_SETUP.md for complete guide
 
 # 3. Deploy edge functions
 .\run-deployment-pipeline.ps1

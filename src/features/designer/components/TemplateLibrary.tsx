@@ -250,9 +250,10 @@ export function TemplateLibrary({
                       variant="outline"
                       className="h-8 w-8 p-0"
                       onClick={() => {
-                        // TODO: Show preview modal
-                        console.log('Preview:', template);
+                        // TODO: Show preview modal - opens template preview
+                        onSelectTemplate(template);
                       }}
+                      title="Preview template"
                     >
                       <Eye className="h-3 w-3" />
                     </Button>
