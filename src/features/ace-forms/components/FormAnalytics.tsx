@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { supabase } from '@core/services/supabase';
 import { BarChart3, TrendingUp, Users, CheckCircle, AlertCircle, Clock } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Progress } from "@/shared/components/ui/progress";
 
 interface FormAnalyticsProps {
   formId: string;

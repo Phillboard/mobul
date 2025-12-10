@@ -3,10 +3,10 @@
  * Shows inventory counts, pricing, and provides quick actions
  */
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Switch } from "@/shared/components/ui/switch";
 import { Upload, Settings, DollarSign, Package, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { PricingConfigDialog } from "./PricingConfigDialog";

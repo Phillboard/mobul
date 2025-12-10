@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { AceFormsSidebar } from "./AceFormsSidebar";
 
 interface AceFormsLayoutProps {

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/shared/components/ui/button";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/shared/components/ui/dialog";
 
 interface DocumentationFeedbackProps {
   pageId: string;

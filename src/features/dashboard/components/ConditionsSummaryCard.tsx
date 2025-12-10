@@ -1,8 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Badge } from "@/shared/components/ui/badge";
 import { CheckCircle2, Clock, Zap, TrendingUp } from "lucide-react";
 
 interface ConditionsSummaryCardProps {

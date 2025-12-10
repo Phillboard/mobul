@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { PaginatedUser } from "@/hooks/useManageableUsersPaginated";
-import { Badge } from "@/components/ui/badge";
+import { PaginatedUser } from '@/core/auth/hooks';
+import { Badge } from "@/shared/components/ui/badge";
 import { roleDisplayNames, roleColors } from '@core/auth/roles';
 import { formatDistanceToNow } from "date-fns";
 import { UserActionMenu } from "./UserActionMenu";

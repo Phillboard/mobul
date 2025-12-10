@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Smartphone, Wallet, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { detectPlatform, getWalletName, supportsWallet } from '@/lib/web/walletDetection';
+import { Button } from "@/shared/components/ui/button";
+import { detectPlatform, getWalletName, supportsWallet } from '@/core/services/web/walletDetection';
 import { useToast } from '@shared/hooks';
 import { GiftCardRedemption } from "@/types/aceForms";
 import { cn } from '@shared/utils/cn';

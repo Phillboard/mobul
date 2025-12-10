@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Plus, Phone, Mail, Calendar, MessageSquare, FileText } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
-import { useActivities } from "@/hooks/useActivities";
-import { UniversalActivityFeed } from "@/components/activities/UniversalActivityFeed";
-import { ActivityLogger } from "@/components/activities/ActivityLogger";
+import { useActivities } from '@/features/activities/hooks';
+import { UniversalActivityFeed } from "@/features/activities/components/UniversalActivityFeed";
+import { ActivityLogger } from "@/features/activities/components/ActivityLogger";
 
 export default function Activities() {
   const { currentClient } = useTenant();

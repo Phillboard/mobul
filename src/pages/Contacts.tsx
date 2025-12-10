@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { Plus, Database, Upload, Download } from "lucide-react";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { ContactsTable } from "@/components/contacts/ContactsTable";
-import { ContactQuickCreate } from "@/components/contacts/ContactQuickCreate";
-import { ContactFilters } from "@/components/contacts/ContactFilters";
-import { SmartCSVImporter } from "@/components/contacts/SmartCSVImporter";
-import { ExportButton } from "@/components/contacts/ExportButton";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { ContactsTable } from "@/features/contacts/components/ContactsTable";
+import { ContactQuickCreate } from "@/features/contacts/components/ContactQuickCreate";
+import { ContactFilters } from "@/features/contacts/components/ContactFilters";
+import { SmartCSVImporter } from "@/features/contacts/components/SmartCSVImporter";
+import { ExportButton } from "@/features/contacts/components/ExportButton";
 import { useTenant } from "@/contexts/TenantContext";
-import { useContacts } from "@/hooks/useContacts";
-import { useDebounce } from "@/hooks/useDebounce";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useContacts } from '@/features/contacts/hooks';
+import { useDebounce } from '@/shared/hooks';
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { seedContactsData } from '@/lib/demo/seed-contacts-data';
-import { CSVTemplateGenerator } from "@/lib/utils/csvTemplates";
+import { seedContactsData } from '@/features/admin/demo/seed-contacts-data';
+import { CSVTemplateGenerator } from "@/shared/utils/csvTemplates";
 import { toast } from "sonner";
 import type { ContactFilters as ContactFiltersType } from "@/types/contacts";
 import {
@@ -24,7 +24,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/shared/components/ui/dialog";
 
 export default function Contacts() {
   const { currentClient } = useTenant();

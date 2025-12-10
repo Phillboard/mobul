@@ -4,7 +4,7 @@
  * Consistent, color-coded status badges for campaigns.
  */
 
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 import { cn } from '@shared/utils/cn';
 import {
   Clock,

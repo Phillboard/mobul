@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Settings } from "lucide-react";
 import { DocumentationSidebar } from "./DocumentationSidebar";
 import { DocumentationSearch } from "./DocumentationSearch";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 
 interface DocumentationLayoutProps {
   children: ReactNode;

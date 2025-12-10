@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Copy, Check } from "lucide-react";
 import { FormConfig, ExportFormat } from "@/types/aceForms";
-import { generateHTMLExport, generateJavaScriptEmbed, generateIframeEmbed, generateReactComponent } from "@/lib/export/aceFormExport";
+import { generateHTMLExport, generateJavaScriptEmbed, generateIframeEmbed, generateReactComponent } from "@/features/contacts/utils/export/aceFormExport";
 import { useToast } from '@shared/hooks';
 
 interface ExportDialogProps {

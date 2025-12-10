@@ -1,5 +1,5 @@
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import { Gift, Check } from "lucide-react";
 import { Tables } from '@core/services/supabase';
 import { cn } from '@shared/utils/cn';

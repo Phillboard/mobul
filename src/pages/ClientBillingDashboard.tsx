@@ -4,11 +4,11 @@
  * Shows gift card transaction history and spending summary for a client
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useBillingTransactions, useClientSpendingSummary } from '@/hooks/useGiftCardBilling';
-import { formatCurrency, formatSource } from '@/lib/gift-cards/provisioning-utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Badge } from '@/shared/components/ui/badge';
+import { Alert, AlertDescription } from '@/shared/components/ui/alert';
+import { useBillingTransactions, useClientSpendingSummary } from '@/features/gift-cards/hooks';
+import { formatCurrency, formatSource } from '@/features/gift-cards/lib/provisioning-utils';
 import { useTenant } from '@/contexts/TenantContext';
 import { DollarSign, TrendingUp, CreditCard, Gift } from 'lucide-react';
 

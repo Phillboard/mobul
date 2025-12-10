@@ -4,22 +4,22 @@
  */
 
 import { useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Layout } from '@/shared/components/layout/Layout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Alert, AlertDescription } from '@/shared/components/ui/alert';
+import { Badge } from '@/shared/components/ui/badge';
+import { Progress } from '@/shared/components/ui/progress';
 import { Loader2, CheckCircle2, AlertCircle, Database, ExternalLink } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/shared/hooks';
 import { useNavigate } from 'react-router-dom';
 import type { DemoConfig, DemoGenerationResult, GenerationProgress } from '@/types/demo';
-import { DEMO_TEMPLATES, getTemplate } from '@/lib/demo/demo-templates';
-import { validateConfig, validateEnvironment } from '@/lib/demo/demo-validators';
-import { DemoDataOrchestrator } from '@/lib/demo/demo-orchestrator';
+import { DEMO_TEMPLATES, getTemplate } from '@/features/admin/demo/demo-templates';
+import { validateConfig, validateEnvironment } from '@/features/admin/demo/demo-validators';
+import { DemoDataOrchestrator } from '@/features/admin/demo/demo-orchestrator';
 
 export default function AdminDemoDataGenerator() {
   const { toast } = useToast();

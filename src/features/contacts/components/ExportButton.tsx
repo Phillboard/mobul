@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Download, FileDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,8 +8,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useContactExport, ExportOptions } from '@/hooks/useContactExport';
+} from '@/shared/components/ui/dropdown-menu';
+import { useContactExport, ExportOptions } from '@/features/contacts/hooks';
 import type { Contact } from '@/types/contacts';
 import { toast } from 'sonner';
 

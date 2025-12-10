@@ -8,8 +8,8 @@
  * ACE fulfillment: full wizard with design, delivery, etc.
  */
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { Upload, Truck, Check, Mail, ArrowRight } from "lucide-react";
 import { cn } from '@shared/utils/cn';
 

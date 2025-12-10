@@ -1,11 +1,11 @@
 import { RevealSettings } from "@/types/aceForms";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/shared/components/ui/label";
+import { Input } from "@/shared/components/ui/input";
+import { Switch } from "@/shared/components/ui/switch";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Separator } from "@/shared/components/ui/separator";
+import { Card } from "@/shared/components/ui/card";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { RevealPreview } from "./RevealPreview";
 import { cardStylePresets } from "./CardStylePresets";
 import { Sparkles, Palette, Settings, MessageSquare } from "lucide-react";

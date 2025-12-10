@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Layout } from "@/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
+import { Layout } from "@/shared/components/layout/Layout";
 import { useTenant } from "@/contexts/TenantContext";
-import { LibrarySearch } from "@/components/shared/LibrarySearch";
-import { ViewToggle } from "@/components/shared/ViewToggle";
-import { LibraryHeader } from "@/components/shared/LibraryHeader";
-import { MailFilters } from "@/components/mail/MailFilters";
-import { MailGrid } from "@/components/mail/MailGrid";
-import { BulkActions } from "@/components/mail/BulkActions";
-import { CreateMailDialog } from "@/components/mail/CreateMailDialog";
+import { LibrarySearch } from "@/shared/components/LibrarySearch";
+import { ViewToggle } from "@/shared/components/ViewToggle";
+import { LibraryHeader } from "@/shared/components/LibraryHeader";
+import { MailFilters } from "@/features/mail-designer/components/MailFilters";
+import { MailGrid } from "@/features/mail-designer/components/MailGrid";
+import { BulkActions } from "@/features/mail-designer/components/BulkActions";
+import { CreateMailDialog } from "@/features/mail-designer/components/CreateMailDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 export default function Mail() {

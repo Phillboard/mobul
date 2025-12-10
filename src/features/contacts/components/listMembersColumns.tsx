@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
-import { Button } from "@/components/ui/button";
+import { DataTableColumnHeader } from "@/shared/components/ui/data-table-column-header";
+import { Button } from "@/shared/components/ui/button";
 
 export type ListMemberRow = {
   id: string;

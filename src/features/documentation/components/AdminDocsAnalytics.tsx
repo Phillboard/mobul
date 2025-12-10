@@ -7,8 +7,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from "@/shared/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Eye } from "lucide-react";
 
 interface AnalyticsData {

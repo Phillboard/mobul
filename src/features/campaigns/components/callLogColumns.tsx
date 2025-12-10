@@ -3,8 +3,8 @@
  * Type-safe column configuration for TanStack Table
  */
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { CallRecordingPlayer } from "./CallRecordingPlayer";
 import { formatRelative, formatDate, DATE_FORMATS } from '@shared/utils/date';

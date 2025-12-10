@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
+import { Label } from "@/shared/components/ui/label";
 import { Gift, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GiftCardDisplay } from "@/features/ace-forms/components";
-import { cn } from "@/lib/utils/utils";
+import { cn } from "@/shared/utils/utils";
 
 /**
  * Public Redemption Page - No authentication required

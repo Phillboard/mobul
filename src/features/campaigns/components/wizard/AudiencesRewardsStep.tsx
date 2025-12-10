@@ -11,10 +11,10 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Input } from "@/shared/components/ui/input";
 import { useTenant } from '@app/providers/TenantProvider';
 import { 
   Users, 
@@ -30,16 +30,16 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Label } from "@/shared/components/ui/label";
+import { Badge } from "@/shared/components/ui/badge";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import type { CampaignFormData } from "@/types/campaigns";
 import { format } from "date-fns";
 import { cn } from '@shared/utils/cn';
 import { useToast } from '@shared/hooks';
-import { SimpleBrandDenominationSelector } from "@/components/gift-cards/SimpleBrandDenominationSelector";
+import { SimpleBrandDenominationSelector } from "@/features/gift-cards/components/SimpleBrandDenominationSelector";
 import { CreateListWithCSVDialog } from "./CreateListWithCSVDialog";
 
 interface AudiencesRewardsStepProps {

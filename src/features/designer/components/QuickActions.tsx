@@ -8,7 +8,7 @@
  * to ensure AI generates only backgrounds, never personalized content.
  */
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 import { 
   Sparkles, Lightbulb, Palette, LayoutGrid, Image,
   Users, Car, Coffee, UtensilsCrossed, Mountain, Shield, Building

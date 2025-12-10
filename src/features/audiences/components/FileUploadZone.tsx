@@ -1,8 +1,8 @@
 import { useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, X, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/shared/components/ui/button";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 
 interface FileUploadZoneProps {
   onFileSelect: (file: File) => void;

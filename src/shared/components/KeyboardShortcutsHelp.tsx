@@ -12,8 +12,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+} from "@/shared/components/ui/dialog";
+import { Badge } from "@/shared/components/ui/badge";
 import { Keyboard } from "lucide-react";
 import { getKeyboardShortcuts } from '@shared/hooks';
 import { useFeatureFlags } from '@shared/hooks';

@@ -3,7 +3,7 @@
  */
 
 import { LayoutGrid, List, FolderTree } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { cn } from '@shared/utils/cn';
 
 export type ViewMode = "grid" | "table" | "category";

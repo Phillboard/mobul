@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { Plus, Filter, Search, Mail } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { CampaignsList } from "@/components/campaigns/CampaignsList";
+import { Input } from "@/shared/components/ui/input";
+import { CampaignsList } from "@/features/campaigns/components/CampaignsList";
 import { useTenant } from "@/contexts/TenantContext";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 

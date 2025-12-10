@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import { Plus, Trash2, Edit, GripVertical, FileText } from "lucide-react";
-import { useCallCenterScripts } from "@/hooks/useCallCenterScripts";
-import { ScriptEditor } from "@/components/call-center/ScriptEditor";
+import { useCallCenterScripts } from '@/features/call-center/hooks';
+import { ScriptEditor } from "@/features/call-center/components/ScriptEditor";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 
 const SCRIPT_TYPE_LABELS = {
   greeting: 'Greeting',

@@ -5,10 +5,10 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+} from "@/shared/components/ui/collapsible";
+import { Checkbox } from "@/shared/components/ui/checkbox";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import { toast } from "sonner";
 import { ChevronDown, Lock, Shield } from "lucide-react";
 

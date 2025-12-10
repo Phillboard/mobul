@@ -1,22 +1,22 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Button } from "@/shared/components/ui/button";
 import { Download, Search, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, SortingState, ColumnFiltersState } from "@tanstack/react-table";
-import { DataTable } from "@/components/ui/data-table";
-import { DataTablePagination } from "@/components/ui/data-table-pagination";
-import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
-import { createAuditLogColumns, AuditLogRow } from "@/components/settings/auditLogColumns";
-import { createUploadHistoryColumns, UploadHistoryRow } from "@/components/settings/uploadHistoryColumns";
-import { exportTableToCSV } from "@/lib/utils/tableHelpers";
+import { DataTable } from "@/shared/components/ui/data-table";
+import { DataTablePagination } from "@/shared/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/shared/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/shared/components/ui/data-table-view-options";
+import { createAuditLogColumns, AuditLogRow } from "@/features/settings/components/auditLogColumns";
+import { createUploadHistoryColumns, UploadHistoryRow } from "@/features/settings/components/uploadHistoryColumns";
+import { exportTableToCSV } from "@/shared/utils/tableHelpers";
 
 export default function AdminAuditLog() {
   const [actionFilter, setActionFilter] = useState<string>("all");

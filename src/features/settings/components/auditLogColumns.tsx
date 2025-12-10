@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
-import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { Badge } from "@/shared/components/ui/badge";
+import { DataTableColumnHeader } from "@/shared/components/ui/data-table-column-header";
 import { format } from "date-fns";
 
 export type AuditLogRow = {

@@ -22,8 +22,8 @@ import {
   getFilteredRowModel,
   SortingState,
 } from "@tanstack/react-table";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/shared/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
 import { Search } from "lucide-react";
 import { GiftCard } from "@/types/giftCards";
 import { createPoolCardsColumns, PoolCardRow } from "./poolCardsColumns";

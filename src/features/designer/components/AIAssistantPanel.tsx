@@ -10,15 +10,15 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Badge } from '@/shared/components/ui/badge';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+} from '@/shared/components/ui/collapsible';
 import { Sparkles, Send, Loader2, Trash2, ChevronDown, ImageIcon } from 'lucide-react';
 import { QuickActions } from './QuickActions';
 import { ReferenceUploader } from './ReferenceUploader';

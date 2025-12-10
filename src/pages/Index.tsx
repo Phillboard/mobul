@@ -1,4 +1,4 @@
-import { Layout } from "@/components/layout/Layout";
+import { Layout } from "@/shared/components/layout/Layout";
 import Dashboard from "./Dashboard";
 
 const Index = () => {

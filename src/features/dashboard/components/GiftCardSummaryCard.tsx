@@ -1,8 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { Gift, TrendingUp, DollarSign, Package } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 interface GiftCardSummaryCardProps {
   clientId: string;

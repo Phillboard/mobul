@@ -4,10 +4,10 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import { GiftCardBrandCard } from "./GiftCardBrandCard";
-import type { BrandWithDenominations } from "@/hooks/useClientGiftCards";
+import type { BrandWithDenominations } from '@/features/gift-cards/hooks';
 
 interface CategorySectionProps {
   category: string;

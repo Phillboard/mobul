@@ -14,8 +14,8 @@
 
 import { cn } from '@shared/utils/cn';
 import { Check, X, AlertTriangle, Clock, Circle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import type { OptInStatus } from "@/hooks/useOptInStatus";
+import { Button } from "@/shared/components/ui/button";
+import type { OptInStatus } from '@/features/settings/hooks';
 
 interface StatusConfig {
   icon: typeof Check;

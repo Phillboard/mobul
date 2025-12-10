@@ -1,5 +1,5 @@
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/shared/components/ui/progress";
+import { Badge } from "@/shared/components/ui/badge";
 import { cn } from '@shared/utils/cn';
 import { Check, Circle } from "lucide-react";
 

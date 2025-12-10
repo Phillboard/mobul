@@ -3,7 +3,7 @@
  * Handles cleanup of partially created demo data on errors
  */
 
-import { supabase } from '@core/services/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import type { CreatedRecord, RollbackLog } from '@/types/demo';
 
 export class DemoRollbackManager {

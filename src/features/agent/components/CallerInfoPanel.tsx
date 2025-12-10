@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import { Phone, MapPin, User, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { CallRecordingPlayer } from "@/components/campaigns/CallRecordingPlayer";
+import { CallRecordingPlayer } from "@/features/campaigns/components/CallRecordingPlayer";
 
 interface CallerInfoPanelProps {
   callSession: any;

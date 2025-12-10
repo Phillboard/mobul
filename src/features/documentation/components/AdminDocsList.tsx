@@ -1,5 +1,5 @@
-import { useDocumentation } from "@/hooks/useDocumentation";
-import { Button } from "@/components/ui/button";
+import { useDocumentation } from '@/features/documentation/hooks';
+import { Button } from "@/shared/components/ui/button";
 import { Plus, Edit, Trash2, FileText, Shield } from "lucide-react";
 import {
   Table,
@@ -8,8 +8,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from "@/shared/components/ui/table";
+import { Badge } from "@/shared/components/ui/badge";
 import { useState } from "react";
 import { EditDocDialog } from "./EditDocDialog";
 import { supabase } from '@core/services/supabase';
@@ -25,7 +25,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 
 const categoryLabels: Record<string, string> = {
   "getting-started": "Getting Started",

@@ -1,7 +1,7 @@
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import { AlertCircle, AlertTriangle, CheckCircle } from "lucide-react";
-import { usePoolInventory } from "@/hooks/usePoolInventory";
+import { usePoolInventory } from '@/features/gift-cards/hooks';
 
 interface PoolInventoryWidgetProps {
   poolId: string | null;

@@ -1,75 +1,64 @@
 ---
-description: Technical specification for implementing reward fulfillment workflows, including SMS opt-in, call center verification, and multi-channel delivery.
+description: Specification for analyzing and documenting reward fulfillment flows and gift card distribution logic
 ---
 
 
 # reward-fulfillment-flow
 
-## Core Fulfillment Components
-
-### Reward Provisioning System
+## Core Reward Distribution Engine
 Importance Score: 95
-- Waterfall provisioning strategy with three sources:
-  1. CSV inventory pool
-  2. Tillo API real-time purchase
-  3. Buffer pool for high-volume campaigns
-- Atomic claiming system with rollback protection
-- Campaign-specific inventory allocation rules
-- Balance verification workflows before distribution
+Path: src/features/rewards/services/RewardFulfillmentService.ts
 
-### Call Center Verification
+Handles end-to-end reward distribution with:
+- Multi-condition verification before reward release
+- SMS opt-in requirement enforcement
+- Waterfall provisioning from multiple gift card sources
+- Automatic retry logic for failed deliveries
+- Transaction logging and reconciliation
+
+## Gift Card Pool Management 
 Importance Score: 90
-- Multi-stage recipient verification workflow:
-  1. Phone number matching
-  2. Campaign code validation
-  3. Personal information confirmation
-- Agent authorization levels for reward triggers
-- Real-time gift card provisioning on successful verification
-- Compliance recording and audit trail maintenance
+Path: src/features/gift-cards/services/PoolManagementService.ts
 
-### SMS Delivery System
+Controls gift card inventory with:
+- Hierarchical pool structure (master → client → campaign)
+- Real-time balance verification
+- Low stock alerts and auto-replenishment
+- Provider-specific allocation rules
+- Audit trail for all pool transfers
+
+## Reward Condition Engine
 Importance Score: 85
-- Double opt-in requirement for SMS reward delivery
-- Automated retry logic for failed deliveries
-- Secure code masking in messages
-- Delivery status tracking and reconciliation
-- Campaign-specific message templating
+Path: src/features/campaigns/services/ConditionValidationService.ts
 
-### Multi-Channel Distribution
-Importance Score: 85
-- Channel-specific delivery rules and validations
-- Unified tracking across delivery methods:
-  - SMS delivery
-  - Email distribution
-  - Call center provisioning
-  - Direct mail codes
-- Status synchronization between channels
+Manages reward trigger conditions:
+- Call completion verification
+- Form submission validation 
+- Manual agent approval workflow
+- Time-delay reward release
+- Multi-step condition sequences
 
-### Condition Management
+## SMS Delivery System
 Importance Score: 80
-- Complex trigger system supporting:
-  - Manual agent approval
-  - Call completion verification
-  - Form submission validation
-  - Time-based triggers
-- Campaign-specific condition combinations
-- Real-time condition evaluation engine
+Path: src/features/rewards/services/SMSDeliveryService.ts
 
-### Balance Management
+Handles reward notification via SMS:
+- Opt-in status verification
+- Configurable retry attempts
+- Delivery status tracking
+- Template personalization
+- Provider failover handling
+
+## Verification System
 Importance Score: 75
-- Automated balance verification schedule
-- Low balance alerting system
-- Real-time balance tracking across pools
-- Provider-specific balance reconciliation
-- Campaign usage analytics and reporting
+Path: src/features/rewards/services/VerificationService.ts
 
-File Paths:
-```
-src/features/gift-cards/utils/provisioning-utils.ts
-src/features/call-center/hooks/useCallVerification.ts
-src/features/campaigns/utils/condition-evaluator.ts
-src/features/sms/services/delivery-service.ts
-```
+Implements recipient verification:
+- Code validation logic
+- Phone number verification
+- Call center agent verification workflow
+- Duplicate claim prevention
+- Fraud detection rules
 
 $END$
 

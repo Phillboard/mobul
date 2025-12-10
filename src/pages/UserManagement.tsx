@@ -1,20 +1,20 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { InviteUserDialog } from "@/components/settings/InviteUserDialog";
-import { PendingInvitations } from "@/components/settings/PendingInvitations";
-import { UserFilters } from "@/components/settings/UserFilters";
-import { useManageableUsersPaginated } from "@/hooks/useManageableUsersPaginated";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Card } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { InviteUserDialog } from "@/features/settings/components/InviteUserDialog";
+import { PendingInvitations } from "@/features/settings/components/PendingInvitations";
+import { UserFilters } from "@/features/settings/components/UserFilters";
+import { useManageableUsersPaginated } from '@/core/auth/hooks';
 import { UserCog, Search } from "lucide-react";
-import { AppRole } from "@/lib/auth/roleUtils";
+import { AppRole } from "@/core/auth/roleUtils";
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import { userManagementColumns } from "@/components/settings/userManagementColumns";
+import { userManagementColumns } from "@/features/settings/components/userManagementColumns";
 import {
   Table,
   TableBody,
@@ -22,14 +22,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/shared/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 
 export default function UserManagement() {
   const [search, setSearch] = useState("");

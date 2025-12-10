@@ -2,10 +2,10 @@
  * GiftCardBrandCard - Grid view card for a brand
  */
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import { DenominationToggle } from "./DenominationToggle";
-import type { BrandWithDenominations } from "@/hooks/useClientGiftCards";
+import type { BrandWithDenominations } from '@/features/gift-cards/hooks';
 import { CheckCircle2 } from "lucide-react";
 
 interface GiftCardBrandCardProps {

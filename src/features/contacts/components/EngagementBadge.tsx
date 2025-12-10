@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/shared/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface EngagementBadgeProps {

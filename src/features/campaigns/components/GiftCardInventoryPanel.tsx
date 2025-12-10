@@ -1,10 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { Gift, TrendingDown, AlertCircle } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/shared/components/ui/progress";
+import { Badge } from "@/shared/components/ui/badge";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 
 interface GiftCardInventoryPanelProps {
   campaignId: string;

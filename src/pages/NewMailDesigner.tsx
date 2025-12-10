@@ -13,9 +13,9 @@ import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/shared/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Sparkles, Layers as LayersIcon, Settings, PanelRightClose, PanelRight } from 'lucide-react';
 import { useToast } from '@shared/hooks';
 import {

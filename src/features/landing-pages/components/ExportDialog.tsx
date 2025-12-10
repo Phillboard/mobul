@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Label } from "@/shared/components/ui/label";
+import { Input } from "@/shared/components/ui/input";
+import { Checkbox } from "@/shared/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Download, FileCode, Package, Wordpress, Globe, Check } from "lucide-react";
-import { exportToStaticHTML, downloadExport } from "@/lib/landing-pages/exporters/static-exporter";
-import { exportToReact } from "@/lib/landing-pages/exporters/react-exporter";
-import { exportToWordPress } from "@/lib/landing-pages/exporters/wordpress-exporter";
+import { exportToStaticHTML, downloadExport } from "@/features/landing-pages/utils/exporters/static-exporter";
+import { exportToReact } from "@/features/landing-pages/utils/exporters/react-exporter";
+import { exportToWordPress } from "@/features/landing-pages/utils/exporters/wordpress-exporter";
 import { toast } from "sonner";
 import { ExportFormat } from "@/types/landingPages";
 

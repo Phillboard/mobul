@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { Download } from "lucide-react";
 
 export function SampleCSVDownload() {

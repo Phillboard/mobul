@@ -95,58 +95,58 @@ All designers (mail, landing, email) use same framework.
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-CAMPAIGN & REWARDS MANAGEMENT PLATFORM
-Importance Score: 85/100
+Campaign Management System
+Importance Score: 90
 
-Core Business Components:
+Core Architecture:
+- Hierarchical credit allocation across Platform → Agency → Client → Campaign
+- Multi-source gift card provisioning with automated inventory management
+- Condition-based reward triggering with automated fulfillment
+- Integrated direct mail production workflows
 
-1. Campaign Orchestration Engine
-- Multi-stage campaign lifecycle management 
-- Conditional reward triggering system
-- Integrated tracking and analytics
-- Mailing method differentiation (self vs ACE fulfillment)
+Key Business Components:
 
-2. Gift Card Management System
+1. Campaign Creation Engine
+src/features/campaigns/components/wizard/AudiencesRewardsStep.tsx
+- Combined audience selection and reward configuration
+- Gift card pool validation and allocation
+- Custom reward trigger definitions
+- Tracking integration for attribution
+
+2. Gift Card Provisioning System
 src/features/gift-cards/utils/provisioning-utils.ts
-- Two-tier provisioning waterfall:
-  - CSV inventory allocation
-  - Tillo API fallback purchase
-- Brand-specific denomination control
-- Inventory threshold monitoring
-- Balance verification workflows
+- Multi-source card provisioning (CSV → Tillo fallback)
+- Automated balance verification workflows
+- Custom pricing tiers for agencies vs clients
+- Pool-based inventory management
 
-3. Credit Management 
-src/features/billing/types/index.ts
-- Hierarchical credit flow (Platform → Agency → Client)
-- Pool-based allocation system
-- Multi-tier pricing structure
-- Automated balance monitoring
+3. Token Management
+src/features/designer/utils/tokenParser.ts
+- Mail merge token system with fallback values
+- Secure personalization replacement logic
+- Template variable transformation rules
+- Print-ready output generation
 
-4. Call Center Operations
-src/features/call-center/hooks/useCallTracking.ts
-- Real-time verification workflows
-- Gift card authorization system
-- Performance tracking
-- Compliance monitoring
+Business Workflows:
+1. Campaign Creation:
+- Mailing method selection
+- Audience targeting
+- Reward configuration
+- Production setup
 
-Domain Integration Points:
+2. Gift Card Management:
+- Pool allocation
+- Balance monitoring
+- Automated provisioning
+- Delivery tracking
 
-1. Campaign → Gift Cards
-- Condition-based reward distribution
-- Inventory validation gates
-- Pool allocation tracking
-
-2. Credit → Campaign
-- Budget validation
-- Cost estimation
-- Resource allocation
-
-3. Call Center → Gift Cards
-- Verification workflows
-- Real-time provisioning
+3. Reward Fulfillment:
+- Condition verification
+- Card assignment
 - Status tracking
+- Delivery confirmation
 
-The system implements sophisticated campaign management with integrated gift card rewards, focusing on secure distribution, inventory management, and multi-level credit control.
+The system implements sophisticated campaign management with integrated gift card rewards, focusing on automated provisioning, complex condition handling, and multi-tenant credit management.
 
 $END$
 

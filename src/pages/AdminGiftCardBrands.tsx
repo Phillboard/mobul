@@ -10,15 +10,15 @@
  */
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
-import { useAllBrands } from '@/hooks/useGiftCardProvisioning';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Switch } from '@/shared/components/ui/switch';
+import { Badge } from '@/shared/components/ui/badge';
+import { Alert, AlertDescription } from '@/shared/components/ui/alert';
+import { useToast } from '@/shared/hooks';
+import { useAllBrands } from '@/features/gift-cards/hooks';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Trash2, Upload, CheckCircle, XCircle, DollarSign, Package, Edit, ExternalLink, Sparkles } from 'lucide-react';
@@ -29,10 +29,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { parseGiftCardCsv, generateUploadBatchId } from '@/lib/gift-cards/provisioning-utils';
-import { AddBrandDialog } from '@/components/gift-cards/AddBrandDialog';
-import { EditBrandDialog } from '@/components/gift-cards/EditBrandDialog';
+} from '@/shared/components/ui/dialog';
+import { parseGiftCardCsv, generateUploadBatchId } from '@/features/gift-cards/lib/provisioning-utils';
+import { AddBrandDialog } from '@/features/gift-cards/components/AddBrandDialog';
+import { EditBrandDialog } from '@/features/gift-cards/components/EditBrandDialog';
 import type { GiftCardBrand } from '@/types/giftCards';
 
 export default function AdminGiftCardBrands() {

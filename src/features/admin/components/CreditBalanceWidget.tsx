@@ -1,7 +1,7 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -11,7 +11,7 @@ import {
   Plus
 } from "lucide-react";
 import { useCreditAccount, useCreditTransactionHistory } from "@features/billing/hooks/useCreditManagement";
-import { formatCurrency } from "@/lib/utils/currency";
+import { formatCurrency } from "@/shared/utils/currency";
 import { formatDistanceToNow } from "date-fns";
 
 interface CreditBalanceWidgetProps {

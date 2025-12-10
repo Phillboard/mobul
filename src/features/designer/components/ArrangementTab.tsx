@@ -7,9 +7,9 @@
  * - Layer ordering (front, back, forward, backward)
  */
 
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Label } from '@/shared/components/ui/label';
+import { Input } from '@/shared/components/ui/input';
+import { Button } from '@/shared/components/ui/button';
 import {
   ArrowUp,
   ArrowDown,

@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Save, Eye, Sparkles, ChevronRight, Code2, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAceForms, useAceForm } from "@/hooks/useAceForms";
+import { Button } from "@/shared/components/ui/button";
+import { useAceForms, useAceForm } from '@/features/ace-forms/hooks';
 import { useTenant } from "@/contexts/TenantContext";
-import { Layout } from "@/components/layout/Layout";
+import { Layout } from "@/shared/components/layout/Layout";
 import { 
   FormBuilder,
   RevealDesigner,
@@ -16,9 +16,9 @@ import {
   KeyboardShortcutsHelp 
 } from "@/features/ace-forms/components";
 import { FormBuilderProvider, useFormBuilder } from "@/contexts/FormBuilderContext";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { useToast } from '@/shared/hooks';
 
 /**
  * Template Selection Screen

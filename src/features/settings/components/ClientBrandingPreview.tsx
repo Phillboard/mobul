@@ -1,7 +1,7 @@
 import { Copy, Check, ExternalLink } from "lucide-react";
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import { Button } from "@/shared/components/ui/button";
 import { useToast } from '@shared/hooks';
 
 interface ClientBrandingPreviewProps {

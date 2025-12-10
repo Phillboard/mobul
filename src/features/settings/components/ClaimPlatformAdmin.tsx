@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useAuth } from '@core/auth/AuthProvider';
 import { supabase } from '@core/services/supabase';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Shield, AlertTriangle } from "lucide-react";
 import { useToast } from '@shared/hooks';
 import { useQueryClient, useQuery } from "@tanstack/react-query";

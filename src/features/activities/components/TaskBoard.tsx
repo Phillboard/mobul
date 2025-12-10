@@ -1,7 +1,7 @@
-import { Task } from "@/hooks/useTasks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Task } from '@/features/activities/hooks';
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import { format } from "date-fns";
 import { CheckCircle2, Clock, AlertCircle, Calendar } from "lucide-react";
 

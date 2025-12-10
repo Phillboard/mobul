@@ -1,4 +1,4 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/shared/components/ui/accordion";
 import { Smartphone, Globe, Store, AlertCircle, CheckCircle } from "lucide-react";
 
 interface GiftCardInstructionsProps {

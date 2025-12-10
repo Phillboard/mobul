@@ -5,19 +5,19 @@
  */
 
 import { useState, useMemo } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Input } from "@/shared/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Card } from "@/shared/components/ui/card";
 import { Search, Gift } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
-import { useClientGiftCards, useToggleDenomination, type GiftCardCategory } from "@/hooks/useClientGiftCards";
-import { ViewModeToggle, type ViewMode } from "@/components/gift-cards/client/ViewModeToggle";
-import { GiftCardBrandCard } from "@/components/gift-cards/client/GiftCardBrandCard";
-import { GiftCardTableRow } from "@/components/gift-cards/client/GiftCardTableRow";
-import { CategorySection } from "@/components/gift-cards/client/CategorySection";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { useClientGiftCards, useToggleDenomination, type GiftCardCategory } from '@/features/gift-cards/hooks';
+import { ViewModeToggle, type ViewMode } from "@/features/gift-cards/components/client/ViewModeToggle";
+import { GiftCardBrandCard } from "@/features/gift-cards/components/client/GiftCardBrandCard";
+import { GiftCardTableRow } from "@/features/gift-cards/components/client/GiftCardTableRow";
+import { CategorySection } from "@/features/gift-cards/components/client/CategorySection";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
+import { Badge } from "@/shared/components/ui/badge";
 
 export default function GiftCardManager() {
   const { currentClient } = useTenant();

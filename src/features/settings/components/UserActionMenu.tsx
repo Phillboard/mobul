@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 import { MoreVertical, Shield, Building2, Users, UserX, UserCheck } from "lucide-react";
 import { useUserRole } from '@core/auth/hooks';
 import { ChangeRoleDialog } from "./ChangeRoleDialog";

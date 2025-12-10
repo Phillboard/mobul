@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createClient } from '@supabase/supabase-js';
-import { CallCenterRedemptionPanel } from '@/components/call-center/CallCenterRedemptionPanel';
+import { CallCenterRedemptionPanel } from '@/features/call-center/components/CallCenterRedemptionPanel';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL!,

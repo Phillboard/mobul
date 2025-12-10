@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { FormField, FieldType } from "@/types/aceForms";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { Lightbulb } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 
 interface SmartFieldSuggestionsProps {
   field: FormField;

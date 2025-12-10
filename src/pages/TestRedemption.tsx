@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { GiftCardDisplay } from "@/features/ace-forms/components";
 import { GiftCardRedemption } from "@/types/aceForms";
-import { detectPlatform, getWalletName } from "@/lib/web/walletDetection";
+import { detectPlatform, getWalletName } from "@/core/services/web/walletDetection";
 import { Smartphone, Apple, Chrome, Bug, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 /**

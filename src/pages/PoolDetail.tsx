@@ -10,20 +10,20 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { RefreshCw, Download, ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { formatCurrency } from '@/lib/utils/currencyUtils';
-import { calculatePoolStats } from "@/lib/campaign/giftCardUtils";
-import { useToast } from "@/hooks/use-toast";
-import { PoolStats } from "@/components/gift-cards/PoolStats";
-import { PoolCardsTable } from "@/components/gift-cards/PoolCardsTable";
-import { PoolBalanceHistory } from "@/components/gift-cards/PoolBalanceHistory";
-import { PoolSettings } from "@/components/gift-cards/PoolSettings";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { formatCurrency } from '@/shared/utils/currencyUtils';
+import { calculatePoolStats } from "@/features/campaigns/utils/giftCardUtils";
+import { useToast } from '@/shared/hooks';
+import { PoolStats } from "@/features/gift-cards/components/PoolStats";
+import { PoolCardsTable } from "@/features/gift-cards/components/PoolCardsTable";
+import { PoolBalanceHistory } from "@/features/gift-cards/components/PoolBalanceHistory";
+import { PoolSettings } from "@/features/gift-cards/components/PoolSettings";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/shared/components/ui/breadcrumb";
 
 export default function PoolDetail() {
   const { poolId } = useParams<{ poolId: string }>();

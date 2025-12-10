@@ -1,19 +1,19 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/shared/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/shared/components/ui/form";
+import { Switch } from "@/shared/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Phone, Gift, AlertCircle, AlertTriangle, CheckCircle } from "lucide-react";
-import { useTrackedNumbers } from "@/hooks/useCallTracking";
-import { useGiftCardPools } from "@/hooks/useGiftCardPools";
-import { validatePoolInventory } from "@/lib/validation/campaignValidation";
+import { useTrackedNumbers } from '@/features/call-center/hooks';
+import { useGiftCardPools } from '@/features/gift-cards/hooks';
+import { validatePoolInventory } from "@/shared/utils/validation/campaignValidation";
 import type { CampaignFormData, LandingPageMode } from "@/types/campaigns";
 
 const trackingRewardsSchema = z.object({

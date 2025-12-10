@@ -5,7 +5,7 @@ import { supabase } from '@core/services/supabase';
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { CampaignFormData } from "@/types/campaigns";
-import { logger } from '@/lib/services/logger';
+import { logger } from '@/core/services/logger';
 
 interface UseCampaignCreateFormProps {
   clientId: string;

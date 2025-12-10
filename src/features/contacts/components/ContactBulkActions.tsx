@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useBulkDeleteContacts } from "@/hooks/useContacts";
-import { useContactLists, useAddContactsToList, useCreateContactList } from "@/hooks/useContactLists";
+import { Button } from "@/shared/components/ui/button";
+import { useBulkDeleteContacts } from '@/features/contacts/hooks';
+import { useContactLists, useAddContactsToList, useCreateContactList } from '@/features/contacts/hooks';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import { Trash2, ListPlus, Plus } from "lucide-react";
 import {
   AlertDialog,
@@ -19,7 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -27,10 +27,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from "@/shared/components/ui/dialog";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { useTenant } from '@app/providers/TenantProvider';
 
 interface ContactBulkActionsProps {

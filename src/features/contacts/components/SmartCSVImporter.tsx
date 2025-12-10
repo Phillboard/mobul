@@ -1,15 +1,15 @@
 import { useState, useCallback } from 'react';
 import { Upload, AlertCircle, CheckCircle, Info, Download, List, Tag } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { useSmartCSVParser, ParsedCSVData } from '@/hooks/useSmartCSVParser';
-import { UniqueCodeService } from '@/lib/services/uniqueCodeService';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert';
+import { Progress } from '@/shared/components/ui/progress';
+import { Badge } from '@/shared/components/ui/badge';
+import { Label } from '@/shared/components/ui/label';
+import { Input } from '@/shared/components/ui/input';
+import { Separator } from '@/shared/components/ui/separator';
+import { useSmartCSVParser, ParsedCSVData } from '@/features/contacts/hooks';
+import { UniqueCodeService } from '@/core/services/uniqueCodeService';
 import { CSVTemplateGenerator } from '@shared/utils/csv';
 import { ColumnMappingDialog } from './ColumnMappingDialog';
 import { useTenant } from '@app/providers/TenantProvider';
@@ -22,7 +22,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/shared/components/ui/select';
 
 interface SmartCSVImporterProps {
   onImportComplete?: (summary: ImportSummary) => void;

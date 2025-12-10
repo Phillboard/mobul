@@ -6,17 +6,17 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { Badge } from '@/shared/components/ui/badge';
 import { useToast } from '@shared/hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
-import { uploadBrandLogo, fileToDataUrl, deleteBrandLogo } from '@/lib/gift-cards/logo-upload-utils';
-import { getAllCategories } from '@/lib/gift-cards/popular-brands-db';
+import { uploadBrandLogo, fileToDataUrl, deleteBrandLogo } from '@/features/gift-cards/lib/logo-upload-utils';
+import { getAllCategories } from '@/features/gift-cards/lib/popular-brands-db';
 import { Loader2, ExternalLink, XCircle, Upload } from 'lucide-react';
 import type { GiftCardBrand } from '@/types/giftCards';
 

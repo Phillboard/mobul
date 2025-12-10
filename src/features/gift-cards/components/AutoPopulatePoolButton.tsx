@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
 import { supabase } from '@core/services/supabase';
 import { toast } from "sonner";
-import { generateGiftCardCode, generatePIN } from '@/lib/demo/fake-data-helpers';
+import { generateGiftCardCode, generatePIN } from '@/features/admin/demo/fake-data-helpers';
 
 interface AutoPopulatePoolButtonProps {
   poolId: string;

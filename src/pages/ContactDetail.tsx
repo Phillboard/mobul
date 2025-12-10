@@ -1,15 +1,15 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useContact, useDeleteContact } from "@/hooks/useContacts";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Separator } from "@/shared/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { useContact, useDeleteContact } from '@/features/contacts/hooks';
 import { ArrowLeft, Mail, Phone, MapPin, Edit, Trash2, Tag } from "lucide-react";
 import { useState } from "react";
-import { ContactEditDialog } from "@/components/contacts/ContactEditDialog";
-import { ContactCampaignsTab } from "@/components/contacts/ContactCampaignsTab";
+import { ContactEditDialog } from "@/features/contacts/components/ContactEditDialog";
+import { ContactCampaignsTab } from "@/features/contacts/components/ContactCampaignsTab";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 
 export default function ContactDetail() {
   const { id } = useParams<{ id: string }>();

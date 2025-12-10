@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@core/auth/AuthProvider";
 import { PlatformDashboard } from "./PlatformDashboard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Progress } from "@/shared/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import {
   AreaChart,
   Area,
@@ -41,13 +41,13 @@ import {
   Gift,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useDashboardData } from "@/hooks/useDashboardData";
-import { useCallStats, useRewardSummary, useConditionCompletionRate } from "@/hooks/useCallAnalytics";
+import { useDashboardData } from '@/features/analytics/hooks';
+import { useCallStats, useRewardSummary, useConditionCompletionRate } from '@/features/call-center/hooks';
 import { useNavigate } from "react-router-dom";
-import { ConditionsSummaryCard } from "@/components/dashboard/ConditionsSummaryCard";
-import { GiftCardSummaryCard } from "@/components/dashboard/GiftCardSummaryCard";
-import { AIInsightsPanel } from "@/components/dashboard/AIInsightsPanel";
-import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
+import { ConditionsSummaryCard } from "@/features/dashboard/components/ConditionsSummaryCard";
+import { GiftCardSummaryCard } from "@/features/dashboard/components/GiftCardSummaryCard";
+import { AIInsightsPanel } from "@/features/dashboard/components/AIInsightsPanel";
+import { OnboardingChecklist } from "@/features/onboarding/components/OnboardingChecklist";
 
 const Dashboard = () => {
   const { currentClient, isAdminMode } = useTenant();

@@ -1,8 +1,8 @@
 import { AceFormsLayout } from "@/features/ace-forms/components";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle, CheckCircle, Copy, Code, MessageSquare } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { toast } from "sonner";
 
 export default function AceFormsDocumentation() {

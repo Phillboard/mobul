@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Card } from "@/shared/components/ui/card";
 import { PoolInventoryWidget } from "./PoolInventoryWidget";
 import { AgentAuthorizationLog } from "./AgentAuthorizationLog";
 import { CallCenterMetrics } from "./CallCenterMetrics";

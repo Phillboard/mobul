@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import { Check, Circle } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 import type { CampaignFormData } from "@/types/campaigns";
 import { useCampaignCostEstimate } from "../../hooks/useCampaignCostEstimate";
-import { useListPreview } from "@/hooks/useListPreview";
+import { useListPreview } from '@/features/contacts/hooks';
 
 interface CampaignSidebarProps {
   form: UseFormReturn<Partial<CampaignFormData>>;

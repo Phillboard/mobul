@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Plus, Trash2, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Label } from "@/shared/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Input } from "@/shared/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { FormField, ConditionalLogic } from "@/types/aceForms";
 
 interface ConditionalLogicBuilderProps {

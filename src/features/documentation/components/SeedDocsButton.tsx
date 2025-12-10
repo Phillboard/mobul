@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { Database, Loader2 } from "lucide-react";
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';

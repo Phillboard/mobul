@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { useReactTable, SortingState } from "@tanstack/react-table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { useGiftCards } from "../hooks/useGiftCards";
 import { useGiftCardPools } from "../hooks/useGiftCardPools";
 import { createGiftCardInventoryColumns } from "./giftCardInventoryColumns";
 import { basicTableModels } from '@shared/utils/table';
-import { DataTable } from "@/components/ui/data-table";
-import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTable } from "@/shared/components/ui/data-table";
+import { DataTablePagination } from "@/shared/components/ui/data-table-pagination";
 
 interface GiftCardInventoryProps {
   clientId: string;

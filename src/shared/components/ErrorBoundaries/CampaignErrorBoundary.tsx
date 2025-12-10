@@ -1,6 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+import { Button } from "@/shared/components/ui/button";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { logger } from '@core/services/logger';
 

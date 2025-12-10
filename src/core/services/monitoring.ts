@@ -4,7 +4,7 @@
  * Tracks performance metrics and usage analytics
  */
 
-import { supabase } from '@core/services/supabase';
+import { supabase } from "@/integrations/supabase/client";
 import { logger } from "./logger";
 
 type MetricType = 'page_load' | 'api_response' | 'edge_function' | 'database_query';

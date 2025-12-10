@@ -15,25 +15,25 @@
  * - Edit mode pre-populates all fields from existing campaign
  */
 
-import { useState, useCallback, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate, useParams, useBlocker } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { logger } from "@/lib/services/logger";
+import { useToast } from '@/shared/hooks';
+import { logger } from "@/core/services/logger";
 
 // Modern Wizard Components
-import { MethodNameStep } from "@/components/campaigns/wizard/MethodNameStep";
-import { AudiencesRewardsStep } from "@/components/campaigns/wizard/AudiencesRewardsStep";
-import { DesignAssetsStep } from "@/components/campaigns/wizard/DesignAssetsStep";
-import { SummaryStep } from "@/components/campaigns/wizard/SummaryStep";
-import { StepIndicator } from "@/components/campaigns/wizard/StepIndicator";
+import { MethodNameStep } from "@/features/campaigns/components/wizard/MethodNameStep";
+import { AudiencesRewardsStep } from "@/features/campaigns/components/wizard/AudiencesRewardsStep";
+import { DesignAssetsStep } from "@/features/campaigns/components/wizard/DesignAssetsStep";
+import { SummaryStep } from "@/features/campaigns/components/wizard/SummaryStep";
+import { StepIndicator } from "@/features/campaigns/components/wizard/StepIndicator";
 
 import type { CampaignFormData } from "@/types/campaigns";
 
@@ -64,6 +64,10 @@ export default function CampaignCreate() {
     utm_source: "directmail",
     utm_medium: "postcard",
   });
+  
+  // Track unsaved changes
+  const [isDirty, setIsDirty] = useState(false);
+  const initialFormDataRef = useRef<string>("");
 
   // Fetch existing campaign data when in edit mode
   const { data: existingCampaign, isLoading: isLoadingCampaign } = useQuery({
@@ -139,9 +143,30 @@ export default function CampaignCreate() {
       
       setFormData(loadedFormData);
       setIsDataLoaded(true);
+      // Store initial form data for dirty tracking
+      initialFormDataRef.current = JSON.stringify(loadedFormData);
       logger.info("Campaign data loaded for editing:", campaignId);
     }
   }, [isEditMode, existingCampaign, existingConditions, isDataLoaded, campaignId]);
+
+  // Block navigation when there are unsaved changes
+  const blocker = useBlocker(
+    isDirty && !saveCampaignMutation.isPending
+  );
+
+  // Handle blocked navigation
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave?'
+      );
+      if (confirmed) {
+        blocker.proceed();
+      } else {
+        blocker.reset();
+      }
+    }
+  }, [blocker]);
 
   // Create or Update campaign mutation
   const saveCampaignMutation = useMutation({
@@ -510,6 +535,9 @@ export default function CampaignCreate() {
       return campaign;
     },
     onSuccess: (campaign) => {
+      // Reset dirty state on successful save
+      setIsDirty(false);
+      
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
       queryClient.invalidateQueries({ queryKey: ["campaign-edit-data", campaignId] });
       queryClient.invalidateQueries({ queryKey: ["campaign-conditions-edit", campaignId] });
@@ -624,8 +652,13 @@ export default function CampaignCreate() {
   }
 
   const handleNext = (data: Partial<CampaignFormData>) => {
-    setFormData({ ...formData, ...data });
+    const newFormData = { ...formData, ...data };
+    setFormData(newFormData);
     setCurrentStep(currentStep + 1);
+    // Mark as dirty if form data changed from initial state
+    if (JSON.stringify(newFormData) !== initialFormDataRef.current) {
+      setIsDirty(true);
+    }
   };
 
   const handleBack = () => {

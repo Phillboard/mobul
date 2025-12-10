@@ -7,14 +7,14 @@
  * - Set agency billing preferences
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Switch } from '@/shared/components/ui/switch';
+import { Label } from '@/shared/components/ui/label';
+import { Input } from '@/shared/components/ui/input';
+import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { useToast } from '@shared/hooks';
-import { useEnabledBrands } from '@/hooks/useGiftCardProvisioning';
+import { useEnabledBrands } from '@/features/gift-cards/hooks';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
 import { Gift, Info, Percent } from 'lucide-react';

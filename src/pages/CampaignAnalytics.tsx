@@ -1,19 +1,19 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle, ArrowLeft, Download, TrendingUp, Users, MousePointerClick, FileText, Calendar, DollarSign, BarChart3, Globe } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { format, differenceInDays } from "date-fns";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CampaignROICalculator } from "@/components/analytics/CampaignROICalculator";
-import { ConversionFunnelVisualization } from "@/components/analytics/ConversionFunnelVisualization";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
+import { Badge } from "@/shared/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { CampaignROICalculator } from "@/features/analytics/components/CampaignROICalculator";
+import { ConversionFunnelVisualization } from "@/features/analytics/components/ConversionFunnelVisualization";
 
 export default function CampaignAnalytics() {
   const { campaignId } = useParams();

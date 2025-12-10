@@ -1,17 +1,17 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Label } from "@/shared/components/ui/label";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Switch } from "@/shared/components/ui/switch";
+import { Badge } from "@/shared/components/ui/badge";
 import { useTenant } from '@app/providers/TenantProvider';
 import { useAuth } from '@core/auth/AuthProvider';
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
 import { useState, useEffect } from "react";
 import { Loader2, MessageCircle, Clock, Eye } from "lucide-react";
-import { useDrPhillipPreference } from "@/hooks/useDrPhillipPreference";
+import { useDrPhillipPreference } from "@/shared/hooks";
 import { formatDistanceToNow } from "date-fns";
 
 const INDUSTRIES = [

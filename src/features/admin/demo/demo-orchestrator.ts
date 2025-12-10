@@ -3,7 +3,7 @@
  * Main coordination logic for generating complete demo data scenarios
  */
 
-import { supabase } from '@core/services/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import type {
   DemoConfig,
   DemoGenerationResult,

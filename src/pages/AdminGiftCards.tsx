@@ -7,11 +7,11 @@
  * - Sales and analytics
  */
 
-import { Layout } from "@/components/layout/Layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Package, ShoppingBag, BarChart3 } from "lucide-react";
-import { GiftCardBrandsTab } from "@/components/gift-cards/GiftCardBrandsTab";
-import { GiftCardInventoryTab } from "@/components/gift-cards/GiftCardInventoryTab";
+import { GiftCardBrandsTab } from "@/features/gift-cards/components/GiftCardBrandsTab";
+import { GiftCardInventoryTab } from "@/features/gift-cards/components/GiftCardInventoryTab";
 import { useState } from "react";
 
 export default function AdminGiftCards() {

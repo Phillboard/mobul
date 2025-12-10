@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
 import { QrCode } from "lucide-react";
 import { GiftCardRedemption } from "@/types/aceForms";
 

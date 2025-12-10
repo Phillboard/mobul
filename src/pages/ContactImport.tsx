@@ -1,6 +1,6 @@
-import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Info } from "lucide-react";
 
 export default function ContactImport() {

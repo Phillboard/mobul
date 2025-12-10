@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import { Search, ExternalLink, Lock, Users, Shield, BookOpen, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 

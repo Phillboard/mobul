@@ -1,16 +1,16 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { useAuth } from '@core/auth/AuthProvider';
 import { useTenant } from '@app/providers/TenantProvider';
 import { Code, Key, BookOpen, TestTube, Plus, Copy, Trash2, ExternalLink } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { useAPIKeys } from "@/hooks/useAPIKeys";
-import { CreateAPIKeyDialog } from "@/components/api/CreateAPIKeyDialog";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
+import { Badge } from "@/shared/components/ui/badge";
+import { useAPIKeys } from '@/features/settings/hooks';
+import { CreateAPIKeyDialog } from "@/features/settings/components/api/CreateAPIKeyDialog";
 import { useState } from "react";
 import { useToast } from '@shared/hooks';
 import { format } from "date-fns";
-import { USER_ROLES } from '@/lib/terminology';
+import { USER_ROLES } from '@/shared/utils/terminology';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +20,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 
 export function APISettings() {
   const { roles, hasPermission } = useAuth();

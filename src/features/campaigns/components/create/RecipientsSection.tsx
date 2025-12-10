@@ -1,12 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Label } from "@/shared/components/ui/label";
 import { UseFormReturn } from "react-hook-form";
 import type { CampaignFormData } from "@/types/campaigns";
-import { useContactLists } from "@/hooks/useContactLists";
-import { useListPreview } from "@/hooks/useListPreview";
-import { useContactTags } from "@/hooks/useContactTags";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useContactLists } from '@/features/contacts/hooks';
+import { useListPreview } from '@/features/contacts/hooks';
+import { useContactTags } from '@/features/contacts/hooks';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { TagSelector } from "../wizard/TagSelector";
 import { Users, Filter } from "lucide-react";
 

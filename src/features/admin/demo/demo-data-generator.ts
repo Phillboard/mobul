@@ -4,7 +4,7 @@
  * Generates comprehensive dummy data for testing all system features
  */
 
-import { supabase } from '@core/services/supabase';
+import { supabase } from "@/integrations/supabase/client";
 import {
   generateName,
   generateEmail,

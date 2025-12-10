@@ -6,9 +6,9 @@
  * - ACE fulfillment: Print + Postage + Gift card costs
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Separator } from "@/shared/components/ui/separator";
 import { FileText, Users, DollarSign, AlertTriangle, Gift, Printer } from "lucide-react";
 import { useCampaignCostEstimate } from "../../hooks/useCampaignCostEstimate";
 import { useCampaignValidation } from "../../hooks/useCampaignValidation";

@@ -1,16 +1,16 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import { Code2, Webhook, Key, Trash2, Power, PowerOff, Zap, ExternalLink, Book } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTenant } from "@/contexts/TenantContext";
-import { useAPIKeys } from "@/hooks/useAPIKeys";
-import { useWebhooks } from "@/hooks/useWebhooks";
-import { CreateAPIKeyDialog } from "@/components/api/CreateAPIKeyDialog";
-import { CreateWebhookDialog } from "@/components/api/CreateWebhookDialog";
+import { useAPIKeys } from '@/features/settings/hooks';
+import { useWebhooks } from '@/features/settings/hooks';
+import { CreateAPIKeyDialog } from "@/features/settings/components/api/CreateAPIKeyDialog";
+import { CreateWebhookDialog } from "@/features/settings/components/api/CreateWebhookDialog";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -21,7 +21,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 
 const zapierTemplates = [
   {

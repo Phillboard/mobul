@@ -3,23 +3,23 @@
  * Manage brands, denominations, inventory, and custom pricing
  */
 
-import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Button } from "@/shared/components/ui/button";
 import { Plus, Upload, Package, Gift, Settings, DollarSign, CreditCard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from '@/lib/utils/utils';
+import { formatCurrency } from '@/shared/utils/utils';
 import { useState } from "react";
-import { AddBrandDialog } from "@/components/gift-cards/AddBrandDialog";
-import { ManageDenominationsDialog } from "@/components/gift-cards/ManageDenominationsDialog";
-import { AdminUploadDialog } from "@/components/gift-cards/AdminUploadDialog";
-import { useGiftCardBrandsWithDenominations } from "@/hooks/useGiftCardBrands";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AdminIndividualCardsView } from "@/components/gift-cards/AdminIndividualCardsView";
-import { ExpandableInventoryRow } from "@/components/gift-cards/ExpandableInventoryRow";
+import { AddBrandDialog } from "@/features/gift-cards/components/AddBrandDialog";
+import { ManageDenominationsDialog } from "@/features/gift-cards/components/ManageDenominationsDialog";
+import { AdminUploadDialog } from "@/features/gift-cards/components/AdminUploadDialog";
+import { useGiftCardBrandsWithDenominations } from '@/features/gift-cards/hooks';
+import { Badge } from "@/shared/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
+import { AdminIndividualCardsView } from "@/features/gift-cards/components/AdminIndividualCardsView";
+import { ExpandableInventoryRow } from "@/features/gift-cards/components/ExpandableInventoryRow";
 
 export default function AdminGiftCardMarketplace() {
   const [addBrandDialogOpen, setAddBrandDialogOpen] = useState(false);

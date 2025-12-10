@@ -1,23 +1,23 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useReactTable, SortingState, ColumnFiltersState } from "@tanstack/react-table";
-import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/shared/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/shared/hooks';
 import { useTenant } from "@/contexts/TenantContext";
 import { Building2, Plus } from "lucide-react";
-import { DataTable } from "@/components/ui/data-table";
-import { DataTablePagination } from "@/components/ui/data-table-pagination";
-import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
-import { createAgencyCompaniesColumns } from "@/components/agency/agencyCompaniesColumns";
-import { basicTableModels } from '@/lib/utils/tableHelpers';
+import { DataTable } from "@/shared/components/ui/data-table";
+import { DataTablePagination } from "@/shared/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/shared/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/shared/components/ui/data-table-view-options";
+import { createAgencyCompaniesColumns } from "@/features/agency/components/agencyCompaniesColumns";
+import { basicTableModels } from '@/shared/utils/tableHelpers';
 
 /**
  * AgencyManagement Component

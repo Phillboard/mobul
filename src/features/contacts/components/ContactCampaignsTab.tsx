@@ -1,5 +1,5 @@
-import { useCampaignParticipationStats } from "@/hooks/useCampaignParticipation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCampaignParticipationStats } from '@/features/campaigns/hooks';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { ContactCampaignsList } from "./ContactCampaignsList";
 import { Mail, CheckCircle, Send, Package } from "lucide-react";
 

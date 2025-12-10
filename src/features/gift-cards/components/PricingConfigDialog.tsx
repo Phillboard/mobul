@@ -4,17 +4,17 @@
  */
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Label } from "@/shared/components/ui/label";
+import { Input } from "@/shared/components/ui/input";
+import { Switch } from "@/shared/components/ui/switch";
+import { Card } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
-import { useUpdateDenominationPricing } from "@/hooks/useGiftCardDenominations";
-import { useDenominationPricing, calculateProfitMargin } from "@/hooks/useDenominationPricing";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useUpdateDenominationPricing } from '@/features/gift-cards/hooks';
+import { useDenominationPricing, calculateProfitMargin } from '@/features/gift-cards/hooks';
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 
 interface PricingConfigDialogProps {
   open: boolean;

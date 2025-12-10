@@ -1,7 +1,7 @@
-import { useCampaignsByContact } from "@/hooks/useCampaignParticipation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useCampaignsByContact } from '@/features/campaigns/hooks';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import { ExternalLink, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";

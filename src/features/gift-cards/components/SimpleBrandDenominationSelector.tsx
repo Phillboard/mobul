@@ -5,11 +5,11 @@
  * Uses new gift card system (no pools, just brand + denomination)
  */
 
-import { useClientAvailableGiftCards, useInventoryCount } from '@/hooks/useGiftCardProvisioning';
-import { useDenominationPricing } from '@/hooks/useDenominationPricing';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useClientAvailableGiftCards, useInventoryCount } from '@/features/gift-cards/hooks';
+import { useDenominationPricing } from '@/features/gift-cards/hooks';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Badge } from '@/shared/components/ui/badge';
+import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { AlertCircle, Package, DollarSign } from 'lucide-react';
 
 interface SimpleBrandDenominationSelectorProps {

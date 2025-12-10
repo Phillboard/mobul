@@ -1,63 +1,62 @@
 ---
-description: Specification for campaign condition data models, trigger evaluation, and reward distribution including delays and verification
+description: Specification for campaign condition and reward model system, handling triggers, validations and reward delivery workflows
 ---
 
 
 # campaign-condition-model
 
-Campaign Condition System implements multi-stage reward delivery with configurable triggers and verifications:
-
-Core Condition Types:
-- manual_agent: Requires agent verification
-- crm_event: Triggered by CRM status changes 
-- time_delay: Enforces waiting periods between stages
-- mail_delivered: Based on mail tracking status
-
-Reward Distribution Logic:
-```typescript
-interface ConditionTrigger {
-  type: ConditionType
-  verification_required: boolean
-  delay_hours?: number
-  crm_status?: string[]
-  agent_notes_required?: boolean
-}
-
-interface RewardPool {
-  brand_id: string
-  denomination: number
-  inventory_threshold: number
-  auto_replenish: boolean
-}
-```
+Core campaign condition model components manage reward triggers, validation rules and distribution workflows.
 
 Key Components:
 
-1. Condition Evaluation Engine
-Path: src/features/campaigns/services/ConditionEvaluator.ts
-- Validates condition prerequisites 
-- Manages condition state transitions
-- Tracks verification status
-- Handles delay timing
+## Condition Trigger System 
+Path: src/features/campaigns/condition/TriggerEngine.ts
 Importance Score: 95
 
-2. Reward Pool Manager 
-Path: src/features/campaigns/services/RewardPoolManager.ts
-- Allocates rewards from available inventory
-- Enforces pool thresholds
-- Manages brand/denomination combinations
-- Tracks utilization metrics
+- Multi-stage trigger validation pipeline:
+  - Pre-validation rules for audience eligibility 
+  - Primary condition validation (calls, forms, manual approval)
+  - Post-validation reward allocation rules
+- Time-delay support between validation stages
+- Fail-safe mechanisms preventing double reward issuance
+- Comprehensive audit trail of validation steps
+
+## Reward Distribution Engine
+Path: src/features/campaigns/rewards/DistributionManager.ts  
 Importance Score: 90
 
-3. Verification Workflow
-Path: src/features/campaigns/components/ConditionVerification.ts
-- Multi-step verification process
-- Required agent documentation
-- Status change tracking
-- Verification expiration handling
+- Manages reward pool allocation and reservation
+- Handles staggered distribution for time-delayed campaigns
+- Implements waterfall distribution logic:
+  1. Reserved card pools
+  2. Client-specific pools
+  3. Global backup pools
+- Tracks distribution status and retry attempts
+
+## Campaign Validation Model
+Path: src/features/campaigns/validation/CampaignValidator.ts
 Importance Score: 85
 
-The system provides configurable reward distribution with sophisticated condition evaluation, inventory management, and verification workflows. Conditions can be chained together with delays and dependencies to create complex reward delivery sequences.
+- Campaign-wide validation ruleset:
+  - Reward pool sufficiency checks
+  - Audience size validation
+  - Trigger condition completeness
+  - Distribution channel verification
+- Real-time validation during campaign creation
+- Prerequisite checking between dependent conditions
+
+## Condition Builder System
+Path: src/features/campaigns/condition/ConditionBuilder.ts
+Importance Score: 80
+
+- Configurable condition types:
+  - Call completion triggers
+  - Form submission validation 
+  - Manual agent approval
+  - Multi-step verification chains
+- Custom condition parameter validation
+- Condition dependency management
+- Template-based SMS notifications
 
 $END$
 

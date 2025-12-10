@@ -4,18 +4,18 @@
  */
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Label } from "@/shared/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Card } from "@/shared/components/ui/card";
 import { ArrowLeft, Gift } from "lucide-react";
 import { BrandSelector } from "./BrandSelector";
 import { useGiftCardBrands } from "../hooks/useGiftCardBrands";
 import { useAddClientGiftCard } from "../hooks/useClientAvailableGiftCards";
 import { useTenant } from '@app/providers/TenantProvider';
 import { useToast } from '@shared/hooks';
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 
 interface AddGiftCardDialogProps {
   open: boolean;

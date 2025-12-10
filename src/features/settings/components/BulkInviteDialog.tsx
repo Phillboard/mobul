@@ -14,17 +14,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+} from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/shared/components/ui/select";
 import { useToast } from '@shared/hooks';
 import { 
   Upload, 
@@ -35,8 +35,8 @@ import {
   FileSpreadsheet,
   Info
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/shared/components/ui/badge";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import Papa from "papaparse";
 
 interface BulkInviteDialogProps {

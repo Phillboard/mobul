@@ -1,7 +1,7 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { useUpdateCallNotes } from "@/hooks/useCallTracking";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Button } from "@/shared/components/ui/button";
+import { useUpdateCallNotes } from '@/features/call-center/hooks';
 import { useState, useEffect } from "react";
 import { FileText, Save } from "lucide-react";
 

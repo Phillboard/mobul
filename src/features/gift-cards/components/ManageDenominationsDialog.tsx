@@ -4,15 +4,15 @@
  */
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Switch } from "@/shared/components/ui/switch";
+import { Badge } from "@/shared/components/ui/badge";
+import { Card } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
 import { Plus, Package, DollarSign } from "lucide-react";
-import { useBrandDenominations, useToggleDenominationEnabled, useCreateDenomination } from "@/hooks/useGiftCardDenominations";
+import { useBrandDenominations, useToggleDenominationEnabled, useCreateDenomination } from '@/features/gift-cards/hooks';
 import { PricingConfigDialog } from "./PricingConfigDialog";
 
 interface ManageDenominationsDialogProps {

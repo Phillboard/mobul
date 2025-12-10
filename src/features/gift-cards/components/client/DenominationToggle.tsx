@@ -2,8 +2,8 @@
  * DenominationToggle - Reusable toggle for enabling/disabling a denomination
  */
 
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/shared/components/ui/switch";
+import { Badge } from "@/shared/components/ui/badge";
 import { cn } from '@shared/utils/cn';
 
 interface DenominationToggleProps {

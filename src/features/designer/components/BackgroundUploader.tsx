@@ -7,8 +7,8 @@
 
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Card } from '@/shared/components/ui/card';
 import { Upload, Image as ImageIcon, X, Check } from 'lucide-react';
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';

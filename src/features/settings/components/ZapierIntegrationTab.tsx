@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Switch } from "@/shared/components/ui/switch";
 import { Zap, Plus, Trash2, TestTube2, CheckCircle2, XCircle, Clock, Activity, ExternalLink } from "lucide-react";
 import { useTenant } from '@app/providers/TenantProvider';
-import { useZapierConnections } from "@/hooks/useZapierConnections";
+import { useZapierConnections } from '@/features/settings/hooks';
 import { ZapierConnectionDialog } from "./ZapierConnectionDialog";
 import { ZapierAnalytics } from "./ZapierAnalytics";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/shared/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { formatDistanceToNow } from "date-fns";
 
 export function ZapierIntegrationTab() {

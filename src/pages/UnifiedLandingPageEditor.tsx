@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { 
   ArrowLeft, 
   Download, 
@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
-import { useVisualEditor } from "@/hooks/useVisualEditor";
-import { ExportDialog } from "@/components/landing-pages/ExportDialog";
+import { useVisualEditor } from "@/features/landing-pages/hooks";
+import { ExportDialog } from "@/features/landing-pages/components/ExportDialog";
 import { toast } from "sonner";
 
 export default function UnifiedLandingPageEditor() {

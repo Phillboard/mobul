@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { DocumentationPage } from "@/hooks/useDocumentation";
+import { DocumentationPage } from '@/features/documentation/hooks';
 
 const categoryLabels: Record<string, string> = {
   "getting-started": "Getting Started",

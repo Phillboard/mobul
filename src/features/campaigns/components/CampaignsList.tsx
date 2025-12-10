@@ -10,10 +10,10 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from '@shared/hooks';
 import { useIsMobile } from '@shared/hooks';
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, SortingState, ColumnFiltersState } from "@tanstack/react-table";
-import { DataTable } from "@/components/ui/data-table";
-import { DataTablePagination } from "@/components/ui/data-table-pagination";
-import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { DataTable } from "@/shared/components/ui/data-table";
+import { DataTablePagination } from "@/shared/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/shared/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/shared/components/ui/data-table-view-options";
 import { createCampaignsColumns, CampaignRow } from "./campaignsColumns";
 
 interface CampaignsListProps {

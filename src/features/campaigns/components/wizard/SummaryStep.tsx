@@ -6,10 +6,10 @@
  * - ACE fulfillment: Print + Postage + Gift cards
  */
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Separator } from "@/shared/components/ui/separator";
+import { Badge } from "@/shared/components/ui/badge";
 import { 
   Calendar, 
   Mail, 
@@ -30,9 +30,9 @@ import { format } from "date-fns";
 import { ValidationChecklist } from "./ValidationChecklist";
 import { useCampaignValidation } from "../../hooks/useCampaignValidation";
 import { useCampaignCostEstimate } from "../../hooks/useCampaignCostEstimate";
-import { useGiftCardCostEstimate } from "@/hooks/useGiftCardCostEstimate";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useGiftCardCostEstimate } from '@/features/gift-cards/hooks';
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/shared/components/ui/accordion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 

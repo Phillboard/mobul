@@ -1,7 +1,7 @@
 import { FormField, FieldType } from "@/types/aceForms";
 import { nanoid } from "nanoid";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { User, Mail, Phone, MapPin, MessageSquare, Gift } from "lucide-react";
 
 export interface FieldPreset {

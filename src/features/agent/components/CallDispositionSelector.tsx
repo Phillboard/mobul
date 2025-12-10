@@ -1,6 +1,6 @@
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { CheckCircle, XCircle, Phone, Clock, AlertCircle } from "lucide-react";
 
 interface CallDispositionSelectorProps {

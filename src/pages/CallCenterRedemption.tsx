@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { CallCenterRedemptionPanel } from "@/components/call-center/CallCenterRedemptionPanel";
-import { ScriptPanel } from "@/components/call-center/ScriptPanel";
-import { UnifiedSidebar } from "@/components/call-center/UnifiedSidebar";
+import { Layout } from "@/shared/components/layout/Layout";
+import { CallCenterRedemptionPanel } from "@/features/call-center/components/CallCenterRedemptionPanel";
+import { ScriptPanel } from "@/features/call-center/components/ScriptPanel";
+import { UnifiedSidebar } from "@/features/call-center/components/UnifiedSidebar";
 
 type WorkflowStep = "code" | "contact" | "condition" | "complete";
 

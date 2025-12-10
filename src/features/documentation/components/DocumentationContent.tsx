@@ -1,10 +1,10 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useMarkdownDoc } from "@/hooks/useMarkdownDocs";
+import { useMarkdownDoc } from '@/features/documentation/hooks';
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { FileQuestion, ChevronLeft, Pencil } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { useAuth } from '@core/auth/AuthProvider';
 
 export function DocumentationContent() {

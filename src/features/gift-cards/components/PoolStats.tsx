@@ -17,7 +17,7 @@
  * Related Components: Card, CardHeader, CardTitle, CardContent
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { formatCurrency } from '@shared/utils/currency';
 import { PoolStats as PoolStatsType } from "@/types/giftCards";
 

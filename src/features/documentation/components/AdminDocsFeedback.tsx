@@ -7,8 +7,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+} from "@/shared/components/ui/table";
+import { Badge } from "@/shared/components/ui/badge";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 
 export function AdminDocsFeedback() {

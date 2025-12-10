@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/shared/components/ui/button";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
 import { FormConfig } from "@/types/aceForms";
-import { useFormContext } from "@/hooks/useFormContext";
-import { Badge } from "@/components/ui/badge";
+import { useFormContext } from '@/features/ace-forms/hooks';
+import { Badge } from "@/shared/components/ui/badge";
 
 interface AIFormGeneratorProps {
   onGenerated: (name: string, description: string, config: FormConfig) => void;

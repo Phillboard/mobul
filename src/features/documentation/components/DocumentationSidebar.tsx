@@ -3,12 +3,12 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@/shared/components/ui/collapsible";
 import { ChevronDown, FileText, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from '@shared/utils/cn';
-import { useDocumentationPermissions } from "@/hooks/useDocumentationPermissions";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useDocumentationPermissions } from '@/features/documentation/hooks';
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 
 export function DocumentationSidebar() {
   const location = useLocation();

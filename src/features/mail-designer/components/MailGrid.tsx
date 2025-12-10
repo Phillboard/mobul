@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { MailCard } from "./MailCard";
 import { MailListItem } from "./MailListItem";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 interface MailGridProps {
   clientId: string;

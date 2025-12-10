@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Plus, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
-import { useTasks } from "@/hooks/useTasks";
-import { TaskBoard } from "@/components/activities/TaskBoard";
-import { TaskForm } from "@/components/activities/TaskForm";
+import { useTasks } from '@/features/activities/hooks';
+import { TaskBoard } from "@/features/activities/components/TaskBoard";
+import { TaskForm } from "@/features/activities/components/TaskForm";
 
 export default function Tasks() {
   const { currentClient } = useTenant();

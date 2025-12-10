@@ -1,8 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { getContextualTemplates } from "@/lib/templates/aceFormTemplates";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { getContextualTemplates } from "@/features/mail-designer/templates/aceFormTemplates";
 import { FormTemplate } from "@/types/aceForms";
-import { useFormContext } from "@/hooks/useFormContext";
+import { useFormContext } from '@/features/ace-forms/hooks';
 
 interface FormTemplateSelectorProps {
   onSelect: (template: FormTemplate) => void;

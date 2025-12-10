@@ -4,16 +4,16 @@
  */
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
+import { Card } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import { Upload, AlertCircle, CheckCircle, FileText, DollarSign } from "lucide-react";
-import { useInventoryUpload, parseCSV } from "@/hooks/useInventoryUpload";
-import { useDenominationInventory } from "@/hooks/useGiftCardDenominations";
+import { useInventoryUpload, parseCSV } from '@/features/gift-cards/hooks';
+import { useDenominationInventory } from '@/features/gift-cards/hooks';
 
 interface AdminUploadDialogProps {
   open: boolean;

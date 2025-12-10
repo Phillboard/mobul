@@ -17,8 +17,8 @@ import {
   useReactTable,
   SortingState,
 } from "@tanstack/react-table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
 import { createRewardDeliveriesColumns, RewardDeliveryRow } from "./rewardDeliveriesColumns";
 import { basicTableModels } from '@shared/utils/table';
 

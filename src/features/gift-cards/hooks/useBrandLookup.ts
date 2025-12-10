@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { lookupBrandByName, lookupLogoFromWebsite } from '@/lib/gift-cards/brand-lookup-service';
+import { lookupBrandByName, lookupLogoFromWebsite } from '@/features/gift-cards/lib/brand-lookup-service';
 import type { BrandLookupResult } from '@/types/giftCards';
 
 export function useBrandLookup() {

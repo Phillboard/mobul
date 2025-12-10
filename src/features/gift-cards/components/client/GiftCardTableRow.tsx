@@ -2,10 +2,10 @@
  * GiftCardTableRow - Table view row for a brand
  */
 
-import { TableCell, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { TableCell, TableRow } from "@/shared/components/ui/table";
+import { Badge } from "@/shared/components/ui/badge";
 import { DenominationToggle } from "./DenominationToggle";
-import type { BrandWithDenominations } from "@/hooks/useClientGiftCards";
+import type { BrandWithDenominations } from '@/features/gift-cards/hooks';
 
 interface GiftCardTableRowProps {
   brand: BrandWithDenominations;

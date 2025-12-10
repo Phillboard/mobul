@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useRewardStats } from "@/hooks/useCallAnalytics";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { useRewardStats } from '@/features/call-center/hooks';
 import { Gift, DollarSign, CheckCircle, XCircle, Clock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { RecentDeliveriesTable } from "./RecentDeliveriesTable";

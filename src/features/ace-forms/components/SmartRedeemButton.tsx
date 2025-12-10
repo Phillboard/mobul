@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { ExternalLink, Smartphone, Globe } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 import { GiftCardRedemption } from "@/types/aceForms";
-import { getBrandLinks, detectPlatform, attemptDeepLink } from '@/lib/web/brandDeepLinks';
+import { getBrandLinks, detectPlatform, attemptDeepLink } from '@/core/services/web/brandDeepLinks';
 
 interface SmartRedeemButtonProps {
   redemption: GiftCardRedemption;

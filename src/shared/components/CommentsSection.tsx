@@ -9,10 +9,10 @@ import { useState, useRef, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { useAuth } from '@core/auth/AuthProvider';
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useToast } from '@shared/hooks';
 import { formatDistanceToNow } from "date-fns";
 import { 
@@ -29,13 +29,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+} from "@/shared/components/ui/popover";
+import { Badge } from "@/shared/components/ui/badge";
 
 interface Comment {
   id: string;

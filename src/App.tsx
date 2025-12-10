@@ -1,17 +1,17 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/shared/components/ui/toaster";
+import { Toaster as Sonner } from "@/shared/components/ui/sonner";
+import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@core/auth/AuthProvider";
 import { TenantProvider } from "@/contexts/TenantContext";
-import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
-import { GlobalSearch } from "@/components/shared/GlobalSearch";
-import { KeyboardShortcutsHelp } from "@/components/shared/KeyboardShortcutsHelp";
+import { ImpersonationBanner } from "@/features/admin/components/ImpersonationBanner";
+import { GlobalSearch } from "@/shared/components/GlobalSearch";
+import { KeyboardShortcutsHelp } from "@/shared/components/KeyboardShortcutsHelp";
 import { ProtectedRoute } from "@core/auth/components/ProtectedRoute";
-import { DrPhillipChatWrapper } from "@/components/DrPhillipChatWrapper";
-import { ErrorBoundary, CampaignErrorBoundary, GiftCardErrorBoundary, FormBuilderErrorBoundary } from "@/components/ErrorBoundaries";
+import { DrPhillipChatWrapper } from "@/features/dashboard/components/DrPhillipChatWrapper";
+import { ErrorBoundary, CampaignErrorBoundary, GiftCardErrorBoundary, FormBuilderErrorBoundary } from "@/shared/components/ErrorBoundaries";
 import { ThemeProvider } from "next-themes";
 import { Loader2 } from "lucide-react";
 

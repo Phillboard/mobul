@@ -1,11 +1,11 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { useAuth } from '@core/auth/AuthProvider';
 import { useTenant } from '@app/providers/TenantProvider';
 import { CreditCard, DollarSign, Download, TrendingUp, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { USER_ROLES } from '@/lib/terminology';
+import { Badge } from "@/shared/components/ui/badge";
+import { Progress } from "@/shared/components/ui/progress";
+import { USER_ROLES } from '@/shared/utils/terminology';
 import {
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/shared/components/ui/table";
 
 export function BillingSettings() {
   const { roles, hasPermission } = useAuth();

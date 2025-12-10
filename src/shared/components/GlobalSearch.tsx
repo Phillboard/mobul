@@ -17,7 +17,7 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from "@/components/ui/command";
+} from "@/shared/components/ui/command";
 import { 
   Megaphone, 
   Users, 
@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { supabase } from '@core/services/supabase';
 import { useTenant } from '@app/providers/TenantProvider';
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 import { useFeatureFlags } from '@shared/hooks';
 
 interface SearchResult {

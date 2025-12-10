@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
 import { Plus, Zap, AlertCircle, CheckCircle, Trash2, Edit } from "lucide-react";
-import { useCRMIntegrations, useDeleteCRMIntegration, useUpdateCRMIntegration } from "@/hooks/useCRMIntegrations";
+import { useCRMIntegrations, useDeleteCRMIntegration, useUpdateCRMIntegration } from '@/features/settings/hooks';
 import { useTenant } from '@app/providers/TenantProvider';
 import { CRMIntegrationDialog } from "./CRMIntegrationDialog";
 import { formatDistanceToNow } from "date-fns";
@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 
 const CRM_LOGOS: Record<string, string> = {
   salesforce: "🔷",

@@ -8,8 +8,8 @@
  */
 
 import { Settings, Sliders, Sparkles, Trash2, Copy } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/shared/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { StylesTab } from './StylesTab';
 import { ArrangementTab } from './ArrangementTab';
 import { EffectsTab } from './EffectsTab';

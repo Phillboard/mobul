@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Copy, Trash2, Edit, Eye, BarChart3, Code2, MoreVertical, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LibraryHeader } from "@/components/shared/LibraryHeader";
-import { LibrarySearch } from "@/components/shared/LibrarySearch";
-import { ViewToggle } from "@/components/shared/ViewToggle";
-import { LibraryEmptyState } from "@/components/shared/LibraryEmptyState";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { LibraryHeader } from "@/shared/components/LibraryHeader";
+import { LibrarySearch } from "@/shared/components/LibrarySearch";
+import { ViewToggle } from "@/shared/components/ViewToggle";
+import { LibraryEmptyState } from "@/shared/components/LibraryEmptyState";
 import { AceFormsFilters } from "@/features/ace-forms/components";
 import {
   DropdownMenu,
@@ -14,11 +14,11 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAceForms } from "@/hooks/useAceForms";
+} from "@/shared/components/ui/dropdown-menu";
+import { useAceForms } from '@/features/ace-forms/hooks';
 import { useTenant } from "@/contexts/TenantContext";
 import { FormEmbedDialog } from "@/features/ace-forms/components";
-import { Layout } from "@/components/layout/Layout";
+import { Layout } from "@/shared/components/layout/Layout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,9 +28,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+} from "@/shared/components/ui/alert-dialog";
+import { Badge } from "@/shared/components/ui/badge";
+import { Input } from "@/shared/components/ui/input";
 
 /**
  * Ace Forms - List and manage all forms

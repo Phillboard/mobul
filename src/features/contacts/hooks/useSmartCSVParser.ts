@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import Papa from 'papaparse';
-import { UniqueCodeService } from '@/lib/services/uniqueCodeService';
+import { UniqueCodeService } from '@/core/services/uniqueCodeService';
 
 export interface ParsedCSVData {
   headers: string[];

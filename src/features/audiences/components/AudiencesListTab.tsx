@@ -3,15 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useReactTable, SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import { supabase } from '@core/services/supabase';
 import { useTenant } from '@app/providers/TenantProvider';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Users, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createAudiencesColumns } from "./audiencesColumns";
 import { basicTableModels } from '@shared/utils/table';
-import { DataTable } from "@/components/ui/data-table";
-import { DataTablePagination } from "@/components/ui/data-table-pagination";
-import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { DataTable } from "@/shared/components/ui/data-table";
+import { DataTablePagination } from "@/shared/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/shared/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/shared/components/ui/data-table-view-options";
 
 export function AudiencesListTab() {
   const { currentClient } = useTenant();

@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode } from "react";
 import { FormField, FormConfig, FieldType, FormSettings } from "@/types/aceForms";
-import { useFormBuilderRHF } from "@/hooks/useFormBuilderRHF";
+import { useFormBuilderRHF } from '@/features/ace-forms/hooks';
 import { FieldPreset } from "@/features/ace-forms/components/FieldPresets";
 
 interface FormBuilderContextValue {

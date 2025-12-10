@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useZapierConnections } from "@/hooks/useZapierConnections";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { useZapierConnections } from '@/features/settings/hooks';
 import { useTenant } from '@app/providers/TenantProvider';
 import { 
   Activity, 
@@ -8,7 +8,7 @@ import {
   TrendingUp,
   Zap
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 
 export function ZapierAnalytics() {

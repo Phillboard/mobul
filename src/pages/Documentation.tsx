@@ -1,10 +1,10 @@
-import { Layout } from "@/components/layout/Layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DocumentationContent } from "@/components/documentation/DocumentationContent";
-import { AdminDocsList } from "@/components/documentation/AdminDocsList";
-import { AdminDocsAnalytics } from "@/components/documentation/AdminDocsAnalytics";
-import { AdminDocsFeedback } from "@/components/documentation/AdminDocsFeedback";
-import { SeedDocsButton } from "@/components/documentation/SeedDocsButton";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { DocumentationContent } from "@/features/documentation/components/DocumentationContent";
+import { AdminDocsList } from "@/features/documentation/components/AdminDocsList";
+import { AdminDocsAnalytics } from "@/features/documentation/components/AdminDocsAnalytics";
+import { AdminDocsFeedback } from "@/features/documentation/components/AdminDocsFeedback";
+import { SeedDocsButton } from "@/features/documentation/components/SeedDocsButton";
 import { useAuth } from "@core/auth/AuthProvider";
 import { useSearchParams, useParams } from "react-router-dom";
 import { BookOpen, Settings, BarChart3, MessageSquare } from "lucide-react";

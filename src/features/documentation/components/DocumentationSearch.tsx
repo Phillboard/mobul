@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/shared/components/ui/input";
 import {
   CommandDialog,
   CommandEmpty,
@@ -9,9 +9,9 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { useDocumentationSearch } from "@/hooks/useDocumentation";
-import { Button } from "@/components/ui/button";
+} from "@/shared/components/ui/command";
+import { useDocumentationSearch } from '@/features/documentation/hooks';
+import { Button } from "@/shared/components/ui/button";
 
 export function DocumentationSearch() {
   const [open, setOpen] = useState(false);

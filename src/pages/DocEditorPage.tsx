@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/shared/components/ui/button";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { useToast } from '@/shared/hooks';
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Save, Eye, Code, Columns } from "lucide-react";
-import { MarkdownRenderer } from "@/components/documentation/MarkdownRenderer";
-import { MarkdownToolbar } from "@/components/documentation/MarkdownToolbar";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import { Skeleton } from "@/components/ui/skeleton";
+import { MarkdownRenderer } from "@/features/documentation/components/MarkdownRenderer";
+import { MarkdownToolbar } from "@/features/documentation/components/MarkdownToolbar";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/shared/components/ui/resizable";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 type ViewMode = "edit" | "split" | "preview";
 

@@ -5,9 +5,9 @@ import { GiftCardInstructions } from "./GiftCardInstructions";
 import { FireworksAnimation } from "./FireworksAnimation";
 import { GiftCardRedemption, RevealSettings } from "@/types/aceForms";
 import { Share2, Download, Smartphone } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { useToast } from '@shared/hooks';
-import { logger } from '@/lib/services/logger';
+import { logger } from '@/core/services/logger';
 
 interface GiftCardRevealProps {
   redemption: GiftCardRedemption;

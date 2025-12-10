@@ -1,24 +1,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { LibraryHeader } from "@/components/shared/LibraryHeader";
-import { LibrarySearch } from "@/components/shared/LibrarySearch";
-import { ViewToggle } from "@/components/shared/ViewToggle";
-import { LibraryEmptyState } from "@/components/shared/LibraryEmptyState";
-import { LandingPageFilters } from "@/components/landing-pages/LandingPageFilters";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { LibraryHeader } from "@/shared/components/LibraryHeader";
+import { LibrarySearch } from "@/shared/components/LibrarySearch";
+import { ViewToggle } from "@/shared/components/ViewToggle";
+import { LibraryEmptyState } from "@/shared/components/LibraryEmptyState";
+import { LandingPageFilters } from "@/features/landing-pages/components/LandingPageFilters";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 import { Plus, Globe, MoreVertical, Edit, Trash2, Eye, Copy, Sparkles, Palette } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
-import { useLandingPages } from "@/hooks/useLandingPages";
-import { usePermissions } from "@/hooks/usePermissions";
+import { useLandingPages } from '@/features/landing-pages/hooks';
+import { usePermissions } from '@/core/auth/hooks';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +28,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 

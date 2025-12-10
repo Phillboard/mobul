@@ -8,7 +8,7 @@
  * @see ../types/designer.ts for token types
  */
 
-import { TEMPLATE_TOKENS, TEMPLATE_TOKEN_METADATA } from '@/lib/terminology';
+import { TEMPLATE_TOKENS, TEMPLATE_TOKEN_METADATA } from '@/shared/utils/terminology';
 import type { TemplateToken, TokenContent } from '../types/designer';
 
 // ============================================================================

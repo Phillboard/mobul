@@ -1,20 +1,20 @@
 import { useState, useMemo } from "react";
 import { Plus, List, Filter } from "lucide-react";
-import { Layout } from "@/components/layout/Layout";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ListBuilder } from "@/components/contacts/ListBuilder";
-import { SegmentBuilder } from "@/components/contacts/SegmentBuilder";
-import { useContactLists } from "@/hooks/useContactLists";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Button } from "@/shared/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { ListBuilder } from "@/features/contacts/components/ListBuilder";
+import { SegmentBuilder } from "@/features/contacts/components/SegmentBuilder";
+import { useContactLists } from '@/features/contacts/hooks';
 import { useNavigate } from "react-router-dom";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, SortingState, ColumnFiltersState } from "@tanstack/react-table";
-import { DataTable } from "@/components/ui/data-table";
-import { DataTablePagination } from "@/components/ui/data-table-pagination";
-import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
-import { createContactListColumns, ContactListRow } from "@/components/contacts/contactListColumns";
-import { createSegmentColumns, SegmentRow } from "@/components/contacts/segmentColumns";
+import { DataTable } from "@/shared/components/ui/data-table";
+import { DataTablePagination } from "@/shared/components/ui/data-table-pagination";
+import { DataTableToolbar } from "@/shared/components/ui/data-table-toolbar";
+import { DataTableViewOptions } from "@/shared/components/ui/data-table-view-options";
+import { createContactListColumns, ContactListRow } from "@/features/contacts/components/contactListColumns";
+import { createSegmentColumns, SegmentRow } from "@/features/contacts/components/segmentColumns";
 
 export default function ContactLists() {
   const navigate = useNavigate();

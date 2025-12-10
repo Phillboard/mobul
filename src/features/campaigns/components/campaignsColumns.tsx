@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
-import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { DataTableColumnHeader } from "@/shared/components/ui/data-table-column-header";
+import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 import { MoreHorizontal, Eye, BarChart3, FileText, Send, Edit, Copy, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 

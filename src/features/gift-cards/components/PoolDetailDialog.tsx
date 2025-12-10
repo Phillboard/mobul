@@ -34,22 +34,22 @@
  * - export-pool-cards: Generates CSV export
  */
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/shared/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { RefreshCw, Download } from "lucide-react";
 import { useState } from "react";
 import { formatCurrency } from '@shared/utils/currency';
-import { calculatePoolStats } from "@/lib/campaign/giftCardUtils";
+import { calculatePoolStats } from "@/features/campaigns/utils/giftCardUtils";
 import { useToast } from '@shared/hooks';
 import { PoolStats } from "./PoolStats";
 import { PoolCardsTable } from "./PoolCardsTable";
 import { PoolBalanceHistory } from "./PoolBalanceHistory";
 import { PoolSettings } from "./PoolSettings";
 import { AutoPopulatePoolButton } from "./AutoPopulatePoolButton";
-import { USER_ROLES } from '@/lib/terminology';
+import { USER_ROLES } from '@/shared/utils/terminology';
 
 interface PoolDetailDialogProps {
   poolId: string | null;

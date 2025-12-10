@@ -4,10 +4,10 @@
  * Platform-wide gift card transaction analytics and reporting
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useAdminBillingStats, useTopSpendingClients } from '@/hooks/useGiftCardBilling';
-import { formatCurrency, calculateProfitMargin } from '@/lib/gift-cards/provisioning-utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Badge } from '@/shared/components/ui/badge';
+import { useAdminBillingStats, useTopSpendingClients } from '@/features/gift-cards/hooks';
+import { formatCurrency, calculateProfitMargin } from '@/features/gift-cards/lib/provisioning-utils';
 import { DollarSign, TrendingUp, CreditCard, Package, PieChart } from 'lucide-react';
 
 export function AdminFinancialReports() {

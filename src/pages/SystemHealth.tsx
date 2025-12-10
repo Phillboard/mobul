@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Layout } from "@/components/layout/Layout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Layout } from "@/shared/components/layout/Layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -13,13 +13,13 @@ import {
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import { format, subDays, subHours } from "date-fns";
-import { toast } from "@/hooks/use-toast";
-import { ExportButton } from "@/components/monitoring/ExportButton";
-import { FilterPanel } from "@/components/monitoring/FilterPanel";
+import { toast } from '@/shared/hooks';
+import { ExportButton } from "@/features/admin/components/monitoring/ExportButton";
+import { FilterPanel } from "@/features/admin/components/monitoring/FilterPanel";
 import { useSearchParams } from "react-router-dom";
-import { Input } from "@/components/ui/input";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/shared/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/components/ui/collapsible";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 
 // Error code descriptions for display
 const ERROR_CODE_DESCRIPTIONS: Record<string, string> = {

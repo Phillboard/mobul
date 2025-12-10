@@ -21,9 +21,9 @@ import {
   Clock,
   AlertTriangle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Checkbox } from "@/shared/components/ui/checkbox";
+import { Badge } from "@/shared/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -31,7 +31,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/shared/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,12 +41,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@/shared/components/ui/alert-dialog";
 import { 
   useIndividualCards, 
   useBulkDeleteCards,
   type InventoryCard,
-} from "@/hooks/useIndividualCardInventory";
+} from '@/features/gift-cards/hooks';
 import { formatDate, DATE_FORMATS } from '@shared/utils/date';
 
 interface ExpandableInventoryRowProps {

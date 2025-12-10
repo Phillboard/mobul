@@ -15,20 +15,20 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+} from '@/shared/components/ui/dialog';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert';
+import { Badge } from '@/shared/components/ui/badge';
+import { Progress } from '@/shared/components/ui/progress';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@/shared/components/ui/select';
 import {
   Upload,
   AlertCircle,
@@ -40,8 +40,8 @@ import {
   ArrowRight,
   Loader2,
 } from 'lucide-react';
-import { useSmartCSVParser, ParsedCSVData } from '@/hooks/useSmartCSVParser';
-import { UniqueCodeService } from '@/lib/services/uniqueCodeService';
+import { useSmartCSVParser, ParsedCSVData } from '@/features/contacts/hooks';
+import { UniqueCodeService } from '@/core/services/uniqueCodeService';
 import { CSVTemplateGenerator } from '@shared/utils/csv';
 import { supabase } from '@core/services/supabase';
 import { toast } from 'sonner';

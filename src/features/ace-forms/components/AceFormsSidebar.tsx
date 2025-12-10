@@ -1,5 +1,5 @@
 import { LayoutGrid, Plus, FileText } from "lucide-react";
-import { NavLink } from "@/components/NavLink";
+import { NavLink } from "@/shared/components/NavLink";
 import {
   Sidebar,
   SidebarContent,
@@ -10,7 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/shared/components/ui/sidebar";
 
 const menuItems = [
   { title: "All Forms", url: "/ace-forms", icon: LayoutGrid, end: true },

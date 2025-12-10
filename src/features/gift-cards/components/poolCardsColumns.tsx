@@ -3,11 +3,11 @@
  * Type-safe column configuration for TanStack Table
  */
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { formatCurrency } from '@shared/utils/currency';
-import { maskCardCode, getStatusBadgeVariant } from '@/lib/campaign/giftCardUtils';
+import { maskCardCode, getStatusBadgeVariant } from '@/features/campaigns/utils/giftCardUtils';
 import { formatDate, DATE_FORMATS } from '@shared/utils/date';
 import { GiftCard } from "@/types/giftCards";
 

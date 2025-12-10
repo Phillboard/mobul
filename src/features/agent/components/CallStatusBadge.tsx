@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 import { Phone, PhoneCall, PhoneOff, PhoneMissed } from "lucide-react";
 
 interface CallStatusBadgeProps {

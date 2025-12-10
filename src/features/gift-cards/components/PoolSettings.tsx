@@ -25,18 +25,18 @@
  */
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Switch } from "@/shared/components/ui/switch";
+import { Badge } from "@/shared/components/ui/badge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
 import { Edit2, X, Check } from "lucide-react";
 import { GiftCardPool } from "@/types/giftCards";
-import { formatCheckFrequency } from "@/lib/campaign/giftCardUtils";
+import { formatCheckFrequency } from "@/features/campaigns/utils/giftCardUtils";
 
 interface PoolSettingsProps {
   pool: GiftCardPool;

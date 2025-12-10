@@ -1,7 +1,7 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Button } from "@/shared/components/ui/button";
 import { Plus, Edit } from "lucide-react";
-import { useMessageTemplates, type MessageTemplate } from "@/hooks/useMessageTemplates";
+import { useMessageTemplates, type MessageTemplate } from '@/features/settings/hooks';
 import { useState } from "react";
 import {
   Dialog,
@@ -10,10 +10,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/shared/components/ui/dialog";
 import { MessageTemplateEditor } from "./MessageTemplateEditor";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
 
 interface TemplateSelectorProps {
   type: 'sms' | 'email';

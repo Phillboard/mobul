@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FileUploadZone } from "@/components/audiences/FileUploadZone";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Label } from "@/shared/components/ui/label";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
+import { FileUploadZone } from "@/features/audiences/components/FileUploadZone";
 import { Download, Upload, AlertCircle, CheckCircle } from "lucide-react";
-import { useGiftCardPools } from "@/hooks/useGiftCardPools";
+import { useGiftCardPools } from '@/features/gift-cards/hooks';
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
 

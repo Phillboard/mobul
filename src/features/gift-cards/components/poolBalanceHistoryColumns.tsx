@@ -3,10 +3,10 @@
  * Type-safe column configuration for TanStack Table
  */
 import { ColumnDef } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/shared/components/ui/badge";
 import { formatDate, DATE_FORMATS } from '@shared/utils/date';
 import { formatCurrency } from '@shared/utils/currency';
-import { maskCardCode } from "@/lib/campaign/giftCardUtils";
+import { maskCardCode } from "@/features/campaigns/utils/giftCardUtils";
 
 export interface BalanceHistoryRow {
   id: string;

@@ -3,8 +3,8 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+} from "@/shared/components/ui/popover";
+import { Button } from "@/shared/components/ui/button";
 
 export function KeyboardShortcutsHelp() {
   return (

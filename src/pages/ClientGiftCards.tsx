@@ -7,13 +7,13 @@
  */
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
-import { useEnabledBrands, useToggleClientGiftCard, useClientAvailableGiftCards } from '@/hooks/useGiftCardProvisioning';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Button } from '@/shared/components/ui/button';
+import { Badge } from '@/shared/components/ui/badge';
+import { Switch } from '@/shared/components/ui/switch';
+import { Alert, AlertDescription } from '@/shared/components/ui/alert';
+import { useToast } from '@/shared/hooks';
+import { useEnabledBrands, useToggleClientGiftCard, useClientAvailableGiftCards } from '@/features/gift-cards/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';

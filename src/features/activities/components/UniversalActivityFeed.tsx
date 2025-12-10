@@ -1,6 +1,6 @@
-import { Activity } from "@/hooks/useActivities";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
+import { Activity } from '@/features/activities/hooks';
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Badge } from "@/shared/components/ui/badge";
 import { Phone, Mail, Calendar, MessageSquare, FileText, Send } from "lucide-react";
 import { format } from "date-fns";
 

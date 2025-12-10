@@ -3,7 +3,7 @@
  * Phase 2.3: Operational visibility for call center
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { Phone, TrendingUp, Clock, CheckCircle } from "lucide-react";

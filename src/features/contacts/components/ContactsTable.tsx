@@ -8,14 +8,14 @@ import {
   VisibilityState,
   RowSelectionState,
 } from "@tanstack/react-table";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
 import { ColumnSelector } from "./ColumnSelector";
 import { ContactBulkActions } from "./ContactBulkActions";
-import { useContacts } from "@/hooks/useContacts";
+import { useContacts } from '@/features/contacts/hooks';
 import { useTablePreferences } from '@shared/hooks';
 import { ContactFilters } from "@/types/contacts";
 import { createColumns } from "./columns";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/shared/components/ui/empty-state";
 import { Users } from "lucide-react";
 
 interface ContactsTableProps {
