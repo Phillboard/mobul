@@ -1,52 +1,65 @@
 ---
-description: Documentation for organization hierarchy aspects including multi-tenant data models, role-based permissions, and client-agency relationships
+description: Provides guidance for implementing organizational hierarchy, tenant management, and access control systems for multi-client campaigns
 ---
 
 
 # organization-hierarchy
 
-Multi-Tenant Organization Model
+Multi-Tenant Hierarchy Implementation:
 
-1. Hierarchical Access Control System (Importance: 95)
-- Three-tier structure: Agency -> Organization -> Client
-- Inherited permissions flow down hierarchy
-- Custom role definitions at each level
-- Cross-organizational access controls for agencies
+1. Organization Structure
+- Three-tier hierarchy: Platform → Agency → Client
+- Agencies can manage multiple client organizations
+- Clients belong to single agency but can have multiple campaigns
+- Organization metadata includes billing status, feature flags, and tier limits
 
-2. Organization Credit Management (Importance: 90)
-- Credit allocation follows organizational hierarchy
-- Automated credit distribution rules
-- Pool-based credit tracking system
-- Multi-level spending limits and thresholds
-- Credit reservation system for pending campaigns
+2. Role-Based Access Control
+- Hierarchical permission inheritance from agency to client level
+- Role definitions bound to organizational context
+- Custom override system for exceptional permissions
+- Organization-specific feature enablement
 
-3. Client-Agency Relationship Logic (Importance: 85)
-- One-to-many agency-client relationships
-- Configurable client access levels
-- Shared resource management between agencies
-- Client-specific pricing overrides
-- White-label branding rules
+3. Credit Management Hierarchy
+- Downward credit flow: Agency → Client → Campaign
+- Shared credit pools with client-specific allocations
+- Organizational credit limits and threshold monitoring
+- Agency-level markup configuration
 
-4. Gift Card Pool Inheritance (Importance: 80)
-- Organization-level pool configuration
-- Client-specific denomination access
-- Inherited pricing tiers
-- Brand availability controls
-- Pool allocation rules
+4. Gift Card Brand Access
+- Organization-level brand availability control
+- Client-specific denomination restrictions
+- Agency-wide brand relationship management
+- Hierarchical brand pricing implementation
 
-5. Permission Inheritance System (Importance: 90)
-- Module-based permission grouping
-- Role templates with inheritance
-- Feature-specific access controls
-- Cross-organizational permission mapping
-- Override rules for client-specific features
+Key Components:
 
-Key Business Rules:
-- Organizations must belong to exactly one agency
+1. Organization Management System
+Path: src/features/settings/components/OrganizationManager.tsx
+- Handles organization lifecycle (create/deactivate/update)
+- Manages organization relationships and hierarchies
+- Controls feature access and billing status
+Importance Score: 90
+
+2. Permission Management 
+Path: src/core/auth/permissions.ts
+- Implements hierarchical permission model
+- Handles role-based access inheritance
+- Manages organization-specific overrides
+Importance Score: 85
+
+3. Credit Allocation System
+Path: src/features/billing/components/CreditManager.tsx
+- Manages hierarchical credit distribution
+- Handles credit pool sharing rules
+- Controls client spending limits
+Importance Score: 80
+
+Business Rules:
+- Organizations can only access approved gift card brands
 - Credit flows only downward in hierarchy
-- Client permissions cannot exceed agency permissions
-- Resource sharing requires explicit agency approval
-- White-label rules enforce client-specific branding
+- Permissions inherit from parent organizations
+- Clients limited to single agency relationship
+- Agency markup applies to all child organizations
 
 $END$
 

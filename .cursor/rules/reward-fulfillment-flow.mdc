@@ -1,68 +1,62 @@
 ---
-description: Use when analyzing reward and gift card fulfillment flows, verification processes, and multi-channel delivery systems
+description: Specification for gift card reward fulfillment workflows including provisioning, delivery tracking, and verification
 ---
 
 
 # reward-fulfillment-flow
 
-Core Fulfillment Components:
+CORE FULFILLMENT LOGIC:
 
-1. Multi-Provider Reward Distribution System
+1. Multi-Source Gift Card Provisioning Waterfall
+Path: src/core/services/tillo.ts
+- Primary fulfillment sequence:
+  1. CSV inventory pool check
+  2. Tillo API real-time provisioning
+  3. Backup provider API fallback
+- Atomic transaction handling for card assignments
+- Balance verification before delivery
 Importance Score: 95
-Location: src/features/gift-cards/utils/giftCardUtils.ts
-- Implements waterfall fulfillment strategy:
-  1. CSV inventory pool
-  2. Tillo API provider
-  3. Internal buffer pool
-- Handles provider-specific balance verification
-- Manages cross-provider code masking and security
-- Tracks fulfillment status across delivery channels
 
-2. Verification Workflow Engine
+2. Reward Delivery Orchestration 
+Path: src/features/rewards/services/delivery.ts
+- SMS opt-in requirement enforcement
+- Multi-channel delivery options:
+  - SMS with secure links
+  - Email with wallet integration
+  - Call center manual release
+- Delivery status tracking and retry logic
 Importance Score: 90
-Location: src/features/verification/VerificationWorkflow.ts
-- Multi-channel verification requirements:
-  - SMS opt-in confirmation
-  - Call center agent validation
+
+3. Reward Condition Verification
+Path: src/features/campaigns/components/wizard/ConditionsStep.tsx
+- Configurable trigger conditions:
   - Form submission validation
-- Handles concurrent verification attempts
-- Manages verification timeouts and retries
-- Implements verification chain dependencies
-
-3. SMS Delivery System
+  - Call center agent approval
+  - Time-based automatic release
+- Real-time condition evaluation
+- Multi-step approval workflows
 Importance Score: 85
-Location: src/features/messaging/SMSDelivery.ts
-- Provider fallback sequence:
-  1. NotificationAPI
-  2. Infobip
-  3. Twilio
-- Handles delivery receipts and status tracking
-- Manages opt-in requirements and compliance
-- Implements retry logic with backoff
 
-4. Credit Management
+4. SMS Opt-In Management
+Path: src/features/rewards/hooks/useOptInStatus.ts
+- Required opt-in verification before delivery
+- Status tracking: not_sent -> pending -> opted_in/opted_out
+- Automated retry system for failed opt-ins
+- Compliance language enforcement
 Importance Score: 80
-Location: src/features/billing/CreditManagement.ts
-- Hierarchical credit allocation:
-  - Platform -> Agency -> Client -> Campaign
-- Real-time balance verification
-- Automated credit holds during fulfillment
-- Transaction rollback protection
 
-5. Call Center Integration
-Importance Score: 75
-Location: src/features/call-center/AgentVerification.ts
-- Agent-assisted reward validation
-- Real-time verification status updates
-- Gift card code masking/reveal system
-- Verification attempt tracking
+KEY BUSINESS RULES:
+1. SMS opt-in required before reward delivery
+2. Gift cards must be validated before assignment
+3. Conditions must be fully met before reward release
+4. Multi-step verification for high-value rewards
+5. Automated balance checking before delivery
 
-Key Business Rules:
-- All rewards require SMS opt-in verification
-- Gift cards must be validated before code reveal
-- Automatic provider fallback on delivery failure
-- Credit verification before reward allocation
-- Maximum 3 verification attempts per recipient
+The system implements a sophisticated reward fulfillment workflow with emphasis on:
+- Secure gift card provisioning
+- Compliant delivery processes
+- Multi-condition verification
+- Status tracking and reporting
 
 $END$
 

@@ -95,64 +95,51 @@ All designers (mail, landing, email) use same framework.
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-MARKETING CAMPAIGN MANAGEMENT CORE
+BUSINESS DOMAIN: Multi-tenant Campaign Management Platform with Gift Card Distribution
 
-Business Domain Architecture:
-1. Campaign Management Layer
-- Campaign creation workflow with conditional reward triggers
-- Mail piece design system with postal regulation compliance
-- Landing page generation with dynamic token replacement
-- Code validation and import management
+Core Business Components:
 
-2. Gift Card Distribution Engine
-- Multi-provider gift card provisioning system (Tillo, CSV, Buffer Pool)
-- Real-time balance verification and tracking
-- Brand-specific denomination management
-- Pool health monitoring with configurable thresholds
-
-3. Credit Management System
-- Hierarchical credit allocation (Platform → Agency → Client → Campaign)
-- One-way credit flow enforcement
-- Multi-source gift card provisioning logic
-- Budget tracking and threshold alerts
-
-4. Recipient Journey Orchestration
-- Condition-based reward triggers
-- SMS opt-in status tracking
-- Form submission validation
-- Call center verification workflow
-
-Key Business Components:
-
-1. Campaign Creation (src/features/campaigns/components/wizard/)
+1. Campaign Wizard System (src/features/campaigns/components/wizard/)
 Importance Score: 90
-- Multi-step validation workflow
-- Conditional reward configuration
-- Mailing method differentiation
-- Code generation and validation
+- Multi-step campaign creation combining audience selection and reward configuration 
+- Complex validation rules for gift card rewards including brand/denomination requirements
+- Unique code validation and generation with custom tracking parameters
+- Reward trigger system with manual/automated conditions
 
-2. Gift Card Operations (src/features/gift-cards/lib/)
+2. Gift Card Provisioning Engine (src/core/services/tillo.ts)
+Importance Score: 95
+- Hierarchical provisioning waterfall: CSV → API → Buffer Pool
+- Real-time balance verification across providers
+- Multi-tenant inventory allocation with role-based access
+- Custom pricing rules per brand/denomination
+
+3. Credit Management System (src/features/billing/types/index.ts) 
 Importance Score: 85
-- Provider integration waterfall
-- Balance verification system
-- Pool health monitoring
-- Inventory management
+- Unidirectional credit flow (Platform → Agency → Client → Campaign)
+- Dynamic pricing with markup calculations
+- Pool-based budget management
+- Real-time balance monitoring with threshold alerts
 
-3. Credit Management (src/features/billing/types/)
+4. Contact Processing System (src/features/contacts/)
 Importance Score: 80
-- Multi-tier credit allocation
-- Transaction validation
-- Budget enforcement
-- Usage monitoring
+- Smart CSV import with field mapping
+- Contact enrichment tracking
+- Segmentation engine with dynamic list management
+- Custom field validation rules
 
-4. Reward Distribution (src/core/services/)
-Importance Score: 75
-- Condition evaluation engine
-- SMS delivery management
-- Verification workflow
-- Audit trail maintenance
+5. CRM Integration Hub (src/features/settings/components/CRMIntegrationDialog.tsx)
+Importance Score: 85
+- Webhook-based integration framework
+- Field/event mapping system
+- Provider-specific configurations
+- Real-time sync validation
 
-The system implements a comprehensive marketing campaign platform focused on gift card reward distribution, with sophisticated credit management and multi-step verification workflows. Core business value centers on secure gift card operations and automated reward fulfillment.
+The platform implements sophisticated campaign management with unique business rules around:
+- Gift card distribution and tracking
+- Multi-level credit management
+- Complex reward conditions
+- Contact segmentation
+- Integration mapping
 
 $END$
 

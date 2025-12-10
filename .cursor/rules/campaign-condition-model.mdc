@@ -1,54 +1,60 @@
 ---
-description: Defines campaign condition data models, reward triggers, verification rules and fulfillment workflows
+description: Specification for campaign condition data models, trigger evaluation, and reward distribution logic
 ---
 
 
 # campaign-condition-model
 
-Campaign Condition Core Components:
+Key Components:
 
-1. Condition Trigger System (Importance: 95)
-- Multi-step condition verification workflow
-- Sequential vs parallel condition evaluation
-- Time-based delay conditions with configurable windows
-- Automatic vs manual verification modes
-- Condition dependency chains with rollback capabilities
+1. Condition Trigger System
+Importance Score: 95
+- Implements multi-stage reward trigger evaluation:
+  - Form submission validation
+  - Call center agent verification  
+  - Time-based delay conditions
+  - Multi-step sequential triggers
+- Maintains condition state machine transitions
+- Handles reward distribution delays and retries
+- Supports compound conditions with AND/OR logic
 
-2. Reward Distribution Engine (Importance: 90)
-- Gift card allocation based on condition completion
-- Inventory verification before reward commitment
-- Multi-provider fallback for gift card provisioning
-- Automatic retry mechanism for failed distributions
-- Balance tracking across reward pools
+2. Reward Distribution Engine 
+Importance Score: 90
+- Gift card pool allocation per condition
+- Balance verification before reward distribution
+- SMS delivery status tracking
+- Multi-attempt delivery system
+- Failed distribution handling with retry logic
 
-3. Verification Rules (Importance: 85)
-- Manual agent verification requirements
-- Form submission validation logic
-- Call completion tracking
-- SMS confirmation workflows
-- Multi-step approval chains
+3. Validation Framework
+Importance Score: 85
+- Brand/denomination validation
+- Pool sufficiency checks
+- Client credit balance verification 
+- SMS opt-in status validation
+- Campaign budget enforcement
 
-4. Time-Based Controls (Importance: 80)
-- Configurable waiting periods between conditions
-- Campaign-specific expiration rules
-- Grace periods for condition completion
-- Rate limiting for reward distribution
-- Automated cleanup of expired conditions
-
-5. Campaign Condition Types
-- manual_agent: Requires agent verification
-- crm_event: Triggered by CRM integrations 
-- time_delay: Enforces waiting periods
-- mail_delivered: Tracks physical mail status
-- form_submitted: Validates form completions
-- call_completed: Monitors call center activity
+4. Campaign State Management
+Importance Score: 80
+- Condition dependency tracking
+- Sequential trigger orchestration
+- Time-window enforcement
+- Reward inventory monitoring
+- Campaign completion detection
 
 Core Business Rules:
-- Conditions must complete in defined sequence
-- Rewards locked until all conditions verified
-- Manual verification requires specific agent roles
-- Time delays enforce minimum waiting periods
-- Failed conditions trigger automatic rollback
+- Each campaign requires one or more reward conditions
+- Conditions must specify brand and denomination
+- SMS opt-in required for reward delivery
+- Pool inventory verified before condition activation
+- Client credit balance checked before reward distribution
+- Multi-step conditions require sequential completion
+
+File Paths:
+src/features/campaigns/components/wizard/ConditionsStep.tsx
+src/features/campaigns/hooks/useCampaignConditions.ts
+src/features/campaigns/validation/campaignValidation.ts
+src/features/campaigns/utils/giftCardUtils.ts
 
 $END$
 

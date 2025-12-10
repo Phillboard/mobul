@@ -1,4 +1,4 @@
-import { useQuery } from "@tantml:query/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 
 export function useCampaignVersions(campaignId: string) {
