@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@shared/hooks';
-import { useGiftCardBrands } from "@/hooks/useGiftCardBrands";
+import { useGiftCardBrands } from "../hooks/useGiftCardBrands";
 import { Receipt, DollarSign } from "lucide-react";
 import { useAuth } from '@core/auth/AuthProvider';
 

@@ -1,4 +1,4 @@
-import { useCampaignCreateForm } from "@/hooks/useCampaignCreateForm";
+import { useCampaignCreateForm } from "../../hooks/useCampaignCreateForm";
 import { CampaignSidebar } from "./CampaignSidebar";
 import { RecipientsSection } from "./RecipientsSection";
 import { MailPieceSection } from "./MailPieceSection";

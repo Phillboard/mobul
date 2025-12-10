@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { useAceForms, useAceForm } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
 import { Layout } from "@/components/layout/Layout";
-import { FormBuilder } from "@/components/ace-forms/FormBuilder";
+import { 
+  FormBuilder,
+  RevealDesigner,
+  FormAnalytics,
+  FormTemplateSelector,
+  ExportDialog,
+  FormEmbedDialog,
+  AIFormGenerator,
+  KeyboardShortcutsHelp 
+} from "@/features/ace-forms/components";
 import { FormBuilderProvider, useFormBuilder } from "@/contexts/FormBuilderContext";
-import { RevealDesigner } from "@/components/ace-forms/RevealDesigner";
-import { FormAnalytics } from "@/components/ace-forms/FormAnalytics";
-import { FormTemplateSelector } from "@/components/ace-forms/FormTemplateSelector";
-import { ExportDialog } from "@/components/ace-forms/ExportDialog";
-import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
-import { AIFormGenerator } from "@/components/ace-forms/AIFormGenerator";
-import { KeyboardShortcutsHelp } from "@/components/ace-forms/KeyboardShortcutsHelp";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";

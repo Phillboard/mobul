@@ -5,12 +5,16 @@
  * Supports selection, dragging, resizing, and keyboard shortcuts.
  */
 
-import { useRef, useState, useCallback, useEffect } from 'react';
-import type { CanvasState, DesignElement } from '../types/designer';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
+import type { CanvasState, DesignElement, DesignSide } from '../types/designer';
 
 export interface DesignerCanvasProps {
   /** Current canvas state */
   canvasState: CanvasState;
+  /** Current side being displayed (front/back or page number) */
+  currentSide?: DesignSide;
+  /** Background for current side (overrides canvasState background) */
+  sideBackground?: { color?: string; image?: string | null };
   /** Callback when element is selected */
   onElementSelect?: (ids: string[]) => void;
   /** Callback when element is updated (dragged, resized, etc.) */
@@ -69,6 +73,8 @@ interface ResizeState {
  */
 export function DesignerCanvas({
   canvasState,
+  currentSide = 'front',
+  sideBackground,
   onElementSelect,
   onElementUpdate,
   onElementCreate,
@@ -88,6 +94,31 @@ export function DesignerCanvas({
   // Convert inches to pixels
   const bleedPx = bleedInches * dpi;
   const safeMarginPx = safeMarginInches * dpi;
+
+  // Filter elements by current side
+  const elementsForSide = useMemo(() => 
+    canvasState.elements.filter(el => 
+      el.side === currentSide || el.side === undefined
+    ),
+    [canvasState.elements, currentSide]
+  );
+
+  // Get background for current side
+  const currentBackground = useMemo(() => {
+    if (sideBackground) return sideBackground;
+    
+    // Check sideBackgrounds map
+    if (canvasState.sideBackgrounds) {
+      const bg = canvasState.sideBackgrounds[currentSide as keyof typeof canvasState.sideBackgrounds];
+      if (bg) return bg;
+    }
+    
+    // Fall back to legacy single background
+    return {
+      color: canvasState.backgroundColor,
+      image: canvasState.backgroundImage,
+    };
+  }, [sideBackground, canvasState.sideBackgrounds, canvasState.backgroundColor, canvasState.backgroundImage, currentSide]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
@@ -587,9 +618,9 @@ export function DesignerCanvas({
         height: canvasState.height * zoom,
         transform: `scale(${zoom})`,
         transformOrigin: 'top left',
-        backgroundColor: canvasState.backgroundColor,
-        backgroundImage: canvasState.backgroundImage 
-          ? `url(${canvasState.backgroundImage})` 
+        backgroundColor: currentBackground.color || canvasState.backgroundColor,
+        backgroundImage: currentBackground.image 
+          ? `url(${currentBackground.image})` 
           : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -665,7 +696,7 @@ export function DesignerCanvas({
       )}
 
       {/* Empty state */}
-      {canvasState.elements.length === 0 && !canvasState.backgroundImage && (
+      {elementsForSide.length === 0 && !currentBackground.image && (
         <div className="canvas-background absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center text-gray-400">
             <p className="text-lg font-medium">Empty Canvas</p>
@@ -674,8 +705,8 @@ export function DesignerCanvas({
         </div>
       )}
 
-      {/* Elements sorted by zIndex */}
-      {[...canvasState.elements]
+      {/* Elements sorted by zIndex - filtered by current side */}
+      {[...elementsForSide]
         .sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
         .map(renderElement)}
     </div>

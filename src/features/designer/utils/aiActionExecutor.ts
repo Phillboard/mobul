@@ -270,6 +270,15 @@ export function executeDesignAction(
       designerState.resetCanvas();
       break;
 
+    case 'generate-background':
+      // This action requires async image generation via DALL-E
+      // It cannot be executed synchronously - the parent component should handle this
+      // by checking for generate-background actions and calling ai.generateImage()
+      console.log('[ActionExecutor] generate-background action detected:', action);
+      console.warn('[ActionExecutor] generate-background requires async handling by parent component');
+      // The action is valid but needs special handling outside this executor
+      break;
+
     default:
       console.warn(`Unknown action type:`, action);
   }

@@ -9,7 +9,7 @@
  * Inspired by MailCraft and Postalytics editors.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
@@ -93,10 +93,16 @@ export default function NewMailDesigner() {
     config,
     initialState,
     autoSaveInterval: 30000,
+    currentSide, // Pass current side to hook
     onAutoSave: (_state) => {
       localStorage.setItem('mail-designer-autosave', JSON.stringify(_state));
     },
   });
+
+  // Keep hook in sync when side changes
+  useEffect(() => {
+    designerState.setCurrentSide(currentSide);
+  }, [currentSide]);
 
   // History management
   const history = useDesignerHistory({
@@ -335,6 +341,60 @@ export default function NewMailDesigner() {
               onSendMessage={ai.sendMessage}
               onClearConversation={ai.clearConversation}
               className="flex-1"
+              // Reference image props - enable "Generate Similar" feature
+              referenceImage={ai.referenceImage}
+              onReferenceSelect={async (file) => {
+                try {
+                  await ai.analyzeReferenceImage(file);
+                  toast({
+                    title: '📸 Reference Analyzed',
+                    description: 'Style extracted. Click "Generate Similar" to create matching background.',
+                  });
+                } catch (err) {
+                  toast({
+                    title: 'Analysis Failed',
+                    description: err instanceof Error ? err.message : 'Could not analyze image',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+              onGenerateFromReference={async (analysis) => {
+                try {
+                  const imageUrl = await ai.generateFromReference(analysis);
+                  if (imageUrl) {
+                    // Apply the generated background to canvas
+                    designerState.setBackgroundImage(imageUrl);
+                    toast({
+                      title: '✨ Background Generated',
+                      description: 'New background applied matching your reference style.',
+                    });
+                  }
+                } catch (err) {
+                  toast({
+                    title: 'Generation Failed',
+                    description: err instanceof Error ? err.message : 'Could not generate image',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+              onClearReference={ai.clearReferenceImage}
+              // Direct background generation for quick action buttons
+              onGenerateBackground={async (prompt) => {
+                try {
+                  toast({ title: '🎨 Generating...', description: 'Creating background image...' });
+                  const imageUrl = await ai.generateImage(prompt);
+                  if (imageUrl) {
+                    designerState.setBackgroundImage(imageUrl);
+                    toast({ title: '✨ Background Applied!', description: 'Your new background is ready.' });
+                  }
+                } catch (err) {
+                  toast({
+                    title: 'Generation Failed',
+                    description: err instanceof Error ? err.message : 'Could not generate image',
+                    variant: 'destructive',
+                  });
+                }
+              }}
             />
           ) : (
             <ScrollArea className="flex-1">
@@ -431,6 +491,8 @@ export default function NewMailDesigner() {
             >
               <DesignerCanvas
                 canvasState={designerState.canvasState}
+                currentSide={currentSide}
+                sideBackground={designerState.getBackgroundForSide(currentSide)}
                 onElementSelect={designerState.selectElements}
                 onElementUpdate={(id, updates) => {
                   history.recordState(designerState.canvasState, 'Update element');
@@ -504,7 +566,7 @@ export default function NewMailDesigner() {
               ) : (
                 <div className="p-4">
                   <LayerPanel
-                    elements={designerState.canvasState.elements}
+                    elements={designerState.getElementsForSide(currentSide)}
                     selectedElementIds={designerState.canvasState.selectedElementIds}
                     onSelectElement={designerState.selectElement}
                     onUpdateElement={(id, updates) => {

@@ -26,11 +26,27 @@ export function ApprovalsTab({ campaignId }: ApprovalsTabProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("campaign_approvals")
-        .select("*, user:profiles(full_name, email)")
+        .select("*")
         .eq("campaign_id", campaignId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+      
+      // Fetch user profiles separately to avoid FK issues
+      if (data && data.length > 0) {
+        const userIds = [...new Set(data.map(a => a.user_id).filter(Boolean))];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", userIds);
+        
+        const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+        return data.map(approval => ({
+          ...approval,
+          user: profileMap.get(approval.user_id) || null
+        }));
+      }
+      
       return data;
     },
   });

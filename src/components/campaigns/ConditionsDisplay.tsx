@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mail, Phone, Webhook, Gift, Zap, AlertCircle, AlertTriangle, DollarSign, Edit } from "lucide-react";
-import { useCampaignConditions } from "@/hooks/useCampaignConditions";
+import { useCampaignConditions } from "@/features/campaigns/hooks/useCampaignConditions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";

@@ -136,11 +136,12 @@ export function useDesignerAI(
         throw new Error(fnError.message || 'Failed to call AI');
       }
 
-      if (!data?.content) {
+      // Edge function returns "message" field, not "content"
+      if (!data?.message) {
         throw new Error('No response from AI');
       }
 
-      return data.content;
+      return data.message;
     } catch (err: any) {
       if (err.name === 'AbortError') throw err;
       throw new Error(err.message || 'AI request failed');
@@ -471,11 +472,12 @@ export function useQuickAI(options: {
         throw new Error(fnError.message || 'AI request failed');
       }
 
-      if (!data?.content) {
+      // Edge function returns "message" field, not "content"
+      if (!data?.message) {
         throw new Error('No response from AI');
       }
 
-      return data.content;
+      return data.message;
     } catch (err: any) {
       const errorMessage = err.message || 'AI request failed';
       setError(errorMessage);

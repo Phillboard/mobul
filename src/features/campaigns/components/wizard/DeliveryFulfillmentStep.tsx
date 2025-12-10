@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { CalendarIcon, Package, DollarSign, Truck } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { cn } from '@shared/utils/cn';
-import { useCampaignCostEstimate } from "@/hooks/useCampaignCostEstimate";
+import { useCampaignCostEstimate } from "../../hooks/useCampaignCostEstimate";
 import type { CampaignFormData } from "@/types/campaigns";
 
 const deliverySchema = z.object({

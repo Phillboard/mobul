@@ -87,8 +87,8 @@ import {
   useBulkCheckBalances,
   type InventoryCard,
   type InventoryCardFilters,
-} from "@/hooks/useIndividualCardInventory";
-import { useGiftCardBrandsWithDenominations } from "@/hooks/useGiftCardBrands";
+} from "../hooks/useIndividualCardInventory";
+import { useGiftCardBrandsWithDenominations } from "../hooks/useGiftCardBrands";
 import { IndividualCardDetailDialog } from "./IndividualCardDetailDialog";
 import { ColumnDef } from "@tanstack/react-table";
 

@@ -7,7 +7,7 @@ import { LibraryHeader } from "@/components/shared/LibraryHeader";
 import { LibrarySearch } from "@/components/shared/LibrarySearch";
 import { ViewToggle } from "@/components/shared/ViewToggle";
 import { LibraryEmptyState } from "@/components/shared/LibraryEmptyState";
-import { AceFormsFilters } from "@/components/ace-forms/AceFormsFilters";
+import { AceFormsFilters } from "@/features/ace-forms/components";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAceForms } from "@/hooks/useAceForms";
 import { useTenant } from "@/contexts/TenantContext";
-import { FormEmbedDialog } from "@/components/ace-forms/FormEmbedDialog";
+import { FormEmbedDialog } from "@/features/ace-forms/components";
 import { Layout } from "@/components/layout/Layout";
 import {
   AlertDialog,

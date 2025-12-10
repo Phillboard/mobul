@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { GiftCardReveal } from "@/components/ace-forms/GiftCardReveal";
+import { GiftCardReveal } from "@/features/ace-forms/components";
 import { GiftCardRedemption } from "@/types/aceForms";
 import { useFormSubmissionRateLimit } from "@/hooks/useFormSubmissionRateLimit";
 import { Alert, AlertDescription } from "@/components/ui/alert";

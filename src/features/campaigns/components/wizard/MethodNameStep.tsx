@@ -139,7 +139,11 @@ export function MethodNameStep({ initialData, onNext, onCancel, isEditMode, camp
                           type="date"
                           className="h-10"
                           {...field}
-                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                          value={field.value ? field.value.split('T')[0] : ''}
+                          onChange={(e) => {
+                            // Store as YYYY-MM-DD to avoid timezone conversion
+                            field.onChange(e.target.value);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />

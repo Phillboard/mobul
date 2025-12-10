@@ -126,19 +126,44 @@ export const useCallCenterScripts = (clientId?: string, campaignId?: string) => 
 
   const updateScript = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<CallCenterScript> }) => {
-      const { data, error } = await supabase
-        .from('call_center_scripts')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
+      // Check if this is a default script (string ID starting with 'default-')
+      const isDefaultScript = typeof id === 'string' && id.startsWith('default-');
+      
+      if (isDefaultScript) {
+        // Clone default script with new UUID instead of updating
+        const { data, error } = await supabase
+          .from('call_center_scripts')
+          .insert({
+            client_id: updates.client_id || clientId,
+            campaign_id: updates.campaign_id || campaignId,
+            script_name: updates.script_name || 'Custom Script',
+            script_type: updates.script_type || 'greeting',
+            script_content: updates.script_content || '',
+            is_active: updates.is_active ?? true,
+            display_order: updates.display_order ?? 1,
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } else {
+        // Normal update for custom scripts with valid UUID
+        const { data, error } = await supabase
+          .from('call_center_scripts')
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['call-center-scripts'] });
-      toast.success('Script updated successfully');
+      const isDefaultScript = variables.id.startsWith('default-');
+      toast.success(isDefaultScript ? 'Custom script created from template' : 'Script updated successfully');
     },
     onError: (error) => {
       toast.error('Failed to update script: ' + error.message);

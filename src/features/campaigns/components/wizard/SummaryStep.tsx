@@ -28,8 +28,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ValidationChecklist } from "./ValidationChecklist";
-import { useCampaignValidation } from "@/hooks/useCampaignValidation";
-import { useCampaignCostEstimate } from "@/hooks/useCampaignCostEstimate";
+import { useCampaignValidation } from "../../hooks/useCampaignValidation";
+import { useCampaignCostEstimate } from "../../hooks/useCampaignCostEstimate";
 import { useGiftCardCostEstimate } from "@/hooks/useGiftCardCostEstimate";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";

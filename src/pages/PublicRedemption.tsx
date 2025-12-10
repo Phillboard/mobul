@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Gift, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { GiftCardDisplay } from "@/components/ace-forms/GiftCardDisplay";
+import { GiftCardDisplay } from "@/features/ace-forms/components";
 import { cn } from "@/lib/utils/utils";
 
 /**

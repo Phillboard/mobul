@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useGiftCardDeliveries } from "@/hooks/useGiftCards";
+import { useGiftCardDeliveries } from "../hooks/useGiftCards";
 import { createDeliveryHistoryColumns } from "./deliveryHistoryColumns";
 import { basicTableModels } from '@shared/utils/table';
 

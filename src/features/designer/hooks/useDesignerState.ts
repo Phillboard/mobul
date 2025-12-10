@@ -12,6 +12,7 @@ import type {
   DesignElement,
   DesignerConfig,
   ElementUpdate,
+  DesignSide,
 } from '../types/designer';
 
 export interface UseDesignerStateOptions {
@@ -21,6 +22,8 @@ export interface UseDesignerStateOptions {
   initialState?: Partial<CanvasState>;
   /** Auto-save interval in milliseconds (0 to disable) */
   autoSaveInterval?: number;
+  /** Current side being edited (front/back or page number) */
+  currentSide?: DesignSide;
   /** Callback when state changes */
   onChange?: (state: CanvasState) => void;
   /** Callback for auto-save */
@@ -33,6 +36,13 @@ export interface UseDesignerStateReturn {
   config: DesignerConfig;
   isDirty: boolean;
   selectedElements: DesignElement[];
+  currentSide: DesignSide;
+  
+  // Side-aware getters
+  /** Get elements for a specific side (or all if side is undefined) */
+  getElementsForSide: (side?: DesignSide) => DesignElement[];
+  /** Get background for a specific side */
+  getBackgroundForSide: (side?: DesignSide) => { color?: string; image?: string | null };
   
   // Element operations
   addElement: (element: Partial<DesignElement>) => string;
@@ -59,6 +69,7 @@ export interface UseDesignerStateReturn {
   setCanvasSize: (width: number, height: number) => void;
   toggleGrid: () => void;
   toggleGuides: () => void;
+  setCurrentSide: (side: DesignSide) => void;
   
   // State management
   resetCanvas: () => void;
@@ -77,9 +88,13 @@ export function useDesignerState(
     config,
     initialState,
     autoSaveInterval = 30000, // 30 seconds default
+    currentSide: initialSide = 'front',
     onChange,
     onAutoSave,
   } = options;
+
+  // Track current side
+  const [currentSide, setCurrentSide] = useState<DesignSide>(initialSide);
 
   // Create initial canvas state
   const createInitialState = (): CanvasState => ({
@@ -87,6 +102,10 @@ export function useDesignerState(
     height: config.dimensions.height,
     backgroundColor: '#ffffff',
     backgroundImage: null,
+    sideBackgrounds: {
+      front: { color: '#ffffff', image: null },
+      back: { color: '#ffffff', image: null },
+    },
     elements: [],
     selectedElementIds: [],
     settings: {
@@ -112,10 +131,47 @@ export function useDesignerState(
     });
   }, [onChange]);
 
-  // Get selected elements
+  // Get selected elements (filtered by current side)
   const selectedElements = canvasState.elements.filter(
-    el => canvasState.selectedElementIds.includes(el.id)
+    el => canvasState.selectedElementIds.includes(el.id) && 
+          (el.side === currentSide || el.side === undefined)
   );
+
+  // ============================================================================
+  // Side-aware Helpers
+  // ============================================================================
+
+  /**
+   * Get elements for a specific side (or current side if not specified)
+   */
+  const getElementsForSide = useCallback((side?: DesignSide): DesignElement[] => {
+    const targetSide = side ?? currentSide;
+    return canvasState.elements.filter(el => 
+      el.side === targetSide || el.side === undefined
+    );
+  }, [canvasState.elements, currentSide]);
+
+  /**
+   * Get background for a specific side
+   */
+  const getBackgroundForSide = useCallback((side?: DesignSide): { color?: string; image?: string | null } => {
+    const targetSide = side ?? currentSide;
+    const sideKey = typeof targetSide === 'number' ? targetSide : targetSide;
+    
+    // Check sideBackgrounds first
+    if (canvasState.sideBackgrounds) {
+      const sideBackground = canvasState.sideBackgrounds[sideKey as keyof typeof canvasState.sideBackgrounds];
+      if (sideBackground) {
+        return sideBackground;
+      }
+    }
+    
+    // Fall back to legacy single background
+    return {
+      color: canvasState.backgroundColor,
+      image: canvasState.backgroundImage,
+    };
+  }, [canvasState.backgroundColor, canvasState.backgroundImage, canvasState.sideBackgrounds, currentSide]);
 
   // ============================================================================
   // Element Operations
@@ -123,6 +179,7 @@ export function useDesignerState(
 
   const addElement = useCallback((element: Partial<DesignElement>): string => {
     const id = element.id || nanoid();
+    const elementsOnCurrentSide = canvasState.elements.filter(el => el.side === currentSide);
     const newElement: DesignElement = {
       id,
       type: element.type || 'text',
@@ -132,10 +189,11 @@ export function useDesignerState(
       width: element.width ?? 200,
       height: element.height ?? 100,
       rotation: element.rotation ?? 0,
-      zIndex: canvasState.elements.length,
+      zIndex: elementsOnCurrentSide.length,
       locked: element.locked ?? false,
       visible: element.visible ?? true,
       styles: element.styles ?? {},
+      side: element.side ?? currentSide, // Assign current side to new elements
       ...element,
     } as DesignElement;
 
@@ -146,7 +204,7 @@ export function useDesignerState(
     }));
 
     return id;
-  }, [canvasState.elements.length, updateState]);
+  }, [canvasState.elements, currentSide, updateState]);
 
   const updateElement = useCallback((id: string, updates: ElementUpdate) => {
     updateState(prev => ({
@@ -288,18 +346,38 @@ export function useDesignerState(
   // ============================================================================
 
   const setBackgroundColor = useCallback((color: string) => {
-    updateState(prev => ({
-      ...prev,
-      backgroundColor: color,
-    }));
-  }, [updateState]);
+    updateState(prev => {
+      const sideKey = typeof currentSide === 'number' ? currentSide : currentSide;
+      return {
+        ...prev,
+        backgroundColor: color, // Keep legacy for backward compatibility
+        sideBackgrounds: {
+          ...prev.sideBackgrounds,
+          [sideKey]: {
+            ...prev.sideBackgrounds?.[sideKey as keyof typeof prev.sideBackgrounds],
+            color,
+          },
+        },
+      };
+    });
+  }, [currentSide, updateState]);
 
   const setBackgroundImage = useCallback((url: string | null) => {
-    updateState(prev => ({
-      ...prev,
-      backgroundImage: url,
-    }));
-  }, [updateState]);
+    updateState(prev => {
+      const sideKey = typeof currentSide === 'number' ? currentSide : currentSide;
+      return {
+        ...prev,
+        backgroundImage: url, // Keep legacy for backward compatibility  
+        sideBackgrounds: {
+          ...prev.sideBackgrounds,
+          [sideKey]: {
+            ...prev.sideBackgrounds?.[sideKey as keyof typeof prev.sideBackgrounds],
+            image: url,
+          },
+        },
+      };
+    });
+  }, [currentSide, updateState]);
 
   const setCanvasSize = useCallback((width: number, height: number) => {
     updateState(prev => ({
@@ -389,6 +467,11 @@ export function useDesignerState(
     config,
     isDirty,
     selectedElements,
+    currentSide,
+    
+    // Side-aware getters
+    getElementsForSide,
+    getBackgroundForSide,
 
     // Element operations
     addElement,
@@ -415,6 +498,7 @@ export function useDesignerState(
     setCanvasSize,
     toggleGrid,
     toggleGuides,
+    setCurrentSide,
 
     // State management
     resetCanvas,

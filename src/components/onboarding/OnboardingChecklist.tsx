@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, Circle, Sparkles, AlertCircle } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, AlertCircle, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@core/auth/AuthProvider";
 
 export function OnboardingChecklist() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [items, setItems] = useState([
-    { id: "profile", title: "Complete your profile", description: "Add your name and preferences", completed: false },
-    { id: "client", title: "Set up your organization", description: "Configure your company details", completed: false },
-    { id: "template", title: "Create your first template", description: "Design a direct mail template", completed: false },
-    { id: "audience", title: "Upload an audience", description: "Import your first list of recipients", completed: false },
-    { id: "campaign", title: "Create a campaign", description: "Set up your first marketing campaign", completed: false },
-    { id: "landing_page", title: "Build a landing page", description: "Create a personalized landing page", completed: false },
+    { id: "profile", title: "Complete your profile", description: "Add your name and preferences", completed: false, path: "/settings/profile" },
+    { id: "client", title: "Set up your organization", description: "Configure your company details", completed: false, path: "/settings" },
+    { id: "template", title: "Create your first template", description: "Design a direct mail template", completed: false, path: "/mail" },
+    { id: "audience", title: "Upload an audience", description: "Import your first list of recipients", completed: false, path: "/contacts/import" },
+    { id: "campaign", title: "Create a campaign", description: "Set up your first marketing campaign", completed: false, path: "/campaigns/create" },
+    { id: "landing_page", title: "Build a landing page", description: "Create a personalized landing page", completed: false, path: "/landing-pages/ai-builder" },
   ]);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -117,7 +119,14 @@ export function OnboardingChecklist() {
       </CardHeader>
       <CardContent className="space-y-4">
         {items.map((item) => (
-          <div key={item.id} className="flex items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-accent/50">
+          <button
+            key={item.id}
+            onClick={() => !item.completed && navigate(item.path)}
+            className={`flex items-start gap-3 rounded-lg border p-4 transition-colors w-full text-left ${
+              item.completed ? "opacity-60 cursor-default" : "hover:bg-accent/50 cursor-pointer"
+            }`}
+            disabled={item.completed}
+          >
             <div className="mt-1">
               {item.completed ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
             </div>
@@ -125,7 +134,8 @@ export function OnboardingChecklist() {
               <h4 className={`font-medium ${item.completed ? "text-muted-foreground line-through" : ""}`}>{item.title}</h4>
               <p className="text-sm text-muted-foreground">{item.description}</p>
             </div>
-          </div>
+            {!item.completed && <ChevronRight className="h-5 w-5 text-muted-foreground mt-1" />}
+          </button>
         ))}
         <Button onClick={checkProgress} variant="outline" className="w-full">Refresh Progress</Button>
       </CardContent>

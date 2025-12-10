@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,13 +103,41 @@ function renderScriptPreview(content: string): string {
   return preview;
 }
 
+const DEFAULT_FORM_STATE = {
+  script_name: '',
+  script_type: 'greeting' as const,
+  script_content: '',
+  is_active: true,
+};
+
 export function ScriptEditor({ open, onOpenChange, script, onSave, clientId }: ScriptEditorProps) {
-  const [formData, setFormData] = useState({
-    script_name: script?.script_name || '',
-    script_type: script?.script_type || 'greeting',
-    script_content: script?.script_content || '',
-    is_active: script?.is_active ?? true,
-  });
+  const [formData, setFormData] = useState(DEFAULT_FORM_STATE);
+
+  // Reset form when dialog opens or script changes
+  useEffect(() => {
+    if (open) {
+      if (script) {
+        // Edit mode - load existing script data
+        setFormData({
+          script_name: script.script_name || '',
+          script_type: script.script_type || 'greeting',
+          script_content: script.script_content || '',
+          is_active: script.is_active ?? true,
+        });
+      } else {
+        // Create mode - reset to empty
+        setFormData(DEFAULT_FORM_STATE);
+      }
+    }
+  }, [open, script]);
+
+  // Reset form on close
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      setFormData(DEFAULT_FORM_STATE);
+    }
+    onOpenChange(isOpen);
+  };
 
   const handleSave = () => {
     onSave({
@@ -117,7 +145,7 @@ export function ScriptEditor({ open, onOpenChange, script, onSave, clientId }: S
       client_id: clientId,
       display_order: script?.display_order || 0,
     });
-    onOpenChange(false);
+    handleClose(false);
   };
 
   const insertPlaceholder = (placeholder: string) => {
@@ -138,7 +166,7 @@ export function ScriptEditor({ open, onOpenChange, script, onSave, clientId }: S
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{script ? 'Edit Script' : 'Create New Script'}</DialogTitle>

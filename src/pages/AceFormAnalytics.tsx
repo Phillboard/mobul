@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAceForm } from "@/hooks/useAceForms";
-import { FormAnalytics } from "@/components/ace-forms/FormAnalytics";
+import { FormAnalytics } from "@/features/ace-forms/components";
 
 export default function AceFormAnalytics() {
   const { formId } = useParams();

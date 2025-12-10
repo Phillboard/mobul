@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GiftCardDisplay } from "@/components/ace-forms/GiftCardDisplay";
+import { GiftCardDisplay } from "@/features/ace-forms/components";
 import { GiftCardRedemption } from "@/types/aceForms";
 import { detectPlatform, getWalletName } from "@/lib/web/walletDetection";
 import { Smartphone, Apple, Chrome, Bug, Loader2 } from "lucide-react";

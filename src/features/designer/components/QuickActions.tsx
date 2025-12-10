@@ -114,8 +114,10 @@ export const DEFAULT_QUICK_ACTIONS: QuickAction[] = [
 export interface QuickActionsProps {
   /** Quick action definitions */
   actions?: QuickAction[];
-  /** Callback when action is clicked */
+  /** Callback when action is clicked (sends to chat) */
   onAction: (prompt: string) => void;
+  /** Direct background image generation callback (bypasses chat) */
+  onGenerateBackground?: (prompt: string) => Promise<void>;
   /** Whether AI is currently processing */
   isLoading?: boolean;
   /** Optional className */
@@ -125,9 +127,23 @@ export interface QuickActionsProps {
 export function QuickActions({
   actions = DEFAULT_QUICK_ACTIONS,
   onAction,
+  onGenerateBackground,
   isLoading = false,
   className = '',
 }: QuickActionsProps) {
+  /**
+   * Handle background button click
+   * Uses direct generation if available, otherwise falls back to chat
+   */
+  const handleBackgroundClick = async (action: QuickAction) => {
+    if (onGenerateBackground) {
+      // Direct image generation - faster, more reliable
+      await onGenerateBackground(action.prompt);
+    } else {
+      // Fallback to sending through chat
+      onAction(action.prompt);
+    }
+  };
   return (
     <div className={className}>
       {/* Background Generation Section */}
@@ -141,7 +157,7 @@ export function QuickActions({
             variant="outline"
             size="sm"
             className="h-7 text-xs px-2 hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-950/30"
-            onClick={() => onAction(action.prompt)}
+            onClick={() => handleBackgroundClick(action)}
             disabled={isLoading}
           >
             <span className="text-purple-600 mr-1">{action.icon}</span>

@@ -186,7 +186,8 @@ export default function CampaignCreate() {
           template_id: data.template_id || null,
           size: data.size || "4x6",
           postage: data.postage || "standard",
-          mail_date: data.mail_date ? new Date(data.mail_date).toISOString() : null,
+          // Store mail_date as date-only string to avoid timezone issues
+          mail_date: data.mail_date || null,
           landing_page_id: data.landing_page_id || null,
           lp_mode: data.lp_mode as any || "bridge",
           utm_source: data.utm_source || null,
@@ -259,6 +260,23 @@ export default function CampaignCreate() {
             await supabase
               .from("campaign_gift_card_config")
               .insert(giftCardConfigs);
+          }
+        }
+
+        // Update forms - unlink existing forms, link new ones
+        if ((data as any).selected_form_ids !== undefined) {
+          // First unlink all forms from this campaign
+          await supabase
+            .from("ace_forms")
+            .update({ campaign_id: null })
+            .eq("campaign_id", campaignId);
+
+          // Then link newly selected forms
+          if ((data as any).selected_form_ids && (data as any).selected_form_ids.length > 0) {
+            await supabase
+              .from("ace_forms")
+              .update({ campaign_id: campaignId })
+              .in("id", (data as any).selected_form_ids);
           }
         }
 
@@ -345,7 +363,8 @@ export default function CampaignCreate() {
           template_id: data.template_id || null,
           size: data.size || "4x6",
           postage: data.postage || "standard",
-          mail_date: data.mail_date ? new Date(data.mail_date).toISOString() : null,
+          // Store mail_date as date-only string to avoid timezone issues
+          mail_date: data.mail_date || null,
           contact_list_id: data.contact_list_id || null,
           audience_id: audienceId,
           landing_page_id: data.landing_page_id || null,

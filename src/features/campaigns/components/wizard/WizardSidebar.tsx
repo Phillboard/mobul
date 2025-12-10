@@ -10,9 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { FileText, Users, DollarSign, AlertTriangle, Gift, Printer } from "lucide-react";
-import { useCampaignCostEstimate } from "@/hooks/useCampaignCostEstimate";
-import { useGiftCardCostEstimate } from "@/hooks/useGiftCardCostEstimate";
-import { useCampaignValidation } from "@/hooks/useCampaignValidation";
+import { useCampaignCostEstimate } from "../../hooks/useCampaignCostEstimate";
+import { useCampaignValidation } from "../../hooks/useCampaignValidation";
+import { useGiftCardCostEstimate } from "@/features/gift-cards/hooks/useGiftCardCostEstimate";
 import type { MailingMethod } from "@/types/campaigns";
 
 interface WizardSidebarProps {

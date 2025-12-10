@@ -119,6 +119,12 @@ export interface ElementStyles {
 // ============================================================================
 
 /**
+ * Side of the mail piece (front or back)
+ * For multi-page documents like letters, this is the page number
+ */
+export type DesignSide = 'front' | 'back' | number;
+
+/**
  * Base properties shared by all design elements
  */
 export interface BaseElement {
@@ -135,6 +141,8 @@ export interface BaseElement {
   visible: boolean;
   styles: ElementStyles;
   metadata?: Record<string, any>;
+  /** Which side of the design this element belongs to (front/back or page number) */
+  side?: DesignSide;
 }
 
 /**
@@ -238,10 +246,16 @@ export interface CanvasState {
   width: number;
   /** Canvas height in pixels */
   height: number;
-  /** Canvas background color */
+  /** Canvas background color (for current side, legacy) */
   backgroundColor: string;
-  /** Uploaded background image URL */
+  /** Uploaded background image URL (for current side, legacy) */
   backgroundImage: string | null;
+  /** Per-side backgrounds for front/back postcards */
+  sideBackgrounds?: {
+    front?: { color?: string; image?: string | null };
+    back?: { color?: string; image?: string | null };
+    [pageNumber: number]: { color?: string; image?: string | null };
+  };
   /** All design elements on the canvas */
   elements: DesignElement[];
   /** IDs of currently selected elements */

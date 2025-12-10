@@ -46,6 +46,10 @@ export interface AIAssistantPanelProps {
   /** Callback to clear reference image */
   onClearReference?: () => void;
   
+  // Direct background generation (for quick action buttons)
+  /** Callback for direct background generation */
+  onGenerateBackground?: (prompt: string) => Promise<void>;
+  
   /** Optional className */
   className?: string;
 }
@@ -60,6 +64,7 @@ export function AIAssistantPanel({
   onReferenceSelect,
   onGenerateFromReference,
   onClearReference,
+  onGenerateBackground,
   className = '',
 }: AIAssistantPanelProps) {
   const [inputValue, setInputValue] = useState('');
@@ -161,6 +166,7 @@ export function AIAssistantPanel({
               {/* Quick Actions */}
               <QuickActions
                 onAction={handleQuickAction}
+                onGenerateBackground={onGenerateBackground}
                 isLoading={isGenerating}
               />
             </>
@@ -253,6 +259,7 @@ export function AIAssistantPanel({
 
                 <QuickActions
                   onAction={handleQuickAction}
+                  onGenerateBackground={onGenerateBackground}
                   isLoading={isGenerating}
                 />
               </div>
