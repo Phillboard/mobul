@@ -2,10 +2,11 @@
  * NewLandingPageDesigner Page
  * 
  * AI-first landing page designer for campaign PURLs.
- * Uses the unified designer framework with web-specific features.
+ * 
+ * Layout: AI on LEFT (primary), Canvas CENTER, Properties RIGHT
  * 
  * Features:
- * - Responsive design
+ * - Responsive design previews
  * - Form fields and buttons
  * - Template tokens
  * - AI-powered layout generation
@@ -17,9 +18,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { ArrowLeft, Save, Download, Eye, Sparkles, Undo, Redo, Globe } from 'lucide-react';
+import { ArrowLeft, Save, Download, Globe, Undo, Redo, Layers, Settings, Tag, Monitor, Tablet, Smartphone } from 'lucide-react';
 import { useToast } from '@shared/hooks';
 import {
   DESIGNER_PRESETS,
@@ -42,7 +44,7 @@ export default function NewLandingPageDesigner() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('design');
+  const [rightTab, setRightTab] = useState('properties');
   const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
   // Fetch existing landing page
@@ -66,7 +68,6 @@ export default function NewLandingPageDesigner() {
   // Initialize designer with landing page preset
   const config = DESIGNER_PRESETS['landing-page'];
 
-  // Use visual_editor_state column (existing in DB schema)
   const initialState = landingPage?.visual_editor_state
     ? (typeof landingPage.visual_editor_state === 'string' 
         ? JSON.parse(landingPage.visual_editor_state) 
@@ -85,9 +86,24 @@ export default function NewLandingPageDesigner() {
     enableKeyboardShortcuts: true,
   });
 
+  // AI assistant - auto-apply suggestions
   const ai = useDesignerAI({
     designerType: 'landing-page',
     canvasState: designerState.canvasState,
+    onSuggestion: (suggestion) => {
+      if (suggestion.actions && suggestion.actions.length > 0) {
+        console.log('[NewLandingPageDesigner] Auto-applying AI suggestion:', suggestion);
+        history.recordState(designerState.canvasState, 'AI suggestion');
+        const result = executeDesignActions(suggestion.actions, designerState);
+        
+        if (result.executed > 0) {
+          toast({
+            title: '✨ AI Applied',
+            description: `${result.executed} change(s) made to your design.`,
+          });
+        }
+      }
+    },
   });
 
   const exporter = useDesignerExport({
@@ -100,7 +116,6 @@ export default function NewLandingPageDesigner() {
    */
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // Store canvas state in visual_editor_state (existing DB column)
       const visualEditorState = designerState.canvasState;
 
       if (id === 'new' || !landingPage) {
@@ -186,6 +201,15 @@ export default function NewLandingPageDesigner() {
     }
   };
 
+  // View mode sizes
+  const getViewModeWidth = () => {
+    switch (viewMode) {
+      case 'mobile': return '375px';
+      case 'tablet': return '768px';
+      default: return 'auto';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -197,17 +221,18 @@ export default function NewLandingPageDesigner() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <div className="border-b bg-card">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/landing-pages')}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
+      <div className="h-14 border-b bg-card flex items-center justify-between px-4">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/landing-pages')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-blue-500" />
             <div>
               <h1 className="text-lg font-semibold">Landing Page Designer</h1>
               <p className="text-xs text-muted-foreground">
@@ -215,106 +240,142 @@ export default function NewLandingPageDesigner() {
               </p>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            {/* View mode toggle */}
-            <div className="flex gap-1 border rounded-lg p-1">
-              <Button
-                size="sm"
-                variant={viewMode === 'desktop' ? 'default' : 'ghost'}
-                onClick={() => setViewMode('desktop')}
-                className="h-7 px-2"
-              >
-                Desktop
-              </Button>
-              <Button
-                size="sm"
-                variant={viewMode === 'tablet' ? 'default' : 'ghost'}
-                onClick={() => setViewMode('tablet')}
-                className="h-7 px-2"
-              >
-                Tablet
-              </Button>
-              <Button
-                size="sm"
-                variant={viewMode === 'mobile' ? 'default' : 'ghost'}
-                onClick={() => setViewMode('mobile')}
-                className="h-7 px-2"
-              >
-                Mobile
-              </Button>
-            </div>
-
+        <div className="flex items-center gap-2">
+          {/* View mode toggle */}
+          <div className="flex gap-1 border rounded-lg p-1">
             <Button
-              variant="ghost"
               size="sm"
-              onClick={() => history.undo()}
-              disabled={!history.canUndo}
+              variant={viewMode === 'desktop' ? 'default' : 'ghost'}
+              onClick={() => setViewMode('desktop')}
+              className="h-7 px-2"
+              title="Desktop view"
             >
-              <Undo className="h-4 w-4" />
+              <Monitor className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
               size="sm"
-              onClick={() => history.redo()}
-              disabled={!history.canRedo}
+              variant={viewMode === 'tablet' ? 'default' : 'ghost'}
+              onClick={() => setViewMode('tablet')}
+              className="h-7 px-2"
+              title="Tablet view"
             >
-              <Redo className="h-4 w-4" />
+              <Tablet className="h-4 w-4" />
             </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export HTML
-            </Button>
-
             <Button
               size="sm"
-              onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending || !designerState.isDirty}
+              variant={viewMode === 'mobile' ? 'default' : 'ghost'}
+              onClick={() => setViewMode('mobile')}
+              className="h-7 px-2"
+              title="Mobile view"
             >
-              <Save className="h-4 w-4 mr-2" />
-              {saveMutation.isPending ? 'Saving...' : 'Save'}
+              <Smartphone className="h-4 w-4" />
             </Button>
           </div>
+
+          <div className="w-px h-6 bg-border mx-1" />
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => history.undo()}
+            disabled={!history.canUndo}
+          >
+            <Undo className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => history.redo()}
+            disabled={!history.canRedo}
+          >
+            <Redo className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export HTML
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || !designerState.isDirty}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saveMutation.isPending ? 'Saving...' : 'Save'}
+          </Button>
         </div>
       </div>
 
-      {/* Main Content - Same structure as MailDesigner */}
+      {/* Main Content - AI on LEFT */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-          <div className="h-full overflow-y-auto p-4 space-y-4">
-            <BackgroundUploader
-              currentBackground={designerState.canvasState.backgroundImage}
-              onBackgroundSet={designerState.setBackgroundImage}
-              onBackgroundRemove={() => designerState.setBackgroundImage(null)}
-            />
-            <ElementLibrary
-              onAddElement={(type, template) => {
-                history.recordState(designerState.canvasState, `Add ${type}`);
-                designerState.addElement(template || { type });
-              }}
-              allowedElements={config.allowedElements}
-            />
+        
+        {/* ========== LEFT PANEL - AI FIRST ========== */}
+        <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
+          <div className="h-full flex flex-col bg-card">
+            {/* AI Chat - PRIMARY */}
+            <div className="flex-1 min-h-0">
+              <DesignerAIChat
+                messages={ai.messages}
+                isGenerating={ai.isGenerating}
+                error={ai.error}
+                currentSuggestion={ai.currentSuggestion}
+                designerType="landing-page"
+                onSendMessage={ai.sendMessage}
+                onApplySuggestion={handleApplySuggestion}
+                onRejectSuggestion={() => {}}
+                onClearConversation={ai.clearConversation}
+                onRetry={ai.retryLastMessage}
+                className="h-full"
+              />
+            </div>
+
+            {/* Quick Add Elements */}
+            <div className="border-t p-3">
+              <ElementLibrary
+                onAddElement={(type, template) => {
+                  history.recordState(designerState.canvasState, `Add ${type}`);
+                  designerState.addElement(template || { type });
+                }}
+                allowedElements={config.allowedElements}
+                className="border-0 shadow-none"
+              />
+            </div>
+
+            {/* Background Upload */}
+            <div className="border-t p-3">
+              <BackgroundUploader
+                currentBackground={designerState.canvasState.backgroundImage}
+                onBackgroundSet={designerState.setBackgroundImage}
+                onBackgroundRemove={() => designerState.setBackgroundImage(null)}
+              />
+            </div>
           </div>
         </ResizablePanel>
 
         <ResizableHandle />
 
-        <ResizablePanel defaultSize={50} minSize={30}>
-          <div className="h-full flex items-center justify-center p-8 bg-muted/30">
-            <div className="shadow-2xl" style={{
-              width: viewMode === 'mobile' ? '375px' : viewMode === 'tablet' ? '768px' : 'auto',
-            }}>
+        {/* ========== CENTER - CANVAS ========== */}
+        <ResizablePanel defaultSize={50} minSize={35}>
+          <div className="h-full flex items-center justify-center p-8 bg-muted/30 overflow-auto">
+            <div className="shadow-2xl transition-all duration-300" style={{ width: getViewModeWidth() }}>
               <DesignerCanvas
                 canvasState={designerState.canvasState}
                 onElementSelect={designerState.selectElements}
                 onElementUpdate={(id, updates) => {
                   history.recordState(designerState.canvasState, 'Update element');
                   designerState.updateElement(id, updates);
+                }}
+                onElementCreate={(element) => {
+                  console.log('[NewLandingPageDesigner] Element dropped:', element);
+                  history.recordState(designerState.canvasState, `Add ${element.type}`);
+                  designerState.addElement(element);
                 }}
                 toolMode="select"
                 snapToGrid={designerState.canvasState.settings?.snapToGrid}
@@ -325,97 +386,88 @@ export default function NewLandingPageDesigner() {
 
         <ResizableHandle />
 
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <div className="border-b px-4">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="design" className="text-xs">Design</TabsTrigger>
-                <TabsTrigger value="layers" className="text-xs">Layers</TabsTrigger>
-                <TabsTrigger value="tokens" className="text-xs">Tokens</TabsTrigger>
-                <TabsTrigger value="ai" className="text-xs">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  AI
+        {/* ========== RIGHT PANEL - PROPERTIES ========== */}
+        <ResizablePanel defaultSize={25} minSize={18} maxSize={35}>
+          <Tabs value={rightTab} onValueChange={setRightTab} className="h-full flex flex-col">
+            <div className="border-b px-2 py-1">
+              <TabsList className="grid w-full grid-cols-3 h-8">
+                <TabsTrigger value="properties" className="text-xs h-7">
+                  <Settings className="h-3 w-3 mr-1" />
+                  Properties
+                </TabsTrigger>
+                <TabsTrigger value="layers" className="text-xs h-7">
+                  <Layers className="h-3 w-3 mr-1" />
+                  Layers
+                </TabsTrigger>
+                <TabsTrigger value="tokens" className="text-xs h-7">
+                  <Tag className="h-3 w-3 mr-1" />
+                  Tokens
                 </TabsTrigger>
               </TabsList>
             </div>
 
             <div className="flex-1 overflow-hidden">
-              <TabsContent value="design" className="h-full m-0">
-                <div className="h-full overflow-y-auto p-4">
-                  <PropertiesPanel
-                    selectedElements={designerState.selectedElements}
-                    onUpdateElement={(id, updates) => {
-                      history.recordState(designerState.canvasState, 'Update');
-                      designerState.updateElement(id, updates);
-                    }}
-                    onDeleteElement={(id) => {
-                      history.recordState(designerState.canvasState, 'Delete');
-                      designerState.deleteElement(id);
-                    }}
-                    onDuplicateElement={(id) => {
-                      history.recordState(designerState.canvasState, 'Duplicate');
-                      designerState.duplicateElement(id);
-                    }}
-                  />
-                </div>
+              <TabsContent value="properties" className="h-full m-0">
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <PropertiesPanel
+                      selectedElements={designerState.selectedElements}
+                      onUpdateElement={(id, updates) => {
+                        history.recordState(designerState.canvasState, 'Update');
+                        designerState.updateElement(id, updates);
+                      }}
+                      onDeleteElement={(id) => {
+                        history.recordState(designerState.canvasState, 'Delete');
+                        designerState.deleteElement(id);
+                      }}
+                      onDuplicateElement={(id) => {
+                        history.recordState(designerState.canvasState, 'Duplicate');
+                        designerState.duplicateElement(id);
+                      }}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
 
               <TabsContent value="layers" className="h-full m-0">
-                <div className="h-full overflow-y-auto p-4">
-                  <LayerPanel
-                    elements={designerState.canvasState.elements}
-                    selectedElementIds={designerState.canvasState.selectedElementIds}
-                    onSelectElement={designerState.selectElement}
-                    onUpdateElement={(id, updates) => {
-                      history.recordState(designerState.canvasState, 'Update');
-                      designerState.updateElement(id, updates);
-                    }}
-                    onDeleteElement={(id) => {
-                      history.recordState(designerState.canvasState, 'Delete');
-                      designerState.deleteElement(id);
-                    }}
-                    onReorderLayers={(_from, _to) => {
-                      // Layer reordering handled by state management
-                    }}
-                  />
-                </div>
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <LayerPanel
+                      elements={designerState.canvasState.elements}
+                      selectedElementIds={designerState.canvasState.selectedElementIds}
+                      onSelectElement={designerState.selectElement}
+                      onUpdateElement={(id, updates) => {
+                        history.recordState(designerState.canvasState, 'Update');
+                        designerState.updateElement(id, updates);
+                      }}
+                      onDeleteElement={(id) => {
+                        history.recordState(designerState.canvasState, 'Delete');
+                        designerState.deleteElement(id);
+                      }}
+                      onReorderLayers={() => {}}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
 
               <TabsContent value="tokens" className="h-full m-0">
-                <div className="h-full overflow-y-auto p-4">
-                  <TokenInserter
-                    onTokenSelect={(token) => {
-                      history.recordState(designerState.canvasState, 'Add token');
-                      designerState.addElement({
-                        type: 'template-token',
-                        tokenContent: { token, fallback: '', transform: 'none' },
-                        width: 200,
-                        height: 40,
-                        styles: { fontSize: 16, color: '#4F46E5' },
-                      });
-                    }}
-                    availableTokens={config.availableTokens}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="ai" className="h-full m-0">
-                <DesignerAIChat
-                  messages={ai.messages}
-                  isGenerating={ai.isGenerating}
-                  error={ai.error}
-                  currentSuggestion={ai.currentSuggestion}
-                  designerType="landing-page"
-                  onSendMessage={ai.sendMessage}
-                  onApplySuggestion={(suggestion) => {
-                    history.recordState(designerState.canvasState, 'AI');
-                    executeDesignActions(suggestion.actions, designerState);
-                  }}
-                  onRejectSuggestion={() => {}}
-                  onClearConversation={ai.clearConversation}
-                  onRetry={ai.retryLastMessage}
-                  className="h-full"
-                />
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <TokenInserter
+                      onTokenSelect={(token) => {
+                        history.recordState(designerState.canvasState, 'Add token');
+                        designerState.addElement({
+                          type: 'template-token',
+                          tokenContent: { token, fallback: '', transform: 'none' },
+                          width: 200,
+                          height: 40,
+                          styles: { fontSize: 16, color: '#4F46E5' },
+                        });
+                      }}
+                      availableTokens={config.availableTokens}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
             </div>
           </Tabs>
@@ -424,4 +476,3 @@ export default function NewLandingPageDesigner() {
     </div>
   );
 }
-

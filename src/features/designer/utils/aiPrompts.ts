@@ -2,7 +2,8 @@
  * AI Design Prompts
  * 
  * Prompt templates for AI-powered design generation.
- * Used with Gemini API to parse user requests into design actions.
+ * Used with OpenAI GPT-4o to parse user requests into design actions.
+ * Supports DALL-E 3 for image generation.
  */
 
 import type { CanvasState, DesignerType } from '../types/designer';

@@ -12,6 +12,204 @@ import type {
 } from '../types/designer';
 import type { UseDesignerStateReturn } from '../hooks/useDesignerState';
 
+// ============================================================================
+// Position Utilities for AI
+// ============================================================================
+
+/**
+ * Position shortcut type
+ */
+export type PositionShortcut = 
+  | 'top-left' | 'top' | 'top-center' | 'top-right'
+  | 'left' | 'center' | 'right'
+  | 'bottom-left' | 'bottom' | 'bottom-center' | 'bottom-right';
+
+/**
+ * Convert a position shortcut to canvas coordinates
+ */
+export function positionToCoordinates(
+  position: string | PositionShortcut,
+  canvasWidth: number,
+  canvasHeight: number,
+  elementWidth: number,
+  elementHeight: number,
+  padding: number = 40
+): { x: number; y: number } {
+  const normalizedPosition = position.toLowerCase().trim();
+  
+  const positions: Record<string, { x: number; y: number }> = {
+    'top-left': { 
+      x: padding, 
+      y: padding 
+    },
+    'top': { 
+      x: (canvasWidth - elementWidth) / 2, 
+      y: padding 
+    },
+    'top-center': { 
+      x: (canvasWidth - elementWidth) / 2, 
+      y: padding 
+    },
+    'top-right': { 
+      x: canvasWidth - elementWidth - padding, 
+      y: padding 
+    },
+    'left': { 
+      x: padding, 
+      y: (canvasHeight - elementHeight) / 2 
+    },
+    'center': { 
+      x: (canvasWidth - elementWidth) / 2, 
+      y: (canvasHeight - elementHeight) / 2 
+    },
+    'right': { 
+      x: canvasWidth - elementWidth - padding, 
+      y: (canvasHeight - elementHeight) / 2 
+    },
+    'bottom-left': { 
+      x: padding, 
+      y: canvasHeight - elementHeight - padding 
+    },
+    'bottom': { 
+      x: (canvasWidth - elementWidth) / 2, 
+      y: canvasHeight - elementHeight - padding 
+    },
+    'bottom-center': { 
+      x: (canvasWidth - elementWidth) / 2, 
+      y: canvasHeight - elementHeight - padding 
+    },
+    'bottom-right': { 
+      x: canvasWidth - elementWidth - padding, 
+      y: canvasHeight - elementHeight - padding 
+    },
+  };
+
+  return positions[normalizedPosition] || positions['center'];
+}
+
+/**
+ * Get default element dimensions by type
+ */
+export function getDefaultElementSize(type: string): { width: number; height: number } {
+  const sizes: Record<string, { width: number; height: number }> = {
+    'text': { width: 300, height: 50 },
+    'headline': { width: 500, height: 60 },
+    'subheading': { width: 400, height: 40 },
+    'body': { width: 350, height: 100 },
+    'image': { width: 200, height: 200 },
+    'shape': { width: 150, height: 150 },
+    'qr-code': { width: 150, height: 150 },
+    'template-token': { width: 200, height: 40 },
+    'button': { width: 180, height: 48 },
+  };
+
+  return sizes[type] || { width: 200, height: 100 };
+}
+
+/**
+ * Create a default element with smart positioning
+ */
+export function createDefaultElement(
+  type: string,
+  canvasState: CanvasState,
+  options?: {
+    position?: string;
+    content?: string;
+    styles?: Record<string, any>;
+  }
+): Partial<DesignElement> {
+  const size = getDefaultElementSize(type);
+  const position = options?.position 
+    ? positionToCoordinates(options.position, canvasState.width, canvasState.height, size.width, size.height)
+    : findAvailablePosition(canvasState, size.width, size.height);
+
+  const baseElement = {
+    type,
+    x: position.x,
+    y: position.y,
+    width: size.width,
+    height: size.height,
+    rotation: 0,
+    locked: false,
+    visible: true,
+    styles: options?.styles || {},
+  };
+
+  // Add type-specific defaults
+  switch (type) {
+    case 'text':
+      return {
+        ...baseElement,
+        content: options?.content || 'New Text',
+        styles: {
+          fontSize: 16,
+          fontFamily: 'Arial',
+          fontWeight: 'normal',
+          color: '#000000',
+          ...options?.styles,
+        },
+      };
+
+    case 'headline':
+      return {
+        ...baseElement,
+        type: 'text',
+        content: options?.content || 'Your Headline',
+        width: 500,
+        height: 60,
+        styles: {
+          fontSize: 32,
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
+          color: '#000000',
+          ...options?.styles,
+        },
+      };
+
+    case 'subheading':
+      return {
+        ...baseElement,
+        type: 'text',
+        content: options?.content || 'Your subheading text',
+        width: 400,
+        height: 40,
+        styles: {
+          fontSize: 18,
+          fontFamily: 'Arial',
+          fontWeight: 'normal',
+          color: '#666666',
+          ...options?.styles,
+        },
+      };
+
+    case 'qr-code':
+      return {
+        ...baseElement,
+        data: '{{purl}}',
+        foregroundColor: '#000000',
+        backgroundColor: '#ffffff',
+      };
+
+    case 'template-token':
+      return {
+        ...baseElement,
+        tokenContent: {
+          token: options?.content || '{{first_name}}',
+          fallback: '',
+          transform: 'none',
+        },
+        styles: {
+          fontSize: 16,
+          color: '#4F46E5',
+          ...options?.styles,
+        },
+      };
+
+    default:
+      return baseElement;
+  }
+}
+
 /**
  * Execute a single design action
  */

@@ -1,684 +1,513 @@
-# DESIGNER FIX PLAN - AI-FIRST REDESIGN
+# DESIGNER FIX PLAN - COMPREHENSIVE MULTI-PHASE
 
 ## Current Problems Identified
 
-Based on the screenshot:
+From the screenshot:
+1. **Drag & drop not working** - Elements can't be dragged to canvas
+2. **AI is on the RIGHT** - Should be LEFT for AI-first approach
+3. **Canvas is non-functional** - No interaction working
+4. **Layout is backwards** - AI should be primary, manual tools secondary
 
-1. **AI is Secondary** - AI panel is hidden on the right side under a tab, not the primary interface
-2. **Drag & Drop Broken** - Elements don't drag to canvas
-3. **Layout Wrong** - AI should be LEFT side, prominently visible
-4. **Click to Add Not Working** - "Click to add to canvas" doesn't function
-5. **Canvas Non-Interactive** - Can't interact with the empty canvas area
-6. **No Visual Feedback** - No indication when dragging or hovering
+## Target Design
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ← Back    Mail Designer - Insurance Services Postcard    ↩ ↪  Export PDF  Save │
+├─────────────────────────────────────────────────────────────────────────┤
+│                    │                              │                      │
+│  ✨ AI ASSISTANT   │                              │   PROPERTIES         │
+│  ─────────────────│                              │   ─────────────────   │
+│                    │                              │                      │
+│  [Chat input...]   │      CANVAS                  │   Selected: None     │
+│                    │      (Background Image)      │                      │
+│  "Add headline..." │      ┌──────────────┐       │   Position: x, y     │
+│  "Insert QR..."    │      │              │       │   Size: w × h        │
+│  "Use first_name"  │      │   Design     │       │   Rotation: 0°       │
+│                    │      │   Elements   │       │                      │
+│  ─────────────────│      │   Here       │       │   Font: ...          │
+│                    │      │              │       │   Color: ...         │
+│  QUICK ADD         │      │              │       │   ─────────────────   │
+│  ─────────────────│      └──────────────┘       │                      │
+│  [Headline]        │                              │   LAYERS             │
+│  [Body Text]       │                              │   ─────────────────   │
+│  [Image]           │                              │   □ Headline         │
+│  [QR Code]         │                              │   □ Body Text        │
+│  [Token Field]     │                              │   □ QR Code          │
+│                    │                              │                      │
+│  ─────────────────│                              │   ─────────────────   │
+│  UPLOAD BG         │                              │   TOKENS             │
+│  [Drop zone]       │                              │   {{first_name}}     │
+│                    │                              │   {{unique_code}}    │
+│                    │                              │   {{company_name}}   │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+## New Layout Structure
+
+**LEFT PANEL (Primary - AI First)**
+1. AI Chat Interface (TOP - most prominent)
+2. Quick Add Elements (below AI)
+3. Background Upload (bottom)
+
+**CENTER (Canvas)**
+1. Functional canvas with actual element rendering
+2. Selection handles
+3. Drag/resize/rotate capability
+
+**RIGHT PANEL (Secondary - Properties)**
+1. Properties Panel (selected element)
+2. Layers Panel
+3. Tokens Reference
 
 ---
 
-## NEW DESIGN VISION: AI-FIRST LAYOUT
+# PHASE 1: DIAGNOSE & UNDERSTAND CURRENT CODE
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ← Back    Mail Designer - Insurance Services Postcard     ↶ ↷  Export  Save │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                           │                              │                   │
-│   ✨ AI DESIGN ASSISTANT  │                              │   PROPERTIES      │
-│   ═══════════════════════ │                              │   ════════════    │
-│                           │                              │                   │
-│   "Describe what you      │                              │   [No Selection]  │
-│    want to create..."     │                              │                   │
-│   ┌─────────────────┐     │        CANVAS               │   - Position      │
-│   │                 │ ➤   │                              │   - Size          │
-│   └─────────────────┘     │   ┌──────────────────────┐  │   - Style         │
-│                           │   │                      │  │   - Font          │
-│   Quick Actions:          │   │                      │  │                   │
-│   [+ Headline]            │   │    (Upload BG or     │  │   ────────────    │
-│   [+ QR Code]             │   │     Start with AI)   │  │                   │
-│   [+ First Name Token]    │   │                      │  │   LAYERS          │
-│                           │   │                      │  │   ════════════    │
-│   ───────────────────     │   └──────────────────────┘  │   [Layer list]    │
-│                           │                              │                   │
-│   ELEMENTS (Manual)       │                              │   ────────────    │
-│   ┌─────┬─────┬─────┐     │                              │                   │
-│   │Text │Shape│Media│     │                              │   TOKENS          │
-│   └─────┴─────┴─────┘     │                              │   ════════════    │
-│   [Headline] [Image]      │                              │   {{first_name}}  │
-│   [Body]     [QR]         │                              │   {{unique_code}} │
-│                           │                              │   {{company}}     │
-│   ───────────────────     │                              │                   │
-│                           │                              │                   │
-│   BACKGROUND              │                              │                   │
-│   [Upload Image]          │                              │                   │
-│   [Color Picker]          │                              │                   │
-│                           │                              │                   │
-└─────────────────────────────────────────────────────────────────────────────┘
+## Task 1.1: Map Current Designer Files
 
-LEFT PANEL (Primary - AI First):        CENTER (Canvas):           RIGHT PANEL (Context):
-- AI Chat (always visible, top)         - Interactive canvas       - Properties of selected
-- Quick action buttons                  - Drag targets work        - Layer management  
-- Elements library (secondary)          - Shows background         - Token reference
-- Background upload                     - Visual guides            - Export options
-```
+Find and document all designer-related files:
+- Components in `src/features/designer/`
+- Pages: `MailDesigner.tsx`, `LandingPageDesigner.tsx`, etc.
+- Hooks: `useDesignerState.ts`, etc.
+- Any canvas library being used
+
+## Task 1.2: Identify Why Drag & Drop Fails
+
+Check for:
+- Event handlers not connected
+- Canvas library not initialized
+- State not updating on drag
+- Missing drag-and-drop library setup
+
+## Task 1.3: Document Current Component Structure
+
+Create a map of:
+- Which components exist
+- How they're connected
+- What props they expect
+- What state they manage
 
 ---
 
-## PHASE 1: FIX CORE CANVAS FUNCTIONALITY
+# PHASE 2: FIX CORE CANVAS FUNCTIONALITY
 
-### Priority: Get drag & drop and basic interactions working
+## Task 2.1: Choose/Verify Canvas Library
 
----
+Options:
+- **Fabric.js** - Full-featured, good for this use case
+- **Konva.js** - React-friendly, performant
+- **Custom Canvas API** - More control, more work
 
-### Task 1.1: Audit Current Canvas Implementation
+Recommendation: **Fabric.js** or **Konva.js**
 
-**Action**: Find and analyze current canvas code
+If not using a library, implement one. The canvas MUST support:
+- Element rendering
+- Selection
+- Drag to move
+- Resize handles
+- Rotation
 
-```
-Search for:
-- src/features/designer/components/DesignerCanvas.tsx
-- src/pages/MailDesigner.tsx
-- Any file with "canvas" in name under src/
+## Task 2.2: Implement Working Canvas
 
-Identify:
-- What library is being used (Fabric.js? Konva? Custom?)
-- Why drag handlers aren't attached
-- Why click handlers aren't working
-```
+Create `src/features/designer/components/DesignerCanvas.tsx`:
 
-**Report**: List the files found and the current implementation approach
-
----
-
-### Task 1.2: Fix Canvas Event Handlers
-
-**File**: `src/features/designer/components/DesignerCanvas.tsx`
-
-**Requirements**:
-1. Canvas must accept drop events
-2. Canvas must handle click to select elements
-3. Canvas must handle drag to move elements
-4. Canvas must show drop target indicator when dragging over
-
-**Implementation Pattern**:
 ```typescript
-// Canvas needs these handlers
-const handleDragOver = (e: React.DragEvent) => {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-  setIsDragOver(true);
-};
-
-const handleDragLeave = () => {
-  setIsDragOver(false);
-};
-
-const handleDrop = (e: React.DragEvent) => {
-  e.preventDefault();
-  setIsDragOver(false);
-  
-  const elementType = e.dataTransfer.getData('element-type');
-  const rect = canvasRef.current?.getBoundingClientRect();
-  if (!rect) return;
-  
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  
-  addElement({
-    type: elementType,
-    x,
-    y,
-    // ... default properties
-  });
-};
+// Must handle:
+- Render background image
+- Render all elements from state
+- Handle click to select
+- Handle drag to move
+- Handle resize via handles
+- Handle keyboard (delete, arrow keys)
+- Emit events for state updates
 ```
 
----
+## Task 2.3: Fix Element State Management
 
-### Task 1.3: Fix Element Drag Source
-
-**File**: `src/features/designer/components/ElementLibrary.tsx`
-
-**Requirements**:
-1. Each element button must be draggable
-2. Must set correct data transfer type
-3. Must show drag preview
-
-**Implementation Pattern**:
+The `useDesignerState` hook must:
 ```typescript
-const ElementButton = ({ type, label, icon }: ElementButtonProps) => {
-  const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('element-type', type);
-    e.dataTransfer.effectAllowed = 'copy';
+interface DesignerState {
+  canvas: {
+    width: number;
+    height: number;
+    backgroundColor: string;
+    backgroundImage: string | null;
   };
+  elements: DesignElement[];
+  selectedId: string | null;
+  history: DesignerState[];
+  historyIndex: number;
+}
 
-  return (
-    <button
-      draggable
-      onDragStart={handleDragStart}
-      onClick={() => addElementToCenter(type)}
-      className="..."
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-};
+// Actions that MUST work:
+- addElement(element)
+- updateElement(id, changes)
+- deleteElement(id)
+- selectElement(id)
+- deselectAll()
+- moveElement(id, x, y)
+- resizeElement(id, width, height)
+- reorderLayers(fromIndex, toIndex)
+- setBackground(image)
+- undo()
+- redo()
 ```
+
+## Task 2.4: Implement Drag from Library to Canvas
+
+The drag-and-drop flow:
+1. User clicks element in library (Headline, Body Text, etc.)
+2. Element follows cursor (ghost preview)
+3. User drops on canvas
+4. Element is added at drop position
+5. Element is auto-selected
+
+Required:
+- `onDragStart` on library items
+- `onDragOver` on canvas (allow drop)
+- `onDrop` on canvas (create element)
 
 ---
 
-### Task 1.4: Add Click-to-Add Functionality
+# PHASE 3: RESTRUCTURE LAYOUT (AI-FIRST)
 
-**File**: `src/features/designer/components/ElementLibrary.tsx`
+## Task 3.1: Create New Layout Component
 
-**Requirements**:
-1. Clicking element button adds it to canvas center
-2. Show toast/feedback when added
-3. Select the newly added element
+Create `src/features/designer/components/DesignerLayout.tsx`:
 
-**Implementation**:
 ```typescript
-const addElementToCenter = (type: ElementType) => {
-  const canvasCenter = {
-    x: canvasWidth / 2,
-    y: canvasHeight / 2,
-  };
+<div className="flex h-screen">
+  {/* LEFT PANEL - AI First */}
+  <div className="w-80 border-r flex flex-col">
+    <AIDesignChat />      {/* TOP - Most prominent */}
+    <ElementLibrary />     {/* Middle */}
+    <BackgroundUploader /> {/* Bottom */}
+  </div>
   
-  const newElement = createDefaultElement(type, canvasCenter);
-  addElement(newElement);
-  selectElement(newElement.id);
+  {/* CENTER - Canvas */}
+  <div className="flex-1 bg-gray-100 p-8 overflow-auto">
+    <DesignerCanvas />
+  </div>
   
-  toast({ title: `${type} added to canvas` });
-};
+  {/* RIGHT PANEL - Properties */}
+  <div className="w-72 border-l flex flex-col">
+    <PropertiesPanel />   {/* Selected element props */}
+    <LayerPanel />        {/* Layer list */}
+    <TokensPanel />       {/* Token reference */}
+  </div>
+</div>
 ```
 
----
+## Task 3.2: Redesign AI Chat Component
 
-### Task 1.5: Add Visual Feedback
-
-**Requirements**:
-1. Show border/highlight when dragging over canvas
-2. Show selection handles on selected element
-3. Show resize handles on corners/edges
-4. Show rotation handle above element
-5. Show guides when aligning elements
-
-**CSS Classes to add**:
-```css
-.canvas-drag-over {
-  border: 2px dashed #3b82f6;
-  background: rgba(59, 130, 246, 0.05);
-}
-
-.element-selected {
-  outline: 2px solid #3b82f6;
-}
-
-.resize-handle {
-  width: 8px;
-  height: 8px;
-  background: white;
-  border: 1px solid #3b82f6;
-  position: absolute;
-}
-```
-
----
-
-## PHASE 2: RESTRUCTURE LAYOUT (AI-FIRST)
-
-### Priority: Move AI to left side, make it the primary interface
-
----
-
-### Task 2.1: Create New Layout Component
-
-**File**: `src/features/designer/components/DesignerLayout.tsx`
-
-**New Structure**:
-```typescript
-export function DesignerLayout({ 
-  designerType,  // 'mail' | 'landing-page' | 'email'
-  campaignId,
-  onSave,
-}: DesignerLayoutProps) {
-  return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <DesignerHeader 
-        title={title}
-        onBack={handleBack}
-        onSave={onSave}
-        onExport={handleExport}
-      />
-      
-      {/* Main Content - 3 Column */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* LEFT PANEL - AI FIRST */}
-        <LeftPanel className="w-80 border-r">
-          <AIDesignChat />           {/* TOP - Always visible */}
-          <QuickActions />           {/* Quick add buttons */}
-          <Separator />
-          <ElementLibrary />         {/* Manual elements */}
-          <Separator />
-          <BackgroundUploader />     {/* Background controls */}
-        </LeftPanel>
-        
-        {/* CENTER - CANVAS */}
-        <div className="flex-1 bg-gray-100 p-8 overflow-auto">
-          <DesignerCanvas />
-        </div>
-        
-        {/* RIGHT PANEL - CONTEXT */}
-        <RightPanel className="w-72 border-l">
-          <PropertiesPanel />        {/* Selected element props */}
-          <Separator />
-          <LayerPanel />             {/* Layer management */}
-          <Separator />
-          <TokenReference />         {/* Available tokens */}
-        </RightPanel>
-      </div>
-    </div>
-  );
-}
-```
-
----
-
-### Task 2.2: Create AI-First Chat Component
-
-**File**: `src/features/designer/components/AIDesignChat.tsx`
-
-**Requirements**:
-1. Always visible at TOP of left panel
-2. Large, prominent input area
-3. Quick example prompts
-4. Chat history (collapsible)
-5. "Apply" buttons on AI suggestions
-
-**Layout**:
-```typescript
-export function AIDesignChat() {
-  return (
-    <div className="p-4 space-y-4">
-      {/* Title */}
-      <div className="flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-purple-500" />
-        <h2 className="font-semibold">AI Design Assistant</h2>
-      </div>
-      
-      {/* Input - PROMINENT */}
-      <div className="relative">
-        <Textarea
-          placeholder="Describe what you want to create..."
-          className="min-h-[80px] pr-12 resize-none"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-        />
-        <Button 
-          size="icon" 
-          className="absolute bottom-2 right-2"
-          onClick={handleSubmit}
-          disabled={!input.trim() || isLoading}
-        >
-          <Send className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      {/* Quick Examples - Clickable */}
-      <div className="space-y-2">
-        <p className="text-xs text-muted-foreground">Try these:</p>
-        {EXAMPLE_PROMPTS.map((prompt) => (
-          <button
-            key={prompt}
-            onClick={() => setInput(prompt)}
-            className="text-left text-sm text-blue-600 hover:underline block"
-          >
-            "{prompt}"
-          </button>
-        ))}
-      </div>
-      
-      {/* Chat History - Collapsible */}
-      <Collapsible>
-        <CollapsibleTrigger className="text-sm text-muted-foreground">
-          Chat History ({messages.length})
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="space-y-2 mt-2 max-h-48 overflow-auto">
-            {messages.map((msg) => (
-              <ChatMessage key={msg.id} message={msg} />
-            ))}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-  );
-}
-
-const EXAMPLE_PROMPTS = [
-  "Add a headline that says 'You're Invited!' at the top",
-  "Add a QR code in the bottom right corner",
-  "Insert the customer's first name in a greeting",
-  "Add the company logo in the top left",
-  "Create a call-to-action button",
-];
-```
-
----
-
-### Task 2.3: Create Quick Actions Component
-
-**File**: `src/features/designer/components/QuickActions.tsx`
-
-**Purpose**: One-click buttons for common actions
+Move from right to left, make it PRIMARY:
 
 ```typescript
-export function QuickActions() {
-  const { addElement, canvasState } = useDesignerState();
+// AIDesignChat.tsx - NEW DESIGN
+<div className="flex-1 flex flex-col p-4">
+  <div className="flex items-center gap-2 mb-4">
+    <Sparkles className="text-purple-500" />
+    <h2 className="font-semibold">AI Design Assistant</h2>
+  </div>
+  
+  {/* Chat messages */}
+  <div className="flex-1 overflow-auto space-y-3">
+    {messages.map(msg => <ChatMessage key={msg.id} {...msg} />)}
+  </div>
+  
+  {/* Quick suggestions - clickable */}
+  <div className="space-y-2 my-4">
+    <QuickSuggestion text="Add a headline at the top" />
+    <QuickSuggestion text="Insert customer's first name" />
+    <QuickSuggestion text="Add QR code bottom right" />
+  </div>
+  
+  {/* Input */}
+  <div className="flex gap-2">
+    <Input placeholder="Describe what you want..." />
+    <Button><Send /></Button>
+  </div>
+</div>
+```
 
-  const quickActions = [
-    { 
-      label: '+ Headline', 
-      icon: Type, 
-      action: () => addElement({ type: 'text', preset: 'headline' }) 
-    },
-    { 
-      label: '+ QR Code', 
-      icon: QrCode, 
-      action: () => addElement({ type: 'qr-code' }) 
-    },
-    { 
-      label: '+ {{first_name}}', 
-      icon: User, 
-      action: () => addElement({ type: 'token', token: '{{first_name}}' }) 
-    },
-    { 
-      label: '+ Image', 
-      icon: Image, 
-      action: () => addElement({ type: 'image' }) 
-    },
-  ];
+## Task 3.3: Simplify Element Library
 
-  return (
-    <div className="p-4">
-      <h3 className="text-sm font-medium mb-2">Quick Add</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {quickActions.map((action) => (
-          <Button
-            key={action.label}
-            variant="outline"
-            size="sm"
-            onClick={action.action}
-            className="justify-start"
-          >
-            <action.icon className="h-4 w-4 mr-2" />
-            {action.label}
-          </Button>
-        ))}
-      </div>
-    </div>
-  );
-}
+Make it compact since it's secondary:
+
+```typescript
+// ElementLibrary.tsx - Compact version
+<div className="p-4 border-t">
+  <h3 className="text-sm font-medium mb-2">Quick Add</h3>
+  <div className="grid grid-cols-2 gap-2">
+    <ElementButton icon={Type} label="Text" />
+    <ElementButton icon={Image} label="Image" />
+    <ElementButton icon={Square} label="Shape" />
+    <ElementButton icon={QrCode} label="QR Code" />
+    <ElementButton icon={Braces} label="Token" />
+  </div>
+</div>
+```
+
+## Task 3.4: Move Background Upload to Bottom Left
+
+```typescript
+// BackgroundUploader.tsx - Compact
+<div className="p-4 border-t">
+  <h3 className="text-sm font-medium mb-2">Background</h3>
+  <div 
+    className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer"
+    onDrop={handleDrop}
+    onDragOver={handleDragOver}
+  >
+    <Upload className="mx-auto mb-2" />
+    <p className="text-sm">Drop image or click</p>
+  </div>
+</div>
 ```
 
 ---
 
-### Task 2.4: Move Element Library Below AI
+# PHASE 4: MAKE AI ACTUALLY WORK
 
-**File**: `src/features/designer/components/ElementLibrary.tsx`
+## Task 4.1: Create AI Action Parser
 
-**Requirements**:
-1. Should be BELOW AI chat and Quick Actions
-2. Collapsible (AI is primary)
-3. Still has tabs: Text, Shapes, Media, Special
-4. All items draggable AND clickable
+The AI must translate natural language to canvas actions:
 
 ```typescript
-export function ElementLibrary() {
-  return (
-    <Collapsible defaultOpen={false}>
-      <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-gray-50">
-        <h3 className="text-sm font-medium">Elements (Manual)</h3>
-        <ChevronDown className="h-4 w-4" />
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <Tabs defaultValue="text" className="px-4 pb-4">
-          <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="text">Text</TabsTrigger>
-            <TabsTrigger value="shapes">Shapes</TabsTrigger>
-            <TabsTrigger value="media">Media</TabsTrigger>
-            <TabsTrigger value="special">Special</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="text">
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              <DraggableElement type="headline" label="Headline" icon={Type} />
-              <DraggableElement type="subheading" label="Subheading" icon={Type} />
-              <DraggableElement type="body" label="Body Text" icon={Type} />
-              <DraggableElement type="caption" label="Caption" icon={Type} />
-            </div>
-          </TabsContent>
-          
-          {/* ... other tabs */}
-        </Tabs>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-```
+// src/features/designer/utils/aiActionParser.ts
 
----
-
-### Task 2.5: Update Right Panel
-
-**File**: `src/features/designer/components/RightPanel.tsx`
-
-**Requirements**:
-1. Properties panel at top (context-sensitive)
-2. Layers panel in middle
-3. Token reference at bottom
-
-```typescript
-export function RightPanel() {
-  const { selectedElement } = useDesignerState();
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Properties - Takes available space */}
-      <div className="flex-1 overflow-auto">
-        <PropertiesPanel element={selectedElement} />
-      </div>
-      
-      <Separator />
-      
-      {/* Layers - Fixed height */}
-      <div className="h-48">
-        <LayerPanel />
-      </div>
-      
-      <Separator />
-      
-      {/* Tokens - Collapsible reference */}
-      <Collapsible>
-        <CollapsibleTrigger className="p-3 w-full text-left">
-          <h3 className="text-sm font-medium">Available Tokens</h3>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <TokenReference />
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-  );
-}
-```
-
----
-
-## PHASE 3: FIX AI INTEGRATION
-
-### Priority: Make AI actually control the canvas
-
----
-
-### Task 3.1: Fix AI Response Parsing
-
-**File**: `src/features/designer/hooks/useDesignerAI.ts`
-
-**Requirements**:
-1. AI response must be parsed into actions
-2. Actions must modify canvas state
-3. Handle multiple actions in one response
-
-**Implementation**:
-```typescript
 interface AIAction {
-  type: 'add' | 'modify' | 'delete' | 'move';
-  elementType?: ElementType;
-  elementId?: string;
-  properties?: Partial<DesignElement>;
-  position?: { x: number; y: number };
+  type: 'add_element' | 'modify_element' | 'delete_element' | 'set_background';
+  payload: any;
 }
 
 function parseAIResponse(response: string): AIAction[] {
-  // AI should return JSON actions
-  try {
-    const parsed = JSON.parse(response);
-    return parsed.actions || [];
-  } catch {
-    // Fallback: try to understand natural language
-    return parseNaturalLanguage(response);
-  }
+  // AI returns structured JSON with actions
+  // Parse and return action array
 }
 
-function executeActions(actions: AIAction[]) {
-  actions.forEach(action => {
-    switch (action.type) {
-      case 'add':
-        addElement(createElementFromAction(action));
-        break;
-      case 'modify':
-        updateElement(action.elementId!, action.properties!);
-        break;
-      case 'delete':
-        deleteElement(action.elementId!);
-        break;
-      case 'move':
-        moveElement(action.elementId!, action.position!);
-        break;
+// Example AI response format:
+{
+  "actions": [
+    {
+      "type": "add_element",
+      "payload": {
+        "type": "text",
+        "content": "You're Invited!",
+        "position": { "x": "center", "y": "top" },
+        "styles": { "fontSize": 32, "fontWeight": "bold" }
+      }
     }
-  });
+  ],
+  "message": "I've added a headline at the top. Would you like me to style it differently?"
 }
 ```
 
----
+## Task 4.2: Create AI Prompt System
 
-### Task 3.2: Improve AI Prompts
-
-**File**: `src/features/designer/utils/aiPrompts.ts`
-
-**System prompt for AI**:
 ```typescript
-export const DESIGNER_SYSTEM_PROMPT = `
-You are an AI design assistant for a mail/marketing designer tool.
-You help users create designs by understanding their requests and returning structured actions.
+// src/features/designer/utils/aiPrompts.ts
+
+const SYSTEM_PROMPT = `
+You are an AI design assistant for a mail/marketing designer.
+You help users create designs by understanding their requests and generating actions.
 
 CANVAS INFO:
-- Canvas size: {{canvasWidth}}x{{canvasHeight}} pixels
-- Current elements: {{elementsSummary}}
-- Background: {{backgroundInfo}}
+- Size: {width}x{height}
+- Current elements: {elementsSummary}
+- Background: {hasBackground}
 
 AVAILABLE ACTIONS:
-1. ADD element: Create new text, image, shape, or QR code
-2. MODIFY element: Change properties of existing element
-3. DELETE element: Remove an element
-4. MOVE element: Reposition an element
+1. add_element - Add text, image, shape, QR code, or token
+2. modify_element - Change properties of existing element
+3. delete_element - Remove an element
+4. set_background - Set background color or suggest image
 
-AVAILABLE TOKENS (for personalization):
+TEMPLATE TOKENS (use these for personalization):
 - {{first_name}} - Recipient's first name
-- {{last_name}} - Recipient's last name
+- {{last_name}} - Recipient's last name  
 - {{unique_code}} - Tracking code
-- {{company_name}} - Client's company name
+- {{company_name}} - Client's company
 - {{purl}} - Personal URL
-- {{qr_code}} - QR code placeholder
+- {{qr_code}} - QR code
 - {{gift_card_amount}} - Gift card value
 
-RESPONSE FORMAT:
-Return JSON with this structure:
-{
-  "message": "Human-friendly response",
-  "actions": [
-    {
-      "type": "add",
-      "elementType": "text",
-      "properties": {
-        "content": "You're Invited!",
-        "x": 300,
-        "y": 50,
-        "fontSize": 32,
-        "fontWeight": "bold",
-        "color": "#000000"
-      }
-    }
-  ]
-}
+POSITION SHORTCUTS:
+- "top", "center", "bottom" for Y
+- "left", "center", "right" for X
+- "top-left", "top-right", "bottom-left", "bottom-right" for corners
 
-POSITIONING GUIDELINES:
-- Top: y = 20-100
-- Center: y = canvas_height / 2
-- Bottom: y = canvas_height - 100
-- Left: x = 20-100
-- Center: x = canvas_width / 2
-- Right: x = canvas_width - 100
+Respond with JSON containing:
+1. "actions" - Array of actions to perform
+2. "message" - Friendly response to user
 
-When user says "at the top", use y around 50.
-When user says "bottom right", use x = width-100, y = height-100.
+Always be helpful and suggest next steps.
 `;
 ```
 
----
-
-### Task 3.3: Add AI Action Preview
-
-**File**: `src/features/designer/components/AIActionPreview.tsx`
-
-**Requirements**:
-1. Before applying AI actions, show preview
-2. User can approve or reject
-3. Can modify individual actions
+## Task 4.3: Connect AI to Canvas State
 
 ```typescript
-export function AIActionPreview({ 
-  actions, 
-  onApply, 
-  onReject,
-  onModify 
-}: AIActionPreviewProps) {
+// useDesignerAI.ts
+
+function useDesignerAI() {
+  const { addElement, updateElement, deleteElement } = useDesignerState();
+  
+  const executeActions = (actions: AIAction[]) => {
+    actions.forEach(action => {
+      switch (action.type) {
+        case 'add_element':
+          addElement(createElementFromAI(action.payload));
+          break;
+        case 'modify_element':
+          updateElement(action.payload.id, action.payload.changes);
+          break;
+        case 'delete_element':
+          deleteElement(action.payload.id);
+          break;
+      }
+    });
+  };
+  
+  const sendMessage = async (message: string) => {
+    const response = await callGeminiAPI(message, canvasContext);
+    const parsed = parseAIResponse(response);
+    executeActions(parsed.actions);
+    return parsed.message;
+  };
+  
+  return { sendMessage, isLoading };
+}
+```
+
+## Task 4.4: Make Quick Suggestions Functional
+
+Clicking a suggestion should:
+1. Send it as a message to AI
+2. AI processes and returns actions
+3. Actions are executed on canvas
+4. AI response shown in chat
+
+```typescript
+<QuickSuggestion 
+  text="Add a headline at the top"
+  onClick={() => sendMessage("Add a headline at the top")}
+/>
+```
+
+---
+
+# PHASE 5: FIX PROPERTIES & LAYERS PANELS
+
+## Task 5.1: Properties Panel Shows Selected Element
+
+```typescript
+// PropertiesPanel.tsx
+function PropertiesPanel() {
+  const { selectedElement, updateElement } = useDesignerState();
+  
+  if (!selectedElement) {
+    return <div className="p-4 text-gray-500">Select an element to edit</div>;
+  }
+  
   return (
-    <div className="border rounded-lg p-3 bg-purple-50">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium">AI Suggestion</span>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={onReject}>
-            Reject
-          </Button>
-          <Button size="sm" onClick={onApply}>
-            Apply
-          </Button>
-        </div>
+    <div className="p-4 space-y-4">
+      <h3 className="font-medium">Properties</h3>
+      
+      {/* Position */}
+      <div className="grid grid-cols-2 gap-2">
+        <Input label="X" value={selectedElement.x} onChange={...} />
+        <Input label="Y" value={selectedElement.y} onChange={...} />
       </div>
       
-      <div className="space-y-2">
-        {actions.map((action, i) => (
-          <div key={i} className="text-sm bg-white p-2 rounded border">
-            <span className="font-medium capitalize">{action.type}</span>
-            {action.elementType && (
-              <span className="text-muted-foreground"> {action.elementType}</span>
-            )}
-            {action.properties?.content && (
-              <span className="block text-muted-foreground truncate">
-                "{action.properties.content}"
-              </span>
-            )}
-          </div>
+      {/* Size */}
+      <div className="grid grid-cols-2 gap-2">
+        <Input label="Width" value={selectedElement.width} onChange={...} />
+        <Input label="Height" value={selectedElement.height} onChange={...} />
+      </div>
+      
+      {/* Text-specific */}
+      {selectedElement.type === 'text' && (
+        <>
+          <Textarea label="Content" value={selectedElement.content} />
+          <FontSelector value={selectedElement.fontFamily} />
+          <Input label="Font Size" type="number" value={selectedElement.fontSize} />
+          <ColorPicker label="Color" value={selectedElement.color} />
+        </>
+      )}
+    </div>
+  );
+}
+```
+
+## Task 5.2: Layers Panel with Drag Reorder
+
+```typescript
+// LayerPanel.tsx
+function LayerPanel() {
+  const { elements, selectedId, selectElement, reorderLayers } = useDesignerState();
+  
+  return (
+    <div className="p-4">
+      <h3 className="font-medium mb-2">Layers</h3>
+      <DragDropContext onDragEnd={handleReorder}>
+        <Droppable droppableId="layers">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              {elements.map((el, index) => (
+                <Draggable key={el.id} draggableId={el.id} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className={cn(
+                        "p-2 rounded cursor-pointer",
+                        selectedId === el.id && "bg-blue-100"
+                      )}
+                      onClick={() => selectElement(el.id)}
+                    >
+                      <span>{el.type}: {el.content?.slice(0, 20)}</span>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </div>
+  );
+}
+```
+
+## Task 5.3: Tokens Panel for Quick Insert
+
+```typescript
+// TokensPanel.tsx
+function TokensPanel() {
+  const { selectedElement, updateElement } = useDesignerState();
+  
+  const insertToken = (token: string) => {
+    if (selectedElement?.type === 'text') {
+      const newContent = selectedElement.content + token;
+      updateElement(selectedElement.id, { content: newContent });
+    }
+  };
+  
+  return (
+    <div className="p-4 border-t">
+      <h3 className="font-medium mb-2">Insert Token</h3>
+      <div className="space-y-1">
+        {TEMPLATE_TOKENS.map(token => (
+          <button
+            key={token.key}
+            className="w-full text-left p-2 hover:bg-gray-100 rounded text-sm"
+            onClick={() => insertToken(token.value)}
+          >
+            <code className="text-purple-600">{token.value}</code>
+            <span className="text-gray-500 ml-2">{token.label}</span>
+          </button>
         ))}
       </div>
     </div>
@@ -688,241 +517,244 @@ export function AIActionPreview({
 
 ---
 
-## PHASE 4: ENSURE CONSISTENCY ACROSS DESIGNERS
+# PHASE 6: FIX EXPORT FUNCTIONALITY
 
-### Priority: Same experience for Mail, Landing Page, Email designers
-
----
-
-### Task 4.1: Create Designer Config System
-
-**File**: `src/features/designer/config/designerConfigs.ts`
+## Task 6.1: PDF Export Must Work
 
 ```typescript
-export interface DesignerConfig {
-  type: 'mail' | 'landing-page' | 'email';
-  name: string;
-  dimensions: {
-    width: number;
-    height: number;
-    unit: 'px' | 'in';
+// useDesignerExport.ts
+function useDesignerExport() {
+  const { canvas, elements } = useDesignerState();
+  
+  const exportToPDF = async () => {
+    // Option 1: Use html2canvas + jsPDF
+    const canvasElement = document.getElementById('designer-canvas');
+    const image = await html2canvas(canvasElement);
+    
+    const pdf = new jsPDF({
+      orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+      unit: 'in',
+      format: [canvas.width / 96, canvas.height / 96] // Convert px to inches
+    });
+    
+    pdf.addImage(image, 'PNG', 0, 0);
+    pdf.save('design.pdf');
+    
+    // Option 2: Server-side generation for better quality
+    // Send canvas state to edge function that generates PDF
   };
-  presets: DimensionPreset[];
-  allowedElements: ElementType[];
-  exportFormats: ExportFormat[];
-  aiExamples: string[];
+  
+  return { exportToPDF };
 }
+```
 
-export const MAIL_DESIGNER_CONFIG: DesignerConfig = {
+## Task 6.2: Preview with Token Replacement
+
+```typescript
+const generatePreview = (sampleData: Record<string, string>) => {
+  // Clone elements
+  const previewElements = elements.map(el => ({
+    ...el,
+    content: el.type === 'text' 
+      ? replaceTokens(el.content, sampleData)
+      : el.content
+  }));
+  
+  return previewElements;
+};
+
+// Sample data for preview
+const SAMPLE_DATA = {
+  first_name: 'John',
+  last_name: 'Smith',
+  unique_code: 'ABC123',
+  company_name: 'Acme Insurance',
+  purl: 'acme.com/p/ABC123',
+  gift_card_amount: '$25'
+};
+```
+
+---
+
+# PHASE 7: ENSURE CONSISTENCY ACROSS DESIGNERS
+
+## Task 7.1: Create Shared Designer Framework
+
+All designers should use the SAME components:
+- `DesignerLayout`
+- `DesignerCanvas`
+- `AIDesignChat`
+- `ElementLibrary`
+- `PropertiesPanel`
+- `LayerPanel`
+- `TokensPanel`
+
+Only the CONFIG differs:
+
+```typescript
+// Mail Designer Config
+const MAIL_CONFIG = {
   type: 'mail',
-  name: 'Mail Designer',
-  dimensions: { width: 600, height: 400, unit: 'px' },
-  presets: [
-    { name: '4x6 Postcard', width: 600, height: 400 },
-    { name: '6x9 Postcard', width: 900, height: 600 },
-    { name: '6x11 Postcard', width: 1100, height: 600 },
-    { name: 'Letter', width: 850, height: 1100 },
-  ],
-  allowedElements: ['text', 'image', 'shape', 'qr-code', 'token'],
-  exportFormats: ['pdf', 'png'],
-  aiExamples: [
-    "Add a headline that says 'You're Invited!' at the top",
-    "Add a QR code in the bottom right corner",
-    "Insert the customer's first name in a greeting",
-  ],
+  dimensions: {
+    '4x6': { width: 576, height: 384 },
+    '6x9': { width: 864, height: 576 },
+    '6x11': { width: 792, height: 1056 },
+  },
+  export: 'pdf',
+  elements: ['text', 'image', 'shape', 'qr-code', 'token']
 };
 
-export const LANDING_PAGE_DESIGNER_CONFIG: DesignerConfig = {
-  type: 'landing-page',
-  name: 'Landing Page Designer',
-  dimensions: { width: 1200, height: 800, unit: 'px' },
-  presets: [
-    { name: 'Desktop', width: 1200, height: 800 },
-    { name: 'Mobile', width: 375, height: 667 },
-    { name: 'Tablet', width: 768, height: 1024 },
-  ],
-  allowedElements: ['text', 'image', 'shape', 'button', 'form', 'video', 'token'],
-  exportFormats: ['html', 'png'],
-  aiExamples: [
-    "Create a hero section with headline and CTA",
-    "Add a contact form",
-    "Insert a video placeholder",
-  ],
+// Landing Page Config
+const LANDING_CONFIG = {
+  type: 'landing',
+  dimensions: {
+    desktop: { width: 1200, height: 'auto' },
+    mobile: { width: 375, height: 'auto' },
+  },
+  export: 'html',
+  elements: ['text', 'image', 'button', 'form', 'token']
 };
 
-export const EMAIL_DESIGNER_CONFIG: DesignerConfig = {
+// Email Config
+const EMAIL_CONFIG = {
   type: 'email',
-  name: 'Email Designer',
-  dimensions: { width: 600, height: 800, unit: 'px' },
-  presets: [
-    { name: 'Standard Email', width: 600, height: 800 },
-  ],
-  allowedElements: ['text', 'image', 'button', 'divider', 'token'],
-  exportFormats: ['html'],
-  aiExamples: [
-    "Add a header with logo",
-    "Create a two-column layout",
-    "Add an unsubscribe footer",
-  ],
+  dimensions: {
+    standard: { width: 600, height: 'auto' },
+  },
+  export: 'html',
+  elements: ['text', 'image', 'button', 'token']
 };
 ```
 
----
-
-### Task 4.2: Update Mail Designer Page
-
-**File**: `src/pages/MailDesigner.tsx`
+## Task 7.2: Update Each Designer Page
 
 ```typescript
-import { DesignerLayout } from '@/features/designer/components/DesignerLayout';
-import { MAIL_DESIGNER_CONFIG } from '@/features/designer/config/designerConfigs';
-
-export default function MailDesigner() {
-  const { campaignId } = useParams();
-  
+// MailDesigner.tsx
+function MailDesigner() {
   return (
-    <DesignerLayout
-      config={MAIL_DESIGNER_CONFIG}
-      campaignId={campaignId}
-      onSave={handleSave}
-      onExport={handleExport}
-    />
+    <DesignerProvider config={MAIL_CONFIG}>
+      <DesignerLayout />
+    </DesignerProvider>
+  );
+}
+
+// LandingPageDesigner.tsx
+function LandingPageDesigner() {
+  return (
+    <DesignerProvider config={LANDING_CONFIG}>
+      <DesignerLayout />
+    </DesignerProvider>
+  );
+}
+
+// EmailDesigner.tsx
+function EmailDesigner() {
+  return (
+    <DesignerProvider config={EMAIL_CONFIG}>
+      <DesignerLayout />
+    </DesignerProvider>
   );
 }
 ```
 
 ---
 
-### Task 4.3: Update Landing Page Designer
+# PHASE 8: TESTING & VERIFICATION
 
-**File**: `src/pages/LandingPageDesigner.tsx`
+## Task 8.1: Manual Testing Checklist
 
-```typescript
-import { DesignerLayout } from '@/features/designer/components/DesignerLayout';
-import { LANDING_PAGE_DESIGNER_CONFIG } from '@/features/designer/config/designerConfigs';
-
-export default function LandingPageDesigner() {
-  const { pageId } = useParams();
-  
-  return (
-    <DesignerLayout
-      config={LANDING_PAGE_DESIGNER_CONFIG}
-      pageId={pageId}
-      onSave={handleSave}
-      onExport={handleExport}
-    />
-  );
-}
-```
-
----
-
-### Task 4.4: Update Email Designer
-
-**File**: `src/pages/EmailDesigner.tsx`
-
-```typescript
-import { DesignerLayout } from '@/features/designer/components/DesignerLayout';
-import { EMAIL_DESIGNER_CONFIG } from '@/features/designer/config/designerConfigs';
-
-export default function EmailDesigner() {
-  const { templateId } = useParams();
-  
-  return (
-    <DesignerLayout
-      config={EMAIL_DESIGNER_CONFIG}
-      templateId={templateId}
-      onSave={handleSave}
-      onExport={handleExport}
-    />
-  );
-}
-```
-
----
-
-## PHASE 5: TESTING & POLISH
-
----
-
-### Task 5.1: Test All Interactions
-
-**Checklist**:
-- [ ] Drag element from library to canvas
-- [ ] Click element to add to center
-- [ ] Click element on canvas to select
-- [ ] Drag element on canvas to move
-- [ ] Resize element with handles
-- [ ] Delete element with keyboard (Delete/Backspace)
-- [ ] Undo (Ctrl+Z) works
-- [ ] Redo (Ctrl+Y) works
-- [ ] AI adds elements correctly
-- [ ] AI modifies elements correctly
-- [ ] Export PDF works (mail)
-- [ ] Export HTML works (landing/email)
-- [ ] Save design works
-- [ ] Load design works
-
----
-
-### Task 5.2: Test Token Insertion
-
-**Checklist**:
-- [ ] All 8 tokens available
-- [ ] Tokens insert into text elements
-- [ ] Tokens show preview with fallback
-- [ ] Tokens export correctly
-- [ ] AI can insert tokens
-
----
-
-### Task 5.3: Test Background Upload
-
-**Checklist**:
-- [ ] Drag & drop upload works
-- [ ] Click to browse works
-- [ ] PNG, JPG, GIF, WEBP supported
+### Canvas Tests
+- [ ] Can upload background image
 - [ ] Background displays correctly
-- [ ] Can remove background
-- [ ] Background saves with design
+- [ ] Can add text element by clicking button
+- [ ] Can add text element via AI
+- [ ] Element appears on canvas
+- [ ] Can select element by clicking
+- [ ] Selected element shows handles
+- [ ] Can drag element to move
+- [ ] Can resize element with handles
+- [ ] Can delete element (Delete key)
+- [ ] Undo works (Ctrl+Z)
+- [ ] Redo works (Ctrl+Y)
+
+### AI Tests
+- [ ] Can type message
+- [ ] AI responds
+- [ ] "Add headline" creates text at top
+- [ ] "Add QR code" creates QR element
+- [ ] "Insert first_name" adds token
+- [ ] Quick suggestions work when clicked
+- [ ] AI understands position words (top, bottom, left, right)
+
+### Properties Panel Tests
+- [ ] Shows "Select element" when nothing selected
+- [ ] Shows properties when element selected
+- [ ] Changing X/Y moves element
+- [ ] Changing width/height resizes element
+- [ ] Changing text content updates element
+- [ ] Changing font/color updates element
+
+### Layers Panel Tests
+- [ ] Shows all elements
+- [ ] Clicking layer selects element on canvas
+- [ ] Can drag to reorder
+- [ ] Reordering changes visual stacking
+
+### Tokens Tests
+- [ ] All 8 tokens listed
+- [ ] Clicking token inserts into selected text
+- [ ] Tokens display correctly in preview
+
+### Export Tests
+- [ ] Export PDF button works
+- [ ] PDF has correct dimensions
+- [ ] PDF shows all elements
+- [ ] Tokens can be replaced with sample data
 
 ---
 
-### Task 5.4: Cross-Designer Consistency
+# SUMMARY: TASK LIST FOR CURSOR
 
-**Verify same behavior in**:
-- [ ] Mail Designer
-- [ ] Landing Page Designer
-- [ ] Email Designer
+## Phase 1: Diagnose (3 tasks)
+- 1.1 Map all designer files
+- 1.2 Identify why drag/drop fails
+- 1.3 Document component structure
 
-**All should have**:
-- [ ] AI on left side
-- [ ] Same element library
-- [ ] Same token system
-- [ ] Same interaction patterns
+## Phase 2: Fix Canvas (4 tasks)
+- 2.1 Choose/implement canvas library
+- 2.2 Create working DesignerCanvas
+- 2.3 Fix useDesignerState hook
+- 2.4 Implement drag from library to canvas
 
----
+## Phase 3: Restructure Layout (4 tasks)
+- 3.1 Create new DesignerLayout (AI on left)
+- 3.2 Redesign AIDesignChat component
+- 3.3 Simplify ElementLibrary
+- 3.4 Move BackgroundUploader to bottom left
 
-## FILE CHANGES SUMMARY
+## Phase 4: Make AI Work (4 tasks)
+- 4.1 Create AI action parser
+- 4.2 Create AI prompt system
+- 4.3 Connect AI to canvas state
+- 4.4 Make quick suggestions functional
 
-### Files to CREATE:
-- `src/features/designer/components/DesignerLayout.tsx`
-- `src/features/designer/components/QuickActions.tsx`
-- `src/features/designer/components/RightPanel.tsx`
-- `src/features/designer/components/AIActionPreview.tsx`
-- `src/features/designer/config/designerConfigs.ts`
+## Phase 5: Fix Panels (3 tasks)
+- 5.1 Properties panel shows selected element
+- 5.2 Layers panel with drag reorder
+- 5.3 Tokens panel for quick insert
 
-### Files to MODIFY:
-- `src/features/designer/components/AIDesignChat.tsx` (move to left, make prominent)
-- `src/features/designer/components/DesignerCanvas.tsx` (fix drop handlers)
-- `src/features/designer/components/ElementLibrary.tsx` (fix drag, make collapsible)
-- `src/features/designer/components/PropertiesPanel.tsx` (update for right side)
-- `src/features/designer/components/LayerPanel.tsx` (update for right side)
-- `src/features/designer/hooks/useDesignerAI.ts` (fix action parsing)
-- `src/features/designer/utils/aiPrompts.ts` (improve prompts)
-- `src/pages/MailDesigner.tsx` (use new layout)
-- `src/pages/LandingPageDesigner.tsx` (use new layout)
-- `src/pages/EmailDesigner.tsx` (use new layout)
+## Phase 6: Fix Export (2 tasks)
+- 6.1 PDF export must work
+- 6.2 Preview with token replacement
+
+## Phase 7: Consistency (2 tasks)
+- 7.1 Create shared designer framework
+- 7.2 Update each designer page
+
+## Phase 8: Testing (1 task)
+- 8.1 Complete manual testing checklist
+
+**Total: 23 tasks**
 
 ---
 

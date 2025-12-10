@@ -2,17 +2,14 @@
  * NewEmailDesigner Page
  * 
  * AI-first email template designer for notifications and campaigns.
- * Uses unified designer framework with email-specific constraints.
+ * 
+ * Layout: AI on LEFT (primary), Canvas CENTER, Properties RIGHT
  * 
  * Features:
  * - Email-safe HTML export (inline styles, table-based)
  * - 600px width (standard email width)
  * - Template tokens for personalization
  * - AI-powered email content generation
- * 
- * NOTE: Requires `email_templates` table in database.
- * If table doesn't exist, run migration to create it.
- * See docs/DATABASE_REQUIREMENTS.md for schema.
  */
 
 import { useState } from 'react';
@@ -20,9 +17,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { ArrowLeft, Save, Download, Mail, Sparkles, Undo, Redo } from 'lucide-react';
+import { ArrowLeft, Save, Download, Mail, Undo, Redo, Layers, Settings, Tag } from 'lucide-react';
 import { useToast } from '@shared/hooks';
 import {
   DESIGNER_PRESETS,
@@ -44,7 +42,7 @@ export default function NewEmailDesigner() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('design');
+  const [rightTab, setRightTab] = useState('properties');
 
   // Fetch existing email template
   const { data: emailTemplate, isLoading } = useQuery({
@@ -83,9 +81,24 @@ export default function NewEmailDesigner() {
     enableKeyboardShortcuts: true,
   });
 
+  // AI assistant - auto-apply suggestions
   const ai = useDesignerAI({
     designerType: 'email',
     canvasState: designerState.canvasState,
+    onSuggestion: (suggestion) => {
+      if (suggestion.actions && suggestion.actions.length > 0) {
+        console.log('[NewEmailDesigner] Auto-applying AI suggestion:', suggestion);
+        history.recordState(designerState.canvasState, 'AI suggestion');
+        const result = executeDesignActions(suggestion.actions, designerState);
+        
+        if (result.executed > 0) {
+          toast({
+            title: '✨ AI Applied',
+            description: `${result.executed} change(s) made to your design.`,
+          });
+        }
+      }
+    },
   });
 
   const exporter = useDesignerExport({
@@ -194,77 +207,101 @@ export default function NewEmailDesigner() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <div className="border-b bg-card">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              <div>
-                <h1 className="text-lg font-semibold">Email Designer</h1>
-                <p className="text-xs text-muted-foreground">
-                  {emailTemplate?.name || 'New Email Template'}
-                </p>
-              </div>
+      <div className="h-14 border-b bg-card flex items-center justify-between px-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-orange-500" />
+            <div>
+              <h1 className="text-lg font-semibold">Email Designer</h1>
+              <p className="text-xs text-muted-foreground">
+                {emailTemplate?.name || 'New Email Template'}
+              </p>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => history.undo()}
-              disabled={!history.canUndo}
-            >
-              <Undo className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => history.redo()}
-              disabled={!history.canRedo}
-            >
-              <Redo className="h-4 w-4" />
-            </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => history.undo()}
+            disabled={!history.canUndo}
+          >
+            <Undo className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => history.redo()}
+            disabled={!history.canRedo}
+          >
+            <Redo className="h-4 w-4" />
+          </Button>
 
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-2" />
-              Export HTML
-            </Button>
+          <div className="w-px h-6 bg-border mx-1" />
 
-            <Button
-              size="sm"
-              onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending || !designerState.isDirty}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {saveMutation.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-2" />
+            Export HTML
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending || !designerState.isDirty}
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saveMutation.isPending ? 'Saving...' : 'Save'}
+          </Button>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content - AI on LEFT */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-          <div className="h-full overflow-y-auto p-4 space-y-4">
-            <ElementLibrary
-              onAddElement={(type, template) => {
-                history.recordState(designerState.canvasState, `Add ${type}`);
-                designerState.addElement(template || { type });
-              }}
-              allowedElements={config.allowedElements}
-            />
+        
+        {/* ========== LEFT PANEL - AI FIRST ========== */}
+        <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
+          <div className="h-full flex flex-col bg-card">
+            {/* AI Chat - PRIMARY */}
+            <div className="flex-1 min-h-0">
+              <DesignerAIChat
+                messages={ai.messages}
+                isGenerating={ai.isGenerating}
+                error={ai.error}
+                currentSuggestion={ai.currentSuggestion}
+                designerType="email"
+                onSendMessage={ai.sendMessage}
+                onApplySuggestion={handleApplySuggestion}
+                onRejectSuggestion={() => {}}
+                onClearConversation={ai.clearConversation}
+                onRetry={ai.retryLastMessage}
+                className="h-full"
+              />
+            </div>
+
+            {/* Quick Add Elements */}
+            <div className="border-t p-3">
+              <ElementLibrary
+                onAddElement={(type, template) => {
+                  history.recordState(designerState.canvasState, `Add ${type}`);
+                  designerState.addElement(template || { type });
+                }}
+                allowedElements={config.allowedElements}
+                className="border-0 shadow-none"
+              />
+            </div>
           </div>
         </ResizablePanel>
 
         <ResizableHandle />
 
-        <ResizablePanel defaultSize={50} minSize={30}>
-          <div className="h-full flex items-center justify-center p-8 bg-muted/30">
+        {/* ========== CENTER - CANVAS (600px email width) ========== */}
+        <ResizablePanel defaultSize={50} minSize={35}>
+          <div className="h-full flex items-center justify-center p-8 bg-muted/30 overflow-auto">
             <div className="shadow-2xl bg-white" style={{ width: '600px' }}>
               <DesignerCanvas
                 canvasState={designerState.canvasState}
@@ -273,6 +310,11 @@ export default function NewEmailDesigner() {
                   history.recordState(designerState.canvasState, 'Update');
                   designerState.updateElement(id, updates);
                 }}
+                onElementCreate={(element) => {
+                  console.log('[NewEmailDesigner] Element dropped:', element);
+                  history.recordState(designerState.canvasState, `Add ${element.type}`);
+                  designerState.addElement(element);
+                }}
               />
             </div>
           </div>
@@ -280,97 +322,88 @@ export default function NewEmailDesigner() {
 
         <ResizableHandle />
 
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <div className="border-b px-4">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="design">Design</TabsTrigger>
-                <TabsTrigger value="layers">Layers</TabsTrigger>
-                <TabsTrigger value="tokens">Tokens</TabsTrigger>
-                <TabsTrigger value="ai">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  AI
+        {/* ========== RIGHT PANEL - PROPERTIES ========== */}
+        <ResizablePanel defaultSize={25} minSize={18} maxSize={35}>
+          <Tabs value={rightTab} onValueChange={setRightTab} className="h-full flex flex-col">
+            <div className="border-b px-2 py-1">
+              <TabsList className="grid w-full grid-cols-3 h-8">
+                <TabsTrigger value="properties" className="text-xs h-7">
+                  <Settings className="h-3 w-3 mr-1" />
+                  Properties
+                </TabsTrigger>
+                <TabsTrigger value="layers" className="text-xs h-7">
+                  <Layers className="h-3 w-3 mr-1" />
+                  Layers
+                </TabsTrigger>
+                <TabsTrigger value="tokens" className="text-xs h-7">
+                  <Tag className="h-3 w-3 mr-1" />
+                  Tokens
                 </TabsTrigger>
               </TabsList>
             </div>
 
             <div className="flex-1 overflow-hidden">
-              <TabsContent value="design" className="h-full m-0">
-                <div className="h-full overflow-y-auto p-4">
-                  <PropertiesPanel
-                    selectedElements={designerState.selectedElements}
-                    onUpdateElement={(id, updates) => {
-                      history.recordState(designerState.canvasState, 'Update');
-                      designerState.updateElement(id, updates);
-                    }}
-                    onDeleteElement={(id) => {
-                      history.recordState(designerState.canvasState, 'Delete');
-                      designerState.deleteElement(id);
-                    }}
-                    onDuplicateElement={(id) => {
-                      history.recordState(designerState.canvasState, 'Duplicate');
-                      designerState.duplicateElement(id);
-                    }}
-                  />
-                </div>
+              <TabsContent value="properties" className="h-full m-0">
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <PropertiesPanel
+                      selectedElements={designerState.selectedElements}
+                      onUpdateElement={(id, updates) => {
+                        history.recordState(designerState.canvasState, 'Update');
+                        designerState.updateElement(id, updates);
+                      }}
+                      onDeleteElement={(id) => {
+                        history.recordState(designerState.canvasState, 'Delete');
+                        designerState.deleteElement(id);
+                      }}
+                      onDuplicateElement={(id) => {
+                        history.recordState(designerState.canvasState, 'Duplicate');
+                        designerState.duplicateElement(id);
+                      }}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
 
               <TabsContent value="layers" className="h-full m-0">
-                <div className="h-full overflow-y-auto p-4">
-                  <LayerPanel
-                    elements={designerState.canvasState.elements}
-                    selectedElementIds={designerState.canvasState.selectedElementIds}
-                    onSelectElement={designerState.selectElement}
-                    onUpdateElement={(id, updates) => {
-                      history.recordState(designerState.canvasState, 'Update');
-                      designerState.updateElement(id, updates);
-                    }}
-                    onDeleteElement={(id) => {
-                      history.recordState(designerState.canvasState, 'Delete');
-                      designerState.deleteElement(id);
-                    }}
-                    onReorderLayers={(_from, _to) => {
-                      // Layer reordering handled by state management
-                    }}
-                  />
-                </div>
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <LayerPanel
+                      elements={designerState.canvasState.elements}
+                      selectedElementIds={designerState.canvasState.selectedElementIds}
+                      onSelectElement={designerState.selectElement}
+                      onUpdateElement={(id, updates) => {
+                        history.recordState(designerState.canvasState, 'Update');
+                        designerState.updateElement(id, updates);
+                      }}
+                      onDeleteElement={(id) => {
+                        history.recordState(designerState.canvasState, 'Delete');
+                        designerState.deleteElement(id);
+                      }}
+                      onReorderLayers={() => {}}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
 
               <TabsContent value="tokens" className="h-full m-0">
-                <div className="h-full overflow-y-auto p-4">
-                  <TokenInserter
-                    onTokenSelect={(token) => {
-                      history.recordState(designerState.canvasState, 'Add token');
-                      designerState.addElement({
-                        type: 'template-token',
-                        tokenContent: { token, fallback: '', transform: 'none' },
-                        width: 200,
-                        height: 40,
-                        styles: { fontSize: 16, color: '#4F46E5' },
-                      });
-                    }}
-                    availableTokens={config.availableTokens}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="ai" className="h-full m-0">
-                <DesignerAIChat
-                  messages={ai.messages}
-                  isGenerating={ai.isGenerating}
-                  error={ai.error}
-                  currentSuggestion={ai.currentSuggestion}
-                  designerType="email"
-                  onSendMessage={ai.sendMessage}
-                  onApplySuggestion={(suggestion) => {
-                    history.recordState(designerState.canvasState, 'AI');
-                    executeDesignActions(suggestion.actions, designerState);
-                  }}
-                  onRejectSuggestion={() => {}}
-                  onClearConversation={ai.clearConversation}
-                  onRetry={ai.retryLastMessage}
-                  className="h-full"
-                />
+                <ScrollArea className="h-full">
+                  <div className="p-4">
+                    <TokenInserter
+                      onTokenSelect={(token) => {
+                        history.recordState(designerState.canvasState, 'Add token');
+                        designerState.addElement({
+                          type: 'template-token',
+                          tokenContent: { token, fallback: '', transform: 'none' },
+                          width: 200,
+                          height: 40,
+                          styles: { fontSize: 16, color: '#4F46E5' },
+                        });
+                      }}
+                      availableTokens={config.availableTokens}
+                    />
+                  </div>
+                </ScrollArea>
               </TabsContent>
             </div>
           </Tabs>
@@ -379,4 +412,3 @@ export default function NewEmailDesigner() {
     </div>
   );
 }
-

@@ -98,9 +98,20 @@ export function DesignerAIChat({
     }
   };
 
+  /**
+   * Handle example/suggestion click - sends message immediately
+   */
   const handleExampleClick = (example: string) => {
-    setInputValue(example);
-    inputRef.current?.focus();
+    if (isGenerating) return;
+    console.log('[DesignerAIChat] Quick suggestion clicked:', example);
+    onSendMessage(example);
+  };
+
+  /**
+   * Handle example hover - shows in input for editing if user prefers
+   */
+  const handleExampleHover = (example: string) => {
+    // Could show preview, but for now just let click send directly
   };
 
   return (
@@ -136,23 +147,26 @@ export function DesignerAIChat({
               </p>
             </div>
 
-            {/* Example prompts */}
+            {/* Quick Actions - Click to execute immediately */}
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-2">
-                Try these examples:
+                Click to try:
               </p>
               <div className="space-y-2">
                 {EXAMPLE_PROMPTS[designerType].slice(0, 4).map((example, i) => (
                   <button
                     key={i}
                     onClick={() => handleExampleClick(example)}
-                    className="w-full text-left text-sm p-3 rounded-lg border hover:bg-accent hover:border-accent-foreground transition-colors"
+                    className="w-full text-left text-sm p-3 rounded-lg border hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-950/30 transition-colors cursor-pointer group"
                     disabled={isGenerating}
                   >
-                    "{example}"
+                    <span className="group-hover:text-purple-600">"{example}"</span>
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-muted-foreground mt-3 text-center">
+                💡 Click any suggestion to apply it instantly
+              </p>
             </div>
           </div>
         ) : (

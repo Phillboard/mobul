@@ -1,15 +1,30 @@
 /**
  * ElementLibrary Component
  * 
- * Library of draggable design elements that can be added to the canvas.
- * Organized by categories: Text, Images, Shapes, Special.
+ * Library of draggable design elements organized into sections:
+ * - BUILD: Text, Shapes, Lines, Images
+ * - TRACK: pURL, QR Code
+ * - PERSONALIZE: Variable Data (Tokens), Variable Logic, Variable Images
+ * 
+ * Based on Postalytics editor structure.
  */
 
 import { useCallback } from 'react';
-import { Type, Image, Square, Circle, QrCode, Sparkles, RectangleHorizontal } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  Type, 
+  Image, 
+  Square, 
+  Circle, 
+  Minus, 
+  List,
+  QrCode, 
+  Link2,
+  Sparkles,
+  Variable,
+  ImageIcon,
+  RectangleHorizontal,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { ElementType, DesignElement } from '../types/designer';
 
 export interface ElementLibraryProps {
@@ -21,154 +36,220 @@ export interface ElementLibraryProps {
   className?: string;
 }
 
+interface ElementItem {
+  id: string;
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  template: Partial<DesignElement> & { type: ElementType };
+  description?: string;
+}
+
 /**
- * Element template definitions
+ * BUILD section elements
  */
-const ELEMENT_TEMPLATES = {
-  text: [
-    {
-      name: 'Headline',
-      icon: Type,
-      template: {
-        type: 'text' as const,
-        content: 'Your Headline',
-        width: 400,
-        height: 60,
-        styles: {
-          fontSize: 32,
-          fontWeight: 'bold' as const,
-          color: '#000000',
-        },
+const BUILD_ELEMENTS: ElementItem[] = [
+  {
+    id: 'text',
+    name: 'Text',
+    icon: Type,
+    template: {
+      type: 'text',
+      content: 'New Text',
+      width: 200,
+      height: 40,
+      styles: {
+        fontSize: 16,
+        fontFamily: 'Arial',
+        fontWeight: 'normal',
+        color: '#000000',
       },
     },
-    {
-      name: 'Subheading',
-      icon: Type,
-      template: {
-        type: 'text' as const,
-        content: 'Your subheading text',
-        width: 350,
-        height: 40,
-        styles: {
-          fontSize: 18,
-          fontWeight: 'normal' as const,
-          color: '#666666',
-        },
+  },
+  {
+    id: 'bullet-list',
+    name: 'Bullet List',
+    icon: List,
+    template: {
+      type: 'text',
+      content: '• Item one\n• Item two\n• Item three',
+      width: 250,
+      height: 100,
+      styles: {
+        fontSize: 14,
+        fontFamily: 'Arial',
+        color: '#000000',
+        lineHeight: 1.6,
       },
     },
-    {
-      name: 'Body Text',
-      icon: Type,
-      template: {
-        type: 'text' as const,
-        content: 'Your body text goes here...',
-        width: 300,
-        height: 100,
-        styles: {
-          fontSize: 14,
-          fontWeight: 'normal' as const,
-          color: '#000000',
-        },
+  },
+  {
+    id: 'image',
+    name: 'Image',
+    icon: Image,
+    template: {
+      type: 'image',
+      src: '',
+      width: 200,
+      height: 150,
+      alt: 'Image placeholder',
+    },
+  },
+  {
+    id: 'line',
+    name: 'Line',
+    icon: Minus,
+    template: {
+      type: 'shape',
+      shapeType: 'line',
+      width: 200,
+      height: 4,
+      styles: {
+        backgroundColor: '#000000',
       },
     },
-  ],
-  
-  shapes: [
-    {
-      name: 'Rectangle',
-      icon: Square,
-      template: {
-        type: 'shape' as const,
-        shapeType: 'rectangle' as const,
-        width: 200,
-        height: 100,
-        styles: {
-          backgroundColor: '#E5E7EB',
-          borderColor: '#000000',
-          borderWidth: 2,
-        },
+  },
+  {
+    id: 'rectangle',
+    name: 'Rectangle',
+    icon: Square,
+    template: {
+      type: 'shape',
+      shapeType: 'rectangle',
+      width: 150,
+      height: 100,
+      styles: {
+        backgroundColor: '#E5E7EB',
+        borderColor: '#9CA3AF',
+        borderWidth: 1,
       },
     },
-    {
-      name: 'Circle',
-      icon: Circle,
-      template: {
-        type: 'shape' as const,
-        shapeType: 'circle' as const,
-        width: 150,
-        height: 150,
-        styles: {
-          backgroundColor: '#E5E7EB',
-          borderColor: '#000000',
-          borderWidth: 2,
-        },
+  },
+  {
+    id: 'circle',
+    name: 'Circle',
+    icon: Circle,
+    template: {
+      type: 'shape',
+      shapeType: 'circle',
+      width: 100,
+      height: 100,
+      styles: {
+        backgroundColor: '#E5E7EB',
+        borderColor: '#9CA3AF',
+        borderWidth: 1,
       },
     },
-    {
-      name: 'Rounded Box',
-      icon: RectangleHorizontal,
-      template: {
-        type: 'shape' as const,
-        shapeType: 'rectangle' as const,
-        width: 200,
-        height: 100,
-        styles: {
-          backgroundColor: '#E5E7EB',
-          borderColor: '#000000',
-          borderWidth: 2,
-          borderRadius: 12,
-        },
+  },
+  {
+    id: 'rounded-rect',
+    name: 'Rounded Box',
+    icon: RectangleHorizontal,
+    template: {
+      type: 'shape',
+      shapeType: 'rectangle',
+      width: 150,
+      height: 100,
+      styles: {
+        backgroundColor: '#E5E7EB',
+        borderRadius: 12,
       },
     },
-  ],
-  
-  special: [
-    {
-      name: 'QR Code',
-      icon: QrCode,
-      template: {
-        type: 'qr-code' as const,
-        data: 'https://example.com',
-        width: 150,
-        height: 150,
-        foregroundColor: '#000000',
-        backgroundColor: '#ffffff',
+  },
+];
+
+/**
+ * TRACK section elements
+ */
+const TRACK_ELEMENTS: ElementItem[] = [
+  {
+    id: 'purl',
+    name: 'pURL',
+    icon: Link2,
+    template: {
+      type: 'text',
+      content: '{{purl}}',
+      width: 250,
+      height: 30,
+      styles: {
+        fontSize: 12,
+        fontFamily: 'monospace',
+        color: '#2563EB',
+        textDecoration: 'underline',
       },
     },
-    {
-      name: 'Token Field',
-      icon: Sparkles,
-      template: {
-        type: 'template-token' as const,
-        tokenContent: {
-          token: '{{first_name}}',
-          fallback: 'Valued Customer',
-          transform: 'none' as const,
-        },
-        width: 200,
-        height: 40,
-        styles: {
-          fontSize: 16,
-          color: '#4F46E5',
-        },
+    description: 'Personalized URL for tracking',
+  },
+  {
+    id: 'qr-code',
+    name: 'QR Code',
+    icon: QrCode,
+    template: {
+      type: 'qr-code',
+      data: '{{purl}}',
+      width: 120,
+      height: 120,
+      foregroundColor: '#000000',
+      backgroundColor: '#ffffff',
+    },
+    description: 'Links to recipient landing page',
+  },
+];
+
+/**
+ * PERSONALIZE section elements
+ */
+const PERSONALIZE_ELEMENTS: ElementItem[] = [
+  {
+    id: 'variable-data',
+    name: 'Variable Data',
+    icon: Sparkles,
+    template: {
+      type: 'template-token',
+      tokenContent: {
+        token: '{{first_name}}',
+        fallback: '',
+        transform: 'none',
+      },
+      width: 150,
+      height: 30,
+      styles: {
+        fontSize: 16,
+        color: '#7C3AED',
       },
     },
-  ],
-  
-  media: [
-    {
-      name: 'Image',
-      icon: Image,
-      template: {
-        type: 'image' as const,
-        src: 'https://via.placeholder.com/300x200',
-        width: 300,
-        height: 200,
-        alt: 'Placeholder image',
+    description: 'Insert personalized data',
+  },
+  {
+    id: 'variable-logic',
+    name: 'Variable Logic',
+    icon: Variable,
+    template: {
+      type: 'text',
+      content: '{{#if has_offer}}Special offer inside!{{/if}}',
+      width: 250,
+      height: 40,
+      styles: {
+        fontSize: 14,
+        color: '#059669',
+        fontStyle: 'italic',
       },
     },
-  ],
-};
+    description: 'Conditional content',
+  },
+  {
+    id: 'variable-image',
+    name: 'Variable Image',
+    icon: ImageIcon,
+    template: {
+      type: 'image',
+      src: '{{profile_image}}',
+      width: 150,
+      height: 150,
+      alt: 'Variable image',
+    },
+    description: 'Personalized images via URL',
+  },
+];
 
 /**
  * ElementLibrary component
@@ -183,73 +264,70 @@ export function ElementLibrary({
     return allowedElements.includes(elementType);
   }, [allowedElements]);
 
-  const renderElementButton = useCallback((item: any) => {
+  const handleDragStart = useCallback((e: React.DragEvent, template: any) => {
+    e.dataTransfer.setData('application/json', JSON.stringify(template));
+    e.dataTransfer.effectAllowed = 'copy';
+    console.log('[ElementLibrary] Drag started:', template.type);
+  }, []);
+
+  const handleClick = useCallback((item: ElementItem) => {
+    console.log('[ElementLibrary] Click to add:', item.id);
+    onAddElement(item.template.type, item.template);
+  }, [onAddElement]);
+
+  const renderElementButton = useCallback((item: ElementItem) => {
     const Icon = item.icon;
     const isAllowed = isElementAllowed(item.template.type);
 
     return (
-      <Button
-        key={item.name}
-        variant="outline"
-        className="h-auto flex-col gap-2 p-4"
-        onClick={() => onAddElement(item.template.type, item.template)}
+      <button
+        key={item.id}
+        className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed cursor-grab active:cursor-grabbing"
+        onClick={() => handleClick(item)}
+        draggable={isAllowed}
+        onDragStart={(e) => handleDragStart(e, item.template)}
         disabled={!isAllowed}
       >
-        <Icon className="h-6 w-6" />
-        <span className="text-xs">{item.name}</span>
-      </Button>
+        <div className="w-8 h-8 rounded bg-muted flex items-center justify-center flex-shrink-0">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground">{item.name}</p>
+          {item.description && (
+            <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+          )}
+        </div>
+      </button>
     );
-  }, [isElementAllowed, onAddElement]);
+  }, [isElementAllowed, handleClick, handleDragStart]);
+
+  const renderSection = (title: string, items: ElementItem[]) => (
+    <div className="space-y-1">
+      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2 mb-2">
+        {title}
+      </h4>
+      <div className="space-y-1">
+        {items.map(renderElementButton)}
+      </div>
+    </div>
+  );
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="text-base">Elements</CardTitle>
-        <CardDescription className="text-xs">
-          Click to add to canvas
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="text" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="text" className="text-xs">Text</TabsTrigger>
-            <TabsTrigger value="shapes" className="text-xs">Shapes</TabsTrigger>
-            <TabsTrigger value="media" className="text-xs">Media</TabsTrigger>
-            <TabsTrigger value="special" className="text-xs">Special</TabsTrigger>
-          </TabsList>
+    <div className={className}>
+      <div className="space-y-6">
+        {/* BUILD Section */}
+        {renderSection('Build', BUILD_ELEMENTS)}
 
-          <TabsContent value="text" className="space-y-2 mt-4">
-            <div className="grid grid-cols-2 gap-2">
-              {ELEMENT_TEMPLATES.text.map(renderElementButton)}
-            </div>
-          </TabsContent>
+        {/* TRACK Section */}
+        {renderSection('Track', TRACK_ELEMENTS)}
 
-          <TabsContent value="shapes" className="space-y-2 mt-4">
-            <div className="grid grid-cols-2 gap-2">
-              {ELEMENT_TEMPLATES.shapes.map(renderElementButton)}
-            </div>
-          </TabsContent>
+        {/* PERSONALIZE Section */}
+        {renderSection('Personalize', PERSONALIZE_ELEMENTS)}
+      </div>
 
-          <TabsContent value="media" className="space-y-2 mt-4">
-            <div className="grid grid-cols-2 gap-2">
-              {ELEMENT_TEMPLATES.media.map(renderElementButton)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              Click image element, then upload your own image in the properties panel
-            </p>
-          </TabsContent>
-
-          <TabsContent value="special" className="space-y-2 mt-4">
-            <div className="grid grid-cols-2 gap-2">
-              {ELEMENT_TEMPLATES.special.map(renderElementButton)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              QR codes link to recipient's personal URL. Token fields display dynamic content.
-            </p>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+      <p className="text-xs text-muted-foreground mt-4 px-2">
+        Drag elements to canvas or click to add at center
+      </p>
+    </div>
   );
 }
-

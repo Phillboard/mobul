@@ -1,14 +1,15 @@
 /**
  * useDesignerAI Hook
  * 
- * AI-powered design assistant using Gemini API.
+ * AI-powered design assistant using OpenAI GPT-4o.
  * Converts natural language requests into design actions.
+ * Supports image generation via DALL-E 3 (and Sora for video in the future).
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { supabase } from '@core/services/supabase';
 import type {
   ChatMessage,
-  DesignAction,
   AISuggestion,
   CanvasState,
   DesignerType,
@@ -25,7 +26,7 @@ export interface UseDesignerAIOptions {
   designerType: DesignerType;
   /** Current canvas state */
   canvasState: CanvasState;
-  /** Gemini API key */
+  /** OpenAI API key (optional, uses edge function if not provided) */
   apiKey?: string;
   /** Callback when actions are ready to apply */
   onSuggestion?: (suggestion: AISuggestion) => void;
@@ -44,13 +45,14 @@ export interface UseDesignerAIReturn {
   applySuggestion: (suggestion: AISuggestion) => void;
   clearConversation: () => void;
   retryLastMessage: () => Promise<void>;
+  generateImage: (prompt: string) => Promise<string | null>;
   
   // Current suggestion (if any)
   currentSuggestion: AISuggestion | null;
 }
 
 /**
- * AI design assistant hook
+ * AI design assistant hook using OpenAI
  */
 export function useDesignerAI(
   options: UseDesignerAIOptions
@@ -71,17 +73,13 @@ export function useDesignerAI(
   const lastUserMessageRef = useRef<string>('');
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Get API key from env if not provided
-  const effectiveApiKey = apiKey || import.meta.env.VITE_GEMINI_API_KEY;
-
   /**
-   * Call Gemini API
+   * Call OpenAI API via Edge Function
    */
-  const callGeminiAPI = useCallback(async (prompt: string): Promise<string> => {
-    if (!effectiveApiKey) {
-      throw new Error('Gemini API key not configured');
-    }
-
+  const callOpenAI = useCallback(async (
+    systemPrompt: string,
+    userPrompt: string
+  ): Promise<string> => {
     // Cancel any in-flight requests
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -89,46 +87,59 @@ export function useDesignerAI(
 
     abortControllerRef.current = new AbortController();
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${effectiveApiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    try {
+      // Use Edge Function to call OpenAI (keeps API key secure)
+      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          systemPrompt,
+          userPrompt,
+          model: 'gpt-4o',
+          temperature: 0.7,
+          maxTokens: 2048,
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt,
-            }],
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          },
-        }),
-        signal: abortControllerRef.current.signal,
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || 'Failed to call AI');
       }
-    );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error?.message || `API error: ${response.status}`
-      );
+      if (!data?.content) {
+        throw new Error('No response from AI');
+      }
+
+      return data.content;
+    } catch (err: any) {
+      if (err.name === 'AbortError') throw err;
+      throw new Error(err.message || 'AI request failed');
     }
+  }, []);
 
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  /**
+   * Generate image using DALL-E 3
+   */
+  const generateImage = useCallback(async (prompt: string): Promise<string | null> => {
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          type: 'image',
+          prompt,
+          size: '1024x1024',
+          quality: 'hd',
+          style: 'vivid',
+        },
+      });
 
-    if (!text) {
-      throw new Error('No response from AI');
+      if (fnError) {
+        throw new Error(fnError.message || 'Failed to generate image');
+      }
+
+      return data?.url || null;
+    } catch (err: any) {
+      console.error('[useDesignerAI] Image generation error:', err);
+      setError(err.message);
+      return null;
     }
-
-    return text;
-  }, [effectiveApiKey]);
+  }, []);
 
   /**
    * Send a message to the AI
@@ -151,17 +162,16 @@ export function useDesignerAI(
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      // Build the full prompt
+      // Build the prompts
       const systemPrompt = getSystemPrompt(designerType);
-      const requestPrompt = createDesignRequestPrompt(
+      const userPrompt = createDesignRequestPrompt(
         content,
         canvasState,
         designerType
       );
-      const fullPrompt = `${systemPrompt}\n\n${requestPrompt}`;
 
-      // Call AI
-      const aiResponse = await callGeminiAPI(fullPrompt);
+      // Call OpenAI
+      const aiResponse = await callOpenAI(systemPrompt, userPrompt);
 
       // Parse response
       const { actions, explanation } = parseAIResponse(aiResponse);
@@ -220,7 +230,7 @@ export function useDesignerAI(
     isGenerating,
     designerType,
     canvasState,
-    callGeminiAPI,
+    callOpenAI,
     onSuggestion,
     onError,
   ]);
@@ -229,8 +239,6 @@ export function useDesignerAI(
    * Apply a suggestion (callback to parent)
    */
   const applySuggestion = useCallback((suggestion: AISuggestion) => {
-    // This is handled by the parent component
-    // The hook just triggers the callback
     onSuggestion?.(suggestion);
     setCurrentSuggestion(null);
   }, [onSuggestion]);
@@ -284,6 +292,7 @@ export function useDesignerAI(
     applySuggestion,
     clearConversation,
     retryLastMessage,
+    generateImage,
 
     // Current suggestion
     currentSuggestion,
@@ -297,7 +306,6 @@ export function useDesignerAI(
 export function useQuickAI(options: {
   designerType: DesignerType;
   canvasState: CanvasState;
-  apiKey?: string;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -307,44 +315,25 @@ export function useQuickAI(options: {
     setError(null);
 
     try {
-      const apiKey = options.apiKey || import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error('Gemini API key not configured');
+      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          systemPrompt: getSystemPrompt(options.designerType),
+          userPrompt: prompt,
+          model: 'gpt-4o',
+          temperature: 0.7,
+          maxTokens: 2048,
+        },
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || 'AI request failed');
       }
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `${getSystemPrompt(options.designerType)}\n\n${prompt}`,
-              }],
-            }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 2048,
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!text) {
+      if (!data?.content) {
         throw new Error('No response from AI');
       }
 
-      return text;
+      return data.content;
     } catch (err: any) {
       const errorMessage = err.message || 'AI request failed';
       setError(errorMessage);
@@ -352,15 +341,41 @@ export function useQuickAI(options: {
     } finally {
       setIsLoading(false);
     }
-  }, [options.designerType, options.apiKey]);
+  }, [options.designerType]);
+
+  const generateImage = useCallback(async (prompt: string): Promise<string | null> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          type: 'image',
+          prompt,
+          size: '1024x1024',
+          quality: 'hd',
+          style: 'vivid',
+        },
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || 'Image generation failed');
+      }
+
+      return data?.url || null;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Image generation failed';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   return {
     executePrompt,
+    generateImage,
     isLoading,
     error,
   };
 }
-
-// Add useEffect import
-import { useEffect } from 'react';
-

@@ -1,25 +1,22 @@
 /**
  * NewMailDesigner Page
  * 
- * AI-first mail piece designer using the new unified designer framework.
- * Replaces the GrapesJS-based MailDesigner.tsx
+ * Professional AI-first mail piece designer with:
+ * - AI Assistant / Elements tabs on left
+ * - Canvas with bleed/safe zone visualization in center
+ * - Dockable Properties/Layers panel on right
  * 
- * Features:
- * - Upload mail template as background
- * - AI-powered design conversation
- * - Drag-and-drop elements
- * - Template tokens for personalization
- * - Export to PDF (300 DPI print-ready)
+ * Inspired by MailCraft and Postalytics editors.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { ArrowLeft, Save, Download, Eye, Sparkles, Undo, Redo } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sparkles, Layers as LayersIcon, Settings, PanelRightClose, PanelRight } from 'lucide-react';
 import { useToast } from '@shared/hooks';
 import {
   DESIGNER_PRESETS,
@@ -28,7 +25,6 @@ import {
   useDesignerAI,
   useDesignerExport,
   DesignerCanvas,
-  DesignerAIChat,
   BackgroundUploader,
   ElementLibrary,
   TokenInserter,
@@ -36,13 +32,26 @@ import {
   LayerPanel,
   executeDesignActions,
 } from '@/features/designer';
+import { DesignerHeader, MAIL_FORMATS } from '@/features/designer/components/DesignerHeader';
+import { AIAssistantPanel } from '@/features/designer/components/AIAssistantPanel';
+import { FormatImporter } from '@/features/designer/components/FormatImporter';
+import { TemplateGallery, type MailTemplate } from '@/features/designer/components/TemplateGallery';
+import { PreviewModal } from '@/features/designer/components/PreviewModal';
 
 export default function NewMailDesigner() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('design');
+
+  // UI State
+  const [leftTab, setLeftTab] = useState<'ai' | 'elements'>('ai');
+  const [rightTab, setRightTab] = useState<'properties' | 'layers'>('properties');
+  const [isRightPanelDocked, setIsRightPanelDocked] = useState(true);
+  const [currentFormat, setCurrentFormat] = useState('postcard-4x6');
+  const [currentSide, setCurrentSide] = useState<'front' | 'back' | number>('front');
+  const [totalPages, setTotalPages] = useState(1);
+  const [zoom, setZoom] = useState(100);
 
   // Fetch existing mail piece
   const { data: mailPiece, isLoading } = useQuery({
@@ -62,8 +71,17 @@ export default function NewMailDesigner() {
     enabled: !!id,
   });
 
-  // Initialize designer with mail preset
-  const config = DESIGNER_PRESETS.mail;
+  // Get format config
+  const formatConfig = MAIL_FORMATS.find(f => f.id === currentFormat) || MAIL_FORMATS[0];
+
+  // Initialize designer with dynamic config based on format
+  const config = {
+    ...DESIGNER_PRESETS.mail,
+    dimensions: {
+      width: formatConfig.width,
+      height: formatConfig.height,
+    },
+  };
 
   // Parse existing canvas state if available
   const initialState = mailPiece?.canvas_state
@@ -74,9 +92,8 @@ export default function NewMailDesigner() {
   const designerState = useDesignerState({
     config,
     initialState,
-    autoSaveInterval: 30000, // Auto-save every 30 seconds
+    autoSaveInterval: 30000,
     onAutoSave: (_state) => {
-      // Auto-save to localStorage or backend
       localStorage.setItem('mail-designer-autosave', JSON.stringify(_state));
     },
   });
@@ -88,12 +105,23 @@ export default function NewMailDesigner() {
     enableKeyboardShortcuts: true,
   });
 
-  // AI assistant
+  // AI assistant - auto-apply suggestions
   const ai = useDesignerAI({
     designerType: 'mail',
     canvasState: designerState.canvasState,
-    onSuggestion: (_suggestion) => {
-      // AI suggestion ready - handled in the AI chat component
+    onSuggestion: (suggestion) => {
+      if (suggestion.actions && suggestion.actions.length > 0) {
+        console.log('[NewMailDesigner] Auto-applying AI suggestion:', suggestion);
+        history.recordState(designerState.canvasState, 'AI suggestion');
+        const result = executeDesignActions(suggestion.actions, designerState);
+        
+        if (result.executed > 0) {
+          toast({
+            title: '✨ Design Updated',
+            description: `${result.executed} change(s) applied to your design.`,
+          });
+        }
+      }
     },
   });
 
@@ -103,20 +131,39 @@ export default function NewMailDesigner() {
     designerType: 'mail',
   });
 
+  // Format change handler
+  const handleFormatChange = useCallback((formatId: string) => {
+    setCurrentFormat(formatId);
+    const newFormat = MAIL_FORMATS.find(f => f.id === formatId);
+    if (newFormat) {
+      designerState.setCanvasSize(newFormat.width, newFormat.height);
+    }
+  }, [designerState]);
+
+  // Add page handler (for letters)
+  const handleAddPage = useCallback(() => {
+    if (totalPages < 6) {
+      setTotalPages(prev => prev + 1);
+    }
+  }, [totalPages]);
+
   /**
    * Save mail piece to database
    */
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const canvasStateJSON = JSON.stringify(designerState.canvasState);
+      const canvasStateJSON = JSON.stringify({
+        ...designerState.canvasState,
+        format: currentFormat,
+        sides: currentSide,
+      });
 
       if (id === 'new' || !mailPiece) {
-        // Create new
         const { data, error } = await supabase
           .from('templates')
           .insert({
             name: 'Untitled Mail Piece',
-            size: '4x6',
+            size: formatConfig.name,
             canvas_state: canvasStateJSON,
             is_active: true,
           })
@@ -126,11 +173,11 @@ export default function NewMailDesigner() {
         if (error) throw error;
         return data;
       } else {
-        // Update existing
         const { data, error } = await supabase
           .from('templates')
           .update({
             canvas_state: canvasStateJSON,
+            size: formatConfig.name,
             updated_at: new Date().toISOString(),
           })
           .eq('id', id)
@@ -150,7 +197,6 @@ export default function NewMailDesigner() {
         description: 'Your mail piece has been saved.',
       });
 
-      // Navigate to the saved design if it was new
       if (id === 'new') {
         navigate(`/mail-designer/${data.id}`);
       }
@@ -163,34 +209,6 @@ export default function NewMailDesigner() {
       });
     },
   });
-
-  /**
-   * Handle AI suggestion application
-   */
-  const handleApplySuggestion = (suggestion: any) => {
-    if (!suggestion.actions || suggestion.actions.length === 0) return;
-
-    // Record current state in history before applying
-    history.recordState(designerState.canvasState, 'AI suggestion');
-
-    // Execute actions
-    const result = executeDesignActions(suggestion.actions, designerState);
-
-    if (result.executed > 0) {
-      toast({
-        title: 'Applied!',
-        description: `${result.executed} action(s) applied successfully.`,
-      });
-    }
-
-    if (result.failed > 0) {
-      toast({
-        title: 'Partial success',
-        description: `${result.failed} action(s) failed.`,
-        variant: 'destructive',
-      });
-    }
-  };
 
   /**
    * Handle export
@@ -211,6 +229,37 @@ export default function NewMailDesigner() {
     }
   };
 
+  /**
+   * Handle template selection
+   */
+  const handleTemplateSelect = useCallback((template: MailTemplate) => {
+    // Set format
+    setCurrentFormat(template.format);
+    
+    // Apply template canvas state
+    if (template.canvasState) {
+      designerState.setCanvasSize(
+        template.canvasState.width || formatConfig.width,
+        template.canvasState.height || formatConfig.height
+      );
+      
+      if (template.canvasState.backgroundColor) {
+        // Would need to add setBackgroundColor to state hook
+      }
+      
+      // Add elements from template
+      template.canvasState.elements?.forEach(element => {
+        history.recordState(designerState.canvasState, 'Apply template');
+        designerState.addElement(element);
+      });
+    }
+    
+    toast({
+      title: 'Template Applied',
+      description: `${template.name} has been loaded.`,
+    });
+  }, [designerState, formatConfig, history, toast]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -222,168 +271,95 @@ export default function NewMailDesigner() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
-      <div className="border-b bg-card">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/mail')}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-lg font-semibold">Mail Designer</h1>
-              <p className="text-xs text-muted-foreground">
-                {mailPiece?.name || 'New Mail Piece'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => history.undo()}
-              disabled={!history.canUndo}
-            >
-              <Undo className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => history.redo()}
-              disabled={!history.canRedo}
-            >
-              <Redo className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              disabled={exporter.isExporting}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export PDF
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={() => saveMutation.mutate()}
-              disabled={saveMutation.isPending || !designerState.isDirty}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {saveMutation.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
-        </div>
-      </div>
+      <DesignerHeader
+        format={currentFormat}
+        onFormatChange={handleFormatChange}
+        currentSide={currentSide}
+        onSideChange={setCurrentSide}
+        totalPages={totalPages}
+        onAddPage={handleAddPage}
+        canUndo={history.canUndo}
+        canRedo={history.canRedo}
+        onUndo={history.undo}
+        onRedo={history.redo}
+        zoom={zoom}
+        onZoomChange={setZoom}
+        canSave={designerState.isDirty}
+        isSaving={saveMutation.isPending}
+        onSave={() => saveMutation.mutate()}
+        isExporting={exporter.isExporting}
+        onExport={handleExport}
+        onBack={() => navigate('/mail')}
+        templateName={mailPiece?.name}
+      />
 
       {/* Main Content */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {/* Left Sidebar */}
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
-          <div className="h-full overflow-y-auto p-4 space-y-4">
-            <BackgroundUploader
-              currentBackground={designerState.canvasState.backgroundImage}
-              onBackgroundSet={designerState.setBackgroundImage}
-              onBackgroundRemove={() => designerState.setBackgroundImage(null)}
-            />
-
-            <ElementLibrary
-              onAddElement={(type, template) => {
-                history.recordState(designerState.canvasState, `Add ${type}`);
-                designerState.addElement(template || { type });
-              }}
-              allowedElements={config.allowedElements}
-            />
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle />
-
-        {/* Center Canvas */}
-        <ResizablePanel defaultSize={50} minSize={30}>
-          <div className="h-full flex items-center justify-center p-8 bg-muted/30">
-            <div className="shadow-2xl">
-              <DesignerCanvas
-                canvasState={designerState.canvasState}
-                onElementSelect={designerState.selectElements}
-                onElementUpdate={(id, updates) => {
-                  history.recordState(designerState.canvasState, 'Update element');
-                  designerState.updateElement(id, updates);
-                }}
-                toolMode="select"
-                snapToGrid={designerState.canvasState.settings?.snapToGrid}
-                gridSize={designerState.canvasState.settings?.gridSize}
-              />
+      <div className="flex-1 flex overflow-hidden">
+        
+        {/* ========== LEFT PANEL - AI Assistant / Elements ========== */}
+        <div className="w-80 border-r bg-card flex flex-col">
+          {/* Tab Toggle */}
+          <div className="border-b p-1">
+            <div className="flex bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setLeftTab('ai')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                  leftTab === 'ai'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Sparkles className="h-4 w-4" />
+                AI Assistant
+              </button>
+              <button
+                onClick={() => setLeftTab('elements')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                  leftTab === 'elements'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <LayersIcon className="h-4 w-4" />
+                Elements
+              </button>
             </div>
           </div>
-        </ResizablePanel>
 
-        <ResizableHandle />
+          {/* Tab Content */}
+          {leftTab === 'ai' ? (
+            <AIAssistantPanel
+              messages={ai.messages}
+              isGenerating={ai.isGenerating}
+              error={ai.error}
+              onSendMessage={ai.sendMessage}
+              onClearConversation={ai.clearConversation}
+              className="flex-1"
+            />
+          ) : (
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-6">
+                {/* Build Section */}
+                <ElementLibrary
+                  onAddElement={(type, template) => {
+                    history.recordState(designerState.canvasState, `Add ${type}`);
+                    designerState.addElement(template || { type });
+                  }}
+                  allowedElements={config.allowedElements}
+                  className="border-0 shadow-none"
+                />
 
-        {/* Right Sidebar */}
-        <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <div className="border-b px-4">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="design" className="text-xs">Design</TabsTrigger>
-                <TabsTrigger value="layers" className="text-xs">Layers</TabsTrigger>
-                <TabsTrigger value="tokens" className="text-xs">Tokens</TabsTrigger>
-                <TabsTrigger value="ai" className="text-xs">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  AI
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="design" className="h-full m-0">
-                <div className="h-full overflow-y-auto p-4">
-                  <PropertiesPanel
-                    selectedElements={designerState.selectedElements}
-                    onUpdateElement={(id, updates) => {
-                      history.recordState(designerState.canvasState, 'Update properties');
-                      designerState.updateElement(id, updates);
-                    }}
-                    onDeleteElement={(id) => {
-                      history.recordState(designerState.canvasState, 'Delete element');
-                      designerState.deleteElement(id);
-                    }}
-                    onDuplicateElement={(id) => {
-                      history.recordState(designerState.canvasState, 'Duplicate element');
-                      designerState.duplicateElement(id);
-                    }}
+                {/* Background Section */}
+                <div className="border-t pt-4">
+                  <BackgroundUploader
+                    currentBackground={designerState.canvasState.backgroundImage}
+                    onBackgroundSet={designerState.setBackgroundImage}
+                    onBackgroundRemove={() => designerState.setBackgroundImage(null)}
                   />
                 </div>
-              </TabsContent>
 
-              <TabsContent value="layers" className="h-full m-0">
-                <div className="h-full overflow-y-auto p-4">
-                  <LayerPanel
-                    elements={designerState.canvasState.elements}
-                    selectedElementIds={designerState.canvasState.selectedElementIds}
-                    onSelectElement={designerState.selectElement}
-                    onUpdateElement={(id, updates) => {
-                      history.recordState(designerState.canvasState, 'Update layer');
-                      designerState.updateElement(id, updates);
-                    }}
-                    onDeleteElement={(id) => {
-                      history.recordState(designerState.canvasState, 'Delete layer');
-                      designerState.deleteElement(id);
-                    }}
-                    onReorderLayers={(_from, _to) => {
-                      // Layer reordering handled by state management
-                    }}
-                  />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="tokens" className="h-full m-0">
-                <div className="h-full overflow-y-auto p-4">
+                {/* Tokens Quick Add */}
+                <div className="border-t pt-4">
                   <TokenInserter
                     onTokenSelect={(token) => {
                       history.recordState(designerState.canvasState, 'Add token');
@@ -405,33 +381,161 @@ export default function NewMailDesigner() {
                     availableTokens={config.availableTokens}
                   />
                 </div>
-              </TabsContent>
+              </div>
+            </ScrollArea>
+          )}
+        </div>
 
-              <TabsContent value="ai" className="h-full m-0">
-                <DesignerAIChat
-                  messages={ai.messages}
-                  isGenerating={ai.isGenerating}
-                  error={ai.error}
-                  currentSuggestion={ai.currentSuggestion}
-                  designerType="mail"
-                  onSendMessage={ai.sendMessage}
-                  onApplySuggestion={handleApplySuggestion}
-                  onRejectSuggestion={() => {
-                    toast({
-                      title: 'Suggestion rejected',
-                      description: 'The AI suggestion was not applied.',
-                    });
-                  }}
-                  onClearConversation={ai.clearConversation}
-                  onRetry={ai.retryLastMessage}
-                  className="h-full"
-                />
-              </TabsContent>
+        {/* ========== CENTER - CANVAS ========== */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Canvas Info Bar with Tools */}
+          <div className="h-10 border-b bg-muted/50 flex items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <FormatImporter
+                onBackgroundSet={designerState.setBackgroundImage}
+                onImportComplete={(result) => {
+                  toast({
+                    title: 'Import Complete',
+                    description: `${result.type} imported successfully.`,
+                  });
+                }}
+              />
+              <TemplateGallery
+                onSelectTemplate={handleTemplateSelect}
+                currentFormat={currentFormat}
+              />
             </div>
-          </Tabs>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+            
+            <span className="text-xs text-muted-foreground">
+              {formatConfig.name} • {formatConfig.bleed > 0 ? `${formatConfig.bleed}" bleed` : 'No bleed'}
+            </span>
+            
+            <PreviewModal
+              canvasState={designerState.canvasState}
+              format={currentFormat}
+              onExportPDF={async () => await exporter.downloadExport('pdf', 'mail-piece.pdf')}
+              onExportPNG={async () => await exporter.downloadExport('png', 'mail-piece.png')}
+              onExportJPG={async () => await exporter.downloadExport('jpg', 'mail-piece.jpg')}
+              isExporting={exporter.isExporting}
+            />
+          </div>
+
+          {/* Canvas Area */}
+          <div className="flex-1 bg-muted/30 p-8 overflow-auto flex items-center justify-center">
+            <div 
+              className="shadow-2xl"
+              style={{
+                transform: `scale(${zoom / 100})`,
+                transformOrigin: 'center center',
+              }}
+            >
+              <DesignerCanvas
+                canvasState={designerState.canvasState}
+                onElementSelect={designerState.selectElements}
+                onElementUpdate={(id, updates) => {
+                  history.recordState(designerState.canvasState, 'Update element');
+                  designerState.updateElement(id, updates);
+                }}
+                onElementCreate={(element) => {
+                  console.log('[NewMailDesigner] Element dropped:', element);
+                  history.recordState(designerState.canvasState, `Add ${element.type}`);
+                  designerState.addElement(element);
+                }}
+                toolMode="select"
+                snapToGrid={designerState.canvasState.settings?.snapToGrid}
+                gridSize={designerState.canvasState.settings?.gridSize}
+                bleedInches={formatConfig.bleed}
+                showBleed={formatConfig.bleed > 0}
+                showSafeMargin={true}
+                showPostageArea={formatConfig.type === 'postcard'}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ========== RIGHT PANEL - Properties/Layers (Dockable) ========== */}
+        {isRightPanelDocked && (
+          <div className="w-72 border-l bg-card flex flex-col">
+            {/* Header with dock toggle */}
+            <div className="h-10 border-b flex items-center justify-between px-3">
+              <Tabs value={rightTab} onValueChange={(v) => setRightTab(v as 'properties' | 'layers')} className="flex-1">
+                <TabsList className="grid w-full grid-cols-2 h-7">
+                  <TabsTrigger value="properties" className="text-xs h-6">
+                    <Settings className="h-3 w-3 mr-1" />
+                    Properties
+                  </TabsTrigger>
+                  <TabsTrigger value="layers" className="text-xs h-6">
+                    <LayersIcon className="h-3 w-3 mr-1" />
+                    Layers
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 ml-2"
+                onClick={() => setIsRightPanelDocked(false)}
+                title="Undock panel"
+              >
+                <PanelRightClose className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Panel Content */}
+            <ScrollArea className="flex-1">
+              {rightTab === 'properties' ? (
+                <div className="p-4">
+                  <PropertiesPanel
+                    selectedElements={designerState.selectedElements}
+                    onUpdateElement={(id, updates) => {
+                      history.recordState(designerState.canvasState, 'Update properties');
+                      designerState.updateElement(id, updates);
+                    }}
+                    onDeleteElement={(id) => {
+                      history.recordState(designerState.canvasState, 'Delete element');
+                      designerState.deleteElement(id);
+                    }}
+                    onDuplicateElement={(id) => {
+                      history.recordState(designerState.canvasState, 'Duplicate element');
+                      designerState.duplicateElement(id);
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="p-4">
+                  <LayerPanel
+                    elements={designerState.canvasState.elements}
+                    selectedElementIds={designerState.canvasState.selectedElementIds}
+                    onSelectElement={designerState.selectElement}
+                    onUpdateElement={(id, updates) => {
+                      history.recordState(designerState.canvasState, 'Update layer');
+                      designerState.updateElement(id, updates);
+                    }}
+                    onDeleteElement={(id) => {
+                      history.recordState(designerState.canvasState, 'Delete layer');
+                      designerState.deleteElement(id);
+                    }}
+                    onReorderLayers={() => {}}
+                  />
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        )}
+
+        {/* Dock button when panel is hidden */}
+        {!isRightPanelDocked && (
+          <Button
+            variant="outline"
+            size="icon"
+            className="absolute right-4 top-20 z-10"
+            onClick={() => setIsRightPanelDocked(true)}
+            title="Dock panel"
+          >
+            <PanelRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
-
