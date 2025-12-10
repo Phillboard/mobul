@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Gift, CheckCircle, Clock, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 
 export function AgentActivityFeed() {
   const { user } = useAuth();

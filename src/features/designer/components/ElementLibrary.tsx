@@ -4,7 +4,10 @@
  * Library of draggable design elements organized into sections:
  * - BUILD: Text, Shapes, Lines, Images
  * - TRACK: pURL, QR Code
- * - PERSONALIZE: Variable Data (Tokens), Variable Logic, Variable Images
+ * - PERSONALIZE: Template tokens (filled by mail house during print)
+ * 
+ * CRITICAL: Template tokens are for personalization (names, codes, etc.)
+ * AI generates ONLY backgrounds and static imagery - never personalized text.
  * 
  * Based on Postalytics editor structure.
  */
@@ -23,8 +26,15 @@ import {
   Variable,
   ImageIcon,
   RectangleHorizontal,
+  Info,
+  User,
+  Users,
+  Hash,
+  Building,
+  Gift,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { ElementType, DesignElement } from '../types/designer';
 
 export interface ElementLibraryProps {
@@ -197,31 +207,119 @@ const TRACK_ELEMENTS: ElementItem[] = [
 
 /**
  * PERSONALIZE section elements
+ * 
+ * These are TEMPLATE TOKENS - placeholders that get filled
+ * by the mail house during printing with actual recipient data.
+ * 
+ * AI NEVER generates personalized content - use these tokens instead!
  */
 const PERSONALIZE_ELEMENTS: ElementItem[] = [
   {
-    id: 'variable-data',
-    name: 'Variable Data',
-    icon: Sparkles,
+    id: 'token-first-name',
+    name: 'First Name',
+    icon: User,
     template: {
       type: 'template-token',
       tokenContent: {
         token: '{{first_name}}',
-        fallback: '',
+        fallback: 'Friend',
         transform: 'none',
       },
-      width: 150,
+      width: 120,
       height: 30,
       styles: {
         fontSize: 16,
         color: '#7C3AED',
       },
     },
-    description: 'Insert personalized data',
+    description: '{{first_name}}',
+  },
+  {
+    id: 'token-full-name',
+    name: 'Full Name',
+    icon: Users,
+    template: {
+      type: 'template-token',
+      tokenContent: {
+        token: '{{full_name}}',
+        fallback: 'Valued Customer',
+        transform: 'none',
+      },
+      width: 180,
+      height: 30,
+      styles: {
+        fontSize: 16,
+        color: '#7C3AED',
+      },
+    },
+    description: '{{full_name}}',
+  },
+  {
+    id: 'token-unique-code',
+    name: 'Unique Code',
+    icon: Hash,
+    template: {
+      type: 'template-token',
+      tokenContent: {
+        token: '{{unique_code}}',
+        fallback: 'CODE123',
+        transform: 'uppercase',
+      },
+      width: 100,
+      height: 30,
+      styles: {
+        fontSize: 14,
+        fontFamily: 'monospace',
+        color: '#059669',
+      },
+    },
+    description: '{{unique_code}}',
+  },
+  {
+    id: 'token-company',
+    name: 'Company Name',
+    icon: Building,
+    template: {
+      type: 'template-token',
+      tokenContent: {
+        token: '{{company_name}}',
+        fallback: 'Our Company',
+        transform: 'none',
+      },
+      width: 200,
+      height: 30,
+      styles: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#1F2937',
+      },
+    },
+    description: '{{company_name}}',
+  },
+  {
+    id: 'token-gift-amount',
+    name: 'Gift Card Amount',
+    icon: Gift,
+    template: {
+      type: 'template-token',
+      tokenContent: {
+        token: '{{gift_card_amount}}',
+        fallback: '$25',
+        transform: 'none',
+      },
+      width: 60,
+      height: 30,
+      styles: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#DC2626',
+      },
+    },
+    description: '{{gift_card_amount}}',
   },
   {
     id: 'variable-logic',
-    name: 'Variable Logic',
+    name: 'Conditional Logic',
     icon: Variable,
     template: {
       type: 'text',
@@ -234,7 +332,7 @@ const PERSONALIZE_ELEMENTS: ElementItem[] = [
         fontStyle: 'italic',
       },
     },
-    description: 'Conditional content',
+    description: 'Show content conditionally',
   },
   {
     id: 'variable-image',
@@ -314,6 +412,22 @@ export function ElementLibrary({
 
   return (
     <div className={className}>
+      {/* AI vs Tokens Guidance Alert */}
+      <Alert className="mb-4 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <AlertTitle className="text-blue-800 dark:text-blue-200 text-sm">
+          AI vs Personalization
+        </AlertTitle>
+        <AlertDescription className="text-blue-700 dark:text-blue-300 text-xs mt-1">
+          <p className="mb-1">
+            <strong>AI generates:</strong> Backgrounds & images only
+          </p>
+          <p>
+            <strong>For names/data:</strong> Use tokens below (filled during print)
+          </p>
+        </AlertDescription>
+      </Alert>
+
       <div className="space-y-6">
         {/* BUILD Section */}
         {renderSection('Build', BUILD_ELEMENTS)}
@@ -321,7 +435,7 @@ export function ElementLibrary({
         {/* TRACK Section */}
         {renderSection('Track', TRACK_ELEMENTS)}
 
-        {/* PERSONALIZE Section */}
+        {/* PERSONALIZE Section - Template Tokens */}
         {renderSection('Personalize', PERSONALIZE_ELEMENTS)}
       </div>
 

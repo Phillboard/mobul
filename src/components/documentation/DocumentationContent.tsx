@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileQuestion, ChevronLeft, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 
 export function DocumentationContent() {
   const { category, slug } = useParams<{ category?: string; slug?: string }>();

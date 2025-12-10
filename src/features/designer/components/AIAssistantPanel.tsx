@@ -2,8 +2,9 @@
  * AIAssistantPanel Component
  * 
  * Clean AI chat panel with:
+ * - Reference image upload (collapsible)
  * - Introduction/helper text
- * - Quick action buttons
+ * - Quick action buttons with background presets
  * - Chat input with Generate button
  * - Chat history (when messages exist)
  */
@@ -12,9 +13,16 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Send, Loader2, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Sparkles, Send, Loader2, Trash2, ChevronDown, ImageIcon } from 'lucide-react';
 import { QuickActions } from './QuickActions';
-import type { ChatMessage } from '../types/designer';
+import { ReferenceUploader } from './ReferenceUploader';
+import type { ChatMessage, ReferenceImageState, ReferenceAnalysis } from '../types/designer';
 
 export interface AIAssistantPanelProps {
   /** Chat messages */
@@ -27,6 +35,17 @@ export interface AIAssistantPanelProps {
   onSendMessage: (message: string) => void;
   /** Callback to clear conversation */
   onClearConversation: () => void;
+  
+  // Reference image props
+  /** Reference image state */
+  referenceImage?: ReferenceImageState;
+  /** Callback when reference file is selected */
+  onReferenceSelect?: (file: File) => Promise<void>;
+  /** Callback to generate from reference analysis */
+  onGenerateFromReference?: (analysis: ReferenceAnalysis) => Promise<void>;
+  /** Callback to clear reference image */
+  onClearReference?: () => void;
+  
   /** Optional className */
   className?: string;
 }
@@ -37,9 +56,14 @@ export function AIAssistantPanel({
   error,
   onSendMessage,
   onClearConversation,
+  referenceImage,
+  onReferenceSelect,
+  onGenerateFromReference,
+  onClearReference,
   className = '',
 }: AIAssistantPanelProps) {
   const [inputValue, setInputValue] = useState('');
+  const [referenceOpen, setReferenceOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -50,9 +74,21 @@ export function AIAssistantPanel({
     }
   }, [messages]);
 
+  // Auto-expand reference section when image is loaded
+  useEffect(() => {
+    if (referenceImage?.analysis) {
+      setReferenceOpen(true);
+    }
+  }, [referenceImage?.analysis]);
+
   const handleSend = () => {
-    const message = inputValue.trim();
+    let message = inputValue.trim();
     if (!message || isGenerating) return;
+
+    // Add reference context if available
+    if (referenceImage?.analysis) {
+      message = `[Reference style: ${referenceImage.analysis.style}, mood: ${referenceImage.analysis.mood}] ${message}`;
+    }
 
     console.log('[AIAssistantPanel] Sending message:', message);
     onSendMessage(message);
@@ -92,6 +128,35 @@ export function AIAssistantPanel({
                   Try "Create a postcard for a summer sale" to get started.
                 </p>
               </div>
+
+              {/* Reference Image Upload - Collapsible */}
+              {referenceImage && onReferenceSelect && onGenerateFromReference && onClearReference && (
+                <>
+                  <Collapsible open={referenceOpen} onOpenChange={setReferenceOpen}>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded-lg transition-colors">
+                      <div className="flex items-center gap-2 text-sm">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        <span>Reference Postcard</span>
+                        {referenceImage.analysis && (
+                          <Badge variant="secondary" className="text-xs">Loaded</Badge>
+                        )}
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${referenceOpen ? 'rotate-180' : ''}`} />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-2">
+                      <ReferenceUploader
+                        referenceImage={referenceImage}
+                        onFileSelect={onReferenceSelect}
+                        onGenerateSimilar={onGenerateFromReference}
+                        onClear={onClearReference}
+                        isGenerating={isGenerating}
+                      />
+                    </CollapsibleContent>
+                  </Collapsible>
+
+                  <div className="border-t my-4" />
+                </>
+              )}
 
               {/* Quick Actions */}
               <QuickActions
@@ -159,8 +224,33 @@ export function AIAssistantPanel({
                 </div>
               )}
 
-              {/* Quick actions below chat */}
-              <div className="pt-4 border-t">
+              {/* Reference and Quick actions below chat */}
+              <div className="pt-4 border-t space-y-4">
+                {/* Reference Image Upload - Collapsible */}
+                {referenceImage && onReferenceSelect && onGenerateFromReference && onClearReference && (
+                  <Collapsible open={referenceOpen} onOpenChange={setReferenceOpen}>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded-lg transition-colors">
+                      <div className="flex items-center gap-2 text-sm">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        <span>Reference Postcard</span>
+                        {referenceImage.analysis && (
+                          <Badge variant="secondary" className="text-xs">Loaded</Badge>
+                        )}
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${referenceOpen ? 'rotate-180' : ''}`} />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-2">
+                      <ReferenceUploader
+                        referenceImage={referenceImage}
+                        onFileSelect={onReferenceSelect}
+                        onGenerateSimilar={onGenerateFromReference}
+                        onClear={onClearReference}
+                        isGenerating={isGenerating}
+                      />
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
                 <QuickActions
                   onAction={handleQuickAction}
                   isLoading={isGenerating}

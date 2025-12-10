@@ -5,7 +5,7 @@ import { AdminDocsList } from "@/components/documentation/AdminDocsList";
 import { AdminDocsAnalytics } from "@/components/documentation/AdminDocsAnalytics";
 import { AdminDocsFeedback } from "@/components/documentation/AdminDocsFeedback";
 import { SeedDocsButton } from "@/components/documentation/SeedDocsButton";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 import { useSearchParams, useParams } from "react-router-dom";
 import { BookOpen, Settings, BarChart3, MessageSquare } from "lucide-react";
 

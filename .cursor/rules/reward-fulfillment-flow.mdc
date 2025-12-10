@@ -1,5 +1,5 @@
 ---
-description: Specifies the reward fulfillment workflow including SMS opt-in, verification, and delivery processes
+description: Technical specification for implementing reward fulfillment workflows, including SMS opt-in, call center verification, and multi-channel delivery.
 ---
 
 
@@ -7,52 +7,69 @@ description: Specifies the reward fulfillment workflow including SMS opt-in, ver
 
 ## Core Fulfillment Components
 
-1. Reward Delivery Orchestration
-`src/features/gift-cards/components/PoolDetailDialog.tsx`
-Importance: 95/100
-- Multi-step verification workflow before reward release
-- SMS opt-in requirement checking
-- Automated balance verification before delivery
-- Delivery method selection (SMS/email) based on opt-in status
-- Retry logic for failed deliveries with exponential backoff
+### Reward Provisioning System
+Importance Score: 95
+- Waterfall provisioning strategy with three sources:
+  1. CSV inventory pool
+  2. Tillo API real-time purchase
+  3. Buffer pool for high-volume campaigns
+- Atomic claiming system with rollback protection
+- Campaign-specific inventory allocation rules
+- Balance verification workflows before distribution
 
-2. Verification Pipeline 
-`src/features/verification/VerificationWorkflow.tsx`
-Importance: 90/100
-- Phone number verification through PIN codes
-- Email verification through magic links
-- Multi-channel verification aggregation
-- Fraud prevention rules and velocity checks
-- Contact method preference management
+### Call Center Verification
+Importance Score: 90
+- Multi-stage recipient verification workflow:
+  1. Phone number matching
+  2. Campaign code validation
+  3. Personal information confirmation
+- Agent authorization levels for reward triggers
+- Real-time gift card provisioning on successful verification
+- Compliance recording and audit trail maintenance
 
-3. Reward Pool Management
-`src/features/gift-cards/hooks/useGiftCardPool.ts` 
-Importance: 85/100
-- Atomic card claiming from inventory pools
-- Provider fallback logic (CSV → API)
-- Low balance alerting and replenishment
-- Usage analytics and delivery success rates
-- Pool health monitoring and maintenance
+### SMS Delivery System
+Importance Score: 85
+- Double opt-in requirement for SMS reward delivery
+- Automated retry logic for failed deliveries
+- Secure code masking in messages
+- Delivery status tracking and reconciliation
+- Campaign-specific message templating
 
-## Business Rules
+### Multi-Channel Distribution
+Importance Score: 85
+- Channel-specific delivery rules and validations
+- Unified tracking across delivery methods:
+  - SMS delivery
+  - Email distribution
+  - Call center provisioning
+  - Direct mail codes
+- Status synchronization between channels
 
-1. Delivery Requirements:
-- Valid SMS opt-in must exist for text delivery
-- Email verification required for email delivery
-- Contact method must match campaign settings
-- No duplicate rewards within 24 hours
+### Condition Management
+Importance Score: 80
+- Complex trigger system supporting:
+  - Manual agent approval
+  - Call completion verification
+  - Form submission validation
+  - Time-based triggers
+- Campaign-specific condition combinations
+- Real-time condition evaluation engine
 
-2. Verification Rules:
-- Phone verification expires after 30 days
-- Maximum 3 verification attempts per day
-- Verification must complete within 48 hours
-- Geographic restrictions based on campaign settings
+### Balance Management
+Importance Score: 75
+- Automated balance verification schedule
+- Low balance alerting system
+- Real-time balance tracking across pools
+- Provider-specific balance reconciliation
+- Campaign usage analytics and reporting
 
-3. Pool Management:
-- Minimum 10% buffer inventory required
-- Auto-replenishment at 25% threshold
-- Maximum 3 simultaneous pools per brand
-- Automatic pool rotation every 30 days
+File Paths:
+```
+src/features/gift-cards/utils/provisioning-utils.ts
+src/features/call-center/hooks/useCallVerification.ts
+src/features/campaigns/utils/condition-evaluator.ts
+src/features/sms/services/delivery-service.ts
+```
 
 $END$
 

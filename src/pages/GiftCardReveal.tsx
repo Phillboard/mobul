@@ -7,7 +7,7 @@ import { CheckCircle2, Printer, Download, Copy, AlertCircle } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 
 export default function GiftCardReveal() {
   const { campaignId, redemptionToken } = useParams();

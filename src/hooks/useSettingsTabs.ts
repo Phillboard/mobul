@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 import { useTenant } from "@/contexts/TenantContext";
 import { settingsTabs, TabConfig } from '@/lib/config/settingsConfig';
 

@@ -4,9 +4,64 @@
  * Prompt templates for AI-powered design generation.
  * Used with OpenAI GPT-4o to parse user requests into design actions.
  * Supports DALL-E 3 for image generation.
+ * 
+ * CRITICAL: AI generates ONLY backgrounds and static design elements.
+ * All personalized data (names, addresses, codes) must use template tokens.
  */
 
 import type { CanvasState, DesignerType } from '../types/designer';
+
+/**
+ * CRITICAL RULES - Never violated by AI
+ * 
+ * These rules ensure AI never generates personalized content in images.
+ * Personalization must ALWAYS use template tokens filled by mail house.
+ */
+const CRITICAL_RULES = `
+════════════════════════════════════════════════════════════════
+⚠️  CRITICAL RULES - NEVER VIOLATE ⚠️
+════════════════════════════════════════════════════════════════
+
+1. AI GENERATES ONLY:
+   ✅ Background images (lifestyle, products, abstract, scenery)
+   ✅ Static design elements (decorative shapes, borders)
+   ✅ Color schemes and layout suggestions
+   ✅ Placeholder positions for personalized content
+
+2. AI NEVER GENERATES:
+   ❌ Names (first, last, or full names)
+   ❌ Addresses (street, city, state, zip)
+   ❌ Phone numbers
+   ❌ QR codes with actual data
+   ❌ Unique codes or tracking numbers
+   ❌ Any text that should be personalized
+
+3. FOR PERSONALIZATION, ALWAYS USE TEMPLATE TOKENS:
+   When user asks for personalization, add TEMPLATE TOKEN ELEMENTS:
+   - {{first_name}} - Recipient's first name
+   - {{last_name}} - Recipient's last name
+   - {{full_name}} - Recipient's full name
+   - {{unique_code}} - Unique tracking code
+   - {{company_name}} - Client's company name
+   - {{purl}} - Personal URL
+   - {{qr_code}} - QR code placeholder
+   - {{gift_card_amount}} - Gift card value
+
+4. CORRECT VS WRONG:
+   User: "Add the customer's name"
+   ✅ CORRECT: Add text element with content "{{first_name}}"
+   ❌ WRONG: Generate text saying "John"
+
+   User: "Generate a background with happy family"
+   ✅ CORRECT: Generate lifestyle image via generate-background action
+   ❌ WRONG: Generate image containing any text
+
+   User: "Add a QR code"
+   ✅ CORRECT: Add qr-code element with data "{{purl}}"
+   ❌ WRONG: Generate image of a QR code
+
+════════════════════════════════════════════════════════════════
+`;
 
 /**
  * System prompt for the design assistant
@@ -18,7 +73,9 @@ export function getSystemPrompt(designerType: DesignerType): string {
     email: 'email template for email campaigns',
   };
 
-  return `You are an expert design assistant helping users create ${typeContext[designerType]} designs.
+  return `${CRITICAL_RULES}
+
+You are an expert design assistant helping users create ${typeContext[designerType]} designs.
 
 Your role is to understand natural language design requests and convert them into specific design actions.
 
@@ -28,8 +85,22 @@ Available actions you can perform:
 - delete-element: Remove elements
 - move-element: Reposition elements
 - resize-element: Change element dimensions
-- set-background: Set background image or color
+- set-background: Set background image URL or color
+- generate-background: Generate AI background image (NO TEXT in generated images!)
 - clear-canvas: Clear all elements
+
+generate-background action format:
+{
+  "type": "generate-background",
+  "prompt": "Professional lifestyle photo, bright sunny day",
+  "size": "1792x1024",
+  "style": "natural"
+}
+
+Available sizes for generate-background:
+- "1024x1024" - Square
+- "1024x1792" - Portrait (vertical postcards)
+- "1792x1024" - Landscape (horizontal postcards)
 
 Available template tokens (for personalization):
 - {{first_name}} - Recipient's first name
@@ -55,6 +126,9 @@ When responding to user requests:
 2. Provide the design actions as JSON
 3. Explain why you made those choices
 4. Offer additional suggestions if helpful
+
+IMPORTANT: When user asks for personalized content (names, addresses, codes), 
+ALWAYS use template tokens, NEVER generate actual data.
 
 Response format:
 {
@@ -345,6 +419,7 @@ export function validateDesignActions(actions: any[]): {
       'move-element',
       'resize-element',
       'set-background',
+      'generate-background',  // NEW: AI background generation
       'clear-canvas',
     ];
 
@@ -363,6 +438,17 @@ export function validateDesignActions(actions: any[]): {
 
     if (action.type === 'delete-element' && !action.id) {
       errors.push(`Action ${index}: 'delete-element' requires 'id' field`);
+    }
+
+    // Validate generate-background action
+    if (action.type === 'generate-background') {
+      if (!action.prompt) {
+        errors.push(`Action ${index}: 'generate-background' requires 'prompt' field`);
+      }
+      const validSizes = ['1024x1024', '1024x1792', '1792x1024'];
+      if (action.size && !validSizes.includes(action.size)) {
+        errors.push(`Action ${index}: Invalid size '${action.size}'. Valid: ${validSizes.join(', ')}`);
+      }
     }
   });
 

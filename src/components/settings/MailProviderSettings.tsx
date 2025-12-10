@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMailProviderSettings, MailProviderSettings as MailProviderSettingsType, SettingsLevel } from "@/hooks/useMailProviderSettings";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, Webhook, Shield, Settings2, Info, Building2, Users } from "lucide-react";

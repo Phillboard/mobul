@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Bell, HelpCircle, LogOut, User, Building2, ChevronDown, Shield, Briefcase, Users, Check } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 import { useTenant } from "@/contexts/TenantContext";
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";

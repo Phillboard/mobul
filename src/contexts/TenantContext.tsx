@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/core/auth/AuthProvider';
 
 /**
  * Organization entity

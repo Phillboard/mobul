@@ -1,52 +1,71 @@
 ---
-description: Specification for analyzing organization relationships, roles, permissions, and client-agency hierarchies
+description: Technical specification for multi-tenant organization hierarchies, roles, and access control in enterprise platform
 ---
 
 
 # organization-hierarchy
 
-Multi-Tenant Organization Model
-Importance Score: 95
+The system implements a multi-tiered organizational hierarchy with the following core components:
 
-1. Hierarchical Structure
-- Platform (Root) → Agencies → Clients → Campaigns
-- Strict downward permission inheritance
-- Cross-tenant isolation with admin override capabilities
-- Organization-specific configuration inheritance
+Tenant Hierarchy Model:
+- Platform (root level)
+- Agency (mid-tier organizations)
+- Client (leaf-level organizations)
+- Campaign (operational unit)
 
-2. Credit Management Hierarchy
-Importance Score: 90
-- Credit pools cascade downward through organization levels
-- Agency-level markup and margin configuration
-- Client credit allocation with threshold monitoring
-- Campaign-specific budget restrictions
+Permission Inheritance Rules:
+1. Downward Flow Only
+- Permissions cascade from Platform → Agency → Client
+- Higher tiers can access all lower tier data
+- Lower tiers cannot access higher tier data
+- Sibling organizations (same level) cannot access each other
 
-3. Role-Based Permissions
-Importance Score: 85
-- Granular feature access control per organization level
-- Role inheritance with override capabilities
-- Organization-specific role customization
-- Permission conflict resolution system
+2. Role-Based Access Control
+- Platform Admin: Full system access
+- Agency Owner: Agency + owned client access
+- Client Owner: Single client access
+- Agent: Campaign-specific access
 
-4. Client-Agency Relationships
-Importance Score: 80
-- Multi-agency client support
-- Agency-specific client configurations
-- Shared resource management
-- Cross-agency isolation enforcement
+3. Resource Scoping
+- Gift Card Pools: Agency-level allocation with client sub-pools
+- Campaign Assets: Client-level ownership with agency oversight
+- Analytics: Tiered access with aggregation at each level
 
-Key Business Rules:
-1. Credits can only flow downward in hierarchy
-2. Agencies can manage multiple clients
-3. Clients inherit agency configurations with override options
-4. Resource access requires explicit organization membership
-5. Admin mode allows cross-organization operations
+Organization Management Logic:
+```typescript
+interface OrganizationHierarchy {
+  id: string;
+  type: 'platform' | 'agency' | 'client';
+  parentId?: string;
+  settings: {
+    creditEnabled: boolean;
+    giftCardAccess: GiftCardAccessLevel;
+    brandingEnabled: boolean;
+  };
+  features: {
+    campaigns: boolean;
+    forms: boolean;
+    callCenter: boolean;
+  };
+}
+```
 
-Core File Paths:
-/src/core/auth/organizationPermissions.ts
-/src/features/organizations/types/hierarchy.ts
-/src/features/auth/hooks/useOrganizationContext.ts
-/src/features/permissions/utils/inheritanceRules.ts
+Key Implementation Points:
+
+1. Credit Flow Management
+- Credit allocations flow downward only
+- Each tier maintains separate balance tracking
+- Sub-pools cannot exceed parent pool limits
+
+2. Brand Control
+- Agency-level brand catalog management
+- Client-specific brand enablement/restrictions
+- Denomination-level access controls
+
+3. Feature Access
+- Modular feature enabling/disabling per organization
+- Granular permission controls for specific capabilities
+- Inheritance of parent organization restrictions
 
 $END$
 

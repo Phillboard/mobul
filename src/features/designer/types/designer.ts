@@ -357,7 +357,8 @@ export type DesignAction =
   | { type: 'delete-element'; id: string }
   | { type: 'move-element'; id: string; x: number; y: number }
   | { type: 'resize-element'; id: string; width: number; height: number }
-  | { type: 'set-background'; imageUrl: string }
+  | { type: 'set-background'; imageUrl?: string; color?: string }
+  | { type: 'generate-background'; prompt: string; size?: string; style?: string }
   | { type: 'clear-canvas' };
 
 /**
@@ -367,6 +368,55 @@ export interface AISuggestion {
   actions: DesignAction[];
   explanation: string;
   preview?: string; // Base64 preview image
+}
+
+// ============================================================================
+// Reference Image Types (for AI background generation)
+// ============================================================================
+
+/**
+ * Reference image analysis result from Vision API
+ * Used for "generate similar" background functionality
+ */
+export interface ReferenceAnalysis {
+  colorPalette: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+  };
+  layout: {
+    composition: string;
+    headerPosition: 'top' | 'center' | 'bottom';
+    imagePosition: 'left' | 'right' | 'center' | 'full';
+    textAlignment: 'left' | 'center' | 'right';
+  };
+  style: 'modern' | 'vintage' | 'corporate' | 'playful' | 'elegant' | 'bold' | 'minimal';
+  imagery: string;
+  mood: string;
+  suitableFor: string[];
+}
+
+/**
+ * Reference image state for upload flow
+ */
+export interface ReferenceImageState {
+  file: File | null;
+  previewUrl: string | null;
+  analysis: ReferenceAnalysis | null;
+  isAnalyzing: boolean;
+  error: string | null;
+}
+
+/**
+ * Image generation options for DALL-E 3
+ */
+export interface ImageGenerationOptions {
+  prompt: string;
+  size: '1024x1024' | '1024x1792' | '1792x1024';
+  quality: 'standard' | 'hd';
+  style: 'vivid' | 'natural';
+  referenceAnalysis?: ReferenceAnalysis;
 }
 
 // ============================================================================

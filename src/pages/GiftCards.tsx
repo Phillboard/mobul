@@ -16,7 +16,7 @@ import { useGiftCardBrands } from "@/hooks/useGiftCardBrands";
 import { useTenant } from "@/contexts/TenantContext";
 import { useToast } from "@/hooks/use-toast";
 import { ClientMarketplace } from "@/components/gift-cards/ClientMarketplace";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 import { useEffect } from "react";
 
 export default function GiftCards() {

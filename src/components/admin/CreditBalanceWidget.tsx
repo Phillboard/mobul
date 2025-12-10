@@ -10,7 +10,7 @@ import {
   ArrowRightLeft,
   Plus
 } from "lucide-react";
-import { useCreditAccount, useCreditTransactionHistory } from "@/hooks/useCreditManagement";
+import { useCreditAccount, useCreditTransactionHistory } from "@features/billing/hooks/useCreditManagement";
 import { formatCurrency } from "@/lib/utils/currency";
 import { formatDistanceToNow } from "date-fns";
 

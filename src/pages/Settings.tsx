@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useTenant } from "@/contexts/TenantContext";
 import { ClaimPlatformAdmin } from "@/components/settings/ClaimPlatformAdmin";
 import { ClientBrandingPreview } from "@/components/settings/ClientBrandingPreview";
-import { PermissionGate } from "@/components/PermissionGate";
+import { PermissionGate } from "@core/auth/components/PermissionGate";
 import { Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

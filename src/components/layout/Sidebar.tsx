@@ -9,7 +9,7 @@ import {
   Bug
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 import { useTenant } from "@/contexts/TenantContext";
 import { settingsTabs } from '@/lib/config/settingsConfig';
 import { useSettingsTabs } from "@/hooks/useSettingsTabs";

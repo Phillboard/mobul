@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MessageSquare, Send } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 
 interface CommentsTabProps {
   campaignId: string;

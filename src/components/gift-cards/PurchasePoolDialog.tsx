@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingCart, Wallet, CreditCard, TrendingUp } from "lucide-react";
 import { formatCurrency } from '@/lib/utils/utils';
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 
 interface PurchasePoolDialogProps {
   open: boolean;

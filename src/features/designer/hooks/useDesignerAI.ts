@@ -3,7 +3,8 @@
  * 
  * AI-powered design assistant using OpenAI GPT-4o.
  * Converts natural language requests into design actions.
- * Supports image generation via DALL-E 3 (and Sora for video in the future).
+ * Supports image generation via DALL-E 3.
+ * Supports reference image analysis via Vision API.
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -13,6 +14,8 @@ import type {
   AISuggestion,
   CanvasState,
   DesignerType,
+  ReferenceImageState,
+  ReferenceAnalysis,
 } from '../types/designer';
 import {
   getSystemPrompt,
@@ -20,6 +23,21 @@ import {
   parseAIResponse,
   validateDesignActions,
 } from '../utils/aiPrompts';
+
+/**
+ * Convert File to Base64 string
+ */
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result); // Keep the full data URL for edge function
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export interface UseDesignerAIOptions {
   /** Designer type (determines available actions) */
@@ -49,6 +67,12 @@ export interface UseDesignerAIReturn {
   
   // Current suggestion (if any)
   currentSuggestion: AISuggestion | null;
+  
+  // Reference image features (for "generate similar" functionality)
+  referenceImage: ReferenceImageState;
+  analyzeReferenceImage: (file: File) => Promise<ReferenceAnalysis>;
+  generateFromReference: (analysis: ReferenceAnalysis, additionalPrompt?: string) => Promise<string | null>;
+  clearReferenceImage: () => void;
 }
 
 /**
@@ -69,6 +93,15 @@ export function useDesignerAI(
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentSuggestion, setCurrentSuggestion] = useState<AISuggestion | null>(null);
+  
+  // Reference image state for "generate similar" functionality
+  const [referenceImage, setReferenceImage] = useState<ReferenceImageState>({
+    file: null,
+    previewUrl: null,
+    analysis: null,
+    isAnalyzing: false,
+    error: null,
+  });
   
   const lastUserMessageRef = useRef<string>('');
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -140,6 +173,109 @@ export function useDesignerAI(
       return null;
     }
   }, []);
+
+  /**
+   * Analyze a reference image using Vision API
+   * Extracts color palette, style, mood, and layout information
+   */
+  const analyzeReferenceImage = useCallback(async (imageFile: File): Promise<ReferenceAnalysis> => {
+    setReferenceImage(prev => ({ ...prev, isAnalyzing: true, error: null }));
+
+    try {
+      // Convert file to base64
+      const base64 = await fileToBase64(imageFile);
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(imageFile);
+      setReferenceImage(prev => ({ ...prev, file: imageFile, previewUrl }));
+
+      // Call vision API
+      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          type: 'vision',
+          imageBase64: base64,
+        },
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || 'Failed to analyze image');
+      }
+
+      if (!data?.analysis) {
+        throw new Error('No analysis returned from Vision API');
+      }
+
+      const analysis = data.analysis as ReferenceAnalysis;
+      setReferenceImage(prev => ({ ...prev, analysis, isAnalyzing: false }));
+
+      return analysis;
+    } catch (err: any) {
+      console.error('[useDesignerAI] Reference image analysis error:', err);
+      setReferenceImage(prev => ({
+        ...prev,
+        isAnalyzing: false,
+        error: err.message || 'Failed to analyze image',
+      }));
+      throw err;
+    }
+  }, []);
+
+  /**
+   * Generate a similar background using reference analysis
+   */
+  const generateFromReference = useCallback(async (
+    analysis: ReferenceAnalysis,
+    additionalPrompt?: string
+  ): Promise<string | null> => {
+    try {
+      setIsGenerating(true);
+      
+      const basePrompt = additionalPrompt || 'Generate a similar professional background';
+
+      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
+        body: {
+          type: 'image',
+          prompt: basePrompt,
+          size: '1792x1024', // Landscape for postcards
+          quality: 'hd',
+          style: 'natural',
+          referenceAnalysis: {
+            colorPalette: Object.values(analysis.colorPalette),
+            style: analysis.style,
+            mood: analysis.mood,
+          },
+        },
+      });
+
+      if (fnError) {
+        throw new Error(fnError.message || 'Failed to generate image');
+      }
+
+      return data?.url || null;
+    } catch (err: any) {
+      console.error('[useDesignerAI] Generate from reference error:', err);
+      setError(err.message);
+      return null;
+    } finally {
+      setIsGenerating(false);
+    }
+  }, []);
+
+  /**
+   * Clear reference image and revoke preview URL
+   */
+  const clearReferenceImage = useCallback(() => {
+    if (referenceImage.previewUrl) {
+      URL.revokeObjectURL(referenceImage.previewUrl);
+    }
+    setReferenceImage({
+      file: null,
+      previewUrl: null,
+      analysis: null,
+      isAnalyzing: false,
+      error: null,
+    });
+  }, [referenceImage.previewUrl]);
 
   /**
    * Send a message to the AI
@@ -296,6 +432,12 @@ export function useDesignerAI(
 
     // Current suggestion
     currentSuggestion,
+
+    // Reference image features
+    referenceImage,
+    analyzeReferenceImage,
+    generateFromReference,
+    clearReferenceImage,
   };
 }
 

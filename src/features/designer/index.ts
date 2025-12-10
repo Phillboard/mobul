@@ -39,4 +39,5 @@ export * from './components/EffectsTab';
 export * from './components/FormatImporter';
 export * from './components/TemplateGallery';
 export * from './components/PreviewModal';
+export * from './components/ReferenceUploader';
 

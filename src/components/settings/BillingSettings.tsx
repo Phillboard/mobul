@@ -9,7 +9,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 import { useTenant } from "@/contexts/TenantContext";
 import { CreditCard, DollarSign, Download, TrendingUp, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useGiftCardBrands } from "@/hooks/useGiftCardBrands";
 import { Receipt, DollarSign } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@core/auth/AuthProvider";
 
 interface RecordPurchaseDialogProps {
   open: boolean;
