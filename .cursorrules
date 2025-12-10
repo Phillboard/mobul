@@ -95,58 +95,64 @@ All designers (mail, landing, email) use same framework.
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Campaign Management System
-Importance Score: 90
+MARKETING CAMPAIGN MANAGEMENT CORE
 
-Core Architecture:
-- Hierarchical credit allocation across Platform → Agency → Client → Campaign
-- Multi-source gift card provisioning with automated inventory management
-- Condition-based reward triggering with automated fulfillment
-- Integrated direct mail production workflows
+Business Domain Architecture:
+1. Campaign Management Layer
+- Campaign creation workflow with conditional reward triggers
+- Mail piece design system with postal regulation compliance
+- Landing page generation with dynamic token replacement
+- Code validation and import management
+
+2. Gift Card Distribution Engine
+- Multi-provider gift card provisioning system (Tillo, CSV, Buffer Pool)
+- Real-time balance verification and tracking
+- Brand-specific denomination management
+- Pool health monitoring with configurable thresholds
+
+3. Credit Management System
+- Hierarchical credit allocation (Platform → Agency → Client → Campaign)
+- One-way credit flow enforcement
+- Multi-source gift card provisioning logic
+- Budget tracking and threshold alerts
+
+4. Recipient Journey Orchestration
+- Condition-based reward triggers
+- SMS opt-in status tracking
+- Form submission validation
+- Call center verification workflow
 
 Key Business Components:
 
-1. Campaign Creation Engine
-src/features/campaigns/components/wizard/AudiencesRewardsStep.tsx
-- Combined audience selection and reward configuration
-- Gift card pool validation and allocation
-- Custom reward trigger definitions
-- Tracking integration for attribution
+1. Campaign Creation (src/features/campaigns/components/wizard/)
+Importance Score: 90
+- Multi-step validation workflow
+- Conditional reward configuration
+- Mailing method differentiation
+- Code generation and validation
 
-2. Gift Card Provisioning System
-src/features/gift-cards/utils/provisioning-utils.ts
-- Multi-source card provisioning (CSV → Tillo fallback)
-- Automated balance verification workflows
-- Custom pricing tiers for agencies vs clients
-- Pool-based inventory management
+2. Gift Card Operations (src/features/gift-cards/lib/)
+Importance Score: 85
+- Provider integration waterfall
+- Balance verification system
+- Pool health monitoring
+- Inventory management
 
-3. Token Management
-src/features/designer/utils/tokenParser.ts
-- Mail merge token system with fallback values
-- Secure personalization replacement logic
-- Template variable transformation rules
-- Print-ready output generation
+3. Credit Management (src/features/billing/types/)
+Importance Score: 80
+- Multi-tier credit allocation
+- Transaction validation
+- Budget enforcement
+- Usage monitoring
 
-Business Workflows:
-1. Campaign Creation:
-- Mailing method selection
-- Audience targeting
-- Reward configuration
-- Production setup
+4. Reward Distribution (src/core/services/)
+Importance Score: 75
+- Condition evaluation engine
+- SMS delivery management
+- Verification workflow
+- Audit trail maintenance
 
-2. Gift Card Management:
-- Pool allocation
-- Balance monitoring
-- Automated provisioning
-- Delivery tracking
-
-3. Reward Fulfillment:
-- Condition verification
-- Card assignment
-- Status tracking
-- Delivery confirmation
-
-The system implements sophisticated campaign management with integrated gift card rewards, focusing on automated provisioning, complex condition handling, and multi-tenant credit management.
+The system implements a comprehensive marketing campaign platform focused on gift card reward distribution, with sophisticated credit management and multi-step verification workflows. Core business value centers on secure gift card operations and automated reward fulfillment.
 
 $END$
 

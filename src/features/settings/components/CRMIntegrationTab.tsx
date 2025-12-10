@@ -4,7 +4,7 @@ import { Card } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Plus, Zap, AlertCircle, CheckCircle, Trash2, Edit } from "lucide-react";
 import { useCRMIntegrations, useDeleteCRMIntegration, useUpdateCRMIntegration } from '@/features/settings/hooks';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { CRMIntegrationDialog } from "./CRMIntegrationDialog";
 import { formatDistanceToNow } from "date-fns";
 import {

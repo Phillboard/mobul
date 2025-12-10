@@ -6,7 +6,7 @@ import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { useToast } from '@shared/hooks';
 import { UserCircle2, Search, AlertTriangle } from "lucide-react";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";

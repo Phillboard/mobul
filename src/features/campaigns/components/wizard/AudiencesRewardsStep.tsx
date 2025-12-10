@@ -15,7 +15,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Input } from "@/shared/components/ui/input";
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { 
   Users, 
   Gift, 

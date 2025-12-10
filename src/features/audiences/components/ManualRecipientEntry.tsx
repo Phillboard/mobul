@@ -13,7 +13,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { UserPlus, Plus, Trash2, Save, Loader2 } from "lucide-react";
 import { useToast } from '@shared/hooks';
 import { supabase } from '@core/services/supabase';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { useQuery } from "@tanstack/react-query";
 
 const recipientSchema = z.object({

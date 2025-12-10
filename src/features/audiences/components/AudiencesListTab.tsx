@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useReactTable, SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import { supabase } from '@core/services/supabase';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Users, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";

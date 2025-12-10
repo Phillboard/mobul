@@ -9,7 +9,7 @@ import { FileUploadZone } from "@/features/audiences/components/FileUploadZone";
 import { ImportResults } from "@/features/audiences/components/ImportResults";
 import { SampleCSVDownload } from "@/features/audiences/components/SampleCSVDownload";
 import { ManualRecipientEntry } from "@/features/audiences/components/ManualRecipientEntry";
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
 import { useNavigate } from "react-router-dom";

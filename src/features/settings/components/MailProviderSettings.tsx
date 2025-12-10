@@ -11,7 +11,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { useMailProviderSettings, MailProviderSettings as MailProviderSettingsType, SettingsLevel } from '@/features/settings/hooks';
 import { useAuth } from '@core/auth/AuthProvider';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@core/services/supabase';
 import { Mail, Webhook, Shield, Settings2, Info, Building2, Users } from "lucide-react";
 

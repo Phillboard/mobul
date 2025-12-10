@@ -34,7 +34,7 @@ import {
   Clock,
 } from "lucide-react";
 import { supabase } from '@core/services/supabase';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { Badge } from "@/shared/components/ui/badge";
 import { useFeatureFlags } from '@shared/hooks';
 

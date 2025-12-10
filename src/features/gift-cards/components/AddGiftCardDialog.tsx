@@ -13,7 +13,7 @@ import { ArrowLeft, Gift } from "lucide-react";
 import { BrandSelector } from "./BrandSelector";
 import { useGiftCardBrands } from "../hooks/useGiftCardBrands";
 import { useAddClientGiftCard } from "../hooks/useClientAvailableGiftCards";
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { useToast } from '@shared/hooks';
 import { Badge } from "@/shared/components/ui/badge";
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { AlertTriangle, X } from "lucide-react";

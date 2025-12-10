@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Switch } from "@/shared/components/ui/switch";
 import { Zap, Plus, Trash2, TestTube2, CheckCircle2, XCircle, Clock, Activity, ExternalLink } from "lucide-react";
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { useZapierConnections } from '@/features/settings/hooks';
 import { ZapierConnectionDialog } from "./ZapierConnectionDialog";
 import { ZapierAnalytics } from "./ZapierAnalytics";

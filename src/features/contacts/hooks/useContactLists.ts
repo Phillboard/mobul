@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { toast } from "sonner";
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@core/auth/AuthProvider';
 import type { ContactList, ContactListFormData } from "@/types/contacts";
 

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useAuth } from '@core/auth/AuthProvider';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { settingsTabs, TabConfig } from '@core/config/settings';
 
 export function useSettingsTabs() {

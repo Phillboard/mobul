@@ -5,7 +5,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useCreateCRMIntegration, useUpdateCRMIntegration, useTestCRMWebhook } from '@/features/settings/hooks';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { Card } from "@/shared/components/ui/card";
 import { Copy, CheckCircle } from "lucide-react";
 import { toast } from "sonner";

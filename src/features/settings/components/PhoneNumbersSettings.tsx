@@ -7,7 +7,7 @@ import { Switch } from "@/shared/components/ui/switch";
 import { Badge } from "@/shared/components/ui/badge";
 import { Phone, Settings, Check, X, Plus } from "lucide-react";
 import { useTrackedNumbers, useUpdateTrackedNumber } from '@/features/settings/hooks';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { ProvisionNumberDialog } from "./ProvisionNumberDialog";
 import { supabase } from '@core/services/supabase';
 import { toast } from "sonner";

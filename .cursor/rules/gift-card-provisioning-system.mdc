@@ -1,72 +1,66 @@
 ---
-description: Technical specification for gift card provisioning system including inventory management, balance verification, and automated distribution logic
+description: Specification for gift card provisioning system including pool management, balance verification, and automated triggers
 ---
 
 
 # gift-card-provisioning-system
 
-## Core Components
+Gift Card Provisioning Waterfall System
+Importance Score: 95
 
-### Provisioning Waterfall System
-`src/features/gift-cards/utils/provisioning.ts`
-Importance: 95
-- Multi-source provisioning hierarchy:
-  1. CSV inventory pool (primary)
-  2. Tillo API integration (fallback)
-  3. Manual provision queue (emergency)
-- Atomic claiming with optimistic locking
-- Provider-specific balance verification
-- Automated retry logic for failed provisions
+Primary Components:
 
-### Pool Management Engine
-`src/features/gift-cards/services/pool-manager.ts` 
-Importance: 90
-- Hierarchical pool structure (master → client → campaign)
-- Low inventory threshold monitoring
+1. Multi-Source Provisioning Engine
+src/features/campaigns/utils/giftCardUtils.ts
+- Three-tier provisioning waterfall:
+  - CSV inventory pool (primary)
+  - Tillo API integration (secondary) 
+  - Emergency buffer pool (fallback)
+- Automated pool switching based on:
+  - Available inventory levels
+  - Cost optimization rules
+  - Brand availability
+  - Denomination requirements
+
+2. Pool Management System
+src/features/gift-cards/hooks/useIndividualCardInventory.ts
+- Inventory health monitoring with configurable thresholds
+- Low stock alerts (default 100 cards)
 - Automated replenishment triggers
-- Balance reconciliation scheduling
-- Usage analytics and forecasting
+- Pool status tracking:
+  - Available
+  - Reserved
+  - Assigned
+  - Delivered
+  - Failed
 
-### Balance Verification System
-`src/features/gift-cards/services/balance-check.ts`
-Importance: 85
-- Provider-specific balance check implementations
-- Scheduled verification jobs
-- Failure detection and alerting
-- Historical balance tracking
-- Reconciliation reporting
+3. Balance Verification System
+src/features/gift-cards/components/PoolDetailDialog.tsx
+- Scheduled balance checks
+- Provider-specific verification methods
+- Automated retry logic
+- Balance history tracking
+- Discrepancy detection and alerting
 
-### Distribution Controller
-`src/features/gift-cards/services/distribution.ts`
-Importance: 80
-- Campaign-specific distribution rules
-- Time-delayed reward delivery
-- SMS delivery integration
-- Failure handling and retry logic
-- Distribution status tracking
+4. Inventory Thresholds
+src/features/gift-cards/components/PoolSettings.tsx
+- Dynamic threshold adjustment based on:
+  - Historical usage patterns
+  - Campaign schedules
+  - Brand availability
+  - Seasonal factors
+- Automated ordering triggers
+- Emergency threshold overrides
 
-## Business Rules
+5. Automated Triggers
+src/features/campaigns/validation/campaignValidation.ts
+- Campaign-based provisioning rules
+- Condition-based reward delivery
+- Real-time balance verification
+- Delivery confirmation tracking
+- Failure recovery workflows
 
-1. Inventory Management
-- Minimum pool threshold: 100 cards
-- Auto-replenishment at 25% remaining
-- Maximum single transaction: 1000 cards
-- Required balance verification before distribution
-
-2. Balance Verification
-- Daily automated checks
-- Mandatory verification before:
-  - Pool transfers
-  - Campaign assignment
-  - Client distribution
-- 7-day expiration on verified status
-
-3. Distribution Controls
-- Rate limiting: 100 cards/minute
-- Retry attempts: 3 maximum
-- Delay between retries: 5 minutes
-- Required SMS confirmation
-- 24-hour delivery window
+The system implements sophisticated gift card management focused on maintaining continuous availability through multi-source provisioning, automated health monitoring, and intelligent threshold management.
 
 $END$
 

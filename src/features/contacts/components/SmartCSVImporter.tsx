@@ -12,7 +12,7 @@ import { useSmartCSVParser, ParsedCSVData } from '@/features/contacts/hooks';
 import { UniqueCodeService } from '@/core/services/uniqueCodeService';
 import { CSVTemplateGenerator } from '@shared/utils/csv';
 import { ColumnMappingDialog } from './ColumnMappingDialog';
-import { useTenant } from '@app/providers/TenantProvider';
+import { useTenant } from '@/contexts/TenantContext';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@core/services/supabase';

@@ -1,62 +1,54 @@
 ---
-description: Specification for campaign condition and reward model system, handling triggers, validations and reward delivery workflows
+description: Defines campaign condition data models, reward triggers, verification rules and fulfillment workflows
 ---
 
 
 # campaign-condition-model
 
-Core campaign condition model components manage reward triggers, validation rules and distribution workflows.
+Campaign Condition Core Components:
 
-Key Components:
+1. Condition Trigger System (Importance: 95)
+- Multi-step condition verification workflow
+- Sequential vs parallel condition evaluation
+- Time-based delay conditions with configurable windows
+- Automatic vs manual verification modes
+- Condition dependency chains with rollback capabilities
 
-## Condition Trigger System 
-Path: src/features/campaigns/condition/TriggerEngine.ts
-Importance Score: 95
+2. Reward Distribution Engine (Importance: 90)
+- Gift card allocation based on condition completion
+- Inventory verification before reward commitment
+- Multi-provider fallback for gift card provisioning
+- Automatic retry mechanism for failed distributions
+- Balance tracking across reward pools
 
-- Multi-stage trigger validation pipeline:
-  - Pre-validation rules for audience eligibility 
-  - Primary condition validation (calls, forms, manual approval)
-  - Post-validation reward allocation rules
-- Time-delay support between validation stages
-- Fail-safe mechanisms preventing double reward issuance
-- Comprehensive audit trail of validation steps
+3. Verification Rules (Importance: 85)
+- Manual agent verification requirements
+- Form submission validation logic
+- Call completion tracking
+- SMS confirmation workflows
+- Multi-step approval chains
 
-## Reward Distribution Engine
-Path: src/features/campaigns/rewards/DistributionManager.ts  
-Importance Score: 90
+4. Time-Based Controls (Importance: 80)
+- Configurable waiting periods between conditions
+- Campaign-specific expiration rules
+- Grace periods for condition completion
+- Rate limiting for reward distribution
+- Automated cleanup of expired conditions
 
-- Manages reward pool allocation and reservation
-- Handles staggered distribution for time-delayed campaigns
-- Implements waterfall distribution logic:
-  1. Reserved card pools
-  2. Client-specific pools
-  3. Global backup pools
-- Tracks distribution status and retry attempts
+5. Campaign Condition Types
+- manual_agent: Requires agent verification
+- crm_event: Triggered by CRM integrations 
+- time_delay: Enforces waiting periods
+- mail_delivered: Tracks physical mail status
+- form_submitted: Validates form completions
+- call_completed: Monitors call center activity
 
-## Campaign Validation Model
-Path: src/features/campaigns/validation/CampaignValidator.ts
-Importance Score: 85
-
-- Campaign-wide validation ruleset:
-  - Reward pool sufficiency checks
-  - Audience size validation
-  - Trigger condition completeness
-  - Distribution channel verification
-- Real-time validation during campaign creation
-- Prerequisite checking between dependent conditions
-
-## Condition Builder System
-Path: src/features/campaigns/condition/ConditionBuilder.ts
-Importance Score: 80
-
-- Configurable condition types:
-  - Call completion triggers
-  - Form submission validation 
-  - Manual agent approval
-  - Multi-step verification chains
-- Custom condition parameter validation
-- Condition dependency management
-- Template-based SMS notifications
+Core Business Rules:
+- Conditions must complete in defined sequence
+- Rewards locked until all conditions verified
+- Manual verification requires specific agent roles
+- Time delays enforce minimum waiting periods
+- Failed conditions trigger automatic rollback
 
 $END$
 
