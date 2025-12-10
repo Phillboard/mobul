@@ -68,7 +68,7 @@ const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
 const ErrorLogs = lazy(() => import("./pages/ErrorLogs"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const CookieConsent = lazy(() => import("./components/CookieConsent").then(m => ({ default: m.CookieConsent })));
+const CookieConsent = lazy(() => import("@/shared/components/CookieConsent").then(m => ({ default: m.CookieConsent })));
 const Documentation = lazy(() => import("./pages/Documentation"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const PlatformDashboard = lazy(() => import("./pages/PlatformDashboard").then(m => ({ default: m.PlatformDashboard })));
