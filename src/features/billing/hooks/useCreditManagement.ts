@@ -1,3 +1,9 @@
+/**
+ * Credit Management Hooks - API-First Architecture
+ * 
+ * Uses edge functions for business logic and RPC calls for simple operations
+ */
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
@@ -23,6 +29,56 @@ interface CreditTransaction {
   created_at: string;
 }
 
+interface CreditRequirements {
+  giftCardTotal: number;
+  mailTotal: number;
+  grandTotal: number;
+  breakdown: {
+    perRecipient: {
+      giftCard: number;
+      mail: number;
+      total: number;
+    };
+  };
+}
+
+/**
+ * Calculate credit requirements using edge function
+ * Server-side calculation with validation
+ */
+export function useCalculateCreditRequirements() {
+  return useMutation({
+    mutationFn: async ({
+      recipientCount,
+      giftCardDenomination,
+      mailCostPerPiece = 0.55,
+    }: {
+      recipientCount: number;
+      giftCardDenomination: number;
+      mailCostPerPiece?: number;
+    }) => {
+      const { data, error } = await supabase.functions.invoke(
+        'calculate-credit-requirements',
+        {
+          body: {
+            recipientCount,
+            giftCardDenomination,
+            mailCostPerPiece,
+          },
+        }
+      );
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || 'Calculation failed');
+
+      return data.data as CreditRequirements;
+    },
+  });
+}
+
+/**
+ * Get credit balance (read-only, kept as RPC for performance)
+ */
 export function useCreditBalance(entityType: string, entityId: string) {
   return useQuery({
     queryKey: ['credit-balance', entityType, entityId],
@@ -37,9 +93,13 @@ export function useCreditBalance(entityType: string, entityId: string) {
       return data as number;
     },
     enabled: !!entityType && !!entityId,
+    staleTime: 30000, // Cache for 30 seconds
   });
 }
 
+/**
+ * Get credit account details (read-only)
+ */
 export function useCreditAccount(entityType: string, entityId: string) {
   return useQuery({
     queryKey: ['credit-account', entityType, entityId],
@@ -51,13 +111,16 @@ export function useCreditAccount(entityType: string, entityId: string) {
         .eq('entity_id', entityId)
         .single();
       
-      if (error && error.code !== 'PGRST116') throw error; // Ignore "not found" error
+      if (error && error.code !== 'PGRST116') throw error;
       return data as CreditAccount | null;
     },
     enabled: !!entityType && !!entityId,
   });
 }
 
+/**
+ * Get credit transaction history (read-only)
+ */
 export function useCreditTransactionHistory(
   entityType: string, 
   entityId: string, 
@@ -80,6 +143,9 @@ export function useCreditTransactionHistory(
   });
 }
 
+/**
+ * Allocate credits (uses RPC with atomic transaction)
+ */
 export function useAllocateCredits() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -134,6 +200,9 @@ export function useAllocateCredits() {
   });
 }
 
+/**
+ * Deduct credits (uses RPC with atomic transaction)
+ */
 export function useDeductCredits() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -189,6 +258,9 @@ export function useDeductCredits() {
   });
 }
 
+/**
+ * Transfer credits (uses RPC with atomic transaction)
+ */
 export function useTransferCredits() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -247,7 +319,9 @@ export function useTransferCredits() {
   });
 }
 
-// Hook to check if entity has sufficient credits
+/**
+ * Check if entity has sufficient credits
+ */
 export function useCheckSufficientCredits(
   entityType: string,
   entityId: string,
@@ -261,4 +335,3 @@ export function useCheckSufficientCredits(
     shortfall: balance !== undefined ? Math.max(0, requiredAmount - balance) : requiredAmount,
   };
 }
-
