@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 
 // Helper functions
 function generateId() {

@@ -145,10 +145,10 @@ it('should add item to cart', () => {
 ### 4. Mock External Dependencies
 ```typescript
 import { vi } from 'vitest';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 // Mock Supabase
-vi.mock('@/integrations/supabase/client', () => ({
+vi.mock('@core/services/supabase', () => ({
   supabase: {
     from: vi.fn(() => ({
       select: vi.fn().mockResolvedValue({ data: [], error: null }),

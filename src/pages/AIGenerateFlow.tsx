@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Progress } from "@/shared/components/ui/progress";
 import { ArrowLeft, Sparkles, Loader2, Check } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
 import { TextPromptForm } from "@/features/landing-pages/components/create/TextPromptForm";

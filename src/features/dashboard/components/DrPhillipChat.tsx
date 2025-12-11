@@ -14,7 +14,7 @@ import { MessageCircle, X, Send, Calculator, Plus, HelpCircle, Headphones, Histo
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { cn } from '@/shared/utils/utils';
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { useDrPhillipPreference, type HideDuration } from "@/shared/hooks";
 import { useNavigate } from "react-router-dom";
 

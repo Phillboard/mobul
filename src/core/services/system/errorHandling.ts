@@ -7,7 +7,7 @@
 import { toast } from '@/shared/hooks';
 import { logger } from "./logger";
 import { PostgrestError } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 
 export interface ApiError {
   message: string;

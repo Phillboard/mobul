@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { Card } from "@/shared/components/ui/card";
 import { Layout } from "@/shared/components/layout/Layout";
 import { Button } from "@/shared/components/ui/button";

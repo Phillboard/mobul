@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { useToast } from '@/shared/hooks';
 import { useEnabledBrands, useToggleClientGiftCard, useClientAvailableGiftCards } from '@/features/gift-cards/hooks';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { CheckCircle, Gift, Info } from 'lucide-react';
 

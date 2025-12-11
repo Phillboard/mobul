@@ -2,7 +2,7 @@
  * Landing Page Types - Extended with AI features
  */
 
-import { Database } from '@/integrations/supabase/types';
+import { Database } from '@core/services/supabase/types';
 
 export type LandingPage = Database['public']['Tables']['landing_pages']['Row'];
 export type LandingPageInsert = Database['public']['Tables']['landing_pages']['Insert'];

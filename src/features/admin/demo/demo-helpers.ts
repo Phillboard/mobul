@@ -2,7 +2,7 @@
  * Helper functions for generating demo data
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 /**
  * Generate a random code with prefix

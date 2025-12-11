@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 
 export type OptInStatus = 'not_sent' | 'pending' | 'opted_in' | 'opted_out' | 'invalid_response';
 

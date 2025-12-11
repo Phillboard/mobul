@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { callEdgeFunction, callPublicEdgeFunction, EdgeFunctionError } from '../services/apiClient';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 // Mock Supabase
-vi.mock('@/integrations/supabase/client', () => ({
+vi.mock('@core/services/supabase', () => ({
   supabase: {
     auth: {
       getSession: vi.fn(),

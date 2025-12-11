@@ -5,7 +5,7 @@
  */
 
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { useTenant } from "@/contexts/TenantContext";
 
 interface ClientScopedQueryOptions<T> extends Omit<UseQueryOptions<T[], Error>, 'queryKey' | 'queryFn'> {

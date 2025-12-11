@@ -25,7 +25,7 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { Switch } from "@/shared/components/ui/switch";
 import { Label } from "@/shared/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { useToast } from '@/shared/hooks';
 import { 
   Building2, 

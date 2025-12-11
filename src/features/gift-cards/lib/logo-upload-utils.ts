@@ -5,7 +5,7 @@
  * for gift card brand logos
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 // Allowed file types for logos
 const ALLOWED_MIME_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];

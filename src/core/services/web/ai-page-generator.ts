@@ -4,7 +4,7 @@
  * Lovable-style AI-powered landing page generation with image and website analysis
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 export interface StyleGuide {
   colors: {

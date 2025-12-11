@@ -24,7 +24,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { useToast } from '@/shared/hooks';
 import { logger } from "@/core/services/logger";
 

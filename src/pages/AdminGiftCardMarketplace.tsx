@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui
 import { Button } from "@/shared/components/ui/button";
 import { Plus, Upload, Package, Gift, Settings, DollarSign, CreditCard } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { formatCurrency } from '@/shared/utils/utils';
 import { useState } from "react";
 import { AddBrandDialog } from "@/features/gift-cards/components/AddBrandDialog";

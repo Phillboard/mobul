@@ -1,4 +1,4 @@
-import { Database } from "@/integrations/supabase/types";
+import { Database } from "@core/services/supabase/types";
 
 // Main mail piece type from database
 export type MailPiece = Database["public"]["Tables"]["templates"]["Row"];

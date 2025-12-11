@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/components/ui/card";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { CheckCircle2, Printer, Download, Copy, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { useToast } from '@/shared/hooks';
 import { format } from "date-fns";
 import { useAuth } from "@core/auth/AuthProvider";

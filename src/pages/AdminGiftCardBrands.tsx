@@ -20,7 +20,7 @@ import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { useToast } from '@/shared/hooks';
 import { useAllBrands } from '@/features/gift-cards/hooks';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 import { Plus, Trash2, Upload, CheckCircle, XCircle, DollarSign, Package, Edit, ExternalLink, Sparkles } from 'lucide-react';
 import {
   Dialog,

@@ -4,7 +4,7 @@
  * Functions for creating and managing system alerts for operational monitoring.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 
 export type AlertType = 
   | 'low_inventory'

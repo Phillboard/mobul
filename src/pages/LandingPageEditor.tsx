@@ -20,7 +20,7 @@ import {
   Globe
 } from "lucide-react";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/shared/components/ui/resizable";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
 

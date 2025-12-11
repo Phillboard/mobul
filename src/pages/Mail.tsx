@@ -11,7 +11,7 @@ import { MailGrid } from "@/features/mail-designer/components/MailGrid";
 import { BulkActions } from "@/features/mail-designer/components/BulkActions";
 import { CreateMailDialog } from "@/features/mail-designer/components/CreateMailDialog";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 

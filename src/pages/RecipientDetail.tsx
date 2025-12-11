@@ -4,7 +4,7 @@ import { Layout } from "@/shared/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle, ArrowLeft, MapPin, Mail, Phone, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";

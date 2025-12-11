@@ -2,7 +2,7 @@
  * Centralized API Client for Edge Functions
  * Standardizes all edge function calls with consistent error handling
  */
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 import { logger } from '@/core/services/logger';
 
 export class EdgeFunctionError extends Error {

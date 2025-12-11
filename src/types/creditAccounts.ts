@@ -7,7 +7,7 @@
  * Core Principle: Money flows DOWN only. Credits cascade but never flow upward.
  */
 
-import { Tables } from "@/integrations/supabase/types";
+import { Tables } from "@core/services/supabase/types";
 
 // ============================================================================
 // Base Types (from Supabase)

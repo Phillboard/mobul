@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { supabase } from '@core/services/supabase';
+import { Database } from '@core/services/supabase/types';
 import { useAuth } from '@/core/auth/AuthProvider';
 
 /**

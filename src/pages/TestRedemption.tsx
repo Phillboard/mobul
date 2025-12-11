@@ -4,7 +4,7 @@ import { GiftCardRedemption } from "@/types/aceForms";
 import { detectPlatform, getWalletName } from "@/core/services/web/walletDetection";
 import { Smartphone, Apple, Chrome, Bug, Loader2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 
 /**
  * Test Redemption Page

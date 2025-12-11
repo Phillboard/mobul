@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useToast } from '@/shared/hooks';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { ArrowLeft, Save, Eye, Code, Columns } from "lucide-react";
 import { MarkdownRenderer } from "@/features/documentation/components/MarkdownRenderer";
 import { MarkdownToolbar } from "@/features/documentation/components/MarkdownToolbar";

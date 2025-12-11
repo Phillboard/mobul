@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/sha
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { 
   Activity, AlertTriangle, BarChart3, Bell, CheckCircle2, Clock, Database, 
   Gift, Info, Mail, Phone, TrendingDown, TrendingUp, Users, XCircle, Zap,

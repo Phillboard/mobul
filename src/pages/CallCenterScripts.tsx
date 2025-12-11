@@ -8,7 +8,7 @@ import { useCallCenterScripts } from '@/features/call-center/hooks';
 import { ScriptEditor } from "@/features/call-center/components/ScriptEditor";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import {
   AlertDialog,
   AlertDialogAction,

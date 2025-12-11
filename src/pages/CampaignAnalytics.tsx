@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Layout } from "@/shared/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle, ArrowLeft, Download, TrendingUp, Users, MousePointerClick, FileText, Calendar, DollarSign, BarChart3, Globe } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";

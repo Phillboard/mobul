@@ -17,7 +17,7 @@ import {
   Code,
   Loader2
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { useTenant } from "@/contexts/TenantContext";
 import { useVisualEditor } from "@/features/landing-pages/hooks";
 import { ExportDialog } from "@/features/landing-pages/components/ExportDialog";

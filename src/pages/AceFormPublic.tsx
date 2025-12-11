@@ -9,7 +9,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { GiftCardReveal } from "@/features/ace-forms/components";
 import { GiftCardRedemption } from "@/types/aceForms";
 import { useFormSubmissionRateLimit } from '@/features/ace-forms/hooks';

@@ -3,7 +3,7 @@
  * Pre-flight checks and validation logic for safe data generation
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 import type { DemoConfig, ValidationResult, ExistingDataCheck } from '@/types/demo';
 
 /**

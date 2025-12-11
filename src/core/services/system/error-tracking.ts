@@ -5,7 +5,7 @@
  * Integrates with Supabase for storage and can be extended to external services.
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 export type ErrorSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type ErrorCategory = 

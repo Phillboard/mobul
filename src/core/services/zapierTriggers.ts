@@ -5,7 +5,7 @@
  * Extended trigger types for comprehensive automation support.
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 /**
  * All supported Zapier trigger event types

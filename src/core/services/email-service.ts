@@ -5,7 +5,7 @@
  * Supports multiple providers: Resend, SendGrid, AWS SES
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 export interface EmailOptions {
   to: string | string[];

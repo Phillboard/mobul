@@ -218,7 +218,7 @@ export function formatSource(source: 'inventory' | 'tillo'): string {
  * ========================================
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 
 export interface ProvisionResult {
   success: boolean;

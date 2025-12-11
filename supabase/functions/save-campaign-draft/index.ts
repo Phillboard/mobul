@@ -1,77 +1,98 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+/**
+ * Save Campaign Draft
+ * Saves or updates campaign draft data
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { withApiGateway, ApiError, type AuthContext } from '../_shared/api-gateway.ts';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+// ============================================
+// REQUEST SCHEMA
+// ============================================
+const RequestSchema = z.object({
+  draftId: z.string().uuid().optional(),
+  clientId: z.string().uuid().optional(),
+  draftName: z.string().optional(),
+  formData: z.record(z.any()),
+  currentStep: z.number().optional(),
+});
 
-  try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
+type RequestBody = z.infer<typeof RequestSchema>;
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error('Unauthorized');
+// ============================================
+// RESPONSE TYPE
+// ============================================
+interface DraftResponse {
+  draft: {
+    id: string;
+    draft_name: string;
+    current_step: number;
+    updated_at: string;
+  };
+}
+
+// ============================================
+// HANDLER
+// ============================================
+async function handler(
+  request: RequestBody,
+  context: AuthContext
+): Promise<DraftResponse> {
+  // Use user's context for RLS
+  const supabase = context.client!;
+  const userId = context.user.id;
+  
+  const { draftId, clientId, draftName, formData, currentStep } = request;
+
+  if (draftId) {
+    // Update existing draft
+    const { data, error } = await supabase
+      .from('campaign_drafts')
+      .update({
+        form_data_json: formData,
+        current_step: currentStep,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', draftId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new ApiError(`Failed to update draft: ${error.message}`, 'DRAFT_UPDATE_FAILED', 400);
     }
 
-    const { draftId, clientId, draftName, formData, currentStep } = await req.json();
-
-    if (draftId) {
-      // Update existing draft
-      const { data, error } = await supabase
-        .from('campaign_drafts')
-        .update({
-          form_data_json: formData,
-          current_step: currentStep,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', draftId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return new Response(JSON.stringify({ success: true, draft: data }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } else {
-      // Create new draft
-      const { data, error } = await supabase
-        .from('campaign_drafts')
-        .insert({
-          client_id: clientId,
-          user_id: user.id,
-          draft_name: draftName || 'Untitled Draft',
-          form_data_json: formData,
-          current_step: currentStep,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return new Response(JSON.stringify({ success: true, draft: data }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    return { draft: data };
+  } else {
+    // Create new draft
+    if (!clientId) {
+      throw new ApiError('clientId is required for new drafts', 'VALIDATION_ERROR', 400);
     }
-  } catch (error) {
-    console.error('Error saving draft:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+
+    const { data, error } = await supabase
+      .from('campaign_drafts')
+      .insert({
+        client_id: clientId,
+        user_id: userId,
+        draft_name: draftName || 'Untitled Draft',
+        form_data_json: formData,
+        current_step: currentStep,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new ApiError(`Failed to create draft: ${error.message}`, 'DRAFT_CREATE_FAILED', 400);
+    }
+
+    return { draft: data };
   }
+}
+
+// ============================================
+// EXPORT WITH MIDDLEWARE
+// ============================================
+export default withApiGateway(handler, {
+  requireAuth: true,
+  validateSchema: RequestSchema,
+  auditAction: 'campaign_draft_saved',
 });

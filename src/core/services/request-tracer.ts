@@ -5,7 +5,7 @@
  * to help correlate frontend requests with backend traces.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 
 // Generate unique trace ID in the same format as backend
 export function generateTraceId(): string {

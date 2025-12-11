@@ -23,7 +23,7 @@ vi.mock('import.meta', () => ({
 }));
 
 // Mock Supabase client
-vi.mock('@/integrations/supabase/client', () => ({
+vi.mock('@core/services/supabase', () => ({
   supabase: {
     auth: {
       getUser: vi.fn(),

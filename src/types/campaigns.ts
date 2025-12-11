@@ -18,7 +18,7 @@
  * @see src/lib/terminology.ts for constants
  */
 
-import { Database } from "@/integrations/supabase/types";
+import { Database } from "@core/services/supabase/types";
 
 // Base table types
 type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];

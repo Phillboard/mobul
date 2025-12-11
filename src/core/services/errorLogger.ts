@@ -5,7 +5,7 @@
  * Logs errors to the Supabase error_logs table.
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 export type ErrorType = 'edge_function' | 'frontend' | 'api_call' | 'database' | 'external_service';
 export type ErrorSeverity = 'info' | 'warning' | 'error' | 'critical';

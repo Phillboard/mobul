@@ -4,7 +4,7 @@
  */
 
 import { faker } from '@faker-js/faker';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@core/services/supabase';
 
 export interface DemoOrganization {
   id: string;

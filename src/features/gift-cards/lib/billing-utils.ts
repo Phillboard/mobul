@@ -3,7 +3,7 @@
  * Handles billing ledger entries with custom pricing and profit tracking
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 
 export interface BillingEntry {
   transaction_type: 'purchase_from_inventory' | 'purchase_from_tillo' | 'refund';

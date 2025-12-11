@@ -5,7 +5,7 @@
  * Can be run from browser console or via admin page
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 
 export interface VerificationResult {
   category: string;

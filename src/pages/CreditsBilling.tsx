@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useTenant } from "@/contexts/TenantContext";
 import { useAuth } from "@core/auth/AuthProvider";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@core/services/supabase";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
