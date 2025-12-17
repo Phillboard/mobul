@@ -78,12 +78,39 @@ interface RecipientData {
   phone: string | null;
   email: string | null;
   approval_status: string;
+  campaign_id?: string;  // Direct campaign link
+  campaign?: {           // Direct campaign data (replaces audiences.campaigns)
+    id: string;
+    name: string;
+    status?: string;
+    client_id?: string;
+    sms_opt_in_message?: string;
+    clients?: { id: string; name: string };
+    campaign_conditions?: Array<{
+      id: string;
+      condition_number: number;
+      condition_name: string;
+      is_active: boolean;
+      brand_id?: string | null;
+      card_value?: number | null;
+    }>;
+    campaign_gift_card_config?: CampaignGiftCardConfig[];
+  };
+  audience?: {           // Simplified audience data
+    id: string;
+    name: string;
+  };
+  // Legacy support - will be populated from campaign for backward compatibility
   audiences?: {
     id: string;
     name: string;
     campaigns?: Array<{
       id: string;
       name: string;
+      status?: string;
+      client_id?: string;
+      sms_opt_in_message?: string;
+      clients?: { id: string; name: string };
       campaign_conditions?: Array<{
         id: string;
         condition_number: number;
@@ -174,8 +201,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   // Real-time opt-in status tracking
   const optInStatus = useOptInStatus(callSessionId, recipient?.id || null);
 
-  // Get client name for SMS message
-  const campaign = recipient?.audiences?.campaigns?.[0];
+  // Get client name for SMS message - now using direct campaign link
+  const campaign = recipient?.campaign || recipient?.audiences?.campaigns?.[0];
   const clientName = (campaign as any)?.clients?.name || "Your provider";
 
   // Pre-fill phone from recipient if available
@@ -416,25 +443,24 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     mutationFn: async (code: string) => {
       console.log('[CALL-CENTER] Looking up code:', code.toUpperCase());
 
-      // Primary lookup: recipients table with redemption_code
-      // This is the working data model: recipients → audiences → campaigns
+      // Primary lookup: Use campaign_id directly on recipients (new model)
       const { data: recipient, error: recipientError } = await supabase
         .from("recipients")
         .select(`
           *,
-          audiences!inner (
+          campaign:campaigns (
             id,
             name,
-            campaigns!inner (
-              id,
-              name,
-              status,
-              client_id,
-              sms_opt_in_message,
-              clients (id, name),
-              campaign_conditions (*),
-              campaign_gift_card_config (*)
-            )
+            status,
+            client_id,
+            sms_opt_in_message,
+            clients (id, name),
+            campaign_conditions (*),
+            campaign_gift_card_config (*)
+          ),
+          audience:audiences (
+            id,
+            name
           )
         `)
         .eq("redemption_code", code.toUpperCase())
@@ -443,9 +469,37 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       if (recipient) {
         console.log('[CALL-CENTER] Found recipient:', recipient.id);
         
+        // If no direct campaign link, try to find via audience (fallback for old data)
+        if (!recipient.campaign && recipient.audience_id) {
+          const { data: audienceCampaign } = await supabase
+            .from("campaigns")
+            .select(`
+              id,
+              name,
+              status,
+              client_id,
+              sms_opt_in_message,
+              clients (id, name),
+              campaign_conditions (*),
+              campaign_gift_card_config (*)
+            `)
+            .eq("audience_id", recipient.audience_id)
+            .maybeSingle();
+          
+          if (audienceCampaign) {
+            recipient.campaign = audienceCampaign;
+            
+            // Backfill campaign_id on recipient for future lookups
+            await supabase
+              .from("recipients")
+              .update({ campaign_id: audienceCampaign.id })
+              .eq("id", recipient.id);
+          }
+        }
+        
         // Check campaign status - only allow active campaigns for redemption
         // Active statuses: in_production, mailed, scheduled
-        const campaign = recipient.audiences?.campaigns?.[0];
+        const campaign = recipient.campaign;
         if (campaign) {
           const status = campaign.status;
           const activeStatuses = ["in_production", "mailed", "scheduled"];
@@ -555,23 +609,23 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       if (contact) {
         console.log('[CALL-CENTER] Found contact:', contact.id, '- checking for campaign assignment...');
         
-        // Find a recipient record linked to this contact (with full campaign chain)
+        // Find a recipient record linked to this contact (using direct campaign link)
         const { data: linkedRecipient, error: linkError } = await supabase
           .from("recipients")
           .select(`
             *,
-            audiences!inner (
+            campaign:campaigns (
               id,
               name,
-              campaigns!inner (
-                id,
-                name,
-                status,
-                client_id,
-                clients (id, name),
-                campaign_conditions (*),
-                campaign_gift_card_config (*)
-              )
+              status,
+              client_id,
+              clients (id, name),
+              campaign_conditions (*),
+              campaign_gift_card_config (*)
+            ),
+            audience:audiences (
+              id,
+              name
             )
           `)
           .eq("contact_id", contact.id)
@@ -582,7 +636,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           
           // Check campaign status - only allow active campaigns for redemption
           // Active statuses: in_production, mailed, scheduled
-          const campaign = linkedRecipient.audiences?.campaigns?.[0];
+          const campaign = linkedRecipient.campaign;
           if (campaign) {
             const status = campaign.status;
             const activeStatuses = ["in_production", "mailed", "scheduled"];
@@ -688,7 +742,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       setStep("optin");
       
       // Notify parent with recipient data and clientId
-      const recipientCampaign = data.audiences?.campaigns?.[0];
+      const recipientCampaign = data.campaign || data.audiences?.campaigns?.[0];
       if (onRecipientLoaded && recipientCampaign) {
         onRecipientLoaded({
           clientId: (recipientCampaign as any).client_id,
@@ -717,7 +771,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         throw new Error("Missing required information");
       }
 
-      const provCampaign = recipient.audiences?.campaigns?.[0];
+      const provCampaign = recipient.campaign || recipient.audiences?.campaigns?.[0];
       const condition = provCampaign?.campaign_conditions?.find(
         c => c.id === selectedConditionId
       );

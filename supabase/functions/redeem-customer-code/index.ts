@@ -69,11 +69,12 @@ Deno.serve(async (req) => {
       return createRateLimitResponse(rateLimitResult, corsHeaders);
     }
 
-    // 1. Look up recipient by redemption code
+    // 1. Look up recipient by redemption code - now using direct campaign_id
     const { data: recipient, error: recipientError } = await supabase
       .from('recipients')
       .select(`
         *,
+        campaign:campaigns(id, name, client_id, status),
         audience:audiences(id, client_id, name),
         gift_card_assigned:gift_cards(
           id, card_code, card_number,
@@ -100,20 +101,51 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Verify campaign matches
-    const { data: campaign } = await supabase
-      .from('campaigns')
-      .select('id, name, audience_id, client_id')
-      .eq('id', campaignId)
-      .single();
+    // 2. Verify campaign matches - now using direct campaign_id
+    // First check if recipient has campaign_id set directly
+    let campaign = recipient.campaign;
 
-    if (!campaign || campaign.audience_id !== recipient.audience_id) {
-      console.log('Campaign mismatch:', { campaignId, audienceId: recipient.audience_id });
-      return Response.json(
-        { success: false, error: 'This code is not valid for this campaign.' },
-        { headers: corsHeaders, status: 400 }
-      );
+    // Fallback: if no direct campaign_id, try to find via audience
+    if (!campaign && recipient.audience_id) {
+      const { data: fallbackCampaign } = await supabase
+        .from('campaigns')
+        .select('id, name, client_id, status')
+        .eq('audience_id', recipient.audience_id)
+        .maybeSingle();
+      
+      campaign = fallbackCampaign;
+      
+      // Update recipient with campaign_id for future lookups (backfill)
+      if (fallbackCampaign) {
+        await supabase
+          .from('recipients')
+          .update({ campaign_id: fallbackCampaign.id })
+          .eq('id', recipient.id);
+      }
     }
+
+    // Validate campaign exists and matches if campaignId was provided
+    if (campaignId) {
+      if (!campaign) {
+        console.log('Campaign not found for recipient:', recipient.id);
+        return Response.json(
+          { success: false, error: 'This code is not associated with any active campaign.' },
+          { headers: corsHeaders, status: 400 }
+        );
+      }
+      
+      if (campaign.id !== campaignId) {
+        console.log('Campaign mismatch:', { expected: campaignId, found: campaign.id });
+        return Response.json(
+          { success: false, error: 'This code is not valid for this campaign.' },
+          { headers: corsHeaders, status: 400 }
+        );
+      }
+    }
+
+    // Use found campaign for rest of function
+    const effectiveCampaignId = campaign?.id || campaignId;
+    const effectiveClientId = campaign?.client_id;
 
     // 3. Check approval status
     if (recipient.approval_status === 'pending') {
@@ -176,7 +208,7 @@ Deno.serve(async (req) => {
           )
         `)
         .eq('recipient_id', recipient.id)
-        .eq('campaign_id', campaignId);
+        .eq('campaign_id', effectiveCampaignId);
 
       if (assignedCards && assignedCards.length > 0) {
         const cards = assignedCards.map((ac: any) => {
@@ -213,11 +245,11 @@ Deno.serve(async (req) => {
     const { data: conditions, error: conditionsError } = await supabase
       .from('campaign_conditions')
       .select('id, condition_name, brand_id, card_value, gift_card_pool_id')
-      .eq('campaign_id', campaignId)
+      .eq('campaign_id', effectiveCampaignId)  // Use effective campaign ID
       .not('brand_id', 'is', null);
 
     if (conditionsError || !conditions || conditions.length === 0) {
-      console.error('No gift card conditions for campaign:', campaignId, conditionsError);
+      console.error('No gift card conditions for campaign:', effectiveCampaignId, conditionsError);
       return Response.json(
         { success: false, error: 'No gift cards configured for this campaign.' },
         { headers: corsHeaders, status: 500 }
@@ -256,9 +288,9 @@ Deno.serve(async (req) => {
           .rpc('claim_card_atomic', {
             p_brand_id: brandId,
             p_card_value: cardValue,
-            p_client_id: campaign.client_id,
+            p_client_id: effectiveClientId,
             p_recipient_id: recipient.id,
-            p_campaign_id: campaignId,
+            p_campaign_id: effectiveCampaignId,
             p_condition_id: condition.id,
             p_agent_id: null,
             p_source: 'landing_page'

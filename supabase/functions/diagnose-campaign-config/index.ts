@@ -94,13 +94,17 @@ serve(async (req) => {
           sms_opt_in_status,
           verification_method,
           disposition,
-          audiences!inner(
-            campaign_id,
-            campaigns!inner(
-              id,
-              name,
-              client_id
-            )
+          campaign_id,
+          campaign:campaigns(
+            id,
+            name,
+            client_id,
+            status
+          ),
+          audience:audiences(
+            id,
+            name,
+            client_id
           )
         `)
         .eq('redemption_code', redemptionCode)
@@ -109,8 +113,8 @@ serve(async (req) => {
       diagnostics.checks.recipientLookup = {
         success: !!recipient,
         hasRecipient: !!recipient,
-        hasCampaign: !!recipient?.audiences?.[0]?.campaign_id,
-        campaignId: recipient?.audiences?.[0]?.campaign_id,
+        hasCampaign: !!recipient?.campaign_id || !!recipient?.campaign,
+        campaignId: recipient?.campaign_id || recipient?.campaign?.id,
         error: recipientError,
         data: recipient ? {
           id: recipient.id,
@@ -118,12 +122,14 @@ serve(async (req) => {
           sms_opt_in_status: recipient.sms_opt_in_status,
           verification_method: recipient.verification_method,
           disposition: recipient.disposition,
+          campaign_id: recipient.campaign_id,
+          campaign_name: recipient.campaign?.name,
         } : null,
       };
 
-      // If we found a recipient, also check their campaign's conditions
-      if (recipient?.audiences?.[0]?.campaign_id) {
-        const recipientCampaignId = recipient.audiences[0].campaign_id;
+      // Check campaign conditions using direct campaign_id
+      const recipientCampaignId = recipient?.campaign_id || recipient?.campaign?.id;
+      if (recipientCampaignId) {
         
         const { data: recipientConditions, error: recipientConditionsError } = await supabaseClient
           .from('campaign_conditions')

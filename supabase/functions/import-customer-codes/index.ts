@@ -182,6 +182,7 @@ Deno.serve(async (req) => {
 
           recipientsToInsert.push({
             audience_id: targetAudienceId,
+            campaign_id: campaignId || null,  // Direct campaign link for efficient lookups
             redemption_code: code.redemption_code.toUpperCase(),
             first_name: code.first_name || null,
             last_name: code.last_name || null,
@@ -261,6 +262,14 @@ Deno.serve(async (req) => {
           status: 'ready'
         })
         .eq('id', targetAudienceId);
+    }
+
+    // If campaignId was provided, also update campaign's audience_id
+    if (campaignId && targetAudienceId) {
+      await supabase
+        .from('campaigns')
+        .update({ audience_id: targetAudienceId })
+        .eq('id', campaignId);
     }
 
     console.log('Import completed:', {

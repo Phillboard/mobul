@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
       return createRateLimitResponse(rateLimitResult, corsHeaders);
     }
 
-    // 1. Check if code exists
+    // 1. Check if code exists - now using direct campaign_id
     const { data: recipient, error: recipientError } = await supabase
       .from('recipients')
       .select(`
@@ -61,14 +61,16 @@ Deno.serve(async (req) => {
         phone,
         email,
         audience_id,
-        audiences(
+        campaign_id,
+        campaign:campaigns(
           id,
           name,
-          campaigns(
-            id,
-            name,
-            client_id
-          )
+          client_id,
+          status
+        ),
+        audience:audiences(
+          id,
+          name
         )
       `)
       .eq('redemption_code', redemptionCode.trim().toUpperCase())
@@ -88,19 +90,46 @@ Deno.serve(async (req) => {
 
     // 2. Check if code belongs to specified campaign (if provided)
     if (campaignId) {
-      const matchesCampaign = recipient.audiences?.campaigns?.some(
-        (c: any) => c.id === campaignId
-      );
+      // Direct check using campaign_id on recipient
+      const matchesCampaign = recipient.campaign_id === campaignId || 
+                              recipient.campaign?.id === campaignId;
 
       if (!matchesCampaign) {
-        return Response.json({
-          valid: false,
-          reason: 'CAMPAIGN_MISMATCH',
-          message: 'This code is not valid for the specified campaign',
-          recipient: null,
-          existingCards: [],
-          canRedeem: false
-        }, { headers: corsHeaders, status: 400 });
+        // Fallback: try to find campaign via audience if campaign_id not set
+        if (!recipient.campaign_id && recipient.audience_id) {
+          const { data: audienceCampaign } = await supabase
+            .from('campaigns')
+            .select('id')
+            .eq('audience_id', recipient.audience_id)
+            .eq('id', campaignId)
+            .maybeSingle();
+          
+          if (audienceCampaign) {
+            // Update recipient for future lookups (backfill)
+            await supabase
+              .from('recipients')
+              .update({ campaign_id: campaignId })
+              .eq('id', recipient.id);
+          } else {
+            return Response.json({
+              valid: false,
+              reason: 'CAMPAIGN_MISMATCH',
+              message: 'This code is not valid for the specified campaign',
+              recipient: null,
+              existingCards: [],
+              canRedeem: false
+            }, { headers: corsHeaders, status: 400 });
+          }
+        } else {
+          return Response.json({
+            valid: false,
+            reason: 'CAMPAIGN_MISMATCH',
+            message: 'This code is not valid for the specified campaign',
+            recipient: null,
+            existingCards: [],
+            canRedeem: false
+          }, { headers: corsHeaders, status: 400 });
+        }
       }
     }
 
@@ -225,19 +254,45 @@ Deno.serve(async (req) => {
       statusMessage = `Code already redeemed with ${existingCards.length} gift card(s)`;
     }
 
-    // 6. Get available conditions for this recipient's campaign(s)
-    const campaignIds = recipient.audiences?.campaigns?.map((c: any) => c.id) || [];
-    const { data: availableConditions } = await supabase
-      .from('campaign_conditions')
-      .select('id, condition_name, brand_id, card_value')
-      .in('campaign_id', campaignIds)
-      .not('brand_id', 'is', null);
+    // 6. Get available conditions for this recipient's campaign
+    // Use direct campaign_id, fallback to audience-based lookup
+    let effectiveCampaignId = recipient.campaign_id || recipient.campaign?.id;
 
-    const conditions = availableConditions?.map((c: any) => ({
+    // If still no campaign_id, try audience lookup
+    if (!effectiveCampaignId && recipient.audience_id) {
+      const { data: audienceCampaign } = await supabase
+        .from('campaigns')
+        .select('id')
+        .eq('audience_id', recipient.audience_id)
+        .maybeSingle();
+      
+      effectiveCampaignId = audienceCampaign?.id;
+      
+      // Backfill the recipient's campaign_id
+      if (effectiveCampaignId) {
+        await supabase
+          .from('recipients')
+          .update({ campaign_id: effectiveCampaignId })
+          .eq('id', recipient.id);
+      }
+    }
+
+    let availableConditions: any[] = [];
+    if (effectiveCampaignId) {
+      const { data } = await supabase
+        .from('campaign_conditions')
+        .select('id, condition_name, brand_id, card_value')
+        .eq('campaign_id', effectiveCampaignId)
+        .not('brand_id', 'is', null);
+      
+      availableConditions = data || [];
+    }
+
+    const conditions = availableConditions.map((c: any) => ({
       id: c.id,
       name: c.condition_name,
       hasAssignment: existingCards.some((ec: any) => ec.conditionId === c.id)
-    })) || [];
+    }));
 
     console.log('[VALIDATE] Validation successful:', {
       recipientId: recipient.id,
@@ -258,8 +313,10 @@ Deno.serve(async (req) => {
         email: recipient.email,
         status: recipient.approval_status,
         smsOptInStatus: recipient.sms_opt_in_status,
-        audienceName: recipient.audiences?.name,
-        campaigns: recipient.audiences?.campaigns || []
+        audienceName: recipient.audience?.name,
+        campaignId: effectiveCampaignId,
+        campaignName: recipient.campaign?.name,
+        campaigns: effectiveCampaignId ? [{ id: effectiveCampaignId, name: recipient.campaign?.name }] : []
       },
       existingCards,
       availableConditions: conditions,

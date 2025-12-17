@@ -139,10 +139,10 @@ serve(async (req) => {
       .from('audiences')
       .insert({
         client_id: clientId,
-        campaign_id: campaignId,
         name: audienceName,
         total_count: uniqueCodes.length,
-        source_type: 'csv_upload'
+        source: 'csv',  // Fixed: use 'source' enum, not 'source_type'
+        status: 'ready'
       })
       .select('id')
       .single();
