@@ -26,6 +26,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useToast } from '@shared/hooks';
 import type { CampaignFormData } from "@/types/campaigns";
 import { SimpleBrandDenominationSelector } from "@/features/gift-cards/components/SimpleBrandDenominationSelector";
+import { GiftCardErrorBoundary } from "@/shared/components/ErrorBoundaries";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 
 // Default SMS message templates (compliance-friendly)
@@ -376,21 +377,39 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
                           {/* Gift Card Reward - New Simplified Selector */}
                           <div className="space-y-2">
                             <Label>Gift Card Reward *</Label>
-                            <SimpleBrandDenominationSelector
-                              clientId={clientId}
-                              value={condition.brand_id && condition.card_value ? {
-                                brandId: condition.brand_id,
-                                denomination: condition.card_value
-                              } : null}
-                              onChange={(selection) =>
-                                handleUpdateCondition(condition.id, {
-                                  brand_id: selection.brandId,
-                                  card_value: selection.denomination,
-                                  brand_name: selection.brandName,
-                                })
-                              }
-                              showAvailability={true}
-                            />
+                            <GiftCardErrorBoundary fallback={
+                              <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>
+                                  Unable to load gift card options. Please refresh and try again.
+                                </AlertDescription>
+                              </Alert>
+                            }>
+                              <SimpleBrandDenominationSelector
+                                clientId={clientId}
+                                value={condition.brand_id && condition.card_value ? {
+                                  brand_id: condition.brand_id,
+                                  card_value: condition.card_value,
+                                  brand_name: condition.brand_name
+                                } : null}
+                                onChange={(selection) => {
+                                  if (!selection) {
+                                    handleUpdateCondition(condition.id, {
+                                      brand_id: undefined,
+                                      card_value: undefined,
+                                      brand_name: undefined,
+                                    });
+                                  } else {
+                                    handleUpdateCondition(condition.id, {
+                                      brand_id: selection.brand_id,
+                                      card_value: selection.card_value,
+                                      brand_name: selection.brand_name,
+                                    });
+                                  }
+                                }}
+                                showAvailability={true}
+                              />
+                            </GiftCardErrorBoundary>
                           </div>
 
                           {/* SMS Template */}

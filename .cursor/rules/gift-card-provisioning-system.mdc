@@ -1,60 +1,52 @@
 ---
-description: Specification for gift card provisioning system including inventory management, balance verification, and delivery workflows
+description: Specification for analyzing and documenting gift card provisioning, pool management, and balance verification systems
 ---
 
 
 # gift-card-provisioning-system
 
-## Core Provisioning Logic
-Importance Score: 95
+Core Gift Card Provisioning Components:
 
-The gift card provisioning system implements a multi-source waterfall strategy:
+1. Provisioning Waterfall System
+Path: src/features/gift-cards/lib/provisioning-utils.ts
+- Two-tier provisioning strategy:
+  - Primary: Check local inventory pools first
+  - Secondary: Real-time purchase from Tillo API
+- Atomic claiming process with validation
+- Denomination-specific provisioning rules
+Importance Score: 95/100
 
-1. Primary Sources:
-- CSV-based inventory pools with pre-purchased cards
-- Tillo API integration for real-time card generation
-- Buffer pools for high-volume campaigns
+2. Pool Management Logic
+Path: src/features/gift-cards/lib/pool-management.ts
+- Pool health monitoring with configurable thresholds
+- Automatic replenishment triggers
+- Buffer pool maintenance for high-demand brands
+- Multi-tenant pool isolation
+Importance Score: 90/100
 
-2. Provisioning Workflow:
-- Attempts CSV inventory first with atomic claiming
-- Falls back to Tillo API if local inventory depleted
-- Maintains buffer thresholds based on campaign volume
+3. Balance Verification Engine 
+Path: src/features/gift-cards/lib/balance-verification.ts
+- Provider-specific balance check implementations
+- Scheduled verification with configurable frequency
+- Failure tracking and retry logic
+- Balance history audit trail
+Importance Score: 85/100
 
-## Balance Verification System 
-Importance Score: 90
+Key Business Rules:
+- Minimum pool size requirements per brand/denomination
+- Low inventory thresholds trigger automatic replenishment
+- Balance checks required before card assignment
+- Provider-specific validation rules for card activation
+- Client-specific brand and denomination restrictions
 
-Automated balance checking infrastructure:
-- Provider-specific check frequencies (15min to 24hr)
-- Multi-provider balance verification APIs
-- Automatic retry logic for failed checks
-- Historical balance tracking for audit purposes
+Domain-Specific Features:
+- Multi-provider gift card sourcing
+- Real-time inventory management
+- Automated pool health monitoring
+- Balance verification scheduling
+- Client-scoped access controls
 
-## Pool Management
-Importance Score: 85
-
-Pool-based inventory organization:
-- Client-specific pool isolation
-- Campaign-linked dedicated pools
-- Low inventory threshold monitoring
-- Automated replenishment triggers
-- Balance synchronization across sources
-
-## Key Files
-
-src/features/gift-cards/lib/provisioning-utils.ts:
-- Core provisioning waterfall implementation
-- Atomic inventory claims
-- Provider fallback logic
-
-src/features/gift-cards/hooks/useCardBalance.ts:
-- Balance verification orchestration
-- Provider-specific check implementations
-- Historical balance tracking
-
-src/features/gift-cards/components/PoolManager.tsx:
-- Pool allocation logic
-- Inventory threshold management
-- Replenishment workflow
+The system implements sophisticated gift card provisioning with emphasis on inventory management, balance verification, and multi-tenant isolation. Core functionality revolves around maintaining sufficient card pools while ensuring proper validation and verification at each step of the provisioning process.
 
 $END$
 

@@ -1,65 +1,96 @@
 ---
-description: Provides guidance for implementing organizational hierarchy, tenant management, and access control systems for multi-client campaigns
+description: Specification for implementing organization/client hierarchies, roles, and permissions in a multi-tenant platform
 ---
 
 
 # organization-hierarchy
 
-Multi-Tenant Hierarchy Implementation:
+HIERARCHY MODEL
+Importance Score: 95/100
 
-1. Organization Structure
-- Three-tier hierarchy: Platform → Agency → Client
-- Agencies can manage multiple client organizations
-- Clients belong to single agency but can have multiple campaigns
-- Organization metadata includes billing status, feature flags, and tier limits
+Core Organization Structure:
+- Platform Level (Top)
+- Agency Level (Middle)
+- Client Level (Bottom)
+- Campaign Level (Operational)
 
-2. Role-Based Access Control
-- Hierarchical permission inheritance from agency to client level
-- Role definitions bound to organizational context
-- Custom override system for exceptional permissions
-- Organization-specific feature enablement
+Key Relationships:
+1. Platform -> Agency
+- One-way credit allocation system
+- Master gift card pool management
+- Global brand/denomination controls
 
-3. Credit Management Hierarchy
-- Downward credit flow: Agency → Client → Campaign
-- Shared credit pools with client-specific allocations
-- Organizational credit limits and threshold monitoring
-- Agency-level markup configuration
+2. Agency -> Client
+- Sub-credit allocation management
+- Restricted brand access controls
+- Custom pricing tier inheritance
 
-4. Gift Card Brand Access
-- Organization-level brand availability control
-- Client-specific denomination restrictions
-- Agency-wide brand relationship management
-- Hierarchical brand pricing implementation
+3. Client -> Campaign
+- Campaign-specific budgets
+- Brand subset availability
+- Denomination restrictions
+
+Permission Architecture:
+- Strict downward inheritance
+- Override capabilities at each level
+- Role-based access matrix
+- Feature-specific controls
+
+Role Hierarchy:
+1. Platform Roles
+- Super Admin
+- Platform Support
+- API Developer
+
+2. Agency Roles
+- Agency Owner
+- Agency Manager
+- Agency Support
+
+3. Client Roles
+- Client Admin
+- Client User
+- Call Center Agent
+
+Critical Business Rules:
+1. Credit Management
+- Credits flow downward only
+- Each level maintains independent balances
+- Automatic threshold monitoring
+- Usage restrictions by level
+
+2. Brand Access
+- Agency-level brand restrictions
+- Client-specific denomination limits
+- Campaign-based availability rules
+
+3. Feature Access
+- Level-specific feature gates
+- Role-based permission matrix
+- Inherited access controls
+- Override management
+
+4. User Management
+- Cross-organization access controls
+- Role assignment restrictions
+- Context-aware permissions
+- Audit trail requirements
 
 Key Components:
+1. src/features/organization/hooks/useOrganizationHierarchy.ts
+- Hierarchy relationship management
+- Cross-level permission resolution
+- Organization context provider
 
-1. Organization Management System
-Path: src/features/settings/components/OrganizationManager.tsx
-- Handles organization lifecycle (create/deactivate/update)
-- Manages organization relationships and hierarchies
-- Controls feature access and billing status
-Importance Score: 90
+2. src/features/clients/hooks/useClientPermissions.ts
+- Client-specific permission matrix
+- Feature access validation
+- Role-based control implementation
 
-2. Permission Management 
-Path: src/core/auth/permissions.ts
-- Implements hierarchical permission model
-- Handles role-based access inheritance
-- Manages organization-specific overrides
-Importance Score: 85
-
-3. Credit Allocation System
-Path: src/features/billing/components/CreditManager.tsx
-- Manages hierarchical credit distribution
-- Handles credit pool sharing rules
-- Controls client spending limits
-Importance Score: 80
-
-Business Rules:
-- Organizations can only access approved gift card brands
-- Credit flows only downward in hierarchy
-- Permissions inherit from parent organizations
-- Clients limited to single agency relationship
-- Agency markup applies to all child organizations
+3. src/features/agency/hooks/useAgencyControls.ts
+- Agency-level management system
+- Sub-organization control logic
+- Credit allocation rules
 
 $END$
 

@@ -28,7 +28,8 @@ import {
   Sparkles,
   BarChart3,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  AlertCircle
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
@@ -40,6 +41,7 @@ import { format } from "date-fns";
 import { cn } from '@shared/utils/cn';
 import { useToast } from '@shared/hooks';
 import { SimpleBrandDenominationSelector } from "@/features/gift-cards/components/SimpleBrandDenominationSelector";
+import { GiftCardErrorBoundary } from "@/shared/components/ErrorBoundaries";
 import { CreateListWithCSVDialog } from "./CreateListWithCSVDialog";
 
 interface AudiencesRewardsStepProps {
@@ -479,30 +481,39 @@ export function AudiencesRewardsStep({
                       {/* Simplified Gift Card Selection */}
                       <div className="space-y-2">
                         <Label className="text-xs">Gift Card Reward *</Label>
-                        <SimpleBrandDenominationSelector
-                          clientId={clientId}
-                          value={condition.brand_id && condition.card_value ? {
-                            brand_id: condition.brand_id,
-                            card_value: condition.card_value,
-                            brand_name: condition.brand_name
-                          } : null}
-                          onChange={(selection) => {
-                            if (!selection) {
-                              updateCondition(index, {
-                                brand_id: null,
-                                card_value: null,
-                                brand_name: null
-                              });
-                            } else {
-                              updateCondition(index, {
-                                brand_id: selection.brand_id,
-                                card_value: selection.card_value,
-                                brand_name: selection.brand_name
-                              });
-                            }
-                          }}
-                          showAvailability={true}
-                        />
+                        <GiftCardErrorBoundary fallback={
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                              Unable to load gift card options. Please refresh and try again.
+                            </AlertDescription>
+                          </Alert>
+                        }>
+                          <SimpleBrandDenominationSelector
+                            clientId={clientId}
+                            value={condition.brand_id && condition.card_value ? {
+                              brand_id: condition.brand_id,
+                              card_value: condition.card_value,
+                              brand_name: condition.brand_name
+                            } : null}
+                            onChange={(selection) => {
+                              if (!selection) {
+                                updateCondition(index, {
+                                  brand_id: null,
+                                  card_value: null,
+                                  brand_name: null
+                                });
+                              } else {
+                                updateCondition(index, {
+                                  brand_id: selection.brand_id,
+                                  card_value: selection.card_value,
+                                  brand_name: selection.brand_name
+                                });
+                              }
+                            }}
+                            showAvailability={true}
+                          />
+                        </GiftCardErrorBoundary>
                       </div>
                     </CardContent>
                   </Card>

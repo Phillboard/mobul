@@ -5,3 +5,4 @@ export * from './currency';
 export * from './table';
 export * from './csv';
 export * from './sms';
+export * from './typeGuards';

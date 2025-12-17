@@ -501,7 +501,49 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         return recipient as RecipientData;
       }
 
-      // Secondary lookup: Try contacts table with customer_code
+      // Secondary lookup: Check if recipient exists but has broken audience/campaign link
+      // This catches cases where redemption_code exists but audience or campaign is missing
+      console.log('[CALL-CENTER] Checking for orphaned recipient with this code...');
+      const { data: orphanedRecipient, error: orphanError } = await supabase
+        .from("recipients")
+        .select(`
+          id,
+          redemption_code,
+          first_name,
+          last_name,
+          audience_id,
+          audiences (
+            id,
+            name,
+            campaigns (id, name, status)
+          )
+        `)
+        .eq("redemption_code", code.toUpperCase())
+        .maybeSingle();
+
+      if (orphanedRecipient) {
+        console.log('[CALL-CENTER] Found orphaned recipient:', orphanedRecipient.id);
+        
+        // Diagnose the issue
+        if (!orphanedRecipient.audience_id) {
+          throw new Error(`Recipient found (${orphanedRecipient.first_name || 'Unknown'} ${orphanedRecipient.last_name || ''}) but not assigned to any audience. Please add this recipient to an audience first.`);
+        }
+        
+        const audience = orphanedRecipient.audiences;
+        if (!audience) {
+          throw new Error(`Recipient found but their audience was deleted. Please reassign this recipient to a valid audience.`);
+        }
+        
+        const campaigns = (audience as any).campaigns || [];
+        if (campaigns.length === 0) {
+          throw new Error(`Recipient found in audience "${(audience as any).name}" but this audience is not linked to any campaign. Please add this audience to a campaign first.`);
+        }
+        
+        // Campaign exists but may have a status issue - this shouldn't happen as the primary query should have caught it
+        throw new Error(`Recipient found but campaign configuration issue detected. Please contact support.`);
+      }
+
+      // Tertiary lookup: Try contacts table with customer_code
       // This handles cases where unique codes are stored on contacts
       console.log('[CALL-CENTER] Trying contacts.customer_code lookup...');
       const { data: contact, error: contactError } = await supabase
@@ -513,7 +555,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       if (contact) {
         console.log('[CALL-CENTER] Found contact:', contact.id, '- checking for campaign assignment...');
         
-        // Find a recipient record linked to this contact
+        // Find a recipient record linked to this contact (with full campaign chain)
         const { data: linkedRecipient, error: linkError } = await supabase
           .from("recipients")
           .select(`
@@ -570,8 +612,23 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           } as RecipientData;
         }
         
-        // Contact exists but not assigned to a campaign
-        throw new Error("Contact found but not assigned to any active campaign. Please add this contact to a campaign first.");
+        // Check if there's a recipient linked to this contact but missing audience/campaign
+        const { data: orphanedContactRecipient } = await supabase
+          .from("recipients")
+          .select(`id, audience_id, audiences (id, name)`)
+          .eq("contact_id", contact.id)
+          .maybeSingle();
+        
+        if (orphanedContactRecipient) {
+          if (!orphanedContactRecipient.audience_id) {
+            throw new Error(`Contact "${contact.first_name || ''} ${contact.last_name || ''}" has a recipient record but is not assigned to any audience. Please add to an audience first.`);
+          }
+          const aud = orphanedContactRecipient.audiences as any;
+          throw new Error(`Contact "${contact.first_name || ''} ${contact.last_name || ''}" is in audience "${aud?.name || 'Unknown'}" but this audience is not linked to an active campaign.`);
+        }
+        
+        // Contact exists but has no recipient record at all
+        throw new Error(`Contact "${contact.first_name || ''} ${contact.last_name || ''}" found but not assigned to any campaign. Please add this contact to a campaign first.`);
       }
 
       // Nothing found

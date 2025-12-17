@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Sparkles, Layers as LayersIcon, Settings, PanelRightClose, PanelRight } from 'lucide-react';
 import { useToast } from '@shared/hooks';
+import { useTenant } from '@/contexts/TenantContext';
 import {
   DESIGNER_PRESETS,
   useDesignerState,
@@ -31,6 +32,9 @@ import {
   PropertiesPanel,
   LayerPanel,
   executeDesignActions,
+  DesignerContextProvider,
+  LoadingOverlay,
+  useDesignerContext,
 } from '@/features/designer';
 import { DesignerHeader, MAIL_FORMATS } from '@/features/designer/components/DesignerHeader';
 import { AIAssistantPanel } from '@/features/designer/components/AIAssistantPanel';
@@ -38,17 +42,18 @@ import { FormatImporter } from '@/features/designer/components/FormatImporter';
 import { TemplateGallery, type MailTemplate } from '@/features/designer/components/TemplateGallery';
 import { PreviewModal } from '@/features/designer/components/PreviewModal';
 
-export default function NewMailDesigner() {
+function MailDesignerContent() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const context = useDesignerContext(); // Get campaign context
 
   // UI State
   const [leftTab, setLeftTab] = useState<'ai' | 'elements'>('ai');
   const [rightTab, setRightTab] = useState<'properties' | 'layers'>('properties');
   const [isRightPanelDocked, setIsRightPanelDocked] = useState(true);
-  const [currentFormat, setCurrentFormat] = useState('postcard-4x6');
+  const [currentFormat, setCurrentFormat] = useState('postcard-6x4'); // Default to 6x4 LANDSCAPE
   const [currentSide, setCurrentSide] = useState<'front' | 'back' | number>('front');
   const [totalPages, setTotalPages] = useState(1);
   const [zoom, setZoom] = useState(100);
@@ -598,6 +603,26 @@ export default function NewMailDesigner() {
           </Button>
         )}
       </div>
+      
+      {/* Loading Overlay - Context-aware loading during AI generation */}
+      <LoadingOverlay
+        isVisible={ai.isGenerating}
+        context={context}
+        error={ai.error}
+        onRetry={() => ai.retryLastMessage()}
+        onDismiss={() => {}}
+      />
     </div>
+  );
+}
+
+// Wrapper component with context provider
+export default function NewMailDesigner() {
+  const { currentClient } = useTenant();
+  
+  return (
+    <DesignerContextProvider clientId={currentClient?.id}>
+      <MailDesignerContent />
+    </DesignerContextProvider>
   );
 }

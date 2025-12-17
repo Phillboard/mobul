@@ -1,60 +1,61 @@
 ---
-description: Specification for campaign condition data models, trigger evaluation, and reward distribution logic
+description: Specifies business rules and data models for campaign reward conditions, triggers, and fulfillment logic
 ---
 
 
 # campaign-condition-model
 
-Key Components:
+Campaign Condition System implements complex reward triggering and fulfillment logic:
 
-1. Condition Trigger System
-Importance Score: 95
-- Implements multi-stage reward trigger evaluation:
-  - Form submission validation
-  - Call center agent verification  
-  - Time-based delay conditions
-  - Multi-step sequential triggers
-- Maintains condition state machine transitions
-- Handles reward distribution delays and retries
-- Supports compound conditions with AND/OR logic
+Core Components:
 
-2. Reward Distribution Engine 
+1. Reward Condition Model (src/features/campaigns/components/wizard/ConditionsStep.tsx)
 Importance Score: 90
-- Gift card pool allocation per condition
-- Balance verification before reward distribution
-- SMS delivery status tracking
-- Multi-attempt delivery system
-- Failed distribution handling with retry logic
+- Condition types: manual_agent, call_completed, form_submitted, qr_scanned
+- Sequential condition chains with dependencies and delays 
+- Validation rules for gift card reward allocation
+- Multi-step verification requirements
 
-3. Validation Framework
+2. Condition Evaluation Engine (src/features/campaigns/validation/campaignValidation.ts) 
 Importance Score: 85
-- Brand/denomination validation
-- Pool sufficiency checks
-- Client credit balance verification 
-- SMS opt-in status validation
-- Campaign budget enforcement
+- Stateful condition evaluation with audit trail
+- Time-based delays between condition triggers
+- Verification workflow for reward eligibility
+- Pool sufficiency validation for each condition
 
-4. Campaign State Management
-Importance Score: 80
-- Condition dependency tracking
-- Sequential trigger orchestration
-- Time-window enforcement
-- Reward inventory monitoring
-- Campaign completion detection
+3. Reward Distribution Logic (src/features/campaigns/hooks/useCampaignConditions.ts)
+Importance Score: 95
+- Atomic reward allocation from gift card pools
+- Multi-condition fulfillment orchestration
+- SMS/email delivery workflow integration
+- Recipient verification and fraud prevention
 
-Core Business Rules:
-- Each campaign requires one or more reward conditions
-- Conditions must specify brand and denomination
-- SMS opt-in required for reward delivery
-- Pool inventory verified before condition activation
-- Client credit balance checked before reward distribution
-- Multi-step conditions require sequential completion
+Key Business Rules:
+- Conditions must be evaluated sequentially in defined order
+- Time delays required between multi-step conditions
+- Gift card inventory validated before condition activation
+- Recipient verification required for high-value rewards
+- Audit trail maintained for all condition evaluations
 
-File Paths:
-src/features/campaigns/components/wizard/ConditionsStep.tsx
-src/features/campaigns/hooks/useCampaignConditions.ts
-src/features/campaigns/validation/campaignValidation.ts
-src/features/campaigns/utils/giftCardUtils.ts
+Domain Models:
+```typescript
+interface CampaignCondition {
+  type: ConditionType;
+  reward: GiftCardReward;
+  delay_minutes?: number;
+  requires_verification: boolean;
+  next_condition_id?: string;
+}
+
+interface GiftCardReward {
+  brand_id: string;
+  denomination: number;
+  pool_id: string;
+  delivery_method: 'sms' | 'email';
+}
+```
+
+The condition model enables sophisticated multi-step reward campaigns with built-in verification, delays, and inventory management. The system maintains atomicity and audit trails throughout the reward fulfillment process.
 
 $END$
 

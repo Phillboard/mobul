@@ -68,7 +68,7 @@ export default function LandingPages() {
   };
 
   const handleEdit = (page: any) => {
-    navigate(`/landing-pages/${page.id}/editor`);
+    navigate(`/landing-pages/${page.id}`);
   };
 
 
@@ -90,7 +90,7 @@ export default function LandingPages() {
             title="Landing Pages"
             subtitle="Create and manage landing pages with AI or visual editor"
             createButtonText="Create Landing Page"
-            onCreateClick={() => navigate("/landing-pages/create")}
+            onCreateClick={() => navigate("/landing-pages/new")}
           />
         )}
 
@@ -122,7 +122,7 @@ export default function LandingPages() {
             title="No landing pages found"
             message={searchQuery ? `No landing pages match "${searchQuery}"` : "Create your first AI-powered landing page in seconds"}
             actionLabel="Create Landing Page"
-            onAction={() => navigate("/landing-pages/create")}
+            onAction={() => navigate("/landing-pages/new")}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -84,25 +84,28 @@ export function SimpleBrandDenominationSelector({
     );
   }
 
-  // Group gift cards by brand for display
+  // Group gift cards by brand for display - filter out items with missing brand data
   const brandOptions = Array.from(
     new Map(
-      availableGiftCards.map((gc: any) => [
-        gc.gift_card_brands.id,
-        {
-          id: gc.gift_card_brands.id,
-          name: gc.gift_card_brands.brand_name,
-          logo: gc.gift_card_brands.logo_url,
-        },
-      ])
+      availableGiftCards
+        .filter((gc: any) => gc?.brand?.id) // Filter out items without valid brand data
+        .map((gc: any) => [
+          gc.brand.id,
+          {
+            id: gc.brand.id,
+            name: gc.brand.brand_name || 'Unknown Brand',
+            logo: gc.brand.logo_url,
+          },
+        ])
     ).values()
   );
 
-  // Get denominations for selected brand
+  // Get denominations for selected brand - filter out items with missing brand data
   const selectedBrandDenominations = value?.brand_id
     ? availableGiftCards
-        .filter((gc: any) => gc.gift_card_brands.id === value.brand_id)
+        .filter((gc: any) => gc?.brand?.id === value.brand_id)
         .map((gc: any) => gc.denomination)
+        .filter((denom: any) => denom != null) // Ensure denominations are valid
     : [];
 
   const handleBrandChange = (brandId: string) => {
@@ -114,7 +117,7 @@ export function SimpleBrandDenominationSelector({
 
     // Auto-select first denomination if available
     const firstDenom = availableGiftCards.find(
-      (gc: any) => gc.gift_card_brands.id === brandId
+      (gc: any) => gc?.brand?.id === brandId
     )?.denomination;
 
     if (firstDenom) {

@@ -10,6 +10,8 @@
  */
 
 import type { CanvasState, DesignerType } from '../types/designer';
+import type { DesignerContext } from '../types/context';
+import type { CanvasConfig } from '../types/canvas';
 
 /**
  * CRITICAL RULES - Never violated by AI
@@ -64,7 +66,113 @@ const CRITICAL_RULES = `
 `;
 
 /**
- * System prompt for the design assistant
+ * Build context section for enhanced prompts
+ */
+function buildContextSection(context: DesignerContext, config: CanvasConfig): string {
+  if (!context.hasContext) {
+    return 'No specific campaign context available. Create professional, versatile designs.';
+  }
+  
+  const giftCard = context.giftCard;
+  const brandStyle = context.brandStyle;
+  const industry = context.industry;
+  
+  return `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CAMPAIGN CONTEXT (Use this for ALL design decisions):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+COMPANY:
+- Name: ${context.company.name}
+- Industry: ${industry.displayName}
+- Phone: ${context.company.phone || 'Not provided'}
+
+GIFT CARD (THE HERO ELEMENT):
+- Brand: ${giftCard?.brand || 'Generic Gift Card'}
+- Amount: $${giftCard?.amount || '15'}
+- Brand Colors: ${brandStyle?.colors.primary || '#D4AF37'} (primary), ${brandStyle?.colors.secondary || '#1a1a1a'} (secondary)
+
+CANVAS:
+- Size: ${config.size}
+- Orientation: ${config.orientation.toUpperCase()}
+- Side: ${config.side?.toUpperCase() || 'FRONT'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BRAND STYLE GUIDE (${giftCard?.brand || 'Generic'}):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMAGERY: ${brandStyle?.imagery || 'Premium gift card presentation'}
+
+STYLE: ${brandStyle?.style || 'Professional, premium, prize-winner energy'}
+
+COLOR PALETTE:
+- Primary: ${brandStyle?.colors.primary || '#D4AF37'}
+- Secondary: ${brandStyle?.colors.secondary || '#1a1a1a'}
+- Background suggestion: ${brandStyle?.colors.background || 'Rich gradient'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DESIGN PRINCIPLES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. GIFT CARD AS HERO:
+   - The $${giftCard?.amount || '15'} ${giftCard?.brand || 'gift'} card is the STAR of every design
+   - Use DRAMATIC lighting: golden glow, light rays, sparkles
+   - Make it look like a VALUABLE PRIZE, not an afterthought
+   - Amount should be clearly visible and prominent
+
+2. PRIZE-WINNER ENERGY:
+   - Recipient should feel like they've WON something special
+   - Celebration feeling, golden ticket vibes
+   - Premium, valuable, exciting
+
+3. APPETIZING IMAGERY (if food brand):
+   - ${brandStyle?.foodType ? `Feature delicious ${brandStyle.foodType} imagery` : 'Use appropriate product imagery'}
+   - Premium food photography quality
+   - Makes viewer hungry/want the product
+
+4. PROFESSIONAL FINISHING:
+   - Clear text hierarchy
+   - Large, readable phone number
+   - QR code placeholder
+   - Unique code in ticket-stub style box
+   - ${config.side === 'back' ? 'Proper mailing format with postal compliance' : 'Eye-catching front design'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+}
+
+/**
+ * Enhanced system prompt with context
+ */
+export function getSystemPromptWithContext(
+  designerType: DesignerType,
+  context: DesignerContext,
+  config: CanvasConfig
+): string {
+  const contextSection = buildContextSection(context, config);
+  
+  return `${CRITICAL_RULES}
+
+${contextSection}
+
+You are an expert design assistant helping users create ${designerType === 'mail' ? 'direct mail piece (postcard or letter) for print' : designerType === 'landing-page' ? 'landing page for web display' : 'email template for email campaigns'} designs.
+
+CRITICAL RULES:
+- Always use template tokens for personalization: {{first_name}}, {{unique_code}}, {{address_line_1}}, etc.
+- NEVER use placeholder names like "John Smith" - always use {{first_name}}
+- The gift card MUST be the dominant visual element
+- Every design must have "prize-winner" energy
+- ${config.side === 'back' ? 'Back designs MUST have proper mailing format' : 'Front designs must be eye-catching and exciting'}
+- ${config.orientation === 'landscape' ? 'Design for LANDSCAPE orientation (wider than tall)' : 'Design for PORTRAIT orientation (taller than wide)'}
+
+Your designs should match the quality of premium advertising campaigns.
+Make every recipient feel like they've won something valuable.
+
+${getSystemPrompt(designerType).split('\n').slice(10).join('\n')}`;
+}
+
+/**
+ * System prompt for the design assistant (original)
  */
 export function getSystemPrompt(designerType: DesignerType): string {
   const typeContext = {

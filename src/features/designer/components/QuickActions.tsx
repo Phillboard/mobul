@@ -13,6 +13,10 @@ import {
   Sparkles, Lightbulb, Palette, LayoutGrid, Image,
   Users, Car, Coffee, UtensilsCrossed, Mountain, Shield, Building
 } from 'lucide-react';
+import { useDesignerContext } from '../context/DesignerContextProvider';
+import { useCanvasConfig } from '../hooks/useCanvasConfig';
+import { getFrontDesignPrompt, getBackDesignPrompt } from '../templates/frontPrompts';
+import { getBackgroundPrompt, getBrandBackgroundSuggestions, type BackgroundStyle } from '../templates/backgroundPrompts';
 
 export interface QuickAction {
   id: string;
@@ -131,19 +135,56 @@ export function QuickActions({
   isLoading = false,
   className = '',
 }: QuickActionsProps) {
+  // Get campaign context if available
+  let context;
+  let config;
+  try {
+    context = useDesignerContext();
+    const canvasConfigHook = useCanvasConfig({
+      initialSize: '6x4',
+      initialOrientation: 'landscape',
+      initialSide: 'front',
+    });
+    config = canvasConfigHook.config;
+  } catch {
+    // Not wrapped in context provider - use defaults
+    context = null;
+    config = null;
+  }
+
   /**
    * Handle background button click
-   * Uses direct generation if available, otherwise falls back to chat
+   * Uses context-aware prompts if available
    */
   const handleBackgroundClick = async (action: QuickAction) => {
+    let prompt = action.prompt;
+    
+    // If we have context and config, use premium prompts
+    if (context && config && action.id.startsWith('bg-')) {
+      const styleMap: Record<string, BackgroundStyle> = {
+        'bg-food-coffee': 'food-hero',
+        'bg-pizza': 'food-hero',
+        'bg-lifestyle': 'lifestyle',
+        'bg-abstract': 'clean-gradient',
+        'bg-nature': 'industry',
+      };
+      
+      const style = styleMap[action.id] || 'gift-card-reveal';
+      prompt = getBackgroundPrompt(context, config, style);
+    }
+    
     if (onGenerateBackground) {
       // Direct image generation - faster, more reliable
-      await onGenerateBackground(action.prompt);
+      await onGenerateBackground(prompt);
     } else {
       // Fallback to sending through chat
-      onAction(action.prompt);
+      onAction(prompt);
     }
   };
+
+  // Get brand-specific background suggestions if context available
+  const brandBackgrounds = context ? getBrandBackgroundSuggestions(context) : null;
+
   return (
     <div className={className}>
       {/* Background Generation Section */}

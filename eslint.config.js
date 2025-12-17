@@ -25,6 +25,10 @@ export default tseslint.config(
         "varsIgnorePattern": "^_"
       }],
       "@typescript-eslint/no-explicit-any": "warn",
+      // Stricter null checking rules to prevent "undefined" errors
+      "@typescript-eslint/prefer-optional-chain": "warn",
+      "@typescript-eslint/no-unnecessary-condition": "off", // Enable after fixing existing issues
+      "no-unsafe-optional-chaining": "error",
     },
   },
 );

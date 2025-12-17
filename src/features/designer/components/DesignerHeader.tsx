@@ -46,7 +46,8 @@ export interface MailFormat {
 }
 
 export const MAIL_FORMATS: MailFormat[] = [
-  { id: 'postcard-4x6', name: '4" x 6" Postcard', width: 1200, height: 1800, bleed: 0.125, type: 'postcard' },
+  { id: 'postcard-6x4', name: '6" x 4" Postcard (Landscape)', width: 1800, height: 1200, bleed: 0.125, type: 'postcard' },
+  { id: 'postcard-4x6', name: '4" x 6" Postcard (Portrait)', width: 1200, height: 1800, bleed: 0.125, type: 'postcard' },
   { id: 'postcard-6x9', name: '6" x 9" Postcard', width: 1800, height: 2700, bleed: 0.125, type: 'postcard' },
   { id: 'postcard-6x11', name: '6" x 11" Postcard', width: 1800, height: 3300, bleed: 0.125, type: 'postcard' },
   { id: 'letter-8.5x11', name: '8.5" x 11" Letter', width: 2550, height: 3300, bleed: 0, type: 'letter' },

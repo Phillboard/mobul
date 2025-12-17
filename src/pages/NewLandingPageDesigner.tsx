@@ -47,11 +47,14 @@ export default function NewLandingPageDesigner() {
   const [rightTab, setRightTab] = useState('properties');
   const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
+  // Determine if this is a new page or editing existing
+  const isNewPage = !id || id === 'new';
+
   // Fetch existing landing page
   const { data: landingPage, isLoading } = useQuery({
     queryKey: ['landing-page', id],
     queryFn: async () => {
-      if (id === 'new') return null;
+      if (isNewPage) return null;
 
       const { data, error } = await supabase
         .from('landing_pages')
@@ -62,7 +65,7 @@ export default function NewLandingPageDesigner() {
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !isNewPage,
   });
 
   // Initialize designer with landing page preset
@@ -118,7 +121,8 @@ export default function NewLandingPageDesigner() {
     mutationFn: async () => {
       const visualEditorState = designerState.canvasState;
 
-      if (id === 'new' || !landingPage) {
+      if (isNewPage || !landingPage) {
+        // INSERT new record
         const { data, error } = await supabase
           .from('landing_pages')
           .insert({
@@ -131,8 +135,9 @@ export default function NewLandingPageDesigner() {
           .single();
 
         if (error) throw error;
-        return data;
+        return { data, isNew: true };
       } else {
+        // UPDATE existing record
         const { data, error } = await supabase
           .from('landing_pages')
           .update({
@@ -145,10 +150,10 @@ export default function NewLandingPageDesigner() {
           .single();
 
         if (error) throw error;
-        return data;
+        return { data, isNew: false };
       }
     },
-    onSuccess: (data) => {
+    onSuccess: ({ data, isNew }) => {
       queryClient.invalidateQueries({ queryKey: ['landing-page', id] });
       designerState.markClean();
       
@@ -157,8 +162,9 @@ export default function NewLandingPageDesigner() {
         description: 'Your landing page has been saved.',
       });
 
-      if (id === 'new') {
-        navigate(`/landing-pages/${data.id}/canvas`);
+      // After creating a new page, update the URL
+      if (isNew && data?.id) {
+        navigate(`/landing-pages/${data.id}`, { replace: true });
       }
     },
   });

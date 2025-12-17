@@ -16,7 +16,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useNavigate, useParams, useBlocker } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layout } from "@/shared/components/layout/Layout";
 import { Button } from "@/shared/components/ui/button";
@@ -148,25 +148,6 @@ export default function CampaignCreate() {
       logger.info("Campaign data loaded for editing:", campaignId);
     }
   }, [isEditMode, existingCampaign, existingConditions, isDataLoaded, campaignId]);
-
-  // Block navigation when there are unsaved changes
-  const blocker = useBlocker(
-    isDirty && !saveCampaignMutation.isPending
-  );
-
-  // Handle blocked navigation
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      const confirmed = window.confirm(
-        'You have unsaved changes. Are you sure you want to leave?'
-      );
-      if (confirmed) {
-        blocker.proceed();
-      } else {
-        blocker.reset();
-      }
-    }
-  }, [blocker]);
 
   // Create or Update campaign mutation
   const saveCampaignMutation = useMutation({
@@ -619,6 +600,21 @@ export default function CampaignCreate() {
     saveDraftMutation.mutate();
   }, [saveDraftMutation]);
 
+  // Warn user before leaving page with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty && !saveCampaignMutation.isPending) {
+        e.preventDefault();
+        // Modern browsers require returnValue to be set
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, saveCampaignMutation.isPending]);
+
   // Loading state for edit mode
   const isLoading = isEditMode && (isLoadingCampaign || isLoadingConditions || !isDataLoaded);
 
@@ -666,6 +662,14 @@ export default function CampaignCreate() {
   };
 
   const handleClose = () => {
+    // Warn if there are unsaved changes
+    if (isDirty && !saveCampaignMutation.isPending) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave?'
+      );
+      if (!confirmed) return;
+    }
+    
     if (isEditMode) {
       navigate(`/campaigns/${campaignId}`);
     } else {

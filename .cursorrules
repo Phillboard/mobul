@@ -95,51 +95,61 @@ All designers (mail, landing, email) use same framework.
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-BUSINESS DOMAIN: Multi-tenant Campaign Management Platform with Gift Card Distribution
+Campaign Management & Gift Card Fulfillment Platform
+Importance Score: 85/100
 
-Core Business Components:
+Core Business Logic Architecture:
 
-1. Campaign Wizard System (src/features/campaigns/components/wizard/)
-Importance Score: 90
-- Multi-step campaign creation combining audience selection and reward configuration 
-- Complex validation rules for gift card rewards including brand/denomination requirements
-- Unique code validation and generation with custom tracking parameters
-- Reward trigger system with manual/automated conditions
+1. Campaign Management Engine
+- Multi-stage campaign creation workflow with audience selection and reward configuration
+- Complex condition-based reward triggering system for gift card distribution
+- Integration between physical mail delivery and digital reward fulfillment
+- Automated code generation and validation for recipient tracking
 
-2. Gift Card Provisioning Engine (src/core/services/tillo.ts)
-Importance Score: 95
-- Hierarchical provisioning waterfall: CSV → API → Buffer Pool
-- Real-time balance verification across providers
-- Multi-tenant inventory allocation with role-based access
-- Custom pricing rules per brand/denomination
+Key Components:
+```
+src/features/campaigns/components/wizard/AudiencesRewardsStep.tsx
+src/features/gift-cards/lib/provisioning-utils.ts
+src/features/billing/types/index.ts
+```
 
-3. Credit Management System (src/features/billing/types/index.ts) 
-Importance Score: 85
-- Unidirectional credit flow (Platform → Agency → Client → Campaign)
-- Dynamic pricing with markup calculations
-- Pool-based budget management
-- Real-time balance monitoring with threshold alerts
+2. Credit Management System
+- Hierarchical credit flow: Platform → Agency → Client → Campaign
+- One-way credit cascade with atomic transactions
+- Multi-tier pricing model with markup calculations
+- Automated balance monitoring and replenishment triggers
 
-4. Contact Processing System (src/features/contacts/)
-Importance Score: 80
-- Smart CSV import with field mapping
-- Contact enrichment tracking
-- Segmentation engine with dynamic list management
-- Custom field validation rules
+3. Gift Card Provisioning Pipeline
+- Two-tier provisioning strategy (CSV inventory → Tillo API fallback)
+- Brand-specific denomination management
+- Real-time balance verification workflows
+- Complex inventory pooling with client-specific access controls
 
-5. CRM Integration Hub (src/features/settings/components/CRMIntegrationDialog.tsx)
-Importance Score: 85
-- Webhook-based integration framework
-- Field/event mapping system
-- Provider-specific configurations
-- Real-time sync validation
+4. Reward Distribution Logic
+- Condition-based reward triggering
+- Multi-provider SMS delivery with failover handling
+- Automated reward delivery tracking
+- Campaign-specific validation rules
 
-The platform implements sophisticated campaign management with unique business rules around:
-- Gift card distribution and tracking
-- Multi-level credit management
-- Complex reward conditions
-- Contact segmentation
-- Integration mapping
+Integration Points:
+- Direct mail service providers (PostGrid, custom mailhouse)
+- Gift card providers (Tillo API)
+- SMS delivery (NotificationAPI, Infobip, Twilio)
+- CRM systems for contact management
+
+The system implements sophisticated business rules around:
+- Campaign lifecycle management
+- Gift card inventory and provisioning
+- Multi-tier credit allocation
+- Complex reward triggering conditions
+- Client/agency hierarchical relationships
+
+Domain-specific validation ensures:
+- Valid brand selection for rewards
+- Sufficient credit availability
+- Compliant mail piece specifications
+- Proper reward condition configuration
+- Secure code generation and tracking
 
 $END$
 

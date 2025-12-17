@@ -40,8 +40,6 @@ const Settings = lazy(() => import("./pages/Settings"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
 const LandingPages = lazy(() => import("./pages/LandingPages"));
-const LandingPageCreate = lazy(() => import("./pages/LandingPageCreate"));
-const LandingPageEditor = lazy(() => import("./pages/LandingPageEditor"));
 const GiftCardReveal = lazy(() => import("./pages/GiftCardReveal"));
 const EmbedGiftCard = lazy(() => import("./pages/EmbedGiftCard"));
 const AgencyManagement = lazy(() => import("./pages/AgencyManagement"));
@@ -188,20 +186,14 @@ const App = () => (
                   <Route path="/templates" element={<Navigate to="/mail" replace />} />
                   <Route path="/template-builder/:id" element={<ProtectedRoute><NewMailDesigner /></ProtectedRoute>} />
                   
-                  {/* Landing Page Builder - Simple Routes */}
+                  {/* Landing Pages - Direct to Designer */}
                   <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
-                  <Route path="/landing-pages/create" element={<ProtectedRoute><LandingPageCreate /></ProtectedRoute>} />
-                  <Route path="/landing-pages/new" element={<ProtectedRoute><LandingPageEditor /></ProtectedRoute>} />
-                  <Route path="/landing-pages/:id/editor" element={<ProtectedRoute><LandingPageEditor /></ProtectedRoute>} />
-                  {/* Canvas-based visual editor (alternative to AI chat editor) */}
-                  <Route path="/landing-pages/new/canvas" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
-                  <Route path="/landing-pages/:id/canvas" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
-                  
-                  {/* Legacy routes redirect to new simple flow */}
-                  <Route path="/landing-pages/new/visual-editor" element={<Navigate to="/landing-pages/create" replace />} />
-                  <Route path="/landing-pages/:id/visual-editor" element={<Navigate to="/landing-pages/:id/editor" replace />} />
-                  <Route path="/landing-pages/:id/edit-grapesjs" element={<Navigate to="/landing-pages/:id/editor" replace />} />
-                  <Route path="/landing-pages/ai-generate/:mode" element={<Navigate to="/landing-pages/create" replace />} />
+                  <Route path="/landing-pages/new" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
+                  <Route path="/landing-pages/:id" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
+                  {/* Redirect old routes */}
+                  <Route path="/landing-pages/create" element={<Navigate to="/landing-pages/new" replace />} />
+                  <Route path="/landing-pages/:id/editor" element={<Navigate to="/landing-pages/:id" replace />} />
+                  <Route path="/landing-pages/:id/canvas" element={<Navigate to="/landing-pages/:id" replace />} />
                   
                   {/* Gift Cards - Role-based access control */}
                   {/* Client/Agency - Simple Gift Card Manager */}
