@@ -170,11 +170,12 @@ export default function CreditsBilling() {
   // Mutation to add credits
   const addCreditsMutation = useMutation({
     mutationFn: async (amount: number) => {
-      if (!creditAccount?.id) {
-        throw new Error("No credit account found");
+      if (!targetClientId) {
+        throw new Error("No client selected");
       }
       
       // For admin/agency, add credits directly
+      // The RPC function will automatically create a credit account if one doesn't exist
       if (isAdminOrAgency) {
         const { data, error } = await supabase.rpc("allocate_credits_atomic", {
           p_entity_type: "client",
@@ -219,8 +220,33 @@ export default function CreditsBilling() {
   // Mutation to save auto-reload settings
   const saveAutoReloadMutation = useMutation({
     mutationFn: async () => {
-      if (!creditAccount?.id) {
-        throw new Error("No credit account found");
+      if (!targetClientId) {
+        throw new Error("No client selected");
+      }
+      
+      // If no account exists yet, create one first by allocating 0 credits
+      let accountId = creditAccount?.id;
+      if (!accountId) {
+        const { data, error } = await supabase.rpc("allocate_credits_atomic", {
+          p_entity_type: "client",
+          p_entity_id: targetClientId,
+          p_amount: 0,
+          p_description: "Auto-reload settings initialization",
+          p_user_id: (await supabase.auth.getUser()).data.user?.id,
+        });
+        
+        if (error) throw error;
+        
+        // Get the newly created account ID
+        const { data: newAccount } = await supabase
+          .from("credit_accounts")
+          .select("id")
+          .eq("entity_type", "client")
+          .eq("entity_id", targetClientId)
+          .single();
+        
+        if (!newAccount) throw new Error("Failed to create credit account");
+        accountId = newAccount.id;
       }
       
       const { error } = await supabase
@@ -230,7 +256,7 @@ export default function CreditsBilling() {
           auto_reload_threshold: autoReloadThreshold,
           auto_reload_amount: autoReloadAmount,
         })
-        .eq("id", creditAccount.id);
+        .eq("id", accountId);
       
       if (error) throw error;
     },
@@ -453,10 +479,10 @@ export default function CreditsBilling() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-slate-400 mb-4">No credit account found</p>
+                  <p className="text-slate-400 mb-4">No credit account yet</p>
                   <Button onClick={() => setAddCreditsOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Account & Add Credits
+                    Add Credits to Get Started
                   </Button>
                 </div>
               )}

@@ -97,10 +97,10 @@ export function MarketingCampaignList() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Campaigns</CardTitle>
-          <Button onClick={() => navigate('/marketing/campaigns/new')}>
+          <CardTitle>Broadcasts</CardTitle>
+          <Button onClick={() => navigate('/marketing/broadcasts/new')}>
             <Plus className="h-4 w-4 mr-2" />
-            New Campaign
+            New Broadcast
           </Button>
         </div>
         
@@ -109,7 +109,7 @@ export function MarketingCampaignList() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search campaigns..."
+              placeholder="Search broadcasts..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
@@ -151,16 +151,16 @@ export function MarketingCampaignList() {
         ) : campaigns.length === 0 ? (
           <div className="text-center py-12">
             <Mail className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No campaigns found</h3>
+            <h3 className="text-lg font-medium mb-2">No broadcasts found</h3>
             <p className="text-muted-foreground mb-4">
               {search || statusFilter !== 'all' || typeFilter !== 'all' 
                 ? 'Try adjusting your filters'
-                : 'Create your first email or SMS campaign'
+                : 'Create your first email or SMS broadcast'
               }
             </p>
             {!search && statusFilter === 'all' && typeFilter === 'all' && (
-              <Button onClick={() => navigate('/marketing/campaigns/new')}>
-                Create Campaign
+              <Button onClick={() => navigate('/marketing/broadcasts/new')}>
+                Create Broadcast
               </Button>
             )}
           </div>
@@ -168,7 +168,7 @@ export function MarketingCampaignList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Campaign</TableHead>
+                <TableHead>Broadcast</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Recipients</TableHead>
@@ -183,7 +183,7 @@ export function MarketingCampaignList() {
                 <TableRow 
                   key={campaign.id} 
                   className="cursor-pointer"
-                  onClick={() => navigate(`/marketing/campaigns/${campaign.id}`)}
+                  onClick={() => navigate(`/marketing/broadcasts/${campaign.id}`)}
                 >
                   <TableCell>
                     <div className="font-medium">{campaign.name}</div>
@@ -233,13 +233,13 @@ export function MarketingCampaignList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate(`/marketing/campaigns/${campaign.id}`)}>
+                        <DropdownMenuItem onClick={() => navigate(`/marketing/broadcasts/${campaign.id}`)}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </DropdownMenuItem>
                         {campaign.status === 'draft' && (
                           <>
-                            <DropdownMenuItem onClick={() => navigate(`/marketing/campaigns/${campaign.id}/edit`)}>
+                            <DropdownMenuItem onClick={() => navigate(`/marketing/broadcasts/${campaign.id}/edit`)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
@@ -293,9 +293,9 @@ export function MarketingCampaignList() {
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+            <AlertDialogTitle>Delete Broadcast</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this campaign? This action cannot be undone.
+              Are you sure you want to delete this broadcast? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -6,7 +6,7 @@ import {
   Gauge, BookOpen, List, Upload, FolderTree, Database, FileSearch, Rocket, TestTube,
   Megaphone, Headphones, ClipboardList, Shield, UserCog, ShieldAlert,
   PhoneCall, Target, Plug, Settings as SettingsIcon, Package, Building2, CreditCard, DollarSign,
-  Bug, MessageSquare, Zap
+  Bug, MessageSquare, Zap, Send
 } from "lucide-react";
 import { NavLink } from "@/shared/components/NavLink";
 import { useAuth } from "@core/auth/AuthProvider";
@@ -73,9 +73,34 @@ const navigationGroups: NavGroup[] = [
     label: "Marketing",
     collapsible: true,
     items: [
-      { name: "Marketing Hub", href: "/marketing", icon: MessageSquare, keywords: ["email", "sms", "marketing", "campaigns"], description: "Email & SMS marketing hub" },
-      { name: "Email/SMS Campaigns", href: "/marketing/campaigns", icon: Mail, keywords: ["email", "sms", "blast", "newsletter"], description: "Create email & SMS campaigns" },
-      { name: "Automations", href: "/marketing/automations", icon: Zap, keywords: ["automation", "workflow", "triggers", "sequences"], description: "Marketing automation workflows" },
+      { 
+        name: "Marketing Hub", 
+        href: "/marketing", 
+        icon: LayoutDashboard,
+        keywords: ["marketing", "overview", "dashboard"], 
+        description: "Email & SMS marketing overview"
+      },
+      { 
+        name: "Broadcasts", 
+        href: "/marketing/broadcasts", 
+        icon: Send,
+        keywords: ["email", "sms", "blast", "newsletter", "broadcast", "campaign"], 
+        description: "One-time email & SMS sends"
+      },
+      { 
+        name: "Automations", 
+        href: "/marketing/automations", 
+        icon: Zap,
+        keywords: ["automation", "workflow", "journey", "sequence", "drip"], 
+        description: "Automated multi-step workflows"
+      },
+      { 
+        name: "Content Library", 
+        href: "/marketing/content", 
+        icon: FileText,
+        keywords: ["templates", "content", "library", "reusable"], 
+        description: "Email & SMS templates"
+      },
     ]
   },
   {

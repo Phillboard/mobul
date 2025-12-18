@@ -167,7 +167,10 @@ function isProviderAvailable(provider: SMSProvider): boolean {
       (Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER'))
     );
   } else if (provider === 'eztexting') {
-    return !!Deno.env.get('EZTEXTING_API_KEY');
+    return !!(
+      Deno.env.get('EZTEXTING_USERNAME') &&
+      Deno.env.get('EZTEXTING_PASSWORD')
+    );
   }
   return false;
 }

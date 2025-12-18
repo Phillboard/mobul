@@ -133,11 +133,11 @@ serve(async (req) => {
     results.push(checkEnvVar('Tillo API (Optional)', 'TILLO_BASE_URL', false, false));
 
     // =====================================================
-    // OPTIONAL: EZ Texting SMS Provider
+    // OPTIONAL: EZ Texting SMS (Legacy HTTP API)
     // =====================================================
     
-    results.push(checkEnvVar('EZ Texting SMS', 'EZTEXTING_API_KEY', false));
-    results.push(checkEnvVar('EZ Texting SMS', 'EZTEXTING_BASE_URL', false, false));
+    results.push(checkEnvVar('EZ Texting SMS', 'EZTEXTING_USERNAME', false));
+    results.push(checkEnvVar('EZ Texting SMS', 'EZTEXTING_PASSWORD', false));
 
     // =====================================================
     // OPTIONAL: Support Contact Info
@@ -281,9 +281,9 @@ serve(async (req) => {
       recommendations.push('💡 TIP: Configure Tillo API credentials to enable automatic gift card provisioning when inventory is empty');
     }
 
-    const ezTextingConfigured = results.find(r => r.variable === 'EZTEXTING_API_KEY')?.configured;
+    const ezTextingConfigured = results.find(r => r.variable === 'EZTEXTING_USERNAME')?.configured;
     if (ezTextingConfigured) {
-      recommendations.push('✅ EZ Texting configured as SMS provider option');
+      recommendations.push('✅ EZ Texting Legacy API configured as SMS provider option');
     }
 
     const supportConfigured = results.find(r => r.variable === 'COMPANY_NAME')?.configured;

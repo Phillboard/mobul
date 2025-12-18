@@ -8,8 +8,8 @@
 // ENUMS / UNION TYPES
 // ============================================================================
 
-/** Marketing campaign type */
-export type CampaignType = 'email' | 'sms' | 'both';
+/** Marketing campaign type (also called "Broadcast" in UI) */
+export type CampaignType = 'email' | 'sms' | 'both' | 'sequence';
 
 /** Marketing campaign status */
 export type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
@@ -30,7 +30,10 @@ export type TriggerType =
   | 'manual';
 
 /** Automation step type */
-export type StepType = 'send_email' | 'send_sms' | 'wait' | 'condition';
+export type StepType = 'send_email' | 'send_sms' | 'wait' | 'condition' | 'update_contact' | 'end_journey';
+
+/** Automation condition type */
+export type ConditionType = 'email_opened' | 'email_clicked' | 'has_tag' | 'contact_field';
 
 /** Automation enrollment status */
 export type EnrollmentStatus = 'active' | 'completed' | 'cancelled' | 'failed';
@@ -58,7 +61,22 @@ export interface SegmentRule {
   value?: string | number | boolean;
 }
 
-/** Marketing campaign entity */
+/** A/B Testing configuration for broadcasts */
+export interface ABTestingConfig {
+  testType: 'subject' | 'content';
+  variants: Array<{
+    id: string;
+    name: string;
+    subject?: string;
+    bodyHtml?: string;
+    percentage: number;
+  }>;
+  testSize: number;
+  winnerMetric: 'opens' | 'clicks';
+  waitHours: number;
+}
+
+/** Marketing campaign entity (also called "Broadcast" in UI) */
 export interface MarketingCampaign {
   id: string;
   client_id: string;
@@ -67,11 +85,21 @@ export interface MarketingCampaign {
   campaign_type: CampaignType;
   status: CampaignStatus;
   linked_mail_campaign_id?: string | null;
+  
+  // Audience targeting
   audience_type: AudienceType;
   audience_config: AudienceConfig;
+  
+  // A/B Testing
+  ab_testing_enabled?: boolean;
+  ab_testing_config?: ABTestingConfig | null;
+  
+  // Scheduling
   scheduled_at?: string | null;
   started_at?: string | null;
   completed_at?: string | null;
+  
+  // Statistics
   total_recipients: number;
   sent_count: number;
   delivered_count: number;
@@ -79,22 +107,35 @@ export interface MarketingCampaign {
   clicked_count: number;
   bounced_count: number;
   unsubscribed_count: number;
+  
+  // Metadata
   created_by?: string | null;
   created_at: string;
   updated_at: string;
 }
 
-/** Marketing campaign message */
+/** Marketing campaign message (broadcast message) */
 export interface MarketingMessage {
   id: string;
   campaign_id: string;
   message_type: 'email' | 'sms';
+  sequence_order: number;
+  delay_minutes: number;
+  
+  // Template-based OR custom content
+  use_template?: boolean;
   template_id?: string | null;
+  
+  // Custom content fields
+  custom_subject?: string | null;
+  custom_body_html?: string | null;
+  custom_body_text?: string | null;
+  
+  // Legacy fields (for backward compatibility)
   subject?: string | null;
   body_html?: string | null;
   body_text?: string | null;
-  sequence_order: number;
-  delay_minutes: number;
+  
   created_at: string;
   updated_at: string;
 }
@@ -140,6 +181,27 @@ export interface AutomationTriggerConfig {
   delayDays?: number;
 }
 
+/** Condition configuration for branching steps */
+export interface ConditionConfig {
+  type: ConditionType;
+  // For email_opened/email_clicked
+  stepId?: string;
+  // For has_tag
+  tagId?: string;
+  hasTag?: boolean;
+  // For contact_field
+  field?: string;
+  operator?: 'equals' | 'contains' | 'starts_with' | 'not_equals';
+  value?: string;
+}
+
+/** Update contact configuration */
+export interface UpdateContactConfig {
+  tagId?: string;
+  field?: string;
+  value?: string;
+}
+
 /** Automation step configuration */
 export interface AutomationStepConfig {
   /** Delay in minutes for wait steps */
@@ -163,6 +225,7 @@ export interface MarketingAutomation {
   is_active: boolean;
   total_enrolled: number;
   total_completed: number;
+  total_active?: number;
   created_by?: string | null;
   created_at: string;
   updated_at: string;
@@ -174,8 +237,32 @@ export interface AutomationStep {
   automation_id: string;
   step_order: number;
   step_type: StepType;
+  
+  // Content - template OR custom
+  use_template?: boolean;
   template_id?: string | null;
+  custom_subject?: string | null;
+  custom_body_html?: string | null;
+  custom_body_text?: string | null;
+  
+  // Wait configuration
+  delay_minutes?: number | null;
+  wait_until_time?: string | null;
+  wait_until_day?: string | null;
+  
+  // Condition/branching configuration
+  condition_type?: ConditionType | null;
+  condition_config?: ConditionConfig | null;
+  branch_yes_step_id?: string | null;
+  branch_no_step_id?: string | null;
+  
+  // Update contact configuration
+  update_action?: 'add_tag' | 'remove_tag' | 'update_field' | null;
+  update_config?: UpdateContactConfig | null;
+  
+  // Legacy config field
   config: AutomationStepConfig;
+  
   created_at: string;
   updated_at: string;
 }

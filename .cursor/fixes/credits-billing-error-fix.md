@@ -1,7 +1,12 @@
 # Credits Billing Page Error - Fix Summary
 
-## Issue
+## Issues Fixed
+
+### 1. RLS Error (Initial Issue - RESOLVED)
 The `/credits-billing` page was showing "Something went wrong" error for users.
+
+### 2. "No credit account found" Error (NEW - RESOLVED)
+When users tried to add credits but had no existing credit account, they received "No credit account found" error.
 
 ## Root Cause
 The error was caused by a database query attempting to join the `clients` table with the `agencies` table using PostgREST syntax:
@@ -62,8 +67,48 @@ Added a proper error display component that shows:
 - Retry button
 - User-friendly explanation
 
+## Solution for "No credit account found" Error
+
+### Root Cause
+The `addCreditsMutation` in `CreditsBilling.tsx` had a premature check that threw an error if `creditAccount?.id` didn't exist:
+
+```typescript
+if (!creditAccount?.id) {
+  throw new Error("No credit account found");
+}
+```
+
+This prevented the RPC function from being called. However, the `allocate_credits_atomic` RPC function automatically creates credit accounts via `get_credit_account()` which has built-in account creation logic:
+
+```sql
+-- From get_credit_account function (line 116-121)
+IF NOT FOUND THEN
+  INSERT INTO credit_accounts (entity_type, entity_id, balance)
+  VALUES (p_entity_type, p_entity_id, 0)
+  RETURNING * INTO v_account;
+END IF;
+```
+
+### Changes Made
+
+1. **Removed premature account check** - Changed from checking `creditAccount?.id` to checking `targetClientId`
+2. **Added comment** - Documented that RPC automatically creates accounts
+3. **Fixed auto-reload mutation** - Added logic to create account with 0 credits if needed before updating settings
+4. **Improved UI text** - Changed "Create Account & Add Credits" to "Add Credits to Get Started" (more accurate)
+
+### Code Changes
+
+**addCreditsMutation (lines 171-206):**
+- Before: `if (!creditAccount?.id) throw new Error("No credit account found")`
+- After: `if (!targetClientId) throw new Error("No client selected")`
+- Added comment explaining automatic account creation
+
+**saveAutoReloadMutation (lines 220-260):**
+- Added automatic account creation by calling `allocate_credits_atomic` with 0 amount
+- This ensures an account exists before updating auto-reload settings
+
 ## Files Modified
-- `src/pages/CreditsBilling.tsx`
+- `src/pages/CreditsBilling.tsx` (lines 171-260, 456-460)
 
 ## Testing Recommendations
 1. Test with `company_owner` role (most likely to encounter the issue)

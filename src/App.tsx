@@ -84,12 +84,15 @@ const PublicRedemption = lazy(() => import("./pages/PublicRedemption"));
 const PublicLandingPage = lazy(() => import("./pages/PublicLandingPage"));
 const TestRedemption = lazy(() => import("./pages/TestRedemption"));
 
-// Marketing Feature
-const Marketing = lazy(() => import("./pages/Marketing"));
-const MarketingCampaignCreate = lazy(() => import("./pages/MarketingCampaignCreate"));
-const MarketingCampaignDetail = lazy(() => import("./pages/MarketingCampaignDetail"));
-const MarketingAutomationCreate = lazy(() => import("./pages/MarketingAutomationCreate"));
-const MarketingAutomationDetail = lazy(() => import("./pages/MarketingAutomationDetail"));
+// Marketing Feature - New Structure
+const MarketingHub = lazy(() => import("./pages/marketing/MarketingHub"));
+const Broadcasts = lazy(() => import("./pages/marketing/Broadcasts"));
+const BroadcastCreate = lazy(() => import("./pages/marketing/BroadcastCreate"));
+const BroadcastDetail = lazy(() => import("./pages/marketing/BroadcastDetail"));
+const Automations = lazy(() => import("./pages/marketing/Automations"));
+const AutomationCreate = lazy(() => import("./pages/marketing/AutomationCreate"));
+const AutomationDetail = lazy(() => import("./pages/marketing/AutomationDetail"));
+const ContentLibrary = lazy(() => import("./pages/marketing/ContentLibrary"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -231,17 +234,24 @@ const App = () => (
                   <Route path="/call-center" element={<ProtectedRoute requiredPermissions={["calls.confirm_redemption"]}><CallCenterRedemption /></ProtectedRoute>} />
                   <Route path="/call-center/scripts" element={<ProtectedRoute requiredPermissions={["calls.manage"]}><CallCenterScripts /></ProtectedRoute>} />
                   
-                  {/* Marketing - Email & SMS */}
-                  <Route path="/marketing" element={<ProtectedRoute><Marketing /></ProtectedRoute>} />
-                  <Route path="/marketing/campaigns" element={<ProtectedRoute><Marketing /></ProtectedRoute>} />
-                  <Route path="/marketing/campaigns/new" element={<ProtectedRoute><MarketingCampaignCreate /></ProtectedRoute>} />
-                  <Route path="/marketing/campaigns/:id" element={<ProtectedRoute><MarketingCampaignDetail /></ProtectedRoute>} />
-                  <Route path="/marketing/campaigns/:id/edit" element={<ProtectedRoute><MarketingCampaignCreate /></ProtectedRoute>} />
-                  <Route path="/marketing/automations" element={<ProtectedRoute><Marketing /></ProtectedRoute>} />
-                  <Route path="/marketing/automations/new" element={<ProtectedRoute><MarketingAutomationCreate /></ProtectedRoute>} />
-                  <Route path="/marketing/automations/:id" element={<ProtectedRoute><MarketingAutomationDetail /></ProtectedRoute>} />
-                  <Route path="/marketing/automations/:id/edit" element={<ProtectedRoute><MarketingAutomationCreate /></ProtectedRoute>} />
-                  <Route path="/marketing/analytics" element={<ProtectedRoute><Marketing /></ProtectedRoute>} />
+                  {/* Marketing - New Structure */}
+                  <Route path="/marketing" element={<ProtectedRoute><MarketingHub /></ProtectedRoute>} />
+                  <Route path="/marketing/broadcasts" element={<ProtectedRoute><Broadcasts /></ProtectedRoute>} />
+                  <Route path="/marketing/broadcasts/new" element={<ProtectedRoute><BroadcastCreate /></ProtectedRoute>} />
+                  <Route path="/marketing/broadcasts/:id" element={<ProtectedRoute><BroadcastDetail /></ProtectedRoute>} />
+                  <Route path="/marketing/broadcasts/:id/edit" element={<ProtectedRoute><BroadcastCreate /></ProtectedRoute>} />
+                  <Route path="/marketing/automations" element={<ProtectedRoute><Automations /></ProtectedRoute>} />
+                  <Route path="/marketing/automations/new" element={<ProtectedRoute><AutomationCreate /></ProtectedRoute>} />
+                  <Route path="/marketing/automations/:id" element={<ProtectedRoute><AutomationDetail /></ProtectedRoute>} />
+                  <Route path="/marketing/automations/:id/edit" element={<ProtectedRoute><AutomationCreate /></ProtectedRoute>} />
+                  <Route path="/marketing/content" element={<ProtectedRoute><ContentLibrary /></ProtectedRoute>} />
+                  
+                  {/* Redirects for old marketing URLs (backward compatibility) */}
+                  <Route path="/marketing/campaigns" element={<Navigate to="/marketing/broadcasts" replace />} />
+                  <Route path="/marketing/campaigns/new" element={<Navigate to="/marketing/broadcasts/new" replace />} />
+                  <Route path="/marketing/campaigns/:id" element={<Navigate to="/marketing/broadcasts/:id" replace />} />
+                  <Route path="/marketing/campaigns/:id/edit" element={<Navigate to="/marketing/broadcasts/:id/edit" replace />} />
+                  <Route path="/marketing/analytics" element={<Navigate to="/marketing" replace />} />
                   
                   {/* ACE Forms */}
                   <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
