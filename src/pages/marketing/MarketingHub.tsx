@@ -22,6 +22,7 @@ export default function MarketingHub() {
   // Calculate stats
   const activeBroadcasts = campaigns.filter(c => c.status === 'sending' || c.status === 'scheduled').length;
   const totalSent = campaigns.reduce((sum, c) => sum + c.sent_count, 0);
+  const totalRecipients = campaigns.reduce((sum, c) => sum + c.total_recipients, 0);
   const activeAutomations = automations.filter(a => a.is_active).length;
   const totalEnrolled = automations.reduce((sum, a) => sum + a.total_enrolled, 0);
 
@@ -59,7 +60,11 @@ export default function MarketingHub() {
             <CardContent>
               <div className="text-2xl font-bold">{totalSent.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">
-                Email & SMS combined
+                {totalRecipients > 0 && totalSent === 0 
+                  ? `${totalRecipients.toLocaleString()} recipients targeted`
+                  : totalRecipients > totalSent
+                  ? `${totalRecipients.toLocaleString()} total recipients`
+                  : 'Email & SMS combined'}
               </p>
             </CardContent>
           </Card>

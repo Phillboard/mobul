@@ -49,6 +49,7 @@ function MailDesignerContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const context = useDesignerContext(); // Get campaign context
+  const { currentClient } = useTenant(); // Get current client
 
   // UI State
   const [leftTab, setLeftTab] = useState<'ai' | 'elements' | 'upload'>('ai');
@@ -58,8 +59,8 @@ function MailDesignerContent() {
   const [currentSide, setCurrentSide] = useState<'front' | 'back' | number>('front');
   const [totalPages, setTotalPages] = useState(1);
   const [zoom, setZoom] = useState(100);
-  const [frontImageUrl, setFrontImageUrl] = useState<string | null>(mailPiece?.front_image_url || null);
-  const [backImageUrl, setBackImageUrl] = useState<string | null>(mailPiece?.back_image_url || null);
+  const [frontImageUrl, setFrontImageUrl] = useState<string | null>(null);
+  const [backImageUrl, setBackImageUrl] = useState<string | null>(null);
 
   // Fetch existing mail piece
   const { data: mailPiece, isLoading } = useQuery({
@@ -78,6 +79,14 @@ function MailDesignerContent() {
     },
     enabled: !!id,
   });
+
+  // Initialize image URLs from mailPiece when loaded
+  useEffect(() => {
+    if (mailPiece) {
+      setFrontImageUrl(mailPiece.front_image_url || null);
+      setBackImageUrl(mailPiece.back_image_url || null);
+    }
+  }, [mailPiece]);
 
   // Get format config
   const formatConfig = MAIL_FORMATS.find(f => f.id === currentFormat) || MAIL_FORMATS[0];

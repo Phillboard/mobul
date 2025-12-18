@@ -37,18 +37,4 @@ export { ExportDialog } from './components/ExportDialog';
 // Utilities
 // ============================================================================
 
-export {
-  classifyError,
-  validateHTML,
-  sanitizeHTML,
-  withRetry,
-  getUserFriendlyError,
-  logError,
-} from './utils/errorHandling';
-
-export type {
-  AIDesignerErrorType,
-  AIDesignerError,
-  HTMLValidationResult,
-  RetryConfig,
-} from './utils/errorHandling';
+export * from './utils';
