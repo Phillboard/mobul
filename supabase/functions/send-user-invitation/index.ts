@@ -156,8 +156,8 @@ serve(async (req) => {
       orgName = org?.name || "the organization";
     }
 
-    // Send invitation email
-    const inviteUrl = `${req.headers.get("origin")}/accept-invite?token=${invitation.token}`;
+    // Send invitation email - URL encode the token to handle special characters
+    const inviteUrl = `${req.headers.get("origin")}/accept-invite?token=${encodeURIComponent(invitation.token)}`;
     
     const roleDisplay = role.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
     

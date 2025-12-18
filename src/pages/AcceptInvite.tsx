@@ -13,7 +13,10 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 export default function AcceptInvite() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const token = searchParams.get("token");
+  // Get token and handle URL encoding issues (+ becomes space, etc.)
+  const rawToken = searchParams.get("token");
+  // Restore any + signs that were converted to spaces by URL parsing
+  const token = rawToken ? rawToken.replace(/ /g, '+') : null;
   
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -26,13 +29,22 @@ export default function AcceptInvite() {
     queryFn: async () => {
       if (!token) throw new Error("No invitation token provided");
 
+      console.log("Looking up invitation with token:", token);
+
       const { data, error } = await supabase
         .from("user_invitations")
         .select("*")
         .eq("token", token)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Invitation lookup error:", error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error("Invitation not found. It may have expired or already been used.");
+      }
       
       // Check if expired
       if (new Date(data.expires_at) < new Date()) {
@@ -40,7 +52,7 @@ export default function AcceptInvite() {
       }
 
       if (data.status !== "pending") {
-        throw new Error(`This invitation is ${data.status}`);
+        throw new Error(`This invitation has already been ${data.status}`);
       }
 
       return data;
