@@ -28,12 +28,12 @@ export const roleHierarchy: Record<AppRole, number> = {
 };
 
 export const roleColors: Record<AppRole, string> = {
-  admin: 'bg-red-100 text-red-700 border border-red-200',
-  tech_support: 'bg-blue-100 text-blue-700 border border-blue-200',
-  agency_owner: 'bg-purple-100 text-purple-700 border border-purple-200',
-  company_owner: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
-  developer: 'bg-amber-100 text-amber-700 border border-amber-200',
-  call_center: 'bg-slate-100 text-slate-700 border border-slate-200'
+  admin: 'bg-rose-50 text-rose-600 border border-rose-200',
+  tech_support: 'bg-sky-50 text-sky-600 border border-sky-200',
+  agency_owner: 'bg-violet-50 text-violet-600 border border-violet-200',
+  company_owner: 'bg-teal-50 text-teal-600 border border-teal-200',
+  developer: 'bg-orange-50 text-orange-600 border border-orange-200',
+  call_center: 'bg-slate-50 text-slate-600 border border-slate-200'
 };
 
 export function getRoleLevel(role: AppRole): number {
