@@ -8,6 +8,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { BrandLogo } from '@/features/gift-cards/components/BrandLogo';
 
 interface ConditionsDisplayProps {
   campaignId: string;
@@ -43,7 +44,7 @@ export function ConditionsDisplay({ campaignId }: ConditionsDisplayProps) {
       
       const { data, error } = await supabase
         .from("gift_card_brands")
-        .select("id, brand_name, logo_url")
+        .select("id, brand_name, logo_url, website_url")
         .in("id", brandIds);
       
       if (error) throw error;
@@ -185,8 +186,13 @@ export function ConditionsDisplay({ campaignId }: ConditionsDisplayProps) {
                           <Gift className="h-4 w-4 text-primary" />
                           <span className="text-muted-foreground">Reward:</span>
                           <div className="flex items-center gap-2">
-                            {brand?.logo_url && (
-                              <img src={brand.logo_url} alt={brand.brand_name} className="h-4 w-4 object-contain" />
+                            {brand && (
+                              <BrandLogo 
+                                logoUrl={brand.logo_url} 
+                                brandName={brand.brand_name}
+                                brandWebsite={(brand as any).website_url || null}
+                                size="xs"
+                              />
                             )}
                             <span className="font-medium">{brand?.brand_name || 'Gift Card'}</span>
                             <Badge variant="secondary">

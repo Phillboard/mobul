@@ -5,14 +5,17 @@
 -- SECTION 1: Seed Gift Card Brands (if missing)
 -- ============================================================================
 
-INSERT INTO gift_card_brands (brand_name, brand_code, provider, category, typical_denominations, logo_url, is_active)
-VALUES 
-  ('Amazon', 'amazon', 'tillo', 'retail', '[10, 25, 50, 100, 250]', 'https://logo.clearbit.com/amazon.com', true),
-  ('Starbucks', 'starbucks', 'tillo', 'food_beverage', '[5, 10, 15, 25, 50]', 'https://logo.clearbit.com/starbucks.com', true),
-  ('Target', 'target', 'tillo', 'retail', '[10, 25, 50, 100]', 'https://logo.clearbit.com/target.com', true),
-  ('Walmart', 'walmart', 'tillo', 'retail', '[10, 25, 50, 100, 250]', 'https://logo.clearbit.com/walmart.com', true),
-  ('Visa', 'visa', 'tillo', 'prepaid', '[25, 50, 100, 200]', 'https://logo.clearbit.com/visa.com', true)
-ON CONFLICT (brand_code) DO NOTHING;
+INSERT INTO gift_card_brands (brand_name, brand_code, provider, category, typical_denominations, logo_url, website_url, is_active)
+VALUES
+  ('Amazon', 'amazon', 'tillo', 'retail', '[10, 25, 50, 100, 250]', 'https://logo.clearbit.com/amazon.com', 'amazon.com', true),
+  ('Starbucks', 'starbucks', 'tillo', 'food_beverage', '[5, 10, 15, 25, 50]', 'https://logo.clearbit.com/starbucks.com', 'starbucks.com', true),
+  ('Target', 'target', 'tillo', 'retail', '[10, 25, 50, 100]', 'https://logo.clearbit.com/target.com', 'target.com', true),
+  ('Walmart', 'walmart', 'tillo', 'retail', '[10, 25, 50, 100, 250]', 'https://logo.clearbit.com/walmart.com', 'walmart.com', true),
+  ('Visa', 'visa', 'tillo', 'prepaid', '[25, 50, 100, 200]', 'https://logo.clearbit.com/visa.com', 'visa.com', true)
+ON CONFLICT (brand_code) 
+DO UPDATE SET 
+  website_url = EXCLUDED.website_url,
+  logo_url = EXCLUDED.logo_url;
 
 -- ============================================================================
 -- SECTION 2: Create Test Organization & Client (if missing)

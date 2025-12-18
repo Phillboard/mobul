@@ -26,7 +26,8 @@ export function GiftCardBrandCard({ brand, onToggle }: GiftCardBrandCardProps) {
           <div className="flex items-center gap-3 flex-1">
             <BrandLogo 
               logoUrl={brand.logo_url} 
-              brandName={brand.brand_name} 
+              brandName={brand.brand_name}
+              brandWebsite={(brand as any).website_url || null}
               size="md"
             />
             <div className="flex-1 min-w-0">

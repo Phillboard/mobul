@@ -24,6 +24,7 @@ interface Brand {
   brand_code: string;
   logo_url?: string;
   category?: GiftCardCategory;
+  website_url?: string;
 }
 
 interface Denomination {
@@ -66,7 +67,7 @@ export function useClientGiftCards(clientId: string | undefined) {
       // Get admin-enabled brands with their denominations
       const { data: brands, error: brandsError } = await supabase
         .from("gift_card_brands")
-        .select("id, brand_name, brand_code, logo_url, category")
+        .select("id, brand_name, brand_code, logo_url, category, website_url")
         .or("is_enabled_by_admin.eq.true,is_active.eq.true")
         .order("brand_name");
 

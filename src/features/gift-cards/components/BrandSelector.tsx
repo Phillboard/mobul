@@ -40,7 +40,8 @@ export function BrandSelector({ brands, selectedBrandId, onSelectBrand }: BrandS
               <div className="flex items-center justify-center h-16">
                 <BrandLogo 
                   logoUrl={brand.logo_url} 
-                  brandName={brand.brand_name} 
+                  brandName={brand.brand_name}
+                  brandWebsite={(brand as any).website_url || null}
                   size="lg" 
                 />
               </div>

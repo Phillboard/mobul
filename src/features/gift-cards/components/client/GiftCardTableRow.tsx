@@ -5,6 +5,7 @@
 import { TableCell, TableRow } from "@/shared/components/ui/table";
 import { Badge } from "@/shared/components/ui/badge";
 import { DenominationToggle } from "./DenominationToggle";
+import { BrandLogo } from "../BrandLogo";
 import type { BrandWithDenominations } from '@/features/gift-cards/hooks';
 
 interface GiftCardTableRowProps {
@@ -20,27 +21,12 @@ export function GiftCardTableRow({ brand, onToggle }: GiftCardTableRowProps) {
       {/* Brand Column */}
       <TableCell>
         <div className="flex items-center gap-3">
-          {brand.logo_url ? (
-            <img
-              src={brand.logo_url}
-              alt={brand.brand_name}
-              className="h-8 w-8 object-contain bg-white rounded"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                // Replace with initials fallback
-                const fallback = document.createElement('div');
-                fallback.className = 'h-8 w-8 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground';
-                fallback.textContent = brand.brand_name.substring(0, 2).toUpperCase();
-                target.replaceWith(fallback);
-              }}
-            />
-          ) : (
-            <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-              <span className="text-sm font-bold text-muted-foreground">
-                {brand.brand_name.charAt(0)}
-              </span>
-            </div>
-          )}
+          <BrandLogo
+            logoUrl={brand.logo_url}
+            brandName={brand.brand_name}
+            brandWebsite={(brand as any).website_url || null}
+            size="sm"
+          />
           <span className="font-medium">{brand.brand_name}</span>
         </div>
       </TableCell>

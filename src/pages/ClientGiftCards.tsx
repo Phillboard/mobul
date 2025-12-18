@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { CheckCircle, Gift, Info } from 'lucide-react';
+import { BrandLogo } from '@/features/gift-cards/components/BrandLogo';
 
 export function ClientGiftCards() {
   const { toast } = useToast();
@@ -143,13 +144,12 @@ export function ClientGiftCards() {
               <Card key={brand.id}>
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    {brand.logo_url && (
-                      <img
-                        src={brand.logo_url}
-                        alt={brand.brand_name}
-                        className="w-12 h-12 rounded object-contain"
-                      />
-                    )}
+                    <BrandLogo
+                      logoUrl={brand.logo_url}
+                      brandName={brand.brand_name}
+                      brandWebsite={(brand as any).website_url || null}
+                      size="lg"
+                    />
                     <div>
                       <CardTitle>{brand.brand_name}</CardTitle>
                       <p className="text-sm text-muted-foreground">{brand.category || 'Gift Card'}</p>
