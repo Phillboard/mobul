@@ -15,48 +15,94 @@ export function DeliveryTimelinePanel({ campaignId }: DeliveryTimelinePanelProps
   const { data: deliveries, isLoading } = useQuery({
     queryKey: ["campaign-gift-deliveries", campaignId],
     queryFn: async () => {
-      // Query the new billing ledger for gift card transactions
-      const { data, error } = await supabase
-        .from("gift_card_billing_ledger")
+      // Query recipient_gift_cards - simpler query
+      const { data: rgcData, error: rgcError } = await supabase
+        .from("recipient_gift_cards")
         .select(`
-          *,
+          id,
+          delivery_status,
+          created_at,
+          condition_id,
+          recipient_id,
+          gift_card_id,
           recipients (
             first_name,
             last_name,
             phone
-          ),
-          gift_card_brands (
-            brand_name
-          ),
-          gift_card_inventory (
-            card_code,
-            status
           )
         `)
         .eq("campaign_id", campaignId)
-        .order("billed_at", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.error("Billing ledger query error:", error);
+      if (rgcError) {
+        console.error("Recipient gift cards query error:", rgcError);
         return [];
       }
-      
-      // Transform to expected format
-      return (data || []).map(entry => ({
-        id: entry.id,
-        delivery_status: entry.gift_card_inventory?.status === 'delivered' ? 'delivered' : 'sent',
-        condition_number: 1, // Condition info would come from campaign_gift_card_config
-        created_at: entry.billed_at,
-        recipients: entry.recipients,
-        gift_cards: {
-          card_code: entry.gift_card_inventory?.card_code,
-          gift_card_pools: {
-            provider: entry.gift_card_brands?.brand_name || 'Gift Card',
-            card_value: entry.denomination
+
+      if (!rgcData || rgcData.length === 0) {
+        return [];
+      }
+
+      // Get all unique gift card IDs
+      const cardIds = rgcData
+        .map(entry => entry.gift_card_id)
+        .filter(Boolean);
+
+      if (cardIds.length === 0) {
+        return rgcData.map(entry => ({
+          id: entry.id,
+          delivery_status: entry.delivery_status,
+          condition_number: 1,
+          created_at: entry.created_at,
+          recipients: entry.recipients,
+          gift_cards: {
+            card_code: null,
+            gift_card_pools: {
+              provider: 'Gift Card',
+              card_value: 0
+            }
           }
-        }
-      }));
+        }));
+      }
+
+      // Query gift card inventory separately
+      const { data: inventoryData } = await supabase
+        .from("gift_card_inventory")
+        .select(`
+          id,
+          card_code,
+          denomination,
+          brand_id,
+          gift_card_brands (
+            brand_name
+          )
+        `)
+        .in("id", cardIds);
+
+      // Create a map of card data
+      const cardMap = new Map(
+        (inventoryData || []).map(card => [card.id, card])
+      );
+
+      // Combine the data
+      return rgcData.map(entry => {
+        const cardInfo = cardMap.get(entry.gift_card_id);
+        return {
+          id: entry.id,
+          delivery_status: entry.delivery_status,
+          condition_number: 1,
+          created_at: entry.created_at,
+          recipients: entry.recipients,
+          gift_cards: {
+            card_code: cardInfo?.card_code,
+            gift_card_pools: {
+              provider: cardInfo?.gift_card_brands?.brand_name || 'Gift Card',
+              card_value: cardInfo?.denomination || 0
+            }
+          }
+        };
+      });
     },
   });
 

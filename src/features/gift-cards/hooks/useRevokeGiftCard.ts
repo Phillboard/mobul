@@ -40,12 +40,19 @@ export function useRevokeGiftCard() {
         body: { assignmentId, reason }
       });
 
+      // Handle network/request errors
       if (error) {
-        throw new Error(error.message || 'Failed to revoke gift card');
+        // Check if we have error details in the data (common with HTTP errors)
+        const errorMessage = data?.error || data?.message || error.message || 'Failed to revoke gift card';
+        console.error('Revoke error:', { error, data, errorMessage });
+        throw new Error(errorMessage);
       }
 
+      // Handle business logic errors from the function
       if (!data.success) {
-        throw new Error(data.error || 'Failed to revoke gift card');
+        const errorMessage = data.error || data.message || 'Failed to revoke gift card';
+        console.error('Revoke failed:', { data, errorMessage });
+        throw new Error(errorMessage);
       }
 
       return data;

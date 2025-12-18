@@ -125,7 +125,24 @@ export function useCreateMarketingCampaign() {
     mutationFn: async (input: CreateCampaignInput) => {
       if (!currentClient?.id) throw new Error('No client selected');
 
-      // Create campaign
+      // Calculate recipient count before creating campaign
+      let recipientCount = 0;
+      try {
+        const { data: previewData } = await supabase.functions.invoke('preview-campaign-audience', {
+          body: {
+            clientId: currentClient.id,
+            audienceType: input.audience_type,
+            audienceConfig: input.audience_config,
+            campaignType: input.campaign_type,
+          },
+        });
+        recipientCount = previewData?.count || 0;
+      } catch (error) {
+        console.error('Failed to calculate recipients:', error);
+        // Continue with 0 if preview fails
+      }
+
+      // Create campaign with recipient count
       const { data: campaign, error: campaignError } = await supabase
         .from('marketing_campaigns')
         .insert({
@@ -138,6 +155,7 @@ export function useCreateMarketingCampaign() {
           linked_mail_campaign_id: input.linked_mail_campaign_id,
           scheduled_at: input.scheduled_at,
           status: input.scheduled_at ? 'scheduled' : 'draft',
+          total_recipients: recipientCount,
         })
         .select()
         .single();
@@ -430,6 +448,52 @@ export function useCancelMarketingCampaign() {
     },
     onError: (error: Error) => {
       toast.error(`Failed to cancel campaign: ${error.message}`);
+    },
+  });
+}
+
+// ============================================================================
+// REFRESH RECIPIENT COUNT
+// ============================================================================
+
+export function useRefreshCampaignRecipients() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Get campaign details
+      const { data: campaign, error: fetchError } = await supabase
+        .from('marketing_campaigns')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Calculate recipient count
+      const { data: previewData, error: previewError } = await supabase.functions.invoke('preview-campaign-audience', {
+        body: { campaignId: id },
+      });
+
+      if (previewError) throw previewError;
+
+      // Update campaign with recipient count
+      const { data, error: updateError } = await supabase
+        .from('marketing_campaigns')
+        .update({ total_recipients: previewData.count })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      return data as MarketingCampaign;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      toast.success('Recipient count updated');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update recipient count: ${error.message}`);
     },
   });
 }

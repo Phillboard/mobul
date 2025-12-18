@@ -6,11 +6,12 @@
  */
 
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Layout } from "@/shared/components/layout/Layout";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Mail, MessageSquare, Zap, Send, Users, TrendingUp, FileText } from "lucide-react";
-import { useMarketingCampaigns } from "@/features/marketing/hooks/useMarketingCampaigns";
+import { useMarketingCampaigns, useRefreshCampaignRecipients } from "@/features/marketing/hooks/useMarketingCampaigns";
 import { useMarketingAutomations } from "@/features/marketing/hooks/useMarketingAutomations";
 
 export default function MarketingHub() {
@@ -18,6 +19,24 @@ export default function MarketingHub() {
   
   const { data: campaigns = [], isLoading: campaignsLoading } = useMarketingCampaigns();
   const { data: automations = [], isLoading: automationsLoading } = useMarketingAutomations();
+  const { mutate: refreshRecipients } = useRefreshCampaignRecipients();
+  const [refreshedCampaigns, setRefreshedCampaigns] = useState<Set<string>>(new Set());
+  
+  // Auto-refresh recipient counts for campaigns with 0 total_recipients (once per campaign)
+  useEffect(() => {
+    if (!campaignsLoading && campaigns.length > 0) {
+      campaigns.forEach(campaign => {
+        if (
+          campaign.total_recipients === 0 && 
+          campaign.status === 'draft' && 
+          !refreshedCampaigns.has(campaign.id)
+        ) {
+          refreshRecipients(campaign.id);
+          setRefreshedCampaigns(prev => new Set(prev).add(campaign.id));
+        }
+      });
+    }
+  }, [campaigns, campaignsLoading, refreshedCampaigns.size]);
   
   // Calculate stats
   const activeBroadcasts = campaigns.filter(c => c.status === 'sending' || c.status === 'scheduled').length;
@@ -90,7 +109,9 @@ export default function MarketingHub() {
             <CardContent>
               <div className="text-2xl font-bold">{totalEnrolled.toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">
-                Contacts in workflows
+                {totalEnrolled === 0 && activeAutomations > 0
+                  ? `${activeAutomations} automation${activeAutomations === 1 ? '' : 's'} waiting for triggers`
+                  : 'Contacts in workflows'}
               </p>
             </CardContent>
           </Card>

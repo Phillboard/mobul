@@ -611,7 +611,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         logger.debug('[CALL-CENTER] Found contact:', contact.id, '- checking for campaign assignment...');
         
         // Find a recipient record linked to this contact (using direct contact_id link)
-        let { data: linkedRecipient, error: linkError } = await supabase
+        // NOTE: A contact can be in multiple campaigns, so we get all and pick the first active one
+        let { data: linkedRecipients, error: linkError } = await supabase
           .from("recipients")
           .select(`
             *,
@@ -629,8 +630,26 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
               name
             )
           `)
-          .eq("contact_id", contact.id)
-          .maybeSingle();
+          .eq("contact_id", contact.id);
+        
+        // If multiple recipients found (contact in multiple campaigns), prefer active campaigns
+        let linkedRecipient = null;
+        if (linkedRecipients && linkedRecipients.length > 0) {
+          const activeStatuses = ["in_production", "mailed", "scheduled"];
+          // First try to find a recipient in an active campaign
+          linkedRecipient = linkedRecipients.find(r => 
+            r.campaign && activeStatuses.includes(r.campaign.status)
+          );
+          // If no active campaigns, just take the first one (will show appropriate error later)
+          if (!linkedRecipient) {
+            linkedRecipient = linkedRecipients[0];
+          }
+          
+          // Log if contact is in multiple campaigns
+          if (linkedRecipients.length > 1) {
+            logger.debug(`[CALL-CENTER] Contact in ${linkedRecipients.length} campaigns, selected: ${linkedRecipient.campaign?.name || 'N/A'}`);
+          }
+        }
 
         // FALLBACK: If no recipient linked via contact_id, try matching by redemption_code
         // This handles cases where recipient exists with matching code but no contact_id link
@@ -743,13 +762,14 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         }
         
         // Check if there's a recipient linked to this contact but missing audience/campaign
-        const { data: orphanedContactRecipient } = await supabase
+        // NOTE: A contact can be in multiple campaigns, so check all recipients
+        const { data: orphanedContactRecipients } = await supabase
           .from("recipients")
           .select(`id, audience_id, audiences (id, name)`)
-          .eq("contact_id", contact.id)
-          .maybeSingle();
+          .eq("contact_id", contact.id);
         
-        if (orphanedContactRecipient) {
+        if (orphanedContactRecipients && orphanedContactRecipients.length > 0) {
+          const orphanedContactRecipient = orphanedContactRecipients[0]; // Check first one
           if (!orphanedContactRecipient.audience_id) {
             throw new Error(`Contact "${contact.first_name || ''} ${contact.last_name || ''}" has a recipient record but is not assigned to any audience. Please add to an audience first.`);
           }

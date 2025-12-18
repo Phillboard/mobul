@@ -30,8 +30,9 @@ Deno.serve(async (req) => {
     // Validate authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      const errorMsg = 'Unauthorized - No authorization header';
       return Response.json(
-        { success: false, error: 'Unauthorized - No authorization header' },
+        { success: false, error: errorMsg, message: errorMsg },
         { headers: corsHeaders, status: 401 }
       );
     }
@@ -53,8 +54,9 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     
     if (authError || !user) {
+      const errorMsg = 'Unauthorized - Invalid token';
       return Response.json(
-        { success: false, error: 'Unauthorized - Invalid token' },
+        { success: false, error: errorMsg, message: errorMsg },
         { headers: corsHeaders, status: 401 }
       );
     }
@@ -65,12 +67,22 @@ Deno.serve(async (req) => {
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
-    if (roleError || !userRole) {
-      console.log(`User ${user.id} attempted revoke without admin role`);
+    if (roleError) {
+      console.error(`Error checking admin role for user ${user.id}:`, roleError);
+      const errorMsg = 'Error verifying admin access';
       return Response.json(
-        { success: false, error: 'Forbidden - Admin access required' },
+        { success: false, error: errorMsg, message: errorMsg },
+        { headers: corsHeaders, status: 500 }
+      );
+    }
+
+    if (!userRole) {
+      console.log(`User ${user.id} attempted revoke without admin role`);
+      const errorMsg = 'Forbidden - Admin access required. Only administrators can revoke gift cards.';
+      return Response.json(
+        { success: false, error: errorMsg, message: errorMsg },
         { headers: corsHeaders, status: 403 }
       );
     }
@@ -81,15 +93,17 @@ Deno.serve(async (req) => {
 
     // Validate required fields
     if (!assignmentId) {
+      const errorMsg = 'Missing required field: assignmentId';
       return Response.json(
-        { success: false, error: 'Missing required field: assignmentId' },
+        { success: false, error: errorMsg, message: errorMsg },
         { headers: corsHeaders, status: 400 }
       );
     }
 
     if (!reason || reason.trim().length < 10) {
+      const errorMsg = 'Reason is required and must be at least 10 characters';
       return Response.json(
-        { success: false, error: 'Reason is required and must be at least 10 characters' },
+        { success: false, error: errorMsg, message: errorMsg },
         { headers: corsHeaders, status: 400 }
       );
     }
@@ -116,16 +130,18 @@ Deno.serve(async (req) => {
 
     if (fetchError || !assignment) {
       console.error('Assignment fetch error:', fetchError);
+      const errorMsg = 'Gift card assignment not found';
       return Response.json(
-        { success: false, error: 'Gift card assignment not found' },
+        { success: false, error: errorMsg, message: errorMsg },
         { headers: corsHeaders, status: 404 }
       );
     }
 
     // Check if already revoked
     if (assignment.delivery_status === 'revoked') {
+      const errorMsg = 'This gift card has already been revoked';
       return Response.json(
-        { success: false, error: 'This gift card has already been revoked' },
+        { success: false, error: errorMsg, message: errorMsg },
         { headers: corsHeaders, status: 400 }
       );
     }
@@ -187,8 +203,9 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error('Error updating recipient_gift_cards:', updateError);
+      const errorMsg = 'Failed to revoke gift card. Please try again or contact support.';
       return Response.json(
-        { success: false, error: 'Failed to revoke gift card' },
+        { success: false, error: errorMsg, message: errorMsg, details: updateError.message },
         { headers: corsHeaders, status: 500 }
       );
     }
@@ -262,8 +279,14 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error in revoke-gift-card:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return Response.json(
-      { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
+      { 
+        success: false, 
+        error: errorMessage,
+        message: errorMessage, // Include both for compatibility
+        details: error instanceof Error ? error.stack : undefined
+      },
       { status: 500, headers: corsHeaders }
     );
   }
