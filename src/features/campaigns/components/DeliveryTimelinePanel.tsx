@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { Badge } from "@/shared/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
-import { Gift, Clock, CheckCircle, XCircle, User } from "lucide-react";
+import { Gift, Clock, CheckCircle, XCircle, User, Undo2 } from "lucide-react";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
+import { RevokeGiftCardButton } from "@/features/gift-cards/components/RevokeGiftCardButton";
 
 interface DeliveryTimelinePanelProps {
   campaignId: string;
@@ -70,18 +71,22 @@ export function DeliveryTimelinePanel({ campaignId }: DeliveryTimelinePanelProps
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case "failed":
         return <XCircle className="h-4 w-4 text-red-600" />;
+      case "revoked":
+        return <Undo2 className="h-4 w-4 text-gray-400" />;
       default:
         return <Clock className="h-4 w-4 text-amber-600" />;
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): "default" | "destructive" | "secondary" | "outline" => {
     switch (status) {
       case "sent":
       case "delivered":
         return "default";
       case "failed":
         return "destructive";
+      case "revoked":
+        return "outline";
       default:
         return "secondary";
     }
@@ -97,57 +102,78 @@ export function DeliveryTimelinePanel({ campaignId }: DeliveryTimelinePanelProps
         <ScrollArea className="h-[400px] pr-4">
           {deliveries && deliveries.length > 0 ? (
             <div className="space-y-4">
-              {deliveries.map((delivery: any) => (
-                <div
-                  key={delivery.id}
-                  className="flex items-start gap-3 rounded-lg border p-3 hover:bg-muted/30 hover:border-primary/20 transition-all duration-200"
-                >
-                  <div className="mt-1">{getStatusIcon(delivery.delivery_status)}</div>
-                  
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <User className="h-3 w-3 text-muted-foreground" />
-                        <span className="font-medium text-sm">
-                          {delivery.recipients?.first_name} {delivery.recipients?.last_name}
-                        </span>
+              {deliveries.map((delivery: any) => {
+                const isRevoked = delivery.delivery_status === 'revoked';
+                const recipientName = `${delivery.recipients?.first_name || ''} ${delivery.recipients?.last_name || ''}`.trim();
+                
+                return (
+                  <div
+                    key={delivery.id}
+                    className={`flex items-start gap-3 rounded-lg border p-3 hover:bg-muted/30 hover:border-primary/20 transition-all duration-200 ${isRevoked ? 'opacity-60' : ''}`}
+                  >
+                    <div className="mt-1">{getStatusIcon(delivery.delivery_status)}</div>
+                    
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <User className="h-3 w-3 text-muted-foreground" />
+                          <span className={`font-medium text-sm ${isRevoked ? 'line-through' : ''}`}>
+                            {recipientName}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={getStatusColor(delivery.delivery_status)} 
+                            className={`text-xs ${isRevoked ? 'line-through' : ''}`}
+                          >
+                            {delivery.delivery_status}
+                          </Badge>
+                          {!isRevoked && (
+                            <RevokeGiftCardButton
+                              assignmentId={delivery.id}
+                              recipientName={recipientName}
+                              cardValue={delivery.gift_cards?.gift_card_pools?.card_value}
+                              brandName={delivery.gift_cards?.gift_card_pools?.provider}
+                              showText={false}
+                              size="icon"
+                              variant="ghost"
+                            />
+                          )}
+                        </div>
                       </div>
-                      <Badge variant={getStatusColor(delivery.delivery_status)} className="text-xs">
-                        {delivery.delivery_status}
-                      </Badge>
-                    </div>
 
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Gift className="h-3 w-3" />
-                      <span>
-                        ${delivery.gift_cards?.gift_card_pools?.card_value}{" "}
-                        {delivery.gift_cards?.gift_card_pools?.provider}
-                      </span>
-                      <span>•</span>
-                      <span>Condition #{delivery.condition_number}</span>
-                    </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Gift className="h-3 w-3" />
+                        <span className={isRevoked ? 'line-through' : ''}>
+                          ${delivery.gift_cards?.gift_card_pools?.card_value}{" "}
+                          {delivery.gift_cards?.gift_card_pools?.provider}
+                        </span>
+                        <span>•</span>
+                        <span>Condition #{delivery.condition_number}</span>
+                      </div>
 
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>
-                        {formatDistanceToNow(new Date(delivery.created_at), { addSuffix: true })}
-                      </span>
-                      {delivery.delivery_method === "sms" && (
-                        <>
-                          <span>•</span>
-                          <span className="font-mono">{delivery.recipients?.phone}</span>
-                        </>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                          {formatDistanceToNow(new Date(delivery.created_at), { addSuffix: true })}
+                        </span>
+                        {delivery.delivery_method === "sms" && (
+                          <>
+                            <span>•</span>
+                            <span className="font-mono">{delivery.recipients?.phone}</span>
+                          </>
+                        )}
+                      </div>
+
+                      {delivery.sms_error_message && (
+                        <div className="text-xs text-destructive mt-1">
+                          Error: {delivery.sms_error_message}
+                        </div>
                       )}
                     </div>
-
-                    {delivery.sms_error_message && (
-                      <div className="text-xs text-destructive mt-1">
-                        Error: {delivery.sms_error_message}
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">

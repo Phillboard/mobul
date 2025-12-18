@@ -1,6 +1,7 @@
 -- Backfill Script: Set campaign_id on recipients
 -- Run this AFTER adding the campaign_id column
 -- This script is safe to run multiple times
+-- Last updated: 2025-12-18
 
 -- Check current state
 SELECT 
@@ -10,12 +11,29 @@ SELECT
   COUNT(*) - COUNT(campaign_id) as missing_campaign_id
 FROM recipients;
 
--- Method 1: Via audiences table
+-- Method 1: Via audiences table (PRIMARY METHOD)
 -- This sets campaign_id based on campaigns.audience_id matching recipients.audience_id
+-- Prioritize active campaigns first
 UPDATE recipients r
-SET campaign_id = c.id
-FROM campaigns c
-WHERE c.audience_id = r.audience_id
+SET campaign_id = subq.campaign_id
+FROM (
+  SELECT DISTINCT ON (r2.id) 
+    r2.id as recipient_id,
+    c.id as campaign_id
+  FROM recipients r2
+  JOIN audiences a ON a.id = r2.audience_id
+  JOIN campaigns c ON c.audience_id = a.id
+  WHERE r2.campaign_id IS NULL
+  ORDER BY r2.id, 
+    CASE c.status 
+      WHEN 'mailed' THEN 1 
+      WHEN 'in_production' THEN 2 
+      WHEN 'scheduled' THEN 3 
+      ELSE 4 
+    END,
+    c.created_at DESC
+) subq
+WHERE r.id = subq.recipient_id
   AND r.campaign_id IS NULL;
 
 -- Check progress

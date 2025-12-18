@@ -7,7 +7,7 @@ import { Layout } from "@/shared/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Button } from "@/shared/components/ui/button";
-import { Plus, Upload, Package, Gift, Settings, DollarSign, CreditCard } from "lucide-react";
+import { Plus, Upload, Package, Gift, Settings, DollarSign, CreditCard, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
 import { formatCurrency } from '@/shared/utils/utils';
@@ -19,6 +19,7 @@ import { useGiftCardBrandsWithDenominations } from '@/features/gift-cards/hooks'
 import { Badge } from "@/shared/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
 import { AdminIndividualCardsView } from "@/features/gift-cards/components/AdminIndividualCardsView";
+import { AdminAssignedCardsView } from "@/features/gift-cards/components/AdminAssignedCardsView";
 import { ExpandableInventoryRow } from "@/features/gift-cards/components/ExpandableInventoryRow";
 
 export default function AdminGiftCardMarketplace() {
@@ -186,6 +187,10 @@ export default function AdminGiftCardMarketplace() {
             <TabsTrigger value="individual-cards">
               <CreditCard className="h-4 w-4 mr-2" />
               Individual Cards
+            </TabsTrigger>
+            <TabsTrigger value="assigned-cards">
+              <Users className="h-4 w-4 mr-2" />
+              Assigned Cards
             </TabsTrigger>
             <TabsTrigger value="pricing">Pricing Configuration</TabsTrigger>
           </TabsList>
@@ -366,6 +371,10 @@ export default function AdminGiftCardMarketplace() {
 
           <TabsContent value="individual-cards" className="space-y-4">
             <AdminIndividualCardsView />
+          </TabsContent>
+
+          <TabsContent value="assigned-cards" className="space-y-4">
+            <AdminAssignedCardsView />
           </TabsContent>
 
           <TabsContent value="pricing" className="space-y-4">

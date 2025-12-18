@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
-import { Gift, TrendingUp, DollarSign, Package } from "lucide-react";
+import { Gift, TrendingUp, DollarSign, Package, Undo2 } from "lucide-react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 interface GiftCardSummaryCardProps {
@@ -54,11 +54,29 @@ export function GiftCardSummaryCard({ clientId }: GiftCardSummaryCardProps) {
 
       const recentValue = recentBilling?.reduce((sum, b) => sum + (b.denomination || 0), 0) || 0;
 
+      // Get revoked count for this client's campaigns
+      const { data: clientCampaigns } = await supabase
+        .from("campaigns")
+        .select("id")
+        .eq("client_id", clientId);
+
+      let revokedCards = 0;
+      if (clientCampaigns && clientCampaigns.length > 0) {
+        const campaignIds = clientCampaigns.map(c => c.id);
+        const { count } = await supabase
+          .from("recipient_gift_cards")
+          .select("*", { count: "exact", head: true })
+          .in("campaign_id", campaignIds)
+          .eq("delivery_status", "revoked");
+        revokedCards = count || 0;
+      }
+
       return {
         totalValue,
         totalCards,
         availableCards,
         deliveredCards,
+        revokedCards,
         recentValue,
         recentCount: recentBilling?.length || 0,
         pools: 0, // No longer using pools
@@ -81,7 +99,7 @@ export function GiftCardSummaryCard({ clientId }: GiftCardSummaryCardProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className={`grid gap-4 md:grid-cols-2 ${(summary?.revokedCards || 0) > 0 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Inventory Value</CardTitle>
@@ -133,6 +151,21 @@ export function GiftCardSummaryCard({ clientId }: GiftCardSummaryCardProps) {
           </p>
         </CardContent>
       </Card>
+
+      {(summary?.revokedCards || 0) > 0 && (
+        <Card className="bg-gray-50 dark:bg-gray-800/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revoked</CardTitle>
+            <Undo2 className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-600">{summary?.revokedCards}</div>
+            <p className="text-xs text-muted-foreground">
+              Cards returned to inventory
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

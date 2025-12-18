@@ -16,6 +16,7 @@ import {
   Shield,
   Activity,
   UserCircle2,
+  Undo2,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
@@ -23,13 +24,14 @@ export function PlatformDashboard() {
   const { data: platformStats, isLoading } = useQuery({
     queryKey: ['platform-stats'],
     queryFn: async () => {
-      const [orgsRes, clientsRes, usersRes, campaignsRes, callsRes, giftsRes] = await Promise.all([
+      const [orgsRes, clientsRes, usersRes, campaignsRes, callsRes, giftsRes, revokedRes] = await Promise.all([
         supabase.from('organizations').select('id, name, type, created_at'),
         supabase.from('clients').select('id, name, industry, org_id, created_at'),
         supabase.from('profiles').select('id, full_name, email, created_at'),
         supabase.from('campaigns').select('id, name, status, created_at'),
         supabase.from('call_sessions').select('id, created_at'),
         supabase.from('gift_card_billing_ledger').select('id, billed_at'),
+        supabase.from('recipient_gift_cards').select('id', { count: 'exact', head: true }).eq('delivery_status', 'revoked'),
       ]);
 
       if (orgsRes.error) throw orgsRes.error;
@@ -65,6 +67,7 @@ export function PlatformDashboard() {
         activeCampaigns: campaignsRes.data?.filter(c => c.status === 'mailed' || c.status === 'in_production').length || 0,
         totalCalls: callsRes.data?.length || 0,
         totalGiftCards: giftsRes.data?.length || 0,
+        totalRevoked: revokedRes.count || 0,
         industryData,
         campaignsByStatus,
         organizations: orgsRes.data || [],
@@ -123,6 +126,13 @@ export function PlatformDashboard() {
       color: "text-pink-600",
       bgGradient: "from-pink-600/10 via-pink-600/5 to-transparent",
     },
+    ...(platformStats?.totalRevoked ? [{
+      title: "Cards Revoked",
+      value: platformStats.totalRevoked,
+      icon: Undo2,
+      color: "text-gray-500",
+      bgGradient: "from-gray-500/10 via-gray-500/5 to-transparent",
+    }] : []),
   ];
 
   const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];

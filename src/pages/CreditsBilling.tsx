@@ -61,12 +61,12 @@ interface CreditTransaction {
 
 export default function CreditsBilling() {
   const { currentClient, currentOrg, clients } = useTenant();
-  const { roles, hasRole } = useAuth();
+  const { hasRole } = useAuth();
   const queryClient = useQueryClient();
   
-  const isAdmin = hasRole('admin');
-  const isAgencyOwner = hasRole('agency_owner');
-  const isCompanyOwner = hasRole('company_owner');
+  const isAdmin = hasRole?.('admin') ?? false;
+  const isAgencyOwner = hasRole?.('agency_owner') ?? false;
+  const isCompanyOwner = hasRole?.('company_owner') ?? false;
   const isAdminOrAgency = isAdmin || isAgencyOwner;
   
   // State
@@ -82,7 +82,7 @@ export default function CreditsBilling() {
   const targetClientId = isAdminOrAgency ? (selectedClientId || currentClient?.id) : currentClient?.id;
   
   // Fetch credit account for target client
-  const { data: creditAccount, isLoading: loadingAccount, refetch: refetchAccount } = useQuery({
+  const { data: creditAccount, isLoading: loadingAccount, refetch: refetchAccount, error: accountError } = useQuery({
     queryKey: ["credit-account", "client", targetClientId],
     queryFn: async () => {
       if (!targetClientId) return null;
@@ -94,10 +94,14 @@ export default function CreditsBilling() {
         .eq("entity_id", targetClientId)
         .single();
       
-      if (error && error.code !== "PGRST116") throw error;
+      if (error && error.code !== "PGRST116") {
+        console.error("Error fetching credit account:", error);
+        throw error;
+      }
       return data as CreditAccount | null;
     },
     enabled: !!targetClientId,
+    retry: false,
   });
 
   // Fetch transaction history
@@ -125,14 +129,31 @@ export default function CreditsBilling() {
     queryFn: async () => {
       if (!targetClientId) return null;
       
-      const { data, error } = await supabase
+      // First get client data
+      const { data: clientData, error: clientError } = await supabase
         .from("clients")
-        .select("id, name, agency_id, agencies(name)")
+        .select("id, name, agency_id")
         .eq("id", targetClientId)
         .single();
       
-      if (error) throw error;
-      return data;
+      if (clientError) throw clientError;
+      
+      // Try to get agency name if user has permission (optional)
+      let agencyName = null;
+      if (clientData?.agency_id) {
+        const { data: agencyData } = await supabase
+          .from("agencies")
+          .select("name")
+          .eq("id", clientData.agency_id)
+          .single();
+        
+        agencyName = agencyData?.name || null;
+      }
+      
+      return {
+        ...clientData,
+        agencies: agencyName ? { name: agencyName } : null
+      };
     },
     enabled: !!targetClientId,
   });
@@ -275,6 +296,35 @@ export default function CreditsBilling() {
     : 0;
 
   const lowBalance = creditAccount && creditAccount.total_remaining < 100;
+
+  // Error handling
+  if (accountError) {
+    return (
+      <Layout>
+        <div className="container mx-auto py-8 max-w-6xl">
+          <Card className="border-red-500/50 bg-red-500/5">
+            <CardContent className="py-8">
+              <div className="flex flex-col items-center gap-4 text-center">
+                <AlertCircle className="h-12 w-12 text-red-500" />
+                <div>
+                  <h3 className="text-lg font-semibold text-red-700 dark:text-red-400">
+                    Error Loading Credit Account
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {accountError instanceof Error ? accountError.message : 'An unexpected error occurred'}
+                  </p>
+                </div>
+                <Button onClick={() => refetchAccount()}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!currentClient && !isAdmin) {
     return (

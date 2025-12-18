@@ -610,8 +610,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       if (contact) {
         logger.debug('[CALL-CENTER] Found contact:', contact.id, '- checking for campaign assignment...');
         
-        // Find a recipient record linked to this contact (using direct campaign link)
-        const { data: linkedRecipient, error: linkError } = await supabase
+        // Find a recipient record linked to this contact (using direct contact_id link)
+        let { data: linkedRecipient, error: linkError } = await supabase
           .from("recipients")
           .select(`
             *,
@@ -632,8 +632,83 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           .eq("contact_id", contact.id)
           .maybeSingle();
 
+        // FALLBACK: If no recipient linked via contact_id, try matching by redemption_code
+        // This handles cases where recipient exists with matching code but no contact_id link
+        if (!linkedRecipient && contact.customer_code) {
+          logger.debug('[CALL-CENTER] No recipient via contact_id, trying redemption_code match...');
+          const { data: codeMatchedRecipient } = await supabase
+            .from("recipients")
+            .select(`
+              *,
+              campaign:campaigns (
+                id,
+                name,
+                status,
+                client_id,
+                clients (id, name),
+                campaign_conditions (*),
+                campaign_gift_card_config (*)
+              ),
+              audience:audiences (
+                id,
+                name
+              )
+            `)
+            .eq("redemption_code", contact.customer_code.toUpperCase())
+            .maybeSingle();
+          
+          if (codeMatchedRecipient) {
+            linkedRecipient = codeMatchedRecipient;
+            logger.debug('[CALL-CENTER] Found recipient via redemption_code match:', linkedRecipient.id);
+            
+            // Backfill contact_id for future lookups (fire and forget)
+            supabase
+              .from("recipients")
+              .update({ contact_id: contact.id })
+              .eq("id", linkedRecipient.id)
+              .then(() => logger.debug('[CALL-CENTER] Backfilled contact_id for recipient:', linkedRecipient.id));
+          }
+        }
+
         if (linkedRecipient) {
-          logger.debug('[CALL-CENTER] Found linked recipient via contact');
+          logger.debug('[CALL-CENTER] Found linked recipient via contact:', {
+            recipientId: linkedRecipient.id,
+            hasDirectCampaign: !!linkedRecipient.campaign,
+            campaignId: linkedRecipient.campaign?.id || null,
+            audienceId: linkedRecipient.audience_id || null,
+            audienceName: (linkedRecipient.audience as any)?.name || null,
+          });
+          
+          // FALLBACK: If no direct campaign link, try via audience (for old data without campaign_id)
+          if (!linkedRecipient.campaign && linkedRecipient.audience_id) {
+            logger.debug('[CALL-CENTER] No direct campaign_id, trying audience fallback...');
+            const { data: audienceCampaign } = await supabase
+              .from("campaigns")
+              .select(`
+                id,
+                name,
+                status,
+                client_id,
+                clients (id, name),
+                campaign_conditions (*),
+                campaign_gift_card_config (*)
+              `)
+              .eq("audience_id", linkedRecipient.audience_id)
+              .maybeSingle();
+            
+            if (audienceCampaign) {
+              linkedRecipient.campaign = audienceCampaign;
+              
+              // Backfill campaign_id for future lookups (fire and forget)
+              supabase
+                .from("recipients")
+                .update({ campaign_id: audienceCampaign.id })
+                .eq("id", linkedRecipient.id)
+                .then(() => logger.debug('[CALL-CENTER] Backfilled campaign_id for recipient:', linkedRecipient.id));
+              
+              logger.debug('[CALL-CENTER] Found campaign via audience fallback:', audienceCampaign.id);
+            }
+          }
           
           // Check campaign status - only allow active campaigns for redemption
           // Active statuses: in_production, mailed, scheduled

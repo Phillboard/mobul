@@ -1,78 +1,110 @@
--- Campaign-Audience Data Linking Script
--- Purpose: Link existing campaigns to their audiences for analytics display
+-- Fix Campaign-Audience Links and Backfill campaign_id
+-- Run this in Supabase SQL Editor
+-- Date: 2025-12-18
 
--- Update campaigns to link to their audiences based on recipients
--- This fixes the "No Audience" issue that prevents analytics from displaying
+-- =====================================================
+-- STEP 1: DIAGNOSE THE PROBLEM
+-- =====================================================
 
-DO $$
-DECLARE
-  campaign_record RECORD;
-  linked_count INTEGER := 0;
-BEGIN
-  -- Loop through campaigns without audience_id
-  FOR campaign_record IN 
-    SELECT id, name FROM campaigns WHERE audience_id IS NULL
-  LOOP
-    -- Try to find contact list from recipients
-    UPDATE campaigns c
-    SET audience_id = (
-      SELECT DISTINCT r.contact_list_id 
-      FROM recipients r 
-      WHERE r.campaign_id = campaign_record.id 
-        AND r.contact_list_id IS NOT NULL
-      LIMIT 1
-    )
-    WHERE c.id = campaign_record.id
-      AND EXISTS (
-        SELECT 1 FROM recipients r 
-        WHERE r.campaign_id = campaign_record.id 
-          AND r.contact_list_id IS NOT NULL
-      );
-    
-    IF FOUND THEN
-      linked_count := linked_count + 1;
-      RAISE NOTICE 'Linked campaign: % (ID: %)', campaign_record.name, campaign_record.id;
-    END IF;
-  END LOOP;
-  
-  RAISE NOTICE 'Total campaigns linked: %', linked_count;
-  
-  -- Also fix any campaigns with recipients but no audience
-  UPDATE campaigns c
-  SET audience_id = (
-    SELECT DISTINCT contact_list_id 
-    FROM recipients r 
-    WHERE r.campaign_id = c.id 
-      AND r.contact_list_id IS NOT NULL
-    LIMIT 1
-  )
-  WHERE audience_id IS NULL
-    AND EXISTS (
-      SELECT 1 FROM recipients r 
-      WHERE r.campaign_id = c.id 
-        AND r.contact_list_id IS NOT NULL
-    );
-    
-  GET DIAGNOSTICS linked_count = ROW_COUNT;
-  RAISE NOTICE 'Additional campaigns auto-linked: %', linked_count;
-  
-END $$;
-
--- Verify the fix
+-- Check how many campaigns have audience_id set
 SELECT 
+  'CAMPAIGNS AUDIT' as report_type,
   COUNT(*) as total_campaigns,
-  COUNT(audience_id) as campaigns_with_audience,
-  COUNT(*) - COUNT(audience_id) as campaigns_missing_audience
+  COUNT(audience_id) as with_audience_id,
+  COUNT(*) - COUNT(audience_id) as missing_audience_id
 FROM campaigns;
 
--- Show campaigns that still need manual attention
+-- Check campaigns that SHOULD have audiences (have recipients via their audience)
+-- This finds campaigns where audience.name matches the campaign pattern
 SELECT 
-  id,
-  name,
-  status,
-  created_at,
-  (SELECT COUNT(*) FROM recipients r WHERE r.campaign_id = campaigns.id) as recipient_count
-FROM campaigns
-WHERE audience_id IS NULL
-ORDER BY created_at DESC;
+  c.id as campaign_id,
+  c.name as campaign_name,
+  c.audience_id as current_audience_id,
+  a.id as matching_audience_id,
+  a.name as audience_name,
+  (SELECT COUNT(*) FROM recipients r WHERE r.audience_id = a.id) as recipient_count
+FROM campaigns c
+LEFT JOIN audiences a ON 
+  a.name LIKE c.name || '%' OR 
+  a.name LIKE '%' || c.name || '%' OR
+  c.name LIKE a.name || '%'
+WHERE c.audience_id IS NULL
+  AND a.id IS NOT NULL
+ORDER BY c.created_at DESC
+LIMIT 20;
 
+-- =====================================================
+-- STEP 2: FIX CAMPAIGN -> AUDIENCE LINKS
+-- =====================================================
+
+-- Method 1: Link campaigns to audiences by matching names
+-- Many campaigns have audiences named "{campaign_name} - Recipients"
+UPDATE campaigns c
+SET audience_id = a.id
+FROM audiences a
+WHERE c.audience_id IS NULL
+  AND (
+    a.name = c.name || ' - Recipients' OR
+    a.name LIKE c.name || '%'
+  );
+
+-- Check how many campaigns were fixed
+SELECT 
+  'AFTER CAMPAIGN FIX' as report_type,
+  COUNT(*) as total_campaigns,
+  COUNT(audience_id) as with_audience_id,
+  COUNT(*) - COUNT(audience_id) as missing_audience_id
+FROM campaigns;
+
+-- =====================================================
+-- STEP 3: BACKFILL RECIPIENTS campaign_id
+-- =====================================================
+
+-- Now that campaigns have audience_id, backfill recipients
+UPDATE recipients r
+SET campaign_id = subq.campaign_id
+FROM (
+  SELECT DISTINCT ON (r2.id) 
+    r2.id as recipient_id,
+    c.id as campaign_id
+  FROM recipients r2
+  JOIN audiences a ON a.id = r2.audience_id
+  JOIN campaigns c ON c.audience_id = a.id
+  WHERE r2.campaign_id IS NULL
+  ORDER BY r2.id, 
+    CASE c.status 
+      WHEN 'mailed' THEN 1 
+      WHEN 'in_production' THEN 2 
+      WHEN 'scheduled' THEN 3 
+      ELSE 4 
+    END,
+    c.created_at DESC
+) subq
+WHERE r.id = subq.recipient_id
+  AND r.campaign_id IS NULL;
+
+-- =====================================================
+-- STEP 4: VERIFY RESULTS
+-- =====================================================
+
+SELECT 
+  'FINAL RECIPIENTS STATUS' as report_type,
+  COUNT(*) as total_recipients,
+  COUNT(campaign_id) as with_campaign_id,
+  COUNT(*) - COUNT(campaign_id) as still_missing
+FROM recipients;
+
+-- Show remaining orphans (if any)
+SELECT 
+  r.id,
+  r.redemption_code,
+  r.first_name,
+  r.last_name,
+  r.audience_id,
+  a.name as audience_name,
+  (SELECT COUNT(*) FROM campaigns c WHERE c.audience_id = a.id) as campaigns_for_audience
+FROM recipients r
+LEFT JOIN audiences a ON a.id = r.audience_id
+WHERE r.campaign_id IS NULL
+ORDER BY r.created_at DESC
+LIMIT 20;

@@ -72,9 +72,19 @@ export function useRewardStats(campaignId: string | null) {
         return null;
       }
 
-      // Calculate total value directly from billing ledger
-      const totalValue = billing?.reduce((sum, entry) => sum + (Number(entry.denomination) || 0), 0) || 0;
-      const totalDelivered = billing?.length || 0;
+      // Get revoked count from recipient_gift_cards
+      const { count: revokedCount } = await supabase
+        .from('recipient_gift_cards')
+        .select('*', { count: 'exact', head: true })
+        .eq('campaign_id', campaignId)
+        .eq('delivery_status', 'revoked');
+
+      // Calculate total value directly from billing ledger (excluding revoked)
+      const activeEntries = billing?.filter(b => 
+        b.gift_card_inventory?.status !== 'revoked'
+      ) || [];
+      const totalValue = activeEntries.reduce((sum, entry) => sum + (Number(entry.denomination) || 0), 0);
+      const totalDelivered = activeEntries.length;
       
       // Count by status
       const deliveredCount = billing?.filter(b => 
@@ -87,24 +97,25 @@ export function useRewardStats(campaignId: string | null) {
         b.gift_card_inventory?.status === 'failed'
       ).length || 0;
 
-      // Group by date for timeline
-      const billingByDate = billing?.reduce((acc, entry) => {
+      // Group by date for timeline (exclude revoked)
+      const billingByDate = activeEntries.reduce((acc, entry) => {
         const date = new Date(entry.billed_at).toLocaleDateString();
         if (!acc[date]) acc[date] = { count: 0, value: 0 };
         acc[date].count++;
         acc[date].value += Number(entry.denomination) || 0;
         return acc;
-      }, {} as Record<string, { count: number; value: number }>) || {};
+      }, {} as Record<string, { count: number; value: number }>);
 
       // Create a default condition entry for display
-      const byCondition: Record<number, { count: number; totalValue: number; delivered: number; failed: number; pending: number }> = {};
-      if (totalDelivered > 0) {
+      const byCondition: Record<number, { count: number; totalValue: number; delivered: number; failed: number; pending: number; revoked: number }> = {};
+      if (totalDelivered > 0 || (revokedCount || 0) > 0) {
         byCondition[1] = {
           count: totalDelivered,
           totalValue,
           delivered: deliveredCount,
           failed: failedCount,
           pending: pendingCount,
+          revoked: revokedCount || 0,
         };
       }
 
@@ -113,6 +124,7 @@ export function useRewardStats(campaignId: string | null) {
         totalValue,
         totalDelivered,
         totalFailed: failedCount,
+        totalRevoked: revokedCount || 0,
         timeline: Object.entries(billingByDate).map(([date, data]) => ({
           date,
           count: data.count,
@@ -197,7 +209,7 @@ export function useRewardSummary(clientId: string | null, dateRange: number) {
 
       if (error) {
         console.error('Reward summary query error:', error);
-        return { totalDelivered: 0, todayCount: 0, todayTrend: 0, totalValue: 0, pendingCount: 0 };
+        return { totalDelivered: 0, todayCount: 0, todayTrend: 0, totalValue: 0, pendingCount: 0, revokedCount: 0 };
       }
 
       const totalDelivered = billing?.length || 0;
@@ -227,12 +239,30 @@ export function useRewardSummary(clientId: string | null, dateRange: number) {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'assigned');
 
+      // Get revoked count for this client's campaigns
+      const { data: clientCampaigns } = await supabase
+        .from('campaigns')
+        .select('id')
+        .eq('client_id', clientId);
+
+      let revokedCount = 0;
+      if (clientCampaigns && clientCampaigns.length > 0) {
+        const campaignIds = clientCampaigns.map(c => c.id);
+        const { count } = await supabase
+          .from('recipient_gift_cards')
+          .select('*', { count: 'exact', head: true })
+          .in('campaign_id', campaignIds)
+          .eq('delivery_status', 'revoked');
+        revokedCount = count || 0;
+      }
+
       return {
         totalDelivered,
         todayCount,
         todayTrend,
         totalValue,
         pendingCount: pendingCount || 0,
+        revokedCount,
       };
     },
     enabled: !!clientId,

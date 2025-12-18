@@ -16,7 +16,7 @@ import { supabase } from '@core/services/supabase';
 import { Button } from '@/shared/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
-import { Sparkles, Layers as LayersIcon, Settings, PanelRightClose, PanelRight } from 'lucide-react';
+import { Sparkles, Layers as LayersIcon, Settings, PanelRightClose, PanelRight, Upload } from 'lucide-react';
 import { useToast } from '@shared/hooks';
 import { useTenant } from '@/contexts/TenantContext';
 import {
@@ -35,6 +35,7 @@ import {
   DesignerContextProvider,
   LoadingOverlay,
   useDesignerContext,
+  DesignUploader,
 } from '@/features/designer';
 import { DesignerHeader, MAIL_FORMATS } from '@/features/designer/components/DesignerHeader';
 import { AIAssistantPanel } from '@/features/designer/components/AIAssistantPanel';
@@ -50,13 +51,15 @@ function MailDesignerContent() {
   const context = useDesignerContext(); // Get campaign context
 
   // UI State
-  const [leftTab, setLeftTab] = useState<'ai' | 'elements'>('ai');
+  const [leftTab, setLeftTab] = useState<'ai' | 'elements' | 'upload'>('ai');
   const [rightTab, setRightTab] = useState<'properties' | 'layers'>('properties');
   const [isRightPanelDocked, setIsRightPanelDocked] = useState(true);
   const [currentFormat, setCurrentFormat] = useState('postcard-6x4'); // Default to 6x4 LANDSCAPE
   const [currentSide, setCurrentSide] = useState<'front' | 'back' | number>('front');
   const [totalPages, setTotalPages] = useState(1);
   const [zoom, setZoom] = useState(100);
+  const [frontImageUrl, setFrontImageUrl] = useState<string | null>(mailPiece?.front_image_url || null);
+  const [backImageUrl, setBackImageUrl] = useState<string | null>(mailPiece?.back_image_url || null);
 
   // Fetch existing mail piece
   const { data: mailPiece, isLoading } = useQuery({
@@ -163,20 +166,32 @@ function MailDesignerContent() {
    */
   const saveMutation = useMutation({
     mutationFn: async () => {
+      if (!currentClient?.id && (id === 'new' || !mailPiece)) {
+        throw new Error('No client selected');
+      }
+
       const canvasStateJSON = JSON.stringify({
         ...designerState.canvasState,
         format: currentFormat,
         sides: currentSide,
       });
 
+      // Prepare the data object
+      const saveData = {
+        name: mailPiece?.name || 'Untitled Mail Piece',
+        size: formatConfig.name,
+        canvas_state: canvasStateJSON,
+        front_image_url: frontImageUrl,
+        back_image_url: backImageUrl,
+        updated_at: new Date().toISOString(),
+      };
+
       if (id === 'new' || !mailPiece) {
         const { data, error } = await supabase
           .from('templates')
           .insert({
-            name: 'Untitled Mail Piece',
-            size: formatConfig.name,
-            canvas_state: canvasStateJSON,
-            is_active: true,
+            ...saveData,
+            client_id: currentClient!.id,
           })
           .select()
           .single();
@@ -186,11 +201,7 @@ function MailDesignerContent() {
       } else {
         const { data, error } = await supabase
           .from('templates')
-          .update({
-            canvas_state: canvasStateJSON,
-            size: formatConfig.name,
-            updated_at: new Date().toISOString(),
-          })
+          .update(saveData)
           .eq('id', id)
           .select()
           .single();
@@ -295,7 +306,7 @@ function MailDesignerContent() {
         onRedo={history.redo}
         zoom={zoom}
         onZoomChange={setZoom}
-        canSave={designerState.isDirty}
+        canSave={designerState.isDirty || !!frontImageUrl || !!backImageUrl || (id === 'new')}
         isSaving={saveMutation.isPending}
         onSave={() => saveMutation.mutate()}
         isExporting={exporter.isExporting}
@@ -307,38 +318,86 @@ function MailDesignerContent() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         
-        {/* ========== LEFT PANEL - AI Assistant / Elements ========== */}
+        {/* ========== LEFT PANEL - AI Assistant / Elements / Upload ========== */}
         <div className="w-80 border-r bg-card flex flex-col">
           {/* Tab Toggle */}
           <div className="border-b p-1">
-            <div className="flex bg-muted rounded-lg p-1">
+            <div className="grid grid-cols-3 bg-muted rounded-lg p-1">
               <button
                 onClick={() => setLeftTab('ai')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center justify-center gap-1 py-2 px-2 rounded-md text-sm font-medium transition-colors ${
                   leftTab === 'ai'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Sparkles className="h-4 w-4" />
-                AI Assistant
+                <span className="hidden sm:inline">AI</span>
               </button>
               <button
                 onClick={() => setLeftTab('elements')}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center justify-center gap-1 py-2 px-2 rounded-md text-sm font-medium transition-colors ${
                   leftTab === 'elements'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <LayersIcon className="h-4 w-4" />
-                Elements
+                <span className="hidden sm:inline">Build</span>
+              </button>
+              <button
+                onClick={() => setLeftTab('upload')}
+                className={`flex items-center justify-center gap-1 py-2 px-2 rounded-md text-sm font-medium transition-colors ${
+                  leftTab === 'upload'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Upload className="h-4 w-4" />
+                <span className="hidden sm:inline">Upload</span>
               </button>
             </div>
           </div>
 
           {/* Tab Content */}
-          {leftTab === 'ai' ? (
+          {leftTab === 'upload' ? (
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-6">
+                <div>
+                  <h3 className="text-sm font-semibold mb-3">Upload Designs</h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Upload pre-designed front and back images for your mail piece
+                  </p>
+                </div>
+                
+                <DesignUploader
+                  side="front"
+                  currentImageUrl={frontImageUrl}
+                  onImageUpload={(url) => {
+                    setFrontImageUrl(url);
+                    designerState.markDirty();
+                  }}
+                  onImageRemove={() => {
+                    setFrontImageUrl(null);
+                    designerState.markDirty();
+                  }}
+                />
+                
+                <DesignUploader
+                  side="back"
+                  currentImageUrl={backImageUrl}
+                  onImageUpload={(url) => {
+                    setBackImageUrl(url);
+                    designerState.markDirty();
+                  }}
+                  onImageRemove={() => {
+                    setBackImageUrl(null);
+                    designerState.markDirty();
+                  }}
+                />
+              </div>
+            </ScrollArea>
+          ) : leftTab === 'ai' ? (
             <AIAssistantPanel
               messages={ai.messages}
               isGenerating={ai.isGenerating}

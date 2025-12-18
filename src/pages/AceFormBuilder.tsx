@@ -15,7 +15,7 @@ import {
   AIFormGenerator,
   KeyboardShortcutsHelp 
 } from "@/features/ace-forms/components";
-import { FormBuilderProvider, useFormBuilder } from "@/contexts/FormBuilderContext";
+import { FormBuilderProvider, useFormBuilder } from "@app/providers/FormBuilderProvider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { useToast } from '@/shared/hooks';

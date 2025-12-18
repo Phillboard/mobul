@@ -6,6 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/shared/components/ui/badge";
 import { formatDate, DATE_FORMATS } from '@shared/utils/date';
 import { formatCurrency } from '@shared/utils/currency';
+import { RevokeGiftCardButton } from "./RevokeGiftCardButton";
 
 export interface DeliveryHistoryRow {
   id: string;
@@ -30,14 +31,22 @@ export interface DeliveryHistoryRow {
 }
 
 const getDeliveryStatusBadge = (status: string) => {
-  const variants: Record<string, "default" | "destructive" | "outline"> = {
+  const variants: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
     sent: "default",
+    delivered: "default",
     failed: "destructive",
     bounced: "destructive",
+    pending: "secondary",
+    revoked: "outline",
   };
   
+  const isRevoked = status === 'revoked';
+  
   return (
-    <Badge variant={variants[status] || "outline"}>
+    <Badge 
+      variant={variants[status] || "outline"}
+      className={isRevoked ? 'line-through opacity-60' : ''}
+    >
       {status}
     </Badge>
   );
@@ -128,7 +137,35 @@ export function createDeliveryHistoryColumns(): ColumnDef<DeliveryHistoryRow>[] 
       accessorKey: "delivery_status",
       header: "Status",
       cell: ({ row }) => getDeliveryStatusBadge(row.getValue("delivery_status")),
-        filterFn: "equals",
+      filterFn: "equals",
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => {
+        const status = row.original.delivery_status;
+        // Don't show revoke button for already revoked cards
+        if (status === 'revoked') {
+          return null;
+        }
+        
+        const recipient = row.original.recipients;
+        const recipientName = recipient 
+          ? `${recipient.first_name || ''} ${recipient.last_name || ''}`.trim()
+          : undefined;
+        const pool = row.original.gift_cards?.gift_card_pools;
+        
+        return (
+          <RevokeGiftCardButton
+            assignmentId={row.original.id}
+            recipientName={recipientName}
+            cardValue={pool?.card_value}
+            brandName={pool?.provider}
+            showText={false}
+            size="icon"
+          />
+        );
+      },
     },
   ];
 }

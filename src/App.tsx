@@ -60,6 +60,7 @@ const AceFormPublic = lazy(() => import("./pages/AceFormPublic"));
 const AceFormAnalytics = lazy(() => import("./pages/AceFormAnalytics"));
 const AceFormsDocumentation = lazy(() => import("./pages/AceFormsDocumentation"));
 const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
+const AdminMessagingTest = lazy(() => import("./pages/AdminMessagingTest"));
 const ErrorLogs = lazy(() => import("./pages/ErrorLogs"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
@@ -282,6 +283,7 @@ const App = () => (
                   <Route path="/admin/site-directory" element={<ProtectedRoute requiredRole="admin"><AdminSiteDirectory /></ProtectedRoute>} />
                   <Route path="/admin/demo-data" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
                   <Route path="/admin/organizations" element={<ProtectedRoute requiredRole="admin"><AdminOrganizationManagement /></ProtectedRoute>} />
+                  <Route path="/admin/messaging-test" element={<ProtectedRoute requiredRole="admin"><AdminMessagingTest /></ProtectedRoute>} />
                   
                   {/* 404 */}
                   <Route path="*" element={<NotFound />} />

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useRewardStats } from '@/features/call-center/hooks';
-import { Gift, DollarSign, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Gift, DollarSign, CheckCircle, XCircle, Clock, Undo2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface RewardsTabProps {
@@ -37,10 +37,13 @@ export function RewardsTab({ campaignId }: RewardsTabProps) {
                 <p className="text-xs text-muted-foreground">
                   ${cond.totalValue.toFixed(2)} total value
                 </p>
-                <div className="mt-2 flex gap-2 text-xs">
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
                   <span className="text-green-600">✓ {cond.delivered}</span>
                   <span className="text-red-600">✗ {cond.failed}</span>
                   <span className="text-amber-600">⏳ {cond.pending}</span>
+                  {(cond.revoked || 0) > 0 && (
+                    <span className="text-gray-500">↩ {cond.revoked}</span>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -68,7 +71,7 @@ export function RewardsTab({ campaignId }: RewardsTabProps) {
           <CardDescription>Gift card fulfillment breakdown</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <div className="flex items-center gap-3 rounded-lg border p-4">
               <CheckCircle className="h-8 w-8 text-green-600" />
               <div>
@@ -90,6 +93,13 @@ export function RewardsTab({ campaignId }: RewardsTabProps) {
                   {Object.values(rewards.byCondition).reduce((sum, c) => sum + c.pending, 0)}
                 </p>
                 <p className="text-sm text-muted-foreground">Pending</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-lg border p-4 bg-gray-50 dark:bg-gray-800/50">
+              <Undo2 className="h-8 w-8 text-gray-500" />
+              <div>
+                <p className="text-2xl font-bold">{rewards.totalRevoked || 0}</p>
+                <p className="text-sm text-muted-foreground">Revoked</p>
               </div>
             </div>
           </div>

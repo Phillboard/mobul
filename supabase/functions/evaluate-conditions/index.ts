@@ -303,20 +303,85 @@ async function sendGiftCard(
     throw new Error('Recipient has no phone number');
   }
 
-  // Claim a gift card
-  const { data: giftCard, error: claimError } = await supabase
-    .rpc('claim_available_card', {
-      p_pool_id: condition.gift_card_pool_id,
+  // ========================================
+  // DUPLICATE PREVENTION: Check if recipient already has a card for this condition
+  // ========================================
+  const { data: hasCard } = await supabase
+    .rpc('recipient_has_card_for_condition', {
       p_recipient_id: recipientId,
+      p_condition_id: condition.id
     });
 
-  if (claimError || !giftCard || giftCard.length === 0) {
+  if (hasCard) {
+    // Already assigned - get existing card info and skip claiming
+    const { data: existingCard } = await supabase
+      .rpc('get_recipient_gift_card_for_condition', {
+        p_recipient_id: recipientId,
+        p_condition_id: condition.id
+      });
+
+    console.log('DUPLICATE PREVENTED: Recipient already has card for this condition', {
+      recipientId,
+      conditionId: condition.id,
+      existingCardId: existingCard?.[0]?.gift_card_id,
+    });
+
+    // Update trigger to note duplicate was prevented
+    await supabase
+      .from('condition_triggers')
+      .update({ 
+        metadata_json: { 
+          duplicate_prevented: true, 
+          existing_card_id: existingCard?.[0]?.gift_card_id 
+        } 
+      })
+      .eq('id', triggerId);
+
+    return; // Exit without claiming new card
+  }
+
+  // ========================================
+  // CLAIM WITH DUPLICATE CHECK: Use safe claiming function
+  // ========================================
+  const { data: giftCard, error: claimError } = await supabase
+    .rpc('claim_card_with_duplicate_check', {
+      p_pool_id: condition.gift_card_pool_id,
+      p_recipient_id: recipientId,
+      p_campaign_id: campaignId,
+      p_condition_id: condition.id,
+    });
+
+  if (claimError) {
+    console.error('Failed to claim gift card:', claimError);
+    throw new Error(`Failed to claim gift card: ${claimError.message}`);
+  }
+
+  if (!giftCard || giftCard.length === 0) {
     throw new Error('No available gift cards');
   }
 
   const card = giftCard[0];
 
-  // Create delivery record
+  // Check if this was a duplicate that was handled by the RPC
+  if (card.already_assigned) {
+    console.log('DUPLICATE HANDLED BY RPC: Returning existing card', card.card_id);
+    
+    await supabase
+      .from('condition_triggers')
+      .update({ 
+        metadata_json: { 
+          duplicate_prevented: true, 
+          existing_card_id: card.card_id 
+        } 
+      })
+      .eq('id', triggerId);
+    
+    return; // Exit - card was already delivered previously
+  }
+
+  // ========================================
+  // NEW CARD CLAIMED: Create delivery record and send
+  // ========================================
   const { data: delivery, error: deliveryError } = await supabase
     .from('gift_card_deliveries')
     .insert({
@@ -336,6 +401,16 @@ async function sendGiftCard(
     throw deliveryError;
   }
 
+  // Update recipient_gift_cards with delivery info
+  await supabase
+    .from('recipient_gift_cards')
+    .update({
+      delivery_method: 'sms',
+      delivery_address: recipient.phone,
+    })
+    .eq('recipient_id', recipientId)
+    .eq('condition_id', condition.id);
+
   // Send SMS
   await supabase.functions.invoke('send-gift-card-sms', {
     body: { deliveryId: delivery.id },
@@ -347,7 +422,7 @@ async function sendGiftCard(
     .update({ gift_card_delivery_id: delivery.id })
     .eq('id', triggerId);
 
-  console.log('Gift card sent:', card.card_code);
+  console.log('Gift card sent (NEW):', card.card_code);
 }
 
 async function sendSMS(supabase: any, recipientId: string, condition: any, triggerId: string) {

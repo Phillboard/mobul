@@ -8,6 +8,7 @@
  * - NotificationAPI (primary)
  * - Infobip (fallback 1)
  * - Twilio (fallback 2)
+ * - EZTexting (fallback 3)
  * 
  * Configuration is loaded from the sms_provider_settings table.
  */
@@ -16,20 +17,24 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 import { getNotificationAPIClient, NotificationAPIClient } from './notificationapi-client.ts';
 import { getInfobipClient, InfobipClient } from './infobip-client.ts';
 import { getTwilioClient, TwilioClient } from './twilio-client.ts';
+import { getEZTextingClient, EZTextingClient } from './eztexting-client.ts';
 
-export type SMSProvider = 'notificationapi' | 'infobip' | 'twilio';
+export type SMSProvider = 'notificationapi' | 'infobip' | 'twilio' | 'eztexting';
 
 export interface SMSProviderSettings {
   primaryProvider: SMSProvider;
   enableFallback: boolean;
   fallbackProvider1: SMSProvider | null;
   fallbackProvider2: SMSProvider | null;
+  fallbackProvider3: SMSProvider | null;
   notificationapiEnabled: boolean;
   notificationapiNotificationId: string | null;
   infobipEnabled: boolean;
   infobipBaseUrl: string;
   infobipSenderId: string | null;
   twilioEnabled: boolean;
+  eztextingEnabled: boolean;
+  eztextingBaseUrl: string;
   fallbackOnError: boolean;
 }
 
@@ -87,12 +92,15 @@ async function getProviderSettings(supabaseClient?: SupabaseClient): Promise<SMS
       enableFallback: data.enable_fallback,
       fallbackProvider1: data.fallback_provider_1 as SMSProvider | null,
       fallbackProvider2: data.fallback_provider_2 as SMSProvider | null,
+      fallbackProvider3: data.fallback_provider_3 as SMSProvider | null,
       notificationapiEnabled: data.notificationapi_enabled ?? true,
       notificationapiNotificationId: data.notificationapi_notification_id,
       infobipEnabled: data.infobip_enabled,
       infobipBaseUrl: data.infobip_base_url || 'https://api.infobip.com',
       infobipSenderId: data.infobip_sender_id,
       twilioEnabled: data.twilio_enabled,
+      eztextingEnabled: data.eztexting_enabled ?? false,
+      eztextingBaseUrl: data.eztexting_base_url || 'https://a.eztexting.com',
       fallbackOnError: data.fallback_on_error,
     };
     settingsCacheTime = now;
@@ -112,7 +120,7 @@ async function getProviderSettings(supabaseClient?: SupabaseClient): Promise<SMS
 }
 
 /**
- * Get default settings (NotificationAPI primary, Infobip fallback 1, Twilio fallback 2)
+ * Get default settings (NotificationAPI primary, Infobip fallback 1, Twilio fallback 2, EZTexting fallback 3)
  */
 function getDefaultSettings(): SMSProviderSettings {
   return {
@@ -120,12 +128,15 @@ function getDefaultSettings(): SMSProviderSettings {
     enableFallback: true,
     fallbackProvider1: 'infobip',
     fallbackProvider2: 'twilio',
+    fallbackProvider3: 'eztexting',
     notificationapiEnabled: true,
     notificationapiNotificationId: null,
     infobipEnabled: true,
     infobipBaseUrl: 'https://api.infobip.com',
     infobipSenderId: null,
     twilioEnabled: true,
+    eztextingEnabled: true,
+    eztextingBaseUrl: 'https://a.eztexting.com',
     fallbackOnError: true,
   };
 }
@@ -155,6 +166,8 @@ function isProviderAvailable(provider: SMSProvider): boolean {
       Deno.env.get('TWILIO_AUTH_TOKEN') &&
       (Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER'))
     );
+  } else if (provider === 'eztexting') {
+    return !!Deno.env.get('EZTEXTING_API_KEY');
   }
   return false;
 }
@@ -209,6 +222,22 @@ async function sendWithProvider(
         error: error instanceof Error ? error.message : 'Twilio client error',
       };
     }
+  } else if (provider === 'eztexting') {
+    try {
+      const client = getEZTextingClient();
+      const result = await client.sendSMS(to, message);
+      return {
+        success: result.success,
+        messageId: result.messageId,
+        status: result.status,
+        error: result.error,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'EZTexting client error',
+      };
+    }
   }
 
   return {
@@ -231,6 +260,13 @@ function getFallbackChain(settings: SMSProviderSettings): SMSProvider[] {
       settings.fallbackProvider2 !== settings.primaryProvider &&
       settings.fallbackProvider2 !== settings.fallbackProvider1) {
     chain.push(settings.fallbackProvider2);
+  }
+
+  if (settings.fallbackProvider3 && 
+      settings.fallbackProvider3 !== settings.primaryProvider &&
+      settings.fallbackProvider3 !== settings.fallbackProvider1 &&
+      settings.fallbackProvider3 !== settings.fallbackProvider2) {
+    chain.push(settings.fallbackProvider3);
   }
   
   return chain;
@@ -377,6 +413,7 @@ export async function getCurrentProviderConfig(supabaseClient?: SupabaseClient):
   notificationapiAvailable: boolean;
   infobipAvailable: boolean;
   twilioAvailable: boolean;
+  eztextingAvailable: boolean;
   activeProvider: SMSProvider;
   fallbackChain: SMSProvider[];
 }> {
@@ -384,6 +421,7 @@ export async function getCurrentProviderConfig(supabaseClient?: SupabaseClient):
   const notificationapiAvailable = isProviderAvailable('notificationapi');
   const infobipAvailable = isProviderAvailable('infobip');
   const twilioAvailable = isProviderAvailable('twilio');
+  const eztextingAvailable = isProviderAvailable('eztexting');
 
   // Determine which provider will actually be used
   let activeProvider = settings.primaryProvider;
@@ -402,6 +440,7 @@ export async function getCurrentProviderConfig(supabaseClient?: SupabaseClient):
     notificationapiAvailable,
     infobipAvailable,
     twilioAvailable,
+    eztextingAvailable,
     activeProvider,
     fallbackChain: getFallbackChain(settings),
   };

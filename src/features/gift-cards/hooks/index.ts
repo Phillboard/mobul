@@ -15,4 +15,4 @@ export * from './useInventoryUpload';
 export * from './usePoolInventory';
 export * from './useSimplifiedGiftCardSelection';
 export * from './useTilloBrandSync';
-
+export * from './useRevokeGiftCard';

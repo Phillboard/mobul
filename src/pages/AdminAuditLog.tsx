@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
 import { Layout } from "@/shared/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { Button } from "@/shared/components/ui/button";
-import { Download, Search, RefreshCw } from "lucide-react";
+import { Download, Search, RefreshCw, Undo2, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import { DataTable } from "@/shared/components/ui/data-table";
@@ -16,6 +17,7 @@ import { DataTableToolbar } from "@/shared/components/ui/data-table-toolbar";
 import { DataTableViewOptions } from "@/shared/components/ui/data-table-view-options";
 import { createAuditLogColumns, AuditLogRow } from "@/features/settings/components/auditLogColumns";
 import { createUploadHistoryColumns, UploadHistoryRow } from "@/features/settings/components/uploadHistoryColumns";
+import { createRevokeLogColumns, RevokeLogRow } from "@/features/gift-cards/components/revokeLogColumns";
 import { exportTableToCSV } from "@/shared/utils/tableHelpers";
 
 export default function AdminAuditLog() {
@@ -29,6 +31,9 @@ export default function AdminAuditLog() {
   const [auditColumnFilters, setAuditColumnFilters] = useState<ColumnFiltersState>([]);
   const [uploadSorting, setUploadSorting] = useState<SortingState>([]);
   const [uploadColumnFilters, setUploadColumnFilters] = useState<ColumnFiltersState>([]);
+  const [revokeSorting, setRevokeSorting] = useState<SortingState>([]);
+  const [revokeColumnFilters, setRevokeColumnFilters] = useState<ColumnFiltersState>([]);
+  const [activeTab, setActiveTab] = useState("activity");
 
   // Fetch unique agents for filter
   const { data: agents } = useQuery({
@@ -116,8 +121,30 @@ export default function AdminAuditLog() {
     },
   });
 
+  // Fetch gift card revoke log
+  const { data: revokeLogs, isLoading: revokeLoading, refetch: refetchRevokes } = useQuery({
+    queryKey: ["gift-card-revoke-log"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gift_card_revoke_log")
+        .select(`
+          *,
+          campaign:campaigns(name)
+        `)
+        .order("revoked_at", { ascending: false })
+        .limit(500);
+
+      if (error) {
+        console.error("Revoke log query error:", error);
+        return [];
+      }
+      return data as RevokeLogRow[];
+    },
+  });
+
   const auditColumns = useMemo(() => createAuditLogColumns(), []);
   const uploadColumns = useMemo(() => createUploadHistoryColumns(), []);
+  const revokeColumns = useMemo(() => createRevokeLogColumns(), []);
 
   const auditTable = useReactTable({
     data: auditLogs || [],
@@ -149,6 +176,21 @@ export default function AdminAuditLog() {
     },
   });
 
+  const revokeTable = useReactTable({
+    data: revokeLogs || [],
+    columns: revokeColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setRevokeSorting,
+    onColumnFiltersChange: setRevokeColumnFilters,
+    state: {
+      sorting: revokeSorting,
+      columnFilters: revokeColumnFilters,
+    },
+  });
+
   const exportAuditToCSV = () => {
     if (!auditLogs) return;
     exportTableToCSV(
@@ -170,12 +212,30 @@ export default function AdminAuditLog() {
         <div>
           <h1 className="text-3xl font-bold">Audit Log & Activity Monitoring</h1>
           <p className="text-muted-foreground mt-2">
-            Complete tracking of all customer code activities
+            Complete tracking of all customer code activities and gift card revocations
           </p>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="activity">
+              <ClipboardList className="h-4 w-4 mr-2" />
+              Activity Log
+            </TabsTrigger>
+            <TabsTrigger value="revokes">
+              <Undo2 className="h-4 w-4 mr-2" />
+              Gift Card Revokes
+              {(revokeLogs?.length || 0) > 0 && (
+                <span className="ml-2 bg-gray-200 dark:bg-gray-700 text-xs px-1.5 py-0.5 rounded-full">
+                  {revokeLogs?.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="activity" className="space-y-6">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Uploads</CardDescription>
@@ -319,45 +379,120 @@ export default function AdminAuditLog() {
           </CardContent>
         </Card>
 
-        {/* Audit Log Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Activity Log</CardTitle>
-            <CardDescription>Showing {auditLogs?.length || 0} events</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8">Loading...</div>
-            ) : (
-              <div className="space-y-4">
-                <DataTableToolbar table={auditTable}>
-                  <DataTableViewOptions table={auditTable} />
-                </DataTableToolbar>
-                <DataTable table={auditTable} />
-                <DataTablePagination table={auditTable} />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            {/* Audit Log Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Activity Log</CardTitle>
+                <CardDescription>Showing {auditLogs?.length || 0} events</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-center py-8">Loading...</div>
+                ) : (
+                  <div className="space-y-4">
+                    <DataTableToolbar table={auditTable}>
+                      <DataTableViewOptions table={auditTable} />
+                    </DataTableToolbar>
+                    <DataTable table={auditTable} />
+                    <DataTablePagination table={auditTable} />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Upload History */}
-        {uploads && uploads.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Upload History</CardTitle>
-              <CardDescription>Recent bulk code uploads</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <DataTableToolbar table={uploadTable}>
-                  <DataTableViewOptions table={uploadTable} />
-                </DataTableToolbar>
-                <DataTable table={uploadTable} />
-                <DataTablePagination table={uploadTable} />
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            {/* Upload History */}
+            {uploads && uploads.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upload History</CardTitle>
+                  <CardDescription>Recent bulk code uploads</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <DataTableToolbar table={uploadTable}>
+                      <DataTableViewOptions table={uploadTable} />
+                    </DataTableToolbar>
+                    <DataTable table={uploadTable} />
+                    <DataTablePagination table={uploadTable} />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="revokes" className="space-y-6">
+            {/* Revoke Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Total Revocations</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">{revokeLogs?.length || 0}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Today's Revocations</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">
+                    {revokeLogs?.filter((log) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return new Date(log.revoked_at) >= today;
+                    }).length || 0}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardDescription>Total Value Revoked</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">
+                    ${revokeLogs?.reduce((sum, log) => sum + (Number(log.card_value) || 0), 0).toFixed(2) || '0.00'}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Revoke Log Table */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Gift Card Revoke Log</CardTitle>
+                    <CardDescription>Complete audit trail of all gift card revocations</CardDescription>
+                  </div>
+                  <Button onClick={() => refetchRevokes()} variant="outline" size="sm">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Refresh
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {revokeLoading ? (
+                  <div className="text-center py-8">Loading revoke log...</div>
+                ) : revokeLogs && revokeLogs.length > 0 ? (
+                  <div className="space-y-4">
+                    <DataTableToolbar table={revokeTable}>
+                      <DataTableViewOptions table={revokeTable} />
+                    </DataTableToolbar>
+                    <DataTable table={revokeTable} />
+                    <DataTablePagination table={revokeTable} />
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Undo2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No gift cards have been revoked yet</p>
+                    <p className="text-sm mt-2">When admins revoke gift cards, the audit trail will appear here</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

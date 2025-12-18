@@ -49,6 +49,7 @@ export { ContextAwareActions } from './components/QuickActions/ContextAwareActio
 export { LandingPageActions } from './components/QuickActions/LandingPageActions';
 export { BackgroundUploader } from './components/BackgroundUploader';
 export { LandingPageAssistantPanel } from './components/LandingPageAssistantPanel';
+export { DesignUploader } from './components/DesignUploader';
 
 // Templates
 export { getFrontDesignPrompt } from './templates/frontPrompts';

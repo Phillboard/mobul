@@ -102,3 +102,9 @@ verify_jwt = false
 [functions.send-sms-opt-in]
 verify_jwt = true
 
+[functions.test-sms-provider]
+verify_jwt = true
+
+[functions.send-email]
+verify_jwt = false
+
