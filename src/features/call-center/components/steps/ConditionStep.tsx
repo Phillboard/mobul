@@ -303,7 +303,7 @@ export function ConditionStep({
                 )}
                 <Button
                   variant="ghost"
-                  onClick={() => window.open('/system-health?tab=gift-cards', '_blank')}
+                  onClick={() => window.open('/admin/system-health?tab=gift-cards', '_blank')}
                   className="ml-auto"
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />

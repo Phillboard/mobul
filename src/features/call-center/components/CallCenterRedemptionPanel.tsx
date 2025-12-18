@@ -882,6 +882,14 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
 
       // Pass IDs directly - recipient was already looked up on frontend
       // SMS delivery is disabled for now, card will be displayed in UI
+      console.log('[Provision] Calling Edge Function with:', {
+        recipientId: recipient.id,
+        campaignId: provCampaign.id,
+        brandId: condition.brand_id,
+        denomination: condition.card_value,
+        conditionId: selectedConditionId,
+      });
+
       const { data, error } = await supabase.functions.invoke("provision-gift-card-for-call-center", {
         body: {
           recipientId: recipient.id,
@@ -892,26 +900,48 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         }
       });
 
+      console.log('[Provision] Edge Function response:', { data, error });
+
       if (error) {
-        // Try to parse the error response for detailed info
-        throw { 
-          message: error.message, 
-          isProvisioningError: true,
-          raw: error 
-        };
-      }
-      
-      if (!data.success) {
-        // Extract detailed error information from the response
+        console.error('[Provision] Edge Function error:', error);
+        
+        // Extract the actual error message from the response
+        let errorMessage = error.message || 'Edge Function error';
+        let errorData: any = {};
+        
+        // The error.context contains the Response object with our JSON body
+        if (error.context && typeof error.context.json === 'function') {
+          try {
+            errorData = await error.context.json();
+            console.log('[Provision] Parsed error data:', errorData);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (parseErr) {
+            console.warn('[Provision] Could not parse error context:', parseErr);
+          }
+        }
+        
         const provError: ProvisioningError = {
-          message: data.message || data.error || 'Provisioning failed',
-          errorCode: data.errorCode,
-          requestId: data.requestId,
-          canRetry: data.canRetry,
-          requiresCampaignEdit: data.requiresCampaignEdit,
+          message: errorMessage,
+          errorCode: errorData.errorCode,
+          requestId: errorData.requestId,
+          canRetry: errorData.canRetry ?? true,
+          requiresCampaignEdit: errorData.requiresCampaignEdit,
         };
         setProvisioningError(provError);
-        throw new Error(data.message || data.error);
+        throw new Error(errorMessage);
+      }
+      
+      if (!data?.success) {
+        // Extract detailed error information from the response
+        const provError: ProvisioningError = {
+          message: data?.message || data?.error || 'Provisioning failed',
+          errorCode: data?.errorCode,
+          requestId: data?.requestId,
+          canRetry: data?.canRetry,
+          requiresCampaignEdit: data?.requiresCampaignEdit,
+        };
+        setProvisioningError(provError);
+        throw new Error(data?.message || data?.error || 'Provisioning failed');
       }
       
       // Transform the edge function response to match UI expected format
@@ -1711,7 +1741,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                     )}
                     <Button 
                       variant="ghost" 
-                      onClick={() => window.open('/system-health?tab=gift-cards', '_blank')}
+                      onClick={() => window.open('/admin/system-health?tab=gift-cards', '_blank')}
                       className="ml-auto"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />

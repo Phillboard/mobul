@@ -373,6 +373,14 @@ export function useRedemptionWorkflow(options: UseRedemptionWorkflowOptions = {}
         throw new Error('Gift card configuration missing for this condition.');
       }
 
+      console.log('[Provision] Calling Edge Function with:', {
+        recipientId: state.recipient.id,
+        campaignId: provCampaign.id,
+        brandId: condition.brand_id,
+        denomination: condition.card_value,
+        conditionId: state.selectedConditionId,
+      });
+
       const { data, error } = await supabase.functions.invoke('provision-gift-card-for-call-center', {
         body: {
           recipientId: state.recipient.id,
@@ -383,20 +391,48 @@ export function useRedemptionWorkflow(options: UseRedemptionWorkflowOptions = {}
         },
       });
 
-      if (error) {
-        throw { message: error.message, isProvisioningError: true };
-      }
+      console.log('[Provision] Edge Function response:', { data, error });
 
-      if (!data.success) {
+      // Handle Edge Function errors - extract the actual error message
+      if (error) {
+        console.error('[Provision] Edge Function error:', error);
+        
+        // Try to parse the error context for our custom error message
+        let errorMessage = error.message || 'Edge Function error';
+        let errorData: any = {};
+        
+        // The error.context contains the Response object with our JSON body
+        if (error.context && typeof error.context.json === 'function') {
+          try {
+            errorData = await error.context.json();
+            console.log('[Provision] Parsed error data:', errorData);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+          } catch (parseErr) {
+            console.warn('[Provision] Could not parse error context:', parseErr);
+          }
+        }
+        
         const provError: ProvisioningError = {
-          message: data.message || data.error || 'Provisioning failed',
-          errorCode: data.errorCode,
-          requestId: data.requestId,
-          canRetry: data.canRetry,
-          requiresCampaignEdit: data.requiresCampaignEdit,
+          message: errorMessage,
+          errorCode: errorData.errorCode,
+          requestId: errorData.requestId,
+          canRetry: errorData.canRetry ?? true,
+          requiresCampaignEdit: errorData.requiresCampaignEdit,
         };
         updateState({ provisioningError: provError });
-        throw new Error(data.message || data.error);
+        throw new Error(errorMessage);
+      }
+
+      if (!data?.success) {
+        const provError: ProvisioningError = {
+          message: data?.message || data?.error || 'Provisioning failed',
+          errorCode: data?.errorCode,
+          requestId: data?.requestId,
+          canRetry: data?.canRetry,
+          requiresCampaignEdit: data?.requiresCampaignEdit,
+        };
+        updateState({ provisioningError: provError });
+        throw new Error(data?.message || data?.error || 'Provisioning failed');
       }
 
       const transformedResult: ProvisionResult = {
@@ -478,7 +514,19 @@ export function useRedemptionWorkflow(options: UseRedemptionWorkflowOptions = {}
 
   // Simulate SMS opt-in
   const simulateSmsOptIn = useCallback(async () => {
-    if (!state.cellPhone || !state.recipient || !campaign) return;
+    console.log('[SimulateOptIn] Starting simulation', {
+      hasCellPhone: !!state.cellPhone,
+      cellPhone: state.cellPhone,
+      hasRecipient: !!state.recipient,
+      recipientId: state.recipient?.id,
+      hasCampaign: !!campaign,
+      campaignId: campaign?.id,
+    });
+    
+    if (!state.cellPhone || !state.recipient || !campaign) {
+      console.warn('[SimulateOptIn] Missing required data, aborting');
+      return;
+    }
 
     updateState({
       isSimulating: true,

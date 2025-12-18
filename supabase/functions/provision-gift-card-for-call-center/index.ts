@@ -154,41 +154,36 @@ serve(async (req) => {
       requestId: logger.requestId,
     };
 
-    const unifiedUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/provision-gift-card-unified`;
     const startTime = Date.now();
     
-    const response = await fetch(unifiedUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-        'x-request-id': logger.requestId,
-      },
-      body: JSON.stringify(provisionRequest),
-    });
+    // Use supabaseClient.functions.invoke for proper auth handling
+    console.log(`[STEP 2] Invoking unified function via supabase client...`);
+    
+    const { data: provisionResult, error: invokeError } = await supabaseClient.functions.invoke(
+      'provision-gift-card-unified',
+      {
+        body: provisionRequest,
+        headers: {
+          'x-request-id': logger.requestId,
+        },
+      }
+    );
 
     const duration = Date.now() - startTime;
-    console.log(`[STEP 2] Response in ${duration}ms, status: ${response.status}`);
+    console.log(`[STEP 2] Response in ${duration}ms`, { 
+      hasData: !!provisionResult, 
+      hasError: !!invokeError,
+      errorMessage: invokeError?.message,
+    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorData: any = {};
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { error: errorText };
-      }
-
+    if (invokeError) {
       await logger.checkpoint(STEPS.CALL_UNIFIED_PROVISION.number, STEPS.CALL_UNIFIED_PROVISION.name, 'failed', {
-        httpStatus: response.status,
-        error: errorData.error || errorText,
+        error: invokeError.message,
         durationMs: duration,
       });
 
-      throw new Error(errorData.error || `Provisioning failed: ${errorText}`);
+      throw new Error(invokeError.message || 'Provisioning failed');
     }
-
-    const provisionResult = await response.json();
 
     if (!provisionResult.success) {
       await logger.checkpoint(STEPS.CALL_UNIFIED_PROVISION.number, STEPS.CALL_UNIFIED_PROVISION.name, 'failed', {
