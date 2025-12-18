@@ -167,20 +167,6 @@ export default function NewLandingPageDesigner() {
     },
   });
 
-  const handleApplySuggestion = (suggestion: any) => {
-    if (!suggestion.actions) return;
-
-    history.recordState(designerState.canvasState, 'AI suggestion');
-    const result = executeDesignActions(suggestion.actions, designerState);
-
-    if (result.executed > 0) {
-      toast({
-        title: 'Applied!',
-        description: `${result.executed} action(s) applied.`,
-      });
-    }
-  };
-
   const handleExport = async () => {
     try {
       const html = await exporter.exportToHTML({ responsive: true });
