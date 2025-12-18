@@ -68,16 +68,28 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
       // Check if it's a configuration error
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
-      if (errorMessage.includes('not configured')) {
+      if (errorMessage.includes('not configured') || errorMessage.includes('GOOGLE_WALLET') || errorMessage.includes('APPLE_WALLET')) {
         toast({
           title: "Wallet Not Configured",
-          description: `${walletName} integration needs to be set up by the administrator.`,
+          description: `${walletName} integration needs to be set up by the administrator. Required secrets are missing.`,
+          variant: "destructive",
+        });
+      } else if (errorMessage.includes('service account') || errorMessage.includes('private key')) {
+        toast({
+          title: "Configuration Error",
+          description: "There's an issue with the wallet service account configuration. Please contact the administrator.",
+          variant: "destructive",
+        });
+      } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('network')) {
+        toast({
+          title: "Network Error",
+          description: "Could not connect to the wallet service. Please check your internet connection and try again.",
           variant: "destructive",
         });
       } else {
         toast({
           title: "Failed to Add to Wallet",
-          description: errorMessage,
+          description: errorMessage || "An unexpected error occurred. Please try again.",
           variant: "destructive",
         });
       }
@@ -150,12 +162,24 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
       { body: { giftCard } }
     );
 
+    // Check for errors - Supabase may return error details in data even when error is set
     if (error) {
-      throw error;
+      // Try to extract a meaningful error message
+      const errorMessage = 
+        (data && typeof data === 'object' && 'error' in data) ? data.error :
+        (data && typeof data === 'object' && 'message' in data) ? data.message :
+        error.message || 'Failed to generate wallet pass';
+      throw new Error(errorMessage);
+    }
+
+    // Check for error response in data (non-2xx status codes)
+    if (data && typeof data === 'object' && 'error' in data) {
+      const errorDetails = data.hint ? `${data.error}. ${data.hint}` : data.error;
+      throw new Error(errorDetails);
     }
 
     if (!data || !data.success) {
-      throw new Error(data?.error || 'Failed to generate wallet pass');
+      throw new Error(data?.error || data?.message || 'Failed to generate wallet pass');
     }
 
     // Redirect to Google's save URL

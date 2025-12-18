@@ -148,10 +148,24 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Google Wallet error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    let hint = 'Check that GOOGLE_WALLET_ISSUER_ID and GOOGLE_WALLET_SERVICE_ACCOUNT secrets are properly configured';
+    
+    // Provide more specific hints based on the error
+    if (errorMessage.includes('Invalid service account')) {
+      hint = 'The GOOGLE_WALLET_SERVICE_ACCOUNT secret contains invalid JSON. Please re-upload the service account key.';
+    } else if (errorMessage.includes('private key') || errorMessage.includes('PKCS#8')) {
+      hint = 'The service account private key format is invalid. Ensure you are using the original JSON key file from Google Cloud Console.';
+    } else if (errorMessage.includes('JWT') || errorMessage.includes('sign')) {
+      hint = 'Failed to sign the wallet pass. Check that the service account key is complete and not corrupted.';
+    }
+    
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error',
-        hint: 'Check that GOOGLE_WALLET_ISSUER_ID and GOOGLE_WALLET_SERVICE_ACCOUNT secrets are properly configured'
+        error: errorMessage,
+        hint,
+        success: false
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -382,9 +396,10 @@ async function signJwt(
     exp: now + 3600,
   };
 
-  // Encode header and payload
-  const encodedHeader = base64UrlEncode(JSON.stringify(header));
-  const encodedPayload = base64UrlEncode(JSON.stringify(jwtPayload));
+  // Encode header and payload - base64UrlEncode expects Uint8Array
+  const encoder = new TextEncoder();
+  const encodedHeader = base64UrlEncode(encoder.encode(JSON.stringify(header)));
+  const encodedPayload = base64UrlEncode(encoder.encode(JSON.stringify(jwtPayload)));
   const signingInput = `${encodedHeader}.${encodedPayload}`;
 
   // Import the private key
@@ -394,7 +409,7 @@ async function signJwt(
   const signature = await crypto.subtle.sign(
     { name: 'RSASSA-PKCS1-v1_5' },
     privateKey,
-    new TextEncoder().encode(signingInput)
+    encoder.encode(signingInput)
   );
 
   // Encode signature
