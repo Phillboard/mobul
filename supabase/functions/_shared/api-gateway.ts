@@ -191,20 +191,43 @@ export function handleCORS(): Response {
 }
 
 /**
- * Check rate limit (placeholder - integrate with actual rate limiter)
+ * Check rate limit using Supabase database
+ * 
+ * Uses a sliding window algorithm stored in the rate_limit_log table.
+ * Falls open (allows request) if the rate limit check fails.
  */
 export async function checkRateLimit(
   userId: string,
   operation: string,
   limit: number = 100,
   windowSeconds: number = 60
-): Promise<{ allowed: boolean; remaining: number }> {
-  // TODO: Implement actual rate limiting with Redis or Supabase
-  // For now, always allow
-  return {
-    allowed: true,
-    remaining: limit,
-  };
+): Promise<{ allowed: boolean; remaining: number; retryAfter?: number }> {
+  try {
+    const supabase = createServiceClient();
+    
+    const { data, error } = await supabase.rpc('check_and_increment_rate_limit', {
+      p_identifier: userId,
+      p_endpoint: operation,
+      p_limit: limit,
+      p_window_seconds: windowSeconds,
+    });
+
+    if (error) {
+      console.error('[RATE-LIMIT] Check failed:', error);
+      // Fail open - allow the request if rate limiting fails
+      return { allowed: true, remaining: limit };
+    }
+
+    return {
+      allowed: data.allowed,
+      remaining: data.remaining,
+      retryAfter: data.allowed ? undefined : data.retry_after,
+    };
+  } catch (error) {
+    console.error('[RATE-LIMIT] Unexpected error:', error);
+    // Fail open
+    return { allowed: true, remaining: limit };
+  }
 }
 
 /**

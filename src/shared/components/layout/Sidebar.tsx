@@ -6,7 +6,7 @@ import {
   Gauge, BookOpen, List, Upload, FolderTree, Database, FileSearch, Rocket, TestTube,
   Megaphone, Headphones, ClipboardList, Shield, UserCog, ShieldAlert, CheckSquare,
   PhoneCall, Target, Plug, Settings as SettingsIcon, Package, Building2, CreditCard, DollarSign,
-  Bug
+  Bug, MessageSquare, Zap
 } from "lucide-react";
 import { NavLink } from "@/shared/components/NavLink";
 import { useAuth } from "@core/auth/AuthProvider";
@@ -67,6 +67,15 @@ const navigationGroups: NavGroup[] = [
       { name: "Contacts", href: "/contacts", icon: Users, keywords: ["contacts", "customers", "crm", "people"], description: "Manage customer database" },
       { name: "Lists & Segments", href: "/contacts/lists", icon: List, keywords: ["lists", "segments", "groups", "targeting"], description: "Organize and segment contacts" },
       { name: "Import Contacts", href: "/contacts/import", icon: Upload, keywords: ["import", "csv", "upload", "bulk"], description: "Import contacts from CSV" },
+    ]
+  },
+  {
+    label: "Marketing",
+    collapsible: true,
+    items: [
+      { name: "Marketing Hub", href: "/marketing", icon: MessageSquare, keywords: ["email", "sms", "marketing", "campaigns"], description: "Email & SMS marketing hub" },
+      { name: "Email/SMS Campaigns", href: "/marketing/campaigns", icon: Mail, keywords: ["email", "sms", "blast", "newsletter"], description: "Create email & SMS campaigns" },
+      { name: "Automations", href: "/marketing/automations", icon: Zap, keywords: ["automation", "workflow", "triggers", "sequences"], description: "Marketing automation workflows" },
     ]
   },
   {

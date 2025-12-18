@@ -29,6 +29,10 @@ export default tseslint.config(
       "@typescript-eslint/prefer-optional-chain": "warn",
       "@typescript-eslint/no-unnecessary-condition": "off", // Enable after fixing existing issues
       "no-unsafe-optional-chaining": "error",
+      // Discourage console.log in favor of centralized logger
+      "no-console": ["warn", { 
+        allow: ["warn", "error", "info", "debug", "table"] 
+      }],
     },
   },
 );

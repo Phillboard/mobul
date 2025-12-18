@@ -8,6 +8,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@core/services/supabase";
+import { logger } from "@/core/services/logger";
 
 export type OptInStatus = 'not_sent' | 'pending' | 'opted_in' | 'opted_out' | 'invalid_response';
 
@@ -51,7 +52,7 @@ export function useOptInStatus(
         .single();
 
       if (error) {
-        console.error("[useOptInStatus] Fetch error:", error);
+        logger.error("[useOptInStatus] Fetch error:", error);
         return;
       }
 
@@ -66,7 +67,7 @@ export function useOptInStatus(
         }));
       }
     } catch (error) {
-      console.error("[useOptInStatus] Fetch exception:", error);
+      logger.error("[useOptInStatus] Fetch exception:", error);
     }
   }, [recipientId]);
 
@@ -93,7 +94,7 @@ export function useOptInStatus(
     const channel = supabase
       .channel(`opt_in_status:${callSessionId}`)
       .on('broadcast', { event: 'status_update' }, (payload) => {
-        console.log("[useOptInStatus] Real-time update:", payload.payload);
+        logger.debug("[useOptInStatus] Real-time update:", payload.payload);
         const data = payload.payload;
         setState(prev => ({
           ...prev,
@@ -118,7 +119,7 @@ export function useOptInStatus(
     const channel = supabase
       .channel(`opt_in_recipient:${recipientId}`)
       .on('broadcast', { event: 'status_update' }, (payload) => {
-        console.log("[useOptInStatus] Recipient channel update:", payload.payload);
+        logger.debug("[useOptInStatus] Recipient channel update:", payload.payload);
         const data = payload.payload;
         setState(prev => ({
           ...prev,

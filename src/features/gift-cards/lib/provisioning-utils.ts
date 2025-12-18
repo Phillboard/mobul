@@ -219,6 +219,7 @@ export function formatSource(source: 'inventory' | 'tillo'): string {
  */
 
 import { supabase } from "@core/services/supabase";
+import { logger } from "@/core/services/logger";
 
 export interface ProvisionResult {
   success: boolean;
@@ -257,7 +258,7 @@ export async function provisionGiftCard(
     return tilloResult;
 
   } catch (error) {
-    console.error('Provisioning failed:', error);
+    logger.error('Provisioning failed:', error);
     return {
       success: false,
       source: 'csv',
@@ -285,7 +286,7 @@ async function claimFromCSVInventory(
     });
 
     if (claimError) {
-      console.log('No CSV inventory available:', claimError.message);
+      logger.debug('No CSV inventory available:', claimError.message);
       return { success: false, source: 'csv', error: 'No CSV inventory available' };
     }
 
@@ -318,7 +319,7 @@ async function claimFromCSVInventory(
       client_price: clientPrice,
     };
   } catch (error) {
-    console.error('CSV claim error:', error);
+    logger.error('CSV claim error:', error);
     return {
       success: false,
       source: 'csv',
@@ -363,7 +364,7 @@ async function purchaseFromTillo(
     });
 
     if (error) {
-      console.error('Tillo purchase error:', error);
+      logger.error('Tillo purchase error:', error);
       return {
         success: false,
         source: 'tillo',
@@ -391,7 +392,7 @@ async function purchaseFromTillo(
       client_price: clientPrice,
     };
   } catch (error) {
-    console.error('Tillo purchase error:', error);
+    logger.error('Tillo purchase error:', error);
     return {
       success: false,
       source: 'tillo',
@@ -422,7 +423,7 @@ export async function checkCSVInventoryAvailable(
       count: count || 0,
     };
   } catch (error) {
-    console.error('Error checking CSV inventory:', error);
+    logger.error('Error checking CSV inventory:', error);
     return { available: false, count: 0 };
   }
 }

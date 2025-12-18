@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { logger } from '@/core/services/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -441,7 +442,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   // Uses the existing data model: recipients → audiences → campaigns
   const lookupMutation = useMutation({
     mutationFn: async (code: string) => {
-      console.log('[CALL-CENTER] Looking up code:', code.toUpperCase());
+      logger.debug('[CALL-CENTER] Looking up code:', code.toUpperCase());
 
       // Primary lookup: Use campaign_id directly on recipients (new model)
       const { data: recipient, error: recipientError } = await supabase
@@ -467,7 +468,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         .maybeSingle();
 
       if (recipient) {
-        console.log('[CALL-CENTER] Found recipient:', recipient.id);
+        logger.debug('[CALL-CENTER] Found recipient:', recipient.id);
         
         // If no direct campaign link, try to find via audience (fallback for old data)
         if (!recipient.campaign && recipient.audience_id) {
@@ -543,7 +544,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           .maybeSingle();
         
         if (existingCard) {
-          console.log('[CALL-CENTER] Found existing provisioned card for recipient:', existingCard.id);
+          logger.debug('[CALL-CENTER] Found existing provisioned card for recipient:', existingCard.id);
           // Return recipient with the existing card attached
           return {
             ...recipient,
@@ -557,7 +558,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
 
       // Secondary lookup: Check if recipient exists but has broken audience/campaign link
       // This catches cases where redemption_code exists but audience or campaign is missing
-      console.log('[CALL-CENTER] Checking for orphaned recipient with this code...');
+      logger.debug('[CALL-CENTER] Checking for orphaned recipient with this code...');
       const { data: orphanedRecipient, error: orphanError } = await supabase
         .from("recipients")
         .select(`
@@ -576,7 +577,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         .maybeSingle();
 
       if (orphanedRecipient) {
-        console.log('[CALL-CENTER] Found orphaned recipient:', orphanedRecipient.id);
+        logger.debug('[CALL-CENTER] Found orphaned recipient:', orphanedRecipient.id);
         
         // Diagnose the issue
         if (!orphanedRecipient.audience_id) {
@@ -599,7 +600,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
 
       // Tertiary lookup: Try contacts table with customer_code
       // This handles cases where unique codes are stored on contacts
-      console.log('[CALL-CENTER] Trying contacts.customer_code lookup...');
+      logger.debug('[CALL-CENTER] Trying contacts.customer_code lookup...');
       const { data: contact, error: contactError } = await supabase
         .from("contacts")
         .select("id, first_name, last_name, email, phone, customer_code")
@@ -607,7 +608,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         .maybeSingle();
 
       if (contact) {
-        console.log('[CALL-CENTER] Found contact:', contact.id, '- checking for campaign assignment...');
+        logger.debug('[CALL-CENTER] Found contact:', contact.id, '- checking for campaign assignment...');
         
         // Find a recipient record linked to this contact (using direct campaign link)
         const { data: linkedRecipient, error: linkError } = await supabase
@@ -632,7 +633,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           .maybeSingle();
 
         if (linkedRecipient) {
-          console.log('[CALL-CENTER] Found linked recipient via contact');
+          logger.debug('[CALL-CENTER] Found linked recipient via contact');
           
           // Check campaign status - only allow active campaigns for redemption
           // Active statuses: in_production, mailed, scheduled
@@ -686,7 +687,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       }
 
       // Nothing found
-      console.log('[CALL-CENTER] Code not found in recipients or contacts');
+      logger.debug('[CALL-CENTER] Code not found in recipients or contacts');
       throw new Error("Code not found. Please verify the code and ensure the contact has been added to an active campaign.");
     },
     onSuccess: (data: any) => {
@@ -694,7 +695,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       
       // Check if this recipient already has a provisioned card
       if (data._alreadyProvisioned && data._existingCard) {
-        console.log('[CALL-CENTER] Showing existing provisioned card');
+        logger.debug('[CALL-CENTER] Showing existing provisioned card');
         const existingCard = data._existingCard;
         const brand = existingCard.gift_card_brands;
         

@@ -86,6 +86,13 @@ const PublicRedemption = lazy(() => import("./pages/PublicRedemption"));
 const PublicLandingPage = lazy(() => import("./pages/PublicLandingPage"));
 const TestRedemption = lazy(() => import("./pages/TestRedemption"));
 
+// Marketing Feature
+const Marketing = lazy(() => import("./pages/Marketing"));
+const MarketingCampaignCreate = lazy(() => import("./pages/MarketingCampaignCreate"));
+const MarketingCampaignDetail = lazy(() => import("./pages/MarketingCampaignDetail"));
+const MarketingAutomationCreate = lazy(() => import("./pages/MarketingAutomationCreate"));
+const MarketingAutomationDetail = lazy(() => import("./pages/MarketingAutomationDetail"));
+
 // Loading fallback component
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -228,6 +235,18 @@ const App = () => (
                   {/* Call Center - Redemption & Fulfillment */}
                   <Route path="/call-center" element={<ProtectedRoute requiredPermissions={["calls.confirm_redemption"]}><CallCenterRedemption /></ProtectedRoute>} />
                   <Route path="/call-center/scripts" element={<ProtectedRoute requiredPermissions={["calls.manage"]}><CallCenterScripts /></ProtectedRoute>} />
+                  
+                  {/* Marketing - Email & SMS */}
+                  <Route path="/marketing" element={<ProtectedRoute><Marketing /></ProtectedRoute>} />
+                  <Route path="/marketing/campaigns" element={<ProtectedRoute><Marketing /></ProtectedRoute>} />
+                  <Route path="/marketing/campaigns/new" element={<ProtectedRoute><MarketingCampaignCreate /></ProtectedRoute>} />
+                  <Route path="/marketing/campaigns/:id" element={<ProtectedRoute><MarketingCampaignDetail /></ProtectedRoute>} />
+                  <Route path="/marketing/campaigns/:id/edit" element={<ProtectedRoute><MarketingCampaignCreate /></ProtectedRoute>} />
+                  <Route path="/marketing/automations" element={<ProtectedRoute><Marketing /></ProtectedRoute>} />
+                  <Route path="/marketing/automations/new" element={<ProtectedRoute><MarketingAutomationCreate /></ProtectedRoute>} />
+                  <Route path="/marketing/automations/:id" element={<ProtectedRoute><MarketingAutomationDetail /></ProtectedRoute>} />
+                  <Route path="/marketing/automations/:id/edit" element={<ProtectedRoute><MarketingAutomationCreate /></ProtectedRoute>} />
+                  <Route path="/marketing/analytics" element={<ProtectedRoute><Marketing /></ProtectedRoute>} />
                   
                   {/* ACE Forms */}
                   <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
