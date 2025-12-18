@@ -48,12 +48,14 @@ export { LoadingOverlay } from './components/LoadingOverlay';
 export { ContextAwareActions } from './components/QuickActions/ContextAwareActions';
 export { LandingPageActions } from './components/QuickActions/LandingPageActions';
 export { BackgroundUploader } from './components/BackgroundUploader';
+export { LandingPageAssistantPanel } from './components/LandingPageAssistantPanel';
 
 // Templates
 export { getFrontDesignPrompt } from './templates/frontPrompts';
 export { getBackDesignPrompt } from './templates/backPrompts';
 export { getBackgroundPrompt, getBrandBackgroundSuggestions } from './templates/backgroundPrompts';
 export { getLandingPagePrompt, getLandingHeroPrompt, getLandingFormPrompt } from './templates/landingPagePrompts';
+export { getLandingBackgroundPrompt, getSectionBackgroundSuggestions } from './templates/landingPageBackgroundPrompts';
 
 // Data
 export { BRAND_STYLES, detectBrand, getBrandStyle } from './data/brandPresets';

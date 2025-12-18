@@ -30,9 +30,7 @@ import {
   useDesignerAI,
   useDesignerExport,
   DesignerCanvas,
-  DesignerAIChat,
-  BackgroundUploader,
-  ElementLibrary,
+  LandingPageAssistantPanel,
   TokenInserter,
   PropertiesPanel,
   LayerPanel,
@@ -322,47 +320,32 @@ export default function NewLandingPageDesigner() {
       {/* Main Content - AI on LEFT */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         
-        {/* ========== LEFT PANEL - AI FIRST ========== */}
+        {/* ========== LEFT PANEL - AI ASSISTANT ========== */}
         <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
-          <div className="h-full flex flex-col bg-card">
-            {/* AI Chat - PRIMARY */}
-            <div className="flex-1 min-h-0">
-              <DesignerAIChat
-                messages={ai.messages}
-                isGenerating={ai.isGenerating}
-                error={ai.error}
-                currentSuggestion={ai.currentSuggestion}
-                designerType="landing-page"
-                onSendMessage={ai.sendMessage}
-                onApplySuggestion={handleApplySuggestion}
-                onRejectSuggestion={() => {}}
-                onClearConversation={ai.clearConversation}
-                onRetry={ai.retryLastMessage}
-                className="h-full"
-              />
-            </div>
-
-            {/* Quick Add Elements */}
-            <div className="border-t p-3">
-              <ElementLibrary
-                onAddElement={(type, template) => {
-                  history.recordState(designerState.canvasState, `Add ${type}`);
-                  designerState.addElement(template || { type });
-                }}
-                allowedElements={config.allowedElements}
-                className="border-0 shadow-none"
-              />
-            </div>
-
-            {/* Background Upload */}
-            <div className="border-t p-3">
-              <BackgroundUploader
-                currentBackground={designerState.canvasState.backgroundImage}
-                onBackgroundSet={designerState.setBackgroundImage}
-                onBackgroundRemove={() => designerState.setBackgroundImage(null)}
-              />
-            </div>
-          </div>
+          <LandingPageAssistantPanel
+            messages={ai.messages}
+            isGenerating={ai.isGenerating}
+            error={ai.error}
+            onSendMessage={ai.sendMessage}
+            onClearConversation={ai.clearConversation}
+            onGenerateBackground={async (prompt) => {
+              try {
+                toast({ title: '🎨 Generating...', description: 'Creating background image...' });
+                const imageUrl = await ai.generateImage(prompt);
+                if (imageUrl) {
+                  designerState.setBackgroundImage(imageUrl);
+                  toast({ title: '✨ Background Applied!', description: 'Your new background is ready.' });
+                }
+              } catch (err) {
+                toast({
+                  title: 'Generation Failed',
+                  description: err instanceof Error ? err.message : 'Could not generate image',
+                  variant: 'destructive',
+                });
+              }
+            }}
+            className="h-full"
+          />
         </ResizablePanel>
 
         <ResizableHandle />
