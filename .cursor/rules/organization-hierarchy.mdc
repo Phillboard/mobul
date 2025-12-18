@@ -1,96 +1,48 @@
 ---
-description: Specification for implementing organization/client hierarchies, roles, and permissions in a multi-tenant platform
+description: Technical specification for multi-tenant organization hierarchy, role permissions, and client-agency relationships
 ---
 
 
 # organization-hierarchy
 
-HIERARCHY MODEL
-Importance Score: 95/100
+Multi-tenant Organization Model (Importance: 95/100)
+- Three-tier hierarchy: Platform > Agency > Client
+- Organization state tracking: active, suspended, deleted
+- Custom domain and branding inheritance system
+- Tenant isolation with data access boundaries
 
-Core Organization Structure:
-- Platform Level (Top)
-- Agency Level (Middle)
-- Client Level (Bottom)
-- Campaign Level (Operational)
-
-Key Relationships:
-1. Platform -> Agency
-- One-way credit allocation system
-- Master gift card pool management
-- Global brand/denomination controls
-
-2. Agency -> Client
-- Sub-credit allocation management
-- Restricted brand access controls
-- Custom pricing tier inheritance
-
-3. Client -> Campaign
-- Campaign-specific budgets
-- Brand subset availability
-- Denomination restrictions
-
-Permission Architecture:
-- Strict downward inheritance
-- Override capabilities at each level
-- Role-based access matrix
-- Feature-specific controls
-
-Role Hierarchy:
-1. Platform Roles
-- Super Admin
-- Platform Support
-- API Developer
-
-2. Agency Roles
-- Agency Owner
-- Agency Manager
-- Agency Support
-
-3. Client Roles
-- Client Admin
-- Client User
-- Call Center Agent
-
-Critical Business Rules:
-1. Credit Management
-- Credits flow downward only
-- Each level maintains independent balances
-- Automatic threshold monitoring
-- Usage restrictions by level
-
-2. Brand Access
-- Agency-level brand restrictions
-- Client-specific denomination limits
-- Campaign-based availability rules
-
-3. Feature Access
-- Level-specific feature gates
-- Role-based permission matrix
-- Inherited access controls
-- Override management
-
-4. User Management
+Role Permission System (Importance: 90/100)
+Path: src/core/auth/roleRequirements.ts
+- Hierarchical roles with inheritance:
+  - Platform Admin (full access)
+  - Agency Owner (agency-scoped access)
+  - Client Owner (client-scoped access)
+  - Agent (limited client access)
+- Role-based feature gates for gift card operations, campaign management
+- Organization context requirements per role
 - Cross-organization access controls
-- Role assignment restrictions
-- Context-aware permissions
-- Audit trail requirements
 
-Key Components:
-1. src/features/organization/hooks/useOrganizationHierarchy.ts
-- Hierarchy relationship management
-- Cross-level permission resolution
-- Organization context provider
+Client-Agency Relationships (Importance: 85/100)
+Path: src/features/agency/types/index.ts
+- Agency manages multiple client organizations
+- Client configuration inheritance from agency settings
+- Agency-level markup rules for gift card pricing
+- Shared vs isolated credit pool management
+- Agency-wide campaign templates
 
-2. src/features/clients/hooks/useClientPermissions.ts
-- Client-specific permission matrix
-- Feature access validation
-- Role-based control implementation
+Permission Inheritance Rules:
+1. Settings cascade from Platform > Agency > Client
+2. Agency owners access all client data within agency
+3. Client owners restricted to single organization
+4. Agents limited to specific campaign operations
+5. Cross-client data access prohibited by default
 
-3. src/features/agency/hooks/useAgencyControls.ts
-- Agency-level management system
-- Sub-organization control logic
-- Credit allocation rules
+Organization Context Management (Importance: 80/100)
+Path: src/core/auth/hooks/useOrganizationContext.ts
+- Real-time context switching between organizations
+- Role-specific view filtering based on context
+- Permission boundary enforcement
+- Custom domain and branding application
 
 $END$
 

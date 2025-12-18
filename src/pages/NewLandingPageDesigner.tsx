@@ -21,8 +21,9 @@ import { Button } from '@/shared/components/ui/button';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/shared/components/ui/resizable';
-import { ArrowLeft, Save, Download, Globe, Undo, Redo, Layers, Settings, Tag, Monitor, Tablet, Smartphone } from 'lucide-react';
+import { ArrowLeft, Save, Download, Globe, Undo, Redo, Layers, Settings, Tag, Monitor, Tablet, Smartphone, Sparkles } from 'lucide-react';
 import { useToast } from '@shared/hooks';
+import { useTenant } from '@/contexts/TenantContext';
 import {
   DESIGNER_PRESETS,
   useDesignerState,
@@ -31,6 +32,8 @@ import {
   useDesignerExport,
   DesignerCanvas,
   LandingPageAssistantPanel,
+  ElementLibrary,
+  BackgroundUploader,
   TokenInserter,
   PropertiesPanel,
   LayerPanel,
@@ -42,6 +45,8 @@ export default function NewLandingPageDesigner() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentClient } = useTenant();
+  const [leftTab, setLeftTab] = useState<'ai' | 'elements'>('ai');
   const [rightTab, setRightTab] = useState('properties');
   const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
@@ -117,13 +122,23 @@ export default function NewLandingPageDesigner() {
    */
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const visualEditorState = designerState.canvasState;
+      // Serialize to JSON-compatible format for Supabase
+      const visualEditorState = JSON.parse(JSON.stringify(designerState.canvasState));
 
       if (isNewPage || !landingPage) {
+        if (!currentClient?.id) {
+          throw new Error('No client selected');
+        }
+        
+        // Generate a unique slug
+        const slug = `landing-page-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+        
         // INSERT new record
         const { data, error } = await supabase
           .from('landing_pages')
           .insert({
+            client_id: currentClient.id,
+            slug,
             name: 'Untitled Landing Page',
             visual_editor_state: visualEditorState,
             editor_type: 'canvas',
@@ -306,32 +321,112 @@ export default function NewLandingPageDesigner() {
       {/* Main Content - AI on LEFT */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         
-        {/* ========== LEFT PANEL - AI ASSISTANT ========== */}
+        {/* ========== LEFT PANEL - AI ASSISTANT / ELEMENTS ========== */}
         <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
-          <LandingPageAssistantPanel
-            messages={ai.messages}
-            isGenerating={ai.isGenerating}
-            error={ai.error}
-            onSendMessage={ai.sendMessage}
-            onClearConversation={ai.clearConversation}
-            onGenerateBackground={async (prompt) => {
-              try {
-                toast({ title: '🎨 Generating...', description: 'Creating background image...' });
-                const imageUrl = await ai.generateImage(prompt);
-                if (imageUrl) {
-                  designerState.setBackgroundImage(imageUrl);
-                  toast({ title: '✨ Background Applied!', description: 'Your new background is ready.' });
-                }
-              } catch (err) {
-                toast({
-                  title: 'Generation Failed',
-                  description: err instanceof Error ? err.message : 'Could not generate image',
-                  variant: 'destructive',
-                });
-              }
-            }}
-            className="h-full"
-          />
+          <div className="h-full flex flex-col bg-card">
+            {/* Tab Toggle */}
+            <div className="border-b p-1">
+              <div className="flex bg-muted rounded-lg p-1">
+                <button
+                  onClick={() => setLeftTab('ai')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                    leftTab === 'ai'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  AI Assistant
+                </button>
+                <button
+                  onClick={() => setLeftTab('elements')}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                    leftTab === 'elements'
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Layers className="h-4 w-4" />
+                  Elements
+                </button>
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            {leftTab === 'ai' ? (
+              <LandingPageAssistantPanel
+                messages={ai.messages}
+                isGenerating={ai.isGenerating}
+                error={ai.error}
+                onSendMessage={ai.sendMessage}
+                onClearConversation={ai.clearConversation}
+                onGenerateBackground={async (prompt) => {
+                  try {
+                    toast({ title: '🎨 Generating...', description: 'Creating background image...' });
+                    const imageUrl = await ai.generateImage(prompt);
+                    if (imageUrl) {
+                      designerState.setBackgroundImage(imageUrl);
+                      toast({ title: '✨ Background Applied!', description: 'Your new background is ready.' });
+                    }
+                  } catch (err) {
+                    toast({
+                      title: 'Generation Failed',
+                      description: err instanceof Error ? err.message : 'Could not generate image',
+                      variant: 'destructive',
+                    });
+                  }
+                }}
+                className="flex-1"
+              />
+            ) : (
+              <ScrollArea className="flex-1">
+                <div className="p-4 space-y-6">
+                  {/* Build Section */}
+                  <ElementLibrary
+                    onAddElement={(type, template) => {
+                      history.recordState(designerState.canvasState, `Add ${type}`);
+                      designerState.addElement(template || { type });
+                    }}
+                    allowedElements={config.allowedElements}
+                    className="border-0 shadow-none"
+                  />
+
+                  {/* Background Section */}
+                  <div className="border-t pt-4">
+                    <BackgroundUploader
+                      currentBackground={designerState.canvasState.backgroundImage}
+                      onBackgroundSet={designerState.setBackgroundImage}
+                      onBackgroundRemove={() => designerState.setBackgroundImage(null)}
+                    />
+                  </div>
+
+                  {/* Tokens Quick Add */}
+                  <div className="border-t pt-4">
+                    <TokenInserter
+                      onTokenSelect={(token) => {
+                        history.recordState(designerState.canvasState, 'Add token');
+                        designerState.addElement({
+                          type: 'template-token',
+                          tokenContent: {
+                            token,
+                            fallback: '',
+                            transform: 'none',
+                          },
+                          width: 200,
+                          height: 40,
+                          styles: {
+                            fontSize: 16,
+                            color: '#3B82F6',
+                          },
+                        });
+                      }}
+                      availableTokens={config.availableTokens}
+                    />
+                  </div>
+                </div>
+              </ScrollArea>
+            )}
+          </div>
         </ResizablePanel>
 
         <ResizableHandle />

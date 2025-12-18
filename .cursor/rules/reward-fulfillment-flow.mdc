@@ -1,59 +1,55 @@
 ---
-description: Defines business rules and workflows for reward/gift card fulfillment and distribution across campaigns
+description: Documents reward fulfillment logic including SMS verification, card provisioning, and delivery tracking
 ---
 
 
 # reward-fulfillment-flow
 
-Core fulfillment workflow consists of:
+Core Fulfillment Workflows:
 
-1. Gift Card Provisioning System (Importance: 95)
-- Hierarchical provisioning waterfall:
-  1. Check CSV inventory pools first 
-  2. Attempt Tillo API purchase if needed
-  3. Fall back to manual agent provisioning
-- Atomic claiming with transaction rollback
-- Custom pricing tiers and markup calculations
-- Pool health monitoring with auto-replenishment
+1. Reward Provisioning System
+Path: src/core/services/tillo.ts
+- Two-stage provisioning waterfall:
+  * CSV inventory allocation with balance verification 
+  * Real-time Tillo API procurement if inventory depleted
+- Custom markup calculations per agency/client tier
+- Automated low balance alerts and replenishment
+Importance Score: 95
 
-2. Reward Trigger Logic (Importance: 90)
-- Multi-condition reward qualification:
-  - Manual agent verification
-  - Call completion status
-  - Form submission
-  - SMS opt-in confirmation
-- Sequential condition dependencies
-- Time-delay reward delivery
-- CRM event integration
+2. Verification Workflow Engine
+Path: src/features/campaigns/components/wizard/DeliveryFulfillmentStep.tsx
+- Multi-channel verification:
+  * SMS opt-in confirmation
+  * Call center agent verification
+  * Form submission validation
+- Required delay periods between verification attempts
+- Campaign-specific verification rule sets
+Importance Score: 90
 
-3. SMS Delivery Management (Importance: 85)
-- Provider failover chain:
-  1. NotificationAPI primary
-  2. Infobip secondary
-  3. Twilio tertiary
-- Retry logic for failed deliveries
-- Opt-in status tracking
-- Delivery receipt verification
+3. Call Center Integration 
+Path: src/features/call-center/hooks/useRedemptionWorkflow.ts
+- Agent verification workflow with required steps
+- Real-time balance and status checks
+- Manual override capabilities with logging
+- Multi-attempt tracking with cooldown periods
+Importance Score: 85
 
-4. Call Center Integration (Importance: 80)
-- Code validation workflow
-- Real-time balance checking
-- Agent-assisted redemption
-- Script management for verification
+4. Gift Card Distribution
+Path: src/features/gift-cards/lib/provisioning-utils.ts
+- Brand selection hierarchy:
+  * Client preferred brands
+  * Agency default brands  
+  * Platform fallback brands
+- Denomination-specific availability checks
+- Pool health monitoring with thresholds
+Importance Score: 80
 
-5. Balance Verification System (Importance: 85)
-- Multi-provider balance checking
-- Audit trail of balance changes
-- Automated threshold monitoring
-- Error tracking and diagnostics
-
-Critical Paths:
-/src/features/campaigns/components/wizard/ConditionsStep.tsx
-/src/features/gift-cards/lib/provisioning-utils.ts
-/src/core/services/tillo.ts
-/src/features/call-center/hooks/useCallCenterScripts.ts
-
-The system implements sophisticated reward fulfillment with multi-tier provisioning, condition-based qualification, and comprehensive delivery verification across channels.
+Key Business Rules:
+- SMS opt-in required before reward delivery
+- Minimum 3-hour delay between verification attempts
+- Agent verification required for high-value rewards
+- Real-time balance verification before distribution
+- Multi-tier markup system based on client hierarchy
 
 $END$
 

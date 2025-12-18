@@ -95,61 +95,43 @@ All designers (mail, landing, email) use same framework.
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Campaign Management & Gift Card Fulfillment Platform
-Importance Score: 85/100
+A multi-tenant campaign management and gift card distribution platform organized around four core business domains:
 
-Core Business Logic Architecture:
+CAMPAIGN MANAGEMENT ENGINE
+- Multi-step campaign creation with audience targeting and reward configuration
+- Condition-based gift card reward triggers (form_submission, call_completed, immediate)
+- Campaign versioning and approval workflows
+- Integrated landing page and QR code tracking
+Path: src/features/campaigns/
 
-1. Campaign Management Engine
-- Multi-stage campaign creation workflow with audience selection and reward configuration
-- Complex condition-based reward triggering system for gift card distribution
-- Integration between physical mail delivery and digital reward fulfillment
-- Automated code generation and validation for recipient tracking
+GIFT CARD PROVISIONING SYSTEM
+- Two-step provisioning waterfall (CSV inventory -> Tillo API)
+- Multi-denomination support with brand-specific configurations 
+- Pool-based inventory management with health monitoring
+- Client-specific pricing and markup rules
+Path: src/core/services/tillo.ts
 
-Key Components:
-```
-src/features/campaigns/components/wizard/AudiencesRewardsStep.tsx
-src/features/gift-cards/lib/provisioning-utils.ts
-src/features/billing/types/index.ts
-```
+CREDIT MANAGEMENT HIERARCHY
+- Four-tier credit flow: Platform → Agency → Client → Campaign
+- One-way credit allocation with downward-only flow
+- Multi-tier pricing structure with defined thresholds
+- Real-time balance monitoring and alerts
+Path: src/features/billing/types/
 
-2. Credit Management System
-- Hierarchical credit flow: Platform → Agency → Client → Campaign
-- One-way credit cascade with atomic transactions
-- Multi-tier pricing model with markup calculations
-- Automated balance monitoring and replenishment triggers
+MARKETING AUTOMATION ENGINE
+- Conditional event triggers with custom reward actions
+- Campaign-specific workflow sequencing
+- Multi-channel delivery (email, SMS, direct mail)
+- Performance tracking and analytics
+Path: src/features/marketing/
 
-3. Gift Card Provisioning Pipeline
-- Two-tier provisioning strategy (CSV inventory → Tillo API fallback)
-- Brand-specific denomination management
-- Real-time balance verification workflows
-- Complex inventory pooling with client-specific access controls
+Integration Components:
+- Call center verification system for reward redemption
+- Brand-specific design generation with postal regulations
+- Multi-provider SMS delivery with fallback chain
+- Organization/client tenant isolation
 
-4. Reward Distribution Logic
-- Condition-based reward triggering
-- Multi-provider SMS delivery with failover handling
-- Automated reward delivery tracking
-- Campaign-specific validation rules
-
-Integration Points:
-- Direct mail service providers (PostGrid, custom mailhouse)
-- Gift card providers (Tillo API)
-- SMS delivery (NotificationAPI, Infobip, Twilio)
-- CRM systems for contact management
-
-The system implements sophisticated business rules around:
-- Campaign lifecycle management
-- Gift card inventory and provisioning
-- Multi-tier credit allocation
-- Complex reward triggering conditions
-- Client/agency hierarchical relationships
-
-Domain-specific validation ensures:
-- Valid brand selection for rewards
-- Sufficient credit availability
-- Compliant mail piece specifications
-- Proper reward condition configuration
-- Secure code generation and tracking
+The system implements sophisticated campaign orchestration focused on gift card distribution through multiple channels while maintaining strict credit controls and multi-tenant isolation.
 
 $END$
 
