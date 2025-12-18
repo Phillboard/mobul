@@ -14,6 +14,7 @@ import { InviteUserDialog } from "@/features/settings/components/InviteUserDialo
 import { PendingInvitations } from "@/features/settings/components/PendingInvitations";
 import { SecuritySettings } from "@/features/settings/components/SecuritySettings";
 import { BillingSettings } from "@/features/settings/components/BillingSettings";
+import { TeamSettings } from "@/features/settings/components/TeamSettings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useTenant } from "@/contexts/TenantContext";
 import { ClaimPlatformAdmin } from "@/features/settings/components/ClaimPlatformAdmin";
@@ -119,13 +120,15 @@ export default function Settings() {
         return <APISettings />;
       case "mail-provider":
         return <MailProviderSettings />;
+      case "team":
+        return <TeamSettings />;
       case "users":
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">User Management</h2>
-                <p className="text-muted-foreground">Invite and manage team members</p>
+                <p className="text-muted-foreground">Platform-wide user management (Admin only)</p>
               </div>
               <InviteUserDialog />
             </div>

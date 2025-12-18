@@ -28,57 +28,6 @@ export interface CampaignVersionData {
   }>;
 }
 
-// GrapesJS JSON schemas
-export interface GrapesJSComponent {
-  type: string;
-  tagName?: string;
-  attributes?: Record<string, any>;
-  classes?: string[];
-  content?: string;
-  components?: GrapesJSComponent[];
-  style?: Record<string, string>;
-  traits?: Array<{
-    type: string;
-    label: string;
-    name: string;
-  }>;
-}
-
-export interface GrapesJSStyle {
-  selectors: string[];
-  style: Record<string, string>;
-  state?: string;
-  mediaText?: string;
-}
-
-export interface GrapesJSAsset {
-  type: 'image' | 'video' | 'font';
-  src: string;
-  name?: string;
-  unitDim?: string;
-  height?: number;
-  width?: number;
-}
-
-export interface GrapesJSPage {
-  id: string;
-  frames: Array<{
-    component: GrapesJSComponent;
-    head?: Array<{
-      type: string;
-      content: string;
-    }>;
-  }>;
-}
-
-export interface GrapesJSProjectData {
-  assets?: GrapesJSAsset[];
-  styles?: GrapesJSStyle[];
-  pages?: GrapesJSPage[];
-  symbols?: any[];
-  dataSources?: any[];
-}
-
 // Template JSON schemas
 export interface TemplateLayer {
   id: string;
@@ -324,14 +273,6 @@ export interface SimulationParameters {
 }
 
 // Helper type guards
-export function isGrapesJSProjectData(data: any): data is GrapesJSProjectData {
-  return data && (
-    Array.isArray(data.assets) ||
-    Array.isArray(data.styles) ||
-    Array.isArray(data.pages)
-  );
-}
-
 export function isTemplateDesign(data: any): data is TemplateDesign {
   return data && data.version && data.canvasSize && Array.isArray(data.layers);
 }

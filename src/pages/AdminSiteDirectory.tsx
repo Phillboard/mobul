@@ -37,9 +37,6 @@ const routes: RouteInfo[] = [
   { path: "/contacts/lists", name: "Lists & Segments", category: "Contacts", auth: "protected", requiredPermissions: ["contacts.view"], description: "Contact lists and segments" },
   { path: "/contacts/lists/:id", name: "List Detail", category: "Contacts", auth: "protected", requiredPermissions: ["contacts.view"], description: "List details and members" },
   { path: "/contacts/import", name: "Import Contacts", category: "Contacts", auth: "protected", requiredPermissions: ["contacts.create"], description: "CSV import wizard" },
-  { path: "/activities", name: "Activities", category: "Contacts", auth: "protected", requiredPermissions: ["contacts.view"], description: "Activity tracking timeline" },
-  { path: "/tasks", name: "Tasks", category: "Contacts", auth: "protected", requiredPermissions: ["contacts.view"], description: "Task management board" },
-  { path: "/team", name: "Team Management", category: "Contacts", auth: "protected", description: "Team member management" },
   
   // Campaigns
   { path: "/campaigns", name: "All Campaigns", category: "Campaigns", auth: "protected", requiredPermissions: ["campaigns.view"], description: "Campaign listing" },
@@ -49,9 +46,9 @@ const routes: RouteInfo[] = [
   
   // Mail & Landing Pages
   { path: "/mail", name: "Mail Library", category: "Campaigns", auth: "protected", requiredPermissions: ["templates.view"], description: "Direct mail template library" },
-  { path: "/mail-designer/:id", name: "Mail Designer", category: "Campaigns", auth: "protected", description: "GrapesJS mail piece editor" },
+  { path: "/mail-designer/:id", name: "Mail Designer", category: "Campaigns", auth: "protected", description: "AI-powered mail piece designer" },
   { path: "/landing-pages", name: "Landing Pages", category: "Campaigns", auth: "protected", requiredPermissions: ["landingpages.view"], description: "PURL landing page library" },
-  { path: "/landing-pages/:id/visual-editor", name: "Landing Page Editor", category: "Campaigns", auth: "protected", description: "GrapesJS landing page editor" },
+  { path: "/landing-pages/:id/visual-editor", name: "Landing Page Editor", category: "Campaigns", auth: "protected", description: "AI-powered landing page designer" },
   
   // ACE Forms
   { path: "/ace-forms", name: "ACE Forms", category: "Campaigns", auth: "protected", description: "Form library" },

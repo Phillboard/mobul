@@ -128,29 +128,6 @@ export async function refineLandingPage(
 }
 
 /**
- * Convert HTML to GrapesJS format
- */
-export function htmlToGrapesJS(html: string): any {
-  // Parse HTML and convert to GrapesJS component structure
-  // This is a simplified version - full implementation would use a proper HTML parser
-  
-  return {
-    components: [
-      {
-        type: 'wrapper',
-        components: [
-          {
-            type: 'text',
-            content: html,
-          },
-        ],
-      },
-    ],
-    styles: [],
-  };
-}
-
-/**
  * Publish landing page to campaign
  */
 export async function publishLandingPage(
@@ -166,7 +143,7 @@ export async function publishLandingPage(
         html_content: html,
         css_content: css,
         published: true,
-        grapesjs_data: htmlToGrapesJS(html),
+        editor_type: 'ai-html',
       })
       .select()
       .single();

@@ -50,9 +50,6 @@ const ContactDetail = lazy(() => import("./pages/ContactDetail"));
 const ContactLists = lazy(() => import("./pages/ContactLists"));
 const ListDetail = lazy(() => import("./pages/contacts/ListDetail"));
 const ContactImport = lazy(() => import("./pages/ContactImport"));
-const Activities = lazy(() => import("./pages/Activities"));
-const Tasks = lazy(() => import("./pages/Tasks"));
-const TeamManagement = lazy(() => import("./pages/TeamManagement"));
 const AdminGiftCardMarketplace = lazy(() => import("./pages/AdminGiftCardMarketplace"));
 const AdminGiftCardBrands = lazy(() => import("./pages/AdminGiftCardBrands"));
 const AdminFinancialReports = lazy(() => import("./pages/AdminFinancialReports"));
@@ -228,9 +225,6 @@ const App = () => (
                   <Route path="/contacts/lists" element={<ProtectedRoute><ContactLists /></ProtectedRoute>} />
                   <Route path="/contacts/lists/:id" element={<ProtectedRoute><ListDetail /></ProtectedRoute>} />
                   <Route path="/contacts/import" element={<ProtectedRoute><ContactImport /></ProtectedRoute>} />
-                  <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
-                  <Route path="/tasks" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-                  <Route path="/team" element={<ProtectedRoute><TeamManagement /></ProtectedRoute>} />
                   
                   {/* Call Center - Redemption & Fulfillment */}
                   <Route path="/call-center" element={<ProtectedRoute requiredPermissions={["calls.confirm_redemption"]}><CallCenterRedemption /></ProtectedRoute>} />

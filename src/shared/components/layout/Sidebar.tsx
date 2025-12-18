@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Mail, FileText, Users, Gift, Phone,
   ShoppingCart, Globe, Activity, ListTodo, ChevronRight, ArrowLeft, FormInput,
   Gauge, BookOpen, List, Upload, FolderTree, Database, FileSearch, Rocket, TestTube,
-  Megaphone, Headphones, ClipboardList, Shield, UserCog, ShieldAlert, CheckSquare,
+  Megaphone, Headphones, ClipboardList, Shield, UserCog, ShieldAlert,
   PhoneCall, Target, Plug, Settings as SettingsIcon, Package, Building2, CreditCard, DollarSign,
   Bug, MessageSquare, Zap
 } from "lucide-react";
@@ -92,15 +92,6 @@ const navigationGroups: NavGroup[] = [
     items: [
       { name: "Redemption Center", href: "/call-center", icon: Headphones, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision", "tracking", "calls"], description: "Redeem gift cards and track calls" },
       { name: "Call Scripts", href: "/call-center/scripts", icon: FileText, permissions: ['calls.manage'], keywords: ["scripts", "training", "call flow"], description: "Manage call scripts" },
-    ]
-  },
-  {
-    label: "Workspace",
-    collapsible: true,
-    items: [
-      { name: "Tasks", href: "/tasks", icon: CheckSquare, keywords: ["tasks", "todos", "follow-ups", "action items"], description: "Manage tasks and to-dos" },
-      { name: "Activities", href: "/activities", icon: Activity, keywords: ["activities", "interactions", "timeline", "history"], description: "Track customer interactions" },
-      { name: "Team", href: "/team", icon: Users, keywords: ["team", "members", "management"], description: "Manage team members" },
     ]
   },
   {

@@ -189,39 +189,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-        }
-      }
-    });
+  /**
+   * @deprecated Public registration is disabled. Users must be created by administrators.
+   * Use the admin user creation interface instead.
+   */
+  const signUp = async (_email: string, _password: string, _fullName: string) => {
+    const error = new Error("Public registration is disabled. Users must be created by administrators.") as AuthError;
+    console.error("Attempted to use deprecated signUp function");
     return { error };
   };
 
+  /**
+   * @deprecated OAuth login is disabled. Only email/password authentication is supported.
+   */
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    const error = new Error("OAuth login is disabled. Please use email and password to sign in.") as AuthError;
+    console.error("Attempted to use deprecated signInWithGoogle function");
     return { error };
   };
 
+  /**
+   * @deprecated OAuth login is disabled. Only email/password authentication is supported.
+   */
   const signInWithApple = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    const error = new Error("OAuth login is disabled. Please use email and password to sign in.") as AuthError;
+    console.error("Attempted to use deprecated signInWithApple function");
     return { error };
   };
 

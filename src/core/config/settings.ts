@@ -106,12 +106,21 @@ export const settingsTabs: TabConfig[] = [
   
   // Administration
   {
+    id: 'team',
+    label: 'Team',
+    icon: Users,
+    roles: ['agency_owner', 'company_owner'],
+    permissions: ['users.manage'],
+    description: 'Manage your team members',
+    group: 'admin'
+  },
+  {
     id: 'users',
     label: 'Users',
     icon: Users,
-    roles: ['admin', 'agency_owner', 'company_owner'],
+    roles: ['admin'],
     permissions: ['users.manage'],
-    description: 'Invite and manage team members',
+    description: 'Platform-wide user management',
     group: 'admin'
   },
   {
