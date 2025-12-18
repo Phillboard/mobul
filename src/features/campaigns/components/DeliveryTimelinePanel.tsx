@@ -15,90 +15,77 @@ export function DeliveryTimelinePanel({ campaignId }: DeliveryTimelinePanelProps
   const { data: deliveries, isLoading } = useQuery({
     queryKey: ["campaign-gift-deliveries", campaignId],
     queryFn: async () => {
-      // Query recipient_gift_cards - simpler query
-      const { data: rgcData, error: rgcError } = await supabase
-        .from("recipient_gift_cards")
+      // Query gift_card_billing_ledger (has the actual delivery data)
+      const { data: billingData, error: billingError } = await supabase
+        .from("gift_card_billing_ledger")
         .select(`
           id,
-          delivery_status,
-          created_at,
-          condition_id,
+          billed_at,
           recipient_id,
-          gift_card_id,
+          campaign_id,
+          denomination,
+          inventory_card_id,
           recipients (
             first_name,
             last_name,
             phone
+          ),
+          gift_card_brands (
+            brand_name
+          ),
+          gift_card_inventory (
+            card_code,
+            status
           )
         `)
         .eq("campaign_id", campaignId)
-        .order("created_at", { ascending: false })
+        .order("billed_at", { ascending: false })
         .limit(50);
 
-      if (rgcError) {
-        console.error("Recipient gift cards query error:", rgcError);
+      if (billingError) {
+        console.error("Billing ledger query error:", billingError);
         return [];
       }
 
-      if (!rgcData || rgcData.length === 0) {
+      if (!billingData || billingData.length === 0) {
         return [];
       }
 
-      // Get all unique gift card IDs
-      const cardIds = rgcData
-        .map(entry => entry.gift_card_id)
-        .filter(Boolean);
+      // Get unique inventory card IDs to find matching recipient_gift_cards records
+      const inventoryCardIds = [...new Set(billingData.map(entry => entry.inventory_card_id).filter(Boolean))];
 
-      if (cardIds.length === 0) {
-        return rgcData.map(entry => ({
-          id: entry.id,
-          delivery_status: entry.delivery_status,
-          condition_number: 1,
-          created_at: entry.created_at,
-          recipients: entry.recipients,
-          gift_cards: {
-            card_code: null,
-            gift_card_pools: {
-              provider: 'Gift Card',
-              card_value: 0
-            }
-          }
-        }));
-      }
+      // Query recipient_gift_cards to get revoke IDs - match by inventory_card_id
+      const { data: rgcData } = await supabase
+        .from("recipient_gift_cards")
+        .select("id, inventory_card_id, delivery_status, revoked_at")
+        .eq("campaign_id", campaignId)
+        .in("inventory_card_id", inventoryCardIds);
 
-      // Query gift card inventory separately
-      const { data: inventoryData } = await supabase
-        .from("gift_card_inventory")
-        .select(`
-          id,
-          card_code,
-          denomination,
-          brand_id,
-          gift_card_brands (
-            brand_name
-          )
-        `)
-        .in("id", cardIds);
-
-      // Create a map of card data
-      const cardMap = new Map(
-        (inventoryData || []).map(card => [card.id, card])
+      // Create a map: inventory_card_id -> recipient_gift_cards record
+      const rgcMap = new Map(
+        (rgcData || []).map(rgc => [rgc.inventory_card_id, rgc])
       );
 
       // Combine the data
-      return rgcData.map(entry => {
-        const cardInfo = cardMap.get(entry.gift_card_id);
+      return billingData.map((entry: any) => {
+        const rgcRecord = rgcMap.get(entry.inventory_card_id);
+        const isRevoked = rgcRecord?.revoked_at != null;
+        const deliveryStatus = isRevoked 
+          ? 'revoked' 
+          : (entry.gift_card_inventory?.status === 'delivered' ? 'delivered' : 'sent');
+
         return {
-          id: entry.id,
-          delivery_status: entry.delivery_status,
+          id: entry.id, // Billing ledger ID for display
+          revokeId: rgcRecord?.id || null, // recipient_gift_cards ID for revoke
+          delivery_status: deliveryStatus,
           condition_number: 1,
-          created_at: entry.created_at,
+          created_at: entry.billed_at,
           recipients: entry.recipients,
           gift_cards: {
-            card_code: cardInfo?.card_code,
+            card_code: entry.gift_card_inventory?.card_code,
             gift_card_pools: {
-              provider: cardInfo?.gift_card_brands?.brand_name || 'Gift Card',
-              card_value: cardInfo?.denomination || 0
+              provider: entry.gift_card_brands?.brand_name || 'Gift Card',
+              card_value: entry.denomination
             }
           }
         };
@@ -174,9 +161,9 @@ export function DeliveryTimelinePanel({ campaignId }: DeliveryTimelinePanelProps
                           >
                             {delivery.delivery_status}
                           </Badge>
-                          {!isRevoked && (
+                          {!isRevoked && delivery.revokeId && (
                             <RevokeGiftCardButton
-                              assignmentId={delivery.id}
+                              assignmentId={delivery.revokeId}
                               recipientName={recipientName}
                               cardValue={delivery.gift_cards?.gift_card_pools?.card_value}
                               brandName={delivery.gift_cards?.gift_card_pools?.provider}

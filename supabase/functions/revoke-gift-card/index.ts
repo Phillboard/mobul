@@ -153,15 +153,18 @@ Deno.serve(async (req) => {
     let cardValue: number | null = null;
     let brandName: string | null = null;
 
-    // Try to get card info from gift_card_inventory if there's a card_id
-    if (assignment.gift_card_id) {
+    // Determine which card ID to use (new inventory_card_id or legacy gift_card_id)
+    const inventoryCardId = assignment.inventory_card_id || assignment.gift_card_id;
+
+    // Try to get card info from gift_card_inventory
+    if (inventoryCardId) {
       const { data: inventoryCard } = await supabase
         .from('gift_card_inventory')
         .select(`
           denomination,
           gift_card_brands(brand_name)
         `)
-        .eq('id', assignment.gift_card_id)
+        .eq('id', inventoryCardId)
         .single();
 
       if (inventoryCard) {
@@ -210,8 +213,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 2. Return card to inventory if applicable
-    if (assignment.gift_card_id) {
+    // 2. Return card to inventory if applicable (use inventory_card_id or legacy gift_card_id)
+    if (inventoryCardId) {
       const { error: inventoryError } = await supabase
         .from('gift_card_inventory')
         .update({
@@ -220,13 +223,13 @@ Deno.serve(async (req) => {
           assigned_to_campaign_id: null,
           assigned_at: null
         })
-        .eq('id', assignment.gift_card_id);
+        .eq('id', inventoryCardId);
 
       if (inventoryError) {
         console.warn('Failed to return card to inventory:', inventoryError);
         // Don't fail the whole operation - the revoke is still valid
       } else {
-        console.log(`Card ${assignment.gift_card_id} returned to inventory`);
+        console.log(`Card ${inventoryCardId} returned to inventory`);
       }
     }
 
@@ -240,7 +243,7 @@ Deno.serve(async (req) => {
       .from('gift_card_revoke_log')
       .insert({
         recipient_gift_card_id: assignmentId,
-        inventory_card_id: assignment.gift_card_id,
+        inventory_card_id: inventoryCardId, // Use resolved inventory card ID
         recipient_id: assignment.recipient_id,
         campaign_id: assignment.campaign_id,
         condition_id: assignment.condition_id,
@@ -273,7 +276,7 @@ Deno.serve(async (req) => {
         originalStatus,
         revokedAt: now,
         revokedBy: user.id,
-        cardReturnedToInventory: !!assignment.gift_card_id
+        cardReturnedToInventory: !!inventoryCardId
       }
     }, { headers: corsHeaders });
 

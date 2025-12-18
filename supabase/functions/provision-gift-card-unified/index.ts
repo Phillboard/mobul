@@ -585,6 +585,43 @@ serve(async (req) => {
       // Don't throw - card is already claimed
     }
 
+    // =====================================================
+    // STEP 11b: CREATE RECIPIENT_GIFT_CARDS ENTRY (for revoke)
+    // =====================================================
+    // This junction table entry is required for the revoke functionality
+    let recipientGiftCardId: string | null = null;
+    try {
+      // Try to get a condition_id for this campaign (optional)
+      const { data: campaignCondition } = await supabaseClient
+        .from('campaign_conditions')
+        .select('id')
+        .eq('campaign_id', campaignId)
+        .limit(1)
+        .single();
+
+      const { data: rgcEntry, error: rgcError } = await supabaseClient
+        .from('recipient_gift_cards')
+        .insert({
+          recipient_id: recipientId,
+          campaign_id: campaignId,
+          condition_id: campaignCondition?.id || null,
+          inventory_card_id: inventoryCardId, // Use inventory_card_id (NOT gift_card_id which has FK to legacy table)
+          delivery_status: 'sent',
+          assigned_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (rgcError) {
+        console.warn(`[STEP ${STEPS.RECORD_BILLING.number}] ⚠ recipient_gift_cards insert failed (non-blocking):`, rgcError.message);
+      } else {
+        recipientGiftCardId = rgcEntry?.id;
+        console.log(`[STEP ${STEPS.RECORD_BILLING.number}] ✓ recipient_gift_cards entry created: ${recipientGiftCardId}`);
+      }
+    } catch (rgcErr) {
+      console.warn(`[STEP ${STEPS.RECORD_BILLING.number}] ⚠ recipient_gift_cards exception (non-blocking):`, rgcErr);
+    }
+
     const profit = costBasis ? amountBilled - costBasis : 0;
 
     // =====================================================
