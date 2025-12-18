@@ -2,7 +2,7 @@
  * AI Designer Feature Module
  * 
  * AI-first landing page designer with code generation.
- * Exports all components, hooks, and types.
+ * Exports all components, hooks, types, and utilities.
  */
 
 // ============================================================================
@@ -32,3 +32,23 @@ export { CodeEditorPanel } from './components/CodeEditorPanel';
 export { TemplateGallery, TEMPLATES } from './components/TemplateGallery';
 export { VersionHistory } from './components/VersionHistory';
 export { ExportDialog } from './components/ExportDialog';
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+export {
+  classifyError,
+  validateHTML,
+  sanitizeHTML,
+  withRetry,
+  getUserFriendlyError,
+  logError,
+} from './utils/errorHandling';
+
+export type {
+  AIDesignerErrorType,
+  AIDesignerError,
+  HTMLValidationResult,
+  RetryConfig,
+} from './utils/errorHandling';

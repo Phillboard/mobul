@@ -31,6 +31,7 @@ const RecipientDetail = lazy(() => import("./pages/RecipientDetail"));
 const Mail = lazy(() => import("./pages/Mail"));
 const NewMailDesigner = lazy(() => import("./pages/NewMailDesigner"));
 const NewLandingPageDesigner = lazy(() => import("./pages/NewLandingPageDesigner"));
+const AILandingPageDesigner = lazy(() => import("./pages/AILandingPageDesigner"));
 const NewEmailDesigner = lazy(() => import("./pages/NewEmailDesigner"));
 const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
 const APIDocumentation = lazy(() => import("./pages/APIDocumentation"));
@@ -198,6 +199,10 @@ const App = () => (
                   <Route path="/landing-pages" element={<ProtectedRoute><LandingPages /></ProtectedRoute>} />
                   <Route path="/landing-pages/new" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
                   <Route path="/landing-pages/:id" element={<ProtectedRoute><NewLandingPageDesigner /></ProtectedRoute>} />
+                  
+                  {/* AI Landing Page Designer (New Code Generation System) */}
+                  <Route path="/landing-pages-ai/new" element={<ProtectedRoute><AILandingPageDesigner /></ProtectedRoute>} />
+                  <Route path="/landing-pages-ai/:id" element={<ProtectedRoute><AILandingPageDesigner /></ProtectedRoute>} />
                   {/* Redirect old routes */}
                   <Route path="/landing-pages/create" element={<Navigate to="/landing-pages/new" replace />} />
                   <Route path="/landing-pages/:id/editor" element={<Navigate to="/landing-pages/:id" replace />} />
