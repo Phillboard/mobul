@@ -145,7 +145,7 @@ export function useCreateMarketingCampaign() {
       if (campaignError) throw campaignError;
 
       // Create messages
-      if (input.messages.length > 0) {
+      if (input.messages && input.messages.length > 0) {
         const { error: messagesError } = await supabase
           .from('marketing_campaign_messages')
           .insert(

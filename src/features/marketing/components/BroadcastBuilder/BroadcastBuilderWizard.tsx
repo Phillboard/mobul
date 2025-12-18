@@ -84,13 +84,40 @@ export function BroadcastBuilderWizard() {
 
   const handleSubmit = async () => {
     try {
-      // Create the broadcast
-      // TODO: Implement full broadcast creation with messages
+      // Validate required fields
+      if (!formData.name.trim()) {
+        toast.error('Please enter a broadcast name');
+        setCurrentStep('basics');
+        return;
+      }
+
+      if (!formData.messages || formData.messages.length === 0) {
+        toast.error('Please add at least one message');
+        setCurrentStep('messages');
+        return;
+      }
+
+      // Create the broadcast campaign
+      const campaignData = {
+        name: formData.name,
+        description: formData.description,
+        campaign_type: formData.broadcast_type,
+        audience_type: formData.audience_type,
+        audience_config: formData.audience_config,
+        messages: formData.messages || [],
+        scheduled_at: formData.schedule_type === 'scheduled' && formData.scheduled_at 
+          ? formData.scheduled_at.toISOString() 
+          : undefined,
+        status: formData.schedule_type === 'scheduled' ? 'scheduled' : 'draft',
+      };
+
+      await createMutation.mutateAsync(campaignData as any);
+      
       toast.success('Broadcast created successfully!');
       navigate('/marketing/broadcasts');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating broadcast:', error);
-      toast.error('Failed to create broadcast');
+      toast.error(error?.message || 'Failed to create broadcast');
     }
   };
 
