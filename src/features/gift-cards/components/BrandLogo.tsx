@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@shared/utils/cn';
 
 interface BrandLogoProps {
   logoUrl?: string | null;
