@@ -6,7 +6,7 @@
  */
 
 import React, { useRef, useMemo } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@shared/utils/cn';
 import type { CanvasLayer } from '../../types/layers';
 import { LayerRenderer } from '../Layers';
 

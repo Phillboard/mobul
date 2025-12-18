@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Braces, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@shared/utils/cn';
 
 export interface PreviewModeToggleProps {
   isPreviewMode: boolean;

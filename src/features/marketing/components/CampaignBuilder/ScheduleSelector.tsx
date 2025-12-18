@@ -15,7 +15,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Send, Clock, CalendarIcon, Zap } from "lucide-react";
 import { format } from "date-fns";
 import type { CampaignBuilderFormData } from "../../types";
-import { cn } from "@/lib/utils";
+import { cn } from "@shared/utils/cn";
 
 interface Props {
   scheduleType: 'immediate' | 'scheduled' | 'follow_up';

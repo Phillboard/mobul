@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@shared/utils/cn';
 import type { TextLayer } from '../../types/layers';
 import { replaceTokensWithPreview, containsTokens } from '../../utils/tokens';
 

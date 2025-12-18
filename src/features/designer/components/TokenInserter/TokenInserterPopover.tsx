@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from '@shared/utils/cn';
 import {
   getAllTokens,
   TokenDefinition,

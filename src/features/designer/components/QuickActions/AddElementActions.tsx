@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Type, Braces, QrCode, Phone, Ticket, Image as ImageIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@shared/utils/cn';
 import { Button } from '@/components/ui/button';
 import {
   createTextLayer,

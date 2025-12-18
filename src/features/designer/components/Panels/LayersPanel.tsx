@@ -22,7 +22,7 @@ import {
   Square,
   Layers as LayersIcon,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@shared/utils/cn';
 import type { CanvasLayer } from '../../types/layers';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
