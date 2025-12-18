@@ -5,6 +5,7 @@
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
 import { DenominationToggle } from "./DenominationToggle";
+import { BrandLogo } from "../BrandLogo";
 import type { BrandWithDenominations } from '@/features/gift-cards/hooks';
 import { CheckCircle2 } from "lucide-react";
 
@@ -23,19 +24,11 @@ export function GiftCardBrandCard({ brand, onToggle }: GiftCardBrandCardProps) {
         {/* Brand Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 flex-1">
-            {brand.logo_url ? (
-              <img 
-                src={brand.logo_url} 
-                alt={brand.brand_name}
-                className="h-10 w-10 object-contain"
-              />
-            ) : (
-              <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
-                <span className="text-lg font-bold text-muted-foreground">
-                  {brand.brand_name.charAt(0)}
-                </span>
-              </div>
-            )}
+            <BrandLogo 
+              logoUrl={brand.logo_url} 
+              brandName={brand.brand_name} 
+              size="md"
+            />
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold truncate">{brand.brand_name}</h3>
               {brand.category && (

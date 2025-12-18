@@ -199,7 +199,7 @@ export function CampaignQuickActions({ campaign, variant = 'default' }: Campaign
             </DropdownMenuItem>
           )}
           
-          <DropdownMenuItem onClick={() => navigate(`/campaigns/${campaign.id}/analytics`)}>
+          <DropdownMenuItem onClick={() => navigate(`/analytics/campaigns/${campaign.id}`)}>
             <BarChart3 className="h-4 w-4 mr-2" />
             View Analytics
           </DropdownMenuItem>

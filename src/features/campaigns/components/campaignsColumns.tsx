@@ -23,9 +23,9 @@ export type CampaignRow = {
   mailing_method: string | null;
   audience?: { name: string } | null;
   template?: { name: string } | null;
-  callSessionCount: number;
-  rewardCount: number;
-  conversionRate: number;
+  recipientCount: number;
+  rewardsGiven: number;
+  responseRate: number;
 };
 
 interface CampaignsColumnsOptions {
@@ -96,7 +96,8 @@ export function createCampaignsColumns(
         const campaign = row.original as any;
         // Prefer contact_lists over deprecated audiences
         const listName = campaign.contact_lists?.name || campaign.audiences?.name;
-        const count = campaign.contact_lists?.contact_count || campaign.audiences?.valid_count || 0;
+        // Use the computed recipientCount which counts actual members
+        const count = campaign.recipientCount || campaign.contact_lists?.contact_count || campaign.audiences?.valid_count || 0;
         return (
           <div className="flex flex-col">
             <span className="text-sm font-medium">
@@ -104,7 +105,7 @@ export function createCampaignsColumns(
             </span>
             {listName && (
               <span className="text-xs text-muted-foreground">
-                {count} contacts
+                {count.toLocaleString()} contacts
               </span>
             )}
           </div>
@@ -112,30 +113,30 @@ export function createCampaignsColumns(
       },
     },
     {
-      accessorKey: "callSessionCount",
+      accessorKey: "recipientCount",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Calls" />
+        <DataTableColumnHeader column={column} title="Recipients" />
       ),
       cell: ({ row }) => (
-        <div className="text-center">{row.getValue("callSessionCount")}</div>
+        <div className="text-center">{(row.getValue("recipientCount") as number).toLocaleString()}</div>
       ),
     },
     {
-      accessorKey: "rewardCount",
+      accessorKey: "rewardsGiven",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Rewards" />
       ),
       cell: ({ row }) => (
-        <div className="text-center">{row.getValue("rewardCount")}</div>
+        <div className="text-center">{row.getValue("rewardsGiven")}</div>
       ),
     },
     {
-      accessorKey: "conversionRate",
+      accessorKey: "responseRate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Conversion" />
+        <DataTableColumnHeader column={column} title="Response" />
       ),
       cell: ({ row }) => {
-        const rate = row.getValue("conversionRate") as number;
+        const rate = row.getValue("responseRate") as number;
         return (
           <div className="text-center font-medium">
             {rate > 0 ? `${rate.toFixed(1)}%` : "0%"}
@@ -162,7 +163,7 @@ export function createCampaignsColumns(
     {
       accessorKey: "mail_date",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Mail Date" />
+        <DataTableColumnHeader column={column} title="Launch Date" />
       ),
       cell: ({ row }) => {
         const date = row.getValue("mail_date") as string | null;

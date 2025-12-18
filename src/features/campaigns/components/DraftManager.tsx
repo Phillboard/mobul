@@ -123,7 +123,7 @@ export function DraftManager({
             {drafts?.map((draft) => (
               <div
                 key={draft.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent"
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-all duration-200"
               >
                 <div className="flex-1">
                   <p className="font-medium text-sm">{draft.draft_name}</p>

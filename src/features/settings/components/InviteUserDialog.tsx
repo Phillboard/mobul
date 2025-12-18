@@ -183,7 +183,7 @@ export function InviteUserDialog() {
                 {invitableRoles.map((roleOption) => (
                   <div
                     key={roleOption.value}
-                    className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors"
+                    className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-muted/50 transition-all duration-200"
                   >
                     <RadioGroupItem value={roleOption.value} id={roleOption.value} />
                     <div className="flex-1 space-y-1">

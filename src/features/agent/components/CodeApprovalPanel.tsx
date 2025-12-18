@@ -155,7 +155,7 @@ export function CodeApprovalPanel({ callSessionId }: CodeApprovalPanelProps) {
               {searchResults.map((recipient) => (
                 <Card
                   key={recipient.id}
-                  className={`cursor-pointer transition-colors hover:bg-accent ${
+                  className={`cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
                     selectedRecipient?.id === recipient.id ? "border-primary" : ""
                   }`}
                   onClick={() => setSelectedRecipient(recipient)}

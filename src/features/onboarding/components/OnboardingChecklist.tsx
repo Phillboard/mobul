@@ -117,7 +117,7 @@ export function OnboardingChecklist() {
       </CardHeader>
       <CardContent className="space-y-4">
         {items.map((item) => (
-          <div key={item.id} className="flex items-start gap-3 rounded-lg border p-4 transition-colors hover:bg-accent/50">
+          <div key={item.id} className="flex items-start gap-3 rounded-lg border p-4 transition-all duration-200 hover:bg-muted/50 hover:border-primary/20">
             <div className="mt-1">
               {item.completed ? <CheckCircle2 className="h-5 w-5 text-primary" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
             </div>

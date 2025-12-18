@@ -179,31 +179,37 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
       const { data: campaignsData, error } = await query;
       if (error) throw error;
 
-      // Fetch call sessions and conditions for each campaign
+      // Fetch recipient counts and rewards for each campaign
       const enrichedCampaigns = await Promise.all(
         (campaignsData || []).map(async (campaign) => {
-          // Get call sessions count
-          const { count: callsCount } = await supabase
-            .from('call_sessions')
+          // Get recipient count - first try cached count, then count members directly
+          let recipientCount = campaign.contact_lists?.contact_count || campaign.audiences?.valid_count || 0;
+          
+          // If cached count is 0 but we have a list, count members directly
+          if (recipientCount === 0 && campaign.contact_list_id) {
+            const { count: memberCount } = await supabase
+              .from('contact_list_members')
+              .select('*', { count: 'exact', head: true })
+              .eq('list_id', campaign.contact_list_id);
+            recipientCount = memberCount || 0;
+          }
+
+          // Get rewards given count from gift_card_billing_ledger (actual gift cards sent)
+          const { count: rewardsGiven } = await supabase
+            .from('gift_card_billing_ledger')
             .select('*', { count: 'exact', head: true })
             .eq('campaign_id', campaign.id);
 
-          // Get conditions met (rewards) count
-          const { count: rewardsCount } = await supabase
-            .from('call_conditions_met')
-            .select('*', { count: 'exact', head: true })
-            .eq('campaign_id', campaign.id);
-
-          // Calculate conversion rate
-          const conversionRate = callsCount && callsCount > 0 
-            ? ((rewardsCount || 0) / callsCount) * 100 
+          // Calculate response rate (rewards / recipients)
+          const responseRate = recipientCount > 0 
+            ? ((rewardsGiven || 0) / recipientCount) * 100 
             : 0;
 
           return {
             ...campaign,
-            callSessionCount: callsCount || 0,
-            rewardCount: rewardsCount || 0,
-            conversionRate,
+            recipientCount,
+            rewardsGiven: rewardsGiven || 0,
+            responseRate,
           };
         })
       );
@@ -216,7 +222,7 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
     () =>
       createCampaignsColumns({
         onViewDetails: (id) => navigate(`/campaigns/${id}`),
-        onViewAnalytics: (id) => navigate(`/analytics/${id}`),
+        onViewAnalytics: (id) => navigate(`/analytics/campaigns/${id}`),
         onReviewProof: (id) => setProofCampaignId(id),
         onSubmitToVendor: (id) => submitToVendorMutation.mutate(id),
         onEdit: (id) => navigate(`/campaigns/${id}/edit`),
@@ -287,7 +293,7 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
               key={campaign.id}
               campaign={campaign}
               onViewDetails={() => navigate(`/campaigns/${campaign.id}`)}
-              onViewAnalytics={() => navigate(`/analytics/${campaign.id}`)}
+              onViewAnalytics={() => navigate(`/analytics/campaigns/${campaign.id}`)}
               onReviewProof={() => setProofCampaignId(campaign.id)}
               onSubmitToVendor={() => submitToVendorMutation.mutate(campaign.id)}
               onEdit={() => navigate(`/campaigns/${campaign.id}/edit`)}

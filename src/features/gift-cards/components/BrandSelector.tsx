@@ -1,8 +1,9 @@
 import { Card } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
-import { Gift, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Tables } from '@core/services/supabase';
 import { cn } from '@shared/utils/cn';
+import { BrandLogo } from './BrandLogo';
 
 type GiftCardBrand = Tables<"gift_card_brands">;
 
@@ -37,17 +38,11 @@ export function BrandSelector({ brands, selectedBrandId, onSelectBrand }: BrandS
             
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-center h-16">
-                {brand.logo_url ? (
-                  <img 
-                    src={brand.logo_url} 
-                    alt={brand.brand_name}
-                    className="h-12 w-auto object-contain"
-                  />
-                ) : (
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                    <Gift className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                )}
+                <BrandLogo 
+                  logoUrl={brand.logo_url} 
+                  brandName={brand.brand_name} 
+                  size="lg" 
+                />
               </div>
               
               <div className="text-center space-y-1">

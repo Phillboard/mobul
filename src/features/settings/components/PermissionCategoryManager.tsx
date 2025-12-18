@@ -125,7 +125,7 @@ export function PermissionCategoryManager({
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
-                className="w-full justify-between hover:bg-accent"
+                className="w-full justify-between hover:bg-muted/50"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{CATEGORY_ICONS[module] || "📋"}</span>
@@ -152,7 +152,7 @@ export function PermissionCategoryManager({
                 return (
                   <div
                     key={perm.id}
-                    className="flex items-center justify-between py-2 px-3 hover:bg-accent rounded-md"
+                    className="flex items-center justify-between py-2 px-3 hover:bg-muted/50 rounded-md transition-all duration-200"
                   >
                     <div className="flex items-center gap-3 flex-1">
                       <Checkbox

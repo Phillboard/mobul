@@ -1,3 +1,7 @@
+/**
+ * @deprecated This component is no longer used. Call tracking has been removed from the campaign detail page.
+ * Kept for reference but can be deleted in future cleanup.
+ */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useCallAnalytics } from '@/features/call-center/hooks';
 import { Phone, Clock, UserCheck, Users } from "lucide-react";

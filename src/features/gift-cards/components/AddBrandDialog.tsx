@@ -22,7 +22,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
 import { useBrandLookup } from '@/features/gift-cards/hooks';
 import { useTilloBrandSync } from '@/features/gift-cards/hooks';
-import { uploadBrandLogo, fileToDataUrl } from '@/features/gift-cards/lib/logo-upload-utils';
+import { uploadBrandLogo, fileToDataUrl, downloadAndUploadLogo } from '@/features/gift-cards/lib/logo-upload-utils';
 import { generateBrandCode, suggestWebsiteUrl } from '@/features/gift-cards/lib/brand-lookup-service';
 import { getAllCategories } from '@/features/gift-cards/lib/popular-brands-db';
 import { 
@@ -104,8 +104,12 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
           ? 'auto_lookup' 
           : 'manual';
         
+        // Use the full brand name from the lookup result if available
+        const fullBrandName = result.brandName || name;
+        setBrandName(fullBrandName); // Update the input field with full name
+        
         setFormData({
-          brand_name: name,
+          brand_name: fullBrandName,
           logo_url: result.logoUrl || '',
           website_url: result.website,
           category: result.category,
@@ -223,6 +227,13 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
           throw new Error(uploadResult.error || 'Failed to upload logo');
         }
         finalLogoUrl = uploadResult.publicUrl!;
+      } else if (finalLogoUrl && !finalLogoUrl.includes('supabase')) {
+        // If it's an external URL (like Clearbit), download and store locally
+        const downloadResult = await downloadAndUploadLogo(finalLogoUrl, formData.brand_name);
+        if (downloadResult.success && downloadResult.publicUrl) {
+          finalLogoUrl = downloadResult.publicUrl;
+        }
+        // If download fails, we'll still try to use the external URL as fallback
       }
 
       // Insert brand with balance check configuration
@@ -340,12 +351,22 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
                     <div className="space-y-2">
                       <p className="font-semibold">Brand found!</p>
                       <div className="flex items-center gap-3">
-                        {logoPreview && (
+                        {logoPreview ? (
                           <img 
                             src={logoPreview} 
-                            alt="Brand logo" 
-                            className="w-12 h-12 object-contain rounded border"
+                            alt={brandName}
+                            className="w-12 h-12 object-contain rounded border bg-white"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
                           />
+                        ) : (
+                          <div className="w-12 h-12 rounded border bg-muted flex items-center justify-center">
+                            <span className="text-lg font-bold text-muted-foreground">
+                              {brandName.substring(0, 2).toUpperCase()}
+                            </span>
+                          </div>
                         )}
                         <div className="text-sm space-y-1">
                           {lookupResult.website && (
@@ -439,7 +460,15 @@ export function AddBrandDialog({ open, onOpenChange, onSuccess }: AddBrandDialog
                   <img 
                     src={logoPreview} 
                     alt="Logo preview" 
-                    className="w-20 h-20 object-contain rounded"
+                    className="w-20 h-20 object-contain rounded bg-white"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      // Replace with initials fallback
+                      const fallback = document.createElement('div');
+                      fallback.className = 'w-20 h-20 rounded bg-muted flex items-center justify-center text-xl font-bold text-muted-foreground';
+                      fallback.textContent = formData.brand_name?.substring(0, 2).toUpperCase() || 'NA';
+                      target.replaceWith(fallback);
+                    }}
                   />
                   <div className="flex-1">
                     <p className="text-sm font-medium">Logo preview</p>

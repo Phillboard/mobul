@@ -127,7 +127,7 @@ export function LayerPanel({
                   className={`group flex items-center gap-2 p-2 rounded-lg border transition-colors ${
                     isSelected
                       ? 'bg-primary/10 border-primary'
-                      : 'bg-card border-transparent hover:bg-accent hover:border-border'
+                      : 'bg-card border-transparent hover:bg-muted/50 hover:border-border'
                   }`}
                   onClick={(e) => onSelectElement(element.id, e.shiftKey)}
                 >

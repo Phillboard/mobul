@@ -158,6 +158,7 @@ export interface GiftCardDelivery {
 // Brand Lookup Types
 export interface BrandLookupResult {
   found: boolean;
+  brandName?: string; // Full brand name from database
   logoUrl?: string;
   website?: string;
   category?: string;

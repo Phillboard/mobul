@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 
+/**
+ * @deprecated Call tracking is not actively used. Consider removing in future cleanup.
+ */
 export function useCallAnalytics(campaignId: string | null) {
   return useQuery({
     queryKey: ['call-analytics', campaignId],
@@ -69,45 +72,22 @@ export function useRewardStats(campaignId: string | null) {
         return null;
       }
 
-      // Get conditions met
-      const { data: conditionsMet, error: conditionsError } = await supabase
-        .from('call_conditions_met')
-        .select('*')
-        .eq('campaign_id', campaignId);
+      // Calculate total value directly from billing ledger
+      const totalValue = billing?.reduce((sum, entry) => sum + (Number(entry.denomination) || 0), 0) || 0;
+      const totalDelivered = billing?.length || 0;
+      
+      // Count by status
+      const deliveredCount = billing?.filter(b => 
+        b.gift_card_inventory?.status === 'delivered' || b.gift_card_inventory?.status === 'sent'
+      ).length || 0;
+      const pendingCount = billing?.filter(b => 
+        b.gift_card_inventory?.status === 'assigned' || b.gift_card_inventory?.status === 'pending'
+      ).length || 0;
+      const failedCount = billing?.filter(b => 
+        b.gift_card_inventory?.status === 'failed'
+      ).length || 0;
 
-      if (conditionsError) {
-        console.error('Conditions query error:', conditionsError);
-        return null;
-      }
-
-      // Group by condition number (if condition data exists)
-      const byCondition = conditionsMet?.reduce((acc, cond) => {
-        const condNum = cond.condition_number;
-        if (!acc[condNum]) {
-          acc[condNum] = {
-            count: 0,
-            totalValue: 0,
-            delivered: 0,
-            failed: 0,
-            pending: 0,
-          };
-        }
-        acc[condNum].count++;
-        
-        // Find matching billing entry
-        const billingEntry = billing?.find(b => b.recipient_id === cond.recipient_id);
-        if (billingEntry) {
-          acc[condNum].totalValue += Number(billingEntry.denomination);
-          
-          // Check delivery status from inventory
-          if (billingEntry.gift_card_inventory?.status === 'delivered') acc[condNum].delivered++;
-          else if (billingEntry.gift_card_inventory?.status === 'assigned') acc[condNum].pending++;
-        }
-        
-        return acc;
-      }, {} as Record<number, { count: number; totalValue: number; delivered: number; failed: number; pending: number }>) || {};
-
-      // Group by date for timeline using billing data
+      // Group by date for timeline
       const billingByDate = billing?.reduce((acc, entry) => {
         const date = new Date(entry.billed_at).toLocaleDateString();
         if (!acc[date]) acc[date] = { count: 0, value: 0 };
@@ -116,15 +96,23 @@ export function useRewardStats(campaignId: string | null) {
         return acc;
       }, {} as Record<string, { count: number; value: number }>) || {};
 
-      const totalValue = Object.values(byCondition).reduce((sum, cond) => sum + cond.totalValue, 0);
-      const totalDelivered = billing?.length || 0;
-      const totalFailed = 0; // Failures would be tracked differently in new system
+      // Create a default condition entry for display
+      const byCondition: Record<number, { count: number; totalValue: number; delivered: number; failed: number; pending: number }> = {};
+      if (totalDelivered > 0) {
+        byCondition[1] = {
+          count: totalDelivered,
+          totalValue,
+          delivered: deliveredCount,
+          failed: failedCount,
+          pending: pendingCount,
+        };
+      }
 
       return {
         byCondition,
         totalValue,
         totalDelivered,
-        totalFailed,
+        totalFailed: failedCount,
         timeline: Object.entries(billingByDate).map(([date, data]) => ({
           date,
           count: data.count,
@@ -137,6 +125,9 @@ export function useRewardStats(campaignId: string | null) {
   });
 }
 
+/**
+ * @deprecated Call tracking is not actively used. Consider removing in future cleanup.
+ */
 export function useCallStats(clientId: string | null, dateRange: number) {
   return useQuery({
     queryKey: ['call-stats', clientId, dateRange],
@@ -189,6 +180,12 @@ export function useRewardSummary(clientId: string | null, dateRange: number) {
 
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - dateRange);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
 
       // Get billing ledger entries for this client
       const { data: billing, error } = await supabase
@@ -200,19 +197,51 @@ export function useRewardSummary(clientId: string | null, dateRange: number) {
 
       if (error) {
         console.error('Reward summary query error:', error);
-        return { totalDelivered: 0 };
+        return { totalDelivered: 0, todayCount: 0, todayTrend: 0, totalValue: 0, pendingCount: 0 };
       }
 
       const totalDelivered = billing?.length || 0;
+      
+      // Calculate total value
+      const totalValue = billing?.reduce((sum, b) => sum + (Number(b.denomination) || 0), 0) || 0;
+      
+      // Count today's rewards
+      const todayCount = billing?.filter(b => 
+        new Date(b.billed_at) >= today
+      ).length || 0;
+      
+      // Count yesterday's rewards for trend
+      const yesterdayCount = billing?.filter(b => {
+        const d = new Date(b.billed_at);
+        return d >= yesterday && d < today;
+      }).length || 0;
+      
+      // Calculate trend
+      const todayTrend = yesterdayCount > 0 
+        ? ((todayCount - yesterdayCount) / yesterdayCount) * 100 
+        : 0;
+
+      // Get pending count (gift cards assigned but not yet delivered)
+      const { count: pendingCount } = await supabase
+        .from('gift_card_inventory')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'assigned');
 
       return {
         totalDelivered,
+        todayCount,
+        todayTrend,
+        totalValue,
+        pendingCount: pendingCount || 0,
       };
     },
     enabled: !!clientId,
   });
 }
 
+/**
+ * @deprecated Call tracking is not actively used. Consider removing in future cleanup.
+ */
 export function useConditionCompletionRate(clientId: string | null, dateRange: number) {
   return useQuery({
     queryKey: ['condition-completion-rate', clientId, dateRange],

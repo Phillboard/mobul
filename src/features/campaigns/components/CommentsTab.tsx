@@ -130,7 +130,7 @@ export function CommentsTab({ campaignId }: CommentsTabProps) {
               {comments.map((comment: any) => (
                 <div
                   key={comment.id}
-                  className="flex gap-3 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                  className="flex gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-all duration-200"
                 >
                   <Avatar className="h-10 w-10 mt-1">
                     <AvatarFallback>

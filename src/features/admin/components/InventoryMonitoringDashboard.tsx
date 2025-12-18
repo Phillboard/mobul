@@ -251,7 +251,7 @@ export function InventoryMonitoringDashboard() {
         <CardContent>
           <div className="space-y-2">
             {inventoryHealth?.map((pool) => (
-              <div key={pool.pool_id} className="flex items-center justify-between p-2 border rounded hover:bg-accent transition-colors">
+              <div key={pool.pool_id} className="flex items-center justify-between p-2 border rounded hover:bg-muted/50 transition-all duration-200">
                 <div className="flex items-center gap-3 flex-1">
                   {getStatusIcon(pool.health_status)}
                   <div className="flex-1">

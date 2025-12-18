@@ -88,7 +88,7 @@ export function VersionHistory({ campaignId }: VersionHistoryProps) {
           {versions?.map((version) => (
             <div
               key={version.id}
-              className="p-4 border rounded-lg hover:bg-accent transition-colors"
+              className="p-4 border rounded-lg hover:bg-muted/50 transition-all duration-200"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

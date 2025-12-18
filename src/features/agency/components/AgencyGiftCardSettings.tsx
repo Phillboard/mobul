@@ -198,12 +198,22 @@ export function AgencyGiftCardSettings({ agencyId }: AgencyGiftCardSettingsProps
             <Card key={brand.id}>
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  {brand.logo_url && (
+                  {brand.logo_url ? (
                     <img
                       src={brand.logo_url}
                       alt={brand.brand_name}
-                      className="w-12 h-12 rounded object-contain"
+                      className="w-12 h-12 rounded object-contain bg-white"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
                     />
+                  ) : (
+                    <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                      <span className="text-sm font-bold text-muted-foreground">
+                        {brand.brand_name?.substring(0, 2).toUpperCase()}
+                      </span>
+                    </div>
                   )}
                   <CardTitle>{brand.brand_name}</CardTitle>
                 </div>

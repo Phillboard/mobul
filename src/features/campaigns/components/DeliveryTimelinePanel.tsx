@@ -100,7 +100,7 @@ export function DeliveryTimelinePanel({ campaignId }: DeliveryTimelinePanelProps
               {deliveries.map((delivery: any) => (
                 <div
                   key={delivery.id}
-                  className="flex items-start gap-3 rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                  className="flex items-start gap-3 rounded-lg border p-3 hover:bg-muted/30 hover:border-primary/20 transition-all duration-200"
                 >
                   <div className="mt-1">{getStatusIcon(delivery.delivery_status)}</div>
                   

@@ -385,7 +385,7 @@ export function CommentsSection({
                   <button
                     key={member.user_id}
                     onClick={() => insertMention(member)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-accent text-left"
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-muted/50 text-left transition-all duration-200"
                   >
                     <Avatar className="h-6 w-6">
                       <AvatarFallback className="text-xs">

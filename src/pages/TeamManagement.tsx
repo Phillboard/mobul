@@ -221,7 +221,7 @@ export default function TeamManagement() {
                 return (
                   <div
                     key={member.id}
-                    className="flex items-start justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                    className="flex items-start justify-between p-4 border rounded-lg hover:bg-muted/50 hover:border-primary/20 transition-all duration-200"
                   >
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-3">

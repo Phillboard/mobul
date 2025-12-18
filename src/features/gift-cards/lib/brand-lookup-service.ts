@@ -90,6 +90,7 @@ export async function lookupBrandByName(brandName: string): Promise<BrandLookupR
   if (popularBrand) {
     return {
       found: true,
+      brandName: popularBrand.brand_name, // Full brand name from database
       logoUrl: popularBrand.logo_url,
       website: popularBrand.website,
       category: popularBrand.category,

@@ -21,10 +21,18 @@ export function GiftCardTableRow({ brand, onToggle }: GiftCardTableRowProps) {
       <TableCell>
         <div className="flex items-center gap-3">
           {brand.logo_url ? (
-            <img 
-              src={brand.logo_url} 
+            <img
+              src={brand.logo_url}
               alt={brand.brand_name}
-              className="h-8 w-8 object-contain"
+              className="h-8 w-8 object-contain bg-white rounded"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                // Replace with initials fallback
+                const fallback = document.createElement('div');
+                fallback.className = 'h-8 w-8 rounded bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground';
+                fallback.textContent = brand.brand_name.substring(0, 2).toUpperCase();
+                target.replaceWith(fallback);
+              }}
             />
           ) : (
             <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">

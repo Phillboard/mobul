@@ -55,7 +55,7 @@ export function UniversalActivityFeed({ activities, isLoading }: UniversalActivi
         const colorClass = activityColors[activity.activity_type] || "bg-gray-500";
 
         return (
-          <div key={activity.id} className="flex gap-4 p-4 border rounded-lg hover:bg-accent transition-colors">
+          <div key={activity.id} className="flex gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-all duration-200">
             <div className={`flex-shrink-0 w-10 h-10 rounded-full ${colorClass} flex items-center justify-center`}>
               <Icon className="h-5 w-5 text-white" />
             </div>

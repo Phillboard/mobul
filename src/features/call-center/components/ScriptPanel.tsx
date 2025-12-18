@@ -129,7 +129,7 @@ export function ScriptPanel({
             <div key={script.id} className="border rounded-lg">
               <button
                 onClick={() => toggleScript(script.id)}
-                className="w-full p-3 flex items-center justify-between hover:bg-accent rounded-lg transition-colors"
+                className="w-full p-3 flex items-center justify-between hover:bg-muted/50 rounded-lg transition-all duration-200"
               >
                 <div className="flex items-center gap-2">
                   {isExpanded ? (

@@ -37,12 +37,12 @@ import {
   Target,
   Clock,
   ArrowRight,
-  Phone,
   Gift,
+  DollarSign,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useDashboardData } from '@/features/analytics/hooks';
-import { useCallStats, useRewardSummary, useConditionCompletionRate } from '@/features/call-center/hooks';
+import { useRewardSummary } from '@/features/call-center/hooks';
 import { useNavigate } from "react-router-dom";
 import { ConditionsSummaryCard } from "@/features/dashboard/components/ConditionsSummaryCard";
 import { GiftCardSummaryCard } from "@/features/dashboard/components/GiftCardSummaryCard";
@@ -56,10 +56,8 @@ const Dashboard = () => {
   const [dateRange, setDateRange] = useState(30);
   const { stats, performance, recentCampaigns, activity, isLoading } = useDashboardData(dateRange);
   
-  // Import the new hooks
-  const { data: callStats } = useCallStats(currentClient?.id || null, dateRange);
+  // Reward summary hook
   const { data: rewardSummary } = useRewardSummary(currentClient?.id || null, dateRange);
-  const { data: conditionRate } = useConditionCompletionRate(currentClient?.id || null, dateRange);
 
   // Show platform dashboard if admin in admin mode
   if (hasRole('admin') && isAdminMode) {
@@ -76,34 +74,26 @@ const Dashboard = () => {
       bgGradient: "from-primary/10 via-primary/5 to-transparent",
     },
     {
-      title: "Active Calls Today",
-      value: callStats?.todayCalls || 0,
-      change: 0,
-      icon: Phone,
-      color: "text-blue-600",
-      bgGradient: "from-blue-600/10 via-blue-600/5 to-transparent",
-    },
-    {
-      title: "Gift Cards Delivered",
-      value: rewardSummary?.totalDelivered || 0,
-      change: 0,
+      title: "Rewards Given Today",
+      value: rewardSummary?.todayCount || 0,
+      change: rewardSummary?.todayTrend || 0,
       icon: Gift,
-      color: "text-purple-600",
-      bgGradient: "from-purple-600/10 via-purple-600/5 to-transparent",
-    },
-    {
-      title: "Avg Call Duration",
-      value: callStats?.avgDuration ? `${Math.floor(callStats.avgDuration / 60)}m ${callStats.avgDuration % 60}s` : "0m 0s",
-      change: 0,
-      icon: Clock,
       color: "text-green-600",
       bgGradient: "from-green-600/10 via-green-600/5 to-transparent",
     },
     {
-      title: "Condition Completion Rate",
-      value: `${conditionRate?.completionRate.toFixed(1) || 0}%`,
+      title: "Total Rewards Value",
+      value: `$${(rewardSummary?.totalValue || 0).toLocaleString()}`,
       change: 0,
-      icon: Target,
+      icon: DollarSign,
+      color: "text-purple-600",
+      bgGradient: "from-purple-600/10 via-purple-600/5 to-transparent",
+    },
+    {
+      title: "Pending Redemptions",
+      value: rewardSummary?.pendingCount || 0,
+      change: 0,
+      icon: Clock,
       color: "text-amber-600",
       bgGradient: "from-amber-600/10 via-amber-600/5 to-transparent",
     },
@@ -130,6 +120,14 @@ const Dashboard = () => {
       icon: MousePointerClick,
       color: "text-amber-600",
       bgGradient: "from-amber-600/10 via-amber-600/5 to-transparent",
+    },
+    {
+      title: "Gift Cards Delivered",
+      value: rewardSummary?.totalDelivered || 0,
+      change: 0,
+      icon: Target,
+      color: "text-blue-600",
+      bgGradient: "from-blue-600/10 via-blue-600/5 to-transparent",
     },
   ];
 
@@ -426,7 +424,7 @@ const Dashboard = () => {
               return (
                 <div
                   key={campaign.id}
-                  className="flex flex-col gap-3 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
+                  className="flex flex-col gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 hover:border-primary/20 hover:shadow-sm transition-all duration-200 cursor-pointer"
                   onClick={() => navigate(`/campaigns/${campaign.id}`)}
                 >
                   <div className="flex items-start justify-between">

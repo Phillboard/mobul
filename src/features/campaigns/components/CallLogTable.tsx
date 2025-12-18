@@ -1,5 +1,8 @@
 /**
- * Call Log Table - Migrated to TanStack Table
+ * @deprecated This component is no longer used. Call tracking has been removed from the campaign detail page.
+ * Kept for reference but can be deleted in future cleanup.
+ * 
+ * Previously: Call Log Table - Migrated to TanStack Table
  * Displays complete history of all campaign calls with advanced filtering
  */
 import { useState, useMemo } from "react";

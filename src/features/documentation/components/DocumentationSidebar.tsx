@@ -62,7 +62,7 @@ export function DocumentationSidebar() {
           open={openCategories.includes(category.slug)}
           onOpenChange={() => toggleCategory(category.slug)}
         >
-          <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1.5 text-sm font-medium hover:bg-accent rounded-md">
+          <CollapsibleTrigger className="flex items-center justify-between w-full px-2 py-1.5 text-sm font-medium hover:bg-muted/50 rounded-md transition-all duration-200">
             <span>{category.category}</span>
             <ChevronDown
               className={cn(
@@ -84,7 +84,7 @@ export function DocumentationSidebar() {
                     "flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors",
                     isActive
                       ? "bg-accent text-accent-foreground font-medium"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
                   <FileText className="h-3.5 w-3.5" />

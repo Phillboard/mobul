@@ -2,7 +2,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/sha
 import { useRewardStats } from '@/features/call-center/hooks';
 import { Gift, DollarSign, CheckCircle, XCircle, Clock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { RecentDeliveriesTable } from "./RecentDeliveriesTable";
 
 interface RewardsTabProps {
   campaignId: string;
@@ -104,34 +103,38 @@ export function RewardsTab({ campaignId }: RewardsTabProps) {
           <CardDescription>Gift cards delivered over time</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={rewards.timeline}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-              <YAxis stroke="hsl(var(--muted-foreground))" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "hsl(var(--background))", 
-                  border: "1px solid hsl(var(--border))" 
-                }}
-              />
-              <Legend />
-              {conditionNumbers.map((condNum, idx) => (
-                <Bar 
-                  key={condNum}
-                  dataKey={condNum} 
-                  fill={`hsl(var(--chart-${(idx % 5) + 1}))`}
-                  name={`Condition #${condNum}`}
-                  stackId="a"
+          {rewards.timeline.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={rewards.timeline}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
+                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "hsl(var(--background))", 
+                    border: "1px solid hsl(var(--border))" 
+                  }}
+                  formatter={(value: number, name: string) => {
+                    if (name === "count") return [value, "Rewards"];
+                    if (name === "value") return [`$${value}`, "Value"];
+                    return [value, name];
+                  }}
                 />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
+                <Legend />
+                <Bar 
+                  dataKey="count" 
+                  fill="hsl(var(--chart-1))"
+                  name="Rewards Sent"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+              No delivery data available yet
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Recent Deliveries */}
-      <RecentDeliveriesTable campaignId={campaignId} deliveries={rewards.recentDeliveries} />
     </div>
   );
 }

@@ -136,7 +136,7 @@ export function AIFormGenerator({ onGenerated }: AIFormGeneratorProps) {
               key={example}
               onClick={() => setPrompt(example)}
               disabled={generating}
-              className="block w-full text-left text-sm text-muted-foreground hover:text-foreground px-3 py-2 rounded-md hover:bg-accent transition-colors"
+              className="block w-full text-left text-sm text-muted-foreground hover:text-foreground px-3 py-2 rounded-md hover:bg-muted/50 transition-all duration-200"
             >
               "{example}"
             </button>

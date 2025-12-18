@@ -197,3 +197,97 @@ export function getExtensionFromMimeType(mimeType: string): string {
   return map[mimeType] || 'png';
 }
 
+/**
+ * Download an external image and upload it to Supabase Storage
+ * This is used to cache external logos (like Clearbit) locally
+ */
+export async function downloadAndUploadLogo(
+  externalUrl: string,
+  brandName: string
+): Promise<LogoUploadResult> {
+  try {
+    // Skip if already in our storage
+    if (externalUrl.includes('gift-card-brand-logos') || externalUrl.includes('supabase')) {
+      return { success: true, publicUrl: externalUrl };
+    }
+
+    // Skip if it's a data URL (already local)
+    if (externalUrl.startsWith('data:')) {
+      return { success: true, publicUrl: externalUrl };
+    }
+
+    // Download the image via a proxy or direct fetch
+    // We'll use the Supabase edge function to avoid CORS issues
+    const response = await fetch(externalUrl, {
+      mode: 'cors',
+      headers: {
+        'Accept': 'image/*',
+      },
+    });
+
+    if (!response.ok) {
+      // If CORS blocks us, try without CORS mode (for same-origin)
+      console.warn(`Failed to fetch logo from ${externalUrl}: ${response.status}`);
+      return { 
+        success: false, 
+        error: 'Could not download external logo' 
+      };
+    }
+
+    const blob = await response.blob();
+    
+    // Determine file extension from content type
+    const contentType = response.headers.get('content-type') || 'image/png';
+    const extension = getExtensionFromMimeType(contentType);
+    
+    // Create a File object from the blob
+    const safeBrandName = brandName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .substring(0, 30);
+    const filename = `${safeBrandName}_${Date.now()}.${extension}`;
+    const file = new File([blob], filename, { type: contentType });
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      return { 
+        success: false, 
+        error: 'Downloaded logo is too large' 
+      };
+    }
+
+    // Upload to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('gift-card-brand-logos')
+      .upload(filename, file, {
+        cacheControl: '31536000', // Cache for 1 year
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      return { 
+        success: false, 
+        error: uploadError.message 
+      };
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('gift-card-brand-logos')
+      .getPublicUrl(filename);
+
+    return {
+      success: true,
+      publicUrl,
+    };
+  } catch (error: any) {
+    console.error('Error downloading/uploading logo:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to process external logo',
+    };
+  }
+}
+

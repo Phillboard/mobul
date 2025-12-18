@@ -129,7 +129,7 @@ export function TokenInserter({
             filteredTokens.map((tokenMeta) => (
               <div
                 key={tokenMeta.token}
-                className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-all duration-200"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
@@ -237,7 +237,7 @@ export function TokenPickerButton({
               {tokens.map((tokenMeta) => (
                 <button
                   key={tokenMeta.token}
-                  className="w-full text-left p-2 rounded hover:bg-accent transition-colors"
+                  className="w-full text-left p-2 rounded hover:bg-muted/50 transition-all duration-200"
                   onClick={() => {
                     onTokenSelect(tokenMeta.token);
                     setIsOpen(false);

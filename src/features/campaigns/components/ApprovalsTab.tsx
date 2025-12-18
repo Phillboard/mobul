@@ -230,7 +230,7 @@ export function ApprovalsTab({ campaignId }: ApprovalsTabProps) {
           {approvals.map((approval: any) => (
             <div
               key={approval.id}
-              className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+              className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-all duration-200"
             >
               <div className="mt-1">{getStatusIcon(approval.status)}</div>
               
