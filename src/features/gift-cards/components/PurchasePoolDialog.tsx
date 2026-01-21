@@ -7,7 +7,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useToast } from '@shared/hooks';
 import { ShoppingCart, Wallet, CreditCard, TrendingUp } from "lucide-react";
-import { formatCurrency } from '@shared/utils/cn';
+import { formatCurrency } from '@shared/utils/currencyUtils';
 import { useAuth } from '@core/auth/AuthProvider';
 
 interface PurchasePoolDialogProps {

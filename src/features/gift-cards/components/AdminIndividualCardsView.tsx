@@ -77,7 +77,7 @@ import {
   Clock,
   Loader2,
 } from "lucide-react";
-import { formatCurrency } from '@shared/utils/cn';
+import { formatCurrency } from '@shared/utils/currencyUtils';
 import { formatDate, DATE_FORMATS } from '@shared/utils/date';
 import { 
   useIndividualCards, 

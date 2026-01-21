@@ -10,7 +10,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Plus, Upload, Package, Gift, Settings, DollarSign, CreditCard, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
-import { formatCurrency } from '@/shared/utils/cn';
+import { formatCurrency } from '@/shared/utils/currencyUtils';
 import { useState } from "react";
 import { AddBrandDialog } from "@/features/gift-cards/components/AddBrandDialog";
 import { ManageDenominationsDialog } from "@/features/gift-cards/components/ManageDenominationsDialog";

@@ -18,7 +18,7 @@ import { useToast } from '@/shared/hooks';
 import { DollarSign, ArrowLeft, Save, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/shared/components/ui/breadcrumb";
-import { formatCurrency } from '@/shared/utils/cn';
+import { formatCurrency } from '@/shared/utils/currencyUtils';
 
 export default function EditPoolPricing() {
   const { poolId } = useParams<{ poolId: string }>();

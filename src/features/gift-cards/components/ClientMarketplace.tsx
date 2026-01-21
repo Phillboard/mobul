@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { ShoppingCart, Package } from "lucide-react";
-import { formatCurrency } from '@shared/utils/cn';
+import { formatCurrency } from '@shared/utils/currencyUtils';
 import { PurchasePoolDialog } from "./PurchasePoolDialog";
 
 interface ClientMarketplaceProps {
