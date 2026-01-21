@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useAceForm } from '@/features/ace-forms/hooks';
 import { useForm } from "react-hook-form";
@@ -17,6 +17,94 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle, Shield } from "lucide-react";
 import DOMPurify from "dompurify";
 import { motion, AnimatePresence } from "framer-motion";
+
+/**
+ * Common URL parameter name mappings to form field IDs
+ * Supports snake_case, camelCase, and kebab-case URL params
+ */
+const URL_PARAM_MAPPINGS: Record<string, string[]> = {
+  // First name variations
+  'first_name': ['first_name', 'firstName', 'first-name', 'fname'],
+  'firstName': ['first_name', 'firstName', 'first-name', 'fname'],
+  'first-name': ['first_name', 'firstName', 'first-name', 'fname'],
+  'fname': ['first_name', 'firstName', 'first-name', 'fname'],
+  // Last name variations
+  'last_name': ['last_name', 'lastName', 'last-name', 'lname'],
+  'lastName': ['last_name', 'lastName', 'last-name', 'lname'],
+  'last-name': ['last_name', 'lastName', 'last-name', 'lname'],
+  'lname': ['last_name', 'lastName', 'last-name', 'lname'],
+  // Unique code / redemption code variations
+  'unique_code': ['unique_code', 'uniqueCode', 'unique-code', 'code', 'redemption_code', 'redemptionCode'],
+  'uniqueCode': ['unique_code', 'uniqueCode', 'unique-code', 'code', 'redemption_code', 'redemptionCode'],
+  'unique-code': ['unique_code', 'uniqueCode', 'unique-code', 'code', 'redemption_code', 'redemptionCode'],
+  'code': ['unique_code', 'uniqueCode', 'unique-code', 'code', 'redemption_code', 'redemptionCode'],
+  'redemption_code': ['unique_code', 'uniqueCode', 'unique-code', 'code', 'redemption_code', 'redemptionCode'],
+  'redemptionCode': ['unique_code', 'uniqueCode', 'unique-code', 'code', 'redemption_code', 'redemptionCode'],
+  // Email variations
+  'email': ['email', 'email_address', 'emailAddress'],
+  'email_address': ['email', 'email_address', 'emailAddress'],
+  'emailAddress': ['email', 'email_address', 'emailAddress'],
+  // Phone variations
+  'phone': ['phone', 'phone_number', 'phoneNumber', 'mobile'],
+  'phone_number': ['phone', 'phone_number', 'phoneNumber', 'mobile'],
+  'phoneNumber': ['phone', 'phone_number', 'phoneNumber', 'mobile'],
+  'mobile': ['phone', 'phone_number', 'phoneNumber', 'mobile'],
+};
+
+/**
+ * Extract pre-fill values from URL parameters
+ * Maps URL params to form field IDs using flexible matching
+ */
+function getPrefilledValues(
+  searchParams: URLSearchParams, 
+  formFields: Array<{ id: string; label: string }>
+): Record<string, string> {
+  const prefilled: Record<string, string> = {};
+  
+  // Reserved params that shouldn't be used for form values
+  const reservedParams = ['formid', 'primaryColor', 'embed', 'campaignId'];
+  
+  searchParams.forEach((value, key) => {
+    // Skip reserved parameters
+    if (reservedParams.includes(key.toLowerCase()) || reservedParams.includes(key)) {
+      return;
+    }
+    
+    // Sanitize the value
+    const sanitizedValue = DOMPurify.sanitize(value, { ALLOWED_TAGS: [] });
+    
+    // Try direct match first (URL param matches field ID exactly)
+    const directMatch = formFields.find(f => f.id === key || f.id.toLowerCase() === key.toLowerCase());
+    if (directMatch) {
+      prefilled[directMatch.id] = sanitizedValue;
+      return;
+    }
+    
+    // Try mapping lookup (URL param maps to potential field IDs)
+    const possibleFieldIds = URL_PARAM_MAPPINGS[key];
+    if (possibleFieldIds) {
+      const matchedField = formFields.find(f => 
+        possibleFieldIds.includes(f.id) || 
+        possibleFieldIds.some(pid => f.id.toLowerCase() === pid.toLowerCase())
+      );
+      if (matchedField) {
+        prefilled[matchedField.id] = sanitizedValue;
+        return;
+      }
+    }
+    
+    // Try label-based matching (URL param matches field label, normalized)
+    const normalizedKey = key.toLowerCase().replace(/[_-]/g, '');
+    const labelMatch = formFields.find(f => 
+      f.label.toLowerCase().replace(/\s+/g, '').replace(/[_-]/g, '') === normalizedKey
+    );
+    if (labelMatch) {
+      prefilled[labelMatch.id] = sanitizedValue;
+    }
+  });
+  
+  return prefilled;
+}
 
 const MAX_SUBMISSIONS_PER_HOUR = 5;
 
@@ -40,14 +128,30 @@ export default function AceFormPublic() {
   const embedMode = searchParams.get("embed") === "true";
 
   const schema = form ? createFormSchema(form.form_config.fields) : null;
+  
+  // Get prefilled values from URL parameters
+  const prefilledValues = useMemo(() => {
+    if (!form?.form_config?.fields) return {};
+    return getPrefilledValues(searchParams, form.form_config.fields);
+  }, [searchParams, form?.form_config?.fields]);
+
   const {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     resolver: schema ? zodResolver(schema) : undefined,
+    defaultValues: prefilledValues,
   });
+
+  // Apply prefilled values when form loads (since defaultValues only works on initial render)
+  useEffect(() => {
+    if (Object.keys(prefilledValues).length > 0) {
+      reset(prefilledValues);
+    }
+  }, [prefilledValues, reset]);
 
   // Watch all form values for conditional logic
   const formValues = watch();

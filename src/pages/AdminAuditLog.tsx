@@ -18,7 +18,7 @@ import { DataTableViewOptions } from "@/shared/components/ui/data-table-view-opt
 import { createAuditLogColumns, AuditLogRow } from "@/features/settings/components/auditLogColumns";
 import { createUploadHistoryColumns, UploadHistoryRow } from "@/features/settings/components/uploadHistoryColumns";
 import { createRevokeLogColumns, RevokeLogRow } from "@/features/gift-cards/components/revokeLogColumns";
-import { exportTableToCSV } from "@/shared/utils/tableHelpers";
+import { exportTableToCSV } from "@/shared/utils/table";
 
 export default function AdminAuditLog() {
   const [actionFilter, setActionFilter] = useState<string>("all");

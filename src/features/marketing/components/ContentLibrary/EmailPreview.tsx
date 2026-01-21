@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Monitor, Smartphone } from "lucide-react";
-import { cn } from "@/shared/utils/utils";
+import { cn } from "@/shared/utils/cn";
 
 interface EmailPreviewProps {
   subject: string;

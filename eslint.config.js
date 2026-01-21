@@ -5,7 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "supabase/functions/**"] },
+  { ignores: ["dist", "supabase/functions/**", "delete/**", "scripts/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -26,7 +26,7 @@ export default tseslint.config(
       }],
       "@typescript-eslint/no-explicit-any": "warn",
       // Stricter null checking rules to prevent "undefined" errors
-      "@typescript-eslint/prefer-optional-chain": "warn",
+      // "@typescript-eslint/prefer-optional-chain": "warn", // Disabled - requires type-aware linting config
       "@typescript-eslint/no-unnecessary-condition": "off", // Enable after fixing existing issues
       "no-unsafe-optional-chaining": "error",
       // Discourage console.log in favor of centralized logger

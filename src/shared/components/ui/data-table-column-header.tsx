@@ -1,7 +1,7 @@
 import { Column } from "@tanstack/react-table";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import { cn } from '@/shared/utils/utils';
+import { cn } from '@/shared/utils/cn';
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.HTMLAttributes<HTMLDivElement> {

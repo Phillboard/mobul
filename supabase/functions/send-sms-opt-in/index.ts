@@ -133,19 +133,30 @@ serve(async (req) => {
     // Prepare opt-in message
     // Priority: 1) custom_message from request, 2) campaign setting, 3) default
     let optInMessage: string;
+    let clientId: string | undefined;
     
     if (custom_message) {
       // Use custom message from request, replace placeholders
       optInMessage = custom_message
         .replace(/\{client_name\}/gi, client_name)
         .replace(/\{company\}/gi, client_name);
-    } else {
-      // Try to fetch campaign-level opt-in message setting
-      const { data: campaignSettings } = await supabaseAdmin
+      
+      // Still need to fetch client_id for hierarchical Twilio
+      const { data: campaignData } = await supabaseAdmin
         .from("campaigns")
-        .select("sms_opt_in_message")
+        .select("client_id")
         .eq("id", campaign_id)
         .single();
+      clientId = campaignData?.client_id || undefined;
+    } else {
+      // Try to fetch campaign-level opt-in message setting AND client_id for Twilio hierarchy
+      const { data: campaignSettings } = await supabaseAdmin
+        .from("campaigns")
+        .select("sms_opt_in_message, client_id")
+        .eq("id", campaign_id)
+        .single();
+      
+      clientId = campaignSettings?.client_id || undefined;
       
       if (campaignSettings?.sms_opt_in_message) {
         optInMessage = campaignSettings.sms_opt_in_message
@@ -157,11 +168,14 @@ serve(async (req) => {
       }
     }
     
+    console.log(`[SEND-SMS-OPT-IN] Client ID for Twilio hierarchy: ${clientId || 'none (will use fallback)'}`)
+    
     console.log(`[SEND-SMS-OPT-IN] Opt-in message: ${optInMessage}`);
 
     // Send SMS using provider abstraction (handles Infobip/Twilio selection and fallback)
+    // Pass clientId for hierarchical Twilio resolution (Client -> Agency -> Admin)
     console.log(`[SEND-SMS-OPT-IN] Sending SMS to ${formattedPhone}...`);
-    const smsResult = await sendSMS(formattedPhone, optInMessage, supabaseAdmin);
+    const smsResult = await sendSMS(formattedPhone, optInMessage, supabaseAdmin, clientId);
 
     if (!smsResult.success) {
       console.error("[SEND-SMS-OPT-IN] SMS send failed:", smsResult.error);
@@ -175,6 +189,14 @@ serve(async (req) => {
     
     if (smsResult.fallbackUsed) {
       console.log('[SEND-SMS-OPT-IN] Note: Fallback provider was used');
+    }
+    
+    // Log Twilio hierarchy info if available
+    if (smsResult.twilioLevelUsed) {
+      console.log(`[SEND-SMS-OPT-IN] Twilio level used: ${smsResult.twilioLevelUsed} (${smsResult.twilioEntityName || 'N/A'})`);
+      if (smsResult.twilioFallbackOccurred) {
+        console.log(`[SEND-SMS-OPT-IN] Twilio fallback reason: ${smsResult.twilioFallbackReason}`);
+      }
     }
 
     // Update recipient status
@@ -236,6 +258,11 @@ serve(async (req) => {
       status: smsResult.status || "pending",
       sent_at: now,
       fallback_used: smsResult.fallbackUsed || false,
+      // Twilio hierarchy info
+      twilio_level_used: smsResult.twilioLevelUsed || null,
+      twilio_entity_name: smsResult.twilioEntityName || null,
+      twilio_from_number: smsResult.twilioFromNumber || null,
+      twilio_fallback_occurred: smsResult.twilioFallbackOccurred || false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

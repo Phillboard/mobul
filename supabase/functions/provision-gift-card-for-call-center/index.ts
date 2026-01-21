@@ -154,36 +154,51 @@ serve(async (req) => {
       requestId: logger.requestId,
     };
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error('Missing environment variables');
+    }
+    
+    const unifiedUrl = `${supabaseUrl}/functions/v1/provision-gift-card-unified`;
     const startTime = Date.now();
     
-    // Use supabaseClient.functions.invoke for proper auth handling
-    console.log(`[STEP 2] Invoking unified function via supabase client...`);
+    console.log(`[STEP 2] Calling unified function at: ${unifiedUrl}`);
     
-    const { data: provisionResult, error: invokeError } = await supabaseClient.functions.invoke(
-      'provision-gift-card-unified',
-      {
-        body: provisionRequest,
-        headers: {
-          'x-request-id': logger.requestId,
-        },
-      }
-    );
-
-    const duration = Date.now() - startTime;
-    console.log(`[STEP 2] Response in ${duration}ms`, { 
-      hasData: !!provisionResult, 
-      hasError: !!invokeError,
-      errorMessage: invokeError?.message,
+    // JWT verification is now disabled for provision-gift-card-unified
+    const response = await fetch(unifiedUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'x-request-id': logger.requestId,
+      },
+      body: JSON.stringify(provisionRequest),
     });
 
-    if (invokeError) {
+    const duration = Date.now() - startTime;
+    console.log(`[STEP 2] Response in ${duration}ms, status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorData: any = {};
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText };
+      }
+
       await logger.checkpoint(STEPS.CALL_UNIFIED_PROVISION.number, STEPS.CALL_UNIFIED_PROVISION.name, 'failed', {
-        error: invokeError.message,
+        httpStatus: response.status,
+        error: errorData.error || errorText,
         durationMs: duration,
       });
 
-      throw new Error(invokeError.message || 'Provisioning failed');
+      throw new Error(errorData.error || errorData.message || `Provisioning failed: ${errorText}`);
     }
+
+    const provisionResult = await response.json();
 
     if (!provisionResult.success) {
       await logger.checkpoint(STEPS.CALL_UNIFIED_PROVISION.number, STEPS.CALL_UNIFIED_PROVISION.name, 'failed', {

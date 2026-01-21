@@ -13,7 +13,7 @@ import { DataTablePagination } from "@/shared/components/ui/data-table-paginatio
 import { DataTableToolbar } from "@/shared/components/ui/data-table-toolbar";
 import { DataTableViewOptions } from "@/shared/components/ui/data-table-view-options";
 import { createListMembersColumns } from "@/features/contacts/components/listMembersColumns";
-import { basicTableModels } from "@/shared/utils/tableHelpers";
+import { basicTableModels } from "@/shared/utils/table";
 
 export default function ListDetail() {
   const { id } = useParams<{ id: string }>();

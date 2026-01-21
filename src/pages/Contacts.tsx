@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, Database, Upload, Download } from "lucide-react";
 import { Layout } from "@/shared/components/layout/Layout";
 import { Button } from "@/shared/components/ui/button";
@@ -10,14 +10,13 @@ import { ContactFilters } from "@/features/contacts/components/ContactFilters";
 import { SmartCSVImporter } from "@/features/contacts/components/SmartCSVImporter";
 import { ExportButton } from "@/features/contacts/components/ExportButton";
 import { useTenant } from "@/contexts/TenantContext";
-import { useContacts } from '@/features/contacts/hooks';
 import { useDebounce } from '@/shared/hooks';
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { seedContactsData } from '@/features/admin/demo/seed-contacts-data';
 import { CSVTemplateGenerator } from "@/shared/utils/csvTemplates";
 import { toast } from "sonner";
-import type { ContactFilters as ContactFiltersType } from "@/types/contacts";
+import type { ContactFilters as ContactFiltersType, Contact } from "@/types/contacts";
 import {
   Dialog,
   DialogContent,
@@ -33,16 +32,21 @@ export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<ContactFiltersType>({});
   const [isSeeding, setIsSeeding] = useState(false);
+  const [contacts, setContacts] = useState<Contact[] | undefined>(undefined);
 
-  // Debounce the search query to prevent rapid-fire database queries
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
-
-  const appliedFilters: ContactFiltersType = {
+  // Debounce the search query to prevent rapid-fire database queries (500ms for stability)
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  
+  // Memoize the filters object to prevent unnecessary re-renders
+  const appliedFilters = useMemo<ContactFiltersType>(() => ({
     ...filters,
     search: debouncedSearchQuery || undefined,
-  };
+  }), [filters, debouncedSearchQuery]);
 
-  const { data: contacts } = useContacts(appliedFilters);
+  // Callback to receive contacts data from table (stable reference)
+  const handleContactsChange = useCallback((data: Contact[] | undefined) => {
+    setContacts(data);
+  }, []);
 
   const handleSeedData = async () => {
     if (!currentClient) return;
@@ -154,7 +158,11 @@ export default function Contacts() {
         </Card>
 
         {/* Contacts Table */}
-        <ContactsTable filters={appliedFilters} onFiltersChange={setFilters} />
+        <ContactsTable 
+          filters={appliedFilters} 
+          onFiltersChange={setFilters}
+          onDataChange={handleContactsChange}
+        />
 
         {/* Create Dialog */}
         <ContactQuickCreate

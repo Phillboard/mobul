@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, memo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -17,15 +17,22 @@ import { ContactFilters } from "@/types/contacts";
 import { createColumns } from "./columns";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import { Users } from "lucide-react";
+import type { Contact } from "@/types/contacts";
 
 interface ContactsTableProps {
   filters?: ContactFilters;
   onFiltersChange?: (filters: ContactFilters) => void;
+  onDataChange?: (contacts: Contact[] | undefined) => void;
 }
 
-export function ContactsTable({ filters }: ContactsTableProps) {
+function ContactsTableComponent({ filters, onDataChange }: ContactsTableProps) {
   const { data: contacts, isLoading } = useContacts(filters);
   const { preferences, updatePreferences } = useTablePreferences("contacts");
+  
+  // Notify parent of data changes for export functionality
+  useEffect(() => {
+    onDataChange?.(contacts);
+  }, [contacts, onDataChange]);
   
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -45,7 +52,13 @@ export function ContactsTable({ filters }: ContactsTableProps) {
     return visibilityState;
   });
 
-  // Only update visibility when preferences change from external source (not our own updates)
+  // Create a stable string representation of visible columns for dependency comparison
+  const prefsVisibleKey = useMemo(
+    () => [...preferences.visible_columns].sort().join(','),
+    [preferences.visible_columns]
+  );
+
+  // Only update visibility when preferences actually change (using stable string key)
   useEffect(() => {
     const allColumns = [
       "customer_code", "name", "email", "phone", "mobile_phone", "company",
@@ -59,17 +72,15 @@ export function ContactsTable({ filters }: ContactsTableProps) {
       .sort()
       .join(',');
     
-    const prefsVisible = preferences.visible_columns.sort().join(',');
-    
     // Only update if preferences actually changed
-    if (currentVisible !== prefsVisible) {
+    if (currentVisible !== prefsVisibleKey) {
       const visibilityState: VisibilityState = {};
       allColumns.forEach(col => {
         visibilityState[col] = preferences.visible_columns.includes(col);
       });
       setColumnVisibility(visibilityState);
     }
-  }, [preferences.visible_columns]);
+  }, [prefsVisibleKey, preferences.visible_columns]);
 
   // Custom handler to persist column visibility changes immediately
   const handleColumnVisibilityChange = (updater: VisibilityState | ((old: VisibilityState) => VisibilityState)) => {
@@ -202,3 +213,6 @@ export function ContactsTable({ filters }: ContactsTableProps) {
     </div>
   );
 }
+
+// Memoize to prevent re-renders when parent state changes unrelated to filters
+export const ContactsTable = memo(ContactsTableComponent);

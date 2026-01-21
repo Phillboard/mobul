@@ -9,10 +9,11 @@
 import { useState } from 'react';
 import { Layout } from '@/shared/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { MessageSquare, Mail, Settings2 } from 'lucide-react';
+import { MessageSquare, Mail, Settings2, Phone } from 'lucide-react';
 import { SMSTestPanel } from '@/features/admin/components/messaging/SMSTestPanel';
 import { EmailTestPanel } from '@/features/admin/components/messaging/EmailTestPanel';
 import { SMSProviderSettingsPanel } from '@/features/admin/components/messaging/SMSProviderSettingsPanel';
+import { AdminTwilioManagement } from '@/features/admin/components/messaging/AdminTwilioManagement';
 
 export default function AdminMessagingTest() {
   const [activeTab, setActiveTab] = useState('sms');
@@ -30,7 +31,7 @@ export default function AdminMessagingTest() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="sms" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               SMS Testing
@@ -42,6 +43,10 @@ export default function AdminMessagingTest() {
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings2 className="h-4 w-4" />
               Provider Settings
+            </TabsTrigger>
+            <TabsTrigger value="twilio" className="flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              Twilio Management
             </TabsTrigger>
           </TabsList>
 
@@ -55,6 +60,10 @@ export default function AdminMessagingTest() {
 
           <TabsContent value="settings" className="mt-6">
             <SMSProviderSettingsPanel />
+          </TabsContent>
+
+          <TabsContent value="twilio" className="mt-6">
+            <AdminTwilioManagement />
           </TabsContent>
         </Tabs>
       </div>

@@ -139,3 +139,6 @@ SELECT
 FROM marketing_campaigns
 ORDER BY created_at DESC
 LIMIT 20;
+
+
+

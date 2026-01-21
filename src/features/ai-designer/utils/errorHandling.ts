@@ -405,3 +405,6 @@ export function logError(error: AIDesignerError, context?: Record<string, any>):
   // In production, you would send this to an error tracking service
   // like Sentry, LogRocket, or similar
 }
+
+
+

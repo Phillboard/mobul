@@ -28,14 +28,19 @@ export function ResendSmsButton({
 
   const resendSms = useMutation({
     mutationFn: async () => {
-      // Fetch recipient's condition template for personalized message
+      // Fetch recipient's condition template for personalized message AND client_id for Twilio hierarchy
       const { data: recipient } = await supabase
         .from('recipients')
         .select(`
           first_name,
           last_name,
+          campaign:campaigns(
+            client_id,
+            campaign_conditions(sms_template)
+          ),
           audiences!inner(
             campaigns!inner(
+              client_id,
               campaign_conditions(sms_template)
             )
           )
@@ -44,7 +49,12 @@ export function ResendSmsButton({
         .single();
 
       // Get sms_template from the first condition (if available)
-      const smsTemplate = recipient?.audiences?.[0]?.campaigns?.[0]?.campaign_conditions?.[0]?.sms_template;
+      const smsTemplate = recipient?.campaign?.campaign_conditions?.[0]?.sms_template 
+        || recipient?.audiences?.[0]?.campaigns?.[0]?.campaign_conditions?.[0]?.sms_template;
+      
+      // Get client_id for hierarchical Twilio resolution (prefer direct campaign link)
+      const clientId = (recipient?.campaign as any)?.client_id 
+        || recipient?.audiences?.[0]?.campaigns?.[0]?.client_id;
       
       // Create SMS delivery log entry (needed for send-gift-card-sms)
       const { data: smsLogEntry, error: logError } = await supabase
@@ -76,16 +86,18 @@ export function ResendSmsButton({
       }
 
       // Send SMS via edge function with correct parameters
+      // Include clientId for hierarchical Twilio resolution (Client -> Agency -> Admin)
       const { error: smsError } = await supabase.functions.invoke('send-gift-card-sms', {
         body: {
           deliveryId: smsLogEntry.id,
           giftCardCode: giftCardCode,
           giftCardValue: giftCardValue,
           recipientPhone: recipientPhone,
-          recipientName: recipient.first_name || '',
+          recipientName: recipient?.first_name || '',
           customMessage: customMessage || undefined,
           recipientId: recipientId,
           giftCardId: giftCardId,
+          clientId: clientId, // For hierarchical Twilio resolution
         },
       });
 

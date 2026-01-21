@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { supabase } from '@core/services/supabase';
 import { useAuth } from '@core/auth/AuthProvider';
 
@@ -136,12 +137,17 @@ export function useTablePreferences(tableName: string) {
     },
   });
 
+  // Memoize the fallback to prevent creating new object references on every render
+  const defaultPreferences = useMemo(() => ({
+    visible_columns: DEFAULT_CONTACT_COLUMNS,
+    column_order: DEFAULT_CONTACT_COLUMNS,
+    column_widths: {},
+  }), []);
+  
+  const result = preferences || defaultPreferences;
+  
   return {
-    preferences: preferences || {
-      visible_columns: DEFAULT_CONTACT_COLUMNS,
-      column_order: DEFAULT_CONTACT_COLUMNS,
-      column_widths: {},
-    },
+    preferences: result,
     isLoading,
     updatePreferences: updatePreferences.mutate,
     resetToDefault: resetToDefault.mutate,

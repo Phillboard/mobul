@@ -32,7 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/shared/components/ui/tooltip';
-import { cn } from '@/shared/utils/utils';
+import { cn } from '@/shared/utils/cn';
 
 // Lazy load Monaco Editor for better initial load performance
 const Editor = lazy(() => import('@monaco-editor/react'));

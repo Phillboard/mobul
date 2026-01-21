@@ -16,7 +16,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useToast } from '@/shared/hooks';
 import { ShoppingCart, Wallet, CreditCard, TrendingUp, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { formatCurrency } from '@/shared/utils/utils';
+import { formatCurrency } from '@/shared/utils/cn';
 import { useAuth } from "@core/auth/AuthProvider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/shared/components/ui/breadcrumb";

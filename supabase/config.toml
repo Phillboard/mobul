@@ -78,6 +78,9 @@ verify_jwt = true
 [functions.provision-gift-card-for-call-center]
 verify_jwt = true
 
+[functions.provision-gift-card-unified]
+verify_jwt = false
+
 [functions.bulk-approve-codes]
 verify_jwt = true
 

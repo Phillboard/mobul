@@ -35,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shared/components/ui/alert-dialog';
-import { cn } from '@/shared/utils/utils';
+import { cn } from '@/shared/utils/cn';
 import type { Version } from '../types';
 
 // ============================================================================

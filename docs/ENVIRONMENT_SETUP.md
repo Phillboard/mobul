@@ -57,14 +57,18 @@ VITE_GEMINI_API_KEY=your_gemini_api_key_here
 ### SMS Provider (Twilio)
 
 ```bash
-# Twilio Account SID
+# Twilio Account SID (Legacy - for environment variable fallback)
 TWILIO_ACCOUNT_SID=your_account_sid
 
-# Twilio Auth Token
+# Twilio Auth Token (Legacy - for environment variable fallback)
 TWILIO_AUTH_TOKEN=your_auth_token
 
-# Twilio Phone Number (for sending SMS)
+# Twilio Phone Number (Legacy - for environment variable fallback)
 TWILIO_PHONE_NUMBER=+1234567890
+
+# Twilio Encryption Key (required for hierarchical Twilio)
+# Must be 32 bytes (64 hex characters) for AES-256-GCM encryption
+TWILIO_ENCRYPTION_KEY=your_64_char_hex_key_here
 ```
 
 **Setup:**
@@ -76,6 +80,44 @@ TWILIO_PHONE_NUMBER=+1234567890
 - Gift card SMS delivery
 - SMS opt-in requests
 - Call tracking
+
+#### Hierarchical Twilio Configuration
+
+The platform supports hierarchical Twilio configuration, allowing different Twilio accounts at different levels:
+
+1. **Client-level** - Individual clients can have their own Twilio account
+2. **Agency-level** - Agency owners can configure a shared Twilio for all their clients
+3. **Admin/Master-level** - Platform-wide fallback Twilio account
+4. **Environment variables** - Final fallback (legacy)
+
+Configure hierarchical Twilio via the UI:
+- **Admin**: Settings → Twilio Configuration
+- **Agency**: Settings → Phone Numbers
+- **Client**: Settings → Phone Numbers
+
+#### Twilio Webhook Configuration (REQUIRED)
+
+For SMS opt-in responses (YES/STOP) to work, configure Twilio webhooks:
+
+1. Go to [Twilio Console](https://console.twilio.com)
+2. Navigate to: **Phone Numbers → Manage → Active Numbers**
+3. Select your SMS-enabled phone number
+4. Under **Messaging Configuration**:
+   - **A MESSAGE COMES IN**: Webhook
+   - **URL**: `https://YOUR_PROJECT_REF.supabase.co/functions/v1/handle-sms-response`
+   - **HTTP Method**: POST
+
+**Example Webhook URL:**
+```
+https://abcdefghijk.supabase.co/functions/v1/handle-sms-response
+```
+
+This webhook handles:
+- Customer replies "YES" → Updates status to `opted_in`
+- Customer replies "STOP" → Updates status to `opted_out`
+- Real-time status updates to the Call Center dashboard
+
+**Note:** Each Twilio phone number (at client, agency, or admin level) needs its own webhook configured to point to the same `handle-sms-response` function.
 
 ---
 
@@ -213,15 +255,22 @@ Edge functions have their own environment configuration in Supabase Dashboard:
 **Required Secrets:**
 - `SUPABASE_URL` (auto-provided)
 - `SUPABASE_SERVICE_ROLE_KEY` (auto-provided)
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_PHONE_NUMBER`
+- `TWILIO_ACCOUNT_SID` (fallback if hierarchical config not set)
+- `TWILIO_AUTH_TOKEN` (fallback if hierarchical config not set)
+- `TWILIO_PHONE_NUMBER` (fallback if hierarchical config not set)
+- `TWILIO_ENCRYPTION_KEY` (required - 64 hex chars for AES-256-GCM)
 - `TILLO_API_KEY`
 - `TILLO_SECRET_KEY`
 - `SENDGRID_API_KEY` (if using SendGrid)
 - `ALERT_SLACK_WEBHOOK_URL` (optional)
 - `SUPPORT_PHONE_NUMBER`
 - `SUPPORT_EMAIL`
+
+**Generate Encryption Key:**
+```bash
+# Generate a 32-byte (64 hex char) encryption key
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ---
 
@@ -292,12 +341,22 @@ curl -X POST 'http://localhost:54321/functions/v1/provision-gift-card-unified' \
 
 ### SMS not sending
 
-- Verify all Twilio variables are set
-- Check Twilio phone number is active
+- Verify Twilio configuration at client/agency/admin level in the UI
+- Check that `TWILIO_ENCRYPTION_KEY` is set in Edge Functions secrets
+- If using environment variable fallback, verify all Twilio variables are set
+- Check Twilio phone number is active and SMS-capable
 - Ensure phone number includes country code (+1 for US)
+- Check Edge Function logs: `supabase functions logs send-sms-opt-in`
+
+### SMS opt-in not updating
+
+- Verify Twilio webhook is configured (see "Twilio Webhook Configuration" above)
+- Check that webhook URL matches your Supabase project ref
+- Test webhook manually: `curl -X POST YOUR_WEBHOOK_URL -d "From=+1234567890&Body=YES"`
+- Check Edge Function logs: `supabase functions logs handle-sms-response`
 
 ---
 
-**Last Updated**: December 2024  
+**Last Updated**: January 2026  
 **Maintainer**: Platform Engineering Team
 

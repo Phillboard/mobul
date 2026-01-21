@@ -40,7 +40,7 @@ import {
   Alert,
   AlertDescription,
 } from '@/shared/components/ui/alert';
-import { cn } from '@/shared/utils/utils';
+import { cn } from '@/shared/utils/cn';
 
 // ============================================================================
 // Component Props

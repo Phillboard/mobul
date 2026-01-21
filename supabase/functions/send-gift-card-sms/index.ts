@@ -16,6 +16,7 @@ interface SendGiftCardSMSRequest {
   customMessage?: string;
   recipientId?: string;
   giftCardId?: string;
+  clientId?: string; // For hierarchical Twilio resolution
 }
 
 Deno.serve(async (req) => {
@@ -47,6 +48,20 @@ Deno.serve(async (req) => {
     giftCardId = requestData.giftCardId;
 
     console.log(`[SEND-GIFT-CARD-SMS] [${errorLogger.requestId}] Sending gift card SMS:`, { deliveryId, recipientPhone, value: giftCardValue });
+
+    // Resolve clientId for hierarchical Twilio resolution
+    let resolvedClientId = requestData.clientId;
+    if (!resolvedClientId && recipientId) {
+      // Try to fetch client_id from recipient -> campaign
+      const { data: recipientData } = await supabaseClient
+        .from('recipients')
+        .select('campaign:campaigns(client_id)')
+        .eq('id', recipientId)
+        .single();
+      resolvedClientId = (recipientData?.campaign as any)?.client_id || undefined;
+      console.log(`[SEND-GIFT-CARD-SMS] Resolved client ID from recipient: ${resolvedClientId || 'none'}`);
+    }
+    console.log(`[SEND-GIFT-CARD-SMS] Client ID for Twilio hierarchy: ${resolvedClientId || 'none (will use fallback)'}`);
 
     // Format phone number
     const formattedPhone = formatPhoneE164(recipientPhone);
@@ -80,8 +95,9 @@ Deno.serve(async (req) => {
       .eq('id', deliveryId);
 
     // Send SMS using provider abstraction (handles Infobip/Twilio selection and fallback)
+    // Pass resolvedClientId for hierarchical Twilio resolution (Client -> Agency -> Admin)
     console.log(`[SEND-GIFT-CARD-SMS] Sending SMS to ${formattedPhone}...`);
-    const smsResult = await sendSMS(formattedPhone, smsMessage, supabaseClient);
+    const smsResult = await sendSMS(formattedPhone, smsMessage, supabaseClient, resolvedClientId);
 
     if (!smsResult.success) {
       console.error('[SEND-GIFT-CARD-SMS] SMS send failed:', smsResult.error);
@@ -118,6 +134,14 @@ Deno.serve(async (req) => {
     if (smsResult.fallbackUsed) {
       console.log('[SEND-GIFT-CARD-SMS] Note: Fallback provider was used');
     }
+    
+    // Log Twilio hierarchy info if available
+    if (smsResult.twilioLevelUsed) {
+      console.log(`[SEND-GIFT-CARD-SMS] Twilio level used: ${smsResult.twilioLevelUsed} (${smsResult.twilioEntityName || 'N/A'})`);
+      if (smsResult.twilioFallbackOccurred) {
+        console.log(`[SEND-GIFT-CARD-SMS] Twilio fallback reason: ${smsResult.twilioFallbackReason}`);
+      }
+    }
 
     // Update SMS delivery log with success
     if (logEntry) {
@@ -153,6 +177,11 @@ Deno.serve(async (req) => {
         provider: smsResult.provider,
         status: smsResult.status || 'sent',
         fallbackUsed: smsResult.fallbackUsed || false,
+        // Twilio hierarchy info
+        twilioLevelUsed: smsResult.twilioLevelUsed || null,
+        twilioEntityName: smsResult.twilioEntityName || null,
+        twilioFromNumber: smsResult.twilioFromNumber || null,
+        twilioFallbackOccurred: smsResult.twilioFallbackOccurred || false,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

@@ -8,7 +8,7 @@
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Monitor, Tablet, Smartphone, Loader2, RefreshCw, AlertCircle, Maximize2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import { cn } from '@/shared/utils/utils';
+import { cn } from '@/shared/utils/cn';
 import type { ViewMode, ElementContext } from '../types';
 
 // ============================================================================

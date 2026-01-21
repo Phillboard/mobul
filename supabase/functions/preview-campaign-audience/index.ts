@@ -128,3 +128,6 @@ async function getRecipients(supabase: any, campaign: any) {
     return true;
   });
 }
+
+
+

@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
-import { cn } from '@/shared/utils/utils';
+import { cn } from '@/shared/utils/cn';
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
 

@@ -28,7 +28,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Badge } from '@/shared/components/ui/badge';
-import { cn } from '@/shared/utils/utils';
+import { cn } from '@/shared/utils/cn';
 import type { ChatMessage, ElementContext, Template } from '../types';
 
 // ============================================================================

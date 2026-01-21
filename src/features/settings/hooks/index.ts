@@ -4,8 +4,8 @@ export * from './useCRMIntegrations';
 export * from './useMessageTemplates';
 export * from './useSettingsTabs';
 export * from './useTwilioNumbers';
+export * from './useTwilioConfig';
 export * from './useWebhooks';
 export * from './useZapierConnections';
 export * from './useOptInStatus';
 export * from './useMailProviderSettings';
-

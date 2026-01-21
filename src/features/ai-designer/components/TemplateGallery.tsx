@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog';
-import { cn } from '@/shared/utils/utils';
+import { cn } from '@/shared/utils/cn';
 import type { Template, TemplateCategory } from '../types';
 
 // ============================================================================
