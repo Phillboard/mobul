@@ -229,10 +229,53 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
 
   // Send SMS opt-in
   const sendOptInSms = async () => {
-    if (!cellPhone || !recipient || !campaign) return;
+    // Debug logging to help diagnose issues
+    console.log('[SEND-OPT-IN] Attempting to send SMS:', {
+      hasCellPhone: !!cellPhone,
+      hasRecipient: !!recipient,
+      hasCampaign: !!campaign,
+      campaignId: campaign?.id,
+      recipientId: recipient?.id,
+    });
+
+    // Provide user feedback for missing data instead of silent return
+    if (!campaign) {
+      console.error('[SEND-OPT-IN] Campaign is missing!', { recipient });
+      toast({
+        title: "Cannot Send SMS",
+        description: "Campaign data is not available for this recipient. The recipient may not be properly linked to a campaign.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!cellPhone) {
+      toast({
+        title: "Phone Required",
+        description: "Please enter a cell phone number first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!recipient) {
+      toast({
+        title: "No Recipient",
+        description: "Please look up a redemption code first.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSendingOptIn(true);
     try {
+      console.log('[SEND-OPT-IN] Calling edge function with:', {
+        recipient_id: recipient.id,
+        campaign_id: campaign.id,
+        phone: cellPhone,
+        client_name: clientName,
+      });
+      
       const { data, error} = await supabase.functions.invoke('send-sms-opt-in', {
         body: {
           recipient_id: recipient.id,
@@ -243,6 +286,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           custom_message: (campaign as any).sms_opt_in_message || undefined, // Pass campaign's custom opt-in message
         }
       });
+      
+      console.log('[SEND-OPT-IN] Edge function response:', { data, error });
       
       if (error) throw error;
       if (data.error) throw new Error(data.error);
@@ -255,6 +300,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         description: "Ask customer to reply YES to continue. You can proceed with the spiel while waiting.",
       });
     } catch (error: any) {
+      console.error('[SEND-OPT-IN] Error:', error);
       toast({
         title: "Failed to send SMS",
         description: error.message || "Please try again",
@@ -1205,6 +1251,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                   onClick={sendOptInSms}
                   disabled={
                     !cellPhone || 
+                    !campaign ||
                     isSendingOptIn || 
                     isSimulating ||
                     (optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response')
@@ -1266,6 +1313,18 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               onRefresh={optInStatus.refresh}
               isLoading={optInStatus.isLoading}
             />
+
+            {/* Campaign missing warning */}
+            {!campaign && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Campaign not linked.</strong> This recipient is not properly linked to a campaign. 
+                  Please ensure the recipient's campaign_id is set in the database, or that their audience 
+                  is linked to an active campaign.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Instructions for agent */}
             {optInStatus.isPending && (
