@@ -116,6 +116,7 @@ const navigationGroups: NavGroup[] = [
     collapsible: true,
     items: [
       { name: "Redemption Center", href: "/call-center", icon: Headphones, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision", "tracking", "calls"], description: "Redeem gift cards and track calls" },
+      { name: "Redemption Logs", href: "/call-center/logs", icon: ClipboardList, roles: ['admin'], keywords: ["logs", "audit", "history", "debug", "errors"], description: "View detailed redemption workflow logs" },
       { name: "Call Scripts", href: "/call-center/scripts", icon: FileText, permissions: ['calls.manage'], keywords: ["scripts", "training", "call flow"], description: "Manage call scripts" },
     ]
   },

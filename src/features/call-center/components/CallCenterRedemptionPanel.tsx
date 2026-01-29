@@ -16,9 +16,11 @@ import { Separator } from "@/shared/components/ui/separator";
 import { PoolInventoryWidget } from "./PoolInventoryWidget";
 import { ResendSmsButton } from "./ResendSmsButton";
 import { OptInStatusIndicator } from "./OptInStatusIndicator";
+import { CampaignSelectionStep } from "./steps/CampaignSelectionStep";
 import { useOptInStatus } from '@/features/settings/hooks';
+import { useRedemptionLogger } from '../hooks/useRedemptionLogger';
 
-type WorkflowStep = "code" | "optin" | "contact" | "condition" | "complete";
+type WorkflowStep = "code" | "campaign_select" | "optin" | "contact" | "condition" | "complete";
 type VerificationMethod = "sms" | "email" | "skipped";
 type DispositionType = "positive" | "negative";
 
@@ -69,6 +71,23 @@ interface CampaignGiftCardConfig {
   brand_id: string;
   denomination: number;
   condition_number: number;
+}
+
+// Existing gift card assignment for previously redeemed recipients
+interface ExistingCard {
+  id: string;
+  giftCardId: string;
+  conditionId: string;
+  conditionName: string;
+  conditionNumber: number;
+  cardCode: string;
+  cardNumber?: string;
+  cardValue: number;
+  brandName: string;
+  brandLogo?: string;
+  assignedAt: string;
+  deliveredAt?: string;
+  deliveryStatus: string;
 }
 
 interface RecipientData {
@@ -123,6 +142,8 @@ interface RecipientData {
       campaign_gift_card_config?: CampaignGiftCardConfig[];
     }>;
   };
+  // Previously redeemed gift cards for this recipient
+  existingCards?: ExistingCard[];
 }
 
 interface GiftCardData {
@@ -162,11 +183,15 @@ interface CallCenterRedemptionPanelProps {
 
 export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedemptionPanelProps) {
   const { toast } = useToast();
+  const { logStep, startNewSession, getSessionId } = useRedemptionLogger();
   
   // Step 1: Code Entry
   const [step, setStep] = useState<WorkflowStep>("code");
   const [redemptionCode, setRedemptionCode] = useState("");
   const [recipient, setRecipient] = useState<RecipientData | null>(null);
+  
+  // Campaign Selection (when code matches multiple campaigns)
+  const [multipleRecipients, setMultipleRecipients] = useState<RecipientData[]>([]);
   
   // Step 2: SMS Opt-In (NEW STEP)
   const [cellPhone, setCellPhone] = useState("");
@@ -227,8 +252,145 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     }
   }, [optInStatus.isOptedIn, step, toast]);
 
+  // Handle campaign selection when multiple recipients match the code
+  const handleCampaignSelect = (selectedRecipient: RecipientData) => {
+    console.log('[CALL-CENTER] Campaign selected:', {
+      recipientId: selectedRecipient.id,
+      campaignId: selectedRecipient.campaign?.id,
+      campaignName: selectedRecipient.campaign?.name,
+    });
+    
+    // Log campaign selection
+    logStep({
+      stepName: 'campaign_select',
+      stepNumber: 2,
+      status: 'success',
+      recipientId: selectedRecipient.id,
+      campaignId: selectedRecipient.campaign?.id,
+      redemptionCode: selectedRecipient.redemption_code,
+      requestPayload: {
+        availableCampaigns: multipleRecipients.length,
+        selectedCampaignName: selectedRecipient.campaign?.name,
+      },
+    });
+    
+    setRecipient(selectedRecipient);
+    setMultipleRecipients([]);
+    
+    // Notify parent with recipient data
+    const recipientCampaign = selectedRecipient.campaign;
+    if (onRecipientLoaded && recipientCampaign) {
+      onRecipientLoaded({
+        clientId: (recipientCampaign as any).client_id,
+        campaignId: recipientCampaign.id,
+        recipient: selectedRecipient,
+        step: "optin"
+      });
+    }
+    
+    setStep("optin");
+    
+    toast({
+      title: "Campaign Selected",
+      description: `Proceeding with ${recipientCampaign?.name || 'selected campaign'}`,
+    });
+  };
+
+  // Handle resend of existing gift card (for previously redeemed codes)
+  const handleResendExistingCard = (selectedRecipient: RecipientData, existingCard: ExistingCard) => {
+    console.log('[CALL-CENTER] Resending existing card:', {
+      recipientId: selectedRecipient.id,
+      cardId: existingCard.giftCardId,
+      brandName: existingCard.brandName,
+      cardValue: existingCard.cardValue,
+    });
+    
+    // Log the resend action
+    logStep({
+      stepName: 'resend_existing_card',
+      stepNumber: 6,
+      status: 'started',
+      recipientId: selectedRecipient.id,
+      campaignId: selectedRecipient.campaign?.id,
+      redemptionCode: selectedRecipient.redemption_code,
+      requestPayload: {
+        existingCardId: existingCard.id,
+        giftCardId: existingCard.giftCardId,
+        brandName: existingCard.brandName,
+        cardValue: existingCard.cardValue,
+        conditionName: existingCard.conditionName,
+      },
+    });
+    
+    // Set the recipient
+    setRecipient(selectedRecipient);
+    setMultipleRecipients([]);
+    
+    // Pre-fill phone if available
+    if (selectedRecipient.phone) {
+      setPhone(selectedRecipient.phone);
+      setCellPhone(selectedRecipient.phone);
+    }
+    
+    // Transform existing card data into ProvisionResult format
+    const resendResult: ProvisionResult = {
+      success: true,
+      recipient: {
+        id: selectedRecipient.id,
+        firstName: selectedRecipient.first_name || '',
+        lastName: selectedRecipient.last_name || '',
+        phone: selectedRecipient.phone,
+        email: selectedRecipient.email,
+      },
+      giftCard: {
+        id: existingCard.giftCardId,
+        card_code: existingCard.cardCode,
+        card_number: existingCard.cardNumber || null,
+        card_value: existingCard.cardValue,
+        expiration_date: null,
+        gift_card_pools: {
+          id: existingCard.giftCardId,
+          pool_name: existingCard.brandName,
+          card_value: existingCard.cardValue,
+          provider: existingCard.brandName,
+          gift_card_brands: {
+            brand_name: existingCard.brandName,
+            logo_url: existingCard.brandLogo || null,
+            balance_check_url: null,
+          },
+        },
+      },
+    };
+    
+    // Set the result and skip to complete step
+    setResult(resendResult);
+    setStep("complete");
+    
+    // Log success
+    logStep({
+      stepName: 'resend_existing_card',
+      stepNumber: 6,
+      status: 'success',
+      recipientId: selectedRecipient.id,
+      campaignId: selectedRecipient.campaign?.id,
+      redemptionCode: selectedRecipient.redemption_code,
+      responsePayload: {
+        cardId: existingCard.giftCardId,
+        brandName: existingCard.brandName,
+        cardValue: existingCard.cardValue,
+      },
+    });
+    
+    toast({
+      title: "Previously Redeemed Card Found",
+      description: `Showing existing ${existingCard.brandName} $${existingCard.cardValue.toFixed(2)} gift card. Use the resend button to send it again.`,
+    });
+  };
+
   // Send SMS opt-in
   const sendOptInSms = async () => {
+    const smsStartTime = Date.now();
+    
     // Debug logging to help diagnose issues
     console.log('[SEND-OPT-IN] Attempting to send SMS:', {
       hasCellPhone: !!cellPhone,
@@ -241,6 +403,18 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     // Provide user feedback for missing data instead of silent return
     if (!campaign) {
       console.error('[SEND-OPT-IN] Campaign is missing!', { recipient });
+      
+      // Log validation failure
+      await logStep({
+        stepName: 'sms_opt_in',
+        stepNumber: 3,
+        status: 'failed',
+        recipientId: recipient?.id,
+        redemptionCode: recipient?.redemption_code,
+        errorCode: 'MISSING_CAMPAIGN',
+        errorMessage: 'Campaign data is not available for this recipient',
+      });
+      
       toast({
         title: "Cannot Send SMS",
         description: "Campaign data is not available for this recipient. The recipient may not be properly linked to a campaign.",
@@ -268,6 +442,23 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     }
     
     setIsSendingOptIn(true);
+    
+    // Log SMS opt-in started
+    await logStep({
+      stepName: 'sms_opt_in',
+      stepNumber: 3,
+      status: 'started',
+      recipientId: recipient.id,
+      campaignId: campaign.id,
+      callSessionId: callSessionId || undefined,
+      redemptionCode: recipient.redemption_code,
+      requestPayload: {
+        phone: cellPhone,
+        clientName,
+        hasCustomMessage: !!(campaign as any).sms_opt_in_message,
+      },
+    });
+    
     try {
       console.log('[SEND-OPT-IN] Calling edge function with:', {
         recipient_id: recipient.id,
@@ -292,6 +483,23 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       if (error) throw error;
       if (data.error) throw new Error(data.error);
       
+      // Log SMS success
+      await logStep({
+        stepName: 'sms_opt_in',
+        stepNumber: 3,
+        status: 'success',
+        recipientId: recipient.id,
+        campaignId: campaign.id,
+        callSessionId: callSessionId || undefined,
+        redemptionCode: recipient.redemption_code,
+        responsePayload: {
+          messageSid: data.messageSid,
+          provider: data.provider,
+          callSessionId: data.call_session_id,
+        },
+        durationMs: Date.now() - smsStartTime,
+      });
+      
       // Pre-fill delivery phone with opt-in phone
       setPhone(cellPhone);
       
@@ -301,9 +509,41 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       });
     } catch (error: any) {
       console.error('[SEND-OPT-IN] Error:', error);
+      
+      // Try to extract the actual error from the edge function response body
+      let actualError = error.message || 'Failed to send SMS';
+      let errorCode = 'SMS_SEND_FAILED';
+      
+      // Parse error body from edge function if available (FunctionsHttpError)
+      if (error.context && typeof error.context.json === 'function') {
+        try {
+          const errorData = await error.context.json();
+          console.log('[SEND-OPT-IN] Parsed edge function error:', errorData);
+          actualError = errorData.error || errorData.message || actualError;
+          errorCode = errorData.errorCode || errorCode;
+        } catch (parseErr) {
+          console.warn('[SEND-OPT-IN] Could not parse error context:', parseErr);
+        }
+      }
+      
+      // Log SMS failure with detailed error
+      await logStep({
+        stepName: 'sms_opt_in',
+        stepNumber: 3,
+        status: 'failed',
+        recipientId: recipient.id,
+        campaignId: campaign.id,
+        callSessionId: callSessionId || undefined,
+        redemptionCode: recipient.redemption_code,
+        errorCode: errorCode,
+        errorMessage: actualError,
+        errorStack: error.stack,
+        durationMs: Date.now() - smsStartTime,
+      });
+      
       toast({
         title: "Failed to send SMS",
-        description: error.message || "Please try again",
+        description: actualError || "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -485,13 +725,25 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   };
 
   // Step 1: Look up recipient by redemption code
-  // Uses the existing data model: recipients → audiences → campaigns
+  // Returns ALL matching recipients since codes can exist in multiple campaigns
   const lookupMutation = useMutation({
     mutationFn: async (code: string) => {
+      const lookupStartTime = Date.now();
       logger.debug('[CALL-CENTER] Looking up code:', code.toUpperCase());
+      
+      // Log lookup started
+      await logStep({
+        stepName: 'code_lookup',
+        stepNumber: 1,
+        status: 'started',
+        redemptionCode: code.toUpperCase(),
+        requestPayload: { code: code.toUpperCase() },
+      });
 
-      // Primary lookup: Use campaign_id directly on recipients (new model)
-      const { data: recipient, error: recipientError } = await supabase
+      // Primary lookup: Get ALL recipients with this code (not maybeSingle!)
+      // Codes are unique per audience, so the same code can exist in multiple campaigns
+      // Also fetch existing gift card assignments to check for previous redemptions
+      const { data: recipients, error: recipientError } = await supabase
         .from("recipients")
         .select(`
           *,
@@ -501,6 +753,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
             status,
             client_id,
             sms_opt_in_message,
+            mail_date,
+            created_at,
             clients (id, name),
             campaign_conditions (*),
             campaign_gift_card_config (*)
@@ -508,16 +762,37 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           audience:audiences (
             id,
             name
+          ),
+          recipient_gift_cards (
+            id,
+            gift_card_id,
+            inventory_card_id,
+            condition_id,
+            assigned_at,
+            delivered_at,
+            delivery_status,
+            campaign_conditions (
+              condition_name,
+              condition_number
+            )
           )
         `)
-        .eq("redemption_code", code.toUpperCase())
-        .maybeSingle();
+        .eq("redemption_code", code.toUpperCase());
 
-      if (recipient) {
-        logger.debug('[CALL-CENTER] Found recipient:', recipient.id);
-        
-        // If no direct campaign link, try to find via audience (fallback for old data)
+      if (recipientError) {
+        throw new Error("Failed to lookup code: " + recipientError.message);
+      }
+
+      if (!recipients || recipients.length === 0) {
+        throw new Error("Code not found. Please verify the code and ensure the contact has been added to an active campaign.");
+      }
+
+      console.log(`[CALL-CENTER] Found ${recipients.length} recipient(s) with code:`, code.toUpperCase());
+
+      // For each recipient, try to populate campaign if missing (via audience fallback)
+      for (const recipient of recipients) {
         if (!recipient.campaign && recipient.audience_id) {
+          console.log('[CALL-CENTER] Recipient', recipient.id, 'missing campaign, trying audience fallback...');
           const { data: audienceCampaign } = await supabase
             .from("campaigns")
             .select(`
@@ -526,6 +801,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
               status,
               client_id,
               sms_opt_in_message,
+              mail_date,
+              created_at,
               clients (id, name),
               campaign_conditions (*),
               campaign_gift_card_config (*)
@@ -536,365 +813,167 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           if (audienceCampaign) {
             recipient.campaign = audienceCampaign;
             
-            // Backfill campaign_id on recipient for future lookups
-            await supabase
-              .from("recipients")
-              .update({ campaign_id: audienceCampaign.id })
-              .eq("id", recipient.id);
-          }
-        }
-        
-        // Check campaign status - only allow active campaigns for redemption
-        // Active statuses: in_production, mailed, scheduled
-        const campaign = recipient.campaign;
-        if (campaign) {
-          const status = campaign.status;
-          const activeStatuses = ["in_production", "mailed", "scheduled"];
-          
-          if (!activeStatuses.includes(status)) {
-            // Provide specific error messages for non-active statuses
-            if (status === "draft") {
-              throw new Error("This contact is in a draft campaign that hasn't been activated yet. Please activate the campaign first.");
-            } else if (status === "completed") {
-              throw new Error("This campaign has been completed. The redemption period has ended.");
-            } else if (status === "proofed") {
-              throw new Error("This campaign is still being reviewed. It needs to be moved to 'In Production' or 'Mailed' status.");
-            } else {
-              throw new Error(`This campaign has status '${status}' which is not eligible for redemption. Campaign must be 'In Production', 'Mailed', or 'Scheduled'.`);
-            }
-          }
-        }
-
-        // Check if a gift card was already provisioned for this recipient
-        const { data: existingCard, error: cardError } = await supabase
-          .from('gift_card_inventory')
-          .select(`
-            id,
-            card_code,
-            card_number,
-            denomination,
-            expiration_date,
-            assigned_at,
-            brand_id,
-            gift_card_brands (
-              id,
-              brand_name,
-              logo_url,
-              balance_check_url
-            )
-          `)
-          .eq('assigned_to_recipient_id', recipient.id)
-          .eq('status', 'assigned')
-          .order('assigned_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        if (existingCard) {
-          logger.debug('[CALL-CENTER] Found existing provisioned card for recipient:', existingCard.id);
-          // Return recipient with the existing card attached
-          return {
-            ...recipient,
-            _alreadyProvisioned: true,
-            _existingCard: existingCard,
-          } as RecipientData & { _alreadyProvisioned: boolean; _existingCard: typeof existingCard };
-        }
-        
-        return recipient as RecipientData;
-      }
-
-      // Secondary lookup: Check if recipient exists but has broken audience/campaign link
-      // This catches cases where redemption_code exists but audience or campaign is missing
-      logger.debug('[CALL-CENTER] Checking for orphaned recipient with this code...');
-      const { data: orphanedRecipient, error: orphanError } = await supabase
-        .from("recipients")
-        .select(`
-          id,
-          redemption_code,
-          first_name,
-          last_name,
-          audience_id,
-          audiences (
-            id,
-            name,
-            campaigns (id, name, status)
-          )
-        `)
-        .eq("redemption_code", code.toUpperCase())
-        .maybeSingle();
-
-      if (orphanedRecipient) {
-        logger.debug('[CALL-CENTER] Found orphaned recipient:', orphanedRecipient.id);
-        
-        // Diagnose the issue
-        if (!orphanedRecipient.audience_id) {
-          throw new Error(`Recipient found (${orphanedRecipient.first_name || 'Unknown'} ${orphanedRecipient.last_name || ''}) but not assigned to any audience. Please add this recipient to an audience first.`);
-        }
-        
-        const audience = orphanedRecipient.audiences;
-        if (!audience) {
-          throw new Error(`Recipient found but their audience was deleted. Please reassign this recipient to a valid audience.`);
-        }
-        
-        const campaigns = (audience as any).campaigns || [];
-        if (campaigns.length === 0) {
-          throw new Error(`Recipient found in audience "${(audience as any).name}" but this audience is not linked to any campaign. Please add this audience to a campaign first.`);
-        }
-        
-        // Campaign exists but may have a status issue - this shouldn't happen as the primary query should have caught it
-        throw new Error(`Recipient found but campaign configuration issue detected. Please contact support.`);
-      }
-
-      // Tertiary lookup: Try contacts table with customer_code
-      // This handles cases where unique codes are stored on contacts
-      logger.debug('[CALL-CENTER] Trying contacts.customer_code lookup...');
-      const { data: contact, error: contactError } = await supabase
-        .from("contacts")
-        .select("id, first_name, last_name, email, phone, customer_code")
-        .eq("customer_code", code.toUpperCase())
-        .maybeSingle();
-
-      if (contact) {
-        logger.debug('[CALL-CENTER] Found contact:', contact.id, '- checking for campaign assignment...');
-        
-        // Find a recipient record linked to this contact (using direct contact_id link)
-        // NOTE: A contact can be in multiple campaigns, so we get all and pick the first active one
-        let { data: linkedRecipients, error: linkError } = await supabase
-          .from("recipients")
-          .select(`
-            *,
-            campaign:campaigns (
-              id,
-              name,
-              status,
-              client_id,
-              clients (id, name),
-              campaign_conditions (*),
-              campaign_gift_card_config (*)
-            ),
-            audience:audiences (
-              id,
-              name
-            )
-          `)
-          .eq("contact_id", contact.id);
-        
-        // If multiple recipients found (contact in multiple campaigns), prefer active campaigns
-        let linkedRecipient = null;
-        if (linkedRecipients && linkedRecipients.length > 0) {
-          const activeStatuses = ["in_production", "mailed", "scheduled"];
-          // First try to find a recipient in an active campaign
-          linkedRecipient = linkedRecipients.find(r => 
-            r.campaign && activeStatuses.includes(r.campaign.status)
-          );
-          // If no active campaigns, just take the first one (will show appropriate error later)
-          if (!linkedRecipient) {
-            linkedRecipient = linkedRecipients[0];
-          }
-          
-          // Log if contact is in multiple campaigns
-          if (linkedRecipients.length > 1) {
-            logger.debug(`[CALL-CENTER] Contact in ${linkedRecipients.length} campaigns, selected: ${linkedRecipient.campaign?.name || 'N/A'}`);
-          }
-        }
-
-        // FALLBACK: If no recipient linked via contact_id, try matching by redemption_code
-        // This handles cases where recipient exists with matching code but no contact_id link
-        if (!linkedRecipient && contact.customer_code) {
-          logger.debug('[CALL-CENTER] No recipient via contact_id, trying redemption_code match...');
-          const { data: codeMatchedRecipient } = await supabase
-            .from("recipients")
-            .select(`
-              *,
-              campaign:campaigns (
-                id,
-                name,
-                status,
-                client_id,
-                clients (id, name),
-                campaign_conditions (*),
-                campaign_gift_card_config (*)
-              ),
-              audience:audiences (
-                id,
-                name
-              )
-            `)
-            .eq("redemption_code", contact.customer_code.toUpperCase())
-            .maybeSingle();
-          
-          if (codeMatchedRecipient) {
-            linkedRecipient = codeMatchedRecipient;
-            logger.debug('[CALL-CENTER] Found recipient via redemption_code match:', linkedRecipient.id);
-            
-            // Backfill contact_id for future lookups (fire and forget)
+            // Backfill campaign_id on recipient for future lookups (fire and forget)
             supabase
               .from("recipients")
-              .update({ contact_id: contact.id })
-              .eq("id", linkedRecipient.id)
-              .then(() => logger.debug('[CALL-CENTER] Backfilled contact_id for recipient:', linkedRecipient.id));
+              .update({ campaign_id: audienceCampaign.id })
+              .eq("id", recipient.id)
+              .then(() => console.log('[CALL-CENTER] Backfilled campaign_id for recipient:', recipient.id));
           }
         }
+      }
 
-        if (linkedRecipient) {
-          logger.debug('[CALL-CENTER] Found linked recipient via contact:', {
-            recipientId: linkedRecipient.id,
-            hasDirectCampaign: !!linkedRecipient.campaign,
-            campaignId: linkedRecipient.campaign?.id || null,
-            audienceId: linkedRecipient.audience_id || null,
-            audienceName: (linkedRecipient.audience as any)?.name || null,
+      // Filter to only recipients with valid campaigns in active statuses
+      const activeStatuses = ["in_production", "mailed", "scheduled"];
+      const validRecipients = recipients.filter(r => {
+        if (!r.campaign) return false;
+        return activeStatuses.includes(r.campaign.status);
+      });
+
+      console.log(`[CALL-CENTER] After filtering: ${validRecipients.length} recipient(s) in active campaigns`);
+
+      // Transform recipient_gift_cards into existingCards format
+      // Note: Card details are fetched separately when needed for resend
+      for (const recipient of validRecipients) {
+        if (recipient.recipient_gift_cards && Array.isArray(recipient.recipient_gift_cards)) {
+          recipient.existingCards = recipient.recipient_gift_cards.map((rgc: any) => {
+            const condition = rgc.campaign_conditions;
+            
+            return {
+              id: rgc.id,
+              giftCardId: rgc.gift_card_id || rgc.inventory_card_id,
+              conditionId: rgc.condition_id,
+              conditionName: condition?.condition_name || 'Unknown Condition',
+              conditionNumber: condition?.condition_number || 0,
+              // Card details not available in this query - shown as placeholders
+              cardCode: '****',
+              cardNumber: undefined,
+              cardValue: 0, // Value will be fetched when viewing/resending
+              brandName: 'Gift Card',
+              brandLogo: undefined,
+              assignedAt: rgc.assigned_at,
+              deliveredAt: rgc.delivered_at || undefined,
+              deliveryStatus: rgc.delivery_status || 'unknown',
+            } as ExistingCard;
           });
           
-          // FALLBACK: If no direct campaign link, try via audience (for old data without campaign_id)
-          if (!linkedRecipient.campaign && linkedRecipient.audience_id) {
-            logger.debug('[CALL-CENTER] No direct campaign_id, trying audience fallback...');
-            const { data: audienceCampaign } = await supabase
-              .from("campaigns")
-              .select(`
-                id,
-                name,
-                status,
-                client_id,
-                clients (id, name),
-                campaign_conditions (*),
-                campaign_gift_card_config (*)
-              `)
-              .eq("audience_id", linkedRecipient.audience_id)
-              .maybeSingle();
-            
-            if (audienceCampaign) {
-              linkedRecipient.campaign = audienceCampaign;
-              
-              // Backfill campaign_id for future lookups (fire and forget)
-              supabase
-                .from("recipients")
-                .update({ campaign_id: audienceCampaign.id })
-                .eq("id", linkedRecipient.id)
-                .then(() => logger.debug('[CALL-CENTER] Backfilled campaign_id for recipient:', linkedRecipient.id));
-              
-              logger.debug('[CALL-CENTER] Found campaign via audience fallback:', audienceCampaign.id);
-            }
-          }
-          
-          // Check campaign status - only allow active campaigns for redemption
-          // Active statuses: in_production, mailed, scheduled
-          const campaign = linkedRecipient.campaign;
-          if (campaign) {
-            const status = campaign.status;
-            const activeStatuses = ["in_production", "mailed", "scheduled"];
-            
-            if (!activeStatuses.includes(status)) {
-              // Provide specific error messages for non-active statuses
-              if (status === "draft") {
-                throw new Error("This contact is in a draft campaign that hasn't been activated yet. Please activate the campaign first.");
-              } else if (status === "completed") {
-                throw new Error("This campaign has been completed. The redemption period has ended.");
-              } else if (status === "proofed") {
-                throw new Error("This campaign is still being reviewed. It needs to be moved to 'In Production' or 'Mailed' status.");
-              } else {
-                throw new Error(`This campaign has status '${status}' which is not eligible for redemption. Campaign must be 'In Production', 'Mailed', or 'Scheduled'.`);
-              }
-            }
-          }
-          
-          if (linkedRecipient.approval_status === "redeemed") {
-            throw new Error("This code has already been redeemed");
-          }
-          
-          // Return with the contact's customer_code as redemption_code
-          return {
-            ...linkedRecipient,
-            redemption_code: contact.customer_code,
-          } as RecipientData;
+          console.log(`[CALL-CENTER] Recipient ${recipient.id} has ${recipient.existingCards.length} existing card(s)`);
+        } else {
+          recipient.existingCards = [];
         }
-        
-        // Check if there's a recipient linked to this contact but missing audience/campaign
-        // NOTE: A contact can be in multiple campaigns, so check all recipients
-        const { data: orphanedContactRecipients } = await supabase
-          .from("recipients")
-          .select(`id, audience_id, audiences (id, name)`)
-          .eq("contact_id", contact.id);
-        
-        if (orphanedContactRecipients && orphanedContactRecipients.length > 0) {
-          const orphanedContactRecipient = orphanedContactRecipients[0]; // Check first one
-          if (!orphanedContactRecipient.audience_id) {
-            throw new Error(`Contact "${contact.first_name || ''} ${contact.last_name || ''}" has a recipient record but is not assigned to any audience. Please add to an audience first.`);
-          }
-          const aud = orphanedContactRecipient.audiences as any;
-          throw new Error(`Contact "${contact.first_name || ''} ${contact.last_name || ''}" is in audience "${aud?.name || 'Unknown'}" but this audience is not linked to an active campaign.`);
-        }
-        
-        // Contact exists but has no recipient record at all
-        throw new Error(`Contact "${contact.first_name || ''} ${contact.last_name || ''}" found but not assigned to any campaign. Please add this contact to a campaign first.`);
       }
 
-      // Nothing found
-      logger.debug('[CALL-CENTER] Code not found in recipients or contacts');
-      throw new Error("Code not found. Please verify the code and ensure the contact has been added to an active campaign.");
+      // If no valid recipients found, provide helpful error
+      if (validRecipients.length === 0) {
+        // Check why they were filtered out
+        const hasCampaigns = recipients.some(r => r.campaign);
+        if (!hasCampaigns) {
+          throw new Error("Code found but recipient is not linked to any campaign. Please contact support.");
+        }
+        // All campaigns are in non-active status
+        const statuses = recipients.map(r => r.campaign?.status).filter(Boolean);
+        if (statuses.includes("draft")) {
+          throw new Error("This contact is in a draft campaign that hasn't been activated yet.");
+        }
+        if (statuses.includes("completed")) {
+          throw new Error("This campaign has been completed. The redemption period has ended.");
+        }
+        throw new Error("No active campaigns found for this code.");
+      }
+
+      // Return all valid recipients - caller will handle single vs multiple
+      return validRecipients as RecipientData[];
     },
-    onSuccess: (data: any) => {
-      setRecipient(data);
+    onSuccess: (recipients: RecipientData[]) => {
+      console.log('[CALL-CENTER] onSuccess - Found', recipients.length, 'recipient(s)');
       
-      // Check if this recipient already has a provisioned card
-      if (data._alreadyProvisioned && data._existingCard) {
-        logger.debug('[CALL-CENTER] Showing existing provisioned card');
-        const existingCard = data._existingCard;
-        const brand = existingCard.gift_card_brands;
+      // Log lookup success
+      logStep({
+        stepName: 'code_lookup',
+        stepNumber: 1,
+        status: 'success',
+        redemptionCode: redemptionCode.toUpperCase(),
+        responsePayload: {
+          recipientCount: recipients.length,
+          recipients: recipients.map(r => ({
+            id: r.id,
+            campaignId: r.campaign?.id,
+            campaignName: r.campaign?.name,
+            campaignStatus: r.campaign?.status,
+          })),
+        },
+      });
+      
+      if (recipients.length === 1) {
+        // Single match - check if previously redeemed
+        const data = recipients[0];
+        const hasExistingCards = data.existingCards && data.existingCards.length > 0;
         
-        // Build result from existing card
-        const existingResult: ProvisionResult = {
-          recipient: {
-            id: data.id,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            phone: data.phone,
-            email: data.email,
-          },
-          giftCard: {
-            id: existingCard.id,
-            card_code: existingCard.card_code,
-            card_number: existingCard.card_number,
-            card_value: existingCard.denomination,
-            expiration_date: existingCard.expiration_date,
-            gift_card_pools: {
-              id: existingCard.id,
-              pool_name: brand?.brand_name || 'Gift Card',
-              card_value: existingCard.denomination,
-              provider: brand?.brand_name,
-              gift_card_brands: {
-                id: brand?.id || '',
-                brand_name: brand?.brand_name || 'Gift Card',
-                logo_url: brand?.logo_url || null,
-                balance_check_url: brand?.balance_check_url || null,
-              },
-            },
-          },
-        };
+        console.log('[CALL-CENTER] Single recipient found:', {
+          id: data.id,
+          hasCampaign: !!data.campaign,
+          campaignId: data.campaign?.id,
+          campaignName: data.campaign?.name,
+          hasExistingCards,
+          existingCardsCount: data.existingCards?.length || 0,
+        });
         
-        setResult(existingResult);
-        setStep("complete");
+        // If recipient has existing cards, show campaign selection step to offer resend option
+        if (hasExistingCards) {
+          console.log('[CALL-CENTER] Recipient has existing cards, showing selection for resend option');
+          setMultipleRecipients([data]);
+          setRecipient(null);
+          setStep("campaign_select");
+          
+          toast({
+            title: "Previously Redeemed",
+            description: `This code has ${data.existingCards!.length} existing gift card(s). You can resend or redeem another condition.`,
+          });
+        } else {
+          // No existing cards - proceed directly to opt-in
+          setRecipient(data);
+          setMultipleRecipients([]);
+          
+          // Notify parent with recipient data
+          const recipientCampaign = data.campaign;
+          if (onRecipientLoaded && recipientCampaign) {
+            onRecipientLoaded({
+              clientId: (recipientCampaign as any).client_id,
+              campaignId: recipientCampaign.id,
+              recipient: data,
+              step: "optin"
+            });
+          }
+          
+          setStep("optin");
+        }
+      } else {
+        // Multiple matches - show campaign selection UI
+        console.log('[CALL-CENTER] Multiple recipients found, showing selection:', 
+          recipients.map(r => ({ id: r.id, campaign: r.campaign?.name }))
+        );
+        
+        setMultipleRecipients(recipients);
+        setRecipient(null);
+        setStep("campaign_select");
         
         toast({
-          title: "Gift Card Already Provisioned",
-          description: "This customer already has a gift card. Showing their existing card details.",
-        });
-        return;
-      }
-      
-      // NEW: Go to opt-in step first instead of contact
-      setStep("optin");
-      
-      // Notify parent with recipient data and clientId
-      const recipientCampaign = data.campaign || data.audiences?.campaigns?.[0];
-      if (onRecipientLoaded && recipientCampaign) {
-        onRecipientLoaded({
-          clientId: (recipientCampaign as any).client_id,
-          campaignId: recipientCampaign.id,
-          recipient: data,
-          step: "optin"
+          title: "Multiple Campaigns Found",
+          description: `This code exists in ${recipients.length} campaigns. Please select the correct one.`,
         });
       }
     },
     onError: (error: Error) => {
+      // Log lookup failure
+      logStep({
+        stepName: 'code_lookup',
+        stepNumber: 1,
+        status: 'failed',
+        redemptionCode: redemptionCode.toUpperCase(),
+        errorMessage: error.message,
+        errorStack: error.stack,
+      });
+      
       toast({
         title: "Lookup Failed",
         description: error.message,
@@ -906,6 +985,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   // Step 3: Provision gift card with comprehensive error handling
   const provisionMutation = useMutation({
     mutationFn: async () => {
+      const provisionStartTime = Date.now();
+      
       // Clear previous error
       setProvisioningError(null);
       
@@ -926,6 +1007,24 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         throw new Error("Gift card configuration missing for this condition. Please configure the brand and value in campaign settings.");
       }
 
+      // Log provision started
+      await logStep({
+        stepName: 'provision',
+        stepNumber: 5,
+        status: 'started',
+        recipientId: recipient.id,
+        campaignId: provCampaign.id,
+        callSessionId: callSessionId || undefined,
+        redemptionCode: recipient.redemption_code,
+        requestPayload: {
+          conditionId: selectedConditionId,
+          conditionName: condition.condition_name,
+          brandId: condition.brand_id,
+          cardValue: condition.card_value,
+          verificationMethod,
+        },
+      });
+
       // Pass IDs directly - recipient was already looked up on frontend
       // SMS delivery is disabled for now, card will be displayed in UI
       console.log('[Provision] Calling Edge Function with:', {
@@ -934,6 +1033,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         brandId: condition.brand_id,
         denomination: condition.card_value,
         conditionId: selectedConditionId,
+        phone: phone,
       });
 
       const { data, error } = await supabase.functions.invoke("provision-gift-card-for-call-center", {
@@ -943,6 +1043,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           brandId: condition.brand_id,
           denomination: condition.card_value,
           conditionId: selectedConditionId,
+          phone: phone, // Pass the updated phone number from the call center rep
         }
       });
 
@@ -996,7 +1097,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           id: recipient?.id || '',
           first_name: recipient?.first_name || '',
           last_name: recipient?.last_name || '',
-          phone: recipient?.phone || null,
+          phone: phone || recipient?.phone || null, // Use the updated phone from call center rep
           email: recipient?.email || null,
         },
         giftCard: {
@@ -1024,6 +1125,22 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       return transformedResult;
     },
     onSuccess: (data) => {
+      // Log provision success
+      logStep({
+        stepName: 'provision',
+        stepNumber: 5,
+        status: 'success',
+        recipientId: recipient?.id,
+        campaignId: campaign?.id,
+        callSessionId: callSessionId || undefined,
+        redemptionCode: recipient?.redemption_code,
+        responsePayload: {
+          cardId: data.giftCard?.id,
+          brandName: data.giftCard?.gift_card_pools?.gift_card_brands?.brand_name,
+          cardValue: data.giftCard?.card_value,
+        },
+      });
+      
       setResult(data);
       setProvisioningError(null);
       setStep("complete");
@@ -1033,6 +1150,25 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       });
     },
     onError: (error: any) => {
+      // Log provision failure
+      logStep({
+        stepName: 'provision',
+        stepNumber: 5,
+        status: 'failed',
+        recipientId: recipient?.id,
+        campaignId: campaign?.id,
+        callSessionId: callSessionId || undefined,
+        redemptionCode: recipient?.redemption_code,
+        errorCode: provisioningError?.errorCode || error.code,
+        errorMessage: error.message || 'Unknown error occurred',
+        errorStack: error.stack,
+        responsePayload: provisioningError ? {
+          requestId: provisioningError.requestId,
+          canRetry: provisioningError.canRetry,
+          requiresCampaignEdit: provisioningError.requiresCampaignEdit,
+        } : undefined,
+      });
+      
       // If we haven't already set the error details, try to extract them
       if (!provisioningError) {
         setProvisioningError({
@@ -1050,9 +1186,13 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   });
 
   const handleStartNew = () => {
+    // Start a new logging session for the next redemption attempt
+    startNewSession();
+    
     setStep("code");
     setRedemptionCode("");
     setRecipient(null);
+    setMultipleRecipients([]);
     setCellPhone("");
     setCallSessionId(null);
     setPhone("");
@@ -1103,6 +1243,35 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
       title: "Copied!",
       description: "All gift card details copied to clipboard",
     });
+  };
+
+  // Handle condition selection with logging
+  const handleConditionSelect = (conditionId: string) => {
+    const provCampaign = recipient?.campaign || recipient?.audiences?.campaigns?.[0];
+    const selectedCondition = provCampaign?.campaign_conditions?.find(
+      (c: any) => c.id === conditionId
+    );
+    
+    // Log condition selection
+    logStep({
+      stepName: 'condition_select',
+      stepNumber: 4,
+      status: 'success',
+      recipientId: recipient?.id,
+      campaignId: provCampaign?.id,
+      callSessionId: callSessionId || undefined,
+      redemptionCode: recipient?.redemption_code,
+      requestPayload: {
+        conditionId,
+        conditionName: selectedCondition?.condition_name,
+        conditionNumber: selectedCondition?.condition_number,
+        brandId: selectedCondition?.brand_id,
+        cardValue: selectedCondition?.card_value,
+        isConfigured: !!(selectedCondition?.brand_id && selectedCondition?.card_value),
+      },
+    });
+    
+    setSelectedConditionId(conditionId);
   };
 
   // campaign is already declared at line 113, so we just use it here
@@ -1204,6 +1373,17 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Step 1.5: Campaign Selection (when multiple campaigns match the code) */}
+      {step === "campaign_select" && multipleRecipients.length > 0 && (
+        <CampaignSelectionStep
+          recipients={multipleRecipients}
+          redemptionCode={redemptionCode}
+          onSelect={handleCampaignSelect}
+          onCancel={handleStartNew}
+          onResend={handleResendExistingCard}
+        />
       )}
 
       {/* Step 2: SMS Opt-In (NEW - Critical Flow) */}
@@ -1598,7 +1778,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
 
             <div className="space-y-2">
               <Label>Condition</Label>
-              <Select value={selectedConditionId} onValueChange={setSelectedConditionId}>
+              <Select value={selectedConditionId} onValueChange={handleConditionSelect}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select the condition the customer completed" />
                 </SelectTrigger>

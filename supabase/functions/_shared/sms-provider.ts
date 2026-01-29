@@ -7,7 +7,7 @@
  * Supports (in order of priority):
  * - NotificationAPI (primary)
  * - Infobip (fallback 1)
- * - Twilio (fallback 2) - NOW WITH HIERARCHICAL CREDENTIAL RESOLUTION
+ * - Twilio (fallback 2) - WITH HIERARCHICAL CREDENTIAL RESOLUTION
  * - EZTexting (fallback 3)
  * 
  * Configuration is loaded from the sms_provider_settings table.
@@ -17,16 +17,19 @@
  * 1. Client's own Twilio (if enabled and validated)
  * 2. Agency's Twilio (if client's agency has it enabled and validated)
  * 3. Admin/Master Twilio (platform-wide fallback)
- * 4. Environment variables (legacy fallback)
+ * 
+ * NOTE: Environment variable fallback has been REMOVED.
+ * If no valid Twilio configuration exists, SMS sending will fail with an error.
  */
 
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { getNotificationAPIClient, NotificationAPIClient } from './notificationapi-client.ts';
 import { getInfobipClient, InfobipClient } from './infobip-client.ts';
-import { getTwilioClient, TwilioClient } from './twilio-client.ts';
+import { TwilioClient } from './twilio-client.ts';
 import { getEZTextingClient, EZTextingClient } from './eztexting-client.ts';
 import { 
-  resolveTwilioCredentials, 
+  resolveTwilioCredentials,
+  resolveAdminTwilioCredentials,
   recordTwilioSuccess, 
   recordTwilioFailure,
   logFallbackEvent,
@@ -84,9 +87,15 @@ const CACHE_TTL_MS = 60000; // 1 minute cache
  * Get SMS provider settings from database
  */
 async function getProviderSettings(supabaseClient?: SupabaseClient): Promise<SMSProviderSettings> {
+  // #region agent log
+  console.log('[DEBUG-A] getProviderSettings called, checking cache...');
+  // #endregion
   // Check cache
   const now = Date.now();
   if (cachedSettings && (now - settingsCacheTime) < CACHE_TTL_MS) {
+    // #region agent log
+    console.log('[DEBUG-A] Using cached settings:', JSON.stringify({ primary: cachedSettings.primaryProvider, twilioEnabled: cachedSettings.twilioEnabled, fallbackEnabled: cachedSettings.enableFallback }));
+    // #endregion
     return cachedSettings;
   }
 
@@ -103,6 +112,10 @@ async function getProviderSettings(supabaseClient?: SupabaseClient): Promise<SMS
       .select('*')
       .limit(1)
       .single();
+
+    // #region agent log
+    console.log('[DEBUG-A] DB query result:', JSON.stringify({ hasData: !!data, hasError: !!error, errorMsg: error?.message, rawData: data ? { primary_provider: data.primary_provider, twilio_enabled: data.twilio_enabled, enable_fallback: data.enable_fallback, fallback_provider_1: data.fallback_provider_1, fallback_provider_2: data.fallback_provider_2, fallback_provider_3: data.fallback_provider_3 } : null }));
+    // #endregion
 
     if (error) {
       console.warn('[SMS-PROVIDER] Failed to load settings, using defaults:', error.message);
@@ -174,8 +187,14 @@ export function clearSettingsCache(): void {
 
 /**
  * Check if a provider is available (credentials configured)
+ * 
+ * NOTE: For Twilio, this always returns false because Twilio availability
+ * is determined by hierarchical resolution (Client -> Agency -> Admin),
+ * not environment variables. Use resolveTwilioIfNeeded() instead.
  */
 function isProviderAvailable(provider: SMSProvider): boolean {
+  console.log('[DEBUG-B] isProviderAvailable check:', JSON.stringify({ provider }));
+  
   if (provider === 'notificationapi') {
     return !!(
       Deno.env.get('NOTIFICATIONAPI_CLIENT_ID') &&
@@ -184,11 +203,10 @@ function isProviderAvailable(provider: SMSProvider): boolean {
   } else if (provider === 'infobip') {
     return !!Deno.env.get('INFOBIP_API_KEY');
   } else if (provider === 'twilio') {
-    return !!(
-      Deno.env.get('TWILIO_ACCOUNT_SID') &&
-      Deno.env.get('TWILIO_AUTH_TOKEN') &&
-      (Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER'))
-    );
+    // Twilio availability is determined by hierarchical resolution, not env vars
+    // Always return false here - actual check happens in resolveTwilioIfNeeded()
+    console.log('[DEBUG-B] Twilio: returning false (uses hierarchical resolution)');
+    return false;
   } else if (provider === 'eztexting') {
     return !!(
       Deno.env.get('EZTEXTING_USERNAME') &&
@@ -244,7 +262,7 @@ async function sendWithProvider(
     }
   } else if (provider === 'twilio') {
     try {
-      // Use provided credentials (from hierarchical resolution) or fall back to environment variables
+      // MUST use hierarchical credentials - no env var fallback allowed
       if (twilioCredentials) {
         const client = new TwilioClient({
           accountSid: twilioCredentials.accountSid,
@@ -259,14 +277,12 @@ async function sendWithProvider(
           error: result.error,
         };
       } else {
-        // Legacy: use environment variables
-        const client = getTwilioClient();
-        const result = await client.sendSMS(to, message);
+        // No hierarchical credentials available - fail explicitly
+        // Environment variable fallback has been removed to ensure consistent phone numbers
+        console.error('[SMS-PROVIDER] Twilio credentials not resolved - hierarchical resolution required');
         return {
-          success: result.success,
-          messageId: result.messageSid,
-          status: result.status,
-          error: result.error,
+          success: false,
+          error: 'No Twilio credentials available. Configure Twilio at client, agency, or admin level.',
         };
       }
     } catch (error) {
@@ -339,8 +355,16 @@ export async function sendSMS(
   supabaseClient?: SupabaseClient,
   clientId?: string
 ): Promise<SendSMSResult> {
+  // #region agent log
+  console.log('[DEBUG-C] sendSMS called:', JSON.stringify({ to, clientId: clientId || 'none', hasSupabaseClient: !!supabaseClient }));
+  // #endregion
+  
   const settings = await getProviderSettings(supabaseClient);
   const attempts: SendSMSResult['attempts'] = [];
+  
+  // #region agent log
+  console.log('[DEBUG-C] Settings loaded:', JSON.stringify({ primary: settings.primaryProvider, twilioEnabled: settings.twilioEnabled, fallbackEnabled: settings.enableFallback, fallback1: settings.fallbackProvider1, fallback2: settings.fallbackProvider2, fallback3: settings.fallbackProvider3 }));
+  // #endregion
   
   // Twilio hierarchy tracking
   let twilioResolution: TwilioResolutionResult | null = null;
@@ -357,29 +381,79 @@ export async function sendSMS(
   }
 
   // Helper function to resolve Twilio credentials if needed
+  // CRITICAL: For Twilio, ALWAYS try hierarchy resolution before falling back to env vars
   const resolveTwilioIfNeeded = async (provider: SMSProvider): Promise<boolean> => {
-    if (provider === 'twilio' && clientId && supabaseClient && !twilioResolution) {
-      console.log('[SMS-PROVIDER] Resolving Twilio credentials hierarchically...');
-      twilioResolution = await resolveTwilioCredentials(clientId, supabaseClient);
-      
-      if (twilioResolution.success && twilioResolution.credentials) {
-        twilioCredentials = {
-          accountSid: twilioResolution.credentials.accountSid,
-          authToken: twilioResolution.credentials.authToken,
-          fromNumber: twilioResolution.credentials.fromNumber,
-        };
-        console.log(`[SMS-PROVIDER] Using ${twilioResolution.credentials.level}-level Twilio: ${twilioResolution.credentials.entityName}`);
-        return true;
-      } else {
-        console.warn(`[SMS-PROVIDER] Twilio resolution failed: ${twilioResolution.error}`);
-        return false;
-      }
+    // For non-Twilio providers, just check if env vars are configured
+    if (provider !== 'twilio') {
+      const available = isProviderAvailable(provider);
+      console.log(`[SMS-PROVIDER] Non-Twilio provider ${provider} availability: ${available}`);
+      return available;
     }
-    return provider !== 'twilio' || !clientId || isProviderAvailable(provider);
+    
+    // Already resolved Twilio credentials
+    if (twilioResolution) {
+      console.log(`[SMS-PROVIDER] Using previously resolved Twilio: ${twilioResolution.credentials?.level}-level`);
+      return twilioResolution.success;
+    }
+    
+    // Resolve Twilio credentials using hierarchy
+    console.log('[SMS-PROVIDER] Resolving Twilio credentials...', JSON.stringify({ 
+      hasClientId: !!clientId, 
+      hasSupabaseClient: !!supabaseClient 
+    }));
+    
+    if (clientId && supabaseClient) {
+      // Full hierarchy: Client → Agency → Admin (no env var fallback)
+      console.log('[SMS-PROVIDER] Using FULL hierarchy (clientId provided)');
+      twilioResolution = await resolveTwilioCredentials(clientId, supabaseClient);
+    } else if (supabaseClient) {
+      // Admin-only hierarchy: Admin only (no env var fallback)
+      console.log('[SMS-PROVIDER] Using ADMIN-ONLY hierarchy (no clientId)');
+      twilioResolution = await resolveAdminTwilioCredentials(supabaseClient);
+    } else {
+      // No supabase client - FAIL (no env var fallback allowed)
+      console.error('[SMS-PROVIDER] No supabase client provided - cannot resolve Twilio credentials');
+      twilioResolution = {
+        success: false,
+        fallbackChain: [],
+        fallbackOccurred: false,
+        error: 'No Twilio configuration available. Supabase client required for credential resolution.',
+        resolutionTimeMs: 0,
+      };
+    }
+    
+    // Log the resolution result
+    console.log('[SMS-PROVIDER] Twilio resolution result:', JSON.stringify({ 
+      success: twilioResolution.success, 
+      level: twilioResolution.credentials?.level,
+      entityName: twilioResolution.credentials?.entityName,
+      fromNumber: twilioResolution.credentials?.fromNumber,
+      fallbackOccurred: twilioResolution.fallbackOccurred,
+      fallbackReason: twilioResolution.fallbackReason,
+      error: twilioResolution.error,
+    }));
+    
+    // Set credentials if resolution succeeded
+    if (twilioResolution.success && twilioResolution.credentials) {
+      twilioCredentials = {
+        accountSid: twilioResolution.credentials.accountSid,
+        authToken: twilioResolution.credentials.authToken,
+        fromNumber: twilioResolution.credentials.fromNumber,
+      };
+      console.log(`[SMS-PROVIDER] ✓ Will use ${twilioResolution.credentials.level}-level Twilio from: ${twilioResolution.credentials.fromNumber}`);
+      return true;
+    }
+    
+    console.warn(`[SMS-PROVIDER] ✗ Twilio resolution failed: ${twilioResolution.error}`);
+    return false;
   };
 
   // Check if primary provider is available (with Twilio hierarchy resolution)
   const primaryAvailable = await resolveTwilioIfNeeded(primaryProvider);
+  
+  // #region agent log
+  console.log('[DEBUG-D] Primary provider availability:', JSON.stringify({ primaryProvider, primaryAvailable, envCheck: isProviderAvailable(primaryProvider) }));
+  // #endregion
   
   if (!primaryAvailable && primaryProvider !== 'twilio') {
     // Non-Twilio provider not available
@@ -389,17 +463,31 @@ export async function sendSMS(
   }
   
   if (!primaryAvailable || (primaryProvider !== 'twilio' && !isProviderAvailable(primaryProvider))) {
+    // #region agent log
+    console.log('[DEBUG-D] Primary provider NOT available, will try fallbacks');
+    // #endregion
     console.warn(`[SMS-PROVIDER] Primary provider ${primaryProvider} not available`);
     
     // Try fallbacks if enabled
     if (settings.enableFallback) {
+      // #region agent log
+      console.log('[DEBUG-D] Trying fallback chain:', JSON.stringify({ fallbackChain }));
+      // #endregion
       for (const fallbackProvider of fallbackChain) {
         // Resolve Twilio if this fallback is Twilio
         const fallbackAvailable = await resolveTwilioIfNeeded(fallbackProvider);
         
+        // #region agent log
+        console.log('[DEBUG-D] Fallback check:', JSON.stringify({ fallbackProvider, fallbackAvailable, envAvailable: isProviderAvailable(fallbackProvider) }));
+        // #endregion
+        
         if (fallbackAvailable || (fallbackProvider !== 'twilio' && isProviderAvailable(fallbackProvider))) {
           console.log(`[SMS-PROVIDER] Using fallback provider: ${fallbackProvider}`);
           const result = await sendWithProvider(fallbackProvider, to, message, twilioCredentials);
+          
+          // #region agent log
+          console.log('[DEBUG-D] Fallback result:', JSON.stringify({ fallbackProvider, success: result.success, error: result.error }));
+          // #endregion
           
           attempts.push({
             provider: fallbackProvider,

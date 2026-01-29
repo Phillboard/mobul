@@ -6,12 +6,14 @@ export type ListMemberRow = {
   id: string;
   contact_id: string;
   added_at: string;
+  unique_code: string | null;  // Per-list unique code from contact_list_members
   contacts: {
     first_name: string | null;
     last_name: string | null;
     email: string | null;
     phone: string | null;
     company: string | null;
+    customer_code: string | null;  // Fallback code from contacts table
   };
 };
 
@@ -36,6 +38,21 @@ export function createListMembersColumns(
           <div className="font-medium">
             {firstName} {lastName}
           </div>
+        );
+      },
+    },
+    {
+      id: "code",
+      accessorFn: (row) => row.unique_code || row.contacts?.customer_code || '',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Code" />
+      ),
+      cell: ({ row }) => {
+        const code = row.original.unique_code || row.original.contacts?.customer_code;
+        return (
+          <span className="font-mono text-sm">
+            {code || "—"}
+          </span>
         );
       },
     },

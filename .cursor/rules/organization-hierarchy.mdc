@@ -1,48 +1,55 @@
 ---
-description: Technical specification for multi-tenant organization hierarchy, role permissions, and client-agency relationships
+description: Defines multi-tenant organization model including roles, permissions, and inheritance for a gift card campaign platform
 ---
 
 
 # organization-hierarchy
 
-Multi-tenant Organization Model (Importance: 95/100)
-- Three-tier hierarchy: Platform > Agency > Client
-- Organization state tracking: active, suspended, deleted
-- Custom domain and branding inheritance system
-- Tenant isolation with data access boundaries
+Multi-Tenant Organization Model (Importance: 95/100)
 
-Role Permission System (Importance: 90/100)
-Path: src/core/auth/roleRequirements.ts
-- Hierarchical roles with inheritance:
-  - Platform Admin (full access)
-  - Agency Owner (agency-scoped access)
-  - Client Owner (client-scoped access)
-  - Agent (limited client access)
-- Role-based feature gates for gift card operations, campaign management
-- Organization context requirements per role
-- Cross-organization access controls
+Hierarchical Structure:
+- Platform Level (ACE Engage)
+- Agency Level (Marketing/Gift Card Resellers) 
+- Client Level (End Customers)
+- Campaign Level (Individual Gift Card Campaigns)
 
-Client-Agency Relationships (Importance: 85/100)
-Path: src/features/agency/types/index.ts
-- Agency manages multiple client organizations
-- Client configuration inheritance from agency settings
-- Agency-level markup rules for gift card pricing
-- Shared vs isolated credit pool management
-- Agency-wide campaign templates
+Core Business Rules:
+1. Credit Flow Management
+- One-way credit distribution (Platform → Agency → Client)
+- Agency-defined markups on gift card denominations
+- Client-specific credit pools with campaign allocations
+- Automated low balance monitoring and alerts
 
-Permission Inheritance Rules:
-1. Settings cascade from Platform > Agency > Client
-2. Agency owners access all client data within agency
-3. Client owners restricted to single organization
-4. Agents limited to specific campaign operations
-5. Cross-client data access prohibited by default
+2. Role-Based Access Control
+- Admin: Full platform access
+- Tech Support: Cross-organization troubleshooting 
+- Agency Owner: Multi-client management
+- Company Owner: Single organization access
+- Call Center: Redemption-only access
+- Developer: API and integration access
 
-Organization Context Management (Importance: 80/100)
-Path: src/core/auth/hooks/useOrganizationContext.ts
-- Real-time context switching between organizations
-- Role-specific view filtering based on context
-- Permission boundary enforcement
-- Custom domain and branding application
+3. Permission Inheritance
+- Features cascade down organization levels
+- Child organizations inherit parent restrictions
+- Custom overrides allowed for specific features
+- Campaign-level permission aggregation
+
+4. Organization Relationships
+- Agencies can manage multiple clients
+- Clients belong to single agency
+- Support staff can access multiple organization levels
+- Campaign ownership tied to client level
+
+5. Client-Agency Hierarchies (Importance: 90/100)
+- Agency-defined pricing tiers
+- Client-specific gift card brand access
+- Shared vs dedicated inventory pools
+- Custom denomination configurations
+
+File Paths:
+src/core/auth/roleRequirements.ts - Role definitions and requirements
+src/contexts/TenantContext.tsx - Multi-tenant context management
+src/features/settings/components/SecuritySettings.tsx - Organization security rules
 
 $END$
 

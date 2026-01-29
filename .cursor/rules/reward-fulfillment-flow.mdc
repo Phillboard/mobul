@@ -1,55 +1,52 @@
 ---
-description: Documents reward fulfillment logic including SMS verification, card provisioning, and delivery tracking
+description: Specification for gift card reward fulfillment flows including verification, delivery and tracking
 ---
 
 
 # reward-fulfillment-flow
 
-Core Fulfillment Workflows:
+Key Business Logic Components:
 
-1. Reward Provisioning System
-Path: src/core/services/tillo.ts
-- Two-stage provisioning waterfall:
-  * CSV inventory allocation with balance verification 
-  * Real-time Tillo API procurement if inventory depleted
-- Custom markup calculations per agency/client tier
-- Automated low balance alerts and replenishment
-Importance Score: 95
-
-2. Verification Workflow Engine
-Path: src/features/campaigns/components/wizard/DeliveryFulfillmentStep.tsx
-- Multi-channel verification:
-  * SMS opt-in confirmation
-  * Call center agent verification
-  * Form submission validation
-- Required delay periods between verification attempts
-- Campaign-specific verification rule sets
+1. Multi-Step Verification Workflow
+Path: src/features/gift-cards/components/client/DenominationToggle.tsx
+- SMS opt-in requirement with configurable retry attempts 
+- Call center agent verification with custom disposition codes
+- Email verification fallback path with time window constraints
+- Multi-channel verification state tracking
 Importance Score: 90
 
-3. Call Center Integration 
+2. Gift Card Provisioning System 
 Path: src/features/call-center/hooks/useRedemptionWorkflow.ts
-- Agent verification workflow with required steps
-- Real-time balance and status checks
-- Manual override capabilities with logging
-- Multi-attempt tracking with cooldown periods
+- Waterfall provisioning strategy (CSV inventory -> Tillo API)
+- Atomic claiming from inventory pools with rollback
+- Custom denomination validation per brand
+- Real-time balance verification before delivery
 Importance Score: 85
 
-4. Gift Card Distribution
-Path: src/features/gift-cards/lib/provisioning-utils.ts
-- Brand selection hierarchy:
-  * Client preferred brands
-  * Agency default brands  
-  * Platform fallback brands
-- Denomination-specific availability checks
-- Pool health monitoring with thresholds
+3. Condition-Based Reward Rules
+Path: src/features/campaigns/components/wizard/ConditionsStep.tsx
+- Supports trigger types: manual_agent, call_completed, form_submitted, time_delay
+- Multi-step condition chains with dependency management
+- Custom validation rules per condition type
+- SMS compliance message template requirements
 Importance Score: 80
 
-Key Business Rules:
-- SMS opt-in required before reward delivery
-- Minimum 3-hour delay between verification attempts
-- Agent verification required for high-value rewards
-- Real-time balance verification before distribution
-- Multi-tier markup system based on client hierarchy
+4. Call Center Verification
+Path: src/features/agent/components/CallVerificationDialog.tsx
+- Agent-assisted code validation workflow
+- Multi-step caller verification against campaign records
+- Custom call disposition tracking
+- Gift card code approval process
+Importance Score: 75
+
+Core Workflow:
+1. Initial verification attempt via preferred channel
+2. Fallback verification paths based on campaign settings
+3. Condition evaluation and reward triggering
+4. Gift card provisioning from appropriate source
+5. Multi-channel delivery with tracking
+
+The system implements a sophisticated reward fulfillment platform with emphasis on verification, compliance, and reliable delivery across multiple channels.
 
 $END$
 

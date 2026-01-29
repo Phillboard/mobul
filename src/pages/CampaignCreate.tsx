@@ -389,6 +389,22 @@ export default function CampaignCreate() {
 
       logger.info(`Campaign created: ${campaign.id} with status: ${campaign.status}`);
 
+      // CRITICAL: Update all recipients with the campaign_id
+      // This ensures the call center lookup can find the campaign via direct FK
+      if (audienceId && campaign?.id) {
+        const { error: updateRecipientsError } = await supabase
+          .from("recipients")
+          .update({ campaign_id: campaign.id })
+          .eq("audience_id", audienceId);
+        
+        if (updateRecipientsError) {
+          logger.warn('[CAMPAIGN-CREATE] Failed to update recipients with campaign_id:', updateRecipientsError);
+          // Don't throw - campaign was created successfully, this is a non-critical enhancement
+        } else {
+          logger.info(`[CAMPAIGN-CREATE] Updated recipients with campaign_id: ${campaign.id} for audience: ${audienceId}`);
+        }
+      }
+
       // Create conditions if any
       if (data.conditions && data.conditions.length > 0) {
         // ENHANCED: Log incoming condition data for debugging with full type information

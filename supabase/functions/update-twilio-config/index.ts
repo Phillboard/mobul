@@ -148,6 +148,15 @@ serve(async (req) => {
       }
     }
 
+    // Configure webhooks on the Twilio phone number (non-blocking)
+    // This ensures inbound SMS/calls are routed to our edge functions
+    const webhookResult = await configureTwilioWebhooks(accountSid, authToken, phoneNumber);
+    if (!webhookResult.success) {
+      console.warn(`[UPDATE-TWILIO] Webhook config warning: ${webhookResult.error}`);
+      // Non-fatal - credentials are valid, webhooks can be configured later
+      // We continue saving the config even if webhook setup fails
+    }
+
     // Encrypt auth token
     const encryptedToken = await encryptAuthToken(authToken);
 
@@ -519,5 +528,86 @@ async function testTwilioCredentials(
       error: 'Could not connect to Twilio. Please try again.',
       errorCode: 'NETWORK_ERROR'
     };
+  }
+}
+
+/**
+ * Configure Twilio phone number webhooks for SMS and Voice
+ * This ensures inbound SMS/calls are routed to our edge functions
+ */
+async function configureTwilioWebhooks(
+  accountSid: string,
+  authToken: string,
+  phoneNumber: string
+): Promise<{ success: boolean; error?: string; phoneSid?: string }> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    if (!supabaseUrl) {
+      console.warn('[UPDATE-TWILIO] SUPABASE_URL not set, skipping webhook config');
+      return { success: true }; // Non-fatal - can be configured later
+    }
+
+    console.log(`[UPDATE-TWILIO] Configuring webhooks for ${phoneNumber}`);
+
+    // First, get the phone number's SID
+    const auth = btoa(`${accountSid}:${authToken}`);
+    const normalizedPhone = phoneNumber.replace(/[^+\d]/g, '');
+    const lookupUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(normalizedPhone)}`;
+    
+    const lookupResponse = await fetch(lookupUrl, {
+      headers: { 'Authorization': `Basic ${auth}` },
+    });
+    
+    if (!lookupResponse.ok) {
+      console.error('[UPDATE-TWILIO] Phone lookup failed:', lookupResponse.status);
+      return { success: false, error: 'Could not look up phone number for webhook config' };
+    }
+    
+    const lookupData = await lookupResponse.json();
+    if (!lookupData.incoming_phone_numbers?.length) {
+      console.error('[UPDATE-TWILIO] Phone number not found in account');
+      return { success: false, error: 'Phone number not found for webhook config' };
+    }
+    
+    const phoneSid = lookupData.incoming_phone_numbers[0].sid;
+    console.log(`[UPDATE-TWILIO] Found phone SID: ${phoneSid}`);
+    
+    // Update the phone number's webhook URLs
+    const updateUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/IncomingPhoneNumbers/${phoneSid}.json`;
+    
+    const webhookParams = new URLSearchParams({
+      // SMS webhooks - routes replies to handle-sms-response
+      SmsUrl: `${supabaseUrl}/functions/v1/handle-sms-response`,
+      SmsMethod: 'POST',
+      // Voice webhooks - routes incoming calls to handle-incoming-call
+      VoiceUrl: `${supabaseUrl}/functions/v1/handle-incoming-call`,
+      VoiceMethod: 'POST',
+      StatusCallback: `${supabaseUrl}/functions/v1/update-call-status`,
+      StatusCallbackMethod: 'POST',
+    });
+
+    console.log(`[UPDATE-TWILIO] Setting webhooks: SmsUrl=${supabaseUrl}/functions/v1/handle-sms-response`);
+    
+    const updateResponse = await fetch(updateUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: webhookParams.toString(),
+    });
+    
+    if (!updateResponse.ok) {
+      const errorData = await updateResponse.json();
+      console.error('[UPDATE-TWILIO] Webhook config failed:', errorData);
+      return { success: false, error: `Could not configure webhooks: ${errorData.message || 'Unknown error'}` };
+    }
+    
+    console.log(`[UPDATE-TWILIO] Webhooks configured successfully for ${phoneNumber}`);
+    return { success: true, phoneSid };
+    
+  } catch (error) {
+    console.error('[UPDATE-TWILIO] Webhook config error:', error);
+    return { success: false, error: 'Webhook configuration failed' };
   }
 }

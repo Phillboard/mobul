@@ -1,53 +1,56 @@
 ---
-description: Defines the core business logic for campaign reward conditions, triggers, and distribution rules
+description: Defines core campaign condition and reward trigger models for gift card campaign management
 ---
 
 
 # campaign-condition-model
 
-Campaign Condition Model implements the core business logic for reward conditions and distribution:
+Campaign Condition System (Importance Score: 90)
+Path: src/features/campaigns/models/campaign-condition.ts
 
-Primary Business Components:
+Core Condition Types:
+1. Time-Based Triggers
+- Configurable delay periods (1-90 days)
+- Time window restrictions (business hours only)
+- Sequential delay chains for multi-step campaigns
 
-1. Campaign Condition Engine
-- Multi-stage condition evaluation system supporting:
-  - form_submission: Requires completed form data
-  - call_completed: Validates call center agent verification 
-  - immediate: Triggers reward on initial contact
-- Configurable time-based delays between stages
-- Condition chaining with sequential validation
-- Real-time condition monitoring
-Importance Score: 95
+2. Event-Based Triggers
+- Form submission validation
+- Call center verification
+- Mail piece delivery confirmation 
+- CRM status updates
 
-2. Reward Distribution Rules
-- Brand-specific denomination allocation logic
-- Pool inventory verification before reward commitment
-- Automated balance checking for provisioned cards
-- Multi-step reward delivery validation
-Importance Score: 90
+3. Manual Agent Triggers
+- Call center representative approval
+- Management override capabilities
+- Multi-agent verification requirements
 
-3. Condition Validation System  
-- Campaign-level condition requirements enforcement
-- Custom field mapping for form submissions
-- Agent verification rule configuration
-- Timeout handling for condition stages
-Importance Score: 85
+Reward Distribution Logic (Importance Score: 85)
+Path: src/features/campaigns/services/reward-distribution.ts
 
-Key Domain-Specific Implementations:
+Distribution Rules:
+- Atomic reward delivery with rollback
+- Multi-condition validation before release
+- Sequential condition evaluation
+- Fail-safe timeouts (72 hour maximum)
 
-1. Complex Condition Chains
-- Multiple conditions can be chained sequentially
-- Each condition maintains separate verification state
-- Configurable delays between condition evaluations
-- Automated roll-back on condition failure
+Verification Framework (Importance Score: 80)
+Path: src/features/campaigns/models/verification.ts
 
-2. Distribution Safeguards  
-- Pool inventory validation before condition activation
-- Real-time balance verification during distribution
-- Multi-stage delivery confirmation
-- Audit trail of condition evaluations
+Verification Requirements:
+- Phone number validation for SMS rewards
+- Email validation for digital delivery
+- Address verification for physical cards
+- Identity confirmation levels (basic/enhanced)
 
-The condition model represents the core business logic for controlling how and when rewards are distributed within campaigns, with sophisticated rules for verification and delivery.
+Status Progression:
+PENDING -> VERIFIED -> REWARD_READY -> DISTRIBUTED
+
+Time-Delay Implementation (Importance Score: 75)
+- Configurable cool-down periods between conditions
+- Business hour awareness for delay calculations 
+- Timezone handling for multi-region campaigns
+- Maximum delay cap enforcement (90 days)
 
 $END$
 

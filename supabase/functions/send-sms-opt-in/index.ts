@@ -175,7 +175,13 @@ serve(async (req) => {
     // Send SMS using provider abstraction (handles Infobip/Twilio selection and fallback)
     // Pass clientId for hierarchical Twilio resolution (Client -> Agency -> Admin)
     console.log(`[SEND-SMS-OPT-IN] Sending SMS to ${formattedPhone}...`);
+    // #region agent log
+    console.log('[DEBUG-OPTIN] Before sendSMS call:', JSON.stringify({ formattedPhone, clientId: clientId || 'none', messageLength: optInMessage.length }));
+    // #endregion
     const smsResult = await sendSMS(formattedPhone, optInMessage, supabaseAdmin, clientId);
+    // #region agent log
+    console.log('[DEBUG-OPTIN] sendSMS result:', JSON.stringify({ success: smsResult.success, provider: smsResult.provider, error: smsResult.error, fallbackUsed: smsResult.fallbackUsed, attempts: smsResult.attempts }));
+    // #endregion
 
     if (!smsResult.success) {
       console.error("[SEND-SMS-OPT-IN] SMS send failed:", smsResult.error);

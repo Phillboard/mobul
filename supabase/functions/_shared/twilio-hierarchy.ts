@@ -5,7 +5,10 @@
  * 1. Client's own Twilio (if enabled, validated, and not circuit-broken)
  * 2. Agency's Twilio (if enabled, validated, and not circuit-broken)
  * 3. Admin/Master Twilio (if enabled and validated)
- * 4. Environment variables (final fallback for backward compatibility)
+ * 
+ * NOTE: Environment variable fallback has been REMOVED.
+ * If no valid configuration exists at any level, resolution fails with an error.
+ * This ensures SMS is never sent from an unexpected/legacy phone number.
  * 
  * Features:
  * - Circuit breaker pattern to skip failing configurations
@@ -323,46 +326,10 @@ export async function resolveTwilioCredentials(
     }
 
     // ========================================
-    // Step 4: Final fallback to environment variables
-    // ========================================
-    const envSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const envToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const envNumber = Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER');
-
-    fallbackChain.push({
-      level: 'env',
-      name: 'Environment Variables (Legacy)',
-      enabled: !!(envSid && envToken && envNumber),
-      validated: true, // Env vars are assumed valid
-      circuitOpen: false,
-      staleValidation: false,
-      reason: (envSid && envToken && envNumber) ? undefined : 'Not configured',
-    });
-
-    if (envSid && envToken && envNumber) {
-      console.log('[TWILIO-HIERARCHY] Using environment variable Twilio (legacy)');
-      
-      return {
-        success: true,
-        credentials: {
-          accountSid: envSid,
-          authToken: envToken,
-          fromNumber: envNumber,
-          level: 'env',
-          entityId: null,
-          entityName: 'Environment Variables (Legacy)',
-        },
-        fallbackChain,
-        fallbackOccurred: true,
-        fallbackReason: 'Using legacy environment variables',
-        resolutionTimeMs: performance.now() - startTime,
-      };
-    }
-
-    // ========================================
-    // No valid configuration found
+    // No valid configuration found - FAIL (no env var fallback)
     // ========================================
     console.error('[TWILIO-HIERARCHY] No valid Twilio configuration found at any level');
+    console.error('[TWILIO-HIERARCHY] Fallback chain:', JSON.stringify(fallbackChain, null, 2));
     
     return {
       success: false,
@@ -381,6 +348,122 @@ export async function resolveTwilioCredentials(
       fallbackChain,
       fallbackOccurred: false,
       error: error instanceof Error ? error.message : 'Unknown error during credential resolution',
+      resolutionTimeMs: performance.now() - startTime,
+    };
+  }
+}
+
+/**
+ * Resolve Twilio credentials when no clientId is available.
+ * Only checks Admin-level Twilio configuration.
+ * 
+ * NOTE: Environment variable fallback has been REMOVED.
+ * If admin-level is not configured, resolution fails with an error.
+ * 
+ * Use this when:
+ * - The campaign doesn't have a client_id
+ * - You want to use platform-wide Twilio settings
+ * 
+ * @param supabase - Supabase client instance
+ * @returns Resolution result with credentials or error
+ */
+export async function resolveAdminTwilioCredentials(
+  supabase: SupabaseClient
+): Promise<TwilioResolutionResult> {
+  const startTime = performance.now();
+  const fallbackChain: FallbackChainItem[] = [];
+
+  console.log('[TWILIO-HIERARCHY] Resolving admin-level credentials (no clientId provided)');
+
+  try {
+    // ========================================
+    // Step 1: Try Admin/Master-level Twilio
+    // ========================================
+    const { data: settings, error: settingsError } = await supabase
+      .from('sms_provider_settings')
+      .select(`
+        admin_twilio_account_sid,
+        admin_twilio_auth_token_encrypted,
+        admin_twilio_phone_number,
+        admin_twilio_enabled,
+        admin_twilio_validated_at,
+        admin_twilio_friendly_name
+      `)
+      .limit(1)
+      .single();
+
+    const adminValidated = settings?.admin_twilio_validated_at != null;
+    const adminEnabled = settings?.admin_twilio_enabled ?? false;
+
+    console.log('[TWILIO-HIERARCHY] Admin-level check:', JSON.stringify({
+      hasSettings: !!settings,
+      settingsError: settingsError?.message,
+      adminEnabled,
+      adminValidated,
+      hasAccountSid: !!settings?.admin_twilio_account_sid,
+      hasPhoneNumber: !!settings?.admin_twilio_phone_number,
+    }));
+
+    fallbackChain.push({
+      level: 'admin',
+      name: settings?.admin_twilio_friendly_name || 'Platform Master',
+      enabled: adminEnabled,
+      validated: adminValidated,
+      circuitOpen: false,
+      staleValidation: false,
+      reason: (adminEnabled && adminValidated && settings?.admin_twilio_account_sid) 
+        ? undefined 
+        : getUnavailableReason(adminEnabled, adminValidated, false, false),
+    });
+
+    if (!settingsError && adminEnabled && settings?.admin_twilio_account_sid && settings?.admin_twilio_phone_number) {
+      try {
+        const authToken = await decryptAuthToken(settings.admin_twilio_auth_token_encrypted);
+        
+        console.log(`[TWILIO-HIERARCHY] Using admin-level Twilio: ${settings.admin_twilio_friendly_name || 'Platform Master'}, phone: ${settings.admin_twilio_phone_number}`);
+        
+        return {
+          success: true,
+          credentials: {
+            accountSid: settings.admin_twilio_account_sid,
+            authToken,
+            fromNumber: settings.admin_twilio_phone_number,
+            level: 'admin',
+            entityId: null,
+            entityName: settings.admin_twilio_friendly_name || 'Platform Master',
+          },
+          fallbackChain,
+          fallbackOccurred: false,
+          resolutionTimeMs: performance.now() - startTime,
+        };
+      } catch (decryptError) {
+        console.error('[TWILIO-HIERARCHY] Failed to decrypt admin token:', decryptError);
+      }
+    }
+
+    // ========================================
+    // No valid configuration found - FAIL (no env var fallback)
+    // ========================================
+    console.error('[TWILIO-HIERARCHY] No valid admin-level Twilio configuration found');
+    console.error('[TWILIO-HIERARCHY] Fallback chain:', JSON.stringify(fallbackChain, null, 2));
+    
+    return {
+      success: false,
+      fallbackChain,
+      fallbackOccurred: true,
+      fallbackReason: 'No valid admin-level configuration',
+      error: 'No valid Twilio configuration found. Please configure admin-level Twilio in SMS Provider Settings.',
+      resolutionTimeMs: performance.now() - startTime,
+    };
+
+  } catch (error) {
+    console.error('[TWILIO-HIERARCHY] Admin resolution error:', error);
+    
+    return {
+      success: false,
+      fallbackChain,
+      fallbackOccurred: false,
+      error: error instanceof Error ? error.message : 'Unknown error during admin credential resolution',
       resolutionTimeMs: performance.now() - startTime,
     };
   }

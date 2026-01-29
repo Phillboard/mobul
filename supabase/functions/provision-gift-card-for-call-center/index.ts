@@ -1,13 +1,11 @@
 /**
  * Call Center Gift Card Provisioning Function
  * 
- * SIMPLIFIED FLOW:
+ * FLOW:
  * 1. Validate input parameters (recipientId, campaignId, brandId, denomination)
  * 2. Call unified provisioning to claim card from inventory/Tillo and assign to recipient
- * 3. Return card details for display
- * 
- * NOTE: Delivery (SMS/Email) is skipped for now as SMS is not working.
- * The card is assigned to the recipient in the database and can be manually communicated.
+ * 3. Auto-send SMS with gift card details to recipient
+ * 4. Return card details for display
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
@@ -32,6 +30,8 @@ interface CallCenterProvisionRequest {
   deliveryEmail?: string | null;
   // Optional recipient info from frontend
   recipientName?: string;
+  // Phone number updated by call center rep (for SMS delivery)
+  phone?: string | null;
 }
 
 interface ProvisionResult {
@@ -54,6 +54,10 @@ interface ProvisionResult {
     amountBilled: number;
     profit: number;
   };
+  sms?: {
+    sent: boolean;
+    error?: string;
+  };
   error?: string;
   message?: string;
   errorCode?: ProvisioningErrorCode;
@@ -62,11 +66,12 @@ interface ProvisionResult {
   requiresCampaignEdit?: boolean;
 }
 
-// Simplified step definitions
+// Step definitions
 const STEPS = {
   VALIDATE_INPUT: { number: 1, name: 'Validate Input Parameters' },
   CALL_UNIFIED_PROVISION: { number: 2, name: 'Claim Gift Card from Inventory/Tillo' },
-  FINALIZE: { number: 3, name: 'Return Result' },
+  SEND_SMS: { number: 3, name: 'Send Gift Card SMS' },
+  FINALIZE: { number: 4, name: 'Return Result' },
 };
 
 serve(async (req) => {
@@ -103,6 +108,7 @@ serve(async (req) => {
     brandId = requestData.brandId;
     denomination = requestData.denomination;
     const conditionId = requestData.conditionId;
+    const phone = requestData.phone;
 
     console.log('╔' + '═'.repeat(60) + '╗');
     console.log(`║ [PROVISION] Request ID: ${logger.requestId}`);
@@ -111,6 +117,7 @@ serve(async (req) => {
     console.log(`║   campaignId: ${campaignId || 'MISSING'}`);
     console.log(`║   brandId: ${brandId || 'MISSING'}`);
     console.log(`║   denomination: $${denomination || 'MISSING'}`);
+    console.log(`║   phone: ${phone || 'not provided'}`);
     console.log('╚' + '═'.repeat(60) + '╝');
 
     // Validate required inputs
@@ -133,6 +140,22 @@ serve(async (req) => {
     });
 
     console.log(`[STEP 1] ✓ Input validated`);
+
+    // If phone was provided by call center rep, update the recipient record
+    if (phone && recipientId) {
+      console.log(`[STEP 1.5] Updating recipient phone to: ${phone}`);
+      const { error: phoneUpdateError } = await supabaseClient
+        .from('recipients')
+        .update({ phone: phone })
+        .eq('id', recipientId);
+
+      if (phoneUpdateError) {
+        console.error(`[STEP 1.5] Failed to update recipient phone:`, phoneUpdateError);
+        // Non-fatal - continue with provisioning even if phone update fails
+      } else {
+        console.log(`[STEP 1.5] ✓ Recipient phone updated`);
+      }
+    }
 
     // =====================================================
     // STEP 2: CALL UNIFIED PROVISIONING
@@ -218,7 +241,94 @@ serve(async (req) => {
     console.log(`[STEP 2] ✓ Card claimed from ${provisionResult.card?.source}`);
 
     // =====================================================
-    // STEP 3: RETURN RESULT
+    // STEP 3: SEND SMS WITH GIFT CARD DETAILS
+    // =====================================================
+    currentStep = STEPS.SEND_SMS;
+    await logger.checkpoint(STEPS.SEND_SMS.number, STEPS.SEND_SMS.name, 'started');
+
+    // Get recipient details for SMS
+    let recipientPhone = phone; // Use phone from request if provided
+    let recipientName = '';
+    let clientId: string | undefined;
+
+    if (!recipientPhone || recipientPhone.trim() === '') {
+      // Fetch phone from recipient record
+      const { data: recipientData, error: recipientError } = await supabaseClient
+        .from('recipients')
+        .select('phone, first_name, last_name, campaign:campaigns(client_id)')
+        .eq('id', recipientId)
+        .single();
+
+      if (recipientError) {
+        console.error('[STEP 3] Failed to fetch recipient:', recipientError);
+      } else {
+        recipientPhone = recipientData?.phone;
+        recipientName = [recipientData?.first_name, recipientData?.last_name].filter(Boolean).join(' ');
+        clientId = (recipientData?.campaign as any)?.client_id;
+      }
+    } else {
+      // Just fetch name and client_id
+      const { data: recipientData } = await supabaseClient
+        .from('recipients')
+        .select('first_name, last_name, campaign:campaigns(client_id)')
+        .eq('id', recipientId)
+        .single();
+      
+      if (recipientData) {
+        recipientName = [recipientData?.first_name, recipientData?.last_name].filter(Boolean).join(' ');
+        clientId = (recipientData?.campaign as any)?.client_id;
+      }
+    }
+
+    let smsResult: { success: boolean; error?: string; provider?: string } = { success: false, error: 'No phone number available' };
+
+    if (recipientPhone && recipientPhone.trim() !== '') {
+      console.log(`[STEP 3] Sending SMS to ${recipientPhone}...`);
+      
+      try {
+        // Call send-gift-card-sms function
+        const smsUrl = `${supabaseUrl}/functions/v1/send-gift-card-sms`;
+        const smsResponse = await fetch(smsUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify({
+            deliveryId: provisionResult.card?.id || logger.requestId, // Use card ID or request ID
+            giftCardCode: provisionResult.card?.cardCode,
+            giftCardValue: provisionResult.card?.denomination,
+            recipientPhone: recipientPhone,
+            recipientName: recipientName,
+            recipientId: recipientId,
+            giftCardId: provisionResult.card?.id,
+            clientId: clientId,
+          }),
+        });
+
+        if (smsResponse.ok) {
+          smsResult = await smsResponse.json();
+          console.log(`[STEP 3] ✓ SMS sent successfully via ${smsResult.provider || 'provider'}`);
+        } else {
+          const errorText = await smsResponse.text();
+          console.error('[STEP 3] SMS send failed:', errorText);
+          smsResult = { success: false, error: errorText };
+        }
+      } catch (smsError) {
+        console.error('[STEP 3] SMS send error:', smsError);
+        smsResult = { success: false, error: smsError instanceof Error ? smsError.message : String(smsError) };
+      }
+    } else {
+      console.log('[STEP 3] No phone number available, skipping SMS');
+    }
+
+    await logger.checkpoint(STEPS.SEND_SMS.number, STEPS.SEND_SMS.name, smsResult.success ? 'completed' : 'failed', {
+      smsSuccess: smsResult.success,
+      smsError: smsResult.error,
+    });
+
+    // =====================================================
+    // STEP 4: RETURN RESULT
     // Card is assigned - return details for display in UI
     // =====================================================
     currentStep = STEPS.FINALIZE;
@@ -232,6 +342,10 @@ serve(async (req) => {
       requestId: logger.requestId,
       card: provisionResult.card,
       billing: provisionResult.billing,
+      sms: {
+        sent: smsResult.success,
+        error: smsResult.success ? undefined : smsResult.error,
+      },
     };
 
     console.log('╔' + '═'.repeat(60) + '╗');
@@ -241,6 +355,7 @@ serve(async (req) => {
     console.log(`║   Brand: ${result.card?.brandName}`);
     console.log(`║   Value: $${result.card?.denomination}`);
     console.log(`║   Source: ${result.card?.source}`);
+    console.log(`║   SMS Sent: ${result.sms?.sent ? '✓' : '✗ ' + (result.sms?.error || 'No')}`);
     console.log('╚' + '═'.repeat(60) + '╝');
 
     return new Response(JSON.stringify(result), {

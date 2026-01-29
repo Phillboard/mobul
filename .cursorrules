@@ -95,43 +95,52 @@ All designers (mail, landing, email) use same framework.
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-A multi-tenant campaign management and gift card distribution platform organized around four core business domains:
+Campaign Wizard Business Logic Architecture
+Importance Score: 85/100
 
-CAMPAIGN MANAGEMENT ENGINE
-- Multi-step campaign creation with audience targeting and reward configuration
-- Condition-based gift card reward triggers (form_submission, call_completed, immediate)
-- Campaign versioning and approval workflows
-- Integrated landing page and QR code tracking
-Path: src/features/campaigns/
+Core Workflow Components:
 
-GIFT CARD PROVISIONING SYSTEM
-- Two-step provisioning waterfall (CSV inventory -> Tillo API)
-- Multi-denomination support with brand-specific configurations 
-- Pool-based inventory management with health monitoring
-- Client-specific pricing and markup rules
-Path: src/core/services/tillo.ts
+1. Contact List & Code Management
+- Custom validation rules for unique redemption codes with pattern ^[A-Za-z0-9][A-Za-z0-9\-_]+$
+- Auto-generation logic for missing codes
+- Smart column mapping for contact imports
+Path: src/features/campaigns/components/wizard/CreateListWithCSVDialog.tsx
 
-CREDIT MANAGEMENT HIERARCHY
-- Four-tier credit flow: Platform → Agency → Client → Campaign
-- One-way credit allocation with downward-only flow
-- Multi-tier pricing structure with defined thresholds
-- Real-time balance monitoring and alerts
-Path: src/features/billing/types/
+2. Campaign Flow Logic  
+- Reward condition validation
+- Gift card brand/denomination validation
+- Audience selection tracking
+- UTM parameter management
+Path: src/features/campaigns/components/wizard/AudiencesRewardsStep.tsx
 
-MARKETING AUTOMATION ENGINE
-- Conditional event triggers with custom reward actions
-- Campaign-specific workflow sequencing
-- Multi-channel delivery (email, SMS, direct mail)
-- Performance tracking and analytics
-Path: src/features/marketing/
+3. Reward Conditions Engine
+- Multiple trigger types: manual_agent, call_completed, form_submitted, time_delay
+- SMS compliance message templates 
+- Gift card allocation rules
+- Condition dependency management
+Path: src/features/campaigns/components/wizard/ConditionsStep.tsx
 
-Integration Components:
-- Call center verification system for reward redemption
-- Brand-specific design generation with postal regulations
-- Multi-provider SMS delivery with fallback chain
-- Organization/client tenant isolation
+Integration Points:
 
-The system implements sophisticated campaign orchestration focused on gift card distribution through multiple channels while maintaining strict credit controls and multi-tenant isolation.
+Credit Management System:
+- Hierarchical credit allocation (Platform → Agency → Client → Campaign)
+- Atomic credit operations with validation
+- Multi-level transaction tracking
+Path: src/features/billing/hooks/useCreditManagement.ts
+
+Gift Card Inventory:
+- Brand-specific denomination configuration 
+- Pool health monitoring with thresholds
+- Multi-source provisioning (CSV vs API)
+Path: src/features/gift-cards/components/AdminGiftCardInventory.tsx
+
+Key Business Workflows:
+1. Campaign Creation
+2. Reward Condition Processing
+3. Credit Allocation
+4. Gift Card Provisioning
+
+The system implements a sophisticated gift card campaign platform with complex validation rules, multi-tier credit management, and conditional reward processing.
 
 $END$
 

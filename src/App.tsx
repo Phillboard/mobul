@@ -46,6 +46,7 @@ const EmbedGiftCard = lazy(() => import("./pages/EmbedGiftCard"));
 const AgencyManagement = lazy(() => import("./pages/AgencyManagement"));
 const CallCenterRedemption = lazy(() => import("./pages/CallCenterRedemption"));
 const CallCenterScripts = lazy(() => import("./pages/CallCenterScripts"));
+const RedemptionLogs = lazy(() => import("./pages/RedemptionLogs"));
 const Contacts = lazy(() => import("./pages/Contacts"));
 const ContactDetail = lazy(() => import("./pages/ContactDetail"));
 const ContactLists = lazy(() => import("./pages/ContactLists"));
@@ -238,6 +239,7 @@ const App = () => (
                   {/* Call Center - Redemption & Fulfillment */}
                   <Route path="/call-center" element={<ProtectedRoute requiredPermissions={["calls.confirm_redemption"]}><CallCenterRedemption /></ProtectedRoute>} />
                   <Route path="/call-center/scripts" element={<ProtectedRoute requiredPermissions={["calls.manage"]}><CallCenterScripts /></ProtectedRoute>} />
+                  <Route path="/call-center/logs" element={<ProtectedRoute requiredRole="admin"><RedemptionLogs /></ProtectedRoute>} />
                   
                   {/* Marketing - New Structure */}
                   <Route path="/marketing" element={<ProtectedRoute><MarketingHub /></ProtectedRoute>} />

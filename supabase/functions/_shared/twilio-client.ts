@@ -132,37 +132,28 @@ export class TwilioClient {
 }
 
 /**
- * Create a Twilio client instance from environment variables
+ * @deprecated DO NOT USE - Environment variable Twilio is deprecated.
+ * Use hierarchical resolution via resolveTwilioCredentials() from twilio-hierarchy.ts instead.
+ * This ensures SMS is sent from the correct configured phone number (Client -> Agency -> Admin).
  */
 export function createTwilioClientFromEnv(): TwilioClient {
-  const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-  const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-  const fromNumber = Deno.env.get('TWILIO_FROM_NUMBER') || Deno.env.get('TWILIO_PHONE_NUMBER');
-
-  if (!accountSid || !authToken) {
-    throw new Error('TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables are required');
-  }
-
-  if (!fromNumber) {
-    throw new Error('TWILIO_FROM_NUMBER or TWILIO_PHONE_NUMBER environment variable is required');
-  }
-
-  return new TwilioClient({
-    accountSid,
-    authToken,
-    fromNumber,
-  });
+  throw new Error(
+    'createTwilioClientFromEnv() is deprecated. ' +
+    'Use hierarchical Twilio resolution via resolveTwilioCredentials() instead. ' +
+    'Environment variable Twilio has been disabled to prevent sending from wrong phone numbers.'
+  );
 }
 
 /**
- * Singleton instance for edge functions
+ * @deprecated DO NOT USE - Environment variable Twilio is deprecated.
+ * Use hierarchical resolution via resolveTwilioCredentials() from twilio-hierarchy.ts instead.
+ * This ensures SMS is sent from the correct configured phone number (Client -> Agency -> Admin).
  */
-let twilioClientInstance: TwilioClient | null = null;
-
 export function getTwilioClient(): TwilioClient {
-  if (!twilioClientInstance) {
-    twilioClientInstance = createTwilioClientFromEnv();
-  }
-  return twilioClientInstance;
+  throw new Error(
+    'getTwilioClient() is deprecated. ' +
+    'Use hierarchical Twilio resolution via resolveTwilioCredentials() instead. ' +
+    'Environment variable Twilio has been disabled to prevent sending from wrong phone numbers.'
+  );
 }
 

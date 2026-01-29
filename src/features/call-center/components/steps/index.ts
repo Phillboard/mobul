@@ -6,6 +6,7 @@
  */
 
 export { CodeEntryStep } from './CodeEntryStep';
+export { CampaignSelectionStep } from './CampaignSelectionStep';
 export { OptInStep, POSITIVE_DISPOSITIONS, NEGATIVE_DISPOSITIONS } from './OptInStep';
 export { ContactMethodStep } from './ContactMethodStep';
 export { ConditionStep } from './ConditionStep';

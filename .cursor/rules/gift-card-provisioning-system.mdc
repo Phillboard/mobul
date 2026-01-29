@@ -1,46 +1,63 @@
 ---
-description: Guidelines for implementing gift card provisioning, pool management, and verification workflows
+description: Documentation for analyzing gift card provisioning, pool management, and balance verification systems
 ---
 
 
 # gift-card-provisioning-system
 
-Gift Card Provisioning Logic:
+Core Gift Card Provisioning Components:
 
-1. Two-Step Provisioning Waterfall (Importance: 95)
+1. Waterfall Provisioning System
 Path: src/core/services/tillo.ts
-- Primary provisioning from existing CSV inventory pool
-- Secondary real-time procurement through Tillo API if pool depleted
-- Parallel balance verification for CSV-sourced cards
-- Automated pool replenishment when thresholds reached
+Importance Score: 95
 
-2. Pool Management System (Importance: 90)
-Path: src/features/gift-cards/hooks/useGiftCardPool.ts
-- Pool health monitoring with configurable thresholds 
-- Brand-specific denomination organization
-- Multi-source card aggregation (CSV, API, buffer pools)
-- Automated pool segmentation by brand/denomination
+- Two-stage provisioning workflow:
+  - CSV inventory check first
+  - Tillo API fallback if CSV depleted
+- Atomic claiming with rollback capability
+- Cost basis tracking per source
+- Real-time balance verification
 
-3. Balance Verification Workflows (Importance: 85)
+2. Pool Management System 
+Path: src/features/gift-cards/hooks/usePoolManagement.ts
+Importance Score: 90
+
+- Multi-tier inventory tracking:
+  - Agency pools
+  - Client pools 
+  - Campaign-specific allocations
+- Low balance thresholds with alerts
+- Automatic pool replenishment triggers
+- Source prioritization logic
+
+3. Balance Verification Infrastructure
 Path: src/features/gift-cards/services/balanceCheck.ts
-- Scheduled balance verification jobs
-- Custom verification schedules per brand
-- Configurable retry logic for failed checks
-- Automated invalidation of cards with zero balance
+Importance Score: 85
 
-4. Pool Inventory Management (Importance: 80)
-Path: src/features/gift-cards/hooks/useInventoryManagement.ts
-- Low stock alerts with configurable thresholds
-- Brand-specific minimum inventory requirements
-- Automated procurement triggers
-- Pool utilization tracking and forecasting
+- Provider-specific balance check implementations:
+  - Tillo API integration
+  - Manual verification workflow
+  - Scheduled automated checks
+- Balance history tracking
+- Failed check retry logic
+- Verification scheduling system
+
+4. Inventory Management
+Path: src/features/admin/components/AgencyGiftCardSettings.tsx
+Importance Score: 80
+
+- Brand-specific denomination configuration
+- Pool health monitoring system
+- Minimum inventory thresholds
+- Auto-replenishment rules
+- Usage trend analysis
 
 Key Business Rules:
-- Cards must be verified before assignment
-- CSV pool takes precedence over API procurement
-- Minimum pool size varies by brand/denomination
-- Balance checks required before card delivery
-- Real-time procurement only as fallback option
+- Pools maintain 15% minimum buffer inventory
+- Balance checks occur every 24 hours for active cards
+- Failed verifications trigger manual review after 3 retries
+- Automatic pool replenishment at 25% remaining
+- Source priority: CSV > Tillo API > Manual
 
 $END$
 
