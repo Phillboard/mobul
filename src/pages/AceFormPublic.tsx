@@ -159,10 +159,18 @@ export default function AceFormPublic() {
     if (form && !viewTracked && !redemption) {
       setViewTracked(true);
       // Fire and forget - don't block UI
-      supabase.rpc('increment_form_stat', { 
-        form_id: form.id, 
-        stat_name: 'views' 
-      }).catch(err => console.warn('View tracking failed:', err));
+      const trackView = async () => {
+        try {
+          const { error } = await supabase.rpc('increment_form_stat', { 
+            form_id: form.id, 
+            stat_name: 'views' 
+          });
+          if (error) console.warn('View tracking failed:', error);
+        } catch (err) {
+          console.warn('View tracking error:', err);
+        }
+      };
+      trackView();
     }
   }, [form?.id, viewTracked, redemption]);
 
