@@ -89,7 +89,7 @@ export function SmsUrlBuilder({
         .from('ace_forms')
         .select('id, name, slug, form_config, is_draft')
         .eq('client_id', clientId)
-        .eq('is_draft', false) // Only show published forms
+        .or('is_draft.eq.false,is_draft.is.null') // Show published forms (is_draft = false OR null)
         .order('name');
 
       if (error) throw error;
