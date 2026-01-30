@@ -6,6 +6,7 @@ import { CreditCard, DollarSign, Download, TrendingUp, Calendar } from "lucide-r
 import { Badge } from "@/shared/components/ui/badge";
 import { Progress } from "@/shared/components/ui/progress";
 import { USER_ROLES } from '@/shared/utils/terminology';
+import { ComingSoon } from '@/shared/components/ComingSoon';
 import {
   Table,
   TableBody,
@@ -45,6 +46,7 @@ export function BillingSettings() {
   ];
 
   return (
+    <ComingSoon featureKey="billing">
     <div className="space-y-6">
       {/* Billing Overview */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -230,5 +232,6 @@ export function BillingSettings() {
         </Card>
       )}
     </div>
+    </ComingSoon>
   );
 }

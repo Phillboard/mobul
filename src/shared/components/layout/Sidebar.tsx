@@ -121,6 +121,13 @@ const navigationGroups: NavGroup[] = [
     ]
   },
   {
+    label: "Monitoring",
+    collapsible: true,
+    items: [
+      { name: "Activity & Logs", href: "/activity", icon: Activity, roles: ['admin', 'agency_owner', 'company_owner'], keywords: ["activity", "logs", "audit", "compliance", "events", "history", "tracking"], description: "Unified activity logs and audit trail" },
+    ]
+  },
+  {
     label: "My Account",
     collapsible: true,
     roles: ['company_owner'],
@@ -223,6 +230,23 @@ export function Sidebar() {
   });
 
   if (isOnSettingsPage) {
+    // Group tabs by their group property
+    const groupedTabs = visibleSettingsTabs.reduce((acc, tab) => {
+      const group = tab.group || 'other';
+      if (!acc[group]) acc[group] = [];
+      acc[group].push(tab);
+      return acc;
+    }, {} as Record<string, typeof visibleSettingsTabs>);
+
+    const groupLabels: Record<string, string> = {
+      personal: 'Personal',
+      client: 'Client Settings',
+      integrations: 'Integrations',
+      admin: 'Administration',
+    };
+
+    const groupOrder = ['personal', 'client', 'integrations', 'admin'];
+
     return (
       <SidebarRoot collapsible="icon" className={collapsed ? "w-14" : "w-60"}>
         <SidebarHeader className="border-b border-sidebar-border">
@@ -236,20 +260,46 @@ export function Sidebar() {
           </div>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarMenu>
-              {visibleSettingsTabs.map(t => (
-                <SidebarMenuItem key={t.id}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={`/settings/${t.id}`} end className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent font-medium">
-                      <t.icon className="h-4 w-4" />
-                      {!collapsed && <span>{t.label}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
+          {groupOrder.map(groupId => {
+            const tabs = groupedTabs[groupId];
+            if (!tabs?.length) return null;
+
+            return (
+              <SidebarGroup key={groupId}>
+                {!collapsed && (
+                  <SidebarGroupLabel className="text-xs uppercase text-muted-foreground px-4 py-2">
+                    {groupLabels[groupId]}
+                  </SidebarGroupLabel>
+                )}
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {tabs.map(t => (
+                      <SidebarMenuItem key={t.id}>
+                        <SidebarMenuButton asChild>
+                          <NavLink 
+                            to={`/settings/${t.id}`} 
+                            end 
+                            className="hover:bg-sidebar-accent flex items-center justify-between" 
+                            activeClassName="bg-sidebar-accent font-medium"
+                          >
+                            <div className="flex items-center gap-2">
+                              <t.icon className="h-4 w-4" />
+                              {!collapsed && <span>{t.label}</span>}
+                            </div>
+                            {!collapsed && t.status === 'coming_soon' && (
+                              <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
+                                Soon
+                              </Badge>
+                            )}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            );
+          })}
         </SidebarContent>
       </SidebarRoot>
     );

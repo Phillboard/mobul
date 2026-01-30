@@ -24,6 +24,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/shared/c
 import { ArrowLeft, Save, Download, Globe, Undo, Redo, Layers, Settings, Tag, Monitor, Tablet, Smartphone, Sparkles } from 'lucide-react';
 import { useToast } from '@shared/hooks';
 import { useTenant } from '@/contexts/TenantContext';
+import { ComingSoon } from '@/shared/components/ComingSoon';
 import {
   DESIGNER_PRESETS,
   useDesignerState,
@@ -224,6 +225,7 @@ export default function NewLandingPageDesigner() {
   }
 
   return (
+    <ComingSoon featureKey="landing_page_designer">
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
       <div className="h-14 border-b bg-card flex items-center justify-between px-4">
@@ -544,5 +546,6 @@ export default function NewLandingPageDesigner() {
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
+    </ComingSoon>
   );
 }

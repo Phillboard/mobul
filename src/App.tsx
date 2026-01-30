@@ -64,6 +64,7 @@ const AceFormsDocumentation = lazy(() => import("./pages/AceFormsDocumentation")
 const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
 const AdminMessagingTest = lazy(() => import("./pages/AdminMessagingTest"));
 const ErrorLogs = lazy(() => import("./pages/ErrorLogs"));
+const Activity = lazy(() => import("./pages/Activity"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CookieConsent = lazy(() => import("@/shared/components/CookieConsent").then(m => ({ default: m.CookieConsent })));
@@ -286,6 +287,9 @@ const App = () => (
                   <Route path="/docs" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                   <Route path="/docs/:category" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
                   <Route path="/docs/:category/:slug" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
+                  
+                  {/* Activity & Logs - Unified logging page */}
+                  <Route path="/activity" element={<ProtectedRoute><Activity /></ProtectedRoute>} />
                   
                   {/* Settings & Utilities */}
                   <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

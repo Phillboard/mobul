@@ -10,6 +10,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { toast } from "sonner";
 import { User, Lock, Bell, Clock, Shield } from "lucide-react";
+import { ComingSoon } from '@/shared/components/ComingSoon';
+import { ComingSoonBadge } from '@/shared/components/ComingSoonBadge';
 import {
   Dialog,
   DialogContent,
@@ -257,18 +259,21 @@ export function AccountSettings() {
 
           <Separator />
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                <p className="text-sm font-medium">Two-Factor Authentication</p>
+          <ComingSoon featureKey="two_factor_auth">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  <p className="text-sm font-medium">Two-Factor Authentication</p>
+                  <ComingSoonBadge variant="coming_soon" size="sm" expectedDate="Q2 2026" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Add an extra layer of security with authenticator app or SMS
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Coming soon
-              </p>
+              <Switch disabled />
             </div>
-            <Switch disabled />
-          </div>
+          </ComingSoon>
         </CardContent>
       </Card>
 

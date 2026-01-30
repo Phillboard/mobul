@@ -6,6 +6,7 @@ export * from './use-mobile';
 export * from './use-toast';
 export * from './useTablePreferences';
 export * from './useFeatureFlags';
+export * from './useFeatureStatus';
 export * from './useDrPhillipPreference';
 export * from './useMenuItemCounts';
 export * from './useTags';

@@ -1,5 +1,6 @@
-import { LucideIcon, User, Settings, Phone, MessageSquare, Palette, Database, Zap, Code, Users, Shield, CreditCard, Building2, Mail } from "lucide-react";
+import { LucideIcon, User, Settings, Phone, MessageSquare, Palette, Database, Zap, Code, Users, Shield, CreditCard, Building2, Mail, Plug } from "lucide-react";
 import { AppRole } from "./roleUtils";
+import { FeatureStatusType } from "./featureStatus";
 
 export interface TabConfig {
   id: string;
@@ -11,125 +12,82 @@ export interface TabConfig {
   requiresOrg?: boolean;
   description?: string;
   group: 'personal' | 'client' | 'integrations' | 'admin';
+  /** Feature status for Coming Soon/Beta badges */
+  status?: FeatureStatusType;
+  /** Feature key for ComingSoon wrapper lookup */
+  featureKey?: string;
+  /** Whether this tab is hidden (legacy routes still work) */
+  hidden?: boolean;
 }
 
+/**
+ * NEW 6-TAB STRUCTURE (Week 4 Consolidation)
+ * 
+ * Account - Profile, preferences, password, 2FA (coming soon)
+ * Company - Branding (logo, colors), business info (industry, timezone)
+ * Communications - Phone numbers, Twilio configuration, SMS templates
+ * Integrations - Overview | CRM (coming soon) | Zapier | Mail Provider | API Keys
+ * Team - Members | Pending Invitations | Roles & Permissions
+ * Billing (Coming Soon) - Usage metrics, invoices, payment methods
+ */
 export const settingsTabs: TabConfig[] = [
-  // Personal Settings
+  // ===================
+  // PERSONAL SETTINGS
+  // ===================
   {
     id: 'account',
     label: 'Account',
     icon: User,
     roles: 'all',
-    description: 'Personal profile and preferences',
+    description: 'Profile, preferences, password, security',
     group: 'personal'
   },
   
-  // Client Settings
+  // ===================
+  // CLIENT SETTINGS  
+  // ===================
   {
-    id: 'general',
-    label: 'General',
-    icon: Settings,
-    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer'],
+    id: 'company',
+    label: 'Company',
+    icon: Building2,
+    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
     permissions: ['settings.view'],
-    description: 'Organization and client settings',
+    description: 'Business info, branding, and logo',
     group: 'client'
   },
   {
-    id: 'branding',
-    label: 'Branding',
-    icon: Palette,
-    roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['clients.edit'],
-    requiresClient: true,
-    description: 'Customize brand colors, fonts, and logo',
-    group: 'client'
-  },
-  {
-    id: 'phone',
-    label: 'Phone Numbers',
+    id: 'communications',
+    label: 'Communications',
     icon: Phone,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
     permissions: ['settings.phone_numbers'],
-    description: 'Manage call tracking numbers',
-    group: 'client'
-  },
-  {
-    id: 'sms',
-    label: 'SMS Logs',
-    icon: MessageSquare,
-    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
-    permissions: ['settings.view'],
-    description: 'View SMS delivery history',
+    description: 'Phone numbers and Twilio configuration',
     group: 'client'
   },
   
-  // Integrations
+  // ===================
+  // INTEGRATIONS
+  // ===================
   {
-    id: 'crm',
-    label: 'CRM Integration',
-    icon: Database,
-    roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['settings.integrations'],
-    requiresClient: true,
-    description: 'Connect your CRM system',
-    group: 'integrations'
-  },
-  {
-    id: 'zapier',
-    label: 'Zapier',
-    icon: Zap,
+    id: 'integrations',
+    label: 'Integrations',
+    icon: Plug,
     roles: ['admin', 'agency_owner', 'company_owner', 'developer'],
     permissions: ['settings.integrations'],
-    requiresClient: true,
-    description: 'Automation and webhooks',
-    group: 'integrations'
-  },
-  {
-    id: 'mail-provider',
-    label: 'Mail Provider',
-    icon: Mail,
-    roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['settings.edit'],
-    requiresClient: false,
-    description: 'Configure direct mail fulfillment provider',
-    group: 'integrations'
-  },
-  {
-    id: 'api',
-    label: 'API Keys',
-    icon: Code,
-    roles: ['admin', 'developer'],
-    permissions: ['settings.api'],
-    description: 'Developer API access',
+    description: 'CRM, Zapier, Mail Provider, API',
     group: 'integrations'
   },
   
-  // Administration
+  // ===================
+  // ADMINISTRATION
+  // ===================
   {
     id: 'team',
     label: 'Team',
     icon: Users,
-    roles: ['agency_owner', 'company_owner'],
+    roles: ['admin', 'agency_owner', 'company_owner'],
     permissions: ['users.manage'],
-    description: 'Manage your team members',
-    group: 'admin'
-  },
-  {
-    id: 'users',
-    label: 'Users',
-    icon: Users,
-    roles: ['admin'],
-    permissions: ['users.manage'],
-    description: 'Platform-wide user management',
-    group: 'admin'
-  },
-  {
-    id: 'security',
-    label: 'Security',
-    icon: Shield,
-    roles: ['admin', 'tech_support'],
-    permissions: ['platform.security.manage'],
-    description: 'Audit logs and security settings',
+    description: 'Team members, invitations, and roles',
     group: 'admin'
   },
   {
@@ -138,14 +96,141 @@ export const settingsTabs: TabConfig[] = [
     icon: CreditCard,
     roles: ['admin', 'agency_owner', 'company_owner'],
     permissions: ['settings.billing'],
-    description: 'Invoices and usage tracking',
-    group: 'admin'
+    description: 'Usage, invoices, and payment methods',
+    group: 'admin',
+    status: 'coming_soon',
+    featureKey: 'billing'
+  },
+
+  // ===================
+  // LEGACY/HIDDEN TABS (for backward compatibility redirects)
+  // ===================
+  {
+    id: 'general',
+    label: 'General',
+    icon: Settings,
+    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer'],
+    permissions: ['settings.view'],
+    description: 'Redirects to Company',
+    group: 'client',
+    hidden: true
+  },
+  {
+    id: 'branding',
+    label: 'Branding',
+    icon: Palette,
+    roles: ['admin', 'agency_owner', 'company_owner'],
+    permissions: ['clients.edit'],
+    requiresClient: true,
+    description: 'Redirects to Company',
+    group: 'client',
+    hidden: true
+  },
+  {
+    id: 'phone',
+    label: 'Phone Numbers',
+    icon: Phone,
+    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
+    permissions: ['settings.phone_numbers'],
+    description: 'Redirects to Communications',
+    group: 'client',
+    hidden: true
+  },
+  {
+    id: 'sms',
+    label: 'SMS Logs',
+    icon: MessageSquare,
+    roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
+    permissions: ['settings.view'],
+    description: 'Redirects to Activity page',
+    group: 'client',
+    hidden: true
+  },
+  {
+    id: 'crm',
+    label: 'CRM Integration',
+    icon: Database,
+    roles: ['admin', 'agency_owner', 'company_owner'],
+    permissions: ['settings.integrations'],
+    requiresClient: true,
+    description: 'Redirects to Integrations',
+    group: 'integrations',
+    hidden: true
+  },
+  {
+    id: 'zapier',
+    label: 'Zapier',
+    icon: Zap,
+    roles: ['admin', 'agency_owner', 'company_owner', 'developer'],
+    permissions: ['settings.integrations'],
+    requiresClient: true,
+    description: 'Redirects to Integrations',
+    group: 'integrations',
+    hidden: true
+  },
+  {
+    id: 'mail-provider',
+    label: 'Mail Provider',
+    icon: Mail,
+    roles: ['admin', 'agency_owner', 'company_owner'],
+    permissions: ['settings.edit'],
+    requiresClient: false,
+    description: 'Redirects to Integrations',
+    group: 'integrations',
+    hidden: true
+  },
+  {
+    id: 'api',
+    label: 'API Keys',
+    icon: Code,
+    roles: ['admin', 'developer'],
+    permissions: ['settings.api'],
+    description: 'Redirects to Integrations',
+    group: 'integrations',
+    hidden: true
+  },
+  {
+    id: 'users',
+    label: 'Users',
+    icon: Users,
+    roles: ['admin'],
+    permissions: ['users.manage'],
+    description: 'Redirects to Team',
+    group: 'admin',
+    hidden: true
+  },
+  {
+    id: 'security',
+    label: 'Security',
+    icon: Shield,
+    roles: ['admin', 'tech_support'],
+    permissions: ['platform.security.manage'],
+    description: 'Redirects to Account/Activity',
+    group: 'admin',
+    hidden: true
   }
 ];
+
+/** Get visible tabs (excluding hidden legacy tabs) */
+export const getVisibleTabs = () => settingsTabs.filter(tab => !tab.hidden);
+
+/** Legacy route redirects */
+export const legacyRouteRedirects: Record<string, string> = {
+  'general': 'company',
+  'branding': 'company',
+  'phone': 'communications',
+  'sms': '/activity?tab=gift-cards', // External redirect
+  'crm': 'integrations?tab=crm',
+  'zapier': 'integrations?tab=zapier',
+  'mail-provider': 'integrations?tab=mail-provider',
+  'api': 'integrations?tab=api',
+  'users': 'team',
+  'security': 'account', // Security settings moved to Account
+};
 
 export const settingsGroups = [
   { id: 'personal', label: 'Personal', description: 'Your account settings' },
   { id: 'client', label: 'Client Settings', description: 'Organization and branding' },
   { id: 'integrations', label: 'Integrations', description: 'Connect external services' },
-  { id: 'admin', label: 'Administration', description: 'Users, security, and billing' }
+  { id: 'admin', label: 'Administration', description: 'Users and billing' }
 ] as const;

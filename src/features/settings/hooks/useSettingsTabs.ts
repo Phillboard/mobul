@@ -3,12 +3,23 @@ import { useAuth } from '@core/auth/AuthProvider';
 import { useTenant } from '@/contexts/TenantContext';
 import { settingsTabs, TabConfig } from '@core/config/settings';
 
+/**
+ * Hook to get visible settings tabs for the current user
+ * Filters based on:
+ * - Hidden flag (legacy tabs)
+ * - User roles
+ * - Permissions
+ * - Client/Org requirements
+ */
 export function useSettingsTabs() {
   const { roles, hasAnyPermission } = useAuth();
   const { currentClient, currentOrg } = useTenant();
 
   return useMemo(() => {
     return settingsTabs.filter(tab => {
+      // Skip hidden (legacy) tabs
+      if (tab.hidden) return false;
+
       // If roles is 'all', everyone can see this tab
       if (tab.roles === 'all') {
         return true;

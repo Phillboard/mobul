@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Layout } from "@/shared/components/layout/Layout";
 import { AccountSettings } from "@/features/settings/components/AccountSettings";
+import { CompanySettings } from "@/features/settings/components/CompanySettings";
+import { CommunicationsSettings } from "@/features/settings/components/CommunicationsSettings";
+import { IntegrationsSettings } from "@/features/settings/components/IntegrationsSettings";
+import { TeamSettings } from "@/features/settings/components/TeamSettings";
+import { BillingSettings } from "@/features/settings/components/BillingSettings";
+// Legacy imports - kept for backward compatibility redirects
 import { GeneralSettings } from "@/features/settings/components/GeneralSettings";
 import { PhoneNumbersSettings } from "@/features/settings/components/PhoneNumbersSettings";
 import { SMSDeliveryLog } from "@/features/settings/components/SMSDeliveryLog";
@@ -13,8 +19,6 @@ import { MailProviderSettings } from "@/features/settings/components/MailProvide
 import { InviteUserDialog } from "@/features/settings/components/InviteUserDialog";
 import { PendingInvitations } from "@/features/settings/components/PendingInvitations";
 import { SecuritySettings } from "@/features/settings/components/SecuritySettings";
-import { BillingSettings } from "@/features/settings/components/BillingSettings";
-import { TeamSettings } from "@/features/settings/components/TeamSettings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useTenant } from "@/contexts/TenantContext";
 import { ClaimPlatformAdmin } from "@/features/settings/components/ClaimPlatformAdmin";
@@ -22,26 +26,64 @@ import { ClientBrandingPreview } from "@/features/settings/components/ClientBran
 import { PermissionGate } from "@core/auth/components/PermissionGate";
 import { Edit } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
+import { legacyRouteRedirects } from '@core/config/settingsConfig';
 
 export default function Settings() {
   const { currentClient } = useTenant();
   const { tab } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isEditingBranding, setIsEditingBranding] = useState(false);
   
   const activeTab = tab || "account";
   
-  // Redirect to /settings/account if on base /settings
+  // Handle legacy route redirects
   useEffect(() => {
     if (!tab) {
       navigate("/settings/account", { replace: true });
+      return;
+    }
+
+    // Check for legacy routes that need redirecting
+    const redirect = legacyRouteRedirects[tab];
+    if (redirect) {
+      if (redirect.startsWith('/')) {
+        // External redirect (e.g., to /activity)
+        navigate(redirect, { replace: true });
+      } else if (redirect.includes('?')) {
+        // Internal redirect with query params
+        const [path, params] = redirect.split('?');
+        navigate(`/settings/${path}?${params}`, { replace: true });
+      } else {
+        // Simple internal redirect
+        navigate(`/settings/${redirect}`, { replace: true });
+      }
     }
   }, [tab, navigate]);
 
   const renderTabContent = (tabId: string) => {
     switch (tabId) {
+      // ============================================
+      // NEW CONSOLIDATED TABS (Week 4 structure)
+      // ============================================
       case "account":
         return <AccountSettings />;
+      case "company":
+        return <CompanySettings />;
+      case "communications":
+        return <CommunicationsSettings />;
+      case "integrations":
+        return <IntegrationsSettings />;
+      case "team":
+        return <TeamSettings />;
+      case "billing":
+        return <BillingSettings />;
+
+      // ============================================
+      // LEGACY TABS (kept for backward compatibility)
+      // These will redirect via useEffect, but render
+      // if somehow accessed directly
+      // ============================================
       case "general":
         return <GeneralSettings />;
       case "phone":
@@ -120,8 +162,6 @@ export default function Settings() {
         return <APISettings />;
       case "mail-provider":
         return <MailProviderSettings />;
-      case "team":
-        return <TeamSettings />;
       case "users":
         return (
           <div className="space-y-6">
@@ -137,8 +177,6 @@ export default function Settings() {
         );
       case "security":
         return <SecuritySettings />;
-      case "billing":
-        return <BillingSettings />;
       default:
         return <div>Tab not found</div>;
     }

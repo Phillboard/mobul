@@ -7,6 +7,7 @@ import { useCRMIntegrations, useDeleteCRMIntegration, useUpdateCRMIntegration } 
 import { useTenant } from '@/contexts/TenantContext';
 import { CRMIntegrationDialog } from "./CRMIntegrationDialog";
 import { formatDistanceToNow } from "date-fns";
+import { ComingSoon } from '@/shared/components/ComingSoon';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,6 +69,7 @@ export function CRMIntegrationTab() {
   }
 
   return (
+    <ComingSoon featureKey="crm_integration">
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -211,5 +213,6 @@ export function CRMIntegrationTab() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </ComingSoon>
   );
 }

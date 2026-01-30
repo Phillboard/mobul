@@ -19,6 +19,7 @@ import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Sparkles, Layers as LayersIcon, Settings, PanelRightClose, PanelRight, Upload } from 'lucide-react';
 import { useToast } from '@shared/hooks';
 import { useTenant } from '@/contexts/TenantContext';
+import { ComingSoon } from '@/shared/components/ComingSoon';
 import {
   DESIGNER_PRESETS,
   useDesignerState,
@@ -689,8 +690,10 @@ export default function NewMailDesigner() {
   const { currentClient } = useTenant();
   
   return (
-    <DesignerContextProvider clientId={currentClient?.id}>
-      <MailDesignerContent />
-    </DesignerContextProvider>
+    <ComingSoon featureKey="mail_designer">
+      <DesignerContextProvider clientId={currentClient?.id}>
+        <MailDesignerContent />
+      </DesignerContextProvider>
+    </ComingSoon>
   );
 }
