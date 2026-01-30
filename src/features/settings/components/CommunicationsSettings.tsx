@@ -615,12 +615,10 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
     if (!activeUrlBuilderTemplate || !editedTemplates) return;
     
     const current = editedTemplates[activeUrlBuilderTemplate].body;
-    // Insert {link} variable if not present
-    const newBody = current.includes('{link}') 
-      ? current 
-      : `${current} ${url}`.trim();
+    // Append the URL to the template (with space if needed)
+    const newBody = current.endsWith(' ') ? current + url : `${current} ${url}`;
     
-    handleTemplateChange(activeUrlBuilderTemplate, newBody);
+    handleTemplateChange(activeUrlBuilderTemplate, newBody.trim());
     setUrlBuilderOpen(false);
   };
 

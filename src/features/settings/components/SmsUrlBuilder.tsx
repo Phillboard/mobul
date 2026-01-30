@@ -186,10 +186,10 @@ export function SmsUrlBuilder({
   };
 
   const handleInsert = () => {
-    // Insert as {link} variable that will be replaced with the actual URL
-    onInsertLink('{link}');
+    // Insert the actual generated URL into the template
+    onInsertLink(generatedUrl);
     onOpenChange(false);
-    toast.success('Link variable inserted. Configure your link in the URL Builder when needed.');
+    toast.success('Link inserted into template');
   };
 
   return (
@@ -399,7 +399,7 @@ export function SmsUrlBuilder({
           </Button>
           <Button onClick={handleInsert} disabled={!generatedUrl}>
             <Link2 className="h-4 w-4 mr-2" />
-            Insert {'{link}'} Variable
+            Insert Link
           </Button>
         </DialogFooter>
       </DialogContent>
