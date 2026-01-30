@@ -9,3 +9,4 @@ export * from './useWebhooks';
 export * from './useZapierConnections';
 export * from './useOptInStatus';
 export * from './useMailProviderSettings';
+export * from './useClientSmsTemplates';

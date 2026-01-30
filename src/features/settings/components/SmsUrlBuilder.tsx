@@ -87,9 +87,9 @@ export function SmsUrlBuilder({
       
       const { data, error } = await supabase
         .from('ace_forms')
-        .select('id, name, slug, form_config, is_draft')
+        .select('id, name, form_config, is_draft, is_active')
         .eq('client_id', clientId)
-        .or('is_draft.eq.false,is_draft.is.null') // Show published forms (is_draft = false OR null)
+        .eq('is_active', true)
         .order('name');
 
       if (error) throw error;
@@ -126,7 +126,7 @@ export function SmsUrlBuilder({
       return `${baseUrl}/redeem-gift-card${queryString ? `?${queryString}` : ''}`;
     }
 
-    if (targetType === 'ace_form' && selectedForm?.slug) {
+    if (targetType === 'ace_form' && selectedForm?.id) {
       const params = new URLSearchParams();
       preFillFields.forEach(field => {
         if (field.key && field.value) {
@@ -134,7 +134,7 @@ export function SmsUrlBuilder({
         }
       });
       const queryString = params.toString();
-      return `${baseUrl}/forms/${selectedForm.slug}${queryString ? `?${queryString}` : ''}`;
+      return `${baseUrl}/forms/${selectedForm.id}${queryString ? `?${queryString}` : ''}`;
     }
 
     return '';
@@ -240,7 +240,7 @@ export function SmsUrlBuilder({
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    No published forms found. Create and publish a form first.
+                    No active forms found. Create a form and save it first.
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -263,7 +263,12 @@ export function SmsUrlBuilder({
                         value={form.id}
                         className="cursor-pointer"
                       >
-                        {form.name || `Unnamed Form (${form.id.slice(0, 8)})`}
+                        <div className="flex items-center gap-2">
+                          <span>{form.name || `Unnamed Form (${form.id.slice(0, 8)})`}</span>
+                          {form.is_draft && (
+                            <Badge variant="secondary" className="text-xs">Draft</Badge>
+                          )}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

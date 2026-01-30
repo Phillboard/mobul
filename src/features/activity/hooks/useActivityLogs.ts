@@ -40,13 +40,25 @@ async function fetchActivityLogs(
   category: ActivityCategory | undefined,
   filters: ActivityFilters | undefined,
   page: number,
-  pageSize: number
+  pageSize: number,
+  sortBy: string = 'created_at',
+  sortOrder: 'asc' | 'desc' = 'desc'
 ): Promise<{ data: ActivityLog[]; count: number }> {
   try {
+    // Map frontend column names to database columns
+    const columnMap: Record<string, string> = {
+      'timestamp': 'created_at',
+      'event_type': 'event_type',
+      'status': 'status',
+      'category': 'category',
+      'severity': 'severity',
+    };
+    const dbColumn = columnMap[sortBy] || 'created_at';
+
     let query = supabase
       .from('activity_log')
       .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false })
+      .order(dbColumn, { ascending: sortOrder === 'asc' })
       .range((page - 1) * pageSize, page * pageSize - 1);
 
     // Filter by client if provided
@@ -163,7 +175,7 @@ export function useActivityLogs({
   return useQuery({
     queryKey: ['activity-logs', category, filters, page, pageSize, sortBy, sortOrder, currentClient?.id],
     queryFn: async (): Promise<ActivityQueryResult> => {
-      const result = await fetchActivityLogs(currentClient?.id, category, filters, page, pageSize);
+      const result = await fetchActivityLogs(currentClient?.id, category, filters, page, pageSize, sortBy, sortOrder);
       
       return {
         data: result.data,
@@ -223,53 +235,42 @@ export function useActivityStats() {
       const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-      // Build base query with client filter
-      const clientFilter = currentClient?.id ? `client_id.eq.${currentClient.id}` : null;
+      const clientId = currentClient?.id;
 
-      // Fetch all counts in parallel
+      // Helper to build query with optional client filter
+      const buildQuery = () => {
+        let q = supabase.from('activity_log').select('id', { count: 'exact', head: true });
+        if (clientId) q = q.eq('client_id', clientId);
+        return q;
+      };
+
+      // Fetch all counts in parallel with client filter applied
       const [todayResult, yesterdayResult, weekResult, monthResult] = await Promise.all([
         // Today's count
-        supabase
-          .from('activity_log')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', todayStart)
-          .then(r => r),
+        buildQuery().gte('created_at', todayStart),
         // Yesterday's count  
-        supabase
-          .from('activity_log')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', yesterdayStart.toISOString())
-          .lt('created_at', yesterdayEnd)
-          .then(r => r),
+        buildQuery().gte('created_at', yesterdayStart.toISOString()).lt('created_at', yesterdayEnd),
         // This week's count
-        supabase
-          .from('activity_log')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', weekStart)
-          .then(r => r),
+        buildQuery().gte('created_at', weekStart),
         // This month's count
-        supabase
-          .from('activity_log')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', monthStart)
-          .then(r => r),
+        buildQuery().gte('created_at', monthStart),
       ]);
 
-      // Fetch category breakdown
+      // Fetch category breakdown with client filter
       const categoryResults = await Promise.all([
-        supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('category', 'gift_card').gte('created_at', todayStart),
-        supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('category', 'campaign').gte('created_at', todayStart),
-        supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('category', 'communication').gte('created_at', todayStart),
-        supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('category', 'api').gte('created_at', todayStart),
-        supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('category', 'user').gte('created_at', todayStart),
-        supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('category', 'system').gte('created_at', todayStart),
+        buildQuery().eq('category', 'gift_card').gte('created_at', todayStart),
+        buildQuery().eq('category', 'campaign').gte('created_at', todayStart),
+        buildQuery().eq('category', 'communication').gte('created_at', todayStart),
+        buildQuery().eq('category', 'api').gte('created_at', todayStart),
+        buildQuery().eq('category', 'user').gte('created_at', todayStart),
+        buildQuery().eq('category', 'system').gte('created_at', todayStart),
       ]);
 
-      // Fetch status breakdown
+      // Fetch status breakdown with client filter
       const statusResults = await Promise.all([
-        supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('status', 'success').gte('created_at', monthStart),
-        supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('status', 'failed').gte('created_at', monthStart),
-        supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('status', 'pending').gte('created_at', monthStart),
+        buildQuery().eq('status', 'success').gte('created_at', monthStart),
+        buildQuery().eq('status', 'failed').gte('created_at', monthStart),
+        buildQuery().eq('status', 'pending').gte('created_at', monthStart),
       ]);
 
       const today = todayResult.count || 0;
@@ -310,6 +311,52 @@ export function useActivityStats() {
       };
     },
     staleTime: 60 * 1000, // 1 minute
+  });
+}
+
+/**
+ * Hook for Gift Card tab stats with server-side aggregation
+ */
+export interface GiftCardStatsResult {
+  sent: number;
+  delivered: number;
+  failed: number;
+  redeemed: number;
+}
+
+export function useGiftCardStats(filters?: ActivityFilters) {
+  const { currentClient } = useTenant();
+
+  return useQuery({
+    queryKey: ['gift-card-stats', currentClient?.id, filters],
+    queryFn: async (): Promise<GiftCardStatsResult> => {
+      const clientId = currentClient?.id;
+
+      // Build base query with client filter
+      const buildQuery = () => {
+        let q = supabase.from('activity_log').select('id', { count: 'exact', head: true }).eq('category', 'gift_card');
+        if (clientId) q = q.eq('client_id', clientId);
+        if (filters?.date_range?.start) q = q.gte('created_at', filters.date_range.start);
+        if (filters?.date_range?.end) q = q.lte('created_at', filters.date_range.end);
+        return q;
+      };
+
+      // Fetch all stats in parallel
+      const [sentResult, deliveredResult, failedResult, redeemedResult] = await Promise.all([
+        buildQuery().eq('event_type', 'sms_sent'),
+        buildQuery().eq('event_type', 'sms_delivered'),
+        buildQuery().eq('status', 'failed'),
+        buildQuery().eq('event_type', 'card_redeemed'),
+      ]);
+
+      return {
+        sent: sentResult.count || 0,
+        delivered: deliveredResult.count || 0,
+        failed: failedResult.count || 0,
+        redeemed: redeemedResult.count || 0,
+      };
+    },
+    staleTime: 30 * 1000, // 30 seconds
   });
 }
 

@@ -14,12 +14,18 @@
  * - "STOP", "UNSUBSCRIBE", "CANCEL", "END", "QUIT" → opted_out
  * - Anything else → invalid_response
  * 
+ * Opt-In Confirmation Message:
+ * - Fetches client's opt_in_confirmation template from message_templates
+ * - If template body is empty, confirmation is disabled (no SMS sent)
+ * - If enabled, uses client's template or system default
+ * 
  * After updating, broadcast real-time update to call center dashboard.
  */
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
 import { createActivityLogger } from '../_shared/activity-logger.ts';
+import { SYSTEM_DEFAULT_TEMPLATES, renderSmsTemplate } from '../_shared/a2p-validation.ts';
 
 // Opt-in keywords (case-insensitive)
 const OPT_IN_KEYWORDS = ['YES', 'Y', 'YEA', 'YEAH', 'YEP', 'YUP', 'OK', 'OKAY', 'SURE', 'ACCEPT'];
@@ -105,8 +111,53 @@ serve(async (req) => {
 
   if (OPT_IN_KEYWORDS.includes(upperBody)) {
     newStatus = "opted_in";
-    replyMessage = "Thanks! You're all set to receive your gift card.";
     console.log(`[HANDLE-SMS-RESPONSE] Recipient ${recipient.id} OPTED IN`);
+    
+    // Fetch opt-in confirmation template from client settings
+    // First get the client_id from campaign
+    let clientId: string | null = null;
+    if (recipient.campaign_id) {
+      const { data: campaign } = await supabaseAdmin
+        .from('campaigns')
+        .select('client_id')
+        .eq('id', recipient.campaign_id)
+        .single();
+      clientId = campaign?.client_id || null;
+    }
+    
+    // Look up client's opt_in_confirmation template
+    if (clientId) {
+      const { data: clientTemplate } = await supabaseAdmin
+        .from('message_templates')
+        .select('body_template')
+        .eq('client_id', clientId)
+        .eq('template_type', 'sms')
+        .eq('name', 'opt_in_confirmation')
+        .eq('is_default', true)
+        .single();
+      
+      if (clientTemplate) {
+        // Empty body means confirmation is disabled
+        if (clientTemplate.body_template === '') {
+          console.log('[HANDLE-SMS-RESPONSE] Opt-in confirmation disabled for this client');
+          replyMessage = null;
+        } else {
+          // Use client's custom template
+          replyMessage = renderSmsTemplate(clientTemplate.body_template, {
+            first_name: '', // Could fetch from recipient if needed
+          });
+          console.log('[HANDLE-SMS-RESPONSE] Using client opt-in confirmation template');
+        }
+      } else {
+        // No custom template - use system default
+        replyMessage = SYSTEM_DEFAULT_TEMPLATES.opt_in_confirmation;
+        console.log('[HANDLE-SMS-RESPONSE] Using system default opt-in confirmation');
+      }
+    } else {
+      // No client context - use system default
+      replyMessage = SYSTEM_DEFAULT_TEMPLATES.opt_in_confirmation;
+      console.log('[HANDLE-SMS-RESPONSE] No client context, using system default');
+    }
   } else if (OPT_OUT_KEYWORDS.includes(upperBody)) {
     newStatus = "opted_out";
     replyMessage = "You have been unsubscribed. No further messages will be sent.";

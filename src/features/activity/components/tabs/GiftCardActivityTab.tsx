@@ -11,12 +11,13 @@ import { Gift, RefreshCw, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
-import { useActivityLogs } from '../../hooks';
+import { useActivityLogs, useGiftCardStats } from '../../hooks';
 import { ActivityTable, StatusBadge } from '../ActivityTable';
 import { ActivityFiltersPanel } from '../ActivityFilters';
 import { formatDate, DATE_FORMATS } from '@shared/utils/date';
 import { GiftCardActivityLog, ActivityFilters } from '../../types/activity.types';
 import { formatCurrency } from '@/shared/utils/currency';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 const GIFT_CARD_EVENT_TYPES = [
   'card_provisioned',
@@ -142,26 +143,25 @@ export function GiftCardActivityTab({ filters, onFilterChange }: GiftCardActivit
     pageSize,
   });
 
-  const giftCardLogs = (data?.data || []) as GiftCardActivityLog[];
+  // Use server-side stats aggregation instead of client-side filtering
+  const { data: stats, isLoading: statsLoading } = useGiftCardStats(filters);
 
-  // Calculate stats
-  const stats = {
-    sent: giftCardLogs.filter(l => l.event_type === 'sms_sent').length,
-    delivered: giftCardLogs.filter(l => l.event_type === 'sms_delivered').length,
-    failed: giftCardLogs.filter(l => l.status === 'failed').length,
-    redeemed: giftCardLogs.filter(l => l.event_type === 'card_redeemed').length,
-  };
+  const giftCardLogs = (data?.data || []) as GiftCardActivityLog[];
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
+      {/* Stats - Server-side aggregated */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">SMS Sent</p>
-                <p className="text-2xl font-bold">{stats.sent}</p>
+                {statsLoading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold">{stats?.sent || 0}</p>
+                )}
               </div>
               <MessageSquare className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -173,7 +173,11 @@ export function GiftCardActivityTab({ filters, onFilterChange }: GiftCardActivit
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Delivered</p>
-                <p className="text-2xl font-bold text-green-500">{stats.delivered}</p>
+                {statsLoading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold text-green-500">{stats?.delivered || 0}</p>
+                )}
               </div>
               <Badge variant="default">Success</Badge>
             </div>
@@ -185,7 +189,11 @@ export function GiftCardActivityTab({ filters, onFilterChange }: GiftCardActivit
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Failed</p>
-                <p className="text-2xl font-bold text-red-500">{stats.failed}</p>
+                {statsLoading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold text-red-500">{stats?.failed || 0}</p>
+                )}
               </div>
               <Badge variant="destructive">Failed</Badge>
             </div>
@@ -197,7 +205,11 @@ export function GiftCardActivityTab({ filters, onFilterChange }: GiftCardActivit
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Redeemed</p>
-                <p className="text-2xl font-bold text-primary">{stats.redeemed}</p>
+                {statsLoading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold text-primary">{stats?.redeemed || 0}</p>
+                )}
               </div>
               <Gift className="h-8 w-8 text-primary" />
             </div>
@@ -221,10 +233,10 @@ export function GiftCardActivityTab({ filters, onFilterChange }: GiftCardActivit
                 onFilterChange={onFilterChange}
                 availableEventTypes={GIFT_CARD_EVENT_TYPES}
               />
-              {stats.failed > 0 && (
+              {(stats?.failed || 0) > 0 && (
                 <Button variant="outline" size="sm">
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Retry {stats.failed} Failed
+                  Retry {stats?.failed} Failed
                 </Button>
               )}
             </div>

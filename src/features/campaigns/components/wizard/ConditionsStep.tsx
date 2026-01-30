@@ -6,9 +6,14 @@
  * - Default trigger: manual_agent (agent marks it complete)
  * - Predefined conditions only (no custom free-form input)
  * - SMS opt-in and delivery message customization
+ * 
+ * Template Hierarchy:
+ * 1. Campaign-specific override (set here)
+ * 2. Client default (from Settings > Communications)
+ * 3. System default (hardcoded fallback)
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { Button } from "@/shared/components/ui/button";
@@ -21,17 +26,23 @@ import { Switch } from "@/shared/components/ui/switch";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Badge } from "@/shared/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/components/ui/collapsible";
-import { Plus, Trash2, GripVertical, AlertCircle, CheckCircle, AlertTriangle, Gift, MessageSquare, ChevronDown, Info } from "lucide-react";
+import { Plus, Trash2, GripVertical, AlertCircle, CheckCircle, AlertTriangle, Gift, MessageSquare, ChevronDown, Info, RotateCcw, Edit } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useToast } from '@shared/hooks';
 import type { CampaignFormData } from "@/types/campaigns";
 import { SimpleBrandDenominationSelector } from "@/features/gift-cards/components/SimpleBrandDenominationSelector";
 import { GiftCardErrorBoundary } from "@/shared/components/ErrorBoundaries";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
+import { useClientSmsTemplates } from "@/features/settings/hooks/useClientSmsTemplates";
+import { 
+  validateSmsTemplate, 
+  checkSmsLength,
+  SMS_TEMPLATE_TYPES,
+} from "@/shared/utils/a2pValidation";
 
-// Default SMS message templates (compliance-friendly)
-const DEFAULT_OPT_IN_MESSAGE = "To send your activation code, we'll text you a link and a few related messages over the next 30 days from {company}. Msg & data rates may apply. Reply STOP to stop at any time.";
-const DEFAULT_DELIVERY_MESSAGE = "Hi {first_name}! Here's your ${value} {provider} gift card from {company}: {link}";
+// System default SMS message templates (compliance-friendly)
+const DEFAULT_OPT_IN_MESSAGE = SMS_TEMPLATE_TYPES.opt_in_request.defaultTemplate;
+const DEFAULT_DELIVERY_MESSAGE = SMS_TEMPLATE_TYPES.gift_card_delivery.defaultTemplate;
 
 // Predefined trigger types - per Mike's requirements
 const TRIGGER_TYPES = [
@@ -82,11 +93,37 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
   const { toast } = useToast();
   const recipientCount = initialData.recipient_count || 0;
 
+  // Fetch client default templates
+  const { data: clientTemplates, isLoading: templatesLoading } = useClientSmsTemplates(clientId);
+
+  // Get effective default templates (client default or system default)
+  const effectiveOptInDefault = useMemo(() => {
+    return clientTemplates?.opt_in_request?.body || DEFAULT_OPT_IN_MESSAGE;
+  }, [clientTemplates]);
+
+  const effectiveDeliveryDefault = useMemo(() => {
+    return clientTemplates?.gift_card_delivery?.body || DEFAULT_DELIVERY_MESSAGE;
+  }, [clientTemplates]);
+
   // SMS Settings state
   const [smsSettingsOpen, setSmsSettingsOpen] = useState(true);
-  const [smsOptInMessage, setSmsOptInMessage] = useState(
-    initialData.sms_opt_in_message || DEFAULT_OPT_IN_MESSAGE
+  const [optInCustomized, setOptInCustomized] = useState(
+    Boolean(initialData.sms_opt_in_message && initialData.sms_opt_in_message !== effectiveOptInDefault)
   );
+  const [smsOptInMessage, setSmsOptInMessage] = useState(
+    initialData.sms_opt_in_message || ''
+  );
+
+  // A2P validation for opt-in message
+  const optInValidation = useMemo(() => {
+    const messageToValidate = optInCustomized ? smsOptInMessage : effectiveOptInDefault;
+    return validateSmsTemplate(messageToValidate, 'opt_in_request');
+  }, [optInCustomized, smsOptInMessage, effectiveOptInDefault]);
+
+  const optInLength = useMemo(() => {
+    const messageToCheck = optInCustomized ? smsOptInMessage : effectiveOptInDefault;
+    return checkSmsLength(messageToCheck);
+  }, [optInCustomized, smsOptInMessage, effectiveOptInDefault]);
 
   // Initialize conditions - default to "Listened to sales call" with manual_agent trigger
   const [conditions, setConditions] = useState<Condition[]>(() => {
@@ -189,9 +226,36 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
       return;
     }
 
+    // A2P Validation check
+    if (!optInValidation.isValid) {
+      toast({
+        title: "A2P Compliance Error",
+        description: "The opt-in message does not meet A2P requirements. Please fix the compliance issues.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check condition SMS templates for A2P compliance
+    for (const condition of activeConditions) {
+      const deliveryValidation = validateSmsTemplate(
+        condition.sms_template || effectiveDeliveryDefault,
+        'gift_card_delivery'
+      );
+      if (!deliveryValidation.isValid) {
+        toast({
+          title: "A2P Compliance Error",
+          description: `Condition "${condition.condition_name}" delivery message does not meet A2P requirements.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     onNext({ 
       conditions,
-      sms_opt_in_message: smsOptInMessage,
+      // Only save custom message if customized, otherwise null to use hierarchy
+      sms_opt_in_message: optInCustomized ? smsOptInMessage : null,
     } as any);
   };
 
@@ -233,45 +297,103 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
             <CardContent className="space-y-6 pt-0">
               {/* Opt-In Message */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm font-medium">Opt-In Message (Consent Request)</Label>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>This message is sent when the agent requests SMS consent. It must include company name, message frequency, and opt-out instructions for compliance.</p>
-                    </TooltipContent>
-                  </Tooltip>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium">Opt-In Message (Consent Request)</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p>This message is sent when the agent requests SMS consent. It must include company name, message frequency, and opt-out instructions for A2P compliance.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  {/* A2P Compliance Badge */}
+                  {optInValidation.isValid ? (
+                    <Badge variant="default" className="bg-green-600">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      A2P Compliant
+                    </Badge>
+                  ) : (
+                    <Badge variant="destructive">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Not Compliant
+                    </Badge>
+                  )}
                 </div>
-                <Textarea
-                  value={smsOptInMessage}
-                  onChange={(e) => setSmsOptInMessage(e.target.value)}
-                  rows={3}
-                  placeholder={DEFAULT_OPT_IN_MESSAGE}
-                  className="font-mono text-sm"
-                />
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Variables: {"{company}"}, {"{client_name}"}</span>
-                  <span className={smsOptInMessage.length > 160 ? "text-amber-500" : ""}>
-                    {smsOptInMessage.length}/160 characters {smsOptInMessage.length > 160 && "(may split into multiple SMS)"}
-                  </span>
-                </div>
-                {smsOptInMessage !== DEFAULT_OPT_IN_MESSAGE && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setSmsOptInMessage(DEFAULT_OPT_IN_MESSAGE)}
-                    className="text-xs"
-                  >
-                    Reset to default
-                  </Button>
+
+                {!optInCustomized ? (
+                  // Show client default with option to customize
+                  <div className="space-y-2">
+                    <div className="p-3 bg-muted rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {clientTemplates?.opt_in_request?.id ? 'Using Client Default' : 'Using System Default'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm font-mono text-muted-foreground">
+                        {effectiveOptInDefault}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setOptInCustomized(true);
+                        setSmsOptInMessage(effectiveOptInDefault);
+                      }}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Customize for this Campaign
+                    </Button>
+                  </div>
+                ) : (
+                  // Custom editing mode
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="text-xs">
+                      Campaign Override
+                    </Badge>
+                    <Textarea
+                      value={smsOptInMessage}
+                      onChange={(e) => setSmsOptInMessage(e.target.value)}
+                      rows={3}
+                      placeholder={effectiveOptInDefault}
+                      className="font-mono text-sm"
+                    />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3">
+                        <span>Variables: {"{company}"}, {"{client_name}"}</span>
+                        {!optInValidation.isValid && (
+                          <span className="text-destructive">
+                            {optInValidation.errors[0]}
+                          </span>
+                        )}
+                      </div>
+                      <span className={optInLength.length > optInLength.limit ? "text-amber-500" : ""}>
+                        {optInLength.length}/{optInLength.limit} chars
+                        {optInLength.segments > 1 && ` (${optInLength.segments} SMS)`}
+                      </span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        setOptInCustomized(false);
+                        setSmsOptInMessage('');
+                      }}
+                      className="text-xs"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Reset to {clientTemplates?.opt_in_request?.id ? 'Client' : 'System'} Default
+                    </Button>
+                  </div>
                 )}
               </div>
 
               <div className="border-t pt-4">
                 <p className="text-xs text-muted-foreground">
-                  <strong>Gift Card Delivery Messages</strong> are configured per condition below. Each condition can have its own custom message.
+                  <strong>Gift Card Delivery Messages</strong> are configured per condition below. Each condition can have its own custom message, or use the client default.
                 </p>
               </div>
             </CardContent>
@@ -413,26 +535,12 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
                           </div>
 
                           {/* SMS Template */}
-                          <div className="space-y-2">
-                            <Label>Gift Card Delivery Message</Label>
-                            <Textarea
-                              value={condition.sms_template}
-                              onChange={(e) =>
-                                handleUpdateCondition(condition.id, {
-                                  sms_template: e.target.value,
-                                })
-                              }
-                              rows={2}
-                              placeholder={DEFAULT_DELIVERY_MESSAGE}
-                              className="font-mono text-sm"
-                            />
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>Variables: {"{first_name}"}, {"{last_name}"}, {"{value}"}, {"{provider}"}, {"{company}"}, {"{link}"}</span>
-                              <span className={condition.sms_template.length > 160 ? "text-amber-500" : ""}>
-                                {condition.sms_template.length}/160
-                              </span>
-                            </div>
-                          </div>
+                          <ConditionSmsTemplate
+                            condition={condition}
+                            effectiveDefault={effectiveDeliveryDefault}
+                            clientHasCustomDefault={Boolean(clientTemplates?.gift_card_delivery?.id)}
+                            onUpdate={(updates) => handleUpdateCondition(condition.id, updates)}
+                          />
                         </CardContent>
                       </Card>
                     )}
@@ -458,6 +566,115 @@ export function ConditionsStep({ clientId, initialData, onNext, onBack }: Condit
         </Button>
         <Button onClick={handleNext}>Next: Customer Page</Button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Helper component for condition-level SMS template with inheritance
+ */
+interface ConditionSmsTemplateProps {
+  condition: Condition;
+  effectiveDefault: string;
+  clientHasCustomDefault: boolean;
+  onUpdate: (updates: Partial<Condition>) => void;
+}
+
+function ConditionSmsTemplate({
+  condition,
+  effectiveDefault,
+  clientHasCustomDefault,
+  onUpdate,
+}: ConditionSmsTemplateProps) {
+  const [isCustomized, setIsCustomized] = useState(
+    Boolean(condition.sms_template && condition.sms_template !== effectiveDefault)
+  );
+
+  const currentMessage = isCustomized ? condition.sms_template : effectiveDefault;
+  const validation = useMemo(
+    () => validateSmsTemplate(currentMessage, 'gift_card_delivery'),
+    [currentMessage]
+  );
+  const lengthInfo = useMemo(() => checkSmsLength(currentMessage), [currentMessage]);
+
+  const handleCustomize = () => {
+    setIsCustomized(true);
+    onUpdate({ sms_template: effectiveDefault });
+  };
+
+  const handleReset = () => {
+    setIsCustomized(false);
+    onUpdate({ sms_template: '' });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label>Gift Card Delivery Message</Label>
+        {validation.isValid ? (
+          <Badge variant="default" className="bg-green-600 text-xs">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Compliant
+          </Badge>
+        ) : (
+          <Badge variant="destructive" className="text-xs">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Not Compliant
+          </Badge>
+        )}
+      </div>
+
+      {!isCustomized ? (
+        // Show default with option to customize
+        <div className="space-y-2">
+          <div className="p-3 bg-muted rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <Badge variant="secondary" className="text-xs">
+                {clientHasCustomDefault ? 'Using Client Default' : 'Using System Default'}
+              </Badge>
+            </div>
+            <p className="text-sm font-mono text-muted-foreground">
+              {effectiveDefault}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleCustomize}>
+            <Edit className="h-3 w-3 mr-1" />
+            Customize for this Condition
+          </Button>
+        </div>
+      ) : (
+        // Custom editing mode
+        <div className="space-y-2">
+          <Badge variant="outline" className="text-xs">
+            Condition Override
+          </Badge>
+          <Textarea
+            value={condition.sms_template}
+            onChange={(e) => onUpdate({ sms_template: e.target.value })}
+            rows={2}
+            placeholder={effectiveDefault}
+            className="font-mono text-sm"
+          />
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <span>Variables: {"{first_name}"}, {"{value}"}, {"{brand}"}, {"{company}"}, {"{link}"}</span>
+              {!validation.isValid && (
+                <span className="text-destructive">
+                  {validation.errors[0]}
+                </span>
+              )}
+            </div>
+            <span className={lengthInfo.length > lengthInfo.limit ? "text-amber-500" : ""}>
+              {lengthInfo.length}/{lengthInfo.limit}
+              {lengthInfo.segments > 1 && ` (${lengthInfo.segments} SMS)`}
+            </span>
+          </div>
+          <Button variant="ghost" size="sm" onClick={handleReset} className="text-xs">
+            <RotateCcw className="h-3 w-3 mr-1" />
+            Reset to {clientHasCustomDefault ? 'Client' : 'System'} Default
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@ export interface TwilioConfig {
   accountSid: string;
   authToken: string;
   fromNumber: string;
+  messagingServiceSid?: string;  // For URL shortening via Messaging Services
 }
 
 export interface SendSMSResult {
@@ -44,6 +45,11 @@ export class TwilioClient {
 
   /**
    * Send an SMS message via Twilio
+   * 
+   * When messagingServiceSid is configured, uses Messaging Service for:
+   * - Automatic link shortening (if enabled in Twilio console)
+   * - Better deliverability through phone number pooling
+   * - Advanced analytics
    */
   async sendSMS(to: string, message: string): Promise<SendSMSResult> {
     try {
@@ -57,17 +63,28 @@ export class TwilioClient {
       // Twilio REST API endpoint
       const url = `https://api.twilio.com/2010-04-01/Accounts/${this.config.accountSid}/Messages.json`;
 
+      // Build request body - prefer Messaging Service for link shortening support
+      const bodyParams: Record<string, string> = {
+        To: formattedTo,
+        Body: message,
+      };
+
+      if (this.config.messagingServiceSid) {
+        // Use Messaging Service - enables automatic link shortening
+        bodyParams.MessagingServiceSid = this.config.messagingServiceSid;
+        console.log(`[TWILIO] Using Messaging Service: ${this.config.messagingServiceSid} (link shortening enabled)`);
+      } else {
+        // Fall back to direct phone number
+        bodyParams.From = this.config.fromNumber;
+      }
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${auth}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          To: formattedTo,
-          From: this.config.fromNumber,
-          Body: message,
-        }),
+        body: new URLSearchParams(bodyParams),
       });
 
       const data = await response.json();

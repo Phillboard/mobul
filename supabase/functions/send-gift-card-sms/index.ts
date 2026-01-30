@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { sendSMS, formatPhoneE164 } from '../_shared/sms-provider.ts';
 import { createErrorLogger } from '../_shared/error-logger.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
@@ -8,16 +8,101 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// System default template - used when no client/condition template is set
+const SYSTEM_DEFAULT_TEMPLATE = "Congratulations {first_name}! You've earned a ${value} {brand} gift card. Your code: {code}. Thank you for your business!";
+
 interface SendGiftCardSMSRequest {
   deliveryId: string;
   giftCardCode: string;
   giftCardValue: number;
   recipientPhone: string;
   recipientName?: string;
-  customMessage?: string;
+  customMessage?: string;      // Condition-level override (highest priority)
   recipientId?: string;
   giftCardId?: string;
-  clientId?: string; // For hierarchical Twilio resolution
+  clientId?: string;           // For hierarchical Twilio resolution
+  conditionId?: string;        // For template resolution
+  brandName?: string;          // Brand name for template
+}
+
+/**
+ * Resolve SMS template using hierarchy:
+ * 1. customMessage (condition-level override) - highest priority
+ * 2. Client default template (from message_templates table)
+ * 3. System default template - lowest priority
+ */
+async function resolveTemplate(
+  supabase: SupabaseClient,
+  customMessage: string | undefined,
+  clientId: string | undefined
+): Promise<{ template: string; source: 'condition' | 'client' | 'system' }> {
+  // 1. Condition-level override (passed as customMessage)
+  if (customMessage && customMessage.trim()) {
+    console.log('[SEND-GIFT-CARD-SMS] Using condition-level SMS template');
+    return { template: customMessage, source: 'condition' };
+  }
+
+  // 2. Client default template
+  if (clientId) {
+    const { data: clientTemplate, error } = await supabase
+      .from('message_templates')
+      .select('body_template')
+      .eq('client_id', clientId)
+      .eq('template_type', 'sms')
+      .eq('name', 'gift_card_delivery')
+      .eq('is_default', true)
+      .single();
+
+    if (!error && clientTemplate?.body_template) {
+      console.log('[SEND-GIFT-CARD-SMS] Using client default SMS template');
+      return { template: clientTemplate.body_template, source: 'client' };
+    }
+  }
+
+  // 3. System default
+  console.log('[SEND-GIFT-CARD-SMS] Using system default SMS template');
+  return { template: SYSTEM_DEFAULT_TEMPLATE, source: 'system' };
+}
+
+/**
+ * Replace template variables with actual values
+ */
+function renderTemplate(
+  template: string,
+  variables: {
+    first_name?: string;
+    last_name?: string;
+    value?: number;
+    brand?: string;
+    code?: string;
+    link?: string;
+    company?: string;
+  }
+): string {
+  let result = template;
+  
+  // Replace variables (case-insensitive)
+  const replacements: [RegExp, string][] = [
+    [/\{first_name\}/gi, variables.first_name || ''],
+    [/\{last_name\}/gi, variables.last_name || ''],
+    [/\{value\}/gi, variables.value?.toString() || ''],
+    [/\$\{value\}/gi, `$${variables.value || ''}`],
+    [/\{brand\}/gi, variables.brand || ''],
+    [/\{provider\}/gi, variables.brand || ''], // Alias
+    [/\{code\}/gi, variables.code || ''],
+    [/\{link\}/gi, variables.link || variables.code || ''],
+    [/\{company\}/gi, variables.company || ''],
+    [/\{client_name\}/gi, variables.company || ''],
+  ];
+
+  for (const [pattern, replacement] of replacements) {
+    result = result.replace(pattern, replacement);
+  }
+
+  // Clean up any remaining empty placeholders
+  result = result.replace(/\{[^}]+\}/g, '').replace(/\s+/g, ' ').trim();
+
+  return result;
 }
 
 Deno.serve(async (req) => {
@@ -70,9 +155,36 @@ Deno.serve(async (req) => {
     // Format phone number
     const formattedPhone = formatPhoneE164(recipientPhone);
 
-    // Build SMS message
-    const defaultMessage = `Congratulations ${recipientName || ''}! You've earned a $${giftCardValue} gift card. Your code: ${giftCardCode}. Thank you for your business!`;
-    const smsMessage = customMessage || defaultMessage;
+    // Resolve template using hierarchy (condition -> client -> system)
+    const { template, source: templateSource } = await resolveTemplate(
+      supabaseClient,
+      customMessage,
+      resolvedClientId
+    );
+
+    // Get company name for template
+    let companyName = '';
+    if (resolvedClientId) {
+      const { data: clientData } = await supabaseClient
+        .from('clients')
+        .select('name')
+        .eq('id', resolvedClientId)
+        .single();
+      companyName = clientData?.name || '';
+    }
+
+    // Render template with actual values
+    const smsMessage = renderTemplate(template, {
+      first_name: recipientName?.split(' ')[0],
+      last_name: recipientName?.split(' ').slice(1).join(' '),
+      value: giftCardValue,
+      brand: requestData.brandName,
+      code: giftCardCode,
+      link: giftCardCode, // Default to code, can be overridden
+      company: companyName,
+    });
+
+    console.log(`[SEND-GIFT-CARD-SMS] Template source: ${templateSource}, message length: ${smsMessage.length}`);
 
     // Log SMS attempt to sms_delivery_log
     const { data: logEntry, error: logError } = await supabaseClient
@@ -211,6 +323,8 @@ Deno.serve(async (req) => {
         provider: smsResult.provider,
         status: smsResult.status || 'sent',
         fallbackUsed: smsResult.fallbackUsed || false,
+        // Template resolution info
+        templateSource: templateSource,
         // Twilio hierarchy info
         twilioLevelUsed: smsResult.twilioLevelUsed || null,
         twilioEntityName: smsResult.twilioEntityName || null,
