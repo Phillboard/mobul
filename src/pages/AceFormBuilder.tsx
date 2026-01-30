@@ -135,10 +135,15 @@ function TemplateSelectionScreen({
   );
 }
 
+interface AceFormBuilderContentProps {
+  initialName?: string;
+  initialDescription?: string;
+}
+
 /**
  * Inner component that uses FormBuilderContext
  */
-function AceFormBuilderContent() {
+function AceFormBuilderContent({ initialName, initialDescription }: AceFormBuilderContentProps) {
   const { formId } = useParams();
   const navigate = useNavigate();
   const { currentClient } = useTenant();
@@ -146,7 +151,8 @@ function AceFormBuilderContent() {
   const [showExport, setShowExport] = useState(false);
   const [showEmbed, setShowEmbed] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
-  const [formName, setFormName] = useState("");
+  const [formName, setFormName] = useState(initialName || "");
+  const [formDescription, setFormDescription] = useState(initialDescription || "");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'form' | 'reveal' | 'analytics'>('form');
@@ -156,12 +162,12 @@ function AceFormBuilderContent() {
 
   const { config, setConfig, updateRevealSettings } = useFormBuilder();
 
-  // Set form name from initial config
+  // Set form name from initial config if not already set
   useEffect(() => {
-    if (config.settings.title && !formName) {
+    if (config.settings.title && !formName && !initialName) {
       setFormName(config.settings.title);
     }
-  }, [config.settings.title, formName]);
+  }, [config.settings.title, formName, initialName]);
 
   // Auto-save every 3 seconds - only if config actually changed
   const performAutoSave = useCallback(async () => {
@@ -180,6 +186,7 @@ function AceFormBuilderContent() {
         updates: {
           client_id: currentClient.id,
           name: formName || "Untitled Form",
+          description: formDescription || null,
           form_config: config,
           is_draft: true,
           last_auto_save: new Date().toISOString(),
@@ -193,7 +200,7 @@ function AceFormBuilderContent() {
     } finally {
       setIsSaving(false);
     }
-  }, [currentClient, formId, formName, config, updateForm]);
+  }, [currentClient, formId, formName, formDescription, config, updateForm]);
 
   // Trigger auto-save when config changes
   useEffect(() => {
@@ -225,6 +232,7 @@ function AceFormBuilderContent() {
       const formData = {
         client_id: currentClient.id,
         name: formName || "Untitled Form",
+        description: formDescription || null,
         form_config: config,
         is_draft: false, // Mark as not draft when explicitly saved
       };
@@ -306,13 +314,22 @@ function AceFormBuilderContent() {
           {/* Actions Bar */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <input
-                type="text"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="Form Name"
-                className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0"
-              />
+              <div className="flex flex-col">
+                <input
+                  type="text"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="Form Name"
+                  className="text-lg font-semibold bg-transparent border-none focus:outline-none focus:ring-0"
+                />
+                <input
+                  type="text"
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  placeholder="Add a description..."
+                  className="text-sm text-muted-foreground bg-transparent border-none focus:outline-none focus:ring-0"
+                />
+              </div>
               
               {/* Tabs for Form/Reveal/Analytics */}
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'form' | 'reveal' | 'analytics')}>
@@ -491,10 +508,15 @@ export default function AceFormBuilder() {
 
   // Use the generated config or the existing form config
   const initialConfig = formConfig || existingForm?.form_config;
+  const initialName = formName || existingForm?.name;
+  const initialDescription = existingForm?.description;
 
   return (
     <FormBuilderProvider initialConfig={initialConfig}>
-      <AceFormBuilderContent />
+      <AceFormBuilderContent 
+        initialName={initialName} 
+        initialDescription={initialDescription} 
+      />
     </FormBuilderProvider>
   );
 }
