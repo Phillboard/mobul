@@ -88,6 +88,7 @@ export function DesignAssetsStep({
         .select("*")
         .eq("client_id", clientId)
         .eq("is_active", true)
+        .eq("is_draft", false) // Only show published forms
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;

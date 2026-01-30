@@ -138,6 +138,7 @@ export function GlobalSearch() {
         .from('ace_forms')
         .select('id, name, form_type')
         .ilike('name', `%${query}%`)
+        .eq('is_draft', false) // Only show published forms in search
         .limit(5);
 
       if (currentClient) {

@@ -88,6 +88,7 @@ export function TriggerSelector({ triggerType, triggerConfig, onChange }: Props)
         .from('ace_forms')
         .select('id, name')
         .eq('client_id', currentClient.id)
+        .eq('is_draft', false) // Only show published forms
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;

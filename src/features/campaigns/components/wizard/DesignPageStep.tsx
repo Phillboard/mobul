@@ -110,6 +110,7 @@ export function DesignPageStep({
         .from("ace_forms")
         .select("id, name, description, total_submissions, is_active, campaign_id")
         .eq("client_id", clientId)
+        .eq("is_draft", false) // Only show published forms
         .or(`campaign_id.is.null,campaign_id.eq.${campaignId}`)
         .order("created_at", { ascending: false });
       if (error) throw error;

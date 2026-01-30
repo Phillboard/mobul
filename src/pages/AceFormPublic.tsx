@@ -123,6 +123,7 @@ export default function AceFormPublic() {
   const [isFlipped, setIsFlipped] = useState(false);
   const { checkRateLimit, recordSubmission } = useFormSubmissionRateLimit();
   const [rateLimitError, setRateLimitError] = useState<string | null>(null);
+  const [viewTracked, setViewTracked] = useState(false);
 
   const primaryColor = searchParams.get("primaryColor") || form?.form_config.settings?.primaryColor || "#6366f1";
   const embedMode = searchParams.get("embed") === "true";
@@ -152,6 +153,18 @@ export default function AceFormPublic() {
       reset(prefilledValues);
     }
   }, [prefilledValues, reset]);
+
+  // Track form view (once per session)
+  useEffect(() => {
+    if (form && !viewTracked && !redemption) {
+      setViewTracked(true);
+      // Fire and forget - don't block UI
+      supabase.rpc('increment_form_stat', { 
+        form_id: form.id, 
+        stat_name: 'views' 
+      }).catch(err => console.warn('View tracking failed:', err));
+    }
+  }, [form?.id, viewTracked, redemption]);
 
   // Watch all form values for conditional logic
   const formValues = watch();

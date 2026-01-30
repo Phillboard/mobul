@@ -63,7 +63,7 @@ serve(async (req) => {
     // =====================================================
     const { data: form, error: formError } = await supabase
       .from('ace_forms')
-      .select('id, name, form_config')
+      .select('id, name, form_config, is_draft, is_active')
       .eq('id', formId)
       .single();
 
@@ -71,6 +71,23 @@ serve(async (req) => {
       console.error('[ACE-FORM] Form not found:', formError);
       return new Response(
         JSON.stringify({ success: false, error: 'Form not found', requestId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    // Validate form is published and active
+    if (form.is_draft) {
+      console.error('[ACE-FORM] Attempted submission to draft form:', formId);
+      return new Response(
+        JSON.stringify({ success: false, error: 'This form is not yet published', requestId }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    if (form.is_active === false) {
+      console.error('[ACE-FORM] Attempted submission to inactive form:', formId);
+      return new Response(
+        JSON.stringify({ success: false, error: 'This form is no longer accepting submissions', requestId }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
@@ -148,6 +165,9 @@ serve(async (req) => {
     console.log(`║   ${card.brand_name || 'Gift Card'} $${card.denomination}`);
     console.log(`║   Card: ${card.card_code}`);
     console.log('╚' + '═'.repeat(60) + '╝');
+
+    // Track submission for analytics
+    await supabase.rpc('increment_form_stat', { form_id: formId, stat_name: 'submissions' });
 
     return new Response(
       JSON.stringify({

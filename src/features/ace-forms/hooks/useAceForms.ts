@@ -42,7 +42,8 @@ export function useAceForms(clientId?: string) {
         description: form.description,
         form_config: form.form_config,
         template_id: form.template_id,
-        is_active: form.is_active,
+        is_active: form.is_active ?? true,
+        is_draft: true, // New forms start as drafts until explicitly published
       };
       
       const { data, error } = await supabase

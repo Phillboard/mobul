@@ -53,6 +53,7 @@ export function FormsSelectionStep({
           )
         `)
         .eq("client_id", clientId)
+        .eq("is_draft", false) // Only show published forms
         .order("created_at", { ascending: false });
 
       if (error) throw error;
