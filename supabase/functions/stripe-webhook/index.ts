@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from 'https://esm.sh/stripe@14.21.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
@@ -65,6 +68,21 @@ serve(async (req) => {
         }
 
         console.log(`Created gift card pool: ${pool.id} for ${quantity} cards`);
+
+        // Log activity
+        await activityLogger.system('payment_received', 'success', {
+          clientId: clientId,
+          description: `Gift card purchase completed - ${quantity} cards at $${cardValue} each`,
+          metadata: {
+            pool_id: pool.id,
+            pool_name: poolName,
+            quantity: parseInt(quantity),
+            card_value: parseFloat(cardValue),
+            provider,
+            stripe_session_id: session.id,
+            total_amount: parseInt(quantity) * parseFloat(cardValue),
+          },
+        });
 
         // Note: Cards will be uploaded separately by the admin
         // The pool is created and ready for card import

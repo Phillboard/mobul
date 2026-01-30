@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { Resend } from 'npm:resend@latest';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,6 +26,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     const supabaseClient = createClient(
@@ -145,6 +148,20 @@ Deno.serve(async (req) => {
     }
 
     console.log('Email sent successfully:', emailResult);
+
+    // Log activity
+    await activityLogger.giftCard('email_sent', 'success', {
+      clientId: finalClientId || undefined,
+      campaignId: campaignId || undefined,
+      recipientId: recipientId || undefined,
+      description: `Gift card email sent to ${recipientEmail}`,
+      metadata: {
+        gift_card_id: giftCardId,
+        brand_name: brandName,
+        card_value: giftCardValue,
+        email_id: emailResult?.id,
+      },
+    });
 
     // Log email delivery
     const { error: logError } = await supabaseClient

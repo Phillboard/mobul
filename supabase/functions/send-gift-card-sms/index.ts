@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { sendSMS, formatPhoneE164 } from '../_shared/sms-provider.ts';
 import { createErrorLogger } from '../_shared/error-logger.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,6 +27,9 @@ Deno.serve(async (req) => {
 
   // Initialize error logger
   const errorLogger = createErrorLogger('send-gift-card-sms');
+  
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('send-gift-card-sms', req);
 
   // Declare variables at function scope for error logging
   let recipientId: string | undefined;
@@ -125,6 +129,20 @@ Deno.serve(async (req) => {
         })
         .eq('id', deliveryId);
 
+      // Log failed SMS activity
+      await activityLogger.giftCard('sms_failed', 'failed',
+        `Gift card SMS delivery failed to ${formattedPhone}`,
+        {
+          recipientId,
+          clientId: resolvedClientId,
+          metadata: {
+            delivery_id: deliveryId,
+            provider: smsResult.provider,
+            error: smsResult.error,
+          },
+        }
+      );
+      
       throw new Error(`SMS send failed: ${smsResult.error}`);
     }
 
@@ -169,6 +187,22 @@ Deno.serve(async (req) => {
     if (updateError) {
       console.error('[SEND-GIFT-CARD-SMS] Failed to update delivery record:', updateError);
     }
+
+    // Log successful SMS activity
+    await activityLogger.giftCard('sms_sent', 'success',
+      `Gift card SMS sent successfully to ${formattedPhone} via ${smsResult.provider}`,
+      {
+        recipientId,
+        clientId: resolvedClientId,
+        metadata: {
+          delivery_id: deliveryId,
+          message_id: messageId,
+          provider: smsResult.provider,
+          card_value: giftCardValue,
+          fallback_used: smsResult.fallbackUsed || false,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({

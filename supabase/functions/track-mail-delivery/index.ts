@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +17,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('track-mail-delivery', req);
 
   try {
     const supabase = createClient(
@@ -82,6 +86,23 @@ Deno.serve(async (req) => {
       });
 
     console.log(`Logged mail_${event.status} event for recipient ${recipient.id}`);
+
+    // Log mail delivery activity
+    const eventType = event.status === 'delivered' ? 'mail_delivered' : 
+                      event.status === 'returned' ? 'mail_returned' : 'mail_sent';
+    await activityLogger.campaign(eventType, 'success',
+      `Mail ${event.status}: ${event.trackingCode}`,
+      {
+        recipientId: recipient.id,
+        campaignId: campaign.id,
+        clientId: (recipient.audiences as any)?.client_id,
+        metadata: {
+          tracking_code: event.trackingCode,
+          status: event.status,
+          ...event.metadata,
+        },
+      }
+    );
 
     // If delivered, evaluate campaign conditions
     if (event.status === 'delivered') {

@@ -7,6 +7,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsHeaders } from '../_shared/cors.ts';
 import { logError } from '../_shared/error-logger.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 interface MarketingEmailRequest {
   campaignId: string;
@@ -23,6 +24,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -147,6 +150,23 @@ Deno.serve(async (req) => {
       .eq('id', sendRecord.id);
 
     console.log(`[MARKETING-EMAIL] Sent to ${email}: ${result.success ? 'success' : 'failed'}`);
+
+    // Log activity
+    await activityLogger.communication(
+      result.success ? 'email_sent' : 'email_failed',
+      result.success ? 'success' : 'failed',
+      {
+        campaignId,
+        description: result.success ? `Marketing email sent to ${email}` : `Marketing email failed to ${email}: ${result.error}`,
+        metadata: {
+          send_id: sendRecord.id,
+          message_id: result.messageId,
+          email,
+          subject: renderedSubject,
+          error: result.error,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({

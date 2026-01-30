@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -97,6 +98,9 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('import-audience', req);
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -251,6 +255,24 @@ serve(async (req) => {
         valid_count: insertedCount
       })
       .eq('id', audience.id);
+
+    // Log audience import activity
+    await activityLogger.campaign('recipient_imported', 'success',
+      `Imported audience "${audienceName}" with ${insertedCount} recipients`,
+      {
+        userId: user.id,
+        clientId: clientId,
+        recipientsAffected: insertedCount,
+        metadata: {
+          audience_id: audience.id,
+          file_name: file.name,
+          file_size: file.size,
+          total_rows: rows.length,
+          valid_rows: insertedCount,
+          invalid_rows: rows.length - insertedCount,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({

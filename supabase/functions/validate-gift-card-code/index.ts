@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
 import { checkRateLimit, createRateLimitResponse } from '../_shared/rate-limiter.ts';
 import { ERROR_MESSAGES } from '../_shared/config.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('validate-gift-card-code', req);
 
   try {
     const { code, campaignId } = await req.json();
@@ -173,6 +177,19 @@ Deno.serve(async (req) => {
     });
 
     console.log("Code validated successfully:", code);
+    
+    // Log successful validation activity
+    await activityLogger.giftCard('card_validated', 'success',
+      `Gift card code validated successfully`,
+      {
+        recipientId: recipient.id,
+        campaignId,
+        metadata: {
+          redemption_id: redemption.id,
+        },
+      }
+    );
+    
     return Response.json(
       {
         valid: true,

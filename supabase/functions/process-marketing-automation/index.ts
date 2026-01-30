@@ -8,6 +8,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsHeaders } from '../_shared/cors.ts';
 import { logError } from '../_shared/error-logger.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 interface ProcessRequest {
   automationId?: string;
@@ -22,6 +23,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -261,6 +264,18 @@ Deno.serve(async (req) => {
     }
 
     console.log(`[AUTOMATION-PROCESS] Completed: ${processedCount} processed, ${completedCount} completed, ${failedCount} failed`);
+
+    // Log activity for automation processing
+    await activityLogger.system('job_completed', 'success', {
+      description: `Marketing automation processing completed: ${processedCount} processed, ${completedCount} completed, ${failedCount} failed`,
+      metadata: {
+        processed: processedCount,
+        completed: completedCount,
+        failed: failedCount,
+        total: enrollments.length,
+        automation_id: automationId,
+      },
+    });
 
     return new Response(
       JSON.stringify({

@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -89,6 +92,28 @@ Deno.serve(async (req) => {
         },
       });
     }
+
+    // Log activity
+    await activityLogger.communication(
+      payload.disposition ? 'call_completed' : 'call_inbound',
+      'success',
+      {
+        clientId: trackedNumber.campaigns?.client_id,
+        campaignId: trackedNumber.campaign_id,
+        recipientId: recipient?.id,
+        description: payload.disposition 
+          ? `Call completed with disposition: ${payload.disposition}` 
+          : `Incoming call from ${payload.phone}`,
+        metadata: {
+          call_session_id: callSession.id,
+          caller_phone: payload.phone,
+          tracked_number: payload.trackedNumber,
+          disposition: payload.disposition,
+          duration: payload.duration,
+          recipient_matched: !!recipient,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({ 

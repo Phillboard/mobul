@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('accept-invitation', req);
 
   try {
     const supabase = createClient(
@@ -115,6 +119,22 @@ serve(async (req) => {
       .eq("id", invitation.id);
 
     console.log(`Invitation accepted for ${invitation.email} with role ${invitation.role}`);
+
+    // Log user accepted invitation activity
+    await activityLogger.user('user_accepted_invite', 'success',
+      `User ${invitation.email} accepted invitation and joined as ${invitation.role}`,
+      {
+        userId: authData.user.id,
+        clientId: invitation.client_id,
+        targetUserEmail: invitation.email,
+        role: invitation.role,
+        metadata: {
+          invitation_id: invitation.id,
+          org_id: invitation.org_id,
+          full_name: fullName,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({

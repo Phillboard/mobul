@@ -12,6 +12,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { createErrorLogger, PROVISIONING_ERROR_CODES } from '../_shared/error-logger.ts';
 import type { ProvisioningErrorCode } from '../_shared/error-logger.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -88,6 +89,9 @@ serve(async (req) => {
 
   // Initialize error logger
   const logger = createErrorLogger('provision-gift-card-for-call-center');
+  
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('provision-gift-card-for-call-center', req);
 
   // Variables for error logging
   let recipientId: string | undefined;
@@ -358,6 +362,24 @@ serve(async (req) => {
     console.log(`║   SMS Sent: ${result.sms?.sent ? '✓' : '✗ ' + (result.sms?.error || 'No')}`);
     console.log('╚' + '═'.repeat(60) + '╝');
 
+    // Log successful provisioning via call center
+    await activityLogger.giftCard('card_provisioned', 'success',
+      `Gift card provisioned via call center: ${result.card?.brandName} $${result.card?.denomination}`,
+      {
+        recipientId,
+        campaignId,
+        clientId,
+        brandName: result.card?.brandName,
+        amount: result.card?.denomination,
+        metadata: {
+          source: 'call_center',
+          card_source: result.card?.source,
+          sms_sent: result.sms?.sent,
+          ledger_id: result.billing?.ledgerId,
+        },
+      }
+    );
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
@@ -391,6 +413,20 @@ serve(async (req) => {
     console.error('╚' + '═'.repeat(60) + '╝');
 
     await logger.logProvisioningError(errorCode, error, currentStep);
+    
+    // Log failed provisioning via call center
+    await activityLogger.giftCard('card_provisioned', 'failed',
+      `Call center gift card provisioning failed: ${errorMessage}`,
+      {
+        recipientId,
+        campaignId,
+        metadata: {
+          error_code: errorCode,
+          failed_step: currentStep.name,
+          source: 'call_center',
+        },
+      }
+    );
 
     const result: ProvisionResult = {
       success: false,

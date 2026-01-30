@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -262,6 +263,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const activityLogger = createActivityLogger(req);
+
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -278,6 +281,22 @@ serve(async (req) => {
     }
 
     const result = await allocateCredit(supabaseClient, requestBody);
+
+    // Log activity
+    await activityLogger.system('credit_allocated', 'success', {
+      userId: requestBody.allocatedByUserId,
+      description: `Credit allocated: $${requestBody.amount} from ${result.summary.fromAccountType} to ${result.summary.toAccountType}`,
+      metadata: {
+        amount: requestBody.amount,
+        from_account_id: requestBody.fromAccountId,
+        to_account_id: requestBody.toAccountId,
+        from_account_type: result.summary.fromAccountType,
+        to_account_type: result.summary.toAccountType,
+        from_balance_after: result.summary.fromBalanceAfter,
+        to_balance_after: result.summary.toBalanceAfter,
+        notes: requestBody.notes,
+      },
+    });
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -9,6 +9,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { corsHeaders } from '../_shared/cors.ts';
 import { sendSMS } from '../_shared/sms-provider.ts';
 import { logError } from '../_shared/error-logger.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 interface MarketingSMSRequest {
   campaignId: string;
@@ -23,6 +24,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -96,6 +99,23 @@ Deno.serve(async (req) => {
       .eq('id', sendRecord.id);
 
     console.log(`[MARKETING-SMS] Sent to ${phone}: ${result.success ? 'success' : 'failed'}`);
+
+    // Log activity
+    await activityLogger.communication(
+      result.success ? 'sms_outbound' : 'sms_failed',
+      result.success ? 'success' : 'failed',
+      {
+        campaignId,
+        recipientId: contactId || undefined,
+        description: result.success ? `Marketing SMS sent to ${phone}` : `Marketing SMS failed to ${phone}: ${result.error}`,
+        metadata: {
+          send_id: sendRecord.id,
+          message_id: result.messageId,
+          phone,
+          error: result.error,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({

@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +10,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('handle-incoming-call', req);
 
   try {
     const supabaseClient = createClient(
@@ -76,6 +80,24 @@ Deno.serve(async (req) => {
       console.error('Failed to create call session:', sessionError);
     } else {
       console.log('Call session created:', callSession.id);
+      
+      // Log inbound call activity
+      await activityLogger.communication('call_inbound', 'success',
+        `Inbound call from ${from} to ${to}`,
+        {
+          recipientId: matchedRecipient?.id,
+          campaignId: trackedNumber.campaign_id,
+          direction: 'inbound',
+          fromNumber: from,
+          toNumber: to,
+          metadata: {
+            call_sid: callSid,
+            call_session_id: callSession.id,
+            match_status: matchStatus,
+            campaign_name: trackedNumber.campaigns?.name,
+          },
+        }
+      );
     }
 
     // Get call forwarding number and recording preference

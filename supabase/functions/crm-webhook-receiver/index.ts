@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -148,6 +149,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     const url = new URL(req.url);
@@ -354,6 +357,21 @@ serve(async (req) => {
       .from('crm_integrations')
       .update({ last_event_at: new Date().toISOString() })
       .eq('id', integrationId);
+
+    // Log activity
+    await activityLogger.api('webhook_received', 'success', {
+      clientId: integration.client_id,
+      campaignId: integration.campaign_id,
+      recipientId: recipientId || undefined,
+      description: `CRM webhook received from ${integration.crm_provider}: ${parsedEvent.event_type}`,
+      metadata: {
+        crm_event_id: crmEvent?.id,
+        crm_provider: integration.crm_provider,
+        event_type: parsedEvent.event_type,
+        matched,
+        condition_triggered: conditionTriggered,
+      },
+    });
 
     return new Response(
       JSON.stringify({

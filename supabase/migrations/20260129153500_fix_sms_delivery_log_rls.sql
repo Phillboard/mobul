@@ -5,6 +5,10 @@
 DROP POLICY IF EXISTS "Service role has full access to sms delivery log" ON public.sms_delivery_log;
 DROP POLICY IF EXISTS "System can insert SMS logs" ON public.sms_delivery_log;
 DROP POLICY IF EXISTS "System can update SMS logs" ON public.sms_delivery_log;
+DROP POLICY IF EXISTS "Authenticated users can insert SMS logs" ON public.sms_delivery_log;
+DROP POLICY IF EXISTS "Authenticated users can update SMS logs" ON public.sms_delivery_log;
+DROP POLICY IF EXISTS "Anon can insert SMS logs" ON public.sms_delivery_log;
+DROP POLICY IF EXISTS "Anon can update SMS logs" ON public.sms_delivery_log;
 
 -- Create a proper service role policy with full access
 CREATE POLICY "Service role has full access to sms delivery log" 

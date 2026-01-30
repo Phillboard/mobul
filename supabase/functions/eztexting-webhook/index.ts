@@ -21,6 +21,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 // Opt-in keywords (case-insensitive)
 const OPT_IN_KEYWORDS = ['YES', 'Y', 'YEA', 'YEAH', 'YEP', 'YUP', 'OK', 'OKAY', 'SURE', 'ACCEPT'];
@@ -30,6 +31,7 @@ const OPT_OUT_KEYWORDS = ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'NO', 
 
 serve(async (req) => {
   console.log(`[EZTEXTING-WEBHOOK] Received ${req.method} request`);
+  const activityLogger = createActivityLogger(req);
   
   let phoneNumber: string = "";
   let message: string = "";
@@ -261,6 +263,24 @@ serve(async (req) => {
     } catch (broadcastError) {
       console.error("[EZTEXTING-WEBHOOK] Recipient broadcast error:", broadcastError);
     }
+
+    // Log activity
+    await activityLogger.communication(
+      newStatus === 'opted_in' ? 'opt_in' : newStatus === 'opted_out' ? 'opt_out' : 'sms_inbound',
+      'success',
+      {
+        campaignId: recipient.campaign_id,
+        recipientId: recipient.id,
+        description: `SMS response received from ${phoneNumber}: ${newStatus}`,
+        metadata: {
+          phone: phoneNumber,
+          message: message,
+          message_id: messageId,
+          status: newStatus,
+          provider: 'eztexting',
+        },
+      }
+    );
 
     // EZ Texting expects a 200 OK response
     // If you want to send an auto-reply, you can return a specific format

@@ -19,6 +19,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 // Opt-in keywords (case-insensitive)
 const OPT_IN_KEYWORDS = ['YES', 'Y', 'YEA', 'YEAH', 'YEP', 'YUP', 'OK', 'OKAY', 'SURE', 'ACCEPT'];
@@ -27,6 +28,9 @@ const OPT_IN_KEYWORDS = ['YES', 'Y', 'YEA', 'YEAH', 'YEP', 'YUP', 'OK', 'OKAY', 
 const OPT_OUT_KEYWORDS = ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'NO', 'OPTOUT', 'OPT OUT', 'STOP ALL'];
 
 serve(async (req) => {
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('handle-sms-response', req);
+
   // Twilio webhooks come as form-encoded data
   const contentType = req.headers.get("content-type") || "";
   
@@ -143,6 +147,24 @@ serve(async (req) => {
   if (logError) {
     console.error("[HANDLE-SMS-RESPONSE] Log error:", logError);
   }
+
+  // Log SMS response activity
+  const eventType = newStatus === 'opted_in' ? 'opt_in' : 
+                    newStatus === 'opted_out' ? 'opt_out' : 'sms_inbound';
+  await activityLogger.communication(eventType, 'success',
+    `SMS ${newStatus === 'opted_in' ? 'opt-in' : newStatus === 'opted_out' ? 'opt-out' : 'response'} from ${from}`,
+    {
+      recipientId: recipient.id,
+      campaignId: recipient.campaign_id,
+      direction: 'inbound',
+      fromNumber: from,
+      metadata: {
+        message_sid: messageSid,
+        response_text: body,
+        new_status: newStatus,
+      },
+    }
+  );
 
   // Find active call session for this recipient to broadcast update
   const { data: callSession } = await supabaseAdmin

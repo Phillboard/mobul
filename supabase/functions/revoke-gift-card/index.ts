@@ -9,6 +9,7 @@
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,6 +26,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('revoke-gift-card', req);
 
   try {
     // Validate authorization header
@@ -264,6 +268,24 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Gift card revoked: assignment=${assignmentId}, by=${user.id}, reason="${reason}"`);
+
+    // Log gift card revocation activity
+    await activityLogger.giftCard('card_revoked', 'success',
+      `Gift card revoked for ${recipientName}`,
+      {
+        userId: user.id,
+        recipientId: assignment.recipient_id,
+        campaignId: assignment.campaign_id,
+        brandName: brandName || undefined,
+        amount: cardValue || undefined,
+        metadata: {
+          assignment_id: assignmentId,
+          reason: reason.trim(),
+          original_status: originalStatus,
+          card_returned_to_inventory: !!inventoryCardId,
+        },
+      }
+    );
 
     return Response.json({
       success: true,

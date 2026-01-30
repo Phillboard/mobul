@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('bulk-approve-codes', req);
 
   try {
     const supabaseClient = createClient(
@@ -109,6 +113,22 @@ serve(async (req) => {
     }
 
     console.log(`Bulk ${action} completed: ${successCount} success, ${failedCount} failed`);
+
+    // Log bulk action activity
+    await activityLogger.giftCard(action === "approve" ? 'card_assigned' : 'card_cancelled',
+      successCount > 0 ? 'success' : 'failed',
+      `Bulk ${action}: ${successCount} codes ${action === "approve" ? "approved" : "rejected"}`,
+      {
+        userId: user.id,
+        metadata: {
+          action,
+          success_count: successCount,
+          failed_count: failedCount,
+          total_requested: recipientIds.length,
+          rejection_reason: action === "reject" ? rejectionReason : undefined,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({

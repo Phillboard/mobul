@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +10,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('approve-customer-code', req);
 
   try {
     const authHeader = req.headers.get('Authorization');
@@ -175,6 +179,26 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Code ${action}d:`, { recipientId: recipient.id, code: recipient.redemption_code, by: user.id });
+
+    // Log approval/rejection activity
+    await activityLogger.giftCard(action === 'approve' ? 'card_assigned' : 'card_cancelled', 
+      action === 'approve' ? 'success' : 'cancelled',
+      action === 'approve' 
+        ? `Recipient code approved by agent`
+        : `Recipient code rejected: ${rejectionReason || 'No reason'}`,
+      {
+        userId: user.id,
+        recipientId: recipient.id,
+        clientId: recipient.audience?.client_id,
+        metadata: {
+          redemption_code: recipient.redemption_code,
+          action,
+          call_session_id: callSessionId,
+          notes,
+          rejection_reason: action === 'reject' ? rejectionReason : undefined,
+        },
+      }
+    );
 
     return Response.json({
       success: true,

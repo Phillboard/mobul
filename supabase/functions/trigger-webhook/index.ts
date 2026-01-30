@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,6 +67,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('trigger-webhook', req);
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -128,6 +132,25 @@ serve(async (req) => {
           })
           .eq('id', webhook.id);
       }
+
+      // Log webhook activity
+      await activityLogger.api(result.success ? 'webhook_sent' : 'webhook_failed',
+        result.success ? 'success' : 'failed',
+        result.success 
+          ? `Webhook sent to ${webhook.name}: ${event_type}`
+          : `Webhook failed for ${webhook.name}: ${result.error}`,
+        {
+          clientId: client_id,
+          webhookUrl: webhook.url,
+          statusCode: result.status,
+          metadata: {
+            webhook_id: webhook.id,
+            webhook_name: webhook.name,
+            event_type,
+            response_status: result.status,
+          },
+        }
+      );
 
       results.push({
         webhook_id: webhook.id,

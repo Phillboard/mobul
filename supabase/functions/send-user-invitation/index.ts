@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,6 +39,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('send-user-invitation', req);
 
   try {
     const supabase = createClient(
@@ -200,6 +204,22 @@ serve(async (req) => {
 
     console.log(`Invitation created for ${email} with role ${role} - Token: ${invitation.token}`);
     console.log(`Invite URL: ${inviteUrl}`);
+
+    // Log user invitation activity
+    await activityLogger.user('user_invited', 'success',
+      `${inviter?.full_name || inviter?.email} invited ${email} as ${roleDisplay}`,
+      {
+        userId: user.id,
+        clientId,
+        targetUserEmail: email,
+        role,
+        metadata: {
+          invitation_id: invitation.id,
+          org_id: orgId,
+          org_name: orgName,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({

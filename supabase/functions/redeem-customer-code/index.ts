@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
 import { checkRateLimit, createRateLimitResponse } from '../_shared/rate-limiter.ts';
 import { ERROR_MESSAGES } from '../_shared/config.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('redeem-customer-code', req);
 
   try {
     const { redemptionCode, campaignId } = await req.json();
@@ -402,6 +406,21 @@ Deno.serve(async (req) => {
     const validCards = fullCards.filter(c => c !== null);
 
     console.log('Redemption successful:', { recipientId: recipient.id, cardCount: validCards.length });
+
+    // Log successful redemption activity
+    await activityLogger.giftCard('card_redeemed', 'success',
+      `Gift card(s) redeemed by recipient via landing page`,
+      {
+        recipientId: recipient.id,
+        campaignId: effectiveCampaignId,
+        clientId: effectiveClientId,
+        metadata: {
+          card_count: validCards.length,
+          total_value: validCards.reduce((sum, c) => sum + (c?.card_value || 0), 0),
+          brands: validCards.map(c => c?.brand_name).filter(Boolean),
+        },
+      }
+    );
 
     return Response.json({
       success: true,

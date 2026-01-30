@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +15,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('zapier-incoming-webhook', req);
 
   try {
     const url = new URL(req.url);
@@ -145,6 +149,20 @@ Deno.serve(async (req) => {
     }
 
     console.log('Incoming webhook processed successfully');
+
+    // Log incoming webhook activity
+    await activityLogger.api('webhook_received', 'success',
+      `Zapier incoming webhook: ${payload.action}`,
+      {
+        clientId,
+        endpoint: '/zapier-incoming-webhook',
+        method: 'POST',
+        metadata: {
+          action: payload.action,
+          result,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({ success: true, result }),

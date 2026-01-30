@@ -2,13 +2,14 @@
  * OverviewTab Component
  * 
  * Dashboard view with recent activity across all types, quick stats, and activity charts.
+ * Now displays real comparison percentages from the unified activity_log table.
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { 
   Activity, Gift, Megaphone, Phone, Code, Users, 
-  TrendingUp, TrendingDown, ArrowRight 
+  TrendingUp, TrendingDown, ArrowRight, Minus
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { useActivityLogs, useActivityStats } from '../../hooks';
@@ -49,8 +50,30 @@ export function OverviewTab({ onNavigateToTab }: OverviewTabProps) {
               {statsLoading ? '...' : stats?.today.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-3 w-3 text-green-500" />
-              <span className="text-green-500">+12%</span> from yesterday
+              {!statsLoading && stats && (
+                <>
+                  {stats.percent_change_direction === 'up' && (
+                    <>
+                      <TrendingUp className="h-3 w-3 text-green-500" />
+                      <span className="text-green-500">+{stats.percent_change}%</span>
+                    </>
+                  )}
+                  {stats.percent_change_direction === 'down' && (
+                    <>
+                      <TrendingDown className="h-3 w-3 text-red-500" />
+                      <span className="text-red-500">-{stats.percent_change}%</span>
+                    </>
+                  )}
+                  {stats.percent_change_direction === 'neutral' && (
+                    <>
+                      <Minus className="h-3 w-3 text-muted-foreground" />
+                      <span>0%</span>
+                    </>
+                  )}
+                  {' '}from yesterday
+                </>
+              )}
+              {statsLoading && '...'}
             </p>
           </CardContent>
         </Card>

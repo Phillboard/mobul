@@ -31,6 +31,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
 import { sendSMS, formatPhoneE164 } from "../_shared/sms-provider.ts";
 import { createErrorLogger } from "../_shared/error-logger.ts";
+import { createActivityLogger } from "../_shared/activity-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,6 +49,9 @@ serve(async (req) => {
 
   // Initialize error logger
   const errorLogger = createErrorLogger('send-sms-opt-in');
+  
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('send-sms-opt-in', req);
 
   // Declare variables at function scope for error logging
   let recipient_id: string | undefined;
@@ -256,6 +260,24 @@ serve(async (req) => {
         // Don't fail the request if broadcast fails
       }
     }
+
+    // Log opt-in SMS sent activity
+    await activityLogger.communication('sms_outbound', 'success',
+      `Opt-in SMS sent to ${formattedPhone} via ${smsResult.provider}`,
+      {
+        recipientId: recipient_id,
+        campaignId: campaign_id,
+        clientId,
+        direction: 'outbound',
+        toNumber: formattedPhone,
+        metadata: {
+          message_id: messageId,
+          provider: smsResult.provider,
+          call_session_id,
+          purpose: 'opt_in_request',
+        },
+      }
+    );
 
     return new Response(JSON.stringify({
       success: true,

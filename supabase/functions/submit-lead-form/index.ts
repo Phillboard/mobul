@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     const formData = await req.json() as LeadFormData;
@@ -116,6 +119,19 @@ Deno.serve(async (req) => {
     }
 
     console.log(`Lead form submitted successfully: lead_id=${lead.id}`);
+
+    // Log activity
+    await activityLogger.campaign('lead_submitted', 'success', {
+      campaignId,
+      recipientId,
+      description: `Lead form submitted by ${fullName}`,
+      metadata: {
+        lead_id: lead.id,
+        email,
+        phone: phone || null,
+        appointment_requested: appointmentRequested || false,
+      },
+    });
 
     // Dispatch Zapier event
     try {

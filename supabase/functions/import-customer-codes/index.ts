@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +10,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('import-customer-codes', req);
 
   try {
     const authHeader = req.headers.get('Authorization');
@@ -279,6 +283,26 @@ Deno.serve(async (req) => {
       duplicates: duplicateCount,
       errors: errorCount
     });
+
+    // Log import activity
+    await activityLogger.campaign('recipient_imported', successCount > 0 ? 'success' : 'failed',
+      `Imported ${successCount} customer codes from ${fileName || 'CSV'}`,
+      {
+        userId: user.id,
+        clientId,
+        campaignId,
+        recipientsAffected: successCount,
+        metadata: {
+          upload_id: upload.id,
+          audience_id: targetAudienceId,
+          file_name: fileName,
+          total_codes: codes.length,
+          successful: successCount,
+          duplicates: duplicateCount,
+          errors: errorCount,
+        },
+      }
+    );
 
     return Response.json({
       success: true,

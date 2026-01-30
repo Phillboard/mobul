@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     const supabaseClient = createClient(
@@ -75,6 +78,18 @@ serve(async (req) => {
     if (error) throw error;
 
     console.log(`API key created: ${apiKeyData.id} for client ${client_id}`);
+
+    // Log activity
+    await activityLogger.api('api_key_created', 'success', {
+      userId: user.id,
+      clientId: client_id,
+      description: `API key "${name}" created`,
+      metadata: {
+        api_key_id: apiKeyData.id,
+        key_name: name,
+        key_prefix: keyPrefix,
+      },
+    });
 
     return new Response(
       JSON.stringify({

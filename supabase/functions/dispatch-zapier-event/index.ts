@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,6 +71,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     const supabaseClient = createClient(
@@ -184,6 +187,22 @@ serve(async (req) => {
 
     const successCount = results.filter(r => r.success).length;
     console.log(`Successfully sent to ${successCount}/${results.length} connections`);
+
+    // Log activity for Zapier event dispatch
+    await activityLogger.api(
+      successCount > 0 ? 'webhook_sent' : 'webhook_failed',
+      successCount > 0 ? 'success' : 'failed',
+      {
+        clientId: client_id,
+        description: `Zapier event ${event_type} dispatched to ${successCount}/${connections.length} connections`,
+        metadata: {
+          event_type,
+          triggered: connections.length,
+          success_count: successCount,
+          failed_count: connections.length - successCount,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({ 

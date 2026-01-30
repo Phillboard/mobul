@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +18,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     const authHeader = req.headers.get('Authorization');
@@ -272,6 +275,21 @@ Deno.serve(async (req) => {
       });
 
     console.log(`Condition ${conditionNumber} completed successfully`);
+
+    // Log activity
+    await activityLogger.campaign('condition_completed', 'success', {
+      userId: user.id,
+      campaignId,
+      recipientId,
+      description: `Condition ${conditionNumber} completed${giftCardData ? ` - Gift card assigned` : ''}`,
+      metadata: {
+        call_session_id: callSessionId,
+        condition_number: conditionNumber,
+        gift_card_assigned: !!giftCardData,
+        gift_card_value: giftCardData?.value,
+        notes,
+      },
+    });
 
     return new Response(
       JSON.stringify({

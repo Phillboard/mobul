@@ -17,6 +17,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { createErrorLogger, PROVISIONING_ERROR_CODES } from '../_shared/error-logger.ts';
 import type { ProvisioningErrorCode } from '../_shared/error-logger.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 // NOTE: Tillo integration disabled for now - only using uploaded inventory
 
@@ -89,6 +90,9 @@ serve(async (req) => {
 
   // Initialize error logger with comprehensive tracing
   const logger = createErrorLogger('provision-gift-card-unified');
+  
+  // Initialize activity logger for audit trail
+  const activityLogger = createActivityLogger('provision-gift-card-unified', req);
 
   // Declare variables at function scope for error logging access
   let campaignId: string | undefined;
@@ -634,6 +638,23 @@ serve(async (req) => {
     console.log(`║   Profit: $${result.billing?.profit}`);
     console.log('╚' + '═'.repeat(70) + '╝');
 
+    // Log successful provisioning activity
+    await activityLogger.giftCard('card_provisioned', 'success', 
+      `Gift card provisioned: ${result.card?.brandName} $${result.card?.denomination} for recipient`,
+      {
+        campaignId,
+        recipientId,
+        brandName: result.card?.brandName,
+        amount: result.card?.denomination,
+        metadata: {
+          source,
+          billed_entity: result.billing?.billedEntity,
+          amount_billed: result.billing?.amountBilled,
+          ledger_id: result.billing?.ledgerId,
+        },
+      }
+    );
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
@@ -675,6 +696,21 @@ serve(async (req) => {
 
     // Log to database
     await logger.logProvisioningError(errorCode, error, currentStep);
+    
+    // Log failed provisioning activity
+    await activityLogger.giftCard('card_provisioned', 'failed',
+      `Gift card provisioning failed: ${errorMessage}`,
+      {
+        campaignId,
+        recipientId,
+        brandName: brandId,
+        amount: denomination,
+        metadata: {
+          error_code: errorCode,
+          failed_step: currentStep.name,
+        },
+      }
+    );
 
     const result: ProvisionResult = {
       success: false,

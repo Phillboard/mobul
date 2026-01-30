@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import Stripe from 'https://esm.sh/stripe@14.21.0';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     // Authenticate user
@@ -93,6 +96,21 @@ serve(async (req) => {
         poolName,
         provider: provider || 'Generic',
         type: 'gift_card_purchase',
+      },
+    });
+
+    // Log activity
+    await activityLogger.giftCard('purchase_initiated', 'success', {
+      userId: user.id,
+      clientId,
+      description: `Gift card purchase initiated - ${quantity} cards at $${cardValue}`,
+      metadata: {
+        pool_name: poolName,
+        quantity,
+        card_value: cardValue,
+        provider,
+        stripe_session_id: session.id,
+        total_amount: totalAmount / 100,
       },
     });
 

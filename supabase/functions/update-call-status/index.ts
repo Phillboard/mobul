@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +10,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const activityLogger = createActivityLogger(req);
 
   try {
     const supabaseClient = createClient(
@@ -61,6 +64,18 @@ Deno.serve(async (req) => {
     }
 
     console.log('Call session updated successfully');
+
+    // Log activity for call status update
+    await activityLogger.communication('call_status_updated', 'success', {
+      description: `Call status updated to ${callStatus.toLowerCase()}`,
+      metadata: {
+        call_sid: callSid,
+        call_status: callStatus.toLowerCase(),
+        call_duration: callDuration ? parseInt(callDuration, 10) : undefined,
+        recording_url: recordingUrl,
+        recording_sid: recordingSid,
+      },
+    });
 
     return new Response(
       JSON.stringify({ success: true }),

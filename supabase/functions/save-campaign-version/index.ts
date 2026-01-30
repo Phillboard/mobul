@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,7 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  const activityLogger = createActivityLogger(req);
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -65,6 +67,19 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     console.log(`Campaign version ${nextVersion} saved for campaign ${campaignId}`);
+
+    // Log activity
+    await activityLogger.campaign('campaign_updated', 'success', {
+      userId: user.id,
+      clientId: campaign.client_id,
+      campaignId: campaignId,
+      description: `Campaign version ${nextVersion} saved`,
+      metadata: {
+        version_number: nextVersion,
+        change_description: changeDescription,
+        version_id: data.id,
+      },
+    });
 
     return new Response(JSON.stringify({ success: true, version: data }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

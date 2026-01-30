@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Initialize activity logger
+  const activityLogger = createActivityLogger('complete-call-disposition', req);
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -134,6 +138,21 @@ Deno.serve(async (req) => {
     } catch (zapierError) {
       console.error('Failed to dispatch Zapier event:', zapierError);
     }
+
+    // Log call completion activity
+    await activityLogger.communication('call_completed', 'success',
+      `Call completed with disposition: ${disposition}`,
+      {
+        recipientId: callSession.recipient_id,
+        campaignId: callSession.campaign_id,
+        clientId: callSession.campaigns?.client_id,
+        metadata: {
+          call_session_id: callSessionId,
+          disposition,
+          notes,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({ success: true, message: 'Call disposition recorded successfully' }),
