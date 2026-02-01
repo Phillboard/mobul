@@ -220,7 +220,7 @@ serve(async (req) => {
     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
     
     <p style="font-size: 12px; color: #9ca3af; margin-bottom: 0; text-align: center;">
-      This is an automated alert from the Mobul ACE Marketing Platform.
+      This is an automated alert from the Mobul Marketing Platform.
     </p>
   </div>
 </body>

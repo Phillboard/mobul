@@ -154,7 +154,7 @@ async function transferTable(
 
 async function main() {
   console.log('=========================================');
-  console.log('  ACE Engage - Data Transfer Script');
+  console.log('  Mobul - Data Transfer Script');
   console.log('=========================================');
   console.log('');
   console.log(`OLD Database: arzthloosvnasokxygfo`);

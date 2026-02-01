@@ -1,6 +1,6 @@
 # Comprehensive Simulated Data System
 
-A complete, production-ready system for generating large-scale, realistic test data for the ACE Engage platform. This system creates tens of thousands of records with historical patterns, complete event sequences, and realistic temporal distributions to support analytics, development, testing, and demonstrations.
+A complete, production-ready system for generating large-scale, realistic test data for the Mobul platform. This system creates tens of thousands of records with historical patterns, complete event sequences, and realistic temporal distributions to support analytics, development, testing, and demonstrations.
 
 ## Features
 

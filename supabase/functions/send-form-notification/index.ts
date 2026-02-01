@@ -104,8 +104,8 @@ serve(async (req) => {
         }
 
         const resend = new Resend(resendApiKey);
-        const fromEmail = Deno.env.get('FROM_EMAIL') || 'noreply@mobulace.com';
-        const fromName = form.clients?.name || 'Mobul ACE';
+        const fromEmail = Deno.env.get('FROM_EMAIL') || 'noreply@mobul.com';
+        const fromName = form.clients?.name || 'Mobul';
 
         const { data: emailResult, error: emailError } = await resend.emails.send({
           from: `${fromName} <${fromEmail}>`,

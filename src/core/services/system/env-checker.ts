@@ -188,7 +188,7 @@ export function isMVPReady(): { ready: boolean; reason?: string } {
  * Generate .env template
  */
 export function generateEnvTemplate(): string {
-  let template = '# Environment Variables for ACE Engage Platform\n';
+  let template = '# Environment Variables for Mobul Platform\n';
   template += '# Copy this file to .env and fill in your values\n\n';
   
   const byCategory = getEnvVarsByCategory();

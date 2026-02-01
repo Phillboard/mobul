@@ -435,7 +435,7 @@ function generateReport() {
 async function main() {
   console.log('');
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('   ACE ENGAGE - Data Validation & Performance Testing');
+  console.log('   MOBUL - Data Validation & Performance Testing');
   console.log('═══════════════════════════════════════════════════════════════');
   
   try {

@@ -33,7 +33,7 @@ export function ZapierIntegrationTab() {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <CardTitle className="flex items-center gap-2"><Zap className="h-5 w-5 text-primary" />Zapier Integrations</CardTitle>
-                  <CardDescription>Connect ACE Engage to 6,000+ apps via Zapier</CardDescription>
+                  <CardDescription>Connect Mobul to 6,000+ apps via Zapier</CardDescription>
                 </div>
                 <Button onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4 mr-2" />Connect New Zap</Button>
               </div>
@@ -77,12 +77,12 @@ export function ZapierIntegrationTab() {
               )}
             </CardContent>
           </Card>
-          <Card><CardHeader><CardTitle>Getting Started with Zapier</CardTitle><CardDescription>Learn how to connect ACE Engage to thousands of apps</CardDescription></CardHeader><CardContent><ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground"><li>Click "Connect New Zap" above to start</li><li>Create a new Zap in Zapier with "Webhooks by Zapier" as the trigger</li><li>Choose "Catch Hook" and copy the webhook URL</li><li>Paste the URL in the connection dialog</li><li>Select which ACE Engage events should trigger your Zap</li><li>Complete your Zap in Zapier with actions like sending emails, creating CRM records, etc.</li></ol></CardContent></Card>
+          <Card><CardHeader><CardTitle>Getting Started with Zapier</CardTitle><CardDescription>Learn how to connect Mobul to thousands of apps</CardDescription></CardHeader><CardContent><ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground"><li>Click "Connect New Zap" above to start</li><li>Create a new Zap in Zapier with "Webhooks by Zapier" as the trigger</li><li>Choose "Catch Hook" and copy the webhook URL</li><li>Paste the URL in the connection dialog</li><li>Select which Mobul events should trigger your Zap</li><li>Complete your Zap in Zapier with actions like sending emails, creating CRM records, etc.</li></ol></CardContent></Card>
         </TabsContent>
         <TabsContent value="analytics"><ZapierAnalytics /></TabsContent>
       </Tabs>
       <ZapierConnectionDialog open={dialogOpen} onOpenChange={setDialogOpen} onCreateConnection={async (connection) => { await createConnection.mutateAsync(connection); }} />
-      <AlertDialog open={!!deleteConnectionId} onOpenChange={() => setDeleteConnectionId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Zapier Connection?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this Zapier connection. Your Zap in Zapier will stop receiving events from ACE Engage.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => { if (deleteConnectionId) { deleteConnection.mutate(deleteConnectionId); setDeleteConnectionId(null); } }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog open={!!deleteConnectionId} onOpenChange={() => setDeleteConnectionId(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete Zapier Connection?</AlertDialogTitle><AlertDialogDescription>This will permanently delete this Zapier connection. Your Zap in Zapier will stop receiving events from Mobul.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => { if (deleteConnectionId) { deleteConnection.mutate(deleteConnectionId); setDeleteConnectionId(null); } }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </div>
   );
 }

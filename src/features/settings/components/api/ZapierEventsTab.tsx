@@ -126,7 +126,7 @@ export function ZapierEventsTab() {
           <div className="space-y-2">
             <h4 className="font-medium">1. Connect Your Account</h4>
             <p className="text-sm text-muted-foreground">
-              Search for "ACE Engage" in Zapier and connect using your API key.
+              Search for "Mobul" in Zapier and connect using your API key.
             </p>
           </div>
           <div className="space-y-2">

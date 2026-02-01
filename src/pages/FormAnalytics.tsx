@@ -1,13 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import { useAceForm } from '@/features/ace-forms/hooks';
-import { FormAnalytics } from "@/features/ace-forms/components";
+import { useForm } from '@/features/forms/hooks';
+import { FormAnalytics as FormAnalyticsComponent } from "@/features/forms/components";
 
-export default function AceFormAnalytics() {
+export default function FormAnalytics() {
   const { formId } = useParams();
   const navigate = useNavigate();
-  const { data: form, isLoading } = useAceForm(formId || "");
+  const { data: form, isLoading } = useForm(formId || "");
 
   if (isLoading) {
     return (
@@ -25,7 +25,7 @@ export default function AceFormAnalytics() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Form Not Found</h1>
           <p className="text-muted-foreground mb-4">This form does not exist.</p>
-          <Button onClick={() => navigate("/ace-forms")}>
+          <Button onClick={() => navigate("/forms")}>
             Back to Forms
           </Button>
         </div>
@@ -41,7 +41,7 @@ export default function AceFormAnalytics() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/ace-forms")}
+            onClick={() => navigate("/forms")}
             className="mb-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -53,7 +53,7 @@ export default function AceFormAnalytics() {
       </div>
 
       {/* Analytics Dashboard */}
-      <FormAnalytics formId={formId!} />
+      <FormAnalyticsComponent formId={formId!} />
     </div>
   );
 }

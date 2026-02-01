@@ -71,7 +71,7 @@ export class FormBuilderErrorBoundary extends Component<Props, State> {
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Try Again
                   </Button>
-                  <Button onClick={() => window.location.href = '/ace-forms'} variant="default">
+                  <Button onClick={() => window.location.href = '/forms'} variant="default">
                     Back to Forms
                   </Button>
                 </div>

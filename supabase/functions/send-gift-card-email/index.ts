@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     }
 
     // Get client details for branding
-    let clientName = 'Mobul ACE';
+    let clientName = 'Mobul';
     let clientLogoUrl;
 
     if (finalClientId) {
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
     });
 
     // Get from email settings
-    const fromEmail = Deno.env.get('FROM_EMAIL') || 'noreply@mobulace.com';
+    const fromEmail = Deno.env.get('FROM_EMAIL') || 'noreply@mobul.com';
     const fromName = Deno.env.get('FROM_NAME') || clientName;
 
     // Send email via Resend

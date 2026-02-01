@@ -6,7 +6,7 @@ import { Label } from "@/shared/components/ui/label";
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
 import { FormConfig } from "@/types/aceForms";
-import { useFormContext } from '@/features/ace-forms/hooks';
+import { useFormContext } from '@/features/forms/hooks';
 import { Badge } from "@/shared/components/ui/badge";
 
 interface AIFormGeneratorProps {

@@ -254,7 +254,7 @@ function createPassJson({
     passTypeIdentifier: passTypeId,
     serialNumber: serialNumber,
     teamIdentifier: teamId,
-    organizationName: 'Mobul ACE',
+    organizationName: 'Mobul',
     description: `${brandName} Gift Card`,
     logoText: brandName,
     
@@ -314,7 +314,7 @@ function createPassJson({
         {
           key: 'poweredBy',
           label: 'Powered By',
-          value: 'Mobul ACE - Direct Mail Campaign Platform',
+          value: 'Mobul - Direct Mail Campaign Platform',
         },
       ],
     },

@@ -27,7 +27,7 @@ export function ApprovalNotificationEmail({
   mailDate,
   recipientCount,
   budgetAmount,
-  approvalUrl = 'https://app.mobulace.com/campaigns',
+  approvalUrl = 'https://app.mobul.com/campaigns',
   clientName,
   clientLogoUrl,
 }: ApprovalNotificationEmailProps): string {
@@ -102,7 +102,7 @@ export function ApprovalNotificationEmail({
   return renderEmailLayout({
     children: emailBody,
     preheader: `Campaign "${campaignName}" needs your approval`,
-    clientName: clientName || 'Mobul ACE',
+    clientName: clientName || 'Mobul',
     logoUrl: clientLogoUrl,
   });
 }

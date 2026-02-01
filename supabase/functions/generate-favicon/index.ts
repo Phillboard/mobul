@@ -29,7 +29,7 @@ serve(async (req) => {
         messages: [
           {
             role: "user",
-            content: "Generate a modern, professional favicon logo for 'ACE Engage' - a direct mail marketing platform. The design should feature the letters 'ACE' in a bold, modern sans-serif font. Use a vibrant blue (#2563eb) as the primary color with electric purple/violet (#8b5cf6) accents. The logo should be clean, minimal, and work well at small sizes (32x32px). Include a subtle lightning bolt or engagement icon integrated into the design. The background should be white or transparent. Make it look professional and tech-forward.",
+            content: "Generate a modern, professional favicon logo for 'Mobul' - a direct mail marketing platform. The design should feature the letter 'M' or 'Mobul' in a bold, modern sans-serif font. Use a vibrant blue (#2563eb) as the primary color with electric purple/violet (#8b5cf6) accents. The logo should be clean, minimal, and work well at small sizes (32x32px). Include a subtle engagement or mail icon integrated into the design. The background should be white or transparent. Make it look professional and tech-forward.",
           },
         ],
         modalities: ["image", "text"],

@@ -2,11 +2,11 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Save, Eye, Sparkles, ChevronRight, Code2, Loader2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import { useAceForms, useAceForm } from '@/features/ace-forms/hooks';
+import { useForms, useForm } from '@/features/forms/hooks';
 import { useTenant } from "@/contexts/TenantContext";
 import { Layout } from "@/shared/components/layout/Layout";
 import { 
-  FormBuilder,
+  FormBuilder as FormBuilderComponent,
   RevealDesigner,
   FormAnalytics,
   FormTemplateSelector,
@@ -14,7 +14,7 @@ import {
   FormEmbedDialog,
   AIFormGenerator,
   KeyboardShortcutsHelp 
-} from "@/features/ace-forms/components";
+} from "@/features/forms/components";
 import { FormBuilderProvider, useFormBuilder } from "@app/providers/FormBuilderProvider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
@@ -42,9 +42,9 @@ function TemplateSelectionScreen({
             <Button 
               variant="link" 
               className="p-0 h-auto font-normal"
-              onClick={() => navigate("/ace-forms")}
+              onClick={() => navigate("/forms")}
             >
-              Ace Forms
+              Forms
             </Button>
             <ChevronRight className="w-4 h-4" />
             <span className="text-foreground font-medium">Generate with AI</span>
@@ -64,9 +64,9 @@ function TemplateSelectionScreen({
             <Button 
               variant="link" 
               className="p-0 h-auto font-normal"
-              onClick={() => navigate("/ace-forms")}
+              onClick={() => navigate("/forms")}
             >
-              Ace Forms
+              Forms
             </Button>
             <ChevronRight className="w-4 h-4" />
             <span className="text-foreground font-medium">Choose Template</span>
@@ -76,7 +76,7 @@ function TemplateSelectionScreen({
             onSelect={(template) => {
               onTemplateSelected(template.name, template.config);
             }}
-            onCancel={() => navigate("/ace-forms")}
+            onCancel={() => navigate("/forms")}
           />
         </div>
       </Layout>
@@ -91,9 +91,9 @@ function TemplateSelectionScreen({
           <Button 
             variant="link" 
             className="p-0 h-auto font-normal"
-            onClick={() => navigate("/ace-forms")}
+            onClick={() => navigate("/forms")}
           >
-            Ace Forms
+            Forms
           </Button>
           <ChevronRight className="w-4 h-4" />
           <span className="text-foreground font-medium">Create New Form</span>
@@ -135,7 +135,7 @@ function TemplateSelectionScreen({
   );
 }
 
-interface AceFormBuilderContentProps {
+interface FormBuilderContentProps {
   initialName?: string;
   initialDescription?: string;
 }
@@ -143,11 +143,11 @@ interface AceFormBuilderContentProps {
 /**
  * Inner component that uses FormBuilderContext
  */
-function AceFormBuilderContent({ initialName, initialDescription }: AceFormBuilderContentProps) {
+function FormBuilderContent({ initialName, initialDescription }: FormBuilderContentProps) {
   const { formId } = useParams();
   const navigate = useNavigate();
   const { currentClient } = useTenant();
-  const { createForm, updateForm } = useAceForms(currentClient?.id);
+  const { createForm, updateForm } = useForms(currentClient?.id);
   const [showExport, setShowExport] = useState(false);
   const [showEmbed, setShowEmbed] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
@@ -242,16 +242,16 @@ function AceFormBuilderContent({ initialName, initialDescription }: AceFormBuild
         // Update last saved ref to prevent immediate auto-save
         lastSavedConfigRef.current = JSON.stringify(config);
         toast({
-          title: "✅ Saved",
+          title: "Saved",
           description: "Your form has been saved successfully.",
         });
         setLastSaved(new Date());
         return formId;
       } else {
         const newForm = await createForm.mutateAsync(formData);
-        navigate(`/ace-forms/${newForm.id}/builder`);
+        navigate(`/forms/${newForm.id}/builder`);
         toast({
-          title: "✅ Form Created",
+          title: "Form Created",
           description: "Your form has been created successfully.",
         });
         setLastSaved(new Date());
@@ -303,9 +303,9 @@ function AceFormBuilderContent({ initialName, initialDescription }: AceFormBuild
             <Button
               variant="link" 
               className="p-0 h-auto font-normal"
-              onClick={() => navigate("/ace-forms")}
+              onClick={() => navigate("/forms")}
             >
-              Ace Forms
+              Forms
             </Button>
             <ChevronRight className="w-4 h-4" />
             <span className="text-foreground font-medium">{formName || "Untitled Form"}</span>
@@ -349,7 +349,7 @@ function AceFormBuilderContent({ initialName, initialDescription }: AceFormBuild
                 </div>
               ) : lastSaved ? (
                 <span className="text-xs text-muted-foreground">
-                  ✓ Saved {lastSaved.toLocaleTimeString()}
+                  Saved {lastSaved.toLocaleTimeString()}
                 </span>
               ) : null}
               
@@ -410,7 +410,7 @@ function AceFormBuilderContent({ initialName, initialDescription }: AceFormBuild
 
         {/* Builder */}
         <div className="flex-1 overflow-hidden">
-          {activeTab === 'form' && <FormBuilder activeTab={activeTab} />}
+          {activeTab === 'form' && <FormBuilderComponent activeTab={activeTab} />}
           
           {activeTab === 'reveal' && (
             <RevealDesigner
@@ -463,16 +463,16 @@ function AceFormBuilderContent({ initialName, initialDescription }: AceFormBuild
 }
 
 /**
- * Ace Form Builder - Visual form editor
+ * Form Builder - Visual form editor
  * Wraps the content in FormBuilderProvider for state management
  */
-export default function AceFormBuilder() {
+export default function FormBuilder() {
   const { formId } = useParams();
   const navigate = useNavigate();
   const [showTemplates, setShowTemplates] = useState(!formId);
   const [formConfig, setFormConfig] = useState<any>(null);
   const [formName, setFormName] = useState("");
-  const { data: existingForm, isLoading } = useAceForm(formId || "");
+  const { data: existingForm, isLoading } = useForm(formId || "");
 
   // Show template selection for new forms (before FormBuilderProvider)
   if (!formId && showTemplates && !formConfig) {
@@ -513,7 +513,7 @@ export default function AceFormBuilder() {
 
   return (
     <FormBuilderProvider initialConfig={initialConfig}>
-      <AceFormBuilderContent 
+      <FormBuilderContent 
         initialName={initialName} 
         initialDescription={initialDescription} 
       />

@@ -4,15 +4,15 @@ import { useToast } from '@shared/hooks';
 import { AceForm, FormConfig } from "@/types/aceForms";
 
 /**
- * Hook for managing Ace Forms CRUD operations
+ * Hook for managing Forms CRUD operations
  */
-export function useAceForms(clientId?: string) {
+export function useForms(clientId?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Fetch all forms for a client
   const { data: forms, isLoading } = useQuery({
-    queryKey: ["ace-forms", clientId],
+    queryKey: ["forms", clientId],
     queryFn: async () => {
       let query = supabase
         .from("ace_forms")
@@ -56,7 +56,7 @@ export function useAceForms(clientId?: string) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ace-forms"] });
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
       toast({
         title: "Form Created",
         description: "Your form has been created successfully",
@@ -89,7 +89,7 @@ export function useAceForms(clientId?: string) {
     },
     onSuccess: (result) => {
       // Only invalidate the list, not the current form being edited
-      queryClient.invalidateQueries({ queryKey: ["ace-forms"], exact: true });
+      queryClient.invalidateQueries({ queryKey: ["forms"], exact: true });
       
       // Skip toast for silent auto-saves
       if (!result.silent) {
@@ -119,7 +119,7 @@ export function useAceForms(clientId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ace-forms"] });
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
       toast({
         title: "Form Deleted",
         description: "The form has been removed",
@@ -165,7 +165,7 @@ export function useAceForms(clientId?: string) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ace-forms"] });
+      queryClient.invalidateQueries({ queryKey: ["forms"] });
       toast({
         title: "Form Duplicated",
         description: "A copy of the form has been created",
@@ -190,8 +190,11 @@ export function useAceForms(clientId?: string) {
   };
 }
 
+// Alias for backward compatibility
+export const useAceForms = useForms;
+
 // Hook for getting a single form
-export function useAceForm(formId: string) {
+export function useForm(formId: string) {
   return useQuery({
     queryKey: ["ace-form", formId],
     queryFn: async () => {
@@ -210,6 +213,9 @@ export function useAceForm(formId: string) {
     enabled: !!formId,
   });
 }
+
+// Alias for backward compatibility
+export const useAceForm = useForm;
 
 // Hook for form submissions
 export function useFormSubmissions(formId: string) {

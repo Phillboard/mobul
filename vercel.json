@@ -1,4 +1,11 @@
 {
+  "redirects": [
+    { "source": "/ace-forms", "destination": "/forms", "permanent": true },
+    { "source": "/ace-forms/new", "destination": "/forms/new", "permanent": true },
+    { "source": "/ace-forms/:formId/builder", "destination": "/forms/:formId/builder", "permanent": true },
+    { "source": "/ace-forms/:formId/analytics", "destination": "/forms/:formId/analytics", "permanent": true },
+    { "source": "/ace-forms/docs", "destination": "/forms/docs", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]

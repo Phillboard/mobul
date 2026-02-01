@@ -7,8 +7,8 @@ import { useAuth } from '@/core/auth/AuthProvider';
  * Organization entity
  * 
  * Per PLATFORM_DICTIONARY.md:
- * - 'platform' = ACE Engage itself (top-level)
- * - 'agency' = Marketing agency/reseller using ACE Engage
+ * - 'platform' = Mobul itself (top-level)
+ * - 'agency' = Marketing agency/reseller using Mobul
  * 
  * Note: 'internal' is legacy, should be 'platform'
  */

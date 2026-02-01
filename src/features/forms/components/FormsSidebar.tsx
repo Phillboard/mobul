@@ -13,19 +13,19 @@ import {
 } from "@/shared/components/ui/sidebar";
 
 const menuItems = [
-  { title: "All Forms", url: "/ace-forms", icon: LayoutGrid, end: true },
-  { title: "Create New", url: "/ace-forms/new", icon: Plus },
-  { title: "Documentation", url: "/ace-forms/docs", icon: FileText },
+  { title: "All Forms", url: "/forms", icon: LayoutGrid, end: true },
+  { title: "Create New", url: "/forms/new", icon: Plus },
+  { title: "Documentation", url: "/forms/docs", icon: FileText },
 ];
 
-export function AceFormsSidebar() {
+export function FormsSidebar() {
   const { open } = useSidebar();
 
   return (
     <Sidebar collapsible="icon" className={open ? "w-60" : "w-14"}>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Ace Forms</SidebarGroupLabel>
+          <SidebarGroupLabel>Forms</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (

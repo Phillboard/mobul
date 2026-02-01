@@ -50,11 +50,11 @@ const routes: RouteInfo[] = [
   { path: "/landing-pages", name: "Landing Pages", category: "Campaigns", auth: "protected", requiredPermissions: ["landingpages.view"], description: "PURL landing page library" },
   { path: "/landing-pages/:id/visual-editor", name: "Landing Page Editor", category: "Campaigns", auth: "protected", description: "AI-powered landing page designer" },
   
-  // ACE Forms
-  { path: "/ace-forms", name: "ACE Forms", category: "Campaigns", auth: "protected", description: "Form library" },
-  { path: "/ace-forms/new", name: "Create Form", category: "Campaigns", auth: "protected", description: "Form builder wizard" },
-  { path: "/ace-forms/:formId/builder", name: "Form Builder", category: "Campaigns", auth: "protected", description: "Drag-and-drop form builder" },
-  { path: "/ace-forms/:formId/analytics", name: "Form Analytics", category: "Campaigns", auth: "protected", description: "Form submission analytics" },
+  // Forms
+  { path: "/forms", name: "Forms", category: "Campaigns", auth: "protected", description: "Form library" },
+  { path: "/forms/new", name: "Create Form", category: "Campaigns", auth: "protected", description: "Form builder wizard" },
+  { path: "/forms/:formId/builder", name: "Form Builder", category: "Campaigns", auth: "protected", description: "Drag-and-drop form builder" },
+  { path: "/forms/:formId/analytics", name: "Form Analytics", category: "Campaigns", auth: "protected", description: "Form submission analytics" },
   
   // Gift Cards & Rewards
   { path: "/gift-cards", name: "Gift Card Inventory", category: "Rewards", auth: "protected", requiredPermissions: ["giftcards.view"], description: "Gift card pool management" },

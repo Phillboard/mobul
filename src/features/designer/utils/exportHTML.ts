@@ -104,7 +104,7 @@ function generateHTMLHead(
   return `<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ACE Engage Design</title>
+  <title>Mobul Design</title>
   ${styleTag}
 </head>`;
 }

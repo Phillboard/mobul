@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Copy, Check } from "lucide-react";
 import { FormConfig, ExportFormat } from "@/types/aceForms";
-import { generateHTMLExport, generateJavaScriptEmbed, generateIframeEmbed, generateReactComponent } from "@/features/ace-forms/utils/aceFormExport";
+import { generateHTMLExport, generateJavaScriptEmbed, generateIframeEmbed, generateReactComponent } from "@/features/forms/utils/formExport";
 import { useToast } from '@shared/hooks';
 
 interface ExportDialogProps {

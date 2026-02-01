@@ -195,7 +195,7 @@ serve(async (req) => {
               <p style="color: #666; font-size: 14px;">If you didn't expect this invitation, you can safely ignore this email.</p>
             </div>
             <div class="footer">
-              <p>© ${new Date().getFullYear()} Mobul ACE Platform. All rights reserved.</p>
+              <p>© ${new Date().getFullYear()} Mobul Platform. All rights reserved.</p>
             </div>
           </div>
         </body>

@@ -151,7 +151,7 @@ PAGE STRUCTURE:
 
 7. FOOTER:
    - Minimal, dark
-   - Copyright + "Powered by ACE Engage"
+   - Copyright + "Powered by Mobul"
 
 OUTPUT: Return ONLY the complete HTML. No markdown. No explanations.`;
 

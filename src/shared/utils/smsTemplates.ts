@@ -3,18 +3,43 @@
  * 
  * Standardized template variable replacement for all SMS messages.
  * Variables use the format: {variable_name} or ${value} for currency.
+ * 
+ * Supports:
+ * - Recipient info: {first_name}, {last_name}, {email}, {phone}, {recipient_company}
+ * - Address: {address1}, {address2}, {city}, {state}, {zip}
+ * - Gift card: {code}, {value}, {brand}, {provider}, {link}
+ * - Client: {client_name}, {company} (backward compat for client name)
+ * - Custom fields: {custom.field_name}
  */
 
 export interface SMSTemplateVariables {
+  // Recipient identity
   first_name?: string;
   last_name?: string;
+  email?: string;
+  phone?: string;
+  recipient_company?: string;
+  
+  // Address
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  
+  // Gift card
   value?: number | string;
-  provider?: string;
   brand?: string;
-  company?: string;
-  client_name?: string;
-  link?: string;
+  provider?: string; // Alias for brand
   code?: string;
+  link?: string;
+  
+  // Client/business
+  client_name?: string;
+  company?: string; // Backward compat alias for client_name
+  
+  // Custom fields from recipient
+  custom?: Record<string, any>;
 }
 
 /**
@@ -32,6 +57,7 @@ export const DEFAULT_DELIVERY_MESSAGE =
 /**
  * Renders an SMS template by replacing variables with actual values.
  * Supports both {variable} and ${value} syntax for currency values.
+ * Also supports custom fields with {custom.field_name} syntax.
  * 
  * @param template - The SMS template string
  * @param variables - Object containing variable values
@@ -45,11 +71,21 @@ export function renderSMSTemplate(
   
   let result = template;
   
-  // Replace all supported variables (case-insensitive)
+  // Build replacements map (case-insensitive matching)
   const replacements: Record<string, string | undefined> = {
-    // Name variables
+    // Recipient identity
     first_name: variables.first_name || '',
     last_name: variables.last_name || '',
+    email: variables.email || '',
+    phone: variables.phone || '',
+    recipient_company: variables.recipient_company || '',
+    
+    // Address
+    address1: variables.address1 || '',
+    address2: variables.address2 || '',
+    city: variables.city || '',
+    state: variables.state || '',
+    zip: variables.zip || '',
     
     // Value/currency - handle ${value} and {value} formats
     value: variables.value?.toString() || '',
@@ -58,26 +94,37 @@ export function renderSMSTemplate(
     provider: variables.provider || variables.brand || 'Gift Card',
     brand: variables.brand || variables.provider || 'Gift Card',
     
-    // Company/client name - can use either
-    company: variables.company || variables.client_name || 'us',
-    client_name: variables.client_name || variables.company || 'us',
-    
     // Link/code - can use either
     link: variables.link || variables.code || '',
     code: variables.code || variables.link || '',
+    
+    // Company/client name
+    // {client_name} is the new preferred variable for the client/business
+    // {company} is kept for backward compatibility (maps to client name)
+    client_name: variables.client_name || variables.company || 'us',
+    company: variables.company || variables.client_name || 'us',
   };
   
   // Replace ${value} format for currency
   result = result.replace(/\$\{value\}/gi, `$${replacements.value}`);
   
-  // Replace all {variable} placeholders
+  // Replace all standard {variable} placeholders
   for (const [key, value] of Object.entries(replacements)) {
     const regex = new RegExp(`\\{${key}\\}`, 'gi');
     result = result.replace(regex, value || '');
   }
   
+  // Handle custom fields: {custom.car_type} → value from custom.car_type
+  if (variables.custom && typeof variables.custom === 'object') {
+    result = result.replace(/\{custom\.([^}]+)\}/gi, (_match, fieldName) => {
+      const value = variables.custom?.[fieldName];
+      if (value === null || value === undefined) return '';
+      return String(value);
+    });
+  }
+  
   // Clean up any remaining empty placeholders
-  result = result.replace(/\{[a-z_]+\}/gi, '');
+  result = result.replace(/\{[a-z_\.]+\}/gi, '');
   
   return result.trim();
 }
@@ -127,6 +174,13 @@ export function getSMSCharacterCount(
   const sampleVars: SMSTemplateVariables = {
     first_name: variables?.first_name || 'Customer',
     last_name: variables?.last_name || 'Smith',
+    email: variables?.email || 'customer@example.com',
+    phone: variables?.phone || '+15551234567',
+    recipient_company: variables?.recipient_company || 'ABC Company',
+    address1: variables?.address1 || '123 Main St',
+    city: variables?.city || 'Austin',
+    state: variables?.state || 'TX',
+    zip: variables?.zip || '78701',
     value: variables?.value || '25',
     provider: variables?.provider || 'Amazon',
     company: variables?.company || 'Your Company',
@@ -157,3 +211,35 @@ export function getSMSSegmentInfo(charCount: number): {
   return { segments, isMultipart: true, charLimit: 153 };
 }
 
+/**
+ * List of all supported SMS variables for documentation/UI
+ */
+export const SMS_VARIABLE_LIST = {
+  recipient: [
+    { name: 'first_name', description: 'Recipient first name' },
+    { name: 'last_name', description: 'Recipient last name' },
+    { name: 'email', description: 'Recipient email address' },
+    { name: 'phone', description: 'Recipient phone number' },
+    { name: 'recipient_company', description: 'Recipient company name' },
+  ],
+  address: [
+    { name: 'address1', description: 'Street address line 1' },
+    { name: 'address2', description: 'Street address line 2' },
+    { name: 'city', description: 'City' },
+    { name: 'state', description: 'State' },
+    { name: 'zip', description: 'ZIP code' },
+  ],
+  gift_card: [
+    { name: 'code', description: 'Gift card code' },
+    { name: 'value', description: 'Gift card value (use ${value} for dollar sign)' },
+    { name: 'brand', description: 'Gift card brand/provider' },
+    { name: 'link', description: 'Gift card redemption link' },
+  ],
+  client: [
+    { name: 'client_name', description: 'Client/business company name' },
+    { name: 'company', description: 'Alias for client_name (backward compat)' },
+  ],
+  custom: [
+    { name: 'custom.*', description: 'Any custom field (e.g., {custom.car_type})' },
+  ],
+};

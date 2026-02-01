@@ -1,6 +1,6 @@
 # Deployment Runbook
 
-Step-by-step deployment process for ACE Engage platform.
+Step-by-step deployment process for Mobul platform.
 
 ---
 
@@ -230,7 +230,7 @@ npm run dev
 # Use staging Supabase project
 # .env.staging with staging credentials
 npm run build
-# Deploy to staging.aceengage.com
+# Deploy to staging.mobul.com
 ```
 
 ### Production
@@ -239,7 +239,7 @@ npm run build
 # Use production Supabase project
 # .env.production with prod credentials
 npm run build
-# Deploy to app.aceengage.com
+# Deploy to app.mobul.com
 ```
 
 ---

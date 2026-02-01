@@ -1,12 +1,12 @@
 # Environment Setup Guide
 
-Complete guide for configuring environment variables for ACE Engage platform.
+Complete guide for configuring environment variables for Mobul platform.
 
 ---
 
 ## Overview
 
-ACE Engage requires several environment variables for proper operation. This document lists all required and optional variables with descriptions and setup instructions.
+Mobul requires several environment variables for proper operation. This document lists all required and optional variables with descriptions and setup instructions.
 
 ---
 
@@ -158,7 +158,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_password
-SMTP_FROM=noreply@aceengage.com
+SMTP_FROM=noreply@mobul.com
 ```
 
 ---
@@ -170,7 +170,7 @@ SMTP_FROM=noreply@aceengage.com
 ALERT_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 
 # Alert Email Recipients (comma-separated)
-ALERT_EMAIL_RECIPIENTS=admin@aceengage.com,support@aceengage.com
+ALERT_EMAIL_RECIPIENTS=admin@mobul.com,support@mobul.com
 ```
 
 ---
@@ -179,11 +179,11 @@ ALERT_EMAIL_RECIPIENTS=admin@aceengage.com,support@aceengage.com
 
 ```bash
 # Company name (used in templates and communications)
-COMPANY_NAME=ACE Engage
+COMPANY_NAME=Mobul
 
 # Support contact information
 SUPPORT_PHONE_NUMBER=1-800-ACE-ENGG
-SUPPORT_EMAIL=support@aceengage.com
+SUPPORT_EMAIL=support@mobul.com
 ```
 
 ---

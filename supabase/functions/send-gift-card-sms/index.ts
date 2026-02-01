@@ -26,6 +26,50 @@ interface SendGiftCardSMSRequest {
 }
 
 /**
+ * Full recipient data for template rendering
+ */
+interface RecipientData {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  custom_fields?: Record<string, any>;
+}
+
+/**
+ * All template variables
+ */
+interface TemplateVariables {
+  // Recipient info
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  recipient_company?: string;
+  // Address
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  // Gift card
+  value?: number;
+  brand?: string;
+  code?: string;
+  link?: string;
+  // Client/business
+  client_name?: string;
+  // Custom fields from recipient
+  custom?: Record<string, any>;
+}
+
+/**
  * Resolve SMS template using hierarchy:
  * 1. customMessage (condition-level override) - highest priority
  * 2. Client default template (from message_templates table)
@@ -66,43 +110,97 @@ async function resolveTemplate(
 
 /**
  * Replace template variables with actual values
+ * Supports all recipient fields, gift card data, client info, and custom fields
  */
-function renderTemplate(
-  template: string,
-  variables: {
-    first_name?: string;
-    last_name?: string;
-    value?: number;
-    brand?: string;
-    code?: string;
-    link?: string;
-    company?: string;
-  }
-): string {
+function renderTemplate(template: string, variables: TemplateVariables): string {
   let result = template;
   
-  // Replace variables (case-insensitive)
+  // Replace standard variables (case-insensitive)
   const replacements: [RegExp, string][] = [
+    // Recipient identity
     [/\{first_name\}/gi, variables.first_name || ''],
     [/\{last_name\}/gi, variables.last_name || ''],
+    [/\{email\}/gi, variables.email || ''],
+    [/\{phone\}/gi, variables.phone || ''],
+    [/\{recipient_company\}/gi, variables.recipient_company || ''],
+    
+    // Address fields
+    [/\{address1\}/gi, variables.address1 || ''],
+    [/\{address2\}/gi, variables.address2 || ''],
+    [/\{city\}/gi, variables.city || ''],
+    [/\{state\}/gi, variables.state || ''],
+    [/\{zip\}/gi, variables.zip || ''],
+    
+    // Gift card
     [/\{value\}/gi, variables.value?.toString() || ''],
     [/\$\{value\}/gi, `$${variables.value || ''}`],
     [/\{brand\}/gi, variables.brand || ''],
-    [/\{provider\}/gi, variables.brand || ''], // Alias
+    [/\{provider\}/gi, variables.brand || ''], // Alias for brand
     [/\{code\}/gi, variables.code || ''],
     [/\{link\}/gi, variables.link || variables.code || ''],
-    [/\{company\}/gi, variables.company || ''],
-    [/\{client_name\}/gi, variables.company || ''],
+    
+    // Client/business - {client_name} is the preferred new variable
+    // {company} is kept for backward compatibility (maps to client name, not recipient company)
+    [/\{client_name\}/gi, variables.client_name || ''],
+    [/\{company\}/gi, variables.client_name || ''], // Backward compat
   ];
 
   for (const [pattern, replacement] of replacements) {
     result = result.replace(pattern, replacement);
   }
+  
+  // Handle custom fields: {custom.car_type} → value from custom_fields.car_type
+  // This allows any custom field from the recipient's custom_fields JSON
+  if (variables.custom && typeof variables.custom === 'object') {
+    result = result.replace(/\{custom\.([^}]+)\}/gi, (_match, fieldName) => {
+      const value = variables.custom?.[fieldName];
+      if (value === null || value === undefined) return '';
+      return String(value);
+    });
+  }
 
   // Clean up any remaining empty placeholders
+  // This ensures unreplaced variables don't appear in the final message
   result = result.replace(/\{[^}]+\}/g, '').replace(/\s+/g, ' ').trim();
 
   return result;
+}
+
+/**
+ * Fetch full recipient data from database
+ */
+async function fetchRecipientData(
+  supabase: SupabaseClient,
+  recipientId: string
+): Promise<{ recipient: RecipientData | null; clientId: string | undefined }> {
+  const { data, error } = await supabase
+    .from('recipients')
+    .select(`
+      first_name,
+      last_name,
+      email,
+      phone,
+      company,
+      address1,
+      address2,
+      city,
+      state,
+      zip,
+      custom_fields,
+      campaign:campaigns(client_id)
+    `)
+    .eq('id', recipientId)
+    .single();
+
+  if (error) {
+    console.error('[SEND-GIFT-CARD-SMS] Failed to fetch recipient data:', error);
+    return { recipient: null, clientId: undefined };
+  }
+
+  return {
+    recipient: data as RecipientData,
+    clientId: (data?.campaign as any)?.client_id || undefined,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -138,18 +236,21 @@ Deno.serve(async (req) => {
 
     console.log(`[SEND-GIFT-CARD-SMS] [${errorLogger.requestId}] Sending gift card SMS:`, { deliveryId, recipientPhone, value: giftCardValue });
 
-    // Resolve clientId for hierarchical Twilio resolution
+    // Fetch full recipient data if recipientId is provided
+    let recipientData: RecipientData | null = null;
     let resolvedClientId = requestData.clientId;
-    if (!resolvedClientId && recipientId) {
-      // Try to fetch client_id from recipient -> campaign
-      const { data: recipientData } = await supabaseClient
-        .from('recipients')
-        .select('campaign:campaigns(client_id)')
-        .eq('id', recipientId)
-        .single();
-      resolvedClientId = (recipientData?.campaign as any)?.client_id || undefined;
-      console.log(`[SEND-GIFT-CARD-SMS] Resolved client ID from recipient: ${resolvedClientId || 'none'}`);
+    
+    if (recipientId) {
+      const fetchResult = await fetchRecipientData(supabaseClient, recipientId);
+      recipientData = fetchResult.recipient;
+      
+      // Use client ID from recipient if not provided in request
+      if (!resolvedClientId && fetchResult.clientId) {
+        resolvedClientId = fetchResult.clientId;
+        console.log(`[SEND-GIFT-CARD-SMS] Resolved client ID from recipient: ${resolvedClientId}`);
+      }
     }
+    
     console.log(`[SEND-GIFT-CARD-SMS] Client ID for Twilio hierarchy: ${resolvedClientId || 'none (will use fallback)'}`);
 
     // Format phone number
@@ -162,27 +263,48 @@ Deno.serve(async (req) => {
       resolvedClientId
     );
 
-    // Get company name for template
-    let companyName = '';
+    // Get client/company name for template
+    let clientName = '';
     if (resolvedClientId) {
       const { data: clientData } = await supabaseClient
         .from('clients')
         .select('name')
         .eq('id', resolvedClientId)
         .single();
-      companyName = clientData?.name || '';
+      clientName = clientData?.name || '';
     }
 
-    // Render template with actual values
-    const smsMessage = renderTemplate(template, {
-      first_name: recipientName?.split(' ')[0],
-      last_name: recipientName?.split(' ').slice(1).join(' '),
+    // Build template variables from all available data sources
+    const templateVariables: TemplateVariables = {
+      // Recipient identity - prefer recipient data, fallback to request data
+      first_name: recipientData?.first_name || recipientName?.split(' ')[0] || '',
+      last_name: recipientData?.last_name || recipientName?.split(' ').slice(1).join(' ') || '',
+      email: recipientData?.email || '',
+      phone: recipientData?.phone || recipientPhone || '',
+      recipient_company: recipientData?.company || '',
+      
+      // Address
+      address1: recipientData?.address1 || '',
+      address2: recipientData?.address2 || '',
+      city: recipientData?.city || '',
+      state: recipientData?.state || '',
+      zip: recipientData?.zip || '',
+      
+      // Gift card
       value: giftCardValue,
-      brand: requestData.brandName,
+      brand: requestData.brandName || '',
       code: giftCardCode,
-      link: giftCardCode, // Default to code, can be overridden
-      company: companyName,
-    });
+      link: giftCardCode, // Default to code, can be overridden in URL
+      
+      // Client/business
+      client_name: clientName,
+      
+      // Custom fields from recipient
+      custom: recipientData?.custom_fields || {},
+    };
+
+    // Render template with all variables
+    const smsMessage = renderTemplate(template, templateVariables);
 
     console.log(`[SEND-GIFT-CARD-SMS] Template source: ${templateSource}, message length: ${smsMessage.length}`);
 

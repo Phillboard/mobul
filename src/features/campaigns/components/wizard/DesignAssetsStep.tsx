@@ -79,9 +79,9 @@ export function DesignAssetsStep({
     },
   });
 
-  // Fetch ACE forms
+  // Fetch forms
   const { data: aceForms } = useQuery({
-    queryKey: ["ace-forms", clientId],
+    queryKey: ["forms", clientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ace_forms")
@@ -264,7 +264,7 @@ export function DesignAssetsStep({
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">ACE Forms</h4>
+                    <h4 className="font-semibold text-sm">Forms</h4>
                     <p className="text-sm text-muted-foreground">
                       Select forms to collect customer information. Forms can trigger reward conditions when submitted.
                     </p>

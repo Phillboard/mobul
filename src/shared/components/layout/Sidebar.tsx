@@ -57,7 +57,7 @@ const navigationGroups: NavGroup[] = [
       { name: "All Campaigns", href: "/campaigns", icon: Megaphone, permissions: ['campaigns.view'], keywords: ["mail", "postcards", "direct mail", "marketing"], description: "Manage direct mail campaigns" },
       { name: "Mail Library", href: "/mail", icon: Mail, permissions: ['templates.view'], keywords: ["design", "layouts", "postcard designs", "templates"], description: "Direct mail designs" },
       { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl", "personalized urls"], description: "Personalized landing pages" },
-      { name: "ACE Forms", href: "/ace-forms", icon: FormInput, permissions: ['campaigns.view'], keywords: ["forms", "lead capture", "redemption"], description: "Lead capture & gift card forms" },
+      { name: "Forms", href: "/forms", icon: FormInput, permissions: ['campaigns.view'], keywords: ["forms", "lead capture", "redemption"], description: "Lead capture & gift card forms" },
     ]
   },
   {
@@ -346,11 +346,11 @@ export function Sidebar() {
         <div className="px-4 py-4 flex items-center gap-3">
           {!collapsed ? (
             <>
-              <img src="/favicon.png" alt="Mobul ACE" className="h-8 w-8" />
-              <h2 className="text-xl font-bold">Mobul ACE</h2>
+              <img src="/favicon.png" alt="Mobul" className="h-8 w-8" />
+              <h2 className="text-xl font-bold">Mobul</h2>
             </>
           ) : (
-            <img src="/favicon.png" alt="Mobul ACE" className="h-6 w-6 mx-auto" />
+            <img src="/favicon.png" alt="Mobul" className="h-6 w-6 mx-auto" />
           )}
         </div>
       </SidebarHeader>

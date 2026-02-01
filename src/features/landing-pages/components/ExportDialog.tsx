@@ -41,7 +41,7 @@ export function ExportDialog({
   const [cssModules, setCssModules] = useState(false);
 
   // WordPress options
-  const [pluginName, setPluginName] = useState(pageName || 'ACE Landing Page');
+  const [pluginName, setPluginName] = useState(pageName || 'Mobul Landing Page');
   const [shortcodePrefix, setShortcodePrefix] = useState('ace');
 
   const handleExport = async () => {
@@ -289,7 +289,7 @@ export function ExportDialog({
                       id="pluginName"
                       value={pluginName}
                       onChange={(e) => setPluginName(e.target.value)}
-                      placeholder="ACE Landing Page"
+                      placeholder="Mobul Landing Page"
                     />
                   </div>
 

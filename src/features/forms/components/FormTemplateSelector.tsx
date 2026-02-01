@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
-import { getContextualTemplates } from "@/features/ace-forms/utils/aceFormTemplates";
+import { getContextualTemplates } from "@/features/forms/utils/formTemplates";
 import { FormTemplate } from "@/types/aceForms";
-import { useFormContext } from '@/features/ace-forms/hooks';
+import { useFormContext } from '@/features/forms/hooks';
 
 interface FormTemplateSelectorProps {
   onSelect: (template: FormTemplate) => void;

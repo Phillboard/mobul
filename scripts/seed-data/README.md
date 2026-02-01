@@ -1,6 +1,6 @@
 # Seed Data Scripts
 
-TypeScript scripts for programmatic data generation and seeding in the ACE Engage platform.
+TypeScript scripts for programmatic data generation and seeding in the Mobul platform.
 
 ## Overview
 

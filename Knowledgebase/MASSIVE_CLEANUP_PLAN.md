@@ -92,7 +92,7 @@ KEEP (essential for development):
 - PLATFORM_DICTIONARY.md
 
 DELETE (obsolete):
-- # ACE ENGAGE - PLATFORM DICTIONARY.md (duplicate with #)
+- # MOBUL - PLATFORM DICTIONARY.md (duplicate with #)
 - AI_BACKGROUND_SYSTEM_PLAN.md
 - AI_BACKGROUND_SYSTEM_PROMPTS.md
 - CLEANUP_STATUS_REPORT.md

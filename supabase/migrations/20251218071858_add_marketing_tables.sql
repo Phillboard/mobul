@@ -1,5 +1,5 @@
 -- ============================================================================
--- ACE ENGAGE - EMAIL & SMS MARKETING FEATURE
+-- MOBUL - EMAIL & SMS MARKETING FEATURE
 -- Migration: Add marketing campaigns, automations, and related tables
 -- ============================================================================
 

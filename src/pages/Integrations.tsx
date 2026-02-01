@@ -115,7 +115,7 @@ export default function Integrations() {
             Integrations
           </h1>
           <p className="text-muted-foreground mt-2">
-            Connect ACE Engage with your existing systems and automation tools
+            Connect Mobul with your existing systems and automation tools
           </p>
         </div>
 
@@ -346,7 +346,7 @@ export default function Integrations() {
                   Zapier Automation
                 </CardTitle>
                 <CardDescription>
-                  Connect ACE Engage with 5,000+ apps using pre-built templates
+                  Connect Mobul with 5,000+ apps using pre-built templates
                 </CardDescription>
               </CardHeader>
               <CardContent>

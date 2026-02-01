@@ -26,7 +26,7 @@ function question(query: string): Promise<string> {
 function displayBanner() {
   console.clear();
   console.log('╔═══════════════════════════════════════════════════════════════╗');
-  console.log('║       ACE ENGAGE - SEED DATA GENERATION CLI                   ║');
+  console.log('║       MOBUL - SEED DATA GENERATION CLI                   ║');
   console.log('║       Interactive Data Generation Tool                        ║');
   console.log('╚═══════════════════════════════════════════════════════════════╝');
   console.log('');
@@ -177,7 +177,7 @@ async function main() {
   try {
     displayBanner();
     
-    console.log('Welcome to the ACE Engage Seed Data Generation Tool!');
+    console.log('Welcome to the Mobul Seed Data Generation Tool!');
     console.log('This tool will help you generate realistic test data for development,');
     console.log('testing, analytics validation, and demonstrations.');
     console.log('');

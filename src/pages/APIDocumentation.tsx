@@ -10,7 +10,7 @@ export default function APIDocumentation() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">API Documentation</h1>
           <p className="mt-1 text-muted-foreground">
-            Complete reference for the ACE Engage REST API
+            Complete reference for the Mobul REST API
           </p>
         </div>
 
@@ -28,7 +28,7 @@ export default function APIDocumentation() {
               <CardHeader>
                 <CardTitle>Getting Started</CardTitle>
                 <CardDescription>
-                  The ACE Engage API is organized around REST with JSON responses
+                  The Mobul API is organized around REST with JSON responses
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

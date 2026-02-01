@@ -193,7 +193,7 @@ export function IntegrationsSettings() {
           >
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" asChild>
-                <a href="mailto:support@aceengage.com?subject=Integration Request">
+                <a href="mailto:support@mobul.com?subject=Integration Request">
                   Request Integration
                 </a>
               </Button>

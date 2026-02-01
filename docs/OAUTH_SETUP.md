@@ -1,12 +1,12 @@
 # OAuth Setup Guide
 
-Complete guide for configuring Google and Apple OAuth authentication for ACE Engage.
+Complete guide for configuring Google and Apple OAuth authentication for Mobul.
 
 ---
 
 ## Overview
 
-ACE Engage supports social sign-in via:
+Mobul supports social sign-in via:
 - **Google OAuth 2.0**
 - **Apple Sign In**
 
@@ -28,7 +28,7 @@ Users can sign in with these providers alongside traditional email/password auth
 ### 1.1 Access Supabase Dashboard
 
 1. Go to [app.supabase.com](https://app.supabase.com)
-2. Select your ACE Engage project
+2. Select your Mobul project
 3. Navigate to **Authentication** → **Providers**
 
 ### 1.2 Enable OAuth Providers
@@ -46,14 +46,14 @@ Users can sign in with these providers alongside traditional email/password auth
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing
-3. Name it: `ACE Engage OAuth`
+3. Name it: `Mobul OAuth`
 
 ### 2.2 Configure OAuth Consent Screen
 
 1. Navigate to **APIs & Services** → **OAuth consent screen**
 2. Select **External** user type
 3. Fill in required fields:
-   - **App name**: ACE Engage
+   - **App name**: Mobul
    - **User support email**: Your support email
    - **Developer contact email**: Your developer email
 4. Add scopes:
@@ -66,7 +66,7 @@ Users can sign in with these providers alongside traditional email/password auth
 1. Navigate to **APIs & Services** → **Credentials**
 2. Click **Create Credentials** → **OAuth client ID**
 3. Application type: **Web application**
-4. Name: `ACE Engage Web Client`
+4. Name: `Mobul Web Client`
 5. **Authorized JavaScript origins**:
    - `http://localhost:5173` (development)
    - `https://yourdomain.com` (production)
@@ -97,7 +97,7 @@ Users can sign in with these providers alongside traditional email/password auth
 4. Select **App IDs** → **Continue**
 5. Select **App** → **Continue**
 6. Fill in:
-   - **Description**: ACE Engage
+   - **Description**: Mobul
    - **Bundle ID**: `com.aceengage.app` (use your domain)
 7. Under **Capabilities**, enable **Sign In with Apple**
 8. Click **Continue** → **Register**
@@ -107,7 +107,7 @@ Users can sign in with these providers alongside traditional email/password auth
 1. In **Identifiers**, click **+** again
 2. Select **Services IDs** → **Continue**
 3. Fill in:
-   - **Description**: ACE Engage Web
+   - **Description**: Mobul Web
    - **Identifier**: `com.aceengage.web` (different from App ID)
 4. Check **Sign In with Apple**
 5. Click **Configure** next to Sign In with Apple
@@ -121,7 +121,7 @@ Users can sign in with these providers alongside traditional email/password auth
 ### 3.3 Create Private Key
 
 1. Navigate to **Keys** → **+** button
-2. **Key Name**: ACE Engage Apple Auth
+2. **Key Name**: Mobul Apple Auth
 3. Enable **Sign In with Apple**
 4. Click **Configure** → Select your Primary App ID
 5. Save → Continue → Register
@@ -157,13 +157,13 @@ No additional environment variables needed! OAuth is configured entirely in Supa
 1. In Supabase Dashboard → **Authentication** → **URL Configuration**
 2. Set **Site URL** to your production domain:
    - Development: `http://localhost:5173`
-   - Production: `https://app.aceengage.com`
+   - Production: `https://app.mobul.com`
 
 ### 4.3 Configure Redirect URLs
 
 1. In **Redirect URLs**, add:
    - `http://localhost:5173/auth/callback` (development)
-   - `https://app.aceengage.com/auth/callback` (production)
+   - `https://app.mobul.com/auth/callback` (production)
 
 ---
 
@@ -200,7 +200,7 @@ Try these scenarios:
 1. Return to Google Cloud Console
 2. Edit OAuth 2.0 Client
 3. Add production URLs to:
-   - **Authorized JavaScript origins**: `https://app.aceengage.com`
+   - **Authorized JavaScript origins**: `https://app.mobul.com`
    - **Authorized redirect URIs**: Keep Supabase callback URL
 
 ### 6.2 Verify Apple Configuration

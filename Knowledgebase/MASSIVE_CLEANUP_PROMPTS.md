@@ -112,7 +112,7 @@ Execute these deletions now.
 - PLATFORM_DICTIONARY.md
 
 ## Files to DELETE (everything else):
-- # ACE ENGAGE - PLATFORM DICTIONARY.md (duplicate with weird name)
+- # MOBUL - PLATFORM DICTIONARY.md (duplicate with weird name)
 - AI_BACKGROUND_SYSTEM_PLAN.md
 - AI_BACKGROUND_SYSTEM_PROMPTS.md
 - CLEANUP_CURSOR_PROMPTS.md (replaced)

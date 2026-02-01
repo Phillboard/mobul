@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines procedures for recovering from various disaster scenarios for the ACE Engage platform.
+This document outlines procedures for recovering from various disaster scenarios for the Mobul platform.
 
 **Recovery Time Objective (RTO)**: 4 hours maximum downtime  
 **Recovery Point Objective (RPO)**: 15 minutes maximum data loss

@@ -97,7 +97,7 @@ export function GiftCardDeliveryEmail({
   return renderEmailLayout({
     children: emailBody,
     preheader: `Your $${giftCardValue} ${brandName} gift card is here!`,
-    clientName: clientName || 'Mobul ACE',
+    clientName: clientName || 'Mobul',
     logoUrl: clientLogoUrl,
   });
 }

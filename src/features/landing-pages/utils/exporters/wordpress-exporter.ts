@@ -15,8 +15,8 @@ export async function exportToWordPress(
   options: WordPressExportOptions = {}
 ): Promise<Blob> {
   const {
-    pluginName = 'ACE Engage Landing Page',
-    shortcodePrefix = 'ace',
+    pluginName = 'Mobul Landing Page',
+    shortcodePrefix = 'mobul',
   } = options;
 
   const pluginSlug = pluginName.toLowerCase().replace(/\s+/g, '-');
@@ -40,11 +40,11 @@ export async function exportToWordPress(
   const pluginMainFile = `<?php
 /**
  * Plugin Name: ${pluginName}
- * Plugin URI: https://aceengage.com
- * Description: Landing page created with ACE Engage AI Landing Page Builder
+ * Plugin URI: https://mobul.com
+ * Description: Landing page created with Mobul AI Landing Page Builder
  * Version: 1.0.0
- * Author: ACE Engage
- * Author URI: https://aceengage.com
+ * Author: Mobul
+ * Author URI: https://mobul.com
  * License: GPL v2 or later
  */
 
@@ -106,7 +106,7 @@ if (!defined('ABSPATH')) {
 
   // CSS file
   const cssFile = `/*
- * ACE Engage Landing Page Styles
+ * Mobul Landing Page Styles
  */
 
 .ace-landing-page-wrapper {
@@ -118,7 +118,7 @@ ${css}
 
   // README file
   const readmeFile = `=== ${pluginName} ===
-Contributors: aceengage
+Contributors: mobul
 Tags: landing-page, marketing
 Requires at least: 5.0
 Tested up to: 6.4
@@ -126,7 +126,7 @@ Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Landing page created with ACE Engage AI Landing Page Builder
+Landing page created with Mobul AI Landing Page Builder
 
 == Description ==
 
@@ -153,7 +153,7 @@ To customize the landing page:
 
 == Support ==
 
-For support, visit https://aceengage.com/support
+For support, visit https://mobul.com/support
 
 == Changelog ==
 
@@ -238,8 +238,8 @@ public function render_landing_page($atts) {
 ## Support
 
 For issues or questions:
-- Email: support@aceengage.com
-- Documentation: https://aceengage.com/docs
+- Email: support@mobul.com
+- Documentation: https://mobul.com/docs
 `;
 
   // Create zip structure

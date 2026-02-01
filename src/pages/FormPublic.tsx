@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { useAceForm } from '@/features/ace-forms/hooks';
+import { useForm as useFormHook } from '@/features/forms/hooks';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFormSchema } from '@/shared/utils/validation/aceFormValidation';
@@ -10,9 +10,9 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
 import { supabase } from "@core/services/supabase";
-import { GiftCardReveal } from "@/features/ace-forms/components";
+import { GiftCardReveal } from "@/features/forms/components";
 import { GiftCardRedemption } from "@/types/aceForms";
-import { useFormSubmissionRateLimit } from '@/features/ace-forms/hooks';
+import { useFormSubmissionRateLimit } from '@/features/forms/hooks';
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle, Shield } from "lucide-react";
 import DOMPurify from "dompurify";
@@ -112,12 +112,12 @@ const MAX_SUBMISSIONS_PER_HOUR = 5;
  * Public form page - No authentication required
  * Used for embedded forms and direct links
  */
-export default function AceFormPublic() {
+export default function FormPublic() {
   const { formId, formSlug } = useParams();
   const [searchParams] = useSearchParams();
   // Support both /forms/:formId and /f/:formSlug routes
   const formIdentifier = formId || formSlug || "";
-  const { data: form, isLoading } = useAceForm(formIdentifier);
+  const { data: form, isLoading } = useFormHook(formIdentifier);
   const [submitting, setSubmitting] = useState(false);
   const [redemption, setRedemption] = useState<GiftCardRedemption | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);

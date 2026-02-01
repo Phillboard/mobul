@@ -1,7 +1,7 @@
-// ACE Forms Components - Barrel Export
-export { AceFormsFilters } from './AceFormsFilters';
-export { AceFormsLayout } from './AceFormsLayout';
-export { AceFormsSidebar } from './AceFormsSidebar';
+// Forms Components - Barrel Export
+export { FormsFilters } from './FormsFilters';
+export { FormsLayout } from './FormsLayout';
+export { FormsSidebar } from './FormsSidebar';
 export { AIFormGenerator } from './AIFormGenerator';
 export { CampaignIntegrationSection } from './CampaignIntegrationSection';
 export { ConditionalLogicBuilder } from './ConditionalLogicBuilder';

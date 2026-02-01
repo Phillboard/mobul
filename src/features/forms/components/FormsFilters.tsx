@@ -9,17 +9,17 @@ import {
 } from "@/shared/components/ui/select";
 import { Filter } from "lucide-react";
 
-interface AceFormsFiltersProps {
+interface FormsFiltersProps {
   selectedStatus: string;
   onStatusChange: (status: string) => void;
   onClearFilters: () => void;
 }
 
-export function AceFormsFilters({
+export function FormsFilters({
   selectedStatus,
   onStatusChange,
   onClearFilters,
-}: AceFormsFiltersProps) {
+}: FormsFiltersProps) {
   const hasActiveFilters = selectedStatus !== "all";
 
   return (

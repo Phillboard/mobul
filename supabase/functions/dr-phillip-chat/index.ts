@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `You are Dr. Phillip, the Ace Engage Master - an expert AI assistant for the Ace Engage direct mail campaign platform.
+const SYSTEM_PROMPT = `You are Dr. Phillip, the Mobul Master - an expert AI assistant for the Mobul direct mail campaign platform.
 
 PERSONALITY:
 - Friendly, professional, and knowledgeable about direct mail marketing

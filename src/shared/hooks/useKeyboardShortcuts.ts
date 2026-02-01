@@ -29,7 +29,7 @@ export function useKeyboardShortcuts() {
     { key: 'g', modifiers: ['meta'], action: () => navigate('/'), description: 'Go to Dashboard', category: 'Navigation' },
     { key: 'c', modifiers: ['meta', 'shift'], action: () => navigate('/campaigns'), description: 'Go to Campaigns', category: 'Navigation' },
     { key: 'u', modifiers: ['meta', 'shift'], action: () => navigate('/contacts'), description: 'Go to Contacts', category: 'Navigation' },
-    { key: 'f', modifiers: ['meta', 'shift'], action: () => navigate('/ace-forms'), description: 'Go to Forms', category: 'Navigation' },
+    { key: 'f', modifiers: ['meta', 'shift'], action: () => navigate('/forms'), description: 'Go to Forms', category: 'Navigation' },
     { key: ',', modifiers: ['meta'], action: () => navigate('/settings'), description: 'Go to Settings', category: 'Navigation' },
     
     // Action shortcuts (these trigger modals/dialogs in their respective pages)

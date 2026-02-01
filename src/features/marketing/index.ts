@@ -1,7 +1,7 @@
 /**
  * Marketing Feature Index
  * 
- * Email & SMS Marketing Feature for ACE Engage
+ * Email & SMS Marketing Feature for Mobul
  */
 
 // Types

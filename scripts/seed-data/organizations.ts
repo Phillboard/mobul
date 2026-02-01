@@ -14,10 +14,10 @@ import {
 export async function seedOrganizationsAndClients() {
     console.log('🏢 Seeding organizations and clients...');
 
-    // 1. Create Internal Organization (ACE Engage)
+    // 1. Create Internal Organization (Mobul)
     const internalOrg = {
         id: generateId(),
-        name: 'ACE Engage',
+        name: 'Mobul',
         org_type: 'internal' as const,
         created_at: pastDate(365),
     };

@@ -12,7 +12,7 @@ interface EmailLayoutProps {
   logoUrl?: string;
 }
 
-export function EmailLayout({ children, preheader, clientName = "Mobul ACE", logoUrl }: EmailLayoutProps) {
+export function EmailLayout({ children, preheader, clientName = "Mobul", logoUrl }: EmailLayoutProps) {
   return `
     <!DOCTYPE html>
     <html lang="en">

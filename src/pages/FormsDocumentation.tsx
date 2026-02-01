@@ -1,37 +1,37 @@
-import { AceFormsLayout } from "@/features/ace-forms/components";
+import { FormsLayout } from "@/features/forms/components";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle, CheckCircle, Copy, Code, MessageSquare } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { toast } from "sonner";
 
-export default function AceFormsDocumentation() {
+export default function FormsDocumentation() {
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success("Code copied to clipboard!");
   };
 
   return (
-    <AceFormsLayout>
+    <FormsLayout>
       <div className="container mx-auto py-8 max-w-4xl space-y-8">
         <div>
-          <h1 className="text-3xl font-bold">Ace Forms Documentation</h1>
+          <h1 className="text-3xl font-bold">Forms Documentation</h1>
           <p className="text-muted-foreground mt-2">
-            Complete guide to using the Ace Forms gift card redemption system
+            Complete guide to using the Forms gift card redemption system
           </p>
         </div>
 
         {/* Overview */}
         <Card>
           <CardHeader>
-            <CardTitle>What are Ace Forms?</CardTitle>
+            <CardTitle>What are Forms?</CardTitle>
             <CardDescription>
               AI-powered forms for seamless gift card redemption
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p>
-              Ace Forms is a specialized form builder designed for collecting customer information
+              Forms is a specialized form builder designed for collecting customer information
               and automatically provisioning gift cards. When customers submit a form, they receive
               their gift card instantly with a beautiful 3D flip animation.
             </p>
@@ -91,7 +91,7 @@ export default function AceFormsDocumentation() {
                 <div className="flex-1">
                   <div className="font-medium">Create a Gift Card Pool</div>
                   <div className="text-sm text-muted-foreground">
-                    Go to Gift Cards → Pools and create a pool with available cards
+                    Go to Gift Cards and create a pool with available cards
                   </div>
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function AceFormsDocumentation() {
               </p>
               <div className="relative">
                 <pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto">
-                  <code>{`<div id="ace-form-container"></div>
+                  <code>{`<div id="form-container"></div>
 <script>
   (function() {
     var iframe = document.createElement('iframe');
@@ -180,7 +180,7 @@ export default function AceFormsDocumentation() {
     iframe.width = '100%';
     iframe.height = '600';
     iframe.frameBorder = '0';
-    document.getElementById('ace-form-container').appendChild(iframe);
+    document.getElementById('form-container').appendChild(iframe);
   })();
 </script>`}</code>
                 </pre>
@@ -190,7 +190,7 @@ export default function AceFormsDocumentation() {
                   className="absolute top-2 right-2"
                   onClick={() =>
                     copyCode(
-                      `<div id="ace-form-container"></div>\n<script>\n  (function() {\n    var iframe = document.createElement('iframe');\n    iframe.src = 'https://yourdomain.com/forms/[FORM_ID]';\n    iframe.width = '100%';\n    iframe.height = '600';\n    iframe.frameBorder = '0';\n    document.getElementById('ace-form-container').appendChild(iframe);\n  })();\n</script>`
+                      `<div id="form-container"></div>\n<script>\n  (function() {\n    var iframe = document.createElement('iframe');\n    iframe.src = 'https://yourdomain.com/forms/[FORM_ID]';\n    iframe.width = '100%';\n    iframe.height = '600';\n    iframe.frameBorder = '0';\n    document.getElementById('form-container').appendChild(iframe);\n  })();\n</script>`
                     )
                   }
                 >
@@ -276,6 +276,6 @@ export default function AceFormsDocumentation() {
           </CardContent>
         </Card>
       </div>
-    </AceFormsLayout>
+    </FormsLayout>
   );
 }

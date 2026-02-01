@@ -1,7 +1,7 @@
 /**
  * PLATFORM TERMINOLOGY CONSTANTS
  * 
- * Source of truth for all terminology used across the ACE Engage platform.
+ * Source of truth for all terminology used across the Mobul platform.
  * Based on PLATFORM_DICTIONARY.md
  * 
  * @see PLATFORM_DICTIONARY.md for complete definitions and business context
@@ -16,10 +16,10 @@
  * Platform → Agency → Client
  */
 export const ORGANIZATION_TYPES = {
-  /** ACE Engage itself - the top-level entity */
+  /** Mobul itself - the top-level entity */
   PLATFORM: 'platform',
   
-  /** Marketing agency or reseller that uses ACE Engage to serve their clients */
+  /** Marketing agency or reseller that uses Mobul to serve their clients */
   AGENCY: 'agency',
   
   /** Business that the Agency serves. The end customer of the Agency. */
@@ -33,14 +33,14 @@ export type OrganizationType = typeof ORGANIZATION_TYPES[keyof typeof ORGANIZATI
 // ============================================================================
 
 /**
- * User roles in the ACE Engage platform
+ * User roles in the Mobul platform
  * Each role has specific permissions and access levels
  */
 export const USER_ROLES = {
-  /** ACE Engage staff with full system access */
+  /** Mobul staff with full system access */
   ADMIN: 'admin',
   
-  /** ACE Engage support staff - can view all data, assist users, cannot delete */
+  /** Mobul support staff - can view all data, assist users, cannot delete */
   TECH_SUPPORT: 'tech_support',
   
   /** Owner/admin of an Agency account - manages all clients under their agency */

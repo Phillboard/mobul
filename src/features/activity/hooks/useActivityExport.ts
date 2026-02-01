@@ -144,7 +144,7 @@ function logsToPrintableHTML(logs: ActivityLog[], title = 'Activity Log Export')
   </table>
   
   <div class="footer">
-    <p>ACE Engage Activity Log Export - Confidential</p>
+    <p>Mobul Activity Log Export - Confidential</p>
   </div>
   
   <script>

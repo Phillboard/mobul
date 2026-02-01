@@ -1,4 +1,4 @@
-// ACE Forms feature module
+// Forms feature module
 export * from './components';
 export * from './hooks';
 export * from './utils';

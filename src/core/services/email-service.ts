@@ -130,7 +130,7 @@ export async function sendGiftCardEmail(options: GiftCardEmailOptions): Promise<
 export async function sendTestEmail(to: string): Promise<{ success: boolean; error?: string }> {
   return await sendEmail({
     to,
-    subject: 'Test Email from ACE Engage',
+    subject: 'Test Email from Mobul',
     html: '<h1>Test Email</h1><p>If you received this, your email configuration is working correctly!</p>',
     text: 'Test Email - If you received this, your email configuration is working correctly!',
   });

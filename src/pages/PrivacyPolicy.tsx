@@ -10,7 +10,7 @@ export default function PrivacyPolicy() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
           <p>
-            Mobul ACE ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy
+            Mobul ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy
             explains how we collect, use, disclose, and safeguard your information when you use our direct
             mail marketing platform and related services.
           </p>
@@ -91,7 +91,7 @@ export default function PrivacyPolicy() {
             <li><strong>Data Portability:</strong> Request a copy of your data in a portable format</li>
           </ul>
           <p className="mt-4">
-            To exercise these rights, please contact us at privacy@mobulace.com
+            To exercise these rights, please contact us at privacy@mobul.com
           </p>
         </section>
 
@@ -139,8 +139,8 @@ export default function PrivacyPolicy() {
           <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
           <p>If you have questions about this Privacy Policy, please contact us at:</p>
           <div className="mt-4 p-4 bg-muted rounded-lg">
-            <p className="font-medium">Mobul ACE</p>
-            <p>Email: privacy@mobulace.com</p>
+            <p className="font-medium">Mobul</p>
+            <p>Email: privacy@mobul.com</p>
             <p>Address: [Your Business Address]</p>
           </div>
         </section>

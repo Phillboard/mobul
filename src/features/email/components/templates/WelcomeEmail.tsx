@@ -24,21 +24,21 @@ export function WelcomeEmail({
   organizationName,
   roleName,
   inviterName,
-  loginUrl = 'https://app.mobulace.com/auth',
+  loginUrl = 'https://app.mobul.com/auth',
   resetPasswordUrl,
   isInvitation = false,
   clientLogoUrl,
 }: WelcomeEmailProps): string {
   const emailBody = `
     <h2 style="color: #333; margin-top: 0;">
-      ${isInvitation ? '🎉 You\'ve Been Invited!' : '👋 Welcome to Mobul ACE'}
+      ${isInvitation ? '🎉 You\'ve Been Invited!' : '👋 Welcome to Mobul'}
     </h2>
     
     <p style="font-size: 16px; color: #555;">
       Hi ${userName},<br><br>
       ${isInvitation 
-        ? `${inviterName || 'Someone'} has invited you to join <strong>${organizationName}</strong> on the Mobul ACE platform.`
-        : `Welcome to <strong>${organizationName}</strong> on the Mobul ACE platform! We're excited to have you on board.`
+        ? `${inviterName || 'Someone'} has invited you to join <strong>${organizationName}</strong> on the Mobul platform.`
+        : `Welcome to <strong>${organizationName}</strong> on the Mobul platform! We're excited to have you on board.`
       }
     </p>
 
@@ -85,7 +85,7 @@ export function WelcomeEmail({
 
     <div class="card">
       <h3 style="margin-top: 0; color: #333; font-size: 18px;">🚀 Getting Started</h3>
-      <p style="color: #555; margin-bottom: 12px;">Here's what you can do with Mobul ACE:</p>
+      <p style="color: #555; margin-bottom: 12px;">Here's what you can do with Mobul:</p>
       <ul style="color: #555; margin: 0; padding-left: 20px; line-height: 1.8;">
         <li>Create and manage direct mail campaigns</li>
         <li>Design personalized landing pages and forms</li>
@@ -99,7 +99,7 @@ export function WelcomeEmail({
     <div class="card" style="background-color: #f8f9fa;">
       <h3 style="margin-top: 0; color: #333; font-size: 16px;">📚 Need Help?</h3>
       <p style="color: #555; margin-bottom: 0; font-size: 14px;">
-        Check out our <a href="https://app.mobulace.com/docs" style="color: #667eea;">documentation</a> or 
+        Check out our <a href="https://app.mobul.com/docs" style="color: #667eea;">documentation</a> or 
         contact your account manager if you have any questions. We're here to help!
       </p>
     </div>
@@ -114,7 +114,7 @@ export function WelcomeEmail({
     children: emailBody,
     preheader: isInvitation 
       ? `You've been invited to join ${organizationName}` 
-      : `Welcome to ${organizationName} on Mobul ACE`,
+      : `Welcome to ${organizationName} on Mobul`,
     clientName: organizationName,
     logoUrl: clientLogoUrl,
   });

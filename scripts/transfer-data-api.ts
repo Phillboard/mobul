@@ -177,7 +177,7 @@ async function transferTable(oldClient: SupabaseClient, newClient: SupabaseClien
 async function main() {
   console.log('');
   console.log('╔═══════════════════════════════════════════════════════════════╗');
-  console.log('║           ACE ENGAGE - DATA MIGRATION                         ║');
+  console.log('║           MOBUL - DATA MIGRATION                         ║');
   console.log('╠═══════════════════════════════════════════════════════════════╣');
   console.log('║  FROM: arzthloosvnasokxygfo (OLD)                             ║');
   console.log('║  TO:   uibvxhwhkatjcwghnzpu (NEW)                             ║');

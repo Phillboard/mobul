@@ -33,9 +33,9 @@ export function FormsSelectionStep({
     (initialData as any).selected_form_ids || []
   );
 
-  // Fetch existing ACE forms
+  // Fetch existing forms
   const { data: forms, isLoading } = useQuery({
-    queryKey: ["ace-forms-for-campaign", clientId],
+    queryKey: ["forms-for-campaign", clientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ace_forms")
@@ -69,7 +69,7 @@ export function FormsSelectionStep({
 
   const handleCreateForm = () => {
     // Navigate to form builder with return state
-    navigate("/ace-forms/new", {
+    navigate("/forms/new", {
       state: {
         returnTo: "/campaigns/new",
         campaignId,

@@ -55,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
           "Authorization": `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: "Mobul ACE Alerts <alerts@updates.mobul.io>",
+          from: "Mobul Alerts <alerts@updates.mobul.com>",
           to: [email],
           subject: emailSubject,
           html: `
@@ -90,11 +90,11 @@ const handler = async (req: Request): Promise<Response> => {
                       </p>
                     </div>
                     <p style="margin-top: 20px;">
-                      Please log in to the Mobul ACE platform to acknowledge and resolve this alert.
+                      Please log in to the Mobul platform to acknowledge and resolve this alert.
                     </p>
                   </div>
                   <div class="footer">
-                    <p>This is an automated alert from Mobul ACE Platform</p>
+                    <p>This is an automated alert from Mobul Platform</p>
                     <p>Do not reply to this email</p>
                   </div>
                 </div>

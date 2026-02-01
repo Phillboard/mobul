@@ -76,7 +76,7 @@ export async function exportToStaticHTML(
 - WCAG 2.1 AA compliant
 
 ## Support
-For questions or issues, contact support@aceengage.com
+For questions or issues, contact support@mobul.com
 `;
   
   zip.file('README.md', readme);

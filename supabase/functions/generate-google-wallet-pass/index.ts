@@ -108,9 +108,9 @@ serve(async (req) => {
 
     // Get allowed origins from environment or use defaults
     const allowedOrigins = Deno.env.get('WALLET_ALLOWED_ORIGINS')?.split(',') || [
-      'https://mobulace.com',
-      'https://www.mobulace.com',
-      'https://app.mobulace.com',
+      'https://mobul.com',
+      'https://www.mobul.com',
+      'https://app.mobul.com',
       'http://localhost:5173',
       'http://localhost:3000',
     ];

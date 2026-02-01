@@ -104,7 +104,7 @@ export function DesignPageStep({
 
   // Fetch forms
   const { data: forms, isLoading: loadingForms } = useQuery({
-    queryKey: ["ace-forms", clientId],
+    queryKey: ["forms", clientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ace_forms")
@@ -239,7 +239,7 @@ export function DesignPageStep({
   };
 
   const handleCreateForm = () => {
-    navigate("/ace-forms/new", {
+    navigate("/forms/new", {
       state: {
         returnTo: "/campaigns/new",
         campaignId,

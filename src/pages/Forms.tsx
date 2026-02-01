@@ -10,7 +10,7 @@ import { LibraryHeader } from "@/shared/components/LibraryHeader";
 import { LibrarySearch } from "@/shared/components/LibrarySearch";
 import { ViewToggle } from "@/shared/components/ViewToggle";
 import { LibraryEmptyState } from "@/shared/components/LibraryEmptyState";
-import { AceFormsFilters } from "@/features/ace-forms/components";
+import { FormsFilters } from "@/features/forms/components";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,9 +18,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { useAceForms } from '@/features/ace-forms/hooks';
+import { useForms } from '@/features/forms/hooks';
 import { useTenant } from "@/contexts/TenantContext";
-import { FormEmbedDialog } from "@/features/ace-forms/components";
+import { FormEmbedDialog } from "@/features/forms/components";
 import { Layout } from "@/shared/components/layout/Layout";
 import {
   AlertDialog,
@@ -45,12 +45,12 @@ const getFormStatus = (form: AceForm) => {
 };
 
 /**
- * Ace Forms - List and manage all forms
+ * Forms - List and manage all forms
  */
-export default function AceForms() {
+export default function Forms() {
   const navigate = useNavigate();
   const { currentClient } = useTenant();
-  const { forms, isLoading, deleteForm, duplicateForm, updateForm } = useAceForms(currentClient?.id);
+  const { forms, isLoading, deleteForm, duplicateForm, updateForm } = useForms(currentClient?.id);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [embedFormId, setEmbedFormId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -86,10 +86,10 @@ export default function AceForms() {
     <Layout>
       <div className="container mx-auto py-8 space-y-6">
       <LibraryHeader
-        title="Ace Forms"
+        title="Forms"
         subtitle="AI-powered form builder for gift card redemption"
         createButtonText="Create Form"
-        onCreateClick={() => navigate("/ace-forms/new")}
+        onCreateClick={() => navigate("/forms/new")}
       />
 
       <div className="flex gap-4 items-center">
@@ -101,7 +101,7 @@ export default function AceForms() {
         <ViewToggle view={view} onViewChange={setView} />
       </div>
 
-      <AceFormsFilters
+      <FormsFilters
         selectedStatus={statusFilter}
         onStatusChange={setStatusFilter}
         onClearFilters={() => setStatusFilter("all")}
@@ -114,7 +114,7 @@ export default function AceForms() {
           title="No forms found"
           message={searchQuery ? `No forms match "${searchQuery}"` : "Create your first form to get started"}
           actionLabel="Create Form"
-          onAction={() => navigate("/ace-forms/new")}
+          onAction={() => navigate("/forms/new")}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -149,7 +149,7 @@ export default function AceForms() {
                         variant="outline"
                         size="sm"
                         className="flex-1"
-                        onClick={() => navigate(`/ace-forms/${form.id}/builder`)}
+                        onClick={() => navigate(`/forms/${form.id}/builder`)}
                       >
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
@@ -165,7 +165,7 @@ export default function AceForms() {
                             <Eye className="w-4 h-4 mr-2" />
                             Preview
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/ace-forms/${form.id}/analytics`)}>
+                          <DropdownMenuItem onClick={() => navigate(`/forms/${form.id}/analytics`)}>
                             <BarChart3 className="w-4 h-4 mr-2" />
                             Analytics
                           </DropdownMenuItem>

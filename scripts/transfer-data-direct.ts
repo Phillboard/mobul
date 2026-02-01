@@ -205,7 +205,7 @@ async function transferTable(oldClient: Client, newClient: Client, table: string
 
 async function main() {
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('       ACE ENGAGE - DATABASE TRANSFER');
+  console.log('       MOBUL - DATABASE TRANSFER');
   console.log('═══════════════════════════════════════════════════════════');
   console.log('');
   console.log('OLD: arzthloosvnasokxygfo');

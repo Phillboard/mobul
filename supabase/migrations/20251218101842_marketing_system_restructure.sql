@@ -1,5 +1,5 @@
 -- ============================================================================
--- ACE ENGAGE - MARKETING SYSTEM RESTRUCTURE
+-- MOBUL - MARKETING SYSTEM RESTRUCTURE
 -- Migration: Enhance marketing tables for broadcasts with sequences and
 --            automations with custom content support
 -- ============================================================================

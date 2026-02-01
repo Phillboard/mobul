@@ -2,7 +2,7 @@
 
 ## Overview
 
-Complete index of all database migrations for the ACE Engage platform. Migrations are organized chronologically and categorized by purpose.
+Complete index of all database migrations for the Mobul platform. Migrations are organized chronologically and categorized by purpose.
 
 **Total Migrations:** ~148 (after consolidation)  
 **Date Range:** November 2024 - December 2024  

@@ -41,20 +41,32 @@ export const SMS_TEMPLATE_TYPES: Record<SmsTemplateType, {
   opt_in_request: {
     label: 'Opt-In Request',
     description: 'Sent when requesting SMS consent from recipients (TCPA required)',
-    variables: ['{company}', '{client_name}'],
+    variables: ['{company}', '{client_name}', '{first_name}'],
     defaultTemplate: 'This is {company}. Reply YES to receive your gift card and messages for 30 days. Reply STOP to opt out. Msg & data rates may apply.',
   },
   opt_in_confirmation: {
     label: 'Opt-In Confirmation',
     description: 'Sent when recipient replies YES to opt-in request',
-    variables: ['{company}', '{first_name}'],
+    variables: ['{company}', '{client_name}', '{first_name}'],
     defaultTemplate: "Thanks! You're all set to receive your gift card.",
     canBeDisabled: true,
   },
   gift_card_delivery: {
     label: 'Gift Card Delivery',
     description: 'Sent when delivering gift card codes to recipients',
-    variables: ['{first_name}', '{last_name}', '{value}', '{brand}', '{code}', '{link}', '{company}'],
+    // All supported variables for gift card delivery (URLs in message can contain any of these)
+    variables: [
+      // Recipient identity
+      '{first_name}', '{last_name}', '{email}', '{phone}', '{recipient_company}',
+      // Address
+      '{address1}', '{address2}', '{city}', '{state}', '{zip}',
+      // Gift card
+      '{code}', '{value}', '{brand}', '{link}',
+      // Client
+      '{client_name}', '{company}',
+      // Custom (documented separately)
+      '{custom.*}',
+    ],
     defaultTemplate: 'Congratulations {first_name}! You\'ve earned a ${value} {brand} gift card. Your code: {code}. Thank you for your business!',
   },
 };

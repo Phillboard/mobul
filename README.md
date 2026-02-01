@@ -1,4 +1,4 @@
-# ACE Engage - Direct Mail Marketing Platform
+# Mobul - Direct Mail Marketing Platform
 
 > **✅ API-FIRST ARCHITECTURE:** Fully refactored with edge functions, business rules, and comprehensive security.  
 > **📚 Complete Documentation:** See [API_FIRST_MASTER_INDEX.md](API_FIRST_MASTER_INDEX.md) for API reference and deployment guides.
@@ -11,7 +11,7 @@
 
 ## 🎯 What This Is
 
-ACE Engage is a **complete direct mail marketing platform** with API-first architecture, featuring gift card rewards, campaign management, and comprehensive analytics.
+Mobul is a **complete direct mail marketing platform** with API-first architecture, featuring gift card rewards, campaign management, and comprehensive analytics.
 
 ### Core Features:
 - ✅ **OAuth Authentication** - Google & Apple Sign-In
@@ -462,7 +462,7 @@ npm run build       # Verify builds
 
 ## 📄 License
 
-Copyright © 2025 ACE Engage Platform
+Copyright © 2025 Mobul Platform
 
 ---
 

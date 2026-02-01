@@ -4,7 +4,7 @@
  * Defines user roles and permissions across the platform hierarchy.
  * 
  * **Roles per PLATFORM_DICTIONARY.md:**
- * - `admin` - Platform Admin: ACE Engage staff with full system access
+ * - `admin` - Platform Admin: Mobul staff with full system access
  * - `tech_support` - Tech Support: ACE support staff (view only, assist users)
  * - `agency_owner` - Agency Owner: Manages all clients under their agency
  * - `company_owner` - Client Owner: Manages their company's campaigns, contacts, users

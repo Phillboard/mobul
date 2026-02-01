@@ -56,11 +56,11 @@ const AdminGiftCardMarketplace = lazy(() => import("./pages/AdminGiftCardMarketp
 const AdminGiftCardBrands = lazy(() => import("./pages/AdminGiftCardBrands"));
 const AdminFinancialReports = lazy(() => import("./pages/AdminFinancialReports"));
 const AdminSiteDirectory = lazy(() => import("./pages/AdminSiteDirectory"));
-const AceForms = lazy(() => import("./pages/AceForms"));
-const AceFormBuilder = lazy(() => import("./pages/AceFormBuilder"));
-const AceFormPublic = lazy(() => import("./pages/AceFormPublic"));
-const AceFormAnalytics = lazy(() => import("./pages/AceFormAnalytics"));
-const AceFormsDocumentation = lazy(() => import("./pages/AceFormsDocumentation"));
+const Forms = lazy(() => import("./pages/Forms"));
+const FormBuilder = lazy(() => import("./pages/FormBuilder"));
+const FormPublic = lazy(() => import("./pages/FormPublic"));
+const FormAnalytics = lazy(() => import("./pages/FormAnalytics"));
+const FormsDocumentation = lazy(() => import("./pages/FormsDocumentation"));
 const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
 const AdminMessagingTest = lazy(() => import("./pages/AdminMessagingTest"));
 const ErrorLogs = lazy(() => import("./pages/ErrorLogs"));
@@ -147,8 +147,8 @@ const App = () => (
                   <Route path="/auth/callback" element={<AuthCallback />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/f/:formSlug" element={<AceFormPublic />} />
-                  <Route path="/forms/:formId" element={<AceFormPublic />} />
+                  <Route path="/f/:formSlug" element={<FormPublic />} />
+                  <Route path="/forms/:formId" element={<FormPublic />} />
                   <Route path="/redeem/:campaignId/:redemptionToken" element={<GiftCardReveal />} />
                   <Route path="/redeem-gift-card" element={<PublicRedemption />} />
                   <Route path="/test-redemption" element={<TestRedemption />} />
@@ -261,12 +261,19 @@ const App = () => (
                   <Route path="/marketing/campaigns/:id/edit" element={<Navigate to="/marketing/broadcasts/:id/edit" replace />} />
                   <Route path="/marketing/analytics" element={<Navigate to="/marketing" replace />} />
                   
-                  {/* ACE Forms */}
-                  <Route path="/ace-forms" element={<ProtectedRoute><AceForms /></ProtectedRoute>} />
-                  <Route path="/ace-forms/new" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
-                  <Route path="/ace-forms/:formId/builder" element={<ProtectedRoute><AceFormBuilder /></ProtectedRoute>} />
-                  <Route path="/ace-forms/:formId/analytics" element={<ProtectedRoute><AceFormAnalytics /></ProtectedRoute>} />
-                  <Route path="/ace-forms/docs" element={<ProtectedRoute><AceFormsDocumentation /></ProtectedRoute>} />
+                  {/* Forms */}
+                  <Route path="/forms" element={<ProtectedRoute><Forms /></ProtectedRoute>} />
+                  <Route path="/forms/new" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
+                  <Route path="/forms/:formId/builder" element={<ProtectedRoute><FormBuilder /></ProtectedRoute>} />
+                  <Route path="/forms/:formId/analytics" element={<ProtectedRoute><FormAnalytics /></ProtectedRoute>} />
+                  <Route path="/forms/docs" element={<ProtectedRoute><FormsDocumentation /></ProtectedRoute>} />
+                  
+                  {/* ACE Forms - Backward compatibility redirects */}
+                  <Route path="/ace-forms" element={<Navigate to="/forms" replace />} />
+                  <Route path="/ace-forms/new" element={<Navigate to="/forms/new" replace />} />
+                  <Route path="/ace-forms/:formId/builder" element={<Navigate to="/forms/:formId/builder" replace />} />
+                  <Route path="/ace-forms/:formId/analytics" element={<Navigate to="/forms/:formId/analytics" replace />} />
+                  <Route path="/ace-forms/docs" element={<Navigate to="/forms/docs" replace />} />
                   
                   {/* Administration - Consolidated */}
                   <Route path="/admin/system-health" element={<ProtectedRoute><SystemHealth /></ProtectedRoute>} />

@@ -51,7 +51,7 @@ async function testAlertSystem() {
         body: {
           severity: 'info',
           title: 'Test Email Alert',
-          message: 'This is a test email from the ACE Engage alerting system. If you receive this, email alerts are configured correctly.',
+          message: 'This is a test email from the Mobul alerting system. If you receive this, email alerts are configured correctly.',
           category: 'system_test'
         }
       }
@@ -79,7 +79,7 @@ async function testAlertSystem() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: '🧪 Test Alert from ACE Engage',
+          text: '🧪 Test Alert from Mobul',
           blocks: [
             {
               type: 'header',
@@ -92,7 +92,7 @@ async function testAlertSystem() {
               type: 'section',
               text: {
                 type: 'mrkdwn',
-                text: 'This is a test alert from the ACE Engage monitoring system. If you see this, Slack alerts are configured correctly.'
+                text: 'This is a test alert from the Mobul monitoring system. If you see this, Slack alerts are configured correctly.'
               }
             },
             {

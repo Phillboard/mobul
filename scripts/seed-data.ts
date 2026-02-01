@@ -1,5 +1,5 @@
 /**
- * Seed Data Script for ACE Engage Platform
+ * Seed Data Script for Mobul Platform
  * Generates realistic test data for 2 agencies with 3 clients each
  */
 
@@ -602,7 +602,7 @@ async function seedRecipientsAndEvents() {
 async function main() {
   console.log('');
   console.log('╔═══════════════════════════════════════════════════════════════╗');
-  console.log('║         ACE ENGAGE - SEED DATA GENERATION                     ║');
+  console.log('║         MOBUL - SEED DATA GENERATION                     ║');
   console.log('╚═══════════════════════════════════════════════════════════════╝');
   console.log('');
   

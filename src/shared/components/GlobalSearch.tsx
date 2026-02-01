@@ -52,7 +52,7 @@ const QUICK_PAGES = [
   { title: 'Dashboard', href: '/', icon: <LayoutDashboard className="h-4 w-4" />, keywords: ['home', 'overview'] },
   { title: 'All Campaigns', href: '/campaigns', icon: <Megaphone className="h-4 w-4" />, keywords: ['mail', 'direct'] },
   { title: 'Contacts', href: '/contacts', icon: <Users className="h-4 w-4" />, keywords: ['people', 'crm'] },
-  { title: 'ACE Forms', href: '/ace-forms', icon: <FormInput className="h-4 w-4" />, keywords: ['forms', 'lead'] },
+  { title: 'Forms', href: '/forms', icon: <FormInput className="h-4 w-4" />, keywords: ['forms', 'lead'] },
   { title: 'Gift Cards', href: '/gift-cards', icon: <Gift className="h-4 w-4" />, keywords: ['rewards', 'inventory'] },
   { title: 'Landing Pages', href: '/landing-pages', icon: <Globe className="h-4 w-4" />, keywords: ['purl', 'web'] },
   { title: 'Mail Library', href: '/mail', icon: <Mail className="h-4 w-4" />, keywords: ['design', 'templates'] },
@@ -255,7 +255,7 @@ export function GlobalSearch() {
               {forms.map((form) => (
                 <CommandItem
                   key={form.id}
-                  onSelect={() => runCommand(() => navigate(`/ace-forms/${form.id}`))}
+                  onSelect={() => runCommand(() => navigate(`/forms/${form.id}`))}
                 >
                   <FormInput className="h-4 w-4" />
                   <span className="ml-2 flex-1">{form.name}</span>

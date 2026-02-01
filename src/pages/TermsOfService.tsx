@@ -10,7 +10,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">Agreement to Terms</h2>
           <p>
-            By accessing or using Mobul ACE ("Service"), you agree to be bound by these Terms of Service
+            By accessing or using Mobul ("Service"), you agree to be bound by these Terms of Service
             ("Terms"). If you disagree with any part of these terms, you may not access the Service.
           </p>
         </section>
@@ -18,7 +18,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">Description of Service</h2>
           <p>
-            Mobul ACE provides a direct mail marketing platform that enables businesses to create, manage,
+            Mobul provides a direct mail marketing platform that enables businesses to create, manage,
             and track marketing campaigns, including but not limited to:
           </p>
           <ul className="list-disc pl-6 space-y-2">
@@ -99,7 +99,7 @@ export default function TermsOfService() {
 
           <h3 className="text-xl font-semibold mb-2 mt-4">Our Content</h3>
           <p>
-            The Service and its original content, features, and functionality are owned by Mobul ACE and
+            The Service and its original content, features, and functionality are owned by Mobul and
             are protected by copyright, trademark, and other intellectual property laws.
           </p>
         </section>
@@ -139,7 +139,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">Limitation of Liability</h2>
           <p>
-            TO THE MAXIMUM EXTENT PERMITTED BY LAW, MOBUL ACE SHALL NOT BE LIABLE FOR ANY INDIRECT,
+            TO THE MAXIMUM EXTENT PERMITTED BY LAW, MOBUL SHALL NOT BE LIABLE FOR ANY INDIRECT,
             INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES.
           </p>
         </section>
@@ -156,7 +156,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">Indemnification</h2>
           <p>
-            You agree to indemnify and hold Mobul ACE harmless from any claims, damages, liabilities, and
+            You agree to indemnify and hold Mobul harmless from any claims, damages, liabilities, and
             expenses arising from your use of the Service or violation of these Terms.
           </p>
         </section>
@@ -189,8 +189,8 @@ export default function TermsOfService() {
           <h2 className="text-2xl font-semibold mb-4">Contact Information</h2>
           <p>For questions about these Terms, please contact us at:</p>
           <div className="mt-4 p-4 bg-muted rounded-lg">
-            <p className="font-medium">Mobul ACE</p>
-            <p>Email: legal@mobulace.com</p>
+            <p className="font-medium">Mobul</p>
+            <p>Email: legal@mobul.com</p>
             <p>Address: [Your Business Address]</p>
           </div>
         </section>

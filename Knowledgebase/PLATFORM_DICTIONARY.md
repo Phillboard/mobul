@@ -1,20 +1,20 @@
-# ACE ENGAGE - PLATFORM DICTIONARY
+# MOBUL - PLATFORM DICTIONARY
 
 ## Purpose
-This document defines ALL terminology used across the ACE Engage platform. Every developer, designer, and AI agent MUST use these terms consistently.
+This document defines ALL terminology used across the Mobul platform. Every developer, designer, and AI agent MUST use these terms consistently.
 
 ---
 
 ## Organization Hierarchy
 
 ### Platform
-- **Definition**: The top-level entity. ACE Engage itself.
+- **Definition**: The top-level entity. Mobul itself.
 - **Role**: Platform Admin
 - **Permissions**: Full system access, manages all agencies
 - **In Code**: `organization_type: 'platform'`
 
 ### Agency
-- **Definition**: A marketing agency or reseller that uses ACE Engage to serve their clients
+- **Definition**: A marketing agency or reseller that uses Mobul to serve their clients
 - **Role**: Agency Owner
 - **Permissions**: Manage their clients, campaigns, users, credits
 - **In Code**: `organization_type: 'agency'`
@@ -40,12 +40,12 @@ This document defines ALL terminology used across the ACE Engage platform. Every
 ## User Roles
 
 ### Platform Admin
-- **Definition**: ACE Engage staff with full system access
+- **Definition**: Mobul staff with full system access
 - **In Code**: `role: 'admin'`
 - **Can**: Everything
 
 ### Tech Support
-- **Definition**: ACE Engage support staff
+- **Definition**: Mobul support staff
 - **In Code**: `role: 'tech_support'`
 - **Can**: View all data, assist users, cannot delete
 
@@ -268,7 +268,7 @@ This document defines ALL terminology used across the ACE Engage platform. Every
 ## Hierarchy Visualization
 
 ```
-Platform (ACE Engage)
+Platform (Mobul)
 ├── Agency A
 │   ├── Client A1
 │   │   ├── Campaign 1

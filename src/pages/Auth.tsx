@@ -54,7 +54,7 @@ export default function Auth() {
             </div>
           </div>
           <CardTitle className="text-2xl">Sign In</CardTitle>
-          <CardDescription>Sign in to your ACE Engage account</CardDescription>
+          <CardDescription>Sign in to your Mobul account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">

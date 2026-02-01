@@ -87,11 +87,11 @@ Deno.serve(async (req) => {
             totalCards: poolData.total_cards || 0,
             cardValue: Number(poolData.card_value || 0),
             poolId,
-            dashboardUrl: 'https://app.mobulace.com/gift-cards',
+            dashboardUrl: 'https://app.mobul.com/gift-cards',
           });
 
           await resend.emails.send({
-            from: `${Deno.env.get('FROM_NAME') || 'Mobul ACE'} <${Deno.env.get('FROM_EMAIL') || 'noreply@mobulace.com'}>`,
+            from: `${Deno.env.get('FROM_NAME') || 'Mobul'} <${Deno.env.get('FROM_EMAIL') || 'noreply@mobul.com'}>`,
             to: emailsArray,
             subject: `${level.toUpperCase()}: ${title}`,
             html: emailHtml,

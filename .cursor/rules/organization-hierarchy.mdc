@@ -8,7 +8,7 @@ description: Defines multi-tenant organization model including roles, permission
 Multi-Tenant Organization Model (Importance: 95/100)
 
 Hierarchical Structure:
-- Platform Level (ACE Engage)
+- Platform Level (Mobul)
 - Agency Level (Marketing/Gift Card Resellers) 
 - Client Level (End Customers)
 - Campaign Level (Individual Gift Card Campaigns)

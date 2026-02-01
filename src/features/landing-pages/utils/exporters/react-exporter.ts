@@ -41,7 +41,7 @@ export async function exportToReact(
   const packageJson = {
     name: componentName.toLowerCase(),
     version: '1.0.0',
-    description: 'Landing page component exported from ACE Engage',
+    description: 'Landing page component exported from Mobul',
     main: `src/${componentName}.${componentExt}`,
     scripts: {
       dev: 'vite',
@@ -68,7 +68,7 @@ export async function exportToReact(
   // Create README
   const readme = `# ${componentName} - React Component
 
-This is a React component exported from ACE Engage.
+This is a React component exported from Mobul.
 
 ## Installation
 

@@ -62,7 +62,7 @@ export class SeedDataOrchestrator {
   async execute(): Promise<GenerationStats> {
     console.log('');
     console.log('╔═══════════════════════════════════════════════════════════════╗');
-    console.log('║       ACE ENGAGE - COMPREHENSIVE SEED DATA GENERATION         ║');
+    console.log('║       MOBUL - COMPREHENSIVE SEED DATA GENERATION         ║');
     console.log('╚═══════════════════════════════════════════════════════════════╝');
     console.log('');
     console.log(`📊 Scenario: ${this.config.scenario}`);

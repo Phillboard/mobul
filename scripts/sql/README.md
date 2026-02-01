@@ -1,6 +1,6 @@
 # SQL Utility Scripts
 
-SQL scripts for database operations, seeding, and verification for the ACE Engage platform.
+SQL scripts for database operations, seeding, and verification for the Mobul platform.
 
 ## Available Scripts
 

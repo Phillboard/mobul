@@ -103,7 +103,7 @@ export function FormSubmissionConfirmation({
   return renderEmailLayout({
     children: emailBody,
     preheader: `Thank you for submitting ${formName}`,
-    clientName: clientName || 'Mobul ACE',
+    clientName: clientName || 'Mobul',
     logoUrl: clientLogoUrl,
   });
 }

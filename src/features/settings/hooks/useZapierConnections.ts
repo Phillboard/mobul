@@ -156,7 +156,7 @@ export function useZapierConnections(clientId: string | null) {
         timestamp: new Date().toISOString(),
         client: { id: clientId },
         data: {
-          message: "This is a test event from ACE Engage",
+          message: "This is a test event from Mobul",
           connection_name: connection.connection_name,
         },
         meta: {

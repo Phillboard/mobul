@@ -194,7 +194,7 @@ async function transferTable(pgClient: Client, supabase: any, table: string): Pr
 async function main() {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════╗');
-  console.log('║       ACE ENGAGE - DATABASE MIGRATION                    ║');
+  console.log('║       MOBUL - DATABASE MIGRATION                    ║');
   console.log('╠══════════════════════════════════════════════════════════╣');
   console.log('║  FROM: arzthloosvnasokxygfo (OLD)                        ║');
   console.log('║  TO:   uibvxhwhkatjcwghnzpu (NEW)                        ║');
