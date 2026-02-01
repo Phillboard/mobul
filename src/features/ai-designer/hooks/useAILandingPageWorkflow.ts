@@ -226,11 +226,13 @@ export function useAILandingPageWorkflow(
   // Load page data into state when query completes
   useEffect(() => {
     if (landingPageId && landingPageId !== 'new') {
-      queryClient.getQueryData<LandingPageRecord>(['ai-landing-page', landingPageId])
-        && dispatch({ 
+      const pageData = queryClient.getQueryData<LandingPageRecord>(['ai-landing-page', landingPageId]);
+      if (pageData) {
+        dispatch({ 
           type: 'LOAD_PAGE', 
-          page: queryClient.getQueryData<LandingPageRecord>(['ai-landing-page', landingPageId])! 
+          page: pageData 
         });
+      }
     }
   }, [landingPageId, queryClient]);
 

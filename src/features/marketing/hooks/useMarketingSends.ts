@@ -175,13 +175,11 @@ export function useRetryFailedSends() {
 
   return useMutation({
     mutationFn: async (campaignId: string) => {
-      // Invoke edge function to retry failed sends
-      const { data, error } = await supabase.functions.invoke('retry-marketing-sends', {
-        body: { campaignId },
-      });
+      if (!campaignId) {
+        throw new Error('Campaign ID is required');
+      }
 
-      if (error) throw error;
-      return data;
+      throw new Error('Retrying failed sends is not available yet.');
     },
     onSuccess: (_, campaignId) => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY, campaignId] });

@@ -29,7 +29,7 @@ export async function exportToReact(
   }
 
   // Convert HTML attributes to JSX
-  let jsxContent = convertToJSX(content);
+  const jsxContent = convertToJSX(content);
 
   // Create component file
   const componentExt = typescript ? 'tsx' : 'jsx';

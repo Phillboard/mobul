@@ -43,11 +43,28 @@ export function SecuritySettings() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-    const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "created_at", desc: true }]);
 
   const isAdmin = roles.some(r => r.role === USER_ROLES.ADMIN);
-  const isTechSupport = roles.some(r => r.role === USER_ROLES.TECH_SUPPORT);
+  const _isTechSupport = roles.some(r => r.role === USER_ROLES.TECH_SUPPORT);
   const canViewSecurity = hasPermission('platform.security.manage') || hasPermission('settings.security.view');
+
+  const filteredLogs = auditLogs.filter(log => 
+    log.action_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    log.resource_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    log.ip_address?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const columns = createAuditLogsColumns();
+
+  // Hook must be called unconditionally (before any early returns)
+  const table = useReactTable({
+    data: filteredLogs,
+    columns,
+    ...basicTableModels,
+    state: { sorting },
+    onSortingChange: setSorting,
+  });
 
   useEffect(() => {
     if (canViewSecurity) {
@@ -73,6 +90,7 @@ export function SecuritySettings() {
     }
   };
 
+  // Early return must be after all hooks
   if (!canViewSecurity) {
     return (
       <Card>
@@ -86,22 +104,6 @@ export function SecuritySettings() {
       </Card>
     );
   }
-
-  const filteredLogs = auditLogs.filter(log => 
-    log.action_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.resource_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    log.ip_address?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const columns = createAuditLogsColumns();
-
-  const table = useReactTable({
-    data: filteredLogs,
-    columns,
-    ...basicTableModels,
-    state: { sorting },
-    onSortingChange: setSorting,
-  });
 
   return (
     <div className="space-y-6">

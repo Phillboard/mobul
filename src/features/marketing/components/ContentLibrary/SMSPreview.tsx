@@ -2,10 +2,12 @@
  * SMS Preview Component
  * 
  * Renders SMS template preview in phone mockup with sample data.
+ * Accounts for Twilio's automatic URL shortening (~35 chars per URL).
  */
 
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
+import { checkSmsLength } from "@/shared/utils/a2pValidation";
 
 interface SMSPreviewProps {
   message: string;
@@ -31,8 +33,8 @@ function replaceMergeTags(text: string): string {
 
 export function SMSPreview({ message }: SMSPreviewProps) {
   const previewMessage = replaceMergeTags(message || 'No message content');
-  const characterCount = message.length;
-  const smsSegments = Math.ceil(characterCount / 160);
+  const lengthInfo = checkSmsLength(message || '');
+  const hasUrlShortening = lengthInfo.urlInfo.urlCount > 0 && lengthInfo.urlInfo.charactersSaved > 0;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -100,13 +102,25 @@ export function SMSPreview({ message }: SMSPreviewProps) {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              {characterCount} character{characterCount !== 1 ? 's' : ''}
+              {hasUrlShortening ? (
+                <>
+                  <span className="line-through opacity-50">{lengthInfo.length}</span>
+                  {' ~'}{lengthInfo.estimatedLength} character{lengthInfo.estimatedLength !== 1 ? 's' : ''}
+                </>
+              ) : (
+                <>{lengthInfo.length} character{lengthInfo.length !== 1 ? 's' : ''}</>
+              )}
             </span>
-            <Badge variant={smsSegments > 1 ? 'destructive' : 'secondary'}>
-              {smsSegments} SMS segment{smsSegments !== 1 ? 's' : ''}
+            <Badge variant={lengthInfo.segments > 1 ? 'destructive' : 'secondary'}>
+              {lengthInfo.segments} SMS segment{lengthInfo.segments !== 1 ? 's' : ''}
             </Badge>
           </div>
-          {smsSegments > 1 && (
+          {hasUrlShortening && (
+            <p className="text-xs text-blue-500 mt-2">
+              URLs will be shortened by Twilio (~35 chars each)
+            </p>
+          )}
+          {lengthInfo.segments > 1 && (
             <p className="text-xs text-muted-foreground mt-2">
               Messages over 160 characters will be sent as multiple SMS segments
             </p>

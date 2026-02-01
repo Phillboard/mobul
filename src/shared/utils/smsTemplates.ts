@@ -12,6 +12,59 @@
  * - Custom fields: {custom.field_name}
  */
 
+/**
+ * Twilio automatically shortens URLs in SMS messages.
+ * Shortened URLs look like: https://link.scaledbyai.com/dweuihd
+ * This is approximately 35 characters.
+ */
+export const TWILIO_SHORTENED_URL_LENGTH = 35;
+
+/**
+ * Regex to match URLs in text
+ */
+const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
+
+/**
+ * Estimates the character count after Twilio's URL shortening.
+ * Twilio shortens all URLs to approximately 35 characters.
+ * 
+ * @param text - The message text
+ * @returns Object with original length, estimated length after shortening, and URL count
+ */
+export function estimateShortenedLength(text: string): {
+  originalLength: number;
+  estimatedLength: number;
+  urlCount: number;
+  urlsSaved: number;
+} {
+  const urls = text.match(URL_REGEX) || [];
+  const urlCount = urls.length;
+  
+  if (urlCount === 0) {
+    return {
+      originalLength: text.length,
+      estimatedLength: text.length,
+      urlCount: 0,
+      urlsSaved: 0,
+    };
+  }
+  
+  // Calculate total characters saved by URL shortening
+  let urlsSaved = 0;
+  urls.forEach(url => {
+    if (url.length > TWILIO_SHORTENED_URL_LENGTH) {
+      urlsSaved += url.length - TWILIO_SHORTENED_URL_LENGTH;
+    }
+  });
+  
+  return {
+    originalLength: text.length,
+    estimatedLength: text.length - urlsSaved,
+    urlCount,
+    urlsSaved,
+  };
+}
+
 export interface SMSTemplateVariables {
   // Recipient identity
   first_name?: string;
@@ -124,7 +177,7 @@ export function renderSMSTemplate(
   }
   
   // Clean up any remaining empty placeholders
-  result = result.replace(/\{[a-z_\.]+\}/gi, '');
+  result = result.replace(/\{[a-z_.]+\}/gi, '');
   
   return result.trim();
 }

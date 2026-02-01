@@ -364,7 +364,7 @@ function renderShapeElement(
   ctx.lineWidth = (element.styles.borderWidth || 1) * scale;
 
   switch (element.shapeType) {
-    case 'rectangle':
+    case 'rectangle': {
       const radius = (element.styles.borderRadius || 0) * scale;
       if (radius > 0) {
         drawRoundedRect(ctx, 0, 0, width, height, radius);
@@ -375,6 +375,7 @@ function renderShapeElement(
         }
       }
       break;
+    }
 
     case 'circle':
       ctx.beginPath();

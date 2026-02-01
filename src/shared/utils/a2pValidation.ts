@@ -255,38 +255,71 @@ export function validateSmsTemplate(
  * Check if a template exceeds SMS character limits.
  * Standard SMS: 160 chars (GSM-7 encoding)
  * Unicode SMS: 70 chars
+ * 
+ * When accountForUrlShortening is true, estimates the length after
+ * Twilio's automatic URL shortening (URLs become ~35 chars).
  */
-export function checkSmsLength(template: string): {
+export function checkSmsLength(template: string, accountForUrlShortening: boolean = true): {
   length: number;
+  estimatedLength: number;
   limit: number;
   isUnicode: boolean;
   segments: number;
   warning: string | null;
+  urlInfo: {
+    urlCount: number;
+    charactersSaved: number;
+  };
 } {
   // Check for non-GSM characters (unicode)
-  const gsmChars = /^[@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1BÆæßÉ !"#¤%&'()*+,\-./0-9:;<=>?¡A-ZÄÖÑÜẞ§¿a-zäöñüà\[\]{}\\~^|€]*$/;
+  // GSM character set regex - includes control characters for newline, carriage return, and escape
+  // eslint-disable-next-line no-control-regex
+  const gsmChars = /^[@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1BÆæßÉ !"#¤%&'()*+,\-./0-9:;<=>?¡A-ZÄÖÑÜẞ§¿a-zäöñüà[\]{}\\~^|€]*$/;
   const isUnicode = !gsmChars.test(template);
   
   const limit = isUnicode ? 70 : 160;
   const multipartLimit = isUnicode ? 67 : 153; // Headers reduce capacity in multipart
   
+  // Estimate length after Twilio URL shortening
+  // Twilio shortens URLs to approximately 35 characters
+  const TWILIO_SHORTENED_URL_LENGTH = 35;
+  const URL_REGEX = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
+  const urls = template.match(URL_REGEX) || [];
+  
+  let charactersSaved = 0;
+  if (accountForUrlShortening) {
+    urls.forEach(url => {
+      if (url.length > TWILIO_SHORTENED_URL_LENGTH) {
+        charactersSaved += url.length - TWILIO_SHORTENED_URL_LENGTH;
+      }
+    });
+  }
+  
+  const estimatedLength = template.length - charactersSaved;
+  const lengthForSegments = accountForUrlShortening ? estimatedLength : template.length;
+  
   let segments = 1;
-  if (template.length > limit) {
-    segments = Math.ceil(template.length / multipartLimit);
+  if (lengthForSegments > limit) {
+    segments = Math.ceil(lengthForSegments / multipartLimit);
   }
   
   let warning: string | null = null;
-  if (template.length > limit) {
-    warning = `Message will be sent as ${segments} SMS segments`;
-  } else if (template.length > limit * 0.9) {
+  if (lengthForSegments > limit) {
+    warning = `Message will be sent as ${segments} SMS segment${segments > 1 ? 's' : ''}`;
+  } else if (lengthForSegments > limit * 0.9) {
     warning = 'Approaching character limit';
   }
   
   return {
     length: template.length,
+    estimatedLength,
     limit,
     isUnicode,
     segments,
     warning,
+    urlInfo: {
+      urlCount: urls.length,
+      charactersSaved,
+    },
   };
 }

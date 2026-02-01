@@ -40,3 +40,11 @@ export function useDesignerContext(): DesignerContext {
   
   return context;
 }
+
+/**
+ * Safe version of useDesignerContext that returns null instead of throwing
+ * Use this when the component might be rendered outside of DesignerContextProvider
+ */
+export function useDesignerContextSafe(): DesignerContext | null {
+  return useContext(DesignerContextContext);
+}

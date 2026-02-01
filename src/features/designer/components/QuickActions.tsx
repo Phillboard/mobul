@@ -13,7 +13,7 @@ import {
   Sparkles, Lightbulb, Palette, LayoutGrid, Image,
   Users, Car, Coffee, UtensilsCrossed, Mountain, Shield, Building
 } from 'lucide-react';
-import { useDesignerContext } from '../context/DesignerContextProvider';
+import { useDesignerContextSafe } from '../context/DesignerContextProvider';
 import { useCanvasConfig } from '../hooks/useCanvasConfig';
 import { getFrontDesignPrompt, getBackDesignPrompt } from '../templates/frontPrompts';
 import { getBackgroundPrompt, getBrandBackgroundSuggestions, type BackgroundStyle } from '../templates/backgroundPrompts';
@@ -135,22 +135,14 @@ export function QuickActions({
   isLoading = false,
   className = '',
 }: QuickActionsProps) {
-  // Get campaign context if available
-  let context;
-  let config;
-  try {
-    context = useDesignerContext();
-    const canvasConfigHook = useCanvasConfig({
-      initialSize: '6x4',
-      initialOrientation: 'landscape',
-      initialSide: 'front',
-    });
-    config = canvasConfigHook.config;
-  } catch {
-    // Not wrapped in context provider - use defaults
-    context = null;
-    config = null;
-  }
+  // Call hooks unconditionally - they return null if context not available
+  const context = useDesignerContextSafe();
+  const canvasConfigHook = useCanvasConfig({
+    initialSize: '6x4',
+    initialOrientation: 'landscape',
+    initialSide: 'front',
+  });
+  const config = canvasConfigHook.config;
 
   /**
    * Handle background button click

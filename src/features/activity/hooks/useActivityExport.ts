@@ -232,7 +232,7 @@ export function useActivityExport(): UseActivityExportReturn {
           mimeType = 'application/json;charset=utf-8;';
           filename = generateFilename('json');
           break;
-        case 'pdf':
+        case 'pdf': {
           // Generate print-friendly HTML and open in new window for printing to PDF
           const htmlContent = logsToPrintableHTML(logs, 'Activity Log Export');
           const printWindow = window.open('', '_blank');
@@ -249,6 +249,7 @@ export function useActivityExport(): UseActivityExportReturn {
             records_exported: logs.length,
             generated_at: new Date().toISOString(),
           };
+        }
         default:
           throw new Error(`Unsupported export format: ${format}`);
       }

@@ -34,7 +34,7 @@ export { useCanvasConfig } from './hooks/useCanvasConfig';
 export { useCampaignContext } from './hooks/useCampaignContext';
 
 // Context
-export { DesignerContextProvider, useDesignerContext } from './context/DesignerContextProvider';
+export { DesignerContextProvider, useDesignerContext, useDesignerContextSafe } from './context/DesignerContextProvider';
 
 // Canvas Components
 export { ProportionalCanvas } from './components/Canvas/ProportionalCanvas';

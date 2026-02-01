@@ -4,5 +4,5 @@ export * from './date';
 export * from './currency';
 export * from './table';
 export * from './csv';
-export * from './sms';
+export * from './smsTemplates';
 export * from './typeGuards';

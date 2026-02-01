@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Input } from "@/shared/components/ui/input";
 import { renderTemplate } from '@/features/settings/hooks';
+import { checkSmsLength } from "@/shared/utils/a2pValidation";
 import { Wand2 } from "lucide-react";
 
 interface MessageTemplateEditorProps {
@@ -49,9 +50,10 @@ export function MessageTemplateEditor({
     onChange(newValue);
   };
 
-  const characterCount = value.length;
-  const smsLimit = 160;
-  const isOverLimit = type === 'sms' && characterCount > smsLimit;
+  // Use URL shortening-aware character count for SMS
+  const lengthInfo = useMemo(() => checkSmsLength(value || ''), [value]);
+  const hasUrlShortening = lengthInfo.urlInfo.urlCount > 0 && lengthInfo.urlInfo.charactersSaved > 0;
+  const isOverLimit = type === 'sms' && lengthInfo.estimatedLength > lengthInfo.limit;
 
   return (
     <div className="space-y-4">
@@ -72,7 +74,19 @@ export function MessageTemplateEditor({
           <div className="flex items-center gap-2">
             {type === 'sms' && (
               <Badge variant={isOverLimit ? "destructive" : "secondary"}>
-                {characterCount}/{smsLimit} characters
+                {hasUrlShortening ? (
+                  <>
+                    <span className="line-through opacity-50 mr-1">{lengthInfo.length}</span>
+                    ~{lengthInfo.estimatedLength}/{lengthInfo.limit} chars
+                  </>
+                ) : (
+                  <>{lengthInfo.length}/{lengthInfo.limit} characters</>
+                )}
+              </Badge>
+            )}
+            {type === 'sms' && hasUrlShortening && (
+              <Badge variant="outline" className="text-blue-500 border-blue-500 text-xs">
+                link shortened
               </Badge>
             )}
           </div>
@@ -90,7 +104,12 @@ export function MessageTemplateEditor({
 
         {isOverLimit && (
           <p className="text-sm text-destructive">
-            SMS message exceeds 160 characters. It will be sent as multiple messages.
+            SMS message exceeds 160 characters{hasUrlShortening ? ' (after URL shortening)' : ''}. It will be sent as multiple messages.
+          </p>
+        )}
+        {type === 'sms' && lengthInfo.segments > 1 && (
+          <p className="text-sm text-amber-500">
+            Will be sent as {lengthInfo.segments} SMS segments
           </p>
         )}
       </div>

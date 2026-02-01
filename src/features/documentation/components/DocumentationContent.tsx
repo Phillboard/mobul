@@ -11,9 +11,10 @@ export function DocumentationContent() {
   const { category, slug } = useParams<{ category?: string; slug?: string }>();
   const { hasRole } = useAuth();
   const navigate = useNavigate();
-  const { data: page, isLoading, error } = category && slug 
-    ? useMarkdownDoc(category, slug)
-    : { data: null, isLoading: false, error: null };
+  
+  // Always call the hook - pass empty strings if category/slug are undefined
+  // The hook will handle the case when params are empty
+  const { data: page, isLoading, error } = useMarkdownDoc(category ?? '', slug ?? '');
 
   const isAdmin = hasRole("admin");
 

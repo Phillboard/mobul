@@ -56,11 +56,6 @@ export function DrPhillipChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Don't render if disabled or hidden
-  if (!isEnabled || isHidden) {
-    return null;
-  }
-
   const handleHide = (duration: HideDuration) => {
     hideFor(duration);
     setIsOpen(false);
@@ -81,10 +76,10 @@ export function DrPhillipChat() {
 
   // Load chat sessions from database
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isEnabled && !isHidden) {
       loadChatSessions();
     }
-  }, [isOpen]);
+  }, [isOpen, isEnabled, isHidden]);
 
   const loadChatSessions = async () => {
     try {
@@ -171,10 +166,10 @@ export function DrPhillipChat() {
 
   // Save chat after messages update
   useEffect(() => {
-    if (messages.length > 0 && !isTyping) {
+    if (messages.length > 0 && !isTyping && isEnabled && !isHidden) {
       saveCurrentChat();
     }
-  }, [messages, isTyping]);
+  }, [messages, isTyping, isEnabled, isHidden]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -182,6 +177,11 @@ export function DrPhillipChat() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isTyping]);
+
+  // Don't render if disabled or hidden (must be after all hooks)
+  if (!isEnabled || isHidden) {
+    return null;
+  }
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;

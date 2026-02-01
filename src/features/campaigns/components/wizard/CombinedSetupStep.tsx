@@ -277,7 +277,7 @@ export function CombinedSetupStep({
       case 'name': return isNameValid ? 'complete' : 'incomplete';
       case 'codes': return hasRecipients ? 'complete' : 'incomplete';
       case 'conditions': return hasValidConditions ? 'complete' : 'warning';
-      case 'delivery': return true ? 'complete' : 'incomplete';
+      case 'delivery': return 'complete'; // Delivery section is always valid by default
       default: return 'incomplete';
     }
   };

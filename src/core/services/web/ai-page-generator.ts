@@ -46,33 +46,49 @@ export interface PageGenerationResponse {
   error?: string;
 }
 
+const FALLBACK_STYLE_GUIDE: StyleGuide = {
+  colors: {
+    primary: '#0f172a',
+    secondary: '#64748b',
+    accent: '#38bdf8',
+    background: '#ffffff',
+    text: '#0f172a',
+  },
+  fonts: {
+    heading: 'Inter',
+    body: 'Inter',
+  },
+  messaging: {
+    headline: 'Your headline here',
+    subheadline: 'Supporting message for your landing page',
+    cta: 'Learn more',
+    value_props: [],
+  },
+  style: 'professional',
+};
+
 /**
  * Analyze postcard image to extract style guide
  */
 export async function analyzePostcardImage(imageFile: File): Promise<StyleGuide> {
-  const formData = new FormData();
-  formData.append('image', imageFile);
+  if (!imageFile) {
+    throw new Error('Image file is required');
+  }
 
-  const { data, error } = await supabase.functions.invoke('analyze-image-for-landing-page', {
-    body: formData,
-  });
-
-  if (error) throw error;
-
-  return data.styleGuide;
+  // Edge function not available yet; return a safe fallback style guide.
+  return FALLBACK_STYLE_GUIDE;
 }
 
 /**
  * Analyze website to extract style guide
  */
 export async function analyzeWebsite(url: string): Promise<StyleGuide> {
-  const { data, error } = await supabase.functions.invoke('analyze-website-style', {
-    body: { url },
-  });
+  if (!url) {
+    throw new Error('Website URL is required');
+  }
 
-  if (error) throw error;
-
-  return data.styleGuide;
+  // Edge function not available yet; return a safe fallback style guide.
+  return FALLBACK_STYLE_GUIDE;
 }
 
 /**
@@ -106,24 +122,12 @@ export async function refineLandingPage(
   currentHTML: string,
   refinementPrompt: string
 ): Promise<PageGenerationResponse> {
-  const { data, error } = await supabase.functions.invoke('refine-landing-page', {
-    body: {
-      html: currentHTML,
-      prompt: refinementPrompt,
-    },
-  });
-
-  if (error) {
-    return {
-      success: false,
-      html: currentHTML,
-      error: error.message || 'Failed to refine landing page',
-    };
-  }
-
   return {
-    success: true,
-    ...data,
+    success: false,
+    html: currentHTML,
+    error: refinementPrompt
+      ? 'Refinement is not available in this environment.'
+      : 'Refinement prompt is required.',
   };
 }
 

@@ -104,9 +104,8 @@ export class DemoDataOrchestrator {
   async generate(): Promise<DemoGenerationResult> {
     this.startTime = Date.now();
     
-    try {
-      let orgId: string;
-      let clientId: string;
+    let orgId: string;
+    let clientId: string;
       let brandId: string;
       let poolId: string;
       let campaignId: string;
@@ -327,35 +326,30 @@ export class DemoDataOrchestrator {
         isRedeemed: idx < this.config.outcomes.redeemed
       }));
 
-      return {
-        success: true,
-        clientId: clientId!,
-        clientName: this.config.clientName,
-        campaignId: campaignId!,
-        campaignName: this.config.campaignName,
-        records: {
-          organizations: 1,
-          clients: 1,
-          giftCardPools: 1,
-          giftCards: this.config.inventorySize,
-          campaigns: 1,
-          campaignConditions: 3,
-          rewardConfigs: 1,
-          audiences: 1,
-          recipients: this.config.recipientCount,
-          callSessions: this.config.outcomes.smsSent + this.config.outcomes.smsOptedIn,
-          smsOptIns: this.config.outcomes.smsOptedIn,
-          events: 0
-        },
-        testCodes,
-        createdRecords: this.createdRecords,
-        timeElapsed: Date.now() - this.startTime
-      };
-
-    } catch (error: any) {
-      // Error handling
-      throw error;
-    }
+    return {
+      success: true,
+      clientId: clientId!,
+      clientName: this.config.clientName,
+      campaignId: campaignId!,
+      campaignName: this.config.campaignName,
+      records: {
+        organizations: 1,
+        clients: 1,
+        giftCardPools: 1,
+        giftCards: this.config.inventorySize,
+        campaigns: 1,
+        campaignConditions: 3,
+        rewardConfigs: 1,
+        audiences: 1,
+        recipients: this.config.recipientCount,
+        callSessions: this.config.outcomes.smsSent + this.config.outcomes.smsOptedIn,
+        smsOptIns: this.config.outcomes.smsOptedIn,
+        events: 0
+      },
+      testCodes,
+      createdRecords: this.createdRecords,
+      timeElapsed: Date.now() - this.startTime
+    };
   }
 
   private getRecipientStatus(index: number): string {

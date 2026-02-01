@@ -1,202 +1,180 @@
 # Scripts Directory
 
-## Overview
+> Utility scripts for deployment, testing, data seeding, and database operations.
 
-Utility scripts for deployment, testing, data management, and database operations.
-
----
-
-## Directory Structure
+## Structure
 
 ```
 scripts/
-├── deployment/          # Deployment automation
-│   ├── run-deployment-pipeline.ps1
-│   ├── deploy-for-mike-demo.ps1
-│   ├── setup-new-supabase.ps1
-│   ├── deploy-edge-functions.ps1
-│   └── deploy-edge-functions.sh
-├── testing/            # Testing utilities
-│   ├── test-edge-functions.ps1
-│   ├── test-wallet-functions.ts
-│   ├── test-db-connection.ts
-│   └── test-alerts.ts
-├── database/           # Database operations
-│   ├── migrations/     # Migration helpers
-│   └── seed/          # Seed data scripts
-├── sql/               # SQL utilities
-│   ├── diagnostics/   # Diagnostic queries
-│   ├── verification/  # Verification scripts
-│   ├── archived/      # One-time fixes
-│   ├── seed/         # Seed SQL scripts
-│   └── README.md
-├── seed-data/         # TypeScript seed data modules
-└── README.md          # This file
+├── sql/                    # SQL utilities
+│   ├── verification/       # Migration verification
+│   ├── rollbacks/          # Rollback templates
+│   └── *.sql               # Utility scripts
+├── seed-data/              # TypeScript seed modules
+├── *.ps1                   # PowerShell scripts
+├── *.ts                    # TypeScript scripts
+└── README.md
 ```
 
 ---
 
 ## Deployment Scripts
 
-### run-deployment-pipeline.ps1
+| Script | Purpose |
+|--------|---------|
+| `run-deployment-pipeline.ps1` | Complete deployment automation |
+| `deploy-edge-functions.ps1` | Deploy all edge functions |
+| `deploy-edge-functions.sh` | Linux/Mac version |
+| `setup-new-supabase.ps1` | Initialize new Supabase project |
+| `setup-new-supabase.sh` | Linux/Mac version |
+| `apply-safe-migrations.ps1` | Safe migration deployment |
+| `run-all-migrations.ps1` | Run all migrations in order |
 
-**Location:** `deployment/run-deployment-pipeline.ps1`
+### Usage
 
-**Purpose:** Complete deployment automation
-
-**Usage:**
 ```powershell
-.\scripts\deployment\run-deployment-pipeline.ps1
-```
+# Full deployment
+.\scripts\run-deployment-pipeline.ps1
 
-**What it does:**
-1. Verifies Supabase CLI installation
-2. Checks project connection
-3. Deploys all edge functions
-4. Runs integration tests
-5. Displays deployment summary
+# Deploy edge functions only
+.\scripts\deploy-edge-functions.ps1
 
-**Duration:** 15-20 minutes
-
-### deploy-edge-functions.ps1
-
-**Location:** `deployment/deploy-edge-functions.ps1`
-
-**Purpose:** Deploy edge functions only
-
-**Usage:**
-```powershell
-.\scripts\deployment\deploy-edge-functions.ps1
-```
-
-### setup-new-supabase.ps1
-
-**Location:** `deployment/setup-new-supabase.ps1`
-
-**Purpose:** Initialize new Supabase project
-
-**Usage:**
-```powershell
-.\scripts\deployment\setup-new-supabase.ps1
+# Setup new Supabase project
+.\scripts\setup-new-supabase.ps1
 ```
 
 ---
 
 ## Testing Scripts
 
-### test-wallet-functions.ts
+| Script | Purpose |
+|--------|---------|
+| `test-edge-functions.ps1` | Test all edge functions |
+| `test-wallet-functions.ts` | Test wallet pass generation |
+| `test-alerts.ts` | Test alert system |
+| `verify-edge-functions.ts` | Verify function deployment |
+| `verify-no-duplicates.ts` | Verify duplicate prevention |
+| `run-diagnostics.ts` | Run campaign diagnostics |
+| `validate-analytics-data.ts` | Validate seed data |
 
-**Purpose:** Test Apple/Google Wallet pass generation
+### Usage
 
-**Usage:**
-```bash
-npx tsx scripts/testing/test-wallet-functions.ts
-```
-
-### test-edge-functions.ps1
-
-**Purpose:** Test all edge functions
-
-**Usage:**
 ```powershell
-.\scripts\testing\test-edge-functions.ps1
+# Test edge functions
+.\scripts\test-edge-functions.ps1
+
+# Test wallet functions
+npx tsx scripts/test-wallet-functions.ts
 ```
-
----
-
-## Database Scripts
-
-### SQL Utilities (scripts/sql/)
-
-**Seed Data:**
-- `seed-mvp-test-data.sql` - Basic test data
-- `seed-comprehensive-demo-data.sql` - Complete demo
-- `seed-complete-analytics-data.sql` - Analytics data
-- `seed-default-message-templates.sql` - Message templates
-- `populate-gift-card-pools.sql` - Test inventory
-
-**Diagnostics:** (in sql/diagnostics/)
-- `diagnose-ab6-1061-simple.sql` - Code lookup diagnostics
-- `diagnose-call-permissions.sql` - Permission diagnostics
-- `diagnose-specific-code.sql` - Generic code diagnostics
-- `comprehensive-system-diagnostic.sql` - Full system check
-
-**Verification:** (in sql/verification/)
-- `check-migration-status.sql` - Migration status
-- `verify-mvp-database.sql` - Database health
-
-**Archived:** (in sql/archived/)
-- One-time fixes
-- Completed audits
-- Historical scripts
 
 ---
 
 ## Seed Data Scripts
 
-### TypeScript Modules (scripts/seed-data/)
+### TypeScript Modules (`seed-data/`)
 
-**Purpose:** Programmatic test data generation
+| Module | Purpose |
+|--------|---------|
+| `organizations.ts` | Organization hierarchies |
+| `contacts.ts` | Contact data |
+| `campaigns.ts` | Campaign data |
+| `recipients-events.ts` | Recipients and events |
+| `call-center.ts` | Call center data |
+| `analytics-generators.ts` | Analytics data |
+| `time-simulator.ts` | Time-based simulation |
+| `generators.ts` | Data generators |
+| `helpers.ts` | Utility functions |
+| `config.ts` | Configuration |
+| `constants.ts` | Constants |
+| `quick-enrich.ts` | Quick enrichment |
 
-**Modules:**
-- `organizations.ts` - Organization hierarchies
-- `contacts.ts` - Contact data
-- `campaigns.ts` - Campaign data
-- `analytics-generators.ts` - Analytics data
-- `call-center.ts` - Call center data
-- `generators.ts` - Data generators
-- `helpers.ts` - Utility functions
-- `config.ts` - Configuration
+### Master Scripts
 
-**Usage:**
-```typescript
-import { generateOrganizations } from './seed-data/organizations';
-const orgs = await generateOrganizations(10);
-```
+| Script | Purpose |
+|--------|---------|
+| `seed-all-data.ts` | Master orchestrator |
+| `seed-cli.ts` | Interactive CLI |
+| `seed-gift-card-data.ts` | Gift card data |
+| `seed-client-gift-cards.ts` | Client gift cards |
 
-### Seed CLI
+### Usage
 
-**File:** `seed-cli.ts`
-
-**Usage:**
 ```bash
-npx tsx scripts/seed-cli.ts --help
+# Run master seeder
+npx tsx scripts/seed-all-data.ts
+
+# Interactive CLI
+npx tsx scripts/seed-cli.ts
+
+# Seed gift cards
+npx tsx scripts/seed-gift-card-data.ts
 ```
 
 ---
 
-## Data Transfer Scripts
+## SQL Scripts (`sql/`)
 
-### Transfer Utilities
+### Seed Data
 
-- `transfer-data-api.ts` - API-based transfer
-- `transfer-data-direct.ts` - Direct database transfer
-- `transfer-data-hybrid.ts` - Hybrid approach
-- `transfer-data-via-api.ts` - Via API endpoints
+| Script | Purpose |
+|--------|---------|
+| `seed-mvp-test-data.sql` | Basic test data |
+| `seed-complete-analytics-data.sql` | Analytics data |
+| `seed-default-message-templates.sql` | Message templates |
+| `populate-gift-card-pools.sql` | Test inventory |
+| `setup-call-center-test-data.sql` | Call center data |
 
-**Usage:**
-```bash
-npx tsx scripts/transfer-data-api.ts
+### Utilities
+
+| Script | Purpose |
+|--------|---------|
+| `enable-client-gift-cards.sql` | Enable gift cards for clients |
+| `grant-admin-role.sql` | Grant admin role |
+| `setup-campaign-gift-card-config.sql` | Campaign config |
+| `setup-designer-storage-buckets.sql` | Storage setup |
+| `apply-credit-functions.sql` | Credit functions |
+
+### Verification (`sql/verification/`)
+
+| Script | Purpose |
+|--------|---------|
+| `check-migration-status.sql` | Check migrations |
+
+### Rollbacks (`sql/rollbacks/`)
+
+| Script | Purpose |
+|--------|---------|
+| `rollback-template.sql` | Rollback template |
+
+### Usage
+
+```sql
+-- In Supabase SQL Editor:
+-- Run verification
+\i scripts/sql/verification/check-migration-status.sql
+
+-- Seed data
+\i scripts/sql/seed-mvp-test-data.sql
 ```
 
 ---
 
-## Migration Scripts
+## Other Scripts
 
-### Migration Helpers
-
-- `apply-migrations.ts` - Apply all migrations
-- `apply-safe-migrations.ps1` - Safe migration deployment
-- `run-all-migrations.ps1` - Run all in order
+| Script | Purpose |
+|--------|---------|
+| `setup-wallet-credentials.ps1` | Wallet credential setup |
+| `setup-gift-cards.ps1` | Gift card setup |
+| `load-test.yml` | Artillery load test config |
 
 ---
 
 ## Common Tasks
 
-### Deploy Everything
+### Full Deployment
 
 ```powershell
-.\scripts\deployment\run-deployment-pipeline.ps1
+.\scripts\run-deployment-pipeline.ps1
 ```
 
 ### Seed Test Data
@@ -205,83 +183,27 @@ npx tsx scripts/transfer-data-api.ts
 npx tsx scripts/seed-all-data.ts
 ```
 
-### Run Diagnostics
-
-```sql
--- In Supabase SQL Editor:
-\i scripts/sql/diagnostics/comprehensive-system-diagnostic.sql
-```
-
 ### Verify Database
 
 ```sql
-\i scripts/sql/verification/verify-mvp-database.sql
+\i scripts/sql/verification/check-migration-status.sql
 ```
 
 ### Test Edge Functions
 
 ```powershell
-.\scripts\testing\test-edge-functions.ps1
+.\scripts\test-edge-functions.ps1
 ```
-
----
-
-## Script Naming Conventions
-
-**PowerShell Scripts (.ps1):**
-- `verb-noun.ps1` (e.g., `deploy-edge-functions.ps1`)
-- Use kebab-case
-- Clear, descriptive names
-
-**TypeScript Scripts (.ts):**
-- `verb-noun.ts` (e.g., `seed-all-data.ts`)
-- Use kebab-case
-- Import as ES modules
-
-**SQL Scripts (.sql):**
-- `action-target.sql` (e.g., `seed-mvp-test-data.sql`)
-- Use kebab-case
-- Include comments at top explaining purpose
-
----
-
-## Adding New Scripts
-
-### 1. Choose Correct Directory
-
-- **Deployment?** → `deployment/`
-- **Testing?** → `testing/`
-- **Database operation?** → `database/` or `sql/`
-- **Data generation?** → `seed-data/`
-
-### 2. Follow Naming Convention
-
-- Use kebab-case
-- Start with verb (deploy, test, seed, verify, etc.)
-- Be descriptive
-
-### 3. Add Documentation
-
-- Add comment block at top of file
-- Update this README
-- Include usage examples
-
-### 4. Test Before Committing
-
-- Run the script
-- Verify it works
-- Check for errors
 
 ---
 
 ## Related Documentation
 
-- [Deployment Guide](../public/docs/4-DEVELOPER-GUIDE/DEPLOYMENT.md)
-- [Testing Guide](../public/docs/4-DEVELOPER-GUIDE/TESTING.md)
-- [Database Guide](../public/docs/4-DEVELOPER-GUIDE/DATABASE.md)
-- [SQL Scripts README](sql/README.md)
+- [Deployment Runbook](../docs/DEPLOYMENT_RUNBOOK.md)
+- [Environment Setup](../docs/ENVIRONMENT_SETUP.md)
+- [Seed Data System](./SEED_DATA_SYSTEM_README.md)
+- [SQL Scripts](./sql/README.md)
 
 ---
 
-**Last Updated:** December 4, 2024  
-**Maintained By:** DevOps Team
+**Last Updated:** February 1, 2026

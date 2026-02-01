@@ -840,6 +840,8 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
                             charCount={lengthInfo.length}
                             charLimit={lengthInfo.limit}
                             segments={lengthInfo.segments}
+                            estimatedCharCount={lengthInfo.estimatedLength}
+                            urlCount={lengthInfo.urlInfo.urlCount}
                           />
 
                           {/* Available Variables */}

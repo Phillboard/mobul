@@ -8,7 +8,7 @@ export function useListPreview(listId: string | undefined, tagFilters: string[] 
       if (!listId) return [];
       
       // Get contacts via list membership
-      let query = supabase
+      const query = supabase
         .from('contact_list_members')
         .select(`
           contact:contacts (

@@ -664,8 +664,16 @@ function ConditionSmsTemplate({
                 </span>
               )}
             </div>
-            <span className={lengthInfo.length > lengthInfo.limit ? "text-amber-500" : ""}>
-              {lengthInfo.length}/{lengthInfo.limit}
+            <span className={lengthInfo.estimatedLength > lengthInfo.limit ? "text-amber-500" : ""}>
+              {lengthInfo.urlInfo.urlCount > 0 && lengthInfo.urlInfo.charactersSaved > 0 ? (
+                <>
+                  <span className="line-through opacity-50">{lengthInfo.length}</span>
+                  {' ~'}{lengthInfo.estimatedLength}/{lengthInfo.limit}
+                  <span className="text-blue-500 ml-1">(link shortened)</span>
+                </>
+              ) : (
+                <>{lengthInfo.length}/{lengthInfo.limit}</>
+              )}
               {lengthInfo.segments > 1 && ` (${lengthInfo.segments} SMS)`}
             </span>
           </div>

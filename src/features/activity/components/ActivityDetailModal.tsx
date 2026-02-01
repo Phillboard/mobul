@@ -78,7 +78,7 @@ export function ActivityDetailModal({ log, open, onClose }: ActivityDetailModalP
     const fields: { label: string; value: string | number | undefined; icon?: any }[] = [];
 
     switch (log.category) {
-      case 'gift_card':
+      case 'gift_card': {
         const gc = log as any;
         if (gc.recipient_name) fields.push({ label: 'Recipient', value: gc.recipient_name, icon: User });
         if (gc.recipient_phone) fields.push({ label: 'Phone', value: gc.recipient_phone, icon: Phone });
@@ -86,22 +86,25 @@ export function ActivityDetailModal({ log, open, onClose }: ActivityDetailModalP
         if (gc.brand_name) fields.push({ label: 'Brand', value: gc.brand_name, icon: Gift });
         if (gc.amount) fields.push({ label: 'Amount', value: `$${gc.amount}` });
         break;
+      }
       
-      case 'campaign':
+      case 'campaign': {
         const camp = log as any;
         if (camp.campaign_name) fields.push({ label: 'Campaign', value: camp.campaign_name, icon: Megaphone });
         if (camp.recipients_affected) fields.push({ label: 'Recipients', value: camp.recipients_affected.toLocaleString() });
         if (camp.tracking_number) fields.push({ label: 'Tracking #', value: camp.tracking_number });
         break;
+      }
       
-      case 'communication':
+      case 'communication': {
         const comm = log as any;
         if (comm.from_number) fields.push({ label: 'From', value: comm.from_number });
         if (comm.to_number) fields.push({ label: 'To', value: comm.to_number });
         if (comm.duration_seconds) fields.push({ label: 'Duration', value: `${Math.floor(comm.duration_seconds / 60)}:${(comm.duration_seconds % 60).toString().padStart(2, '0')}` });
         break;
+      }
       
-      case 'api':
+      case 'api': {
         const api = log as any;
         if (api.endpoint) fields.push({ label: 'Endpoint', value: api.endpoint, icon: Globe });
         if (api.method) fields.push({ label: 'Method', value: api.method });
@@ -109,20 +112,23 @@ export function ActivityDetailModal({ log, open, onClose }: ActivityDetailModalP
         if (api.latency_ms) fields.push({ label: 'Latency', value: `${api.latency_ms}ms` });
         if (api.api_key_name) fields.push({ label: 'API Key', value: api.api_key_name });
         break;
+      }
       
-      case 'user':
+      case 'user': {
         const usr = log as any;
         if (usr.target_user_email) fields.push({ label: 'Target User', value: usr.target_user_email, icon: User });
         if (usr.role) fields.push({ label: 'Role', value: usr.role, icon: Shield });
         if (usr.location) fields.push({ label: 'Location', value: usr.location, icon: Globe });
         break;
+      }
       
-      case 'system':
+      case 'system': {
         const sys = log as any;
         if (sys.job_name) fields.push({ label: 'Job', value: sys.job_name });
         if (sys.integration_name) fields.push({ label: 'Integration', value: sys.integration_name });
         if (sys.affected_records) fields.push({ label: 'Records Affected', value: sys.affected_records.toLocaleString() });
         break;
+      }
     }
 
     return fields;

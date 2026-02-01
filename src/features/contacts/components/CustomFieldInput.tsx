@@ -126,7 +126,7 @@ export function CustomFieldInput({ field, value, onChange }: CustomFieldInputPro
         </div>
       );
 
-    case 'multi-select':
+    case 'multi-select': {
       const selectedValues = Array.isArray(value) ? value : [];
       return (
         <div className="space-y-2">
@@ -153,6 +153,7 @@ export function CustomFieldInput({ field, value, onChange }: CustomFieldInputPro
           </div>
         </div>
       );
+    }
 
     default:
       return null;

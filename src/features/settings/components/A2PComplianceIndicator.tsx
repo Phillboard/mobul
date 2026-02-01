@@ -163,6 +163,10 @@ interface InlineComplianceProps {
   charCount: number;
   charLimit: number;
   segments?: number;
+  /** Estimated character count after Twilio URL shortening */
+  estimatedCharCount?: number;
+  /** Number of URLs that will be shortened */
+  urlCount?: number;
 }
 
 export function InlineComplianceStatus({
@@ -170,9 +174,14 @@ export function InlineComplianceStatus({
   charCount,
   charLimit,
   segments = 1,
+  estimatedCharCount,
+  urlCount = 0,
 }: InlineComplianceProps) {
-  const isOverLimit = charCount > charLimit;
-  const isNearLimit = charCount > charLimit * 0.9;
+  // Use estimated count (after URL shortening) for limit checking
+  const effectiveCount = estimatedCharCount ?? charCount;
+  const isOverLimit = effectiveCount > charLimit;
+  const isNearLimit = effectiveCount > charLimit * 0.9;
+  const hasUrlShortening = urlCount > 0 && estimatedCharCount !== undefined && estimatedCharCount < charCount;
 
   return (
     <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -182,11 +191,34 @@ export function InlineComplianceStatus({
           isOverLimit ? 'text-destructive' :
           isNearLimit ? 'text-amber-500' : ''
         )}>
-          {charCount}/{charLimit} chars
+          {hasUrlShortening ? (
+            <>
+              <span className="line-through opacity-50">{charCount}</span>
+              {' ~'}{estimatedCharCount}/{charLimit} chars
+            </>
+          ) : (
+            <>{charCount}/{charLimit} chars</>
+          )}
           {segments > 1 && (
             <span className="text-amber-500 ml-1">
               ({segments} SMS)
             </span>
+          )}
+          {hasUrlShortening && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-blue-500 ml-1 cursor-help">
+                  (link shortened)
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">
+                  Twilio automatically shortens URLs to ~35 characters.
+                  <br />
+                  Estimated length accounts for {urlCount} URL{urlCount > 1 ? 's' : ''}.
+                </p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </span>
 

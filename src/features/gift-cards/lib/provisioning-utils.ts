@@ -338,58 +338,17 @@ async function purchaseFromTillo(
   campaignId: string
 ): Promise<ProvisionResult> {
   try {
-    // Get brand information
-    const { data: brand, error: brandError } = await supabase
-      .from('gift_card_brands')
-      .select('brand_code, tillo_brand_code')
-      .eq('id', brandId)
-      .single();
-
-    if (brandError || !brand) {
-      return {
-        success: false,
-        source: 'tillo',
-        error: 'Brand not found',
-      };
-    }
-
-    // Call Tillo purchase edge function
-    const { data, error } = await supabase.functions.invoke('purchase-from-tillo', {
-      body: {
-        brandCode: brand.tillo_brand_code || brand.brand_code,
-        denomination,
-        recipientId,
-        campaignId,
-      },
+    logger.warn('Tillo purchase requested but no backend handler is available.', {
+      brandId,
+      denomination,
+      recipientId,
+      campaignId,
     });
 
-    if (error) {
-      logger.error('Tillo purchase error:', error);
-      return {
-        success: false,
-        source: 'tillo',
-        error: error.message || 'Tillo API unavailable',
-      };
-    }
-
-    // Get pricing
-    const { data: pricing } = await supabase
-      .from('gift_card_denominations')
-      .select('client_price, use_custom_pricing, tillo_cost_per_card')
-      .eq('brand_id', brandId)
-      .eq('denomination', denomination)
-      .single();
-
-    const clientPrice = pricing?.use_custom_pricing && pricing?.client_price 
-      ? pricing.client_price 
-      : denomination;
-
     return {
-      success: true,
+      success: false,
       source: 'tillo',
-      card: data.card,
-      cost_basis: pricing?.tillo_cost_per_card || denomination, // Tillo cost or face value
-      client_price: clientPrice,
+      error: 'Tillo purchase is not available in this environment.',
     };
   } catch (error) {
     logger.error('Tillo purchase error:', error);

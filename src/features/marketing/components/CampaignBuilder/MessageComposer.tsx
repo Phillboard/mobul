@@ -3,9 +3,10 @@
  * 
  * Compose email and/or SMS content for the campaign.
  * Reuses existing message template hooks.
+ * Accounts for Twilio's automatic URL shortening (~35 chars per URL).
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -16,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/shared/components/ui/badge";
 import { Mail, MessageSquare, FileText, Tag, Eye } from "lucide-react";
 import { useMessageTemplates, extractMergeTags } from "@/features/settings/hooks/useMessageTemplates";
+import { checkSmsLength } from "@/shared/utils/a2pValidation";
 import type { CampaignType, CampaignBuilderFormData } from "../../types";
 
 interface Props {
@@ -81,13 +83,9 @@ export function MessageComposer({
     onChange({ [field]: (currentValue || '') + tag });
   };
 
-  const getSmsCharacterCount = () => {
-    const length = smsBody?.length || 0;
-    const segments = Math.ceil(length / 160) || 1;
-    return { length, segments };
-  };
-
-  const smsStats = getSmsCharacterCount();
+  // Use URL shortening-aware character count
+  const smsStats = useMemo(() => checkSmsLength(smsBody || ''), [smsBody]);
+  const hasUrlShortening = smsStats.urlInfo.urlCount > 0 && smsStats.urlInfo.charactersSaved > 0;
 
   return (
     <div className="space-y-6">
@@ -274,7 +272,17 @@ export function MessageComposer({
                 rows={4}
               />
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{smsStats.length} characters</span>
+                <span>
+                  {hasUrlShortening ? (
+                    <>
+                      <span className="line-through opacity-50">{smsStats.length}</span>
+                      {' ~'}{smsStats.estimatedLength} characters
+                      <span className="text-blue-500 ml-1">(link shortened)</span>
+                    </>
+                  ) : (
+                    <>{smsStats.length} characters</>
+                  )}
+                </span>
                 <Badge variant={smsStats.segments > 1 ? 'secondary' : 'outline'}>
                   {smsStats.segments} {smsStats.segments === 1 ? 'segment' : 'segments'}
                 </Badge>

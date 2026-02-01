@@ -325,7 +325,7 @@ export function canExecuteAction(
   canvasState: CanvasState
 ): { canExecute: boolean; reason?: string } {
   switch (action.type) {
-    case 'add-element':
+    case 'add-element': {
       if (!action.element) {
         return { canExecute: false, reason: 'No element data provided' };
       }
@@ -339,11 +339,12 @@ export function canExecuteAction(
         };
       }
       break;
+    }
 
     case 'update-element':
     case 'delete-element':
     case 'move-element':
-    case 'resize-element':
+    case 'resize-element': {
       if (!action.id) {
         return { canExecute: false, reason: 'No element ID provided' };
       }
@@ -352,6 +353,7 @@ export function canExecuteAction(
         return { canExecute: false, reason: `Element ${action.id} not found` };
       }
       break;
+    }
 
     case 'set-background':
       if (!action.imageUrl && !action.color) {
@@ -396,15 +398,17 @@ export function previewActions(
     }
 
     switch (action.type) {
-      case 'add-element':
+      case 'add-element': {
         const type = action.element?.type || 'unknown';
         details.push(`Add ${type} element`);
         break;
+      }
 
-      case 'update-element':
+      case 'update-element': {
         const updateKeys = Object.keys(action.updates || {});
         details.push(`Update element: ${updateKeys.join(', ')}`);
         break;
+      }
 
       case 'delete-element':
         details.push(`Delete element ${action.id}`);
@@ -572,7 +576,7 @@ export function createUndoActions(
         }
         break;
 
-      case 'delete-element':
+      case 'delete-element': {
         // Undo delete by re-adding the element
         const deletedElement = previousState.elements.find(
           el => el.id === action.id
@@ -584,8 +588,9 @@ export function createUndoActions(
           });
         }
         break;
+      }
 
-      case 'update-element':
+      case 'update-element': {
         // Undo update by reverting to previous values
         const previousElement = previousState.elements.find(
           el => el.id === action.id
@@ -602,6 +607,7 @@ export function createUndoActions(
           });
         }
         break;
+      }
 
       // Other action types can be added as needed
     }

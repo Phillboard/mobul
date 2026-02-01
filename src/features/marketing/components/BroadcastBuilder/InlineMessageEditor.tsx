@@ -2,9 +2,10 @@
  * Inline Message Editor
  * 
  * Allows editing message content inline - either custom content OR template selection.
+ * Accounts for Twilio's automatic URL shortening (~35 chars per URL).
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -16,6 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ChevronDown, Save, X } from "lucide-react";
 import { MarketingMessage } from "@/features/marketing/types";
 import { useMarketingTemplates } from "@/features/marketing/hooks/useContentLibrary";
+import { checkSmsLength } from "@/shared/utils/a2pValidation";
 
 interface InlineMessageEditorProps {
   message: Partial<MarketingMessage>;
@@ -58,8 +60,9 @@ export function InlineMessageEditor({
     }
   };
 
-  const characterCount = message.custom_body_text?.length || 0;
-  const smsSegments = Math.ceil(characterCount / 160);
+  // Use URL shortening-aware character count for SMS
+  const lengthInfo = useMemo(() => checkSmsLength(message.custom_body_text || ''), [message.custom_body_text]);
+  const hasUrlShortening = lengthInfo.urlInfo.urlCount > 0 && lengthInfo.urlInfo.charactersSaved > 0;
 
   return (
     <div className="space-y-4">
@@ -158,9 +161,18 @@ export function InlineMessageEditor({
             {message.message_type === 'sms' && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  {characterCount}/160 characters • {smsSegments} segment{smsSegments !== 1 ? 's' : ''}
+                  {hasUrlShortening ? (
+                    <>
+                      <span className="line-through opacity-50">{lengthInfo.length}</span>
+                      {' ~'}{lengthInfo.estimatedLength}/160 characters
+                      <span className="text-blue-500 ml-1">(link shortened)</span>
+                    </>
+                  ) : (
+                    <>{lengthInfo.length}/160 characters</>
+                  )}
+                  {' • '}{lengthInfo.segments} segment{lengthInfo.segments !== 1 ? 's' : ''}
                 </span>
-                {smsSegments > 1 && (
+                {lengthInfo.segments > 1 && (
                   <Badge variant="destructive" className="text-xs">
                     Multiple SMS segments
                   </Badge>

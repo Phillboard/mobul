@@ -40,3 +40,13 @@ temp-google-wallet-secret.json
 *.sw?
 .vercel
 .env*.local
+
+# Archive folder for cleanup (manual deletion)
+_archive/
+
+# ESLint output (build artifacts)
+eslint-full-output.txt
+eslint-report.json
+
+# Temporary exports
+Issues/

@@ -465,7 +465,7 @@ export function DesignerCanvas({
             />
           );
 
-        case 'shape':
+        case 'shape': {
           const shapeType = 'shapeType' in element ? element.shapeType : 'rectangle';
           return (
             <div
@@ -480,6 +480,7 @@ export function DesignerCanvas({
               }}
             />
           );
+        }
 
         case 'qr-code':
           return (
@@ -502,7 +503,7 @@ export function DesignerCanvas({
             </div>
           );
 
-        case 'template-token':
+        case 'template-token': {
           const tokenContent = 'tokenContent' in element ? element.tokenContent : { token: '{{token}}', fallback: '' };
           return (
             <div
@@ -523,6 +524,7 @@ export function DesignerCanvas({
               {tokenContent.token}
             </div>
           );
+        }
 
         case 'button':
           return (

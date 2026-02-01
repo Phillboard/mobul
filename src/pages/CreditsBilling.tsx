@@ -188,21 +188,8 @@ export default function CreditsBilling() {
         if (error) throw error;
         return data;
       } else {
-        // For clients, initiate Stripe checkout
-        const { data, error } = await supabase.functions.invoke("create-credit-checkout", {
-          body: {
-            clientId: targetClientId,
-            amount: amount,
-            returnUrl: window.location.href,
-          },
-        });
-        
-        if (error) throw error;
-        
-        if (data?.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
-        }
-        return data;
+        // Self-serve credit checkout is not available yet
+        throw new Error("Self-service credit purchases are not available. Please contact support.");
       }
     },
     onSuccess: () => {
