@@ -228,7 +228,7 @@ export default function FormPublic() {
         }
       } else {
         // OLD FLOW: Direct gift card code entry
-        const { data: result, error } = await supabase.functions.invoke("submit-ace-form", {
+        const { data: result, error } = await supabase.functions.invoke("submit-form", {
           body: { formId: formIdentifier, data: sanitizedData },
         });
 

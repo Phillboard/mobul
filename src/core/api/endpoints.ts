@@ -28,9 +28,9 @@ export const Endpoints = {
   
   // Form Operations
   forms: {
-    submit: 'submit-ace-form' as const,
+    submit: 'submit-form' as const,
     submitLead: 'submit-lead-form' as const,
-    generateAI: 'generate-ace-form-ai' as const,
+    generateAI: 'generate-form-ai' as const,
   },
   
   // Communication/Messaging

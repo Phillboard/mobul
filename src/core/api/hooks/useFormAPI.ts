@@ -44,9 +44,9 @@ export interface GenerateAIFormResponse {
 // ============================================
 
 /**
- * Submit an ACE form
+ * Submit a form
  */
-export function useSubmitAceForm() {
+export function useSubmitForm() {
   return useMutation({
     mutationFn: (request: SubmitFormRequest) => 
       callEdgeFunction<FormSubmissionResponse>(
@@ -81,4 +81,7 @@ export function useGenerateAIForm() {
       ),
   });
 }
+
+// Backward compatibility alias
+export const useSubmitAceForm = useSubmitForm;
 

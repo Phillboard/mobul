@@ -35,7 +35,7 @@ export default function APIDocumentation() {
                 <div>
                   <h4 className="font-semibold mb-2">Base URL</h4>
                   <code className="block rounded bg-muted p-3 text-sm">
-                    https://api.ace-engage.com/v1
+                    https://api.mobul.com/v1
                   </code>
                 </div>
                 <div>
@@ -60,14 +60,14 @@ export default function APIDocumentation() {
                 <div>
                   <h4 className="font-semibold mb-2">Authentication Header</h4>
                   <code className="block rounded bg-muted p-3 text-sm">
-                    Authorization: Bearer ace_live_your_api_key_here
+                    Authorization: Bearer mobul_live_your_api_key_here
                   </code>
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Example Request</h4>
                   <pre className="rounded bg-muted p-3 text-sm overflow-x-auto">
-{`curl https://api.ace-engage.com/v1/campaigns \\
-  -H "Authorization: Bearer ace_live_..." \\
+{`curl https://api.mobul.com/v1/campaigns \\
+  -H "Authorization: Bearer mobul_live_..." \\
   -H "Content-Type: application/json"`}
                   </pre>
                 </div>
@@ -157,12 +157,12 @@ export default function APIDocumentation() {
                 <div>
                   <h4 className="font-semibold mb-2">Signature Verification</h4>
                   <p className="text-sm text-muted-foreground mb-2">
-                    All webhook payloads are signed with HMAC-SHA256. Verify the signature using the X-ACE-Signature header.
+                    All webhook payloads are signed with HMAC-SHA256. Verify the signature using the X-Mobul-Signature header.
                   </p>
                   <pre className="rounded bg-muted p-3 text-sm overflow-x-auto">
 {`const crypto = require('crypto');
 
-const signature = req.headers['x-ace-signature'];
+const signature = req.headers['x-mobul-signature'];
 const payload = JSON.stringify(req.body);
 const expectedSignature = crypto
   .createHmac('sha256', webhookSecret)

@@ -1,5 +1,5 @@
 /**
- * ACE Form Submission Handler
+ * Form Submission Handler
  * 
  * This form DOES NOT provision gift cards.
  * It only looks up and displays cards that were already assigned by the call center.

@@ -41,7 +41,7 @@ export function generateHTMLExport(
   <div class="form-container">
     <h1>${config.settings?.title || 'Form'}</h1>
     ${config.settings?.description ? `<p>${config.settings.description}</p>` : ''}
-    <form id="aceForm">
+    <form id="mobulForm">
       ${config.fields.map(field => generateFieldHTML(field)).join('\n')}
       <button type="submit">${config.settings?.submitButtonText || 'Submit'}</button>
     </form>
@@ -49,13 +49,13 @@ export function generateHTMLExport(
   </div>
 
   <script>
-    document.getElementById('aceForm').addEventListener('submit', async (e) => {
+    document.getElementById('mobulForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
       const data = Object.fromEntries(formData.entries());
       
       try {
-        const response = await fetch('${apiUrl}/functions/v1/submit-ace-form', {
+        const response = await fetch('${apiUrl}/functions/v1/submit-form', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ formId: '${formId}', data })
@@ -133,7 +133,7 @@ export function generateJavaScriptEmbed(
   // Use app URL for iframe embeds (frontend route), not Supabase URL
   const appUrl = customDomain || (typeof window !== 'undefined' ? window.location.origin : import.meta.env.VITE_APP_URL || '');
 
-  return `<div id="ace-form-${formId}"></div>
+  return `<div id="mobul-form-${formId}"></div>
 <script>
   (function() {
     const iframe = document.createElement('iframe');
@@ -141,7 +141,7 @@ export function generateJavaScriptEmbed(
     iframe.style.width = '100%';
     iframe.style.border = 'none';
     iframe.style.minHeight = '500px';
-    document.getElementById('ace-form-${formId}').appendChild(iframe);
+    document.getElementById('mobul-form-${formId}').appendChild(iframe);
   })();
 </script>`;
 }
@@ -170,7 +170,7 @@ export function generateReactComponent(
   return `import { useState } from 'react';
 import { supabase } from '@core/services/supabase';
 
-export function AceForm() {
+export function MobulForm() {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -179,7 +179,7 @@ export function AceForm() {
     setLoading(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('submit-ace-form', {
+      const { data, error } = await supabase.functions.invoke('submit-form', {
         body: { formId: '${formId}', data: formData }
       });
       

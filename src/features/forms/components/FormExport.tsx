@@ -29,7 +29,7 @@ export function FormExport({ open, onOpenChange, formId }: FormExportProps) {
   style="border: none; border-radius: 8px;"
 ></iframe>`;
 
-  const jsCode = `<div id="ace-form-${formId}"></div>
+  const jsCode = `<div id="mobul-form-${formId}"></div>
 <script>
   (function() {
     var iframe = document.createElement('iframe');
@@ -39,7 +39,7 @@ export function FormExport({ open, onOpenChange, formId }: FormExportProps) {
     iframe.frameBorder = '0';
     iframe.style.border = 'none';
     iframe.style.borderRadius = '8px';
-    document.getElementById('ace-form-${formId}').appendChild(iframe);
+    document.getElementById('mobul-form-${formId}').appendChild(iframe);
   })();
 </script>`;
 

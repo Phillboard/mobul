@@ -123,7 +123,7 @@ export type MailingMethod = 'self' | 'ace_fulfillment';
  * Step 1: Setup (name, template, size)
  * Step 2: Audiences/Contacts (NEW dedicated step)
  * Step 3: Design/Codes/Conditions
- * Step 4: Delivery (ACE only)
+ * Step 4: Delivery (Mobul only)
  * Step 5: Review
  */
 export interface CampaignFormData {
@@ -148,7 +148,7 @@ export interface CampaignFormData {
   // Step 3: Codes & Conditions
   codes_uploaded?: boolean;
   requires_codes?: boolean; // For test campaigns
-  selected_form_ids?: string[]; // ACE Forms selected
+  selected_form_ids?: string[]; // Forms selected
   
   // Step 3/4: Tracking & Rewards
   enableCallTracking?: boolean;
@@ -162,7 +162,7 @@ export interface CampaignFormData {
   condition1PoolId?: string;
   condition1SmsTemplate?: string;
   
-  // Step 4/5: Delivery (ACE fulfillment only)
+  // Step 4/5: Delivery (Mobul fulfillment only)
   postage?: PostageClass;
   mail_date_mode?: 'asap' | 'scheduled';
   mail_date?: Date | null;

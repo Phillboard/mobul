@@ -196,7 +196,7 @@ export const useAceForms = useForms;
 // Hook for getting a single form
 export function useForm(formId: string) {
   return useQuery({
-    queryKey: ["ace-form", formId],
+    queryKey: ["form", formId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ace_forms")

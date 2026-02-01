@@ -32,7 +32,7 @@ export function AIFormGenerator({ onGenerated }: AIFormGeneratorProps) {
 
     setGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-ace-form-ai", {
+      const { data, error } = await supabase.functions.invoke("generate-form-ai", {
         body: { 
           prompt,
           context: {

@@ -32,8 +32,8 @@ async function sendWebhook(webhook: any, eventData: any, retries = 3): Promise<a
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-ACE-Signature': signature,
-          'X-ACE-Event-Type': eventData.event_type,
+          'X-Mobul-Signature': signature,
+          'X-Mobul-Event-Type': eventData.event_type,
         },
         body: payload,
       });
