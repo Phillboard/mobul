@@ -4,7 +4,8 @@ import { GiftCardRedemption } from "@/types/aceForms";
 import { detectPlatform, getWalletName } from "@/core/services/web/walletDetection";
 import { Smartphone, Apple, Chrome, Bug, Loader2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import { supabase } from "@core/services/supabase";
+import { callEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 
 /**
  * Test Redemption Page
@@ -40,27 +41,26 @@ export default function TestRedemption() {
       
       addLog(`Calling generate-apple-wallet-pass with: ${JSON.stringify(giftCardData)}`);
       
-      const { data, error } = await supabase.functions.invoke(
-        'generate-apple-wallet-pass',
-        { body: { giftCard: giftCardData } }
-      );
+      try {
+        const data = await callEdgeFunction<{ success?: boolean; pkpass?: string; size?: number; filename?: string; error?: string; hint?: string; requiredSecrets?: string[] }>(
+          Endpoints.wallet.appleWalletPass,
+          { giftCard: giftCardData }
+        );
       
-      if (error) {
-        addLog(`❌ Error: ${JSON.stringify(error)}`);
-        return;
+        addLog(`Response received: ${JSON.stringify(data, null, 2)}`);
+      
+        if (data?.success && data?.pkpass) {
+          addLog(`✅ Success! Pass size: ${data.size} bytes`);
+          addLog(`Filename: ${data.filename}`);
+        } else if (data?.error) {
+          addLog(`❌ Server error: ${data.error}`);
+          if (data?.hint) addLog(`Hint: ${data.hint}`);
+          if (data?.requiredSecrets) addLog(`Required secrets: ${data.requiredSecrets.join(', ')}`);
+        }
+      } catch (err) {
+        addLog(`❌ Exception: ${err instanceof Error ? err.message : String(err)}`);
       }
-      
-      addLog(`Response received: ${JSON.stringify(data, null, 2)}`);
-      
-      if (data?.success && data?.pkpass) {
-        addLog(`✅ Success! Pass size: ${data.size} bytes`);
-        addLog(`Filename: ${data.filename}`);
-      } else if (data?.error) {
-        addLog(`❌ Server error: ${data.error}`);
-        if (data?.hint) addLog(`Hint: ${data.hint}`);
-        if (data?.requiredSecrets) addLog(`Required secrets: ${data.requiredSecrets.join(', ')}`);
-      }
-    } catch (err) {
+        } catch (err) {
       addLog(`❌ Exception: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsTestingApple(false);
@@ -84,27 +84,24 @@ export default function TestRedemption() {
       
       addLog(`Calling generate-google-wallet-pass with: ${JSON.stringify(giftCardData)}`);
       
-      const { data, error } = await supabase.functions.invoke(
-        'generate-google-wallet-pass',
-        { body: { giftCard: giftCardData } }
-      );
+      try {
+        const data = await callEdgeFunction<{ success?: boolean; url?: string; error?: string; hint?: string }>(
+          Endpoints.wallet.googleWalletPass,
+          { giftCard: giftCardData }
+        );
       
-      if (error) {
-        addLog(`❌ Error: ${JSON.stringify(error)}`);
-        return;
+        addLog(`Response received: ${JSON.stringify(data, null, 2)}`);
+      
+        if (data?.success && data?.url) {
+          addLog(`✅ Success! Save URL generated`);
+          addLog(`URL: ${data.url.substring(0, 100)}...`);
+        } else if (data?.error) {
+          addLog(`❌ Server error: ${data.error}`);
+          if (data?.hint) addLog(`Hint: ${data.hint}`);
+        }
+      } catch (err) {
+        addLog(`❌ Exception: ${err instanceof Error ? err.message : String(err)}`);
       }
-      
-      addLog(`Response received: ${JSON.stringify(data, null, 2)}`);
-      
-      if (data?.success && data?.url) {
-        addLog(`✅ Success! Save URL generated`);
-        addLog(`URL: ${data.url.substring(0, 100)}...`);
-      } else if (data?.error) {
-        addLog(`❌ Server error: ${data.error}`);
-        if (data?.hint) addLog(`Hint: ${data.hint}`);
-      }
-    } catch (err) {
-      addLog(`❌ Exception: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsTestingGoogle(false);
     }

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
 import { Badge } from "@/shared/components/ui/badge";
@@ -190,16 +192,15 @@ export function ClientCreditDashboard() {
         }
 
         // Allocate credit
-        const { error: allocateError } = await supabase.functions.invoke("allocate-credit", {
-          body: {
+        await callEdgeFunction(
+          Endpoints.admin.allocateCredit,
+          {
             fromAccountId: creditAccount.id,
             toAccountId: campaign.credit_account_id,
             amount: amount,
             notes: "Budget allocation to campaign"
           }
-        });
-
-        if (allocateError) throw allocateError;
+        );
 
         // Update campaign settings
         await supabase

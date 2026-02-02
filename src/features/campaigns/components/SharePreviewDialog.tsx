@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import {
   Dialog,
   DialogContent,
@@ -28,19 +29,16 @@ export function SharePreviewDialog({ campaignId }: SharePreviewDialogProps) {
 
   const createPreviewMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke(
-        "create-preview-link",
+      const data = await callEdgeFunction<{ url: string }>(
+        Endpoints.campaign.createPreviewLink,
         {
-          body: {
-            campaignId,
-            password: password || undefined,
-            expiresInHours,
-            maxViews,
-          },
+          campaignId,
+          password: password || undefined,
+          expiresInHours,
+          maxViews,
         }
       );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: (data) => {

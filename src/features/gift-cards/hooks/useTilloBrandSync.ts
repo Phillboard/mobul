@@ -1,12 +1,14 @@
 /**
  * Tillo Brand Sync Hook
  * 
- * React hook for syncing brand data with Tillo API
+ * React hook for syncing brand data with Tillo API.
+ * Uses typed API client for edge function calls.
  */
 
 import { useState, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import type { TilloBrandSearchResult } from '@/types/giftCards';
 
 export function useTilloBrandSync() {
@@ -18,23 +20,15 @@ export function useTilloBrandSync() {
   const syncWithTillo = useMutation({
     mutationFn: async (brandName: string): Promise<TilloBrandSearchResult> => {
       try {
-        const { data, error } = await supabase.functions.invoke('lookup-tillo-brand', {
-          body: { brandName },
-        });
+        const data = await callEdgeFunction<TilloBrandSearchResult>(
+          Endpoints.giftCards.lookupBrand,
+          { brandName }
+        );
 
-        // Handle Supabase function invocation errors
-        if (error) {
-          console.warn('Tillo sync failed:', error.message);
-          // Return not found instead of throwing
-          return {
-            found: false,
-            error: 'Tillo API is currently unavailable',
-          };
-        }
-
-        return data as TilloBrandSearchResult;
-      } catch (err: any) {
-        console.warn('Tillo sync failed:', err);
+        return data;
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.warn('Tillo sync failed:', errorMessage);
         // Return not found for graceful degradation
         return {
           found: false,

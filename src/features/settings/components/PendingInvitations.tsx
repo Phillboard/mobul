@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import {
   useReactTable,
   getCoreRowModel,
@@ -78,17 +80,16 @@ export function PendingInvitations() {
 
   const resendMutation = useMutation({
     mutationFn: async (invitation: any) => {
-      const { data, error } = await supabase.functions.invoke("send-user-invitation", {
-        body: {
+      const data = await callEdgeFunction(
+        Endpoints.admin.sendInvitation,
+        {
           email: invitation.email,
           role: invitation.role,
           orgId: invitation.org_id,
           clientId: invitation.client_id,
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
-      
       // Revoke old invitation
       await supabase
         .from("user_invitations")

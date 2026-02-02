@@ -7,7 +7,8 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { FileUploadZone } from "@/features/audiences/components/FileUploadZone";
 import { Download, Upload, AlertCircle, CheckCircle } from "lucide-react";
 import { useGiftCardPools } from '@/features/gift-cards/hooks';
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 
 interface GiftCardUploadTabProps {
@@ -43,14 +44,17 @@ export function GiftCardUploadTab({ clientId, preselectedPoolId }: GiftCardUploa
       reader.onload = async (e) => {
         const csvContent = e.target?.result as string;
 
-        const { data, error } = await supabase.functions.invoke("import-gift-cards", {
-          body: {
+        const data = await callEdgeFunction<{
+          success: number;
+          duplicates: number;
+          errors: string[];
+        }>(
+          Endpoints.giftCards.import,
+          {
             pool_id: selectedPoolId,
             csv_content: csvContent,
-          },
-        });
-
-        if (error) throw error;
+          }
+        );
 
         setUploadResult(data);
         toast({

@@ -1,14 +1,14 @@
 /**
  * Send Marketing SMS Edge Function
  * 
- * Sends individual marketing SMS messages and tracks delivery.
- * Uses the existing sms-provider.ts for actual sending.
+ * Sends individual marketing SMS messages with merge tag support.
+ * Uses shared sms-provider for delivery.
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { corsHeaders } from '../_shared/cors.ts';
-import { sendSMS } from '../_shared/sms-provider.ts';
-import { logError } from '../_shared/error-logger.ts';
+import { withApiGateway, ApiError } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
+import { sendSMS, formatPhoneE164 } from '../_shared/sms-provider.ts';
+import { renderMergeTags } from '../_shared/sms-templates.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 interface MarketingSMSRequest {
@@ -17,128 +17,129 @@ interface MarketingSMSRequest {
   contactId?: string;
   phone: string;
   body: string;
-  mergeData?: Record<string, any>;
+  mergeData?: Record<string, unknown>;
+  clientId?: string;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+interface MarketingSMSResponse {
+  success: boolean;
+  sendId?: string;
+  messageId?: string;
+  provider?: string;
+  error?: string;
+}
+
+async function handleSendMarketingSMS(
+  request: MarketingSMSRequest,
+  _context: unknown,
+  rawRequest: Request
+): Promise<MarketingSMSResponse> {
+  const supabase = createServiceClient();
+  const activityLogger = createActivityLogger('send-marketing-sms', rawRequest);
+
+  const { campaignId, messageId, contactId, phone, body, mergeData = {}, clientId } = request;
+
+  // Validate required fields
+  if (!campaignId || !messageId || !phone || !body) {
+    throw new ApiError(
+      'Missing required fields: campaignId, messageId, phone, body',
+      'VALIDATION_ERROR',
+      400
+    );
   }
 
-  const activityLogger = createActivityLogger(req);
+  // Format phone and render merge tags
+  const formattedPhone = formatPhoneE164(phone);
+  const renderedBody = renderMergeTags(body, mergeData);
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    { auth: { persistSession: false } }
+  // Get client ID from campaign if not provided
+  let resolvedClientId = clientId;
+  if (!resolvedClientId) {
+    const { data: campaign } = await supabase
+      .from('campaigns')
+      .select('client_id')
+      .eq('id', campaignId)
+      .single();
+    resolvedClientId = campaign?.client_id;
+  }
+
+  // Create send record
+  const { data: sendRecord, error: insertError } = await supabase
+    .from('marketing_sends')
+    .insert({
+      campaign_id: campaignId,
+      message_id: messageId,
+      contact_id: contactId,
+      message_type: 'sms',
+      recipient_phone: phone,
+      status: 'pending',
+    })
+    .select()
+    .single();
+
+  if (insertError) {
+    throw new ApiError(
+      `Failed to create send record: ${insertError.message}`,
+      'DATABASE_ERROR',
+      500
+    );
+  }
+
+  // Send SMS using shared provider (correct signature)
+  const result = await sendSMS(formattedPhone, renderedBody, supabase, resolvedClientId);
+
+  // Update send record
+  const updateData: Record<string, unknown> = {
+    sent_at: new Date().toISOString(),
+    provider_message_id: result.messageId,
+    status: result.success ? 'sent' : 'failed',
+  };
+
+  if (!result.success) {
+    updateData.error_message = result.error;
+  }
+
+  await supabase
+    .from('marketing_sends')
+    .update(updateData)
+    .eq('id', sendRecord.id);
+
+  console.log(`[MARKETING-SMS] ${phone}: ${result.success ? 'sent' : 'failed'}`);
+
+  // Log activity
+  await activityLogger.communication(
+    result.success ? 'sms_outbound' : 'sms_status_updated',
+    result.success ? 'success' : 'failed',
+    result.success 
+      ? `Marketing SMS sent to ${phone}` 
+      : `Marketing SMS failed to ${phone}: ${result.error}`,
+    {
+      campaignId,
+      recipientId: contactId,
+      clientId: resolvedClientId,
+      metadata: {
+        send_id: sendRecord.id,
+        message_id: result.messageId,
+        phone,
+        provider: result.provider,
+        error: result.error,
+      },
+    }
   );
 
-  try {
-    const { 
-      campaignId, 
-      messageId, 
-      contactId, 
-      phone, 
-      body, 
-      mergeData = {} 
-    }: MarketingSMSRequest = await req.json();
-
-    if (!campaignId || !messageId || !phone || !body) {
-      throw new Error('Missing required fields: campaignId, messageId, phone, body');
-    }
-
-    // Render merge tags
-    let renderedBody = body;
-    Object.entries(mergeData).forEach(([key, value]) => {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      renderedBody = renderedBody.replace(regex, String(value || ''));
-    });
-    // Remove any unreplaced tags
-    renderedBody = renderedBody.replace(/{{[^}]+}}/g, '');
-
-    // Create send record
-    const { data: sendRecord, error: insertError } = await supabase
-      .from('marketing_sends')
-      .insert({
-        campaign_id: campaignId,
-        message_id: messageId,
-        contact_id: contactId,
-        message_type: 'sms',
-        recipient_phone: phone,
-        status: 'pending',
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      throw new Error(`Failed to create send record: ${insertError.message}`);
-    }
-
-    // Send SMS using existing provider
-    const result = await sendSMS({
-      to: phone,
-      message: renderedBody,
-    }, supabase);
-
-    // Update send record with result
-    const updateData: any = {
-      sent_at: new Date().toISOString(),
-      provider_message_id: result.messageId,
-    };
-
-    if (result.success) {
-      updateData.status = 'sent';
-    } else {
-      updateData.status = 'failed';
-      updateData.error_message = result.error;
-    }
-
-    await supabase
-      .from('marketing_sends')
-      .update(updateData)
-      .eq('id', sendRecord.id);
-
-    console.log(`[MARKETING-SMS] Sent to ${phone}: ${result.success ? 'success' : 'failed'}`);
-
-    // Log activity
-    await activityLogger.communication(
-      result.success ? 'sms_outbound' : 'sms_failed',
-      result.success ? 'success' : 'failed',
-      {
-        campaignId,
-        recipientId: contactId || undefined,
-        description: result.success ? `Marketing SMS sent to ${phone}` : `Marketing SMS failed to ${phone}: ${result.error}`,
-        metadata: {
-          send_id: sendRecord.id,
-          message_id: result.messageId,
-          phone,
-          error: result.error,
-        },
-      }
-    );
-
-    return new Response(
-      JSON.stringify({
-        success: result.success,
-        sendId: sendRecord.id,
-        messageId: result.messageId,
-        error: result.error,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error: any) {
-    console.error('[MARKETING-SMS] Error:', error);
-    await logError(supabase, {
-      function_name: 'send-marketing-sms',
-      error_message: error.message,
-      error_stack: error.stack,
-      severity: 'error',
-    });
-
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+  if (!result.success) {
+    throw new ApiError(result.error || 'SMS send failed', 'SMS_ERROR', 500);
   }
-});
+
+  return {
+    success: true,
+    sendId: sendRecord.id,
+    messageId: result.messageId,
+    provider: result.provider,
+  };
+}
+
+Deno.serve(withApiGateway(handleSendMarketingSMS, {
+  requireAuth: false,
+  parseBody: true,
+}));

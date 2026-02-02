@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { toast } from "sonner";
 
 export function useTrackedNumbers(clientId: string | null) {
@@ -72,11 +74,10 @@ export function useProvisionNumber() {
       friendlyName?: string;
       forwardToNumber?: string;
     }) => {
-      const { data, error } = await supabase.functions.invoke('provision-twilio-number', {
-        body: { areaCode, campaignId, friendlyName, forwardToNumber },
-      });
-
-      if (error) throw error;
+      const data = await callEdgeFunction(
+        Endpoints.telephony.provisionNumber,
+        { areaCode, campaignId, friendlyName, forwardToNumber }
+      );
       return data;
     },
     onSuccess: () => {
@@ -102,11 +103,10 @@ export function useAssignNumber() {
       phoneNumberId?: string; 
       provisionNew?: boolean;
     }) => {
-      const { data, error } = await supabase.functions.invoke('assign-tracked-numbers', {
-        body: { campaignId, phoneNumberId, provisionNew },
-      });
-
-      if (error) throw error;
+      const data = await callEdgeFunction(
+        Endpoints.telephony.assignNumbers,
+        { campaignId, phoneNumberId, provisionNew }
+      );
       return data;
     },
     onSuccess: () => {
@@ -166,22 +166,24 @@ export function useRetryFailedSMS() {
 
         if (!inventory) throw new Error('Gift card inventory not found');
 
-        const { data, error } = await supabase.functions.invoke('send-gift-card-sms', {
-          body: {
+        const data = await callEdgeFunction(
+          Endpoints.messaging.sendGiftCardSms,
+          {
             inventoryId: inventory.id,
             giftCardCode: inventory.card_code,
             giftCardValue: inventory.denomination,
             recipientPhone: inventory.recipients?.phone,
             recipientName: inventory.recipients?.first_name,
-          },
-        });
+          }
+        );
 
-        if (error) throw error;
         return data;
       } else {
         // Retry all failed deliveries
-        const { data, error } = await supabase.functions.invoke('retry-failed-sms');
-        if (error) throw error;
+        const data = await callEdgeFunction(
+          Endpoints.messaging.retrySms,
+          {}
+        );
         return data;
       }
     },

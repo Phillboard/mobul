@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import type { CampaignFormData } from "@/types/campaigns";
@@ -48,15 +50,16 @@ export function useCampaignCreateForm({ clientId }: UseCampaignCreateFormProps) 
 
   const saveDraft = async (data: Partial<CampaignFormData>) => {
     try {
-      const { data: result } = await supabase.functions.invoke("save-campaign-draft", {
-        body: {
+      const result = await callEdgeFunction<{ draft?: { id: string } }>(
+        Endpoints.campaigns.saveDraft,
+        {
           draftId: currentDraftId,
           clientId,
           draftName: data.name || "Untitled Draft",
           formData: data,
           currentStep: 1,
-        },
-      });
+        }
+      );
 
       if (result?.draft?.id && !currentDraftId) {
         setCurrentDraftId(result.draft.id);

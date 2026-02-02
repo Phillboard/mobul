@@ -1,10 +1,13 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
-import { createActivityLogger } from '../_shared/activity-logger.ts';
+/**
+ * Handle Call Webhook Edge Function
+ * 
+ * Receives call data from external call center systems.
+ * Creates/updates call sessions and triggers condition evaluation.
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { withApiGateway, ApiError } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 interface CallWebhookPayload {
   phone: string;
@@ -16,120 +19,116 @@ interface CallWebhookPayload {
   externalCallId?: string;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+interface CallWebhookResponse {
+  success: boolean;
+  callSessionId?: string;
+  recipientMatched?: boolean;
+}
+
+async function handleCallWebhook(
+  request: CallWebhookPayload,
+  _context: unknown,
+  rawRequest: Request
+): Promise<CallWebhookResponse> {
+  const supabase = createServiceClient();
+  const activityLogger = createActivityLogger('handle-call-webhook', rawRequest);
+
+  const { phone, trackedNumber, disposition, duration, recordingUrl, callSid, externalCallId } = request;
+
+  console.log('[CALL-WEBHOOK] Received:', { phone, trackedNumber, disposition });
+
+  // Find tracked number
+  const { data: trackedNumberData, error: numberError } = await supabase
+    .from('tracked_phone_numbers')
+    .select('*, campaigns(id, client_id)')
+    .eq('phone_number', trackedNumber)
+    .single();
+
+  if (numberError || !trackedNumberData) {
+    throw new ApiError('Tracked number not found', 'NOT_FOUND', 404);
   }
 
-  const activityLogger = createActivityLogger(req);
+  // Try to match recipient
+  const { data: recipient } = await supabase
+    .from('recipients')
+    .select('*')
+    .eq('phone', phone)
+    .eq('campaign_id', trackedNumberData.campaign_id)
+    .maybeSingle();
 
-  try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  // Create/update call session
+  const callData: Record<string, unknown> = {
+    campaign_id: trackedNumberData.campaign_id,
+    tracked_number_id: trackedNumberData.id,
+    caller_phone: phone,
+    recipient_id: recipient?.id || null,
+    match_status: recipient ? 'matched' : 'unmatched',
+    call_status: disposition ? 'completed' : 'in-progress',
+    twilio_call_sid: callSid || null,
+    recording_url: recordingUrl || null,
+    call_duration_seconds: duration || null,
+  };
 
-    const payload = await req.json() as CallWebhookPayload;
-    console.log('Received call webhook:', payload);
+  if (disposition) {
+    callData.call_ended_at = new Date().toISOString();
+  }
 
-    // Find tracked number
-    const { data: trackedNumber, error: numberError } = await supabase
-      .from('tracked_phone_numbers')
-      .select('*, campaigns(id, client_id)')
-      .eq('phone_number', payload.trackedNumber)
-      .single();
+  const { data: callSession, error: sessionError } = await supabase
+    .from('call_sessions')
+    .upsert(callData)
+    .select()
+    .single();
 
-    if (numberError || !trackedNumber) {
-      throw new Error('Tracked number not found');
-    }
+  if (sessionError) {
+    throw new ApiError('Failed to save call session', 'DATABASE_ERROR', 500);
+  }
 
-    // Try to match recipient by phone
-    const { data: recipient } = await supabase
-      .from('recipients')
-      .select('*')
-      .eq('phone', payload.phone)
-      .eq('campaign_id', trackedNumber.campaign_id)
-      .maybeSingle();
-
-    // Create or update call session
-    const callData: any = {
-      campaign_id: trackedNumber.campaign_id,
-      tracked_number_id: trackedNumber.id,
-      caller_phone: payload.phone,
-      recipient_id: recipient?.id || null,
-      match_status: recipient ? 'matched' : 'unmatched',
-      call_status: payload.disposition ? 'completed' : 'in-progress',
-      twilio_call_sid: payload.callSid || null,
-      recording_url: payload.recordingUrl || null,
-      call_duration_seconds: payload.duration || null,
-    };
-
-    if (payload.disposition) {
-      callData.call_ended_at = new Date().toISOString();
-    }
-
-    const { data: callSession, error: sessionError } = await supabase
-      .from('call_sessions')
-      .upsert(callData)
-      .select()
-      .single();
-
-    if (sessionError) throw sessionError;
-
-    // If call is completed with a positive disposition, evaluate conditions
-    if (payload.disposition && recipient && 
-        ['interested', 'qualified', 'validated'].includes(payload.disposition.toLowerCase())) {
-      
-      await supabase.functions.invoke('evaluate-conditions', {
-        body: {
-          recipientId: recipient.id,
-          campaignId: trackedNumber.campaign_id,
-          eventType: 'call_completed',
-          metadata: {
-            disposition: payload.disposition,
-            callSessionId: callSession.id,
-            externalCallId: payload.externalCallId,
-          },
-        },
-      });
-    }
-
-    // Log activity
-    await activityLogger.communication(
-      payload.disposition ? 'call_completed' : 'call_inbound',
-      'success',
-      {
-        clientId: trackedNumber.campaigns?.client_id,
-        campaignId: trackedNumber.campaign_id,
-        recipientId: recipient?.id,
-        description: payload.disposition 
-          ? `Call completed with disposition: ${payload.disposition}` 
-          : `Incoming call from ${payload.phone}`,
+  // Evaluate conditions for positive dispositions
+  if (disposition && recipient && ['interested', 'qualified', 'validated'].includes(disposition.toLowerCase())) {
+    await supabase.functions.invoke('evaluate-conditions', {
+      body: {
+        recipientId: recipient.id,
+        campaignId: trackedNumberData.campaign_id,
+        eventType: 'call_completed',
         metadata: {
-          call_session_id: callSession.id,
-          caller_phone: payload.phone,
-          tracked_number: payload.trackedNumber,
-          disposition: payload.disposition,
-          duration: payload.duration,
-          recipient_matched: !!recipient,
+          disposition,
+          callSessionId: callSession.id,
+          externalCallId,
         },
-      }
-    );
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        callSessionId: callSession.id,
-        recipientMatched: !!recipient 
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error) {
-    console.error('Error processing call webhook:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      },
+    });
   }
-});
+
+  // Log activity
+  await activityLogger.communication(
+    disposition ? 'call_completed' : 'call_inbound',
+    'success',
+    disposition
+      ? `Call completed with disposition: ${disposition}`
+      : `Incoming call from ${phone}`,
+    {
+      clientId: trackedNumberData.campaigns?.client_id,
+      campaignId: trackedNumberData.campaign_id,
+      recipientId: recipient?.id,
+      metadata: {
+        call_session_id: callSession.id,
+        caller_phone: phone,
+        tracked_number: trackedNumber,
+        disposition,
+        duration,
+        recipient_matched: !!recipient,
+      },
+    }
+  );
+
+  return {
+    success: true,
+    callSessionId: callSession.id,
+    recipientMatched: !!recipient,
+  };
+}
+
+Deno.serve(withApiGateway(handleCallWebhook, {
+  requireAuth: false, // External webhook
+  parseBody: true,
+}));

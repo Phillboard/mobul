@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Badge } from "@/shared/components/ui/badge";
 import { useToast } from '@shared/hooks';
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { AlertCircle, CheckCircle2, FileText, Zap, PlayCircle } from "lucide-react";
 
 export function GiftCardTesting() {
@@ -95,8 +97,9 @@ export function GiftCardTesting() {
     setTestResult(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('provision-gift-card-from-api', {
-        body: {
+      const data = await callEdgeFunction(
+        Endpoints.giftCards.provisionFromApi,
+        {
           poolId: 'test-pool',
           recipientId: null,
           callSessionId: null,
@@ -107,9 +110,7 @@ export function GiftCardTesting() {
             api_config: apiConfig
           }
         }
-      });
-
-      if (error) throw error;
+      );
       
       setTestResult(data);
       toast({

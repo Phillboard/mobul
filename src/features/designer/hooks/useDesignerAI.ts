@@ -8,7 +8,8 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import type {
   ChatMessage,
   AISuggestion,
@@ -122,19 +123,16 @@ export function useDesignerAI(
 
     try {
       // Use Edge Function to call OpenAI (keeps API key secure)
-      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
-        body: {
+      const data = await callEdgeFunction<{ message?: string }>(
+        Endpoints.ai.openaiChat,
+        {
           systemPrompt,
           userPrompt,
           model: 'gpt-4o',
           temperature: 0.7,
           maxTokens: 2048,
-        },
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message || 'Failed to call AI');
-      }
+        }
+      );
 
       // Edge function returns "message" field, not "content"
       if (!data?.message) {
@@ -153,19 +151,16 @@ export function useDesignerAI(
    */
   const generateImage = useCallback(async (prompt: string): Promise<string | null> => {
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
-        body: {
+      const data = await callEdgeFunction<{ url?: string }>(
+        Endpoints.ai.openaiChat,
+        {
           type: 'image',
           prompt,
           size: '1024x1024',
           quality: 'hd',
           style: 'vivid',
-        },
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message || 'Failed to generate image');
-      }
+        }
+      );
 
       return data?.url || null;
     } catch (err: any) {
@@ -191,22 +186,19 @@ export function useDesignerAI(
       setReferenceImage(prev => ({ ...prev, file: imageFile, previewUrl }));
 
       // Call vision API
-      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
-        body: {
+      const data = await callEdgeFunction<{ analysis?: ReferenceAnalysis }>(
+        Endpoints.ai.openaiChat,
+        {
           type: 'vision',
           imageBase64: base64,
-        },
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message || 'Failed to analyze image');
-      }
+        }
+      );
 
       if (!data?.analysis) {
         throw new Error('No analysis returned from Vision API');
       }
 
-      const analysis = data.analysis as ReferenceAnalysis;
+      const analysis = data.analysis;
       setReferenceImage(prev => ({ ...prev, analysis, isAnalyzing: false }));
 
       return analysis;
@@ -233,8 +225,9 @@ export function useDesignerAI(
       
       const basePrompt = additionalPrompt || 'Generate a similar professional background';
 
-      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
-        body: {
+      const data = await callEdgeFunction<{ url?: string }>(
+        Endpoints.ai.openaiChat,
+        {
           type: 'image',
           prompt: basePrompt,
           size: '1792x1024', // Landscape for postcards
@@ -245,12 +238,8 @@ export function useDesignerAI(
             style: analysis.style,
             mood: analysis.mood,
           },
-        },
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message || 'Failed to generate image');
-      }
+        }
+      );
 
       return data?.url || null;
     } catch (err: any) {
@@ -458,19 +447,16 @@ export function useQuickAI(options: {
     setError(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
-        body: {
+      const data = await callEdgeFunction<{ message?: string }>(
+        Endpoints.ai.openaiChat,
+        {
           systemPrompt: getSystemPrompt(options.designerType),
           userPrompt: prompt,
           model: 'gpt-4o',
           temperature: 0.7,
           maxTokens: 2048,
-        },
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message || 'AI request failed');
-      }
+        }
+      );
 
       // Edge function returns "message" field, not "content"
       if (!data?.message) {
@@ -492,19 +478,16 @@ export function useQuickAI(options: {
     setError(null);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('openai-chat', {
-        body: {
+      const data = await callEdgeFunction<{ url?: string }>(
+        Endpoints.ai.openaiChat,
+        {
           type: 'image',
           prompt,
           size: '1024x1024',
           quality: 'hd',
           style: 'vivid',
-        },
-      });
-
-      if (fnError) {
-        throw new Error(fnError.message || 'Image generation failed');
-      }
+        }
+      );
 
       return data?.url || null;
     } catch (err: any) {

@@ -8,6 +8,8 @@
 import { useState, useCallback, useReducer, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 import { useTenant } from '@/contexts/TenantContext';
 import { exportToReact } from '@/features/landing-pages/utils/exporters/react-exporter';
@@ -256,17 +258,14 @@ export function useAILandingPageWorkflow(
     dispatch({ type: 'ADD_MESSAGE', message: userMessage });
 
     try {
-      const { data, error } = await supabase.functions.invoke<GenerateResponse>(
-        'ai-landing-page-generate',
+      const data = await callEdgeFunction<GenerateResponse>(
+        Endpoints.ai.landingPageGenerate,
         {
-          body: {
-            prompt,
-            ...options,
-          },
+          prompt,
+          ...options,
         }
       );
 
-      if (error) throw new Error(error.message);
       if (!data?.success || !data.html) throw new Error('Failed to generate landing page');
 
       // Update HTML
@@ -372,18 +371,15 @@ export function useAILandingPageWorkflow(
     dispatch({ type: 'ADD_MESSAGE', message: userMessage });
 
     try {
-      const { data, error } = await supabase.functions.invoke<ChatResponse>(
-        'ai-landing-page-chat',
+      const data = await callEdgeFunction<ChatResponse>(
+        Endpoints.ai.landingPageChat,
         {
-          body: {
-            landingPageId: state.landingPageId || 'temp',
-            message,
-            currentHtml: state.currentHTML,
-          },
+          landingPageId: state.landingPageId || 'temp',
+          message,
+          currentHtml: state.currentHTML,
         }
       );
 
-      if (error) throw new Error(error.message);
       if (!data?.success) throw new Error('Failed to update landing page');
 
       // Update HTML

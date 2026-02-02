@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
+import { callPublicEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -69,15 +71,15 @@ export default function AcceptInvite() {
         throw new Error("Password must be at least 8 characters");
       }
 
-      const { data, error } = await supabase.functions.invoke("accept-invitation", {
-        body: {
+      const data = await callPublicEdgeFunction(
+        Endpoints.admin.acceptInvitation,
+        {
           token,
           password,
           fullName,
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: async () => {

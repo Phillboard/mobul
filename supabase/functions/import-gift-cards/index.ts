@@ -1,167 +1,194 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+/**
+ * Import Gift Cards Edge Function
+ * 
+ * Imports gift cards from CSV content into a pool.
+ * Admin access required.
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { withApiGateway, ApiError, type AuthContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
+import { parseCSV, type ValidationError, type ImportResult } from '../_shared/import-export-utils.ts';
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+// ============================================================================
+// Types
+// ============================================================================
+
+interface ImportGiftCardsRequest {
+  pool_id: string;
+  csv_content: string;
+}
+
+interface ImportGiftCardsResponse extends ImportResult {
+  duplicates: number;
+}
+
+// ============================================================================
+// Main Handler
+// ============================================================================
+
+async function handleImportGiftCards(
+  request: ImportGiftCardsRequest,
+  context: AuthContext
+): Promise<ImportGiftCardsResponse> {
+  const supabase = createServiceClient();
+
+  const { pool_id, csv_content } = request;
+
+  if (!pool_id || !csv_content) {
+    throw new ApiError('Missing required fields: pool_id, csv_content', 'VALIDATION_ERROR', 400);
   }
 
-  try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
+  // Check if user is admin
+  const { data: roles } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', context.user.id);
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) {
-      throw new Error('Unauthorized');
+  const isAdmin = roles?.some(r => r.role === 'admin');
+  if (!isAdmin) {
+    throw new ApiError('Admin access required', 'FORBIDDEN', 403);
+  }
+
+  console.log(`[IMPORT-GIFT-CARDS] Importing gift cards for pool: ${pool_id}`);
+
+  // Parse CSV
+  const { rows, headers, errors: parseErrors } = parseCSV<{
+    card_code: string;
+    card_number?: string;
+    expiration_date?: string;
+  }>(csv_content, {
+    requiredHeaders: ['card_code'],
+  });
+
+  if (parseErrors.length > 0) {
+    return {
+      success: false,
+      imported: 0,
+      failed: rows.length,
+      skipped: 0,
+      errors: parseErrors,
+      duplicates: 0,
+    };
+  }
+
+  // Get existing card codes to check for duplicates
+  const { data: existingCards } = await supabase
+    .from('gift_cards')
+    .select('card_code')
+    .eq('pool_id', pool_id);
+
+  const existingCodes = new Set(existingCards?.map(c => c.card_code) || []);
+
+  const cardsToInsert: Array<{
+    pool_id: string;
+    card_code: string;
+    card_number?: string;
+    expiration_date?: string;
+    status: string;
+  }> = [];
+  const duplicates: string[] = [];
+  const errors: ValidationError[] = [];
+
+  // Process each row
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowNumber = i + 2; // Account for header row and 1-indexing
+
+    const cardCode = row.card_code?.trim();
+    if (!cardCode) {
+      errors.push({
+        row: rowNumber,
+        field: 'card_code',
+        message: 'Missing card_code',
+      });
+      continue;
     }
 
-    // Check if user is admin
-    const { data: roles } = await supabaseClient
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
-    
-    const isAdmin = roles?.some((r: any) => r.role === 'admin');
-    if (!isAdmin) {
-      throw new Error('Admin access required');
+    // Check for duplicates
+    if (existingCodes.has(cardCode)) {
+      duplicates.push(cardCode);
+      continue;
     }
 
-    const { pool_id, csv_content } = await req.json();
+    const card: {
+      pool_id: string;
+      card_code: string;
+      card_number?: string;
+      expiration_date?: string;
+      status: string;
+    } = {
+      pool_id,
+      card_code: cardCode,
+      status: 'available',
+    };
 
-    if (!pool_id || !csv_content) {
-      throw new Error('Missing required fields: pool_id, csv_content');
+    if (row.card_number) {
+      card.card_number = row.card_number.trim();
     }
 
-    console.log(`Importing gift cards for pool: ${pool_id}`);
-
-    // Parse CSV
-    const lines = csv_content.trim().split('\n');
-    const headers = lines[0].toLowerCase().split(',').map((h: string) => h.trim());
-    
-    const requiredHeaders = ['card_code'];
-    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-    if (missingHeaders.length > 0) {
-      throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
+    if (row.expiration_date) {
+      card.expiration_date = row.expiration_date.trim();
     }
 
-    const cardCodeIndex = headers.indexOf('card_code');
-    const cardNumberIndex = headers.indexOf('card_number');
-    const expirationDateIndex = headers.indexOf('expiration_date');
+    cardsToInsert.push(card);
+    existingCodes.add(cardCode); // Track to prevent duplicates within this import
+  }
 
-    // Get existing card codes to check for duplicates
-    const { data: existingCards } = await supabaseClient
+  console.log(`[IMPORT-GIFT-CARDS] Inserting ${cardsToInsert.length} gift cards`);
+
+  // Bulk insert cards
+  let successCount = 0;
+  if (cardsToInsert.length > 0) {
+    const { data, error: insertError } = await supabase
       .from('gift_cards')
-      .select('card_code')
-      .eq('pool_id', pool_id);
+      .insert(cardsToInsert)
+      .select();
 
-    const existingCodes = new Set(existingCards?.map(c => c.card_code) || []);
-
-    const cardsToInsert = [];
-    const duplicates = [];
-    const errors = [];
-
-    // Process each row
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-
-      const values = line.split(',').map((v: string) => v.trim());
-      
-      const cardCode = values[cardCodeIndex];
-      if (!cardCode) {
-        errors.push(`Row ${i + 1}: Missing card_code`);
-        continue;
-      }
-
-      // Check for duplicates
-      if (existingCodes.has(cardCode)) {
-        duplicates.push(cardCode);
-        continue;
-      }
-
-      const card: any = {
-        pool_id,
-        card_code: cardCode,
-        status: 'available',
-      };
-
-      // Optional fields
-      if (cardNumberIndex >= 0 && values[cardNumberIndex]) {
-        card.card_number = values[cardNumberIndex];
-      }
-      if (expirationDateIndex >= 0 && values[expirationDateIndex]) {
-        card.expiration_date = values[expirationDateIndex];
-      }
-
-      cardsToInsert.push(card);
-      existingCodes.add(cardCode); // Track to prevent duplicates within this import
+    if (insertError) {
+      console.error('[IMPORT-GIFT-CARDS] Insert error:', insertError);
+      throw new ApiError(`Failed to insert cards: ${insertError.message}`, 'DATABASE_ERROR', 500);
     }
 
-    console.log(`Inserting ${cardsToInsert.length} gift cards`);
+    successCount = data?.length || 0;
 
-    // Bulk insert cards
-    let successCount = 0;
-    if (cardsToInsert.length > 0) {
-      const { data, error } = await supabaseClient
-        .from('gift_cards')
-        .insert(cardsToInsert)
-        .select();
+    // Update pool statistics
+    const { data: poolData } = await supabase
+      .from('gift_card_pools')
+      .select('total_cards, available_cards')
+      .eq('id', pool_id)
+      .single();
 
-      if (error) {
-        console.error('Insert error:', error);
-        throw error;
-      }
-
-      successCount = data?.length || 0;
-
-      // Update pool statistics - fetch current values first
-      const { data: poolData } = await supabaseClient
+    if (poolData) {
+      await supabase
         .from('gift_card_pools')
-        .select('total_cards, available_cards')
-        .eq('id', pool_id)
-        .single();
-
-      if (poolData) {
-        await supabaseClient
-          .from('gift_card_pools')
-          .update({
-            total_cards: poolData.total_cards + successCount,
-            available_cards: poolData.available_cards + successCount,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', pool_id);
-      }
+        .update({
+          total_cards: (poolData.total_cards || 0) + successCount,
+          available_cards: (poolData.available_cards || 0) + successCount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', pool_id);
     }
-
-    console.log(`Import complete: ${successCount} success, ${duplicates.length} duplicates, ${errors.length} errors`);
-
-    return new Response(
-      JSON.stringify({
-        success: successCount,
-        duplicates: duplicates.length,
-        errors: errors,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error) {
-    console.error('Error importing gift cards:', error);
-    const message = error instanceof Error ? error.message : 'An unknown error occurred';
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   }
-});
+
+  console.log(`[IMPORT-GIFT-CARDS] Complete: ${successCount} success, ${duplicates.length} duplicates, ${errors.length} errors`);
+
+  return {
+    success: successCount > 0 || errors.length === 0,
+    imported: successCount,
+    failed: errors.length,
+    skipped: duplicates.length,
+    errors: errors.slice(0, 100),
+    duplicates: duplicates.length,
+  };
+}
+
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handleImportGiftCards, {
+  requireAuth: true,
+  requiredRole: 'admin',
+  parseBody: true,
+  auditAction: 'import_gift_cards',
+}));

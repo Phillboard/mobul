@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/shared/components/ui/button";
 import { CallDispositionSelector } from "./CallDispositionSelector";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 import { Loader2 } from "lucide-react";
 
@@ -40,15 +42,14 @@ export function CompleteCallDialog({
       if (updateError) throw updateError;
 
       // Call the complete-call-disposition edge function to handle disposition logic
-      const { error: functionError } = await supabase.functions.invoke("complete-call-disposition", {
-        body: {
+      await callEdgeFunction(
+        Endpoints.callCenter.completeDisposition,
+        {
           callSessionId,
           disposition,
           notes,
-        },
-      });
-
-      if (functionError) throw functionError;
+        }
+      );
 
       toast({
         title: "Call completed",

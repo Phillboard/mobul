@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -23,15 +25,15 @@ export function CustomerCodeBulkActions({
 
   const bulkApproveMutation = useMutation({
     mutationFn: async (action: "approve" | "reject") => {
-      const { data, error } = await supabase.functions.invoke("bulk-approve-codes", {
-        body: {
+      const data = await callEdgeFunction<{ successCount: number; failedCount: number }>(
+        Endpoints.callCenter.bulkApproveCodes,
+        {
           recipientIds: selectedRecipients.map(r => r.id),
           action,
           rejectionReason: action === "reject" ? rejectionReason : undefined,
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: (data, action) => {

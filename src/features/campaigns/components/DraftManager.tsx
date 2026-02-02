@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -44,19 +46,16 @@ export function DraftManager({
 
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke(
-        "save-campaign-draft",
+      const data = await callEdgeFunction(
+        Endpoints.campaigns.saveDraft,
         {
-          body: {
-            clientId,
-            draftName: `Draft ${new Date().toLocaleDateString()}`,
-            formData: currentFormData,
-            currentStep: currentStep || 1,
-          },
+          clientId,
+          draftName: `Draft ${new Date().toLocaleDateString()}`,
+          formData: currentFormData,
+          currentStep: currentStep || 1,
         }
       );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: () => {

@@ -1,25 +1,26 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+/**
+ * Handle Incoming Call Edge Function
+ * 
+ * Twilio webhook handler for incoming voice calls.
+ * Creates call session, matches recipient, and returns TwiML.
+ * 
+ * NOTE: This is a Twilio webhook endpoint that receives form-encoded data,
+ * so it cannot use the standard withApiGateway (which expects JSON).
+ */
+
+import { createServiceClient } from '../_shared/supabase.ts';
+import { handleCORS } from '../_shared/cors.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCORS(req);
+  if (corsResponse) return corsResponse;
 
-  // Initialize activity logger
+  const supabase = createServiceClient();
   const activityLogger = createActivityLogger('handle-incoming-call', req);
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
     // Parse Twilio webhook payload (form-encoded)
     const formData = await req.formData();
     const callSid = formData.get('CallSid') as string;
@@ -27,10 +28,10 @@ Deno.serve(async (req) => {
     const to = formData.get('To') as string;
     const callStatus = formData.get('CallStatus') as string;
 
-    console.log('Incoming call:', { callSid, from, to, callStatus });
+    console.log('[INCOMING-CALL] Received:', { callSid, from, to, callStatus });
 
-    // Find the tracked number with recording settings
-    const { data: trackedNumber, error: numberError } = await supabaseClient
+    // Find the tracked number
+    const { data: trackedNumber, error: numberError } = await supabase
       .from('tracked_phone_numbers')
       .select('*, campaigns(*)')
       .eq('phone_number', to)
@@ -38,17 +39,17 @@ Deno.serve(async (req) => {
       .single();
 
     if (numberError || !trackedNumber) {
-      console.error('Tracked number not found:', to);
+      console.error('[INCOMING-CALL] Number not found:', to);
       return new Response(
         generateTwiML('Sorry, this number is not configured.'),
         { headers: { 'Content-Type': 'text/xml' } }
       );
     }
 
-    console.log('Found campaign:', trackedNumber.campaigns?.name);
+    console.log('[INCOMING-CALL] Campaign:', trackedNumber.campaigns?.name);
 
     // Try to match caller to a recipient
-    const { data: matchedRecipient } = await supabaseClient
+    const { data: matchedRecipient } = await supabase
       .from('recipients')
       .select('*')
       .eq('audience_id', trackedNumber.campaigns?.audience_id)
@@ -57,11 +58,10 @@ Deno.serve(async (req) => {
       .single();
 
     const matchStatus = matchedRecipient ? 'matched' : 'unmatched';
-
-    console.log('Recipient match status:', matchStatus);
+    console.log('[INCOMING-CALL] Match status:', matchStatus);
 
     // Create call session
-    const { data: callSession, error: sessionError } = await supabaseClient
+    const { data: callSession, error: sessionError } = await supabase
       .from('call_sessions')
       .insert({
         campaign_id: trackedNumber.campaign_id,
@@ -77,11 +77,10 @@ Deno.serve(async (req) => {
       .single();
 
     if (sessionError) {
-      console.error('Failed to create call session:', sessionError);
+      console.error('[INCOMING-CALL] Session error:', sessionError);
     } else {
-      console.log('Call session created:', callSession.id);
-      
-      // Log inbound call activity
+      console.log('[INCOMING-CALL] Session created:', callSession.id);
+
       await activityLogger.communication('call_inbound', 'success',
         `Inbound call from ${from} to ${to}`,
         {
@@ -100,23 +99,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get call forwarding number and recording preference
+    // Get forwarding settings
     const forwardNumber = trackedNumber.forward_to_number || Deno.env.get('CALL_CENTER_NUMBER');
     const recordingEnabled = trackedNumber.recording_enabled !== false;
+    const statusCallbackUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/update-call-status`;
 
-    // Generate TwiML to forward call with recording
     const twiml = generateTwiML(
       `Connecting your call. Session ID: ${callSession?.id || 'unknown'}`,
       forwardNumber,
       recordingEnabled,
-      `${Deno.env.get('SUPABASE_URL')}/functions/v1/update-call-status`
+      statusCallbackUrl
     );
 
     return new Response(twiml, {
       headers: { 'Content-Type': 'text/xml' },
     });
   } catch (error) {
-    console.error('Error handling incoming call:', error);
+    console.error('[INCOMING-CALL] Error:', error);
     return new Response(
       generateTwiML('An error occurred. Please try again later.'),
       { headers: { 'Content-Type': 'text/xml' } }
@@ -125,20 +124,22 @@ Deno.serve(async (req) => {
 });
 
 function generateTwiML(
-  message: string, 
-  dialNumber?: string, 
+  message: string,
+  dialNumber?: string,
   record?: boolean,
   statusCallback?: string
 ): string {
   if (dialNumber) {
-    const recordAttr = record ? ' record="record-from-answer" recordingStatusCallback="' + statusCallback + '"' : '';
+    const recordAttr = record 
+      ? ` record="record-from-answer" recordingStatusCallback="${statusCallback}"` 
+      : '';
     return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say>${message}</Say>
   <Dial${recordAttr} action="${statusCallback}">${dialNumber}</Dial>
 </Response>`;
   }
-  
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say>${message}</Say>

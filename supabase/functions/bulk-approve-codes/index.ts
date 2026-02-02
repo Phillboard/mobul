@@ -1,157 +1,132 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+/**
+ * Bulk Approve Codes Edge Function
+ * 
+ * Approves or rejects multiple recipient codes at once.
+ * Admin/call center only.
+ */
+
+import { withApiGateway, ApiError, type AuthContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// ============================================================================
+// Types
+// ============================================================================
 
 interface BulkApproveRequest {
   recipientIds: string[];
-  action: "approve" | "reject";
+  action: 'approve' | 'reject';
   rejectionReason?: string;
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+interface BulkApproveResponse {
+  success: boolean;
+  successCount: number;
+  failedCount: number;
+  action: string;
+  message: string;
+}
+
+// ============================================================================
+// Main Handler
+// ============================================================================
+
+async function handleBulkApproveCodes(
+  request: BulkApproveRequest,
+  context: AuthContext
+): Promise<BulkApproveResponse> {
+  const { recipientIds, action, rejectionReason } = request;
+
+  if (!recipientIds || recipientIds.length === 0) {
+    throw new ApiError('No recipient IDs provided', 'VALIDATION_ERROR', 400);
   }
 
-  // Initialize activity logger
-  const activityLogger = createActivityLogger('bulk-approve-codes', req);
+  if (!action || !['approve', 'reject'].includes(action)) {
+    throw new ApiError('Invalid action. Must be "approve" or "reject"', 'VALIDATION_ERROR', 400);
+  }
 
-  try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
-        },
-      }
-    );
+  const supabase = createServiceClient();
+  const activityLogger = createActivityLogger('bulk-approve-codes');
 
-    // Verify user is authenticated and has permission
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
+  console.log(`[BULK-APPROVE] Processing bulk ${action} for ${recipientIds.length} codes by user ${context.user.id}`);
 
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+  // Update all recipients
+  const newStatus = action === 'approve' ? 'approved' : 'rejected';
+  const { data: updatedRecipients, error: updateError } = await supabase
+    .from('recipients')
+    .update({
+      status: newStatus,
+      approved_at: action === 'approve' ? new Date().toISOString() : null,
+      approved_by_user_id: context.user.id,
+      rejection_reason: action === 'reject' ? rejectionReason : null,
+    })
+    .in('id', recipientIds)
+    .select();
 
-    // Check user role (must be admin or call_center)
-    const { data: userRole, error: roleError } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
+  if (updateError) {
+    console.error('[BULK-APPROVE] Update error:', updateError);
+    throw new ApiError('Failed to update recipients', 'DATABASE_ERROR', 500);
+  }
 
-    if (roleError || !userRole || !["admin", "call_center", "company_owner"].includes(userRole.role)) {
-      return new Response(
-        JSON.stringify({ error: "Insufficient permissions" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+  const successCount = updatedRecipients?.length || 0;
+  const failedCount = recipientIds.length - successCount;
 
-    const { recipientIds, action, rejectionReason }: BulkApproveRequest = await req.json();
+  // Log bulk action in audit log for each recipient
+  const auditLogs = recipientIds.map((recipientId) => ({
+    recipient_id: recipientId,
+    action: action === 'approve' ? 'approved' : 'rejected',
+    performed_by_user_id: context.user.id,
+    metadata: {
+      bulk_action: true,
+      total_in_batch: recipientIds.length,
+      rejection_reason: action === 'reject' ? rejectionReason : undefined,
+    },
+  }));
 
-    if (!recipientIds || recipientIds.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "No recipient IDs provided" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+  const { error: auditError } = await supabase
+    .from('recipient_audit_log')
+    .insert(auditLogs);
 
-    console.log(`Processing bulk ${action} for ${recipientIds.length} codes by user ${user.id}`);
+  if (auditError) {
+    console.error('[BULK-APPROVE] Audit log error:', auditError);
+    // Don't fail the request
+  }
 
-    // Update all recipients
-    const newStatus = action === "approve" ? "approved" : "rejected";
-    const { data: updatedRecipients, error: updateError } = await supabaseClient
-      .from("recipients")
-      .update({
-        status: newStatus,
-        approved_at: action === "approve" ? new Date().toISOString() : null,
-        approved_by_user_id: user.id,
-        rejection_reason: action === "reject" ? rejectionReason : null,
-      })
-      .in("id", recipientIds)
-      .select();
+  console.log(`[BULK-APPROVE] Completed: ${successCount} success, ${failedCount} failed`);
 
-    if (updateError) {
-      console.error("Update error:", updateError);
-      throw updateError;
-    }
-
-    const successCount = updatedRecipients?.length || 0;
-    const failedCount = recipientIds.length - successCount;
-
-    // Log bulk action in audit log for each recipient
-    const auditLogs = recipientIds.map((recipientId) => ({
-      recipient_id: recipientId,
-      action: action === "approve" ? "approved" : "rejected",
-      performed_by_user_id: user.id,
+  // Log activity
+  await activityLogger.giftCard(
+    action === 'approve' ? 'card_assigned' : 'card_cancelled',
+    successCount > 0 ? 'success' : 'failed',
+    {
+      userId: context.user.id,
+      description: `Bulk ${action}: ${successCount} codes ${action === 'approve' ? 'approved' : 'rejected'}`,
       metadata: {
-        bulk_action: true,
-        total_in_batch: recipientIds.length,
-        rejection_reason: action === "reject" ? rejectionReason : undefined,
-      },
-    }));
-
-    const { error: auditError } = await supabaseClient
-      .from("recipient_audit_log")
-      .insert(auditLogs);
-
-    if (auditError) {
-      console.error("Audit log error:", auditError);
-      // Don't fail the request if audit logging fails
-    }
-
-    console.log(`Bulk ${action} completed: ${successCount} success, ${failedCount} failed`);
-
-    // Log bulk action activity
-    await activityLogger.giftCard(action === "approve" ? 'card_assigned' : 'card_cancelled',
-      successCount > 0 ? 'success' : 'failed',
-      `Bulk ${action}: ${successCount} codes ${action === "approve" ? "approved" : "rejected"}`,
-      {
-        userId: user.id,
-        metadata: {
-          action,
-          success_count: successCount,
-          failed_count: failedCount,
-          total_requested: recipientIds.length,
-          rejection_reason: action === "reject" ? rejectionReason : undefined,
-        },
-      }
-    );
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        successCount,
-        failedCount,
         action,
-        message: `${action === "approve" ? "Approved" : "Rejected"} ${successCount} codes`,
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
-  } catch (error) {
-    console.error("Error in bulk-approve-codes:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
-  }
-});
+        success_count: successCount,
+        failed_count: failedCount,
+        total_requested: recipientIds.length,
+        rejection_reason: action === 'reject' ? rejectionReason : undefined,
+      },
+    }
+  );
+
+  return {
+    success: true,
+    successCount,
+    failedCount,
+    action,
+    message: `${action === 'approve' ? 'Approved' : 'Rejected'} ${successCount} codes`,
+  };
+}
+
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handleBulkApproveCodes, {
+  requireAuth: true,
+  requiredRole: ['admin', 'call_center', 'company_owner'],
+  parseBody: true,
+  auditAction: 'bulk_approve_codes',
+}));

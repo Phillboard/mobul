@@ -1,9 +1,17 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+/**
+ * Dr. Phillip Chat Edge Function
+ * 
+ * AI assistant for the Mobul platform with streaming support.
+ * Uses Lovable AI Gateway for Gemini with custom system prompt.
+ */
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { withApiGateway, ApiError, type PublicContext } from '../_shared/api-gateway.ts';
+import { createStreamingCompletion, type AIMessage } from '../_shared/ai-client.ts';
+import { handleCORS } from '../_shared/cors.ts';
+
+// ============================================================================
+// System Prompt
+// ============================================================================
 
 const SYSTEM_PROMPT = `You are Dr. Phillip, the Mobul Master - an expert AI assistant for the Mobul direct mail campaign platform.
 
@@ -72,88 +80,75 @@ RESPONSE FORMAT:
 - Use bullet points for lists
 - End with a helpful follow-up question or next step suggestion`;
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+// ============================================================================
+// Types
+// ============================================================================
+
+interface DrPhillipChatRequest {
+  messages: Array<{ role: string; content: string }>;
+}
+
+// ============================================================================
+// Main Handler (Custom for Streaming)
+// ============================================================================
+
+Deno.serve(async (req: Request): Promise<Response> => {
+  // Handle CORS
+  const corsResponse = handleCORS(req);
+  if (corsResponse) return corsResponse;
+
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
 
   try {
-    const { messages } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const { messages }: DrPhillipChatRequest = await req.json();
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    console.log('[DR-PHILLIP-CHAT] Request:', { messageCount: messages.length });
 
-    console.log("Dr. Phillip chat request:", { messageCount: messages.length });
+    // Convert messages to AI format
+    const aiMessages: AIMessage[] = messages.map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    }));
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...messages,
-        ],
-        stream: true,
-        temperature: 0.7,
-      }),
+    // Get streaming response
+    const streamResponse = await createStreamingCompletion({
+      provider: 'lovable',
+      model: 'google/gemini-2.5-flash',
+      systemPrompt: SYSTEM_PROMPT,
+      messages: aiMessages,
+      temperature: 0.7,
+      stream: true,
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        console.error("Rate limit exceeded");
-        return new Response(
-          JSON.stringify({ error: "Rate limits exceeded, please try again later." }),
-          {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      if (response.status === 402) {
-        console.error("Payment required");
-        return new Response(
-          JSON.stringify({ error: "Payment required, please add credits to your workspace." }),
-          {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return new Response(
-        JSON.stringify({ error: "AI gateway error" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Stream the response back to the client
-    return new Response(response.body, {
+    // Forward the stream
+    return new Response(streamResponse.body, {
       headers: {
         ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
   } catch (error) {
-    console.error("Dr. Phillip chat error:", error);
+    console.error('[DR-PHILLIP-CHAT] Error:', error);
+
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    let status = 500;
+
+    if (errorMessage.includes('Rate limit')) {
+      status = 429;
+    } else if (errorMessage.includes('Payment') || errorMessage.includes('credits')) {
+      status = 402;
+    }
+
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error",
-      }),
+      JSON.stringify({ error: errorMessage }),
       {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

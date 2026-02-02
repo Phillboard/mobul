@@ -10,6 +10,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
+import { callEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { Layout } from "@/shared/components/layout/Layout";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
@@ -108,11 +110,10 @@ export default function PoolDetail() {
 
     setIsCheckingBalances(true);
     try {
-      const { data, error } = await supabase.functions.invoke('check-gift-card-balance', {
-        body: { poolId },
-      });
-
-      if (error) throw error;
+      const data = await callEdgeFunction<{ results?: any[] }>(
+        Endpoints.giftCards.checkBalance,
+        { poolId }
+      );
 
       toast({
         title: "Balance Check Complete",
@@ -139,14 +140,13 @@ export default function PoolDetail() {
 
     setIsExporting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('export-pool-cards', {
-        body: {
+      const data = await callEdgeFunction<string>(
+        Endpoints.giftCards.exportPool,
+        {
           poolId,
           includeSensitiveData: isAdmin,
-        },
-      });
-
-      if (error) throw error;
+        }
+      );
 
       const blob = new Blob([data as string], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);

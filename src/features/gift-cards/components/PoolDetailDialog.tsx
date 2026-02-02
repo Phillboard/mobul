@@ -37,6 +37,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { RefreshCw, Download } from "lucide-react";
@@ -142,11 +144,10 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
 
     setIsCheckingBalances(true);
     try {
-      const { data, error } = await supabase.functions.invoke('check-gift-card-balance', {
-        body: { poolId },
-      });
-
-      if (error) throw error;
+      const data = await callEdgeFunction<{ results?: any[] }>(
+        Endpoints.giftCards.checkBalance,
+        { poolId }
+      );
 
       toast({
         title: "Balance Check Complete",
@@ -179,14 +180,13 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
 
     setIsExporting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('export-pool-cards', {
-        body: {
+      const data = await callEdgeFunction<string>(
+        Endpoints.giftCards.exportPool,
+        {
           poolId,
           includeSensitiveData: isAdmin, // Only admins can export full codes
-        },
-      });
-
-      if (error) throw error;
+        }
+      );
 
       // Create blob and download
       const blob = new Blob([data as string], { type: 'text/csv' });

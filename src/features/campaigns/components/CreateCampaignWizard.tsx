@@ -30,6 +30,8 @@ import { WizardSidebar } from "./wizard/WizardSidebar";
 import { WizardProgressIndicator } from "./wizard/WizardProgressIndicator";
 import { DraftManager } from "./DraftManager";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import type { CampaignFormData, MailingMethod } from "@/types/campaigns";
 import { useMutation } from "@tanstack/react-query";
 import { Save } from "lucide-react";
@@ -106,15 +108,16 @@ export function CreateCampaignWizard({
 
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
-      const { data } = await supabase.functions.invoke("save-campaign-draft", {
-        body: {
+      const data = await callEdgeFunction<{ draft?: { id: string } }>(
+        Endpoints.campaigns.saveDraft,
+        {
           draftId: currentDraftId,
           clientId,
           draftName: formData.name || "Untitled Draft",
           formData,
           currentStep,
-        },
-      });
+        }
+      );
       return data;
     },
     onSuccess: (data) => {

@@ -1,11 +1,15 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createActivityLogger } from '../_shared/activity-logger.ts';
+/**
+ * Send User Invitation Edge Function
+ * 
+ * Creates a user invitation and sends an email with the invite link.
+ * Uses the shared email provider and templates.
+ */
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { withApiGateway, ApiError, AuthContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
+import { sendEmail } from '../_shared/email-provider.ts';
+import { buildInvitationEmailHtml } from '../_shared/email-templates.ts';
+import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 interface InvitationRequest {
   email: string;
@@ -15,7 +19,20 @@ interface InvitationRequest {
   message?: string;
 }
 
-const VALID_ROLES = ["admin", "tech_support", "agency_owner", "company_owner", "developer", "call_center"];
+interface InvitationResponse {
+  success: boolean;
+  invitation: {
+    id: string;
+    email: string;
+    role: string;
+    token: string;
+  };
+  inviteUrl: string;
+  message: string;
+  emailSent: boolean;
+}
+
+const VALID_ROLES = ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer', 'call_center'];
 
 const roleRequirements: Record<string, { requiresOrg: boolean; requiresClient: boolean }> = {
   admin: { requiresOrg: false, requiresClient: false },
@@ -27,220 +44,198 @@ const roleRequirements: Record<string, { requiresOrg: boolean; requiresClient: b
 };
 
 const roleHierarchy: Record<string, string[]> = {
-  admin: ["admin", "tech_support", "agency_owner", "company_owner", "developer", "call_center"],
-  tech_support: ["agency_owner", "company_owner", "developer", "call_center"],
-  agency_owner: ["company_owner", "call_center"],
-  company_owner: ["call_center"],
+  admin: ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer', 'call_center'],
+  tech_support: ['agency_owner', 'company_owner', 'developer', 'call_center'],
+  agency_owner: ['company_owner', 'call_center'],
+  company_owner: ['call_center'],
   developer: [],
   call_center: [],
 };
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+async function handleSendUserInvitation(
+  request: InvitationRequest,
+  context: AuthContext,
+  rawRequest: Request
+): Promise<InvitationResponse> {
+  const supabase = createServiceClient();
+  const activityLogger = createActivityLogger('send-user-invitation', rawRequest);
+
+  const { email, role, orgId, clientId, message } = request;
+  const userId = context.user.id;
+
+  // Validate required fields
+  if (!email || !role) {
+    throw new ApiError('Email and role are required', 'VALIDATION_ERROR', 400);
   }
 
-  // Initialize activity logger
-  const activityLogger = createActivityLogger('send-user-invitation', req);
+  // Validate role
+  if (!VALID_ROLES.includes(role)) {
+    throw new ApiError(`Invalid role: ${role}`, 'VALIDATION_ERROR', 400);
+  }
 
-  try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  // Get inviter's role
+  const { data: inviterRole } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .single();
+
+  if (!inviterRole) {
+    throw new ApiError('Inviter role not found', 'AUTHORIZATION_ERROR', 403);
+  }
+
+  // Check permission to invite
+  const canInvite = roleHierarchy[inviterRole.role];
+  if (!canInvite || !canInvite.includes(role)) {
+    throw new ApiError(
+      `You do not have permission to invite ${role} users`,
+      'AUTHORIZATION_ERROR',
+      403
     );
+  }
 
-    // Get the user from the request
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+  // Validate org/client requirements
+  const requirements = roleRequirements[role];
+  if (requirements.requiresOrg && !orgId) {
+    throw new ApiError(`Organization is required for ${role} role`, 'VALIDATION_ERROR', 400);
+  }
+  if (requirements.requiresClient && !clientId) {
+    throw new ApiError(`Client is required for ${role} role`, 'VALIDATION_ERROR', 400);
+  }
 
-    if (userError || !user) {
-      throw new Error("Unauthorized");
-    }
+  // Check for existing user
+  const { data: existingUser } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', email)
+    .single();
 
-    const { email, role, orgId, clientId, message }: InvitationRequest = await req.json();
+  if (existingUser) {
+    throw new ApiError('User with this email already exists', 'CONFLICT', 409);
+  }
 
-    // Validate required fields
-    if (!email || !role) {
-      throw new Error("Email and role are required");
-    }
+  // Check for pending invitation
+  const { data: existingInvite } = await supabase
+    .from('user_invitations')
+    .select('id')
+    .eq('email', email)
+    .eq('status', 'pending')
+    .single();
 
-    // Validate role is a valid app_role
-    if (!VALID_ROLES.includes(role)) {
-      throw new Error(`Invalid role: ${role}`);
-    }
+  if (existingInvite) {
+    throw new ApiError('Pending invitation already exists for this email', 'CONFLICT', 409);
+  }
 
-    // Get inviter's role
-    const { data: inviterRole } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
+  // Get inviter details
+  const { data: inviter } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', userId)
+    .single();
+
+  // Create invitation
+  const { data: invitation, error: inviteError } = await supabase
+    .from('user_invitations')
+    .insert({
+      email,
+      role,
+      org_id: orgId,
+      client_id: clientId,
+      invited_by: userId,
+      metadata: { message, inviter_name: inviter?.full_name },
+    })
+    .select()
+    .single();
+
+  if (inviteError) {
+    throw new ApiError(`Failed to create invitation: ${inviteError.message}`, 'DATABASE_ERROR', 500);
+  }
+
+  // Get organization/client name
+  let orgName = 'the platform';
+  if (clientId) {
+    const { data: client } = await supabase
+      .from('clients')
+      .select('name')
+      .eq('id', clientId)
       .single();
-
-    if (!inviterRole) {
-      throw new Error("Inviter role not found");
-    }
-
-    // Check if inviter can invite this role
-    const canInvite = roleHierarchy[inviterRole.role];
-    if (!canInvite || !canInvite.includes(role)) {
-      throw new Error(`You do not have permission to invite ${role} users`);
-    }
-
-    // Validate org/client requirements
-    const requirements = roleRequirements[role];
-    if (requirements.requiresOrg && !orgId) {
-      throw new Error(`Organization is required for ${role} role`);
-    }
-    if (requirements.requiresClient && !clientId) {
-      throw new Error(`Client is required for ${role} role`);
-    }
-
-    // Check if user already exists
-    const { data: existingUser } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", email)
+    orgName = client?.name || 'the organization';
+  } else if (orgId) {
+    const { data: org } = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', orgId)
       .single();
+    orgName = org?.name || 'the organization';
+  }
 
-    if (existingUser) {
-      throw new Error("User with this email already exists");
-    }
+  // Build invite URL
+  const origin = rawRequest.headers.get('origin') || Deno.env.get('APP_URL') || '';
+  const inviteUrl = `${origin}/accept-invite?token=${encodeURIComponent(invitation.token)}`;
+  
+  const roleDisplay = role.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 
-    // Check for existing pending invitation
-    const { data: existingInvite } = await supabase
-      .from("user_invitations")
-      .select("id")
-      .eq("email", email)
-      .eq("status", "pending")
-      .single();
+  // Build email HTML using shared template
+  const emailHtml = buildInvitationEmailHtml({
+    inviterName: inviter?.full_name || '',
+    inviterEmail: inviter?.email,
+    organizationName: orgName,
+    roleName: roleDisplay,
+    inviteUrl,
+    message,
+    expiresIn: '7 days',
+  });
 
-    if (existingInvite) {
-      throw new Error("Pending invitation already exists for this email");
-    }
+  // Send invitation email
+  let emailSent = false;
+  const emailResult = await sendEmail({
+    to: email,
+    subject: `You're invited to join ${orgName}`,
+    html: emailHtml,
+  });
 
-    // Get inviter details
-    const { data: inviter } = await supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", user.id)
-      .single();
+  emailSent = emailResult.success;
 
-    // Create invitation with role column
-    const { data: invitation, error: inviteError } = await supabase
-      .from("user_invitations")
-      .insert({
-        email,
-        role,
+  if (!emailSent) {
+    console.warn(`[INVITATION] Email failed but invitation created: ${emailResult.error}`);
+  }
+
+  console.log(`[INVITATION] Created for ${email} with role ${role}`);
+
+  // Log activity
+  await activityLogger.user('user_invited', 'success',
+    `${inviter?.full_name || inviter?.email} invited ${email} as ${roleDisplay}`,
+    {
+      userId,
+      clientId,
+      targetUserEmail: email,
+      role,
+      metadata: {
+        invitation_id: invitation.id,
         org_id: orgId,
-        client_id: clientId,
-        invited_by: user.id,
-        metadata: { message, inviter_name: inviter?.full_name },
-      })
-      .select()
-      .single();
-
-    if (inviteError) throw inviteError;
-
-    // Get organization/client name for email
-    let orgName = "the platform";
-    if (clientId) {
-      const { data: client } = await supabase
-        .from("clients")
-        .select("name")
-        .eq("id", clientId)
-        .single();
-      orgName = client?.name || "the organization";
-    } else if (orgId) {
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("name")
-        .eq("id", orgId)
-        .single();
-      orgName = org?.name || "the organization";
+        org_name: orgName,
+        email_sent: emailSent,
+      },
     }
+  );
 
-    // Send invitation email - URL encode the token to handle special characters
-    const inviteUrl = `${req.headers.get("origin")}/accept-invite?token=${encodeURIComponent(invitation.token)}`;
-    
-    const roleDisplay = role.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-    
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-            .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-            .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🎉 You're Invited!</h1>
-            </div>
-            <div class="content">
-              <p>Hi there,</p>
-              <p><strong>${inviter?.full_name || inviter?.email}</strong> has invited you to join <strong>${orgName}</strong> as a <strong>${roleDisplay}</strong>.</p>
-              ${message ? `<p><em>"${message}"</em></p>` : ''}
-              <p>Click the button below to accept your invitation and create your account:</p>
-              <center>
-                <a href="${inviteUrl}" class="button">Accept Invitation</a>
-              </center>
-              <p style="color: #666; font-size: 14px;">This invitation will expire in 7 days.</p>
-              <p style="color: #666; font-size: 14px;">If you didn't expect this invitation, you can safely ignore this email.</p>
-            </div>
-            <div class="footer">
-              <p>© ${new Date().getFullYear()} Mobul Platform. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+  return {
+    success: true,
+    invitation: {
+      id: invitation.id,
+      email: invitation.email,
+      role: invitation.role,
+      token: invitation.token,
+    },
+    inviteUrl,
+    message: emailSent 
+      ? 'Invitation sent successfully' 
+      : 'Invitation created but email delivery failed',
+    emailSent,
+  };
+}
 
-    console.log(`Invitation created for ${email} with role ${role} - Token: ${invitation.token}`);
-    console.log(`Invite URL: ${inviteUrl}`);
-
-    // Log user invitation activity
-    await activityLogger.user('user_invited', 'success',
-      `${inviter?.full_name || inviter?.email} invited ${email} as ${roleDisplay}`,
-      {
-        userId: user.id,
-        clientId,
-        targetUserEmail: email,
-        role,
-        metadata: {
-          invitation_id: invitation.id,
-          org_id: orgId,
-          org_name: orgName,
-        },
-      }
-    );
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        invitation,
-        inviteUrl,
-        message: "Invitation sent successfully",
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
-  } catch (error) {
-    console.error("Error sending invitation:", error);
-    return new Response(
-      JSON.stringify({ error: (error as Error).message }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      }
-    );
-  }
-});
+Deno.serve(withApiGateway(handleSendUserInvitation, {
+  requireAuth: true,
+  parseBody: true,
+}));

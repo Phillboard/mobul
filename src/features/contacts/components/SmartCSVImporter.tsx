@@ -16,6 +16,8 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import {
   Select,
   SelectContent,
@@ -256,16 +258,15 @@ export function SmartCSVImporter({ onImportComplete, onCancel }: SmartCSVImporte
       setImportProgress(50);
 
       // Call import function
-      const { data, error } = await supabase.functions.invoke('import-contacts', {
-        body: {
+      const data = await callEdgeFunction<{ successful?: number; failed?: number; skipped?: number }>(
+        Endpoints.audience.importContacts,
+        {
           client_id: currentClient.id,
           contacts: rowsToImport,
           list_id: targetListId || undefined,
           tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
-        },
-      });
-
-      if (error) throw error;
+        }
+      );
 
       setImportProgress(100);
 

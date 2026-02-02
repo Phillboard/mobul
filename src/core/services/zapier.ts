@@ -5,7 +5,8 @@
  * Extended trigger types for comprehensive automation support.
  */
 
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 
 /**
  * All supported Zapier trigger event types
@@ -62,17 +63,16 @@ export async function dispatchZapierEvent(
   }
 ): Promise<{ success: boolean; triggered: number; error?: string }> {
   try {
-    const { data: result, error } = await supabase.functions.invoke('dispatch-zapier-event', {
-      body: {
+    const result = await callEdgeFunction<{ triggered?: number }>(
+      Endpoints.integrations.dispatchZapierEvent,
+      {
         event_type: eventType,
         client_id: clientId,
         data,
         triggered_by: options?.triggeredBy || 'system',
         meta: options?.meta,
-      },
-    });
-
-    if (error) throw error;
+      }
+    );
 
     return {
       success: true,

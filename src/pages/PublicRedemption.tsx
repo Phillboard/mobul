@@ -7,7 +7,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Label } from "@/shared/components/ui/label";
 import { Gift, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { supabase } from "@core/services/supabase";
+import { callPublicEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { GiftCardDisplay } from "@/features/forms/components";
 import { cn } from "@/shared/utils/cn";
 
@@ -48,14 +49,18 @@ export default function PublicRedemption() {
       }
 
       // Call the edge function to redeem
-      const { data, error } = await supabase.functions.invoke("redeem-customer-code", {
-        body: {
+      const data = await callPublicEdgeFunction<{
+        success: boolean;
+        error?: string;
+        giftCard?: any;
+      }>(
+        Endpoints.giftCards.redeemCustomerCode,
+        {
           redemptionCode: redemptionCode.trim().toUpperCase(),
           campaignId: campaignId.trim(),
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
       if (!data.success) throw new Error(data.error || "Redemption failed");
 
       return data;

@@ -1,32 +1,53 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// ============================================================================
-// THRESHOLDS
-// ============================================================================
-
-const THRESHOLDS = {
-  CSV_HEALTHY: 50,
-  CSV_LOW: 10,
-  CSV_EMPTY: 0,
-  AGENCY_LOW_CREDIT: 1000,
-  CLIENT_LOW_CREDIT: 500,
-  CAMPAIGN_LOW_CREDIT: 100,
-};
-
-// ============================================================================
-// MONITORING FUNCTIONS
-// ============================================================================
-
 /**
- * Check CSV pool health and alert on low stock
+ * Monitor Gift Card System Edge Function
+ * 
+ * Comprehensive monitoring for the gift card system:
+ * - CSV pool inventory health
+ * - Campaign budget/credit monitoring
+ * - Agency/Client credit alerts
+ * - Provisioning failure detection
+ * - API provider health checks
+ * 
+ * No authentication required (service function for scheduled monitoring).
+ * Should be called with service role key.
  */
-async function checkCSVPoolHealth(supabase: any): Promise<string[]> {
+
+import { withApiGateway, type PublicContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
+import { 
+  MONITORING_THRESHOLDS,
+  getInventoryAlertSeverity,
+  getCreditAlertSeverity,
+} from '../_shared/business-rules/gift-card-rules.ts';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+interface MonitorRequest {
+  // Optional: which checks to run (defaults to all)
+  checks?: ('csv_pools' | 'campaigns' | 'agencies' | 'clients' | 'failures' | 'api')[];
+}
+
+interface MonitorResponse {
+  duration_ms: number;
+  alerts_generated: number;
+  breakdown: {
+    csv_pools: number;
+    campaigns: number;
+    agencies: number;
+    clients: number;
+    provisioning_failures: number;
+    api_providers: number;
+  };
+  alerts: string[];
+}
+
+// ============================================================================
+// Monitoring Functions
+// ============================================================================
+
+async function checkCSVPoolHealth(supabase: ReturnType<typeof createServiceClient>): Promise<string[]> {
   console.log('[MONITOR] Checking CSV pool health...');
   const alerts: string[] = [];
 
@@ -52,55 +73,38 @@ async function checkCSVPoolHealth(supabase: any): Promise<string[]> {
 
   for (const pool of pools || []) {
     const available = pool.available_cards || 0;
-    const threshold = pool.low_stock_threshold || THRESHOLDS.CSV_HEALTHY;
-    const brandName = pool.gift_card_brands?.brand_name || 'Unknown Brand';
+    const threshold = pool.low_stock_threshold || MONITORING_THRESHOLDS.CSV_HEALTHY;
+    const brandName = (pool.gift_card_brands as { brand_name?: string })?.brand_name || 'Unknown Brand';
 
-    if (available === 0) {
-      // CRITICAL: Pool empty
-      const message = `CSV pool EMPTY: ${brandName} $${pool.card_value} - ${pool.pool_name}`;
+    const severity = getInventoryAlertSeverity(available, threshold);
+    
+    if (severity) {
+      let message: string;
+      let alertType: string;
+      
+      if (severity === 'critical') {
+        message = `CSV pool EMPTY: ${brandName} $${pool.card_value} - ${pool.pool_name}`;
+        alertType = 'csv_pool_empty';
+      } else if (severity === 'warning') {
+        message = `CSV pool CRITICALLY LOW: ${brandName} $${pool.card_value} - ${available} cards remaining`;
+        alertType = 'csv_pool_low';
+      } else {
+        message = `CSV pool low: ${brandName} $${pool.card_value} - ${available} cards (threshold: ${threshold})`;
+        alertType = 'csv_pool_below_threshold';
+      }
+      
       alerts.push(message);
       
       await supabase.from('system_alerts').insert({
-        severity: 'critical',
-        alert_type: 'csv_pool_empty',
-        message: message,
-        metadata: {
-          pool_id: pool.id,
-          brand_id: pool.brand_id,
-          denomination: pool.card_value,
-          pool_name: pool.pool_name
-        }
-      });
-    } else if (available < THRESHOLDS.CSV_LOW) {
-      // WARNING: Pool critically low
-      const message = `CSV pool CRITICALLY LOW: ${brandName} $${pool.card_value} - ${available} cards remaining`;
-      alerts.push(message);
-      
-      await supabase.from('system_alerts').insert({
-        severity: 'warning',
-        alert_type: 'csv_pool_low',
-        message: message,
+        severity,
+        alert_type: alertType,
+        message,
         metadata: {
           pool_id: pool.id,
           brand_id: pool.brand_id,
           denomination: pool.card_value,
           available_cards: available,
           pool_name: pool.pool_name
-        }
-      });
-    } else if (available < threshold) {
-      // INFO: Pool below custom threshold
-      const message = `CSV pool low: ${brandName} $${pool.card_value} - ${available} cards (threshold: ${threshold})`;
-      alerts.push(message);
-      
-      await supabase.from('system_alerts').insert({
-        severity: 'info',
-        alert_type: 'csv_pool_below_threshold',
-        message: message,
-        metadata: {
-          pool_id: pool.id,
-          available_cards: available,
-          threshold: threshold
         }
       });
     }
@@ -110,10 +114,7 @@ async function checkCSVPoolHealth(supabase: any): Promise<string[]> {
   return alerts;
 }
 
-/**
- * Check for depleted campaigns
- */
-async function checkDepletedCampaigns(supabase: any): Promise<string[]> {
+async function checkDepletedCampaigns(supabase: ReturnType<typeof createServiceClient>): Promise<string[]> {
   console.log('[MONITOR] Checking for depleted campaigns...');
   const alerts: string[] = [];
 
@@ -135,9 +136,9 @@ async function checkDepletedCampaigns(supabase: any): Promise<string[]> {
   }
 
   for (const campaign of campaigns || []) {
-    // Determine which account to check
+    const clientData = campaign.clients as { name?: string; credit_account_id?: string } | null;
     const accountId = campaign.uses_shared_credit 
-      ? campaign.clients?.credit_account_id 
+      ? clientData?.credit_account_id 
       : campaign.credit_account_id;
 
     if (!accountId) continue;
@@ -150,11 +151,13 @@ async function checkDepletedCampaigns(supabase: any): Promise<string[]> {
 
     if (accountError) continue;
 
-    if (account.status === 'depleted' || account.total_remaining <= 0) {
-      const message = `Campaign "${campaign.name}" budget exhausted (Client: ${campaign.clients?.name})`;
+    const severity = getCreditAlertSeverity(account.total_remaining, 'campaign');
+    
+    if (severity === 'critical' || account.status === 'depleted') {
+      const message = `Campaign "${campaign.name}" budget exhausted (Client: ${clientData?.name})`;
       alerts.push(message);
 
-      // Mark campaign as paused if not already
+      // Auto-pause depleted campaigns
       await supabase
         .from('campaigns')
         .update({ status: 'paused' })
@@ -164,7 +167,7 @@ async function checkDepletedCampaigns(supabase: any): Promise<string[]> {
       await supabase.from('system_alerts').insert({
         severity: 'warning',
         alert_type: 'campaign_depleted',
-        message: message,
+        message,
         metadata: {
           campaign_id: campaign.id,
           campaign_name: campaign.name,
@@ -172,14 +175,14 @@ async function checkDepletedCampaigns(supabase: any): Promise<string[]> {
           uses_shared_credit: campaign.uses_shared_credit
         }
       });
-    } else if (account.total_remaining < THRESHOLDS.CAMPAIGN_LOW_CREDIT) {
+    } else if (severity === 'info') {
       const message = `Campaign "${campaign.name}" low on credit: $${account.total_remaining} remaining`;
       alerts.push(message);
 
       await supabase.from('system_alerts').insert({
         severity: 'info',
         alert_type: 'campaign_low_credit',
-        message: message,
+        message,
         metadata: {
           campaign_id: campaign.id,
           campaign_name: campaign.name,
@@ -193,21 +196,13 @@ async function checkDepletedCampaigns(supabase: any): Promise<string[]> {
   return alerts;
 }
 
-/**
- * Check for agencies with low credit
- */
-async function checkAgencyCredit(supabase: any): Promise<string[]> {
+async function checkAgencyCredit(supabase: ReturnType<typeof createServiceClient>): Promise<string[]> {
   console.log('[MONITOR] Checking agency credit balances...');
   const alerts: string[] = [];
 
   const { data: agencies, error } = await supabase
     .from('agencies')
-    .select(`
-      id,
-      name,
-      credit_account_id,
-      status
-    `)
+    .select('id, name, credit_account_id, status')
     .eq('status', 'active');
 
   if (error) {
@@ -226,19 +221,21 @@ async function checkAgencyCredit(supabase: any): Promise<string[]> {
 
     if (accountError) continue;
 
-    if (account.total_remaining < THRESHOLDS.AGENCY_LOW_CREDIT) {
+    const severity = getCreditAlertSeverity(account.total_remaining, 'agency');
+    
+    if (severity) {
       const message = `Agency "${agency.name}" low on credit: $${account.total_remaining} remaining`;
       alerts.push(message);
 
       await supabase.from('system_alerts').insert({
-        severity: 'warning',
+        severity,
         alert_type: 'agency_low_credit',
-        message: message,
+        message,
         metadata: {
           agency_id: agency.id,
           agency_name: agency.name,
           remaining_credit: account.total_remaining,
-          threshold: THRESHOLDS.AGENCY_LOW_CREDIT
+          threshold: MONITORING_THRESHOLDS.AGENCY_LOW_CREDIT
         }
       });
     }
@@ -248,10 +245,7 @@ async function checkAgencyCredit(supabase: any): Promise<string[]> {
   return alerts;
 }
 
-/**
- * Check for clients with low credit
- */
-async function checkClientCredit(supabase: any): Promise<string[]> {
+async function checkClientCredit(supabase: ReturnType<typeof createServiceClient>): Promise<string[]> {
   console.log('[MONITOR] Checking client credit balances...');
   const alerts: string[] = [];
 
@@ -281,20 +275,23 @@ async function checkClientCredit(supabase: any): Promise<string[]> {
 
     if (accountError) continue;
 
-    if (account.total_remaining < THRESHOLDS.CLIENT_LOW_CREDIT) {
-      const message = `Client "${client.name}" low on credit: $${account.total_remaining} remaining (Agency: ${client.agencies?.name || 'N/A'})`;
+    const severity = getCreditAlertSeverity(account.total_remaining, 'client');
+    
+    if (severity) {
+      const agencyName = (client.agencies as { name?: string })?.name || 'N/A';
+      const message = `Client "${client.name}" low on credit: $${account.total_remaining} remaining (Agency: ${agencyName})`;
       alerts.push(message);
 
       await supabase.from('system_alerts').insert({
-        severity: 'info',
+        severity,
         alert_type: 'client_low_credit',
-        message: message,
+        message,
         metadata: {
           client_id: client.id,
           client_name: client.name,
           agency_id: client.agency_id,
           remaining_credit: account.total_remaining,
-          threshold: THRESHOLDS.CLIENT_LOW_CREDIT
+          threshold: MONITORING_THRESHOLDS.CLIENT_LOW_CREDIT
         }
       });
     }
@@ -304,10 +301,7 @@ async function checkClientCredit(supabase: any): Promise<string[]> {
   return alerts;
 }
 
-/**
- * Check for recent provisioning failures
- */
-async function checkProvisioningFailures(supabase: any): Promise<string[]> {
+async function checkProvisioningFailures(supabase: ReturnType<typeof createServiceClient>): Promise<string[]> {
   console.log('[MONITOR] Checking for provisioning failures...');
   const alerts: string[] = [];
 
@@ -340,13 +334,13 @@ async function checkProvisioningFailures(supabase: any): Promise<string[]> {
     await supabase.from('system_alerts').insert({
       severity: 'critical',
       alert_type: 'provisioning_failures',
-      message: message,
+      message,
       metadata: {
         failure_count: failures.length,
         time_window: '1 hour',
-        failures: failures.map((f: any) => ({
+        failures: failures.map((f) => ({
           redemption_id: f.id,
-          campaign_name: f.campaigns?.name,
+          campaign_name: (f.campaigns as { name?: string })?.name,
           brand_id: f.brand_id,
           denomination: f.denomination
         }))
@@ -358,15 +352,12 @@ async function checkProvisioningFailures(supabase: any): Promise<string[]> {
   return alerts;
 }
 
-/**
- * Check API provider health (placeholder for future implementation)
- */
-async function checkAPIProviderHealth(supabase: any): Promise<string[]> {
+async function checkAPIProviderHealth(_supabase: ReturnType<typeof createServiceClient>): Promise<string[]> {
   console.log('[MONITOR] Checking API provider health...');
   const alerts: string[] = [];
 
   // API health checks: Tillo integration tested via provision-gift-card-unified
-  // Additional provider health checks can be added here as needed
+  // Additional provider health checks can be added here:
   // - Check last successful API call per provider
   // - Check error rates
   // - Ping health endpoints if available
@@ -375,78 +366,94 @@ async function checkAPIProviderHealth(supabase: any): Promise<string[]> {
 }
 
 // ============================================================================
-// MAIN MONITORING FUNCTION
+// Main Monitoring Function
 // ============================================================================
 
-async function runMonitoring(supabase: any): Promise<any> {
+async function runMonitoring(
+  supabase: ReturnType<typeof createServiceClient>,
+  checks?: MonitorRequest['checks']
+): Promise<MonitorResponse> {
   console.log('[MONITOR] Starting system monitoring...');
   const startTime = Date.now();
 
   const allAlerts: string[] = [];
+  const breakdown = {
+    csv_pools: 0,
+    campaigns: 0,
+    agencies: 0,
+    clients: 0,
+    provisioning_failures: 0,
+    api_providers: 0,
+  };
 
-  // Run all monitoring checks
-  const csvAlerts = await checkCSVPoolHealth(supabase);
-  const campaignAlerts = await checkDepletedCampaigns(supabase);
-  const agencyAlerts = await checkAgencyCredit(supabase);
-  const clientAlerts = await checkClientCredit(supabase);
-  const failureAlerts = await checkProvisioningFailures(supabase);
-  const apiAlerts = await checkAPIProviderHealth(supabase);
+  const runAll = !checks || checks.length === 0;
 
-  allAlerts.push(...csvAlerts, ...campaignAlerts, ...agencyAlerts, ...clientAlerts, ...failureAlerts, ...apiAlerts);
+  // Run selected or all monitoring checks
+  if (runAll || checks?.includes('csv_pools')) {
+    const csvAlerts = await checkCSVPoolHealth(supabase);
+    breakdown.csv_pools = csvAlerts.length;
+    allAlerts.push(...csvAlerts);
+  }
+
+  if (runAll || checks?.includes('campaigns')) {
+    const campaignAlerts = await checkDepletedCampaigns(supabase);
+    breakdown.campaigns = campaignAlerts.length;
+    allAlerts.push(...campaignAlerts);
+  }
+
+  if (runAll || checks?.includes('agencies')) {
+    const agencyAlerts = await checkAgencyCredit(supabase);
+    breakdown.agencies = agencyAlerts.length;
+    allAlerts.push(...agencyAlerts);
+  }
+
+  if (runAll || checks?.includes('clients')) {
+    const clientAlerts = await checkClientCredit(supabase);
+    breakdown.clients = clientAlerts.length;
+    allAlerts.push(...clientAlerts);
+  }
+
+  if (runAll || checks?.includes('failures')) {
+    const failureAlerts = await checkProvisioningFailures(supabase);
+    breakdown.provisioning_failures = failureAlerts.length;
+    allAlerts.push(...failureAlerts);
+  }
+
+  if (runAll || checks?.includes('api')) {
+    const apiAlerts = await checkAPIProviderHealth(supabase);
+    breakdown.api_providers = apiAlerts.length;
+    allAlerts.push(...apiAlerts);
+  }
 
   const duration = Date.now() - startTime;
   console.log(`[MONITOR] Monitoring complete in ${duration}ms. Total alerts: ${allAlerts.length}`);
 
   return {
-    success: true,
     duration_ms: duration,
     alerts_generated: allAlerts.length,
-    breakdown: {
-      csv_pools: csvAlerts.length,
-      campaigns: campaignAlerts.length,
-      agencies: agencyAlerts.length,
-      clients: clientAlerts.length,
-      provisioning_failures: failureAlerts.length,
-      api_providers: apiAlerts.length
-    },
-    alerts: allAlerts
+    breakdown,
+    alerts: allAlerts,
   };
 }
 
 // ============================================================================
-// HTTP HANDLER
+// Main Handler
 // ============================================================================
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+async function handleMonitorGiftCardSystem(
+  request: MonitorRequest | null,
+  _context: PublicContext
+): Promise<MonitorResponse> {
+  const supabase = createServiceClient();
+  return await runMonitoring(supabase, request?.checks);
+}
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
 
-  try {
-    const result = await runMonitoring(supabaseClient);
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[MONITOR-SYSTEM] Error:', errorMessage);
-    
-    return new Response(JSON.stringify({ 
-      success: false,
-      error: errorMessage 
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
-});
-
+Deno.serve(withApiGateway(handleMonitorGiftCardSystem, {
+  requireAuth: false, // Service function called by cron/scheduler
+  parseBody: true,
+  auditAction: 'monitor_gift_card_system',
+}));

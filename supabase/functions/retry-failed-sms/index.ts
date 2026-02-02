@@ -1,122 +1,124 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+/**
+ * Retry Failed SMS Edge Function
+ * 
+ * Finds failed SMS deliveries and retries them through the gift card SMS function.
+ * Respects retry limits (max 3 attempts per delivery).
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { withApiGateway, ApiError, callEdgeFunction } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+interface RetryResult {
+  deliveryId: string;
+  success: boolean;
+  result?: unknown;
+  error?: string;
+}
+
+interface RetryFailedSMSResponse {
+  success: boolean;
+  message?: string;
+  retriedCount: number;
+  results: RetryResult[];
+}
+
+async function handleRetryFailedSMS(): Promise<RetryFailedSMSResponse> {
+  const supabase = createServiceClient();
+
+  console.log('[RETRY-SMS] Checking for failed SMS deliveries...');
+
+  // Find failed deliveries with retry count < 3
+  const { data: failedDeliveries, error: fetchError } = await supabase
+    .from('gift_card_deliveries')
+    .select(`
+      *,
+      gift_cards!inner(card_code, card_number, gift_card_pools!inner(card_value)),
+      recipients!inner(phone, first_name, last_name)
+    `)
+    .eq('sms_status', 'failed')
+    .lt('retry_count', 3)
+    .order('created_at', { ascending: true })
+    .limit(10);
+
+  if (fetchError) {
+    console.error('[RETRY-SMS] Error fetching failed deliveries:', fetchError);
+    throw new ApiError(`Failed to fetch deliveries: ${fetchError.message}`, 'DATABASE_ERROR', 500);
   }
 
-  try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+  if (!failedDeliveries || failedDeliveries.length === 0) {
+    console.log('[RETRY-SMS] No failed deliveries to retry');
+    return {
+      success: true,
+      message: 'No deliveries to retry',
+      retriedCount: 0,
+      results: [],
+    };
+  }
 
-    console.log('Checking for failed SMS deliveries to retry...');
+  console.log(`[RETRY-SMS] Found ${failedDeliveries.length} failed deliveries to retry`);
 
-    // Find failed SMS deliveries with retry count < 3
-    const { data: failedDeliveries, error: fetchError } = await supabaseClient
-      .from('gift_card_deliveries')
-      .select(`
-        *,
-        gift_cards!inner(card_code, card_number, gift_card_pools!inner(card_value)),
-        recipients!inner(phone, first_name, last_name)
-      `)
-      .eq('sms_status', 'failed')
-      .lt('retry_count', 3)
-      .order('created_at', { ascending: true })
-      .limit(10);
+  const results: RetryResult[] = [];
 
-    if (fetchError) {
-      console.error('Error fetching failed deliveries:', fetchError);
-      throw fetchError;
-    }
+  for (const delivery of failedDeliveries) {
+    try {
+      console.log(`[RETRY-SMS] Retrying delivery ${delivery.id}...`);
 
-    if (!failedDeliveries || failedDeliveries.length === 0) {
-      console.log('No failed deliveries to retry');
-      return new Response(
-        JSON.stringify({ success: true, message: 'No deliveries to retry' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+      // Increment retry count and set to pending
+      await supabase
+        .from('gift_card_deliveries')
+        .update({
+          retry_count: delivery.retry_count + 1,
+          sms_status: 'pending',
+        })
+        .eq('id', delivery.id);
 
-    console.log(`Found ${failedDeliveries.length} failed deliveries to retry`);
+      // Call the gift card SMS function
+      const result = await callEdgeFunction<{
+        deliveryId: string;
+        giftCardCode: string;
+        giftCardValue: number;
+        recipientPhone: string;
+        recipientName: string;
+        customMessage?: string;
+      }, unknown>('send-gift-card-sms', {
+        deliveryId: delivery.id,
+        giftCardCode: delivery.gift_cards.card_code,
+        giftCardValue: delivery.gift_cards.gift_card_pools.card_value,
+        recipientPhone: delivery.recipients.phone,
+        recipientName: delivery.recipients.first_name,
+        customMessage: delivery.sms_message,
+      });
 
-    const retryResults = [];
-
-    for (const delivery of failedDeliveries) {
-      try {
-        console.log(`Retrying delivery ${delivery.id}...`);
-
-        // Increment retry count
-        await supabaseClient
-          .from('gift_card_deliveries')
-          .update({
-            retry_count: delivery.retry_count + 1,
-            sms_status: 'pending',
-          })
-          .eq('id', delivery.id);
-
-        // Retry SMS send
-        const response = await fetch(
-          `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-gift-card-sms`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-            },
-            body: JSON.stringify({
-              deliveryId: delivery.id,
-              giftCardCode: delivery.gift_cards.card_code,
-              giftCardValue: delivery.gift_cards.gift_card_pools.card_value,
-              recipientPhone: delivery.recipients.phone,
-              recipientName: delivery.recipients.first_name,
-              customMessage: delivery.sms_message,
-            }),
-          }
-        );
-
-        const result = await response.json();
-        
-        retryResults.push({
-          deliveryId: delivery.id,
-          success: response.ok,
-          result,
-        });
-
-        console.log(`Retry result for ${delivery.id}:`, result);
-      } catch (error) {
-        console.error(`Failed to retry delivery ${delivery.id}:`, error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        retryResults.push({
-          deliveryId: delivery.id,
-          success: false,
-          error: errorMessage,
-        });
-      }
-    }
-
-    return new Response(
-      JSON.stringify({
+      results.push({
+        deliveryId: delivery.id,
         success: true,
-        retriedCount: failedDeliveries.length,
-        results: retryResults,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error: any) {
-    console.error('Error in retry-failed-sms:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+        result,
+      });
+
+      console.log(`[RETRY-SMS] Success for ${delivery.id}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[RETRY-SMS] Failed for ${delivery.id}:`, errorMessage);
+      
+      results.push({
+        deliveryId: delivery.id,
+        success: false,
+        error: errorMessage,
+      });
+    }
   }
-});
+
+  const successCount = results.filter(r => r.success).length;
+  console.log(`[RETRY-SMS] Completed: ${successCount}/${results.length} successful`);
+
+  return {
+    success: true,
+    retriedCount: failedDeliveries.length,
+    results,
+  };
+}
+
+Deno.serve(withApiGateway(handleRetryFailedSMS, {
+  requireAuth: false,
+  parseBody: false, // No body needed
+}));

@@ -417,11 +417,19 @@ export function useCheckCardBalance() {
 
   return useMutation({
     mutationFn: async (cardId: string) => {
-      const { data, error } = await supabase.functions.invoke("check-inventory-card-balance", {
-        body: { cardIds: [cardId] },
-      });
+      const { callEdgeFunction } = await import('@core/api/client');
+      const { Endpoints } = await import('@core/api/endpoints');
+      
+      const data = await callEdgeFunction<{
+        success: boolean;
+        error?: string;
+        results?: Array<{
+          status: string;
+          newBalance?: number;
+          error?: string;
+        }>;
+      }>(Endpoints.giftCards.checkInventoryBalance, { cardIds: [cardId] });
 
-      if (error) throw error;
       if (!data.success) throw new Error(data.error || "Balance check failed");
 
       return data;
@@ -475,11 +483,20 @@ export function useBulkCheckBalances() {
       brandId?: string; 
       denomination?: number;
     }) => {
-      const { data, error } = await supabase.functions.invoke("check-inventory-card-balance", {
-        body: { cardIds, brandId, denomination, limit: 200 },
-      });
+      const { callEdgeFunction } = await import('@core/api/client');
+      const { Endpoints } = await import('@core/api/endpoints');
+      
+      const data = await callEdgeFunction<{
+        success: boolean;
+        error?: string;
+        summary?: {
+          checked: number;
+          success: number;
+          error: number;
+          manual: number;
+        };
+      }>(Endpoints.giftCards.checkInventoryBalance, { cardIds, brandId, denomination, limit: 200 });
 
-      if (error) throw error;
       if (!data.success) throw new Error(data.error || "Bulk balance check failed");
 
       return data;

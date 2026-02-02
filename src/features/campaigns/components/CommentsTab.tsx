@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -52,13 +54,14 @@ export function CommentsTab({ campaignId }: CommentsTabProps) {
       // Check for @mentions and send notifications
       const mentions = commentText.match(/@(\w+)/g);
       if (mentions && mentions.length > 0) {
-        await supabase.functions.invoke("send-comment-notification", {
-          body: {
+        await callEdgeFunction(
+          Endpoints.messaging.sendCommentNotification,
+          {
             campaignId,
             comment: commentText,
             mentions,
-          },
-        });
+          }
+        );
       }
     },
     onSuccess: () => {

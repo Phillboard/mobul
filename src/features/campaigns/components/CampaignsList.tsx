@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Mail } from "lucide-react";
 import { GenerateQRCodesDialog } from "./GenerateQRCodesDialog";
 import { CampaignProofDialog } from "./CampaignProofDialog";
@@ -37,10 +39,10 @@ export function CampaignsList({ clientId, searchQuery }: CampaignsListProps) {
 
   const submitToVendorMutation = useMutation({
     mutationFn: async (campaignId: string) => {
-      const { data, error } = await supabase.functions.invoke('submit-to-vendor', {
-        body: { campaignId },
-      });
-      if (error) throw error;
+      const data = await callEdgeFunction<{ batchCount: number; estimatedCompletion: string }>(
+        Endpoints.campaigns.submitToVendor,
+        { campaignId }
+      );
       return data;
     },
     onSuccess: (data) => {

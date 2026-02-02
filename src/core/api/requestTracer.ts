@@ -6,6 +6,8 @@
  */
 
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from './client';
+import { Endpoints } from './endpoints';
 
 // Generate unique trace ID in the same format as backend
 export function generateTraceId(): string {
@@ -328,18 +330,10 @@ class RequestTracerClass {
     denomination?: number;
   }): Promise<any> {
     try {
-      const { data, error } = await supabase.functions.invoke('diagnose-provisioning-setup', {
-        body: params,
-      });
-      
-      if (error) {
-        console.error('[REQUEST-TRACER] Diagnostics failed:', error);
-        return { success: false, error: error.message };
-      }
-      
+      const data = await callEdgeFunction(Endpoints.admin.diagnoseProvisioning, params);
       return data;
     } catch (err) {
-      console.error('[REQUEST-TRACER] Exception running diagnostics:', err);
+      console.error('[REQUEST-TRACER] Diagnostics failed:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
     }
   }

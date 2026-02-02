@@ -1,207 +1,224 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.0";
-import { checkRateLimit, createRateLimitResponse } from '../_shared/rate-limiter.ts';
-import { ERROR_MESSAGES } from '../_shared/config.ts';
+/**
+ * Validate Gift Card Code Edge Function
+ * 
+ * Public endpoint that validates a gift card code and creates a redemption record.
+ * Used by landing pages to verify codes before showing gift card details.
+ * 
+ * Features:
+ * - Rate limiting (5 attempts per IP per 5 minutes)
+ * - Validates recipient exists and belongs to campaign
+ * - Creates redemption tracking record
+ * - Returns redemption token for subsequent reveal
+ */
+
+import { withApiGateway, ApiError, type PublicContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
+import { checkRateLimit } from '../_shared/rate-limiter.ts';
+import { ERROR_MESSAGES } from '../_shared/config.ts';
+import { validateRedemptionCodeFormat } from '../_shared/business-rules/gift-card-rules.ts';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// ============================================================================
+// Types
+// ============================================================================
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+interface ValidateCodeRequest {
+  code: string;
+  campaignId: string;
+}
+
+interface ValidateCodeResponse {
+  valid: boolean;
+  message?: string;
+  alreadyViewed?: boolean;
+  redemptionToken?: string;
+}
+
+// ============================================================================
+// Main Handler
+// ============================================================================
+
+async function handleValidateGiftCardCode(
+  request: ValidateCodeRequest,
+  _context: PublicContext,
+  rawRequest: Request
+): Promise<ValidateCodeResponse> {
+  const supabase = createServiceClient();
+  const activityLogger = createActivityLogger('validate-gift-card-code', rawRequest);
+  
+  const { code, campaignId } = request;
+
+  // Validate input
+  if (!code || !campaignId) {
+    return {
+      valid: false,
+      message: 'Missing required parameters',
+    };
   }
 
-  // Initialize activity logger
-  const activityLogger = createActivityLogger('validate-gift-card-code', req);
+  // Validate code format
+  const formatValidation = validateRedemptionCodeFormat(code);
+  if (!formatValidation.valid) {
+    return {
+      valid: false,
+      message: formatValidation.message,
+    };
+  }
 
-  try {
-    const { code, campaignId } = await req.json();
+  // Apply rate limiting
+  const rateLimitResult = await checkRateLimit(
+    supabase,
+    rawRequest,
+    { maxRequests: 5, windowMs: 5 * 60 * 1000 },
+    'validate-gift-card-code'
+  );
 
-    if (!code || !campaignId) {
-      return Response.json(
-        { valid: false, message: "Missing required parameters" },
-        { headers: corsHeaders }
-      );
-    }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Apply rate limiting: 5 attempts per IP per 5 minutes
-    const rateLimitResult = await checkRateLimit(
-      supabase,
-      req,
-      { maxRequests: 5, windowMs: 5 * 60 * 1000 },
-      'validate-gift-card-code'
+  if (!rateLimitResult.allowed) {
+    throw new ApiError(
+      `Too many attempts. Please try again in ${Math.ceil((rateLimitResult.retryAfter || 300) / 60)} minutes.`,
+      'RATE_LIMIT_EXCEEDED',
+      429
     );
+  }
 
-    if (!rateLimitResult.allowed) {
-      return createRateLimitResponse(rateLimitResult, corsHeaders);
-    }
+  // 1. Look up recipient by token (code)
+  const { data: recipient, error: recipientError } = await supabase
+    .from('recipients')
+    .select('*, audience:audiences(client_id)')
+    .eq('token', code)
+    .single();
 
-    // 1. Look up recipient by token (code)
-    const { data: recipient, error: recipientError } = await supabase
-      .from("recipients")
-      .select("*, audience:audiences(client_id)")
-      .eq("token", code)
-      .single();
+  if (recipientError || !recipient) {
+    console.log('[VALIDATE] Recipient not found:', code);
+    return {
+      valid: false,
+      message: ERROR_MESSAGES.INVALID_CODE,
+    };
+  }
 
-    if (recipientError || !recipient) {
-      console.log("Recipient not found:", code);
-      return Response.json(
-        {
-          valid: false,
-          message: ERROR_MESSAGES.INVALID_CODE,
-        },
-        { headers: corsHeaders }
-      );
-    }
+  // 2. Check if campaign matches and belongs to same client
+  const { data: campaign, error: campaignError } = await supabase
+    .from('campaigns')
+    .select('*, audience:audiences!inner(id, client_id)')
+    .eq('id', campaignId)
+    .eq('audiences.id', recipient.audience_id)
+    .single();
 
-    // 2. Check if campaign matches and belongs to same client
-    const { data: campaign, error: campaignError } = await supabase
-      .from("campaigns")
-      .select("*, audience:audiences!inner(id, client_id)")
-      .eq("id", campaignId)
-      .eq("audiences.id", recipient.audience_id)
-      .single();
+  if (campaignError || !campaign) {
+    console.log('[VALIDATE] Campaign not found or doesn\'t match:', campaignId);
+    return {
+      valid: false,
+      message: ERROR_MESSAGES.CAMPAIGN_MISMATCH,
+    };
+  }
 
-    if (campaignError || !campaign) {
-      console.log("Campaign not found or doesn't match:", campaignId);
-      return Response.json(
-        {
-          valid: false,
-          message: ERROR_MESSAGES.CAMPAIGN_MISMATCH,
-        },
-        { headers: corsHeaders }
-      );
-    }
-
-    // 3. Check if gift card has been delivered to this recipient
-    const { data: delivery, error: deliveryError } = await supabase
-      .from("gift_card_deliveries")
-      .select(
-        `
+  // 3. Check if gift card has been delivered to this recipient
+  const { data: delivery, error: deliveryError } = await supabase
+    .from('gift_card_deliveries')
+    .select(`
+      *,
+      gift_card:gift_cards(
         *,
-        gift_card:gift_cards(
-          *,
-          pool:gift_card_pools(*)
-        )
-      `
+        pool:gift_card_pools(*)
       )
-      .eq("recipient_id", recipient.id)
-      .eq("campaign_id", campaignId)
-      .in("delivery_status", ["sent", "delivered"])
-      .maybeSingle();
+    `)
+    .eq('recipient_id', recipient.id)
+    .eq('campaign_id', campaignId)
+    .in('delivery_status', ['sent', 'delivered'])
+    .maybeSingle();
 
-    if (deliveryError) {
-      console.error("Error fetching delivery:", deliveryError);
-      return Response.json(
-        {
-          valid: false,
-          message: "Error checking gift card status. Please try again.",
-        },
-        { headers: corsHeaders }
-      );
-    }
+  if (deliveryError) {
+    console.error('[VALIDATE] Error fetching delivery:', deliveryError);
+    return {
+      valid: false,
+      message: 'Error checking gift card status. Please try again.',
+    };
+  }
 
-    if (!delivery) {
-      console.log("No delivery found for recipient:", recipient.id);
-      return Response.json(
-        {
-          valid: false,
-          message:
-            "No gift card has been approved for this code yet. Please contact support if you believe this is an error.",
-        },
-        { headers: corsHeaders }
-      );
-    }
+  if (!delivery) {
+    console.log('[VALIDATE] No delivery found for recipient:', recipient.id);
+    return {
+      valid: false,
+      message: 'No gift card has been approved for this code yet. Please contact support if you believe this is an error.',
+    };
+  }
 
-    // 4. Check if already redeemed/viewed
-    const { data: existingRedemption } = await supabase
-      .from("gift_card_redemptions")
-      .select("*")
-      .eq("recipient_id", recipient.id)
-      .eq("campaign_id", campaignId)
-      .eq("redemption_status", "viewed")
-      .maybeSingle();
+  // 4. Check if already redeemed/viewed
+  const { data: existingRedemption } = await supabase
+    .from('gift_card_redemptions')
+    .select('*')
+    .eq('recipient_id', recipient.id)
+    .eq('campaign_id', campaignId)
+    .eq('redemption_status', 'viewed')
+    .maybeSingle();
 
-    if (existingRedemption) {
-      // Allow viewing again
-      console.log("Redemption already exists, allowing re-view");
-      return Response.json(
-        {
-          valid: true,
-          alreadyViewed: true,
-          redemptionToken: existingRedemption.id,
-        },
-        { headers: corsHeaders }
-      );
-    }
+  if (existingRedemption) {
+    console.log('[VALIDATE] Redemption already exists, allowing re-view');
+    return {
+      valid: true,
+      alreadyViewed: true,
+      redemptionToken: existingRedemption.id,
+    };
+  }
 
-    // 5. Create redemption record
-    const { data: redemption, error: redemptionError } = await supabase
-      .from("gift_card_redemptions")
-      .insert({
-        campaign_id: campaignId,
-        recipient_id: recipient.id,
-        gift_card_delivery_id: delivery.id,
-        code_entered: code,
-        redemption_status: "pending",
-        redemption_ip: req.headers.get("x-forwarded-for"),
-        redemption_user_agent: req.headers.get("user-agent"),
-      })
-      .select()
-      .single();
-
-    if (redemptionError) {
-      console.error("Error creating redemption:", redemptionError);
-      return Response.json(
-        {
-          valid: false,
-          message: "Error processing redemption. Please try again.",
-        },
-        { headers: corsHeaders }
-      );
-    }
-
-    // 6. Log event
-    await supabase.from("events").insert({
+  // 5. Create redemption record
+  const { data: redemption, error: redemptionError } = await supabase
+    .from('gift_card_redemptions')
+    .insert({
       campaign_id: campaignId,
       recipient_id: recipient.id,
-      event_type: "gift_card_code_entered",
-      source: "landing_page",
-      event_data_json: { code, valid: true },
-    });
+      gift_card_delivery_id: delivery.id,
+      code_entered: code,
+      redemption_status: 'pending',
+      redemption_ip: rawRequest.headers.get('x-forwarded-for'),
+      redemption_user_agent: rawRequest.headers.get('user-agent'),
+    })
+    .select()
+    .single();
 
-    console.log("Code validated successfully:", code);
-    
-    // Log successful validation activity
-    await activityLogger.giftCard('card_validated', 'success',
-      `Gift card code validated successfully`,
-      {
-        recipientId: recipient.id,
-        campaignId,
-        metadata: {
-          redemption_id: redemption.id,
-        },
-      }
-    );
-    
-    return Response.json(
-      {
-        valid: true,
-        redemptionToken: redemption.id,
-      },
-      { headers: corsHeaders }
-    );
-  } catch (error) {
-    console.error("Error in validate-gift-card-code:", error);
-    return Response.json(
-      { valid: false, message: "Internal server error" },
-      { status: 500, headers: corsHeaders }
-    );
+  if (redemptionError) {
+    console.error('[VALIDATE] Error creating redemption:', redemptionError);
+    return {
+      valid: false,
+      message: 'Error processing redemption. Please try again.',
+    };
   }
-});
+
+  // 6. Log event
+  await supabase.from('events').insert({
+    campaign_id: campaignId,
+    recipient_id: recipient.id,
+    event_type: 'gift_card_code_entered',
+    source: 'landing_page',
+    event_data_json: { code, valid: true },
+  });
+
+  console.log('[VALIDATE] Code validated successfully:', code);
+  
+  // Log activity
+  await activityLogger.giftCard('card_validated', 'success',
+    'Gift card code validated successfully',
+    {
+      recipientId: recipient.id,
+      campaignId,
+      metadata: {
+        redemption_id: redemption.id,
+      },
+    }
+  );
+  
+  return {
+    valid: true,
+    redemptionToken: redemption.id,
+  };
+}
+
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handleValidateGiftCardCode, {
+  requireAuth: false, // Public endpoint for landing pages
+  parseBody: true,
+  auditAction: 'validate_gift_card_code',
+}));

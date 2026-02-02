@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 
 interface Condition {
@@ -110,16 +112,16 @@ export function useEvaluateConditions() {
       eventType?: string;
       metadata?: Record<string, any>;
     }) => {
-      const { data, error } = await supabase.functions.invoke("evaluate-conditions", {
-        body: {
+      const data = await callEdgeFunction(
+        Endpoints.campaigns.evaluateConditions,
+        {
           recipientId,
           campaignId,
           eventType,
           metadata,
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
       return data;
     },
     onError: (error: any) => {

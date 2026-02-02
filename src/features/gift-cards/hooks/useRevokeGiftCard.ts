@@ -2,11 +2,12 @@
  * useRevokeGiftCard Hook
  * 
  * Mutation hook for revoking gift cards.
- * Calls the revoke-gift-card edge function and invalidates all affected queries.
+ * Uses the typed API client and invalidates all affected queries.
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@core/services/supabase";
+import { callEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { useToast } from "@/shared/hooks/use-toast";
 
 interface RevokeGiftCardParams {
@@ -36,17 +37,10 @@ export function useRevokeGiftCard() {
 
   return useMutation({
     mutationFn: async ({ assignmentId, reason }: RevokeGiftCardParams): Promise<RevokeGiftCardResponse> => {
-      const { data, error } = await supabase.functions.invoke('revoke-gift-card', {
-        body: { assignmentId, reason }
-      });
-
-      // Handle network/request errors
-      if (error) {
-        // Check if we have error details in the data (common with HTTP errors)
-        const errorMessage = data?.error || data?.message || error.message || 'Failed to revoke gift card';
-        console.error('Revoke error:', { error, data, errorMessage });
-        throw new Error(errorMessage);
-      }
+      const data = await callEdgeFunction<RevokeGiftCardResponse>(
+        Endpoints.giftCards.revoke,
+        { assignmentId, reason }
+      );
 
       // Handle business logic errors from the function
       if (!data.success) {

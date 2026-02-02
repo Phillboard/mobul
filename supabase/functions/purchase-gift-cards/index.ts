@@ -1,109 +1,109 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import Stripe from 'https://esm.sh/stripe@14.21.0';
+/**
+ * Purchase Gift Cards Edge Function
+ * 
+ * Creates a Stripe checkout session for purchasing gift cards.
+ * Requires authenticated user with access to the specified client.
+ */
+
+import { withApiGateway, ApiError, type AuthContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
+import Stripe from 'https://esm.sh/stripe@14.21.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// ============================================================================
+// Types
+// ============================================================================
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+interface PurchaseRequest {
+  clientId: string;
+  quantity: number;
+  cardValue: number;
+  poolName: string;
+  provider?: string;
+}
+
+interface PurchaseResponse {
+  checkoutUrl: string;
+}
+
+// ============================================================================
+// Main Handler
+// ============================================================================
+
+async function handlePurchaseGiftCards(
+  request: PurchaseRequest,
+  context: AuthContext,
+  rawRequest: Request
+): Promise<PurchaseResponse> {
+  const supabase = createServiceClient();
+  const activityLogger = createActivityLogger('purchase-gift-cards', rawRequest);
+  
+  const { clientId, quantity, cardValue, poolName, provider } = request;
+
+  // Validate required fields
+  if (!clientId || !quantity || !cardValue || !poolName) {
+    throw new ApiError('Missing required fields: clientId, quantity, cardValue, poolName', 'VALIDATION_ERROR', 400);
   }
 
-  const activityLogger = createActivityLogger(req);
+  // Verify user has access to this client
+  const { data: clientAccess } = await supabase
+    .rpc('user_can_access_client', { _user_id: context.user.id, _client_id: clientId });
+  
+  if (!clientAccess) {
+    throw new ApiError('You do not have access to this client', 'FORBIDDEN', 403);
+  }
 
-  try {
-    // Authenticate user
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authorization required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+  // Get Stripe key
+  const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+  if (!stripeKey) {
+    throw new ApiError('Stripe secret key not configured', 'CONFIGURATION_ERROR', 500);
+  }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  const stripe = new Stripe(stripeKey, {
+    apiVersion: '2023-10-16',
+  });
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid or expired token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+  const totalAmount = quantity * cardValue * 100; // Convert to cents
 
-    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
-    if (!stripeKey) {
-      throw new Error('Stripe secret key not configured');
-    }
+  // Get origin for redirect URLs
+  const origin = rawRequest.headers.get('origin') || Deno.env.get('FRONTEND_URL') || '';
 
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: '2023-10-16',
-    });
-
-    const { clientId, quantity, cardValue, poolName, provider } = await req.json();
-    
-    // Verify user has access to this client
-    const { data: clientAccess } = await supabase
-      .rpc('user_can_access_client', { _user_id: user.id, _client_id: clientId });
-    
-    if (!clientAccess) {
-      return new Response(
-        JSON.stringify({ error: 'You do not have access to this client' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!clientId || !quantity || !cardValue || !poolName) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const totalAmount = quantity * cardValue * 100; // Convert to cents
-
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `Gift Card Pool: ${poolName}`,
-              description: `${quantity} gift cards × $${cardValue} each${provider !== 'Generic' ? ` (${provider})` : ''}`,
-            },
-            unit_amount: cardValue * 100,
+  // Create Stripe checkout session
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `Gift Card Pool: ${poolName}`,
+            description: `${quantity} gift cards × $${cardValue} each${provider !== 'Generic' ? ` (${provider})` : ''}`,
           },
-          quantity: quantity,
+          unit_amount: cardValue * 100,
         },
-      ],
-      mode: 'payment',
-      success_url: `${req.headers.get('origin')}/gift-cards?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get('origin')}/gift-cards?purchase=cancelled`,
-      metadata: {
-        clientId,
-        quantity: quantity.toString(),
-        cardValue: cardValue.toString(),
-        poolName,
-        provider: provider || 'Generic',
-        type: 'gift_card_purchase',
+        quantity: quantity,
       },
-    });
-
-    // Log activity
-    await activityLogger.giftCard('purchase_initiated', 'success', {
-      userId: user.id,
+    ],
+    mode: 'payment',
+    success_url: `${origin}/gift-cards?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/gift-cards?purchase=cancelled`,
+    metadata: {
       clientId,
-      description: `Gift card purchase initiated - ${quantity} cards at $${cardValue}`,
+      quantity: quantity.toString(),
+      cardValue: cardValue.toString(),
+      poolName,
+      provider: provider || 'Generic',
+      type: 'gift_card_purchase',
+      userId: context.user.id,
+    },
+  });
+
+  // Log activity
+  await activityLogger.giftCard('purchase_initiated', 'success',
+    `Gift card purchase initiated - ${quantity} cards at $${cardValue}`,
+    {
+      userId: context.user.id,
+      clientId,
       metadata: {
         pool_name: poolName,
         quantity,
@@ -112,18 +112,22 @@ serve(async (req) => {
         stripe_session_id: session.id,
         total_amount: totalAmount / 100,
       },
-    });
+    }
+  );
 
-    return new Response(
-      JSON.stringify({ checkoutUrl: session.url }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-});
+  console.log(`[PURCHASE] Checkout session created: ${session.id}`);
+
+  return {
+    checkoutUrl: session.url!,
+  };
+}
+
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handlePurchaseGiftCards, {
+  requireAuth: true,
+  parseBody: true,
+  auditAction: 'purchase_gift_cards',
+}));

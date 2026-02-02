@@ -5,7 +5,8 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { toast } from 'sonner';
 import { logApiError, createScopedLogger } from '@core/api/errorLogger';
 import type {
@@ -56,19 +57,10 @@ export function useTwilioStatus(entityId: string | null, level: 'client' | 'agen
       }
       
       try {
-        const { data, error } = await supabase.functions.invoke('get-twilio-status', {
-          body: { level, entityId },
-        });
-        
-        if (error) {
-          // Log error to error_logs table
-          await logApiError('get-twilio-status', error, {
-            method: 'POST',
-            requestBody: { level, entityId },
-          });
-          // Return default state on error instead of throwing
-          return DEFAULT_TWILIO_STATUS;
-        }
+        const data = await callEdgeFunction<TwilioStatusResponse & { success?: boolean; error?: string }>(
+          Endpoints.telephony.getStatus,
+          { level, entityId }
+        );
         
         if (!data?.success) {
           // Log API-level error
@@ -81,7 +73,12 @@ export function useTwilioStatus(entityId: string | null, level: 'client' | 'agen
         }
         
         return data;
-      } catch (err) {
+      } catch (err: any) {
+        // Log error to error_logs table
+        await logApiError('get-twilio-status', err, {
+          method: 'POST',
+          requestBody: { level, entityId },
+        });
         // Log exception
         await twilioLogger.error(err instanceof Error ? err : new Error(String(err)), {
           operation: 'get-twilio-status',
@@ -110,18 +107,10 @@ export function useTestTwilioConnection() {
       phoneNumber?: string;
     }): Promise<TwilioTestResult> => {
       try {
-        const { data, error } = await supabase.functions.invoke('test-twilio-connection', {
-          body: params,
-        });
-        
-        if (error) {
-          // Log error
-          await logApiError('test-twilio-connection', error, {
-            method: 'POST',
-            requestBody: { accountSid: params.accountSid?.substring(0, 10) + '...', hasAuthToken: !!params.authToken, phoneNumber: params.phoneNumber },
-          });
-          throw error;
-        }
+        const data = await callEdgeFunction<TwilioTestResult>(
+          Endpoints.telephony.testConnection,
+          params
+        );
         
         // Log failed tests as warnings
         if (!data?.success) {
@@ -134,6 +123,11 @@ export function useTestTwilioConnection() {
         
         return data;
       } catch (err) {
+        // Log error
+        await logApiError('test-twilio-connection', err, {
+          method: 'POST',
+          requestBody: { accountSid: params.accountSid?.substring(0, 10) + '...', hasAuthToken: !!params.authToken, phoneNumber: params.phoneNumber },
+        });
         // Log exception
         await twilioLogger.error(err instanceof Error ? err : new Error(String(err)), {
           operation: 'test-twilio-connection',
@@ -157,8 +151,9 @@ export function useUpdateTwilioConfig() {
   return useMutation({
     mutationFn: async (params: UpdateTwilioConfigParams): Promise<{ success: boolean; message?: string; error?: string }> => {
       try {
-        const { data, error } = await supabase.functions.invoke('update-twilio-config', {
-          body: {
+        const data = await callEdgeFunction<{ success: boolean; message?: string; error?: string; errorCode?: string }>(
+          Endpoints.telephony.updateConfig,
+          {
             level: params.level,
             entityId: params.entityId,
             accountSid: params.config.accountSid,
@@ -169,17 +164,8 @@ export function useUpdateTwilioConfig() {
             monthlyLimit: params.config.monthlyLimit,
             skipValidation: params.skipValidation,
             expectedVersion: params.expectedVersion,
-          },
-        });
-        
-        if (error) {
-          // Log error
-          await logApiError('update-twilio-config', error, {
-            method: 'POST',
-            requestBody: { level: params.level, entityId: params.entityId, phoneNumber: params.config.phoneNumber },
-          });
-          throw error;
-        }
+          }
+        );
         
         if (!data?.success) {
           // Log API error
@@ -193,6 +179,11 @@ export function useUpdateTwilioConfig() {
         
         return data;
       } catch (err) {
+        // Log error
+        await logApiError('update-twilio-config', err, {
+          method: 'POST',
+          requestBody: { level: params.level, entityId: params.entityId, phoneNumber: params.config.phoneNumber },
+        });
         // Log exception
         await twilioLogger.error(err instanceof Error ? err : new Error(String(err)), {
           operation: 'update-twilio-config',
@@ -222,19 +213,10 @@ export function useFetchTwilioNumbers(accountSid: string, authToken: string) {
     queryKey: ['twilio-numbers', accountSid],
     queryFn: async (): Promise<TwilioPhoneNumber[]> => {
       try {
-        const { data, error } = await supabase.functions.invoke('fetch-twilio-numbers', {
-          body: { accountSid, authToken },
-        });
-        
-        if (error) {
-          // Log error
-          await logApiError('fetch-twilio-numbers', error, {
-            method: 'POST',
-            requestBody: { accountSidPrefix: accountSid?.substring(0, 10) + '...' },
-          });
-          // Return empty array with a friendlier error for edge function issues
-          throw new Error('Phone number fetch unavailable. Please use manual entry.');
-        }
+        const data = await callEdgeFunction<{ success: boolean; numbers?: TwilioPhoneNumber[]; error?: string }>(
+          Endpoints.telephony.fetchNumbers,
+          { accountSid, authToken }
+        );
         
         if (!data?.success) {
           // Log API error
@@ -246,6 +228,11 @@ export function useFetchTwilioNumbers(accountSid: string, authToken: string) {
         
         return data.numbers || [];
       } catch (err: any) {
+        // Log error
+        await logApiError('fetch-twilio-numbers', err, {
+          method: 'POST',
+          requestBody: { accountSidPrefix: accountSid?.substring(0, 10) + '...' },
+        });
         // Log the exception
         await twilioLogger.error(err instanceof Error ? err : new Error(String(err)), {
           operation: 'fetch-twilio-numbers',
@@ -277,19 +264,17 @@ export function useDisableTwilioConfig() {
       entityId?: string;
     }): Promise<void> => {
       try {
-        const { data, error } = await supabase.functions.invoke('disable-twilio-config', {
-          body: params,
-        });
+        const data = await callEdgeFunction<{ success: boolean; error?: string }>(
+          Endpoints.telephony.disableConfig,
+          params
+        );
         
-        if (error) {
-          await logApiError('disable-twilio-config', error, { method: 'POST', requestBody: params });
-          throw error;
-        }
         if (!data?.success) {
           await twilioLogger.error(`Disable Twilio config failed: ${data?.error}`, params);
           throw new Error(data?.error || 'Failed to disable Twilio');
         }
       } catch (err) {
+        await logApiError('disable-twilio-config', err, { method: 'POST', requestBody: params });
         await twilioLogger.error(err instanceof Error ? err : new Error(String(err)), {
           operation: 'disable-twilio-config',
           ...params,
@@ -319,19 +304,17 @@ export function useRemoveTwilioConfig() {
       entityId?: string;
     }): Promise<void> => {
       try {
-        const { data, error } = await supabase.functions.invoke('remove-twilio-config', {
-          body: { ...params, confirmRemoval: true },
-        });
+        const data = await callEdgeFunction<{ success: boolean; error?: string }>(
+          Endpoints.telephony.removeConfig,
+          { ...params, confirmRemoval: true }
+        );
         
-        if (error) {
-          await logApiError('remove-twilio-config', error, { method: 'POST', requestBody: params });
-          throw error;
-        }
         if (!data?.success) {
           await twilioLogger.error(`Remove Twilio config failed: ${data?.error}`, params);
           throw new Error(data?.error || 'Failed to remove Twilio');
         }
       } catch (err) {
+        await logApiError('remove-twilio-config', err, { method: 'POST', requestBody: params });
         await twilioLogger.error(err instanceof Error ? err : new Error(String(err)), {
           operation: 'remove-twilio-config',
           ...params,
@@ -373,15 +356,14 @@ export function useTwilioOverviewStats() {
     queryKey: ['twilio-overview-stats'],
     queryFn: async (): Promise<TwilioHealthStats> => {
       try {
-        const { data, error } = await supabase.functions.invoke('admin-twilio-health-report');
-        
-        if (error) {
-          await logApiError('admin-twilio-health-report', error, { method: 'POST' });
-          return DEFAULT_HEALTH_STATS;
-        }
+        const data = await callEdgeFunction<{ summary?: TwilioHealthStats }>(
+          Endpoints.telephony.adminHealthReport,
+          {}
+        );
         
         return data?.summary || DEFAULT_HEALTH_STATS;
       } catch (err) {
+        await logApiError('admin-twilio-health-report', err, { method: 'POST' });
         await twilioLogger.error(err instanceof Error ? err : new Error(String(err)), {
           operation: 'admin-twilio-health-report',
         });
@@ -405,19 +387,17 @@ export function useRevalidateTwilio() {
       entityId?: string;
     }): Promise<void> => {
       try {
-        const { data, error } = await supabase.functions.invoke('revalidate-twilio', {
-          body: params,
-        });
+        const data = await callEdgeFunction<{ success: boolean; error?: string }>(
+          Endpoints.telephony.revalidate,
+          params
+        );
         
-        if (error) {
-          await logApiError('revalidate-twilio', error, { method: 'POST', requestBody: params });
-          throw error;
-        }
         if (!data?.success) {
           await twilioLogger.error(`Revalidate Twilio failed: ${data?.error}`, params);
           throw new Error(data?.error || 'Revalidation failed');
         }
       } catch (err) {
+        await logApiError('revalidate-twilio', err, { method: 'POST', requestBody: params });
         await twilioLogger.error(err instanceof Error ? err : new Error(String(err)), {
           operation: 'revalidate-twilio',
           ...params,

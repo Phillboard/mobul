@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -55,17 +57,17 @@ export function CodeApprovalPanel({ callSessionId }: CodeApprovalPanelProps) {
   // Approve mutation
   const approveMutation = useMutation({
     mutationFn: async ({ recipientId, action }: { recipientId: string; action: "approve" | "reject" }) => {
-      const { data, error } = await supabase.functions.invoke("approve-customer-code", {
-        body: {
+      const data = await callEdgeFunction(
+        Endpoints.callCenter.approveCode,
+        {
           recipientId,
           action,
           callSessionId,
           notes,
           rejectionReason: action === "reject" ? rejectionReason : undefined,
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: (data, variables) => {

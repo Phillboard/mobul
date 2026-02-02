@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
+import { callEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { Layout } from "@/shared/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
@@ -141,17 +143,10 @@ export default function AudienceDetail() {
     
     setIsExporting(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No active session');
-
-      const { data, error } = await supabase.functions.invoke('export-audience', {
-        body: { audience_id: id },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) throw error;
+      const data = await callEdgeFunction<string>(
+        Endpoints.audience.exportAudience,
+        { audience_id: id }
+      );
 
       // Create blob and download
       const blob = new Blob([data], { type: 'text/csv' });

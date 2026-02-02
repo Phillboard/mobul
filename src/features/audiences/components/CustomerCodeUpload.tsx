@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -23,17 +24,17 @@ export function CustomerCodeUpload({ clientId, campaignId, audienceId }: Custome
 
   const uploadMutation = useMutation({
     mutationFn: async (codes: any[]) => {
-      const { data, error } = await supabase.functions.invoke("import-customer-codes", {
-        body: {
+      const data = await callEdgeFunction<{ summary: { successful: number; duplicates: number; errors: number }; errorLog?: string[] }>(
+        Endpoints.audience.importCustomerCodes,
+        {
           clientId,
           campaignId,
           audienceId,
           fileName: file?.name,
           codes,
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: (data) => {

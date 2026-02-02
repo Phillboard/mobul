@@ -5,6 +5,8 @@
  */
 
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 
 export interface StyleGuide {
   colors: {
@@ -97,22 +99,24 @@ export async function analyzeWebsite(url: string): Promise<StyleGuide> {
 export async function generateLandingPage(
   request: PageGenerationRequest
 ): Promise<PageGenerationResponse> {
-  const { data, error } = await supabase.functions.invoke('generate-landing-page-ai', {
-    body: request,
-  });
+  try {
+    const data = await callEdgeFunction<{ html?: string; css?: string; js?: string; styleGuide?: StyleGuide }>(
+      Endpoints.ai.generateLandingPage,
+      request
+    );
 
-  if (error) {
+    return {
+      success: true,
+      html: data.html || '',
+      ...data,
+    };
+  } catch (error: any) {
     return {
       success: false,
       html: '',
       error: error.message || 'Failed to generate landing page',
     };
   }
-
-  return {
-    success: true,
-    ...data,
-  };
 }
 
 /**

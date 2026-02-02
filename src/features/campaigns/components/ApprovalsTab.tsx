@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -45,13 +47,14 @@ export function ApprovalsTab({ campaignId }: ApprovalsTabProps) {
       if (error) throw error;
 
       // Send notification
-      await supabase.functions.invoke("send-approval-notification", {
-        body: {
+      await callEdgeFunction(
+        Endpoints.messaging.sendApprovalNotification,
+        {
           approvalId,
           action: "approved",
           notes,
-        },
-      });
+        }
+      );
     },
     onSuccess: () => {
       toast({ title: "Campaign approved" });
@@ -81,13 +84,14 @@ export function ApprovalsTab({ campaignId }: ApprovalsTabProps) {
 
       if (error) throw error;
 
-      await supabase.functions.invoke("send-approval-notification", {
-        body: {
+      await callEdgeFunction(
+        Endpoints.messaging.sendApprovalNotification,
+        {
           approvalId,
           action: "rejected",
           notes,
-        },
-      });
+        }
+      );
     },
     onSuccess: () => {
       toast({ title: "Campaign rejected", description: "Feedback sent to campaign owner" });
@@ -117,13 +121,14 @@ export function ApprovalsTab({ campaignId }: ApprovalsTabProps) {
 
       if (error) throw error;
 
-      await supabase.functions.invoke("send-approval-notification", {
-        body: {
+      await callEdgeFunction(
+        Endpoints.messaging.sendApprovalNotification,
+        {
           approvalId,
           action: "changes_requested",
           notes,
-        },
-      });
+        }
+      );
     },
     onSuccess: () => {
       toast({ title: "Changes requested", description: "Campaign owner has been notified" });

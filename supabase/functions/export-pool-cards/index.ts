@@ -1,217 +1,215 @@
 /**
- * Edge Function: export-pool-cards
+ * Export Pool Cards Edge Function
  * 
- * Purpose: Export gift cards from a pool to CSV format
- * Called by: PoolDetailDialog component
- * 
- * Permissions: Requires authentication, validates user access to pool
- * 
- * Request Body:
- * - poolId: string (UUID) - ID of the pool to export
- * - includeSensitiveData: boolean - Whether to include full card codes (admin only)
- * 
- * Response:
- * - CSV file download with card details
- * 
- * Database Tables:
- * - gift_cards (READ): Fetch cards for export
- * - gift_card_pools (READ): Validate pool access
- * 
- * CSV Columns:
- * - Card Code (masked or full based on permissions)
- * - Status
- * - Balance
- * - Created Date
- * - Last Balance Check
- * - Delivered Date
- * 
- * Security:
- * - Validates user has access to the pool's client
- * - Only admins can export with full card codes
- * - Client users get masked codes
+ * Exports gift cards from a pool to CSV format.
+ * Supports sensitive data masking based on user role.
  */
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { withApiGateway, ApiError, type AuthContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
+import { handleCORS } from '../_shared/cors.ts';
+import {
+  generateCSV,
+  createCSVResponse,
+  maskSensitiveData,
+  formatDateForExport,
+} from '../_shared/import-export-utils.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// ============================================================================
+// Types
+// ============================================================================
 
-/**
- * Masks a card code for security, showing only last 4 characters
- */
-function maskCardCode(code: string): string {
-  if (code.length <= 4) return code;
-  return '•'.repeat(code.length - 4) + code.slice(-4);
+interface ExportPoolCardsRequest {
+  poolId: string;
+  includeSensitiveData?: boolean;
 }
 
-/**
- * Formats a date to readable string
- */
-function formatDate(date: string | null): string {
-  if (!date) return 'N/A';
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+// ============================================================================
+// Main Handler
+// ============================================================================
+
+async function handleExportPoolCards(
+  request: ExportPoolCardsRequest,
+  context: AuthContext
+): Promise<Response> {
+  const supabase = createServiceClient();
+
+  const { poolId, includeSensitiveData = false } = request;
+
+  if (!poolId) {
+    throw new ApiError('Pool ID is required', 'VALIDATION_ERROR', 400);
+  }
+
+  // Check if user is admin
+  const isAdmin = context.user.role === 'admin' || context.user.role === 'platform_admin';
+
+  // Get pool to validate access
+  const { data: pool, error: poolError } = await supabase
+    .from('gift_card_pools')
+    .select('pool_name, client_id, is_master_pool, gift_card_brands(brand_name)')
+    .eq('id', poolId)
+    .single();
+
+  if (poolError || !pool) {
+    throw new ApiError('Pool not found', 'NOT_FOUND', 404);
+  }
+
+  // Validate access: admin can access all, users can only access their client's pools
+  if (!isAdmin && pool.client_id) {
+    const { data: clientUser } = await supabase
+      .from('client_users')
+      .select('id')
+      .eq('client_id', pool.client_id)
+      .eq('user_id', context.user.id)
+      .single();
+
+    if (!clientUser) {
+      throw new ApiError('Access denied: You do not have permission to access this pool', 'FORBIDDEN', 403);
+    }
+  }
+
+  console.log(`[EXPORT-POOL-CARDS] Exporting pool: ${poolId}`);
+
+  // Fetch all cards from the pool
+  const { data: cards, error: cardsError } = await supabase
+    .from('gift_cards')
+    .select('*')
+    .eq('pool_id', poolId)
+    .order('created_at', { ascending: false });
+
+  if (cardsError) {
+    throw new ApiError(`Failed to fetch cards: ${cardsError.message}`, 'DATABASE_ERROR', 500);
+  }
+
+  if (!cards || cards.length === 0) {
+    throw new ApiError('No cards found in this pool', 'NOT_FOUND', 404);
+  }
+
+  // Only include sensitive data if user is admin AND explicitly requested it
+  const shouldMask = !isAdmin || !includeSensitiveData;
+
+  // Transform data for export
+  const exportData = cards.map(card => ({
+    card_code: shouldMask ? maskSensitiveData(card.card_code, 4) : card.card_code,
+    card_number: shouldMask ? maskSensitiveData(card.card_number, 4) : (card.card_number || ''),
+    status: card.status,
+    current_balance: card.current_balance ? `$${Number(card.current_balance).toFixed(2)}` : '',
+    created_at: formatDateForExport(card.created_at),
+    last_balance_check: formatDateForExport(card.last_balance_check),
+    balance_check_status: card.balance_check_status || '',
+    delivered_at: formatDateForExport(card.delivered_at),
+    expires_at: formatDateForExport(card.expires_at),
+  }));
+
+  // Generate CSV
+  const csv = generateCSV(exportData, {
+    headers: [
+      'card_code',
+      'card_number',
+      'status',
+      'current_balance',
+      'created_at',
+      'last_balance_check',
+      'balance_check_status',
+      'delivered_at',
+      'expires_at',
+    ],
+    headerLabels: {
+      card_code: 'Card Code',
+      card_number: 'Card Number',
+      status: 'Status',
+      current_balance: 'Current Balance',
+      created_at: 'Created Date',
+      last_balance_check: 'Last Balance Check',
+      balance_check_status: 'Balance Check Status',
+      delivered_at: 'Delivered Date',
+      expires_at: 'Expires Date',
+    },
+  });
+
+  console.log(`[EXPORT-POOL-CARDS] Exported ${cards.length} cards`);
+
+  // Generate filename
+  const brandInfo = pool.gift_card_brands as { brand_name?: string } | null;
+  const brandName = brandInfo?.brand_name?.replace(/[^a-zA-Z0-9]/g, '_') || 'Cards';
+  const poolName = pool.pool_name?.replace(/[^a-zA-Z0-9]/g, '_') || 'Pool';
+  const timestamp = new Date().toISOString().split('T')[0];
+  const filename = `${brandName}_${poolName}_${timestamp}.csv`;
+
+  return createCSVResponse(csv, filename, {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   });
 }
 
-/**
- * Escapes CSV field values to prevent injection and formatting issues
- */
-function escapeCsvField(value: any): string {
-  if (value === null || value === undefined) return '';
-  const str = String(value);
-  // Escape quotes and wrap in quotes if contains comma, quote, or newline
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+// ============================================================================
+// Custom handler to return Response directly
+// ============================================================================
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+Deno.serve(async (req: Request): Promise<Response> => {
+  // Handle CORS
+  const corsResponse = handleCORS(req);
+  if (corsResponse) return corsResponse;
+
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
 
   try {
-    // Get auth token from request
+    const supabase = createServiceClient();
+
+    // Authenticate
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      throw new ApiError('No authorization header', 'UNAUTHORIZED', 401);
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    );
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const { poolId, includeSensitiveData = false } = await req.json();
-
-    if (!poolId) {
-      throw new Error('Pool ID is required');
-    }
-
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      throw new ApiError('Unauthorized', 'UNAUTHORIZED', 401);
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
+    // Get user role
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role, organization_id')
+      .eq('user_id', user.id)
       .single();
 
-    const isAdmin = profile?.role === 'admin';
-
-    // Get pool to validate access
-    const { data: pool, error: poolError } = await supabaseAdmin
-      .from('gift_card_pools')
-      .select('pool_name, client_id, is_master_pool, gift_card_brands(brand_name)')
-      .eq('id', poolId)
-      .single();
-
-    if (poolError || !pool) {
-      throw new Error('Pool not found');
-    }
-
-    // Validate access: admin can access all, users can only access their client's pools
-    if (!isAdmin && pool.client_id) {
-      const { data: clientUser } = await supabaseAdmin
-        .from('client_users')
-        .select('id')
-        .eq('client_id', pool.client_id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (!clientUser) {
-        throw new Error('Access denied: You do not have permission to access this pool');
-      }
-    }
-
-    // Fetch all cards from the pool
-    const { data: cards, error: cardsError } = await supabaseAdmin
-      .from('gift_cards')
-      .select('*')
-      .eq('pool_id', poolId)
-      .order('created_at', { ascending: false });
-
-    if (cardsError) throw cardsError;
-
-    if (!cards || cards.length === 0) {
-      throw new Error('No cards found in this pool');
-    }
-
-    // Build CSV
-    const headers = [
-      'Card Code',
-      'Card Number',
-      'Status',
-      'Current Balance',
-      'Created Date',
-      'Last Balance Check',
-      'Balance Check Status',
-      'Delivered Date',
-      'Expires Date'
-    ];
-
-    // Only include sensitive data if user is admin AND explicitly requested it
-    const shouldMask = !isAdmin || !includeSensitiveData;
-
-    const rows = cards.map(card => [
-      escapeCsvField(shouldMask ? maskCardCode(card.card_code) : card.card_code),
-      escapeCsvField(shouldMask && card.card_number ? maskCardCode(card.card_number) : card.card_number || ''),
-      escapeCsvField(card.status),
-      escapeCsvField(card.current_balance ? `$${Number(card.current_balance).toFixed(2)}` : ''),
-      escapeCsvField(formatDate(card.created_at)),
-      escapeCsvField(formatDate(card.last_balance_check)),
-      escapeCsvField(card.balance_check_status || ''),
-      escapeCsvField(formatDate(card.delivered_at)),
-      escapeCsvField(formatDate(card.expires_at))
-    ]);
-
-    const csv = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    // Generate filename with timestamp
-    const timestamp = new Date().toISOString().split('T')[0];
-    const brandName = pool.gift_card_brands?.brand_name || 'Cards';
-    const filename = `${brandName}_${pool.pool_name}_${timestamp}.csv`;
-
-    return new Response(csv, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="${filename}"`,
+    const context: AuthContext = {
+      user: {
+        id: user.id,
+        email: user.email || '',
+        role: roleData?.role || 'user',
       },
-    });
+      organization_id: roleData?.organization_id || null,
+      client: supabase,
+    };
+
+    const body = await req.json();
+    return await handleExportPoolCards(body, context);
 
   } catch (error) {
-    console.error('Error exporting pool cards:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('[EXPORT-POOL-CARDS] Error:', error);
+
+    if (error instanceof ApiError) {
+      return new Response(
+        JSON.stringify({ success: false, error: error.message }),
+        {
+          status: error.statusCode,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { 
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      JSON.stringify({ success: false, error: 'Export failed' }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }

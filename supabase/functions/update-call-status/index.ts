@@ -1,37 +1,38 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
+/**
+ * Update Call Status Edge Function
+ * 
+ * Twilio status callback handler for call updates.
+ * Updates call session with duration, recording URL, etc.
+ * 
+ * NOTE: This is a Twilio webhook endpoint that receives form-encoded data.
+ */
+
+import { createServiceClient } from '../_shared/supabase.ts';
+import { handleCORS } from '../_shared/cors.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCORS(req);
+  if (corsResponse) return corsResponse;
 
-  const activityLogger = createActivityLogger(req);
+  const supabase = createServiceClient();
+  const activityLogger = createActivityLogger('update-call-status', req);
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Parse Twilio status callback payload
+    // Parse Twilio status callback (form-encoded)
     const formData = await req.formData();
     const callSid = formData.get('CallSid') as string;
     const callStatus = formData.get('CallStatus') as string;
-    const callDuration = formData.get('CallDuration') as string;
+    const callDuration = formData.get('CallDuration') as string | null;
     const recordingUrl = formData.get('RecordingUrl') as string | null;
     const recordingSid = formData.get('RecordingSid') as string | null;
     const recordingDuration = formData.get('RecordingDuration') as string | null;
 
-    console.log('Call status update:', { callSid, callStatus, callDuration });
+    console.log('[UPDATE-CALL-STATUS] Received:', { callSid, callStatus, callDuration });
 
-    // Update call session
-    const updateData: any = {
+    // Build update data
+    const updateData: Record<string, unknown> = {
       call_status: callStatus.toLowerCase(),
     };
 
@@ -49,44 +50,47 @@ Deno.serve(async (req) => {
       if (recordingDuration) {
         updateData.recording_duration = parseInt(recordingDuration, 10);
       }
-    } else if (callStatus === 'in-progress' && !updateData.call_answered_at) {
+    } else if (callStatus === 'in-progress') {
       updateData.call_answered_at = new Date().toISOString();
     }
 
-    const { error: updateError } = await supabaseClient
+    // Update call session
+    const { error: updateError } = await supabase
       .from('call_sessions')
       .update(updateData)
       .eq('twilio_call_sid', callSid);
 
     if (updateError) {
-      console.error('Failed to update call session:', updateError);
+      console.error('[UPDATE-CALL-STATUS] Update error:', updateError);
       throw updateError;
     }
 
-    console.log('Call session updated successfully');
+    console.log('[UPDATE-CALL-STATUS] Updated successfully');
 
-    // Log activity for call status update
-    await activityLogger.communication('call_status_updated', 'success', {
-      description: `Call status updated to ${callStatus.toLowerCase()}`,
-      metadata: {
-        call_sid: callSid,
-        call_status: callStatus.toLowerCase(),
-        call_duration: callDuration ? parseInt(callDuration, 10) : undefined,
-        recording_url: recordingUrl,
-        recording_sid: recordingSid,
-      },
-    });
+    // Log activity
+    await activityLogger.communication('call_status_updated', 'success',
+      `Call status updated to ${callStatus.toLowerCase()}`,
+      {
+        metadata: {
+          call_sid: callSid,
+          call_status: callStatus.toLowerCase(),
+          call_duration: callDuration ? parseInt(callDuration, 10) : undefined,
+          recording_url: recordingUrl,
+          recording_sid: recordingSid,
+        },
+      }
+    );
 
     return new Response(
       JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error updating call status:', error);
+    console.error('[UPDATE-CALL-STATUS] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -25,6 +25,8 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { supabase } from "@core/services/supabase";
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@/shared/hooks';
 import { logger } from "@/core/services/logger";
 
@@ -581,17 +583,17 @@ export default function CampaignCreate() {
     mutationFn: async () => {
       if (!currentClient) throw new Error("No client selected");
       
-      const { data, error } = await supabase.functions.invoke("save-campaign-draft", {
-        body: {
+      const data = await callEdgeFunction<{ draft?: { id: string } }>(
+        Endpoints.campaigns.saveDraft,
+        {
           draftId: currentDraftId,
           clientId: currentClient.id,
           draftName: formData.name || "Untitled Draft",
           formData,
           currentStep,
-        },
-      });
+        }
+      );
       
-      if (error) throw error;
       return data;
     },
     onSuccess: (data) => {

@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 
 interface ApiKey {
@@ -62,17 +64,17 @@ export function useAPIKeys(clientId?: string) {
   // Create new API key
   const createApiKey = useMutation({
     mutationFn: async (request: CreateApiKeyRequest) => {
-      const { data, error } = await supabase.functions.invoke('generate-api-key', {
-        body: {
+      const data = await callEdgeFunction<{ key: string }>(
+        Endpoints.admin.generateApiKey,
+        {
           action: 'create',
           keyName: request.keyName,
           scopes: request.scopes || ['read'],
           expiresInDays: request.expiresInDays,
           clientId: request.clientId || clientId
         }
-      });
+      );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: (data) => {
@@ -94,15 +96,15 @@ export function useAPIKeys(clientId?: string) {
   // Rotate API key (generates new key, revokes old one)
   const rotateApiKey = useMutation({
     mutationFn: async (request: RotateApiKeyRequest) => {
-      const { data, error } = await supabase.functions.invoke('generate-api-key', {
-        body: {
+      const data = await callEdgeFunction<{ key: string }>(
+        Endpoints.admin.generateApiKey,
+        {
           action: 'rotate',
           keyId: request.keyId,
           expiresInDays: request.expiresInDays
         }
-      });
+      );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: (data) => {

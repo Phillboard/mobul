@@ -6,7 +6,8 @@ import { Input } from "@/shared/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Loader2, Gift } from "lucide-react";
-import { supabase } from '@core/services/supabase';
+import { callPublicEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 
 interface CodeEntryFormProps {
@@ -21,11 +22,15 @@ export function CodeEntryForm({ campaignId }: CodeEntryFormProps) {
 
   const validateMutation = useMutation({
     mutationFn: async (enteredCode: string) => {
-      const { data, error } = await supabase.functions.invoke("validate-gift-card-code", {
-        body: { code: enteredCode, campaignId },
-      });
+      const data = await callPublicEdgeFunction<{
+        valid: boolean;
+        redemptionToken?: string;
+        message?: string;
+      }>(
+        Endpoints.giftCards.validateCode,
+        { code: enteredCode, campaignId }
+      );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: (data) => {

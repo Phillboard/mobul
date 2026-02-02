@@ -10,6 +10,8 @@ import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
 import { supabase } from "@core/services/supabase";
+import { callPublicEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { GiftCardReveal } from "@/features/forms/components";
 import { GiftCardRedemption } from "@/types/aceForms";
 import { useFormSubmissionRateLimit } from '@/features/forms/hooks';
@@ -210,14 +212,17 @@ export default function FormPublic() {
       
       if (campaignId && hasGiftCardField && sanitizedData.code) {
         // NEW FLOW: Customer redemption code (approved by call center)
-        const { data: result, error } = await supabase.functions.invoke("redeem-customer-code", {
-          body: { 
+        const result = await callPublicEdgeFunction<{
+          success: boolean;
+          giftCard?: any;
+          error?: string;
+        }>(
+          Endpoints.giftCards.redeemCustomerCode,
+          { 
             redemptionCode: sanitizedData.code,
             campaignId: campaignId
-          },
-        });
-
-        if (error) throw error;
+          }
+        );
 
         if (result.success && result.giftCard) {
           recordSubmission();
@@ -228,11 +233,14 @@ export default function FormPublic() {
         }
       } else {
         // OLD FLOW: Direct gift card code entry
-        const { data: result, error } = await supabase.functions.invoke("submit-form", {
-          body: { formId: formIdentifier, data: sanitizedData },
-        });
-
-        if (error) throw error;
+        const result = await callPublicEdgeFunction<{
+          success: boolean;
+          giftCard?: any;
+          error?: string;
+        }>(
+          Endpoints.forms.submit,
+          { formId: formIdentifier, data: sanitizedData }
+        );
 
         if (result.success && result.giftCard) {
           recordSubmission();

@@ -11,6 +11,8 @@
  */
 
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 
 export async function testRevokeAccess() {
   console.group('🔍 Testing Revoke Gift Card Access');
@@ -61,12 +63,19 @@ export async function testRevokeAccess() {
     
     // Step 3: Test function endpoint
     console.log('\nStep 3: Testing revoke-gift-card endpoint...');
-    const testResponse = await supabase.functions.invoke('revoke-gift-card', {
-      body: { 
-        assignmentId: 'test-id-12345', 
-        reason: 'Testing endpoint access from browser console' 
-      }
-    });
+    let testResponse: { data?: any; error?: any } = {};
+    try {
+      testResponse.data = await callEdgeFunction(
+        Endpoints.giftCards.revoke,
+        { 
+          assignmentId: 'test-id-12345', 
+          reason: 'Testing endpoint access from browser console' 
+        }
+      );
+    } catch (error: any) {
+      testResponse.error = error;
+      testResponse.data = { error: error.message };
+    }
     
     console.log('Response:', testResponse);
     

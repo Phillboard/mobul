@@ -1,728 +1,479 @@
 /**
  * Unified Gift Card Provisioning Function
  * 
- * Handles gift card provisioning with intelligent fallback:
- * 1. Try to claim from uploaded inventory first
- * 2. If no inventory available, purchase from Tillo API
- * 3. Record billing transaction
- * 4. Return card details
+ * Single entry point for all gift card provisioning scenarios:
+ * - Standard: Direct provisioning from frontend/API
+ * - Call Center: Provisioning + automatic SMS delivery
+ * - API Test: Direct Tillo API testing (no billing)
  * 
- * COMPREHENSIVE LOGGING:
- * - Every step is logged to gift_card_provisioning_trace table
- * - Errors are logged with structured error codes
- * - Full request context is captured for debugging
+ * Entry Points:
+ * - "standard" (default): Normal provisioning flow
+ * - "call_center": Provision + send SMS to recipient
+ * - "api_test": Test Tillo API directly (testMode: true) or delegate to standard
+ * 
+ * Backward Compatible: Existing callers without entryPoint default to "standard"
  */
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { withApiGateway, ApiError, successResponse, errorResponse } from '../_shared/api-gateway.ts';
+import { handleCORS } from '../_shared/cors.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
+import { provisionGiftCard, ProvisioningError, PROVISIONING_STEPS } from '../_shared/business-rules/gift-card-provisioning.ts';
+import type { ProvisionParams, ProvisionResult } from '../_shared/business-rules/gift-card-provisioning.ts';
 import { createErrorLogger, PROVISIONING_ERROR_CODES } from '../_shared/error-logger.ts';
 import type { ProvisioningErrorCode } from '../_shared/error-logger.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
+import { getTilloClient } from '../_shared/tillo-client.ts';
 
-// NOTE: Tillo integration disabled for now - only using uploaded inventory
+// ============================================================================
+// Types
+// ============================================================================
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id',
-};
+type EntryPoint = 'standard' | 'call_center' | 'api_test';
 
-interface ProvisionRequest {
-  campaignId: string;
-  recipientId: string;
-  brandId: string;
-  denomination: number;
-  conditionNumber: number;
-  requestId?: string; // Optional client-provided trace ID
-}
-
-interface ProvisionResult {
-  success: boolean;
-  requestId: string; // Always return request ID for tracing
-  card?: {
-    id?: string;
-    cardCode: string;
-    cardNumber?: string;
-    denomination: number;
-    brandName: string;
-    brandLogo?: string;
-    expirationDate?: string;
-    source: 'inventory' | 'tillo';
-  };
-  billing?: {
-    ledgerId: string;
-    billedEntity: string;
-    billedEntityId: string;
-    amountBilled: number;
-    profit: number;
-  };
-  error?: string;
-  errorCode?: ProvisioningErrorCode;
-  errorDescription?: string;
-}
-
-// Step definitions for trace logging
-const STEPS = {
-  VALIDATE_INPUT: { number: 1, name: 'Validate Input Parameters' },
-  GET_BILLING_ENTITY: { number: 2, name: 'Get Billing Entity' },
-  CHECK_CREDITS: { number: 3, name: 'Check Entity Credits' },
-  GET_BRAND: { number: 4, name: 'Get Brand Details' },
-  CHECK_INVENTORY: { number: 5, name: 'Check Inventory Availability' },
-  CLAIM_INVENTORY: { number: 6, name: 'Claim from Inventory' },
-  CHECK_TILLO_CONFIG: { number: 7, name: 'Check Tillo Configuration' },
-  PROVISION_TILLO: { number: 8, name: 'Provision from Tillo API' },
-  SAVE_TILLO_CARD: { number: 9, name: 'Save Tillo Card to Inventory' },
-  GET_PRICING: { number: 10, name: 'Get Pricing Configuration' },
-  RECORD_BILLING: { number: 11, name: 'Record Billing Transaction' },
-  FINALIZE: { number: 12, name: 'Finalize and Return Result' },
-};
-
-serve(async (req) => {
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  const supabaseClient = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    { auth: { persistSession: false } }
-  );
-
-  // Initialize error logger with comprehensive tracing
-  const logger = createErrorLogger('provision-gift-card-unified');
+interface UnifiedProvisionRequest {
+  // Entry point determines behavior
+  entryPoint?: EntryPoint;
   
-  // Initialize activity logger for audit trail
-  const activityLogger = createActivityLogger('provision-gift-card-unified', req);
-
-  // Declare variables at function scope for error logging access
-  let campaignId: string | undefined;
-  let recipientId: string | undefined;
-  let brandId: string | undefined;
-  let denomination: number | undefined;
-  let conditionNumber: number | undefined;
-  let currentStep = STEPS.VALIDATE_INPUT;
-
-  try {
-    // =====================================================
-    // STEP 1: VALIDATE INPUT PARAMETERS
-    // =====================================================
-    await logger.checkpoint(STEPS.VALIDATE_INPUT.number, STEPS.VALIDATE_INPUT.name, 'started');
-    
-    const requestData: ProvisionRequest = await req.json();
-    campaignId = requestData.campaignId;
-    recipientId = requestData.recipientId;
-    brandId = requestData.brandId;
-    denomination = requestData.denomination;
-    conditionNumber = requestData.conditionNumber;
-    
-    // Use client-provided request ID if available
-    const clientRequestId = requestData.requestId || req.headers.get('x-request-id');
-    
-    // Set provisioning context for all subsequent checkpoints
-    logger.setProvisioningContext({
-      campaignId,
-      recipientId,
-      brandId,
-      denomination,
-    });
-
-    console.log('╔' + '═'.repeat(70) + '╗');
-    console.log(`║ [UNIFIED-PROVISION] Request ID: ${logger.requestId}`);
-    console.log(`║ Client Request ID: ${clientRequestId || 'none'}`);
-    console.log('╠' + '═'.repeat(70) + '╣');
-    console.log('║ INPUT PARAMETERS:');
-    console.log(`║   campaignId: ${campaignId || 'MISSING'}`);
-    console.log(`║   recipientId: ${recipientId || 'MISSING'}`);
-    console.log(`║   brandId: ${brandId || 'MISSING'}`);
-    console.log(`║   denomination: ${denomination || 'MISSING'}`);
-    console.log(`║   conditionNumber: ${conditionNumber || 'N/A'}`);
-    console.log('╚' + '═'.repeat(70) + '╝');
-
-    // Validate inputs
-    const missingParams: string[] = [];
-    if (!campaignId) missingParams.push('campaignId');
-    if (!recipientId) missingParams.push('recipientId');
-    if (!brandId) missingParams.push('brandId');
-    if (!denomination) missingParams.push('denomination');
-    
-    if (missingParams.length > 0) {
-      await logger.checkpoint(STEPS.VALIDATE_INPUT.number, STEPS.VALIDATE_INPUT.name, 'failed', {
-        missingParams,
-        provided: { campaignId: !!campaignId, recipientId: !!recipientId, brandId: !!brandId, denomination: !!denomination },
-      });
-      await logger.logProvisioningError('GC-012', new Error(`Missing: ${missingParams.join(', ')}`), STEPS.VALIDATE_INPUT);
-      throw new Error(`Missing required parameters: ${missingParams.join(', ')}`);
-    }
-
-    await logger.checkpoint(STEPS.VALIDATE_INPUT.number, STEPS.VALIDATE_INPUT.name, 'completed', {
-      campaignId,
-      recipientId,
-      brandId,
-      denomination,
-      conditionNumber,
-    });
-
-    // =====================================================
-    // STEP 2: GET BILLING ENTITY
-    // =====================================================
-    currentStep = STEPS.GET_BILLING_ENTITY;
-    await logger.checkpoint(STEPS.GET_BILLING_ENTITY.number, STEPS.GET_BILLING_ENTITY.name, 'started');
-    
-    console.log(`[STEP ${STEPS.GET_BILLING_ENTITY.number}] Getting billing entity for campaign: ${campaignId}`);
-    
-    const { data: billingEntity, error: billingError } = await supabaseClient
-      .rpc('get_billing_entity_for_campaign', { p_campaign_id: campaignId });
-
-    console.log(`[STEP ${STEPS.GET_BILLING_ENTITY.number}] Billing entity result:`, JSON.stringify({
-      found: billingEntity && billingEntity.length > 0,
-      data: billingEntity?.[0] || null,
-      error: billingError?.message || null,
-    }));
-
-    if (billingError) {
-      await logger.checkpoint(STEPS.GET_BILLING_ENTITY.number, STEPS.GET_BILLING_ENTITY.name, 'failed', {
-        error: billingError.message,
-        errorCode: billingError.code,
-        hint: billingError.hint,
-      });
-      await logger.logProvisioningError('GC-008', billingError, STEPS.GET_BILLING_ENTITY, {
-        rpcError: billingError.message,
-      });
-      throw new Error(`Failed to get billing entity: ${billingError.message}`);
-    }
-
-    if (!billingEntity || billingEntity.length === 0) {
-      await logger.checkpoint(STEPS.GET_BILLING_ENTITY.number, STEPS.GET_BILLING_ENTITY.name, 'failed', {
-        error: 'No billing entity found',
-        campaignId,
-      });
-      await logger.logProvisioningError('GC-008', new Error('No billing entity configured for campaign'), STEPS.GET_BILLING_ENTITY);
-      throw new Error('Campaign does not have a valid client or billing configuration');
-    }
-
-    const { entity_type, entity_id, entity_name } = billingEntity[0];
-    
-    await logger.checkpoint(STEPS.GET_BILLING_ENTITY.number, STEPS.GET_BILLING_ENTITY.name, 'completed', {
-      entityType: entity_type,
-      entityId: entity_id,
-      entityName: entity_name,
-    });
-
-    console.log(`[STEP ${STEPS.GET_BILLING_ENTITY.number}] ✓ Billing entity: ${entity_type} - ${entity_name} (${entity_id})`);
-
-    // =====================================================
-    // STEP 3: CHECK ENTITY CREDITS
-    // =====================================================
-    currentStep = STEPS.CHECK_CREDITS;
-    await logger.checkpoint(STEPS.CHECK_CREDITS.number, STEPS.CHECK_CREDITS.name, 'started');
-    
-    console.log(`[STEP ${STEPS.CHECK_CREDITS.number}] Checking ${entity_type} credits...`);
-    
-    // Get current credit balance
-    const creditTable = entity_type === 'agency' ? 'agencies' : 'clients';
-    const { data: entityData, error: creditError } = await supabaseClient
-      .from(creditTable)
-      .select('credits, name')
-      .eq('id', entity_id)
-      .single();
-
-    const currentCredits = entityData?.credits || 0;
-    const creditsNeeded = denomination;
-    const hasEnoughCredits = currentCredits >= creditsNeeded;
-
-    console.log(`[STEP ${STEPS.CHECK_CREDITS.number}] Credit check:`, {
-      entityType: entity_type,
-      currentCredits,
-      creditsNeeded,
-      hasEnoughCredits,
-      error: creditError?.message || null,
-    });
-
-    await logger.checkpoint(STEPS.CHECK_CREDITS.number, STEPS.CHECK_CREDITS.name, hasEnoughCredits ? 'completed' : 'failed', {
-      entityType: entity_type,
-      currentCredits,
-      creditsNeeded,
-      hasEnoughCredits,
-      deficit: hasEnoughCredits ? 0 : creditsNeeded - currentCredits,
-    });
-
-    if (!hasEnoughCredits) {
-      await logger.logProvisioningError('GC-006', new Error(`Insufficient credits: ${currentCredits} available, ${creditsNeeded} needed`), STEPS.CHECK_CREDITS, {
-        currentCredits,
-        creditsNeeded,
-        deficit: creditsNeeded - currentCredits,
-      });
-      // Note: We log but don't throw here - billing will handle the credit check
-      console.warn(`[STEP ${STEPS.CHECK_CREDITS.number}] ⚠ Warning: ${entity_type} may have insufficient credits`);
-    } else {
-      console.log(`[STEP ${STEPS.CHECK_CREDITS.number}] ✓ Credits sufficient: $${currentCredits} available, $${creditsNeeded} needed`);
-    }
-
-    // =====================================================
-    // STEP 4: GET BRAND DETAILS
-    // =====================================================
-    currentStep = STEPS.GET_BRAND;
-    await logger.checkpoint(STEPS.GET_BRAND.number, STEPS.GET_BRAND.name, 'started');
-    
-    console.log(`[STEP ${STEPS.GET_BRAND.number}] Getting brand details for: ${brandId}`);
-    
-    const { data: brand, error: brandError } = await supabaseClient
-      .from('gift_card_brands')
-      .select('id, brand_name, brand_code, tillo_brand_code, logo_url, is_enabled_by_admin')
-      .eq('id', brandId)
-      .single();
-
-    console.log(`[STEP ${STEPS.GET_BRAND.number}] Brand lookup result:`, {
-      found: !!brand,
-      brand_name: brand?.brand_name,
-      brand_code: brand?.brand_code,
-      tillo_brand_code: brand?.tillo_brand_code,
-      is_enabled: brand?.is_enabled_by_admin,
-      error: brandError?.message || null,
-    });
-
-    if (brandError || !brand) {
-      await logger.checkpoint(STEPS.GET_BRAND.number, STEPS.GET_BRAND.name, 'failed', {
-        error: brandError?.message || 'Brand not found',
-        brandId,
-      });
-      await logger.logProvisioningError('GC-002', brandError || new Error('Brand not found'), STEPS.GET_BRAND, {
-        brandId,
-        dbError: brandError?.message,
-      });
-      throw new Error(`Gift card brand not found (ID: ${brandId})`);
-    }
-
-    if (!brand.is_enabled_by_admin) {
-      await logger.checkpoint(STEPS.GET_BRAND.number, STEPS.GET_BRAND.name, 'failed', {
-        error: 'Brand is disabled',
-        brandName: brand.brand_name,
-      });
-      throw new Error(`Gift card brand "${brand.brand_name}" is currently disabled`);
-    }
-
-    await logger.checkpoint(STEPS.GET_BRAND.number, STEPS.GET_BRAND.name, 'completed', {
-      brandName: brand.brand_name,
-      brandCode: brand.brand_code,
-      tilloBrandCode: brand.tillo_brand_code,
-      hasTilloCode: !!(brand.tillo_brand_code || brand.brand_code),
-    });
-
-    console.log(`[STEP ${STEPS.GET_BRAND.number}] ✓ Brand found: ${brand.brand_name}`);
-
-    // =====================================================
-    // STEP 5: CHECK INVENTORY AVAILABILITY
-    // =====================================================
-    currentStep = STEPS.CHECK_INVENTORY;
-    await logger.checkpoint(STEPS.CHECK_INVENTORY.number, STEPS.CHECK_INVENTORY.name, 'started');
-    
-    console.log(`[STEP ${STEPS.CHECK_INVENTORY.number}] Checking inventory for ${brand.brand_name} @ $${denomination}`);
-    
-    const { data: inventoryCount, error: countError } = await supabaseClient
-      .rpc('get_inventory_count', {
-        p_brand_id: brandId,
-        p_denomination: denomination,
-      });
-
-    const availableCards = inventoryCount || 0;
-    console.log(`[STEP ${STEPS.CHECK_INVENTORY.number}] Inventory count: ${availableCards} cards available`);
-
-    await logger.checkpoint(STEPS.CHECK_INVENTORY.number, STEPS.CHECK_INVENTORY.name, 'completed', {
-      brandId,
-      denomination,
-      availableCards,
-      hasInventory: availableCards > 0,
-    });
-
-    // =====================================================
-    // STEP 6: CLAIM FROM INVENTORY (if available)
-    // =====================================================
-    let cardResult: any = null;
-    let source: 'inventory' | 'tillo' = 'inventory';
-    let costBasis: number | null = null;
-    let inventoryCardId: string | null = null;
-
-    // =====================================================
-    // STEP 6: CLAIM FROM INVENTORY
-    // Using DIRECT SQL to bypass any RPC issues
-    // =====================================================
-    currentStep = STEPS.CLAIM_INVENTORY;
-    await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'started', {
-      availableCards,
-      brandId,
-      denomination,
-      denominationType: typeof denomination,
-    });
-    
-    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] Attempting DIRECT claim from inventory...`);
-    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] brandId=${brandId}, denomination=${denomination} (type: ${typeof denomination})`);
-    
-    // First, let's see what cards exist for this brand (any denomination)
-    const { data: allBrandCards, error: brandCardsError } = await supabaseClient
-      .from('gift_card_inventory')
-      .select('id, brand_id, denomination, status, card_code, expiration_date')
-      .eq('brand_id', brandId)
-      .eq('status', 'available')
-      .limit(10);
-    
-    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] All available cards for this brand:`, {
-      count: allBrandCards?.length || 0,
-      denominations: allBrandCards?.map(c => c.denomination),
-      sample: allBrandCards?.slice(0, 3).map(c => ({
-        id: c.id,
-        denom: c.denomination,
-        denomType: typeof c.denomination,
-        status: c.status,
-      })),
-      error: brandCardsError?.message,
-    });
-    
-    // Check for exact denomination match
-    const { data: exactMatch, error: exactError } = await supabaseClient
-      .from('gift_card_inventory')
-      .select('id, brand_id, denomination, status, card_code, card_number, expiration_date')
-      .eq('brand_id', brandId)
-      .eq('denomination', denomination)
-      .eq('status', 'available')
-      .is('assigned_to_recipient_id', null)
-      .limit(1)
-      .single();
-    
-    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] Exact match query result:`, {
-      found: !!exactMatch,
-      cardId: exactMatch?.id,
-      cardDenom: exactMatch?.denomination,
-      cardStatus: exactMatch?.status,
-      error: exactError?.message,
-      errorCode: exactError?.code,
-    });
-    
-    // Log to checkpoint for visibility in UI
-    await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'started', {
-      debugInfo: {
-        allBrandCardsCount: allBrandCards?.length || 0,
-        denominationsInInventory: allBrandCards?.map(c => Number(c.denomination)) || [],
-        requestedDenomination: denomination,
-        exactMatchFound: !!exactMatch,
-        exactMatchError: exactError?.message,
-      },
-    });
-    
-    if (exactError && exactError.code !== 'PGRST116') { // PGRST116 = no rows found
-      await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'failed', {
-        error: exactError.message,
-        errorCode: exactError.code,
-        hint: exactError.hint,
-      });
-      throw new Error(`Database error finding card: ${exactError.message}`);
-    }
-    
-    if (!exactMatch) {
-      // No exact match - show what denominations ARE available
-      const availableDenoms = [...new Set(allBrandCards?.map(c => Number(c.denomination)) || [])];
-      await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'failed', {
-        error: `No $${denomination} cards available`,
-        availableDenominations: availableDenoms,
-        requestedDenomination: denomination,
-        brandId,
-      });
-      throw new Error(`No $${denomination} cards available for ${brand.brand_name}. Available denominations: ${availableDenoms.length > 0 ? '$' + availableDenoms.join(', $') : 'NONE'}`);
-    }
-    
-    // Now claim this specific card by updating it
-    const { data: claimedCard, error: claimError } = await supabaseClient
-      .from('gift_card_inventory')
-      .update({
-        status: 'assigned',
-        assigned_to_recipient_id: recipientId,
-        assigned_to_campaign_id: campaignId,
-        assigned_at: new Date().toISOString(),
-      })
-      .eq('id', exactMatch.id)
-      .eq('status', 'available') // Double-check still available
-      .select('id, card_code, card_number, expiration_date')
-      .single();
-    
-    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] Claim update result:`, {
-      success: !!claimedCard,
-      cardId: claimedCard?.id,
-      hasCode: !!claimedCard?.card_code,
-      error: claimError?.message,
-    });
-    
-    if (claimError || !claimedCard) {
-      await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'failed', {
-        error: claimError?.message || 'Update returned no rows (race condition?)',
-        attemptedCardId: exactMatch.id,
-      });
-      throw new Error(`Failed to claim card: ${claimError?.message || 'Card was claimed by another process'}`);
-    }
-    
-    // Build the card result
-    cardResult = {
-      card_id: claimedCard.id,
-      card_code: claimedCard.card_code,
-      card_number: claimedCard.card_number,
-      expiration_date: claimedCard.expiration_date,
-      brand_name: brand.brand_name,
-      brand_logo_url: brand.logo_url,
+  // Standard provisioning params
+  campaignId?: string;
+  recipientId?: string;
+  brandId?: string;
+  denomination?: number;
+  conditionNumber?: number;
+  requestId?: string;
+  
+  // Call center specific
+  phone?: string | null;
+  deliveryPhone?: string | null;
+  deliveryEmail?: string | null;
+  recipientName?: string;
+  conditionId?: string;
+  
+  // API test specific
+  testMode?: boolean;
+  testConfig?: {
+    api_provider: string;
+    card_value: number;
+    api_config?: {
+      brandCode?: string;
     };
-    source = 'inventory';
-    inventoryCardId = claimedCard.id;
-    
-    // Get cost from denominations table
-    const { data: denomData } = await supabaseClient
-      .from('gift_card_denominations')
-      .select('cost_basis, use_custom_pricing, client_price, agency_price')
-      .eq('brand_id', brandId)
-      .eq('denomination', denomination)
-      .single();
-    
-    costBasis = denomData?.cost_basis || denomination * 0.95;
-    
-    await logger.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'completed', {
-      cardId: cardResult.card_id,
-      cardCode: cardResult.card_code ? '***redacted***' : null,
-      brandName: cardResult.brand_name,
-      costBasis,
-    });
-    
-    console.log(`[STEP ${STEPS.CLAIM_INVENTORY.number}] ✓ Claimed card from inventory: ${cardResult.card_id}`);
+  };
+  poolId?: string;
+  callSessionId?: string | null;
+}
 
-    // NOTE: Tillo fallback is disabled - only claiming from uploaded inventory
+interface UnifiedProvisionResponse extends ProvisionResult {
+  sms?: {
+    sent: boolean;
+    error?: string;
+    provider?: string;
+  };
+  apiResponse?: {
+    transactionId?: string;
+    orderReference?: string;
+    provider: string;
+    timestamp: string;
+    rawResponse?: unknown;
+  };
+  testMode?: boolean;
+  canRetry?: boolean;
+  requiresCampaignEdit?: boolean;
+}
 
-    // =====================================================
-    // STEP 10: GET PRICING CONFIGURATION
-    // =====================================================
-    currentStep = STEPS.GET_PRICING;
-    await logger.checkpoint(STEPS.GET_PRICING.number, STEPS.GET_PRICING.name, 'started');
-    
-    console.log(`[STEP ${STEPS.GET_PRICING.number}] Getting pricing configuration...`);
-    
-    const { data: pricingData, error: pricingError } = await supabaseClient
-      .from('gift_card_denominations')
-      .select('use_custom_pricing, client_price, agency_price, cost_basis')
-      .eq('brand_id', brandId)
-      .eq('denomination', denomination)
-      .single();
+// ============================================================================
+// Main Handler
+// ============================================================================
 
-    const useCustomPricing = pricingData?.use_custom_pricing || false;
-    const isAgency = entity_type === 'agency';
-    
-    let amountBilled = denomination; // Default to face value
-    if (useCustomPricing) {
-      if (isAgency && pricingData?.agency_price) {
-        amountBilled = pricingData.agency_price;
-      } else if (pricingData?.client_price) {
-        amountBilled = pricingData.client_price;
-      }
-    }
+/**
+ * Unified provisioning handler
+ * Routes to appropriate logic based on entryPoint
+ */
+async function handleProvision(
+  request: UnifiedProvisionRequest,
+  _context: unknown,
+  rawRequest: Request
+): Promise<UnifiedProvisionResponse> {
+  const supabase = createServiceClient();
+  const logger = createErrorLogger('provision-gift-card-unified');
+  const activityLogger = createActivityLogger('provision-gift-card-unified', rawRequest);
+  
+  const entryPoint: EntryPoint = request.entryPoint || 'standard';
+  
+  console.log(`[UNIFIED-PROVISION] Entry point: ${entryPoint}, Request ID: ${logger.requestId}`);
+  
+  // Route based on entry point
+  switch (entryPoint) {
+    case 'api_test':
+      return handleApiTest(request, supabase, logger);
+      
+    case 'call_center':
+      return handleCallCenter(request, supabase, logger, activityLogger);
+      
+    case 'standard':
+    default:
+      return handleStandard(request, supabase, logger, activityLogger);
+  }
+}
 
-    const pricingDetails = {
-      useCustomPricing,
-      isAgency,
-      faceValue: denomination,
-      clientPrice: pricingData?.client_price,
-      agencyPrice: pricingData?.agency_price,
-      amountBilled,
-      costBasis,
-      expectedProfit: costBasis ? amountBilled - costBasis : 0,
-    };
+// ============================================================================
+// Entry Point Handlers
+// ============================================================================
 
-    console.log(`[STEP ${STEPS.GET_PRICING.number}] Pricing:`, pricingDetails);
-
-    await logger.checkpoint(STEPS.GET_PRICING.number, STEPS.GET_PRICING.name, 'completed', pricingDetails);
-    console.log(`[STEP ${STEPS.GET_PRICING.number}] ✓ Will bill: $${amountBilled} (cost: $${costBasis})`);
-
-    // =====================================================
-    // STEP 11: RECORD BILLING TRANSACTION (non-blocking)
-    // =====================================================
-    currentStep = STEPS.RECORD_BILLING;
-    await logger.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'started', {
-      entityType: entity_type,
-      amountBilled,
-    });
-    
-    console.log(`[STEP ${STEPS.RECORD_BILLING.number}] Recording billing transaction...`);
-
-    let ledgerId: string | null = null;
-    try {
-      // Insert directly to avoid RPC signature issues
-      const { data: ledgerEntry, error: billingError } = await supabaseClient
-        .from('gift_card_billing_ledger')
-        .insert({
-          transaction_type: 'purchase_from_inventory',
-          billed_entity_type: entity_type,
-          billed_entity_id: entity_id,
-          campaign_id: campaignId,
-          recipient_id: recipientId,
-          brand_id: brandId,
-          denomination: denomination,
-          amount_billed: amountBilled,
-          cost_basis: costBasis,
-          inventory_card_id: inventoryCardId,
-          metadata: { source: 'inventory', request_id: logger.requestId },
-          billed_at: new Date().toISOString(),
-        })
-        .select('id')
-        .single();
-
-      if (billingError) {
-        console.error(`[STEP ${STEPS.RECORD_BILLING.number}] ⚠ Billing failed (non-blocking):`, billingError.message);
-        await logger.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'failed', {
-          error: billingError.message,
-          errorCode: billingError.code,
-          hint: billingError.hint,
-          // Card still claimed - this is just billing
-        });
-        // Don't throw - card is already claimed
-      } else {
-        ledgerId = ledgerEntry?.id;
-        await logger.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'completed', {
-          ledgerId,
-          amountBilled,
-        });
-        console.log(`[STEP ${STEPS.RECORD_BILLING.number}] ✓ Billing recorded: ${ledgerId}`);
-      }
-    } catch (billingErr) {
-      console.error(`[STEP ${STEPS.RECORD_BILLING.number}] ⚠ Billing exception (non-blocking):`, billingErr);
-      // Don't throw - card is already claimed
-    }
-
-    const profit = costBasis ? amountBilled - costBasis : 0;
-
-    // =====================================================
-    // STEP 12: FINALIZE AND RETURN RESULT
-    // =====================================================
-    currentStep = STEPS.FINALIZE;
-    await logger.checkpoint(STEPS.FINALIZE.number, STEPS.FINALIZE.name, 'started');
-    
-    const result: ProvisionResult = {
-      success: true,
-      requestId: logger.requestId,
-      card: {
-        id: cardResult.card_id,
-        cardCode: cardResult.card_code,
-        cardNumber: cardResult.card_number,
-        denomination: denomination,
-        brandName: cardResult.brand_name || brand.brand_name,
-        brandLogo: cardResult.brand_logo_url || brand.logo_url,
-        expirationDate: cardResult.expiration_date,
-        source: source,
-      },
-      billing: {
-        ledgerId: ledgerId,
-        billedEntity: entity_name,
-        billedEntityId: entity_id,
-        amountBilled: amountBilled,
-        profit: profit,
-      },
-    };
-
-    await logger.checkpoint(STEPS.FINALIZE.number, STEPS.FINALIZE.name, 'completed', {
-      source,
-      brandName: result.card?.brandName,
-      denomination: result.card?.denomination,
-      billedEntity: result.billing?.billedEntity,
-      amountBilled: result.billing?.amountBilled,
-    });
-
-    console.log('╔' + '═'.repeat(70) + '╗');
-    console.log(`║ [UNIFIED-PROVISION] ✓ SUCCESS - Request ID: ${logger.requestId}`);
-    console.log('╠' + '═'.repeat(70) + '╣');
-    console.log(`║   Source: ${source}`);
-    console.log(`║   Brand: ${result.card?.brandName}`);
-    console.log(`║   Value: $${result.card?.denomination}`);
-    console.log(`║   Billed To: ${result.billing?.billedEntity}`);
-    console.log(`║   Amount: $${result.billing?.amountBilled}`);
-    console.log(`║   Profit: $${result.billing?.profit}`);
-    console.log('╚' + '═'.repeat(70) + '╝');
-
-    // Log successful provisioning activity
-    await activityLogger.giftCard('card_provisioned', 'success', 
-      `Gift card provisioned: ${result.card?.brandName} $${result.card?.denomination} for recipient`,
+/**
+ * Standard provisioning flow
+ */
+async function handleStandard(
+  request: UnifiedProvisionRequest,
+  supabase: ReturnType<typeof createServiceClient>,
+  logger: ReturnType<typeof createErrorLogger>,
+  activityLogger: ReturnType<typeof createActivityLogger>
+): Promise<UnifiedProvisionResponse> {
+  const { campaignId, recipientId, brandId, denomination, conditionNumber, requestId } = request;
+  
+  // Validate required params
+  if (!campaignId || !recipientId || !brandId || !denomination) {
+    throw new ApiError(
+      'Missing required parameters: campaignId, recipientId, brandId, denomination',
+      'VALIDATION_ERROR',
+      400
+    );
+  }
+  
+  const params: ProvisionParams = {
+    campaignId,
+    recipientId,
+    brandId,
+    denomination,
+    conditionNumber,
+    requestId: requestId || logger.requestId,
+  };
+  
+  // Create a provisioning logger adapter
+  const provisionLogger = {
+    requestId: logger.requestId,
+    checkpoint: logger.checkpoint.bind(logger),
+    setProvisioningContext: logger.setProvisioningContext.bind(logger),
+    logProvisioningError: logger.logProvisioningError.bind(logger),
+  };
+  
+  const result = await provisionGiftCard(supabase, params, provisionLogger);
+  
+  // Log activity
+  if (result.success) {
+    await activityLogger.giftCard('card_provisioned', 'success',
+      `Gift card provisioned: ${result.card?.brandName} $${result.card?.denomination}`,
       {
         campaignId,
         recipientId,
         brandName: result.card?.brandName,
         amount: result.card?.denomination,
         metadata: {
-          source,
+          source: result.card?.source,
           billed_entity: result.billing?.billedEntity,
           amount_billed: result.billing?.amountBilled,
           ledger_id: result.billing?.ledgerId,
         },
       }
     );
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
-    
-  } catch (error) {
-    // Comprehensive error logging
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    
-    // Determine error code based on message
-    let errorCode: ProvisioningErrorCode = 'GC-015';
-    if (errorMessage.includes('Missing required')) errorCode = 'GC-012';
-    else if (errorMessage.includes('billing entity')) errorCode = 'GC-008';
-    else if (errorMessage.includes('Brand not found') || errorMessage.includes('brand')) errorCode = 'GC-002';
-    else if (errorMessage.includes('inventory') && errorMessage.includes('Tillo')) errorCode = 'GC-003';
-    else if (errorMessage.includes('Tillo API not configured')) errorCode = 'GC-004';
-    else if (errorMessage.includes('Tillo')) errorCode = 'GC-005';
-    else if (errorMessage.includes('credits') || errorMessage.includes('Insufficient')) errorCode = 'GC-006';
-    else if (errorMessage.includes('billing')) errorCode = 'GC-007';
-
-    console.error('╔' + '═'.repeat(70) + '╗');
-    console.error(`║ [UNIFIED-PROVISION] ✗ FAILED - Request ID: ${logger.requestId}`);
-    console.error('╠' + '═'.repeat(70) + '╣');
-    console.error(`║   Error Code: ${errorCode}`);
-    console.error(`║   Description: ${PROVISIONING_ERROR_CODES[errorCode]}`);
-    console.error(`║   Message: ${errorMessage}`);
-    console.error(`║   Failed Step: ${currentStep.number} - ${currentStep.name}`);
-    console.error('╠' + '═'.repeat(70) + '╣');
-    console.error(`║   Campaign: ${campaignId || 'N/A'}`);
-    console.error(`║   Recipient: ${recipientId || 'N/A'}`);
-    console.error(`║   Brand: ${brandId || 'N/A'}`);
-    console.error(`║   Amount: $${denomination || 'N/A'}`);
-    console.error('╚' + '═'.repeat(70) + '╝');
-    
-    if (errorStack) {
-      console.error('[UNIFIED-PROVISION] Stack trace:', errorStack);
-    }
-
-    // Log to database
-    await logger.logProvisioningError(errorCode, error, currentStep);
-    
-    // Log failed provisioning activity
+  } else {
     await activityLogger.giftCard('card_provisioned', 'failed',
-      `Gift card provisioning failed: ${errorMessage}`,
+      `Gift card provisioning failed: ${result.error}`,
       {
         campaignId,
         recipientId,
-        brandName: brandId,
-        amount: denomination,
         metadata: {
-          error_code: errorCode,
-          failed_step: currentStep.name,
+          error_code: result.errorCode,
         },
       }
     );
-
-    const result: ProvisionResult = {
-      success: false,
-      requestId: logger.requestId,
-      error: errorMessage,
-      errorCode,
-      errorDescription: PROVISIONING_ERROR_CODES[errorCode],
-    };
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    });
   }
-});
+  
+  if (!result.success) {
+    throw new ApiError(result.error || 'Provisioning failed', result.errorCode || 'GC-015', 400);
+  }
+  
+  return result;
+}
+
+/**
+ * Call center provisioning with SMS delivery
+ */
+async function handleCallCenter(
+  request: UnifiedProvisionRequest,
+  supabase: ReturnType<typeof createServiceClient>,
+  logger: ReturnType<typeof createErrorLogger>,
+  activityLogger: ReturnType<typeof createActivityLogger>
+): Promise<UnifiedProvisionResponse> {
+  const { campaignId, recipientId, brandId, denomination, phone, conditionNumber } = request;
+  
+  // Validate required params
+  if (!campaignId || !recipientId || !brandId || !denomination) {
+    throw new ApiError(
+      'Missing required parameters: campaignId, recipientId, brandId, denomination',
+      'VALIDATION_ERROR',
+      400
+    );
+  }
+  
+  // Update recipient phone if provided
+  if (phone && recipientId) {
+    console.log(`[CALL-CENTER] Updating recipient phone: ${phone}`);
+    const { error: phoneError } = await supabase
+      .from('recipients')
+      .update({ phone })
+      .eq('id', recipientId);
+    
+    if (phoneError) {
+      console.error(`[CALL-CENTER] Phone update failed (non-fatal): ${phoneError.message}`);
+    }
+  }
+  
+  // Run standard provisioning
+  const params: ProvisionParams = {
+    campaignId,
+    recipientId,
+    brandId,
+    denomination,
+    conditionNumber,
+    requestId: logger.requestId,
+  };
+  
+  const provisionLogger = {
+    requestId: logger.requestId,
+    checkpoint: logger.checkpoint.bind(logger),
+    setProvisioningContext: logger.setProvisioningContext.bind(logger),
+    logProvisioningError: logger.logProvisioningError.bind(logger),
+  };
+  
+  const result = await provisionGiftCard(supabase, params, provisionLogger);
+  
+  if (!result.success) {
+    // Determine if error is retryable
+    const canRetry = result.errorCode === 'GC-003'; // Inventory issues
+    const requiresCampaignEdit = result.errorCode === 'GC-002'; // Brand issues
+    
+    await activityLogger.giftCard('card_provisioned', 'failed',
+      `Call center provisioning failed: ${result.error}`,
+      {
+        campaignId,
+        recipientId,
+        metadata: {
+          error_code: result.errorCode,
+          source: 'call_center',
+        },
+      }
+    );
+    
+    return {
+      ...result,
+      canRetry,
+      requiresCampaignEdit,
+    };
+  }
+  
+  // Send SMS with gift card details
+  let smsResult: { sent: boolean; error?: string; provider?: string } = {
+    sent: false,
+    error: 'No phone number available',
+  };
+  
+  // Get recipient details for SMS
+  let recipientPhone = phone;
+  let recipientName = request.recipientName || '';
+  let clientId: string | undefined;
+  
+  if (!recipientPhone) {
+    const { data: recipientData } = await supabase
+      .from('recipients')
+      .select('phone, first_name, last_name, campaign:campaigns(client_id)')
+      .eq('id', recipientId)
+      .single();
+    
+    if (recipientData) {
+      recipientPhone = recipientData.phone;
+      recipientName = [recipientData.first_name, recipientData.last_name].filter(Boolean).join(' ');
+      clientId = (recipientData.campaign as any)?.client_id;
+    }
+  }
+  
+  if (recipientPhone?.trim()) {
+    console.log(`[CALL-CENTER] Sending SMS to ${recipientPhone}...`);
+    
+    try {
+      const smsUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-gift-card-sms`;
+      const smsResponse = await fetch(smsUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+        body: JSON.stringify({
+          deliveryId: result.card?.id || logger.requestId,
+          giftCardCode: result.card?.cardCode,
+          giftCardValue: result.card?.denomination,
+          recipientPhone,
+          recipientName,
+          recipientId,
+          giftCardId: result.card?.id,
+          clientId,
+        }),
+      });
+      
+      if (smsResponse.ok) {
+        smsResult = await smsResponse.json();
+        console.log(`[CALL-CENTER] SMS sent via ${smsResult.provider || 'provider'}`);
+      } else {
+        const errorText = await smsResponse.text();
+        console.error(`[CALL-CENTER] SMS failed: ${errorText}`);
+        smsResult = { sent: false, error: errorText };
+      }
+    } catch (smsError) {
+      console.error(`[CALL-CENTER] SMS exception:`, smsError);
+      smsResult = {
+        sent: false,
+        error: smsError instanceof Error ? smsError.message : String(smsError),
+      };
+    }
+  }
+  
+  // Log successful provisioning
+  await activityLogger.giftCard('card_provisioned', 'success',
+    `Gift card provisioned via call center: ${result.card?.brandName} $${result.card?.denomination}`,
+    {
+      campaignId,
+      recipientId,
+      clientId,
+      brandName: result.card?.brandName,
+      amount: result.card?.denomination,
+      metadata: {
+        source: 'call_center',
+        card_source: result.card?.source,
+        sms_sent: smsResult.sent,
+        ledger_id: result.billing?.ledgerId,
+      },
+    }
+  );
+  
+  return {
+    ...result,
+    sms: {
+      sent: smsResult.sent,
+      error: smsResult.sent ? undefined : smsResult.error,
+      provider: smsResult.provider,
+    },
+  };
+}
+
+/**
+ * API test mode - direct Tillo testing or delegate to standard
+ */
+async function handleApiTest(
+  request: UnifiedProvisionRequest,
+  supabase: ReturnType<typeof createServiceClient>,
+  logger: ReturnType<typeof createErrorLogger>
+): Promise<UnifiedProvisionResponse> {
+  const { testMode, testConfig, campaignId, recipientId, brandId, denomination } = request;
+  
+  // Test mode: Direct Tillo API call (no billing)
+  if (testMode && testConfig) {
+    console.log('[API-TEST] Test mode - calling Tillo API directly');
+    
+    const { api_provider, card_value, api_config } = testConfig;
+    
+    if (!api_provider || !card_value) {
+      throw new ApiError('Test mode requires api_provider and card_value', 'VALIDATION_ERROR', 400);
+    }
+    
+    const testBrandCode = api_config?.brandCode || 'AMZN';
+    
+    try {
+      const tilloClient = getTilloClient();
+      const tilloCard = await tilloClient.provisionCard(testBrandCode, card_value, 'USD');
+      
+      console.log('[API-TEST] Tillo API test successful');
+      
+      return {
+        success: true,
+        requestId: logger.requestId,
+        testMode: true,
+        card: {
+          cardCode: tilloCard.cardCode,
+          cardNumber: tilloCard.cardNumber,
+          denomination: card_value,
+          brandName: api_provider,
+          expirationDate: tilloCard.expirationDate,
+          source: 'tillo',
+        },
+        apiResponse: {
+          transactionId: tilloCard.transactionId,
+          orderReference: tilloCard.orderReference,
+          provider: 'Tillo',
+          timestamp: new Date().toISOString(),
+          rawResponse: { success: true, message: 'Test provisioning successful' },
+        },
+      };
+    } catch (tilloError) {
+      console.error('[API-TEST] Tillo API test failed:', tilloError);
+      
+      return {
+        success: false,
+        requestId: logger.requestId,
+        testMode: true,
+        error: `Tillo API Error: ${tilloError instanceof Error ? tilloError.message : String(tilloError)}`,
+        apiResponse: {
+          provider: 'Tillo',
+          timestamp: new Date().toISOString(),
+          rawResponse: { error: tilloError instanceof Error ? tilloError.message : String(tilloError) },
+        },
+      };
+    }
+  }
+  
+  // Production mode: delegate to standard provisioning
+  console.log('[API-TEST] Production mode - delegating to standard provisioning');
+  
+  if (!campaignId || !recipientId || !brandId || !denomination) {
+    throw new ApiError(
+      'Production mode requires campaignId, recipientId, brandId, and denomination',
+      'VALIDATION_ERROR',
+      400
+    );
+  }
+  
+  // Create minimal loggers for delegation
+  const activityLogger = createActivityLogger('provision-gift-card-unified-api');
+  
+  const result = await handleStandard(
+    { ...request, entryPoint: 'standard' },
+    supabase,
+    logger,
+    activityLogger
+  );
+  
+  return {
+    ...result,
+    testMode: false,
+    apiResponse: {
+      provider: result.card?.source === 'tillo' ? 'Tillo' : 'Inventory',
+      timestamp: new Date().toISOString(),
+    },
+  };
+}
+
+// ============================================================================
+// Serve
+// ============================================================================
+
+/**
+ * Main entry point using withApiGateway wrapper
+ * 
+ * Note: requireAuth is false because this function needs to be called:
+ * - By authenticated users (frontend)
+ * - By other edge functions (service role)
+ * - The authorization header is still used for user context when present
+ */
+Deno.serve(withApiGateway(handleProvision, {
+  requireAuth: false, // Called by both users and service-to-service
+  parseBody: true,
+  auditAction: 'gift_card_provision',
+}));

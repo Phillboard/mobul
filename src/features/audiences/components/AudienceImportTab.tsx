@@ -10,7 +10,8 @@ import { ImportResults } from "@/features/audiences/components/ImportResults";
 import { SampleCSVDownload } from "@/features/audiences/components/SampleCSVDownload";
 import { ManualRecipientEntry } from "@/features/audiences/components/ManualRecipientEntry";
 import { useTenant } from '@/contexts/TenantContext';
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunctionWithFormData } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 import { useNavigate } from "react-router-dom";
 
@@ -63,25 +64,18 @@ export function AudienceImportTab() {
       formData.append('audience_name', audienceName);
 
       setUploadProgress(30);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
-      }
-
       setUploadProgress(50);
 
-      const { data, error } = await supabase.functions.invoke('import-audience', {
-        body: formData,
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      // Use FormData-capable API client for file uploads
+      const data = await callEdgeFunctionWithFormData<ImportResult>(
+        Endpoints.imports.audience,
+        formData,
+        { timeout: 120000 } // 2 minute timeout for large files
+      );
 
       setUploadProgress(90);
 
-      if (error) throw error;
-      if (!data.success) throw new Error(data.error || 'Import failed');
+      if (!data.success) throw new Error('Import failed');
 
       setUploadProgress(100);
       setImportResult(data as ImportResult);

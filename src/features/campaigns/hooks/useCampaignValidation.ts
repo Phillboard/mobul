@@ -5,7 +5,8 @@
  */
 
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 
 interface BudgetValidationResult {
   valid: boolean;
@@ -43,22 +44,19 @@ export function useValidateCampaignBudget() {
       giftCardDenomination: number;
       mailCostPerPiece?: number;
     }) => {
-      const { data, error } = await supabase.functions.invoke(
-        'validate-campaign-budget',
+      const data = await callEdgeFunction<{ success: boolean; error?: string; data: BudgetValidationResult }>(
+        Endpoints.campaigns.validateBudget,
         {
-          body: {
-            campaignId,
-            recipientCount,
-            giftCardDenomination,
-            mailCostPerPiece,
-          },
+          campaignId,
+          recipientCount,
+          giftCardDenomination,
+          mailCostPerPiece,
         }
       );
 
-      if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Validation failed');
 
-      return data.data as BudgetValidationResult;
+      return data.data;
     },
   });
 }
@@ -80,22 +78,19 @@ export function useValidateGiftCardConfiguration() {
       denomination: number;
       conditionNumber: number;
     }) => {
-      const { data, error } = await supabase.functions.invoke(
-        'validate-gift-card-configuration',
+      const data = await callEdgeFunction<{ success: boolean; error?: string; data: GiftCardConfigValidation }>(
+        Endpoints.giftCards.validateConfig,
         {
-          body: {
-            campaignId,
-            brandId,
-            denomination,
-            conditionNumber,
-          },
+          campaignId,
+          brandId,
+          denomination,
+          conditionNumber,
         }
       );
 
-      if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Validation failed');
 
-      return data.data as GiftCardConfigValidation;
+      return data.data;
     },
   });
 }
@@ -115,19 +110,16 @@ export function useCampaignBudgetCheck(
     queryFn: async () => {
       if (!campaignId) return null;
 
-      const { data, error } = await supabase.functions.invoke(
-        'validate-campaign-budget',
+      const data = await callEdgeFunction<{ data: BudgetValidationResult }>(
+        Endpoints.campaigns.validateBudget,
         {
-          body: {
-            campaignId,
-            recipientCount,
-            giftCardDenomination,
-          },
+          campaignId,
+          recipientCount,
+          giftCardDenomination,
         }
       );
 
-      if (error) throw error;
-      return data.data as BudgetValidationResult;
+      return data.data;
     },
     enabled: enabled && !!campaignId && recipientCount > 0 && giftCardDenomination > 0,
     staleTime: 10000, // Cache for 10 seconds
@@ -150,20 +142,17 @@ export function useGiftCardAvailabilityCheck(
     queryFn: async () => {
       if (!campaignId || !brandId) return null;
 
-      const { data, error } = await supabase.functions.invoke(
-        'validate-gift-card-configuration',
+      const data = await callEdgeFunction<{ data: GiftCardConfigValidation }>(
+        Endpoints.giftCards.validateConfig,
         {
-          body: {
-            campaignId,
-            brandId,
-            denomination,
-            conditionNumber,
-          },
+          campaignId,
+          brandId,
+          denomination,
+          conditionNumber,
         }
       );
 
-      if (error) throw error;
-      return data.data as GiftCardConfigValidation;
+      return data.data;
     },
     enabled: enabled && !!campaignId && !!brandId && denomination > 0,
     staleTime: 30000, // Cache for 30 seconds

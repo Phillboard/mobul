@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/components/ui/table";
 import { Badge } from "@/shared/components/ui/badge";
@@ -196,16 +198,15 @@ export function AgencyDashboard() {
       }
 
       // Call allocate-credit function
-      const { data, error } = await supabase.functions.invoke("allocate-credit", {
-        body: {
+      await callEdgeFunction(
+        Endpoints.admin.allocateCredit,
+        {
           fromAccountId: creditAccount.id,
           toAccountId: clientData.credit_account_id,
           amount: amount,
           notes: allocationNotes || `Credit allocation to ${client.clientName}`
         }
-      });
-
-      if (error) throw error;
+      );
 
       toast({
         title: "Credit Allocated Successfully!",

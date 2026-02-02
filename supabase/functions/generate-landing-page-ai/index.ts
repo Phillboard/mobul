@@ -1,9 +1,45 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
+/**
+ * Generate Landing Page AI Edge Function
+ * 
+ * Simple landing page generation using Gemini.
+ * Lighter weight alternative to ai-landing-page-generate.
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { withApiGateway, ApiError, type PublicContext } from '../_shared/api-gateway.ts';
+import { createAICompletion, extractHTML } from '../_shared/ai-client.ts';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+interface GenerateRequest {
+  prompt: string;
+  styleGuide?: {
+    colors?: {
+      primary?: string;
+      secondary?: string;
+    };
+    fonts?: {
+      heading?: string;
+      body?: string;
+    };
+    style?: string;
+  };
+  postcardImageUrl?: string;
+  websiteUrl?: string;
+  campaignId?: string;
+  includeForm?: boolean;
+  includeGiftCardRedemption?: boolean;
+}
+
+interface GenerateResponse {
+  html: string;
+  styleGuide?: typeof GenerateRequest.prototype.styleGuide;
+}
+
+// ============================================================================
+// System Prompt
+// ============================================================================
 
 const LANDING_PAGE_EXPERT_PROMPT = `You are an expert landing page designer specializing in direct mail campaign landing pages.
 
@@ -26,132 +62,104 @@ Generate a complete, standalone HTML page that includes:
 
 Output ONLY valid HTML5. No markdown, no explanations, just the complete HTML document.`;
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+// ============================================================================
+// Main Handler
+// ============================================================================
+
+async function handleGenerateLandingPageAI(
+  request: GenerateRequest,
+  _context: PublicContext
+): Promise<GenerateResponse> {
+  const {
+    prompt,
+    styleGuide,
+    postcardImageUrl,
+    websiteUrl,
+    includeForm = true,
+    includeGiftCardRedemption = false,
+  } = request;
+
+  // Build context prompt
+  let contextPrompt = prompt;
+
+  if (styleGuide) {
+    contextPrompt += `\n\nStyle Guide:
+- Primary Color: ${styleGuide.colors?.primary || 'brand primary'}
+- Secondary Color: ${styleGuide.colors?.secondary || 'brand secondary'}
+- Heading Font: ${styleGuide.fonts?.heading || 'modern sans-serif'}
+- Body Font: ${styleGuide.fonts?.body || 'readable sans-serif'}
+- Brand Voice: ${styleGuide.style || 'professional'}`;
   }
 
-  try {
-    const {
-      prompt,
-      styleGuide,
-      postcardImageUrl,
-      websiteUrl,
-      campaignId,
-      includeForm = true,
-      includeGiftCardRedemption = false,
-    } = await req.json();
+  if (postcardImageUrl) {
+    contextPrompt += '\n\nPostcard image provided. Match the visual style and messaging from the postcard.';
+  }
 
-    // Get Gemini API key from environment
-    const geminiAPIKey = Deno.env.get('GEMINI_API_KEY');
-    
-    if (!geminiAPIKey) {
-      throw new Error('Gemini API key not configured');
-    }
+  if (websiteUrl) {
+    contextPrompt += `\n\nWebsite URL: ${websiteUrl}. Match the brand style from this website.`;
+  }
 
-    // Build context from style guide
-    let contextPrompt = prompt;
-    
-    if (styleGuide) {
-      contextPrompt += `\n\nStyle Guide:
-- Primary Color: ${styleGuide.colors?.primary}
-- Secondary Color: ${styleGuide.colors?.secondary}
-- Heading Font: ${styleGuide.fonts?.heading}
-- Body Font: ${styleGuide.fonts?.body}
-- Brand Voice: ${styleGuide.style}`;
-    }
+  if (includeForm) {
+    contextPrompt += '\n\nInclude a lead capture form with fields: Name, Email, Phone, Company (optional).';
+  }
 
-    if (postcardImageUrl) {
-      contextPrompt += `\n\nPostcard image provided. Match the visual style and messaging from the postcard.`;
-    }
+  if (includeGiftCardRedemption) {
+    contextPrompt += '\n\nInclude a gift card redemption form where users can enter their unique code.';
+  }
 
-    if (websiteUrl) {
-      contextPrompt += `\n\nWebsite URL: ${websiteUrl}. Match the brand style from this website.`;
-    }
+  console.log('[GENERATE-LP-AI] Request:', {
+    promptLength: prompt.length,
+    hasStyleGuide: !!styleGuide,
+    includeForm,
+    includeGiftCardRedemption,
+  });
 
-    if (includeForm) {
-      contextPrompt += `\n\nInclude a lead capture form with fields: Name, Email, Phone, Company (optional).`;
-    }
+  // Call Gemini via shared client
+  const result = await createAICompletion({
+    provider: 'gemini',
+    model: 'gemini-2.5-pro',
+    systemPrompt: LANDING_PAGE_EXPERT_PROMPT,
+    messages: [{ role: 'user', content: contextPrompt }],
+    temperature: 0.7,
+    maxTokens: 8192,
+  });
 
-    if (includeGiftCardRedemption) {
-      contextPrompt += `\n\nInclude a gift card redemption form where users can enter their unique code.`;
-    }
+  // Extract HTML from response
+  let html = extractHTML(result.content);
 
-    // Call Gemini API
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiAPIKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `${LANDING_PAGE_EXPERT_PROMPT}\n\nUser Request: ${contextPrompt}`
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 8192,
-          },
-        }),
-      }
-    );
-
-    if (!geminiResponse.ok) {
-      throw new Error('Gemini API request failed');
-    }
-
-    const geminiData = await geminiResponse.json();
-    const generatedHTML = geminiData.candidates[0]?.content?.parts[0]?.text || '';
-
-    // Extract HTML if wrapped in code blocks
-    let html = generatedHTML;
-    if (html.includes('```html')) {
-      html = html.split('```html')[1].split('```')[0].trim();
-    } else if (html.includes('```')) {
-      html = html.split('```')[1].split('```')[0].trim();
-    }
-
-    // Ensure it's valid HTML
-    if (!html.toLowerCase().includes('<!doctype html') && !html.toLowerCase().includes('<html')) {
-      html = `<!DOCTYPE html>
+  // Ensure valid HTML structure
+  if (!html.toLowerCase().includes('<!doctype html') && !html.toLowerCase().includes('<html')) {
+    html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Landing Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
   ${html}
 </body>
 </html>`;
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        html,
-        styleGuide,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-
-  } catch (error: any) {
-    console.error('Landing page generation error:', error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'Failed to generate landing page',
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
   }
-});
 
+  console.log('[GENERATE-LP-AI] Generated:', {
+    htmlLength: html.length,
+    tokensUsed: result.usage.totalTokens,
+  });
+
+  return {
+    html,
+    styleGuide,
+  };
+}
+
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handleGenerateLandingPageAI, {
+  requireAuth: false, // This is a lighter weight endpoint, can be called without auth
+  parseBody: true,
+  auditAction: 'generate_landing_page_ai',
+}));

@@ -19,7 +19,8 @@ import {
   TwilioFallbackIndicator 
 } from "./twilio";
 import { getTwilioStatusType } from '@/features/settings/types/twilio';
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { toast } from "sonner";
 
 export function PhoneNumbersSettings() {
@@ -73,11 +74,10 @@ export function PhoneNumbersSettings() {
     }
 
     try {
-      const { error } = await supabase.functions.invoke('release-twilio-number', {
-        body: { phoneNumberId },
-      });
-
-      if (error) throw error;
+      await callEdgeFunction(
+        Endpoints.telephony.releaseNumber,
+        { phoneNumberId }
+      );
       
       toast.success('Phone number released successfully');
       refetch();

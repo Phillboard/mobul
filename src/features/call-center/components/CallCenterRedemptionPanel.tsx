@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { logger } from '@/core/services/logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
@@ -467,8 +469,9 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         client_name: clientName,
       });
       
-      const { data, error} = await supabase.functions.invoke('send-sms-opt-in', {
-        body: {
+      const data = await callEdgeFunction<{ error?: string; messageSid?: string; provider?: string; call_session_id?: string }>(
+        Endpoints.messaging.sendOptIn,
+        {
           recipient_id: recipient.id,
           campaign_id: campaign.id,
           call_session_id: callSessionId,
@@ -476,11 +479,10 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           client_name: clientName,
           custom_message: (campaign as any).sms_opt_in_message || undefined, // Pass campaign's custom opt-in message
         }
-      });
+      );
       
-      console.log('[SEND-OPT-IN] Edge function response:', { data, error });
+      console.log('[SEND-OPT-IN] Edge function response:', { data });
       
-      if (error) throw error;
       if (data.error) throw new Error(data.error);
       
       // Log SMS success
@@ -640,17 +642,17 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     
     setIsSendingEmailVerification(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-verification-email', {
-        body: {
+      const data = await callEdgeFunction<{ error?: string }>(
+        Endpoints.messaging.sendVerificationEmail,
+        {
           recipient_id: recipient.id,
           campaign_id: campaign.id,
           email: recipient.email,
           client_name: clientName,
           recipient_name: `${recipient.first_name || ''} ${recipient.last_name || ''}`.trim(),
         }
-      });
+      );
       
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
       
       setEmailVerificationSent(true);
@@ -1036,46 +1038,30 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         phone: phone,
       });
 
-      const { data, error } = await supabase.functions.invoke("provision-gift-card-for-call-center", {
-        body: {
-          recipientId: recipient.id,
-          campaignId: provCampaign.id,
-          brandId: condition.brand_id,
-          denomination: condition.card_value,
-          conditionId: selectedConditionId,
-          phone: phone, // Pass the updated phone number from the call center rep
-        }
-      });
-
-      console.log('[Provision] Edge Function response:', { data, error });
-
-      if (error) {
+      let data: any;
+      try {
+        data = await callEdgeFunction(
+          Endpoints.giftCards.provisionForCallCenter,
+          {
+            recipientId: recipient.id,
+            campaignId: provCampaign.id,
+            brandId: condition.brand_id,
+            denomination: condition.card_value,
+            conditionId: selectedConditionId,
+            phone: phone, // Pass the updated phone number from the call center rep
+          }
+        );
+        console.log('[Provision] Edge Function response:', { data });
+      } catch (error: any) {
         console.error('[Provision] Edge Function error:', error);
         
-        // Extract the actual error message from the response
-        let errorMessage = error.message || 'Edge Function error';
-        let errorData: any = {};
-        
-        // The error.context contains the Response object with our JSON body
-        if (error.context && typeof error.context.json === 'function') {
-          try {
-            errorData = await error.context.json();
-            console.log('[Provision] Parsed error data:', errorData);
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          } catch (parseErr) {
-            console.warn('[Provision] Could not parse error context:', parseErr);
-          }
-        }
-        
         const provError: ProvisioningError = {
-          message: errorMessage,
-          errorCode: errorData.errorCode,
-          requestId: errorData.requestId,
-          canRetry: errorData.canRetry ?? true,
-          requiresCampaignEdit: errorData.requiresCampaignEdit,
+          message: error.message || 'Edge Function error',
+          errorCode: error.code,
+          canRetry: true,
         };
         setProvisioningError(provError);
-        throw new Error(errorMessage);
+        throw error;
       }
       
       if (!data?.success) {

@@ -6,6 +6,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useTenant } from '@/contexts/TenantContext';
 import { toast } from "sonner";
 import type { 
@@ -128,14 +130,15 @@ export function useCreateMarketingCampaign() {
       // Calculate recipient count before creating campaign
       let recipientCount = 0;
       try {
-        const { data: previewData } = await supabase.functions.invoke('preview-campaign-audience', {
-          body: {
+        const previewData = await callEdgeFunction<{ count: number }>(
+          Endpoints.campaigns.previewAudience,
+          {
             clientId: currentClient.id,
             audienceType: input.audience_type,
             audienceConfig: input.audience_config,
             campaignType: input.campaign_type,
-          },
-        });
+          }
+        );
         recipientCount = previewData?.count || 0;
       } catch (error) {
         console.error('Failed to calculate recipients:', error);
@@ -351,11 +354,10 @@ export function useSendMarketingCampaign() {
       if (statusError) throw statusError;
 
       // Invoke edge function to process sends
-      const { error: sendError } = await supabase.functions.invoke('send-marketing-campaign', {
-        body: { campaignId: id },
-      });
-
-      if (sendError) throw sendError;
+      await callEdgeFunction(
+        Endpoints.marketing.sendCampaign,
+        { campaignId: id }
+      );
 
       return id;
     },
@@ -471,11 +473,10 @@ export function useRefreshCampaignRecipients() {
       if (fetchError) throw fetchError;
 
       // Calculate recipient count
-      const { data: previewData, error: previewError } = await supabase.functions.invoke('preview-campaign-audience', {
-        body: { campaignId: id },
-      });
-
-      if (previewError) throw previewError;
+      const previewData = await callEdgeFunction<{ count: number }>(
+        Endpoints.campaigns.previewAudience,
+        { campaignId: id }
+      );
 
       // Update campaign with recipient count
       const { data, error: updateError } = await supabase

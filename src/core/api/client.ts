@@ -25,6 +25,12 @@ export interface RequestConfig {
   headers?: Record<string, string>;
 }
 
+/**
+ * @deprecated Use RequestConfig instead
+ * Alias for backward compatibility with older imports
+ */
+export type EdgeFunctionOptions = RequestConfig;
+
 interface RequestContext {
   requestId: string;
   startTime: number;
@@ -435,4 +441,146 @@ export function createEdgeFunctionQuery<TResponse = any, TBody = any>(
     queryKey: [functionName, body],
     queryFn: () => callEdgeFunction<TResponse, TBody>(functionName, body, config),
   };
+}
+
+/**
+ * Call edge function with FormData (for file uploads)
+ * Handles multipart/form-data instead of JSON
+ */
+export async function callEdgeFunctionWithFormData<TResponse = any>(
+  functionName: string,
+  formData: FormData,
+  config: RequestConfig = {}
+): Promise<TResponse> {
+  const { timeout = 60000, retries = 2, retryDelay = 1000 } = config;
+  
+  const requestId = generateRequestId();
+  const startTime = Date.now();
+  
+  // Get current session for auth token
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError) {
+    throw new EdgeFunctionError(
+      'Failed to get authentication session',
+      401,
+      functionName,
+      sessionError,
+      'AUTH_SESSION_ERROR'
+    );
+  }
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const url = `${supabaseUrl}/functions/v1/${functionName}`;
+
+  let lastError: EdgeFunctionError | undefined;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            // Don't set Content-Type - browser will set it with boundary for FormData
+            'Authorization': session?.access_token ? `Bearer ${session.access_token}` : '',
+            'X-Request-ID': requestId,
+          },
+          body: formData,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          let errorMessage = `Edge function ${functionName} failed`;
+          let errorCode = 'EDGE_FUNCTION_ERROR';
+          
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.error || errorJson.message || errorMessage;
+            errorCode = errorJson.code || errorCode;
+          } catch {
+            errorMessage = errorText || errorMessage;
+          }
+
+          throw new EdgeFunctionError(
+            errorMessage,
+            response.status,
+            functionName,
+            undefined,
+            errorCode
+          );
+        }
+
+        const data = await response.json();
+        
+        const duration = Date.now() - startTime;
+        logger.info(`[API] FormData ${functionName} completed in ${duration}ms`, {
+          requestId,
+          attempt: attempt + 1,
+          duration,
+        });
+        
+        return data as TResponse;
+
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+
+        if (fetchError.name === 'AbortError') {
+          throw new EdgeFunctionError(
+            `Edge function ${functionName} timed out after ${timeout}ms`,
+            408,
+            functionName,
+            fetchError,
+            'TIMEOUT'
+          );
+        }
+
+        if (fetchError instanceof EdgeFunctionError) {
+          throw fetchError;
+        }
+
+        throw new EdgeFunctionError(
+          `Network error calling ${functionName}: ${fetchError.message}`,
+          undefined,
+          functionName,
+          fetchError,
+          'NETWORK_ERROR'
+        );
+      }
+    } catch (error: any) {
+      lastError = error instanceof EdgeFunctionError 
+        ? error 
+        : new EdgeFunctionError(
+            `Unexpected error: ${error.message}`,
+            undefined,
+            functionName,
+            error,
+            'UNEXPECTED_ERROR'
+          );
+
+      // Check if we should retry
+      if (attempt < retries && isRetryableError(lastError)) {
+        const delayMs = retryDelay * Math.pow(2, attempt);
+        logger.warn(`[API] FormData ${functionName} failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms`);
+        await delay(delayMs);
+        continue;
+      }
+
+      break;
+    }
+  }
+
+  const duration = Date.now() - startTime;
+  logger.error(`[API] FormData ${functionName} failed (${duration}ms)`, {
+    requestId,
+    error: lastError?.message,
+    statusCode: lastError?.statusCode,
+  });
+
+  throw lastError;
 }

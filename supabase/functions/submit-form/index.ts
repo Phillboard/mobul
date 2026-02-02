@@ -1,5 +1,5 @@
 /**
- * Form Submission Handler
+ * ACE Form Submission Handler
  * 
  * This form DOES NOT provision gift cards.
  * It only looks up and displays cards that were already assigned by the call center.
@@ -7,194 +7,150 @@
  * Flow:
  * 1. Call center agent enters code → Provisions gift card → Assigns to recipient
  * 2. Customer enters code on this form → Form looks up their existing card → Displays it
- * 
- * Uses a SECURITY DEFINER database function to bypass RLS and ensure consistent
- * results regardless of calling context.
  */
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { withApiGateway, ApiError, type PublicContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
+import {
+  validateFormState,
+  validateRedemptionCode,
+  extractRedemptionCode,
+  buildGiftCardResponse,
+  type AceFormConfig,
+} from '../_shared/business-rules/form-rules.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// ============================================================================
+// Types
+// ============================================================================
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+interface SubmitFormRequest {
+  formId: string;
+  data: Record<string, unknown>;
+}
 
+interface SubmitFormResponse {
+  success: boolean;
+  requestId: string;
+  gift_card_provisioned: boolean;
+  giftCard?: ReturnType<typeof buildGiftCardResponse>;
+}
+
+// ============================================================================
+// Main Handler
+// ============================================================================
+
+async function handleSubmitForm(
+  request: SubmitFormRequest,
+  _context: PublicContext
+): Promise<SubmitFormResponse> {
   const requestId = `form-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+  const { formId, data } = request;
 
-  try {
-    // =====================================================
-    // STEP 1: PARSE REQUEST
-    // =====================================================
-    const { formId, data } = await req.json();
-    
-    console.log('╔' + '═'.repeat(60) + '╗');
-    console.log(`║ [ACE-FORM] Request ID: ${requestId}`);
-    console.log('╠' + '═'.repeat(60) + '╣');
-    console.log(`║   formId: ${formId || 'MISSING'}`);
-    console.log(`║   dataKeys: ${Object.keys(data || {}).join(', ')}`);
-    console.log('╚' + '═'.repeat(60) + '╝');
+  console.log('╔' + '═'.repeat(60) + '╗');
+  console.log(`║ [ACE-FORM] Request ID: ${requestId}`);
+  console.log('╠' + '═'.repeat(60) + '╣');
+  console.log(`║   formId: ${formId || 'MISSING'}`);
+  console.log(`║   dataKeys: ${Object.keys(data || {}).join(', ')}`);
+  console.log('╚' + '═'.repeat(60) + '╝');
 
-    if (!formId) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Form ID is required', requestId }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
+  if (!formId) {
+    throw new ApiError('Form ID is required', 'VALIDATION_ERROR', 400);
+  }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+  const supabase = createServiceClient();
 
-    // =====================================================
-    // STEP 2: LOAD FORM CONFIG
-    // =====================================================
-    const { data: form, error: formError } = await supabase
-      .from('ace_forms')
-      .select('id, name, form_config, is_draft, is_active')
-      .eq('id', formId)
-      .single();
+  // =====================================================
+  // STEP 1: LOAD FORM CONFIG
+  // =====================================================
+  const { data: form, error: formError } = await supabase
+    .from('ace_forms')
+    .select('id, name, form_config, is_draft, is_active')
+    .eq('id', formId)
+    .single();
 
-    if (formError || !form) {
-      console.error('[ACE-FORM] Form not found:', formError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Form not found', requestId }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
-    }
+  if (formError) {
+    console.error('[ACE-FORM] Form not found:', formError);
+    throw new ApiError('Form not found', 'NOT_FOUND', 404);
+  }
 
-    // Validate form is published and active
-    if (form.is_draft) {
-      console.error('[ACE-FORM] Attempted submission to draft form:', formId);
-      return new Response(
-        JSON.stringify({ success: false, error: 'This form is not yet published', requestId }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
-    }
+  // Validate form state using shared rules
+  const formValidation = validateFormState(form as AceFormConfig);
+  if (!formValidation.valid) {
+    throw new ApiError(formValidation.error!, 'FORM_INACTIVE', 404);
+  }
 
-    if (form.is_active === false) {
-      console.error('[ACE-FORM] Attempted submission to inactive form:', formId);
-      return new Response(
-        JSON.stringify({ success: false, error: 'This form is no longer accepting submissions', requestId }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
-    }
+  console.log(`[STEP 1] ✓ Form loaded: ${form.name}`);
 
-    console.log(`[STEP 2] ✓ Form loaded: ${form.name}`);
+  // =====================================================
+  // STEP 2: EXTRACT AND VALIDATE REDEMPTION CODE
+  // =====================================================
+  const code = extractRedemptionCode(form.form_config, data);
 
-    // =====================================================
-    // STEP 3: EXTRACT REDEMPTION CODE
-    // =====================================================
-    const giftCardField = form.form_config?.fields?.find((f: any) => 
-      f.type === 'gift-card-code' || f.id === 'gift_card_code' || f.id === 'code'
-    );
-    
-    const rawCode = giftCardField ? data[giftCardField.id] : 
-                    data.gift_card_code || data.code || data.redemption_code || data.giftCardCode;
-    
-    // Just uppercase - keep dashes (codes stored as "AB6-1061")
-    const code = rawCode ? rawCode.toUpperCase() : null;
+  const codeValidation = validateRedemptionCode(code || undefined);
+  if (!codeValidation.valid) {
+    throw new ApiError(codeValidation.error!, 'VALIDATION_ERROR', 400);
+  }
 
-    console.log(`[STEP 3] Code: "${code}"`);
+  console.log(`[STEP 2] ✓ Code validated: "${code}"`);
 
-    if (!code) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Please enter your gift card code', requestId }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
+  // =====================================================
+  // STEP 3: LOOKUP CARD VIA DATABASE FUNCTION
+  // =====================================================
+  console.log(`[STEP 3] Looking up card via RPC for code: ${code}`);
 
-    // =====================================================
-    // STEP 4: LOOKUP CARD VIA DATABASE FUNCTION
-    // =====================================================
-    // This uses a SECURITY DEFINER function that:
-    // 1. Joins recipients → gift_card_inventory → gift_card_brands
-    // 2. Finds cards where the recipient has the matching redemption code
-    // 3. Bypasses RLS to avoid ID mismatch issues
-    console.log(`[STEP 4] Looking up card via RPC for code: ${code}`);
+  const { data: cardData, error: rpcError } = await supabase
+    .rpc('lookup_gift_card_by_redemption_code', { p_code: code });
 
-    const { data: cardData, error: rpcError } = await supabase
-      .rpc('lookup_gift_card_by_redemption_code', { p_code: code });
-
-    if (rpcError) {
-      console.error('[ACE-FORM] RPC error:', rpcError);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Unable to retrieve your gift card. Please try again.', 
-          requestId,
-          debug: rpcError.message 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
-
-    if (!cardData || cardData.length === 0) {
-      console.log(`[STEP 4] ✗ No card found for code: ${code}`);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Your gift card is not yet available. Please contact support or try again later.', 
-          requestId 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    // =====================================================
-    // STEP 5: SUCCESS - RETURN CARD DETAILS
-    // =====================================================
-    const card = cardData[0];
-    
-    console.log('╔' + '═'.repeat(60) + '╗');
-    console.log(`║ [ACE-FORM] ✓ SUCCESS`);
-    console.log('╠' + '═'.repeat(60) + '╣');
-    console.log(`║   ${card.recipient_first_name} ${card.recipient_last_name}`);
-    console.log(`║   ${card.brand_name || 'Gift Card'} $${card.denomination}`);
-    console.log(`║   Card: ${card.card_code}`);
-    console.log('╚' + '═'.repeat(60) + '╝');
-
-    // Track submission for analytics
-    await supabase.rpc('increment_form_stat', { form_id: formId, stat_name: 'submissions' });
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        requestId,
-        gift_card_provisioned: true,
-        giftCard: {
-          card_code: card.card_code,
-          card_number: card.card_number,
-          card_value: Number(card.denomination),
-          provider: card.brand_name || 'Gift Card', // Required by GiftCardRedemption type
-          brand_name: card.brand_name || 'Gift Card',
-          brand_logo: card.brand_logo_url || null,
-          brand_color: card.brand_color || null,
-          store_url: card.balance_check_url || null,
-          redemption_instructions: card.redemption_instructions || null,
-          expiration_date: card.expiration_date,
-        }
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error) {
-    console.error('[ACE-FORM] Unexpected error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: 'An unexpected error occurred. Please try again.', requestId }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+  if (rpcError) {
+    console.error('[ACE-FORM] RPC error:', rpcError);
+    throw new ApiError(
+      'Unable to retrieve your gift card. Please try again.',
+      'LOOKUP_ERROR',
+      500
     );
   }
-});
+
+  if (!cardData || cardData.length === 0) {
+    console.log(`[STEP 3] ✗ No card found for code: ${code}`);
+    throw new ApiError(
+      'Your gift card is not yet available. Please contact support or try again later.',
+      'CARD_NOT_FOUND',
+      400
+    );
+  }
+
+  // =====================================================
+  // STEP 4: SUCCESS - RETURN CARD DETAILS
+  // =====================================================
+  const card = cardData[0];
+
+  console.log('╔' + '═'.repeat(60) + '╗');
+  console.log(`║ [ACE-FORM] ✓ SUCCESS`);
+  console.log('╠' + '═'.repeat(60) + '╣');
+  console.log(`║   ${card.recipient_first_name} ${card.recipient_last_name}`);
+  console.log(`║   ${card.brand_name || 'Gift Card'} $${card.denomination}`);
+  console.log(`║   Card: ${card.card_code}`);
+  console.log('╚' + '═'.repeat(60) + '╝');
+
+  // Track submission for analytics
+  await supabase.rpc('increment_form_stat', { form_id: formId, stat_name: 'submissions' }).catch(() => {
+    // Ignore stat tracking errors
+  });
+
+  return {
+    success: true,
+    requestId,
+    gift_card_provisioned: true,
+    giftCard: buildGiftCardResponse(card),
+  };
+}
+
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handleSubmitForm, {
+  requireAuth: false, // Public endpoint
+  parseBody: true,
+  auditAction: 'submit_form',
+}));

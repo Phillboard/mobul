@@ -1,6 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
+import { callPublicEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -25,11 +27,11 @@ export default function PURLLandingPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['purl', campaignId, token],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke('handle-purl', {
-        body: { campaignId, token },
-      });
+      const data = await callPublicEdgeFunction(
+        Endpoints.public.handlePurl,
+        { campaignId, token }
+      );
       
-      if (error) throw error;
       return data;
     },
     enabled: !!campaignId && !!token,
@@ -37,15 +39,15 @@ export default function PURLLandingPage() {
 
   const submitLeadMutation = useMutation({
     mutationFn: async () => {
-      const { data: submitData, error: submitError } = await supabase.functions.invoke('submit-lead-form', {
-        body: {
+      const submitData = await callPublicEdgeFunction(
+        Endpoints.public.submitLeadForm,
+        {
           campaignId,
           recipientId: data.recipient.id,
           ...formData,
-        },
-      });
+        }
+      );
       
-      if (submitError) throw submitError;
       return submitData;
     },
     onSuccess: () => {

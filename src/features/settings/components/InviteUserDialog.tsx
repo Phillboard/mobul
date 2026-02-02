@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import {
   Dialog,
   DialogContent,
@@ -78,17 +80,17 @@ export function InviteUserDialog() {
 
   const inviteMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("send-user-invitation", {
-        body: {
+      const data = await callEdgeFunction<{ inviteUrl?: string }>(
+        Endpoints.messaging.sendUserInvitation,
+        {
           email,
           role,
           orgId: orgId || undefined,
           clientId: clientId || undefined,
           message: message || undefined,
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: (data) => {

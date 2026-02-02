@@ -6,7 +6,8 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import {
   Dialog,
   DialogContent,
@@ -75,20 +76,17 @@ export function BulkInviteDialog({
       
       for (const email of emailList) {
         try {
-          const { error } = await supabase.functions.invoke('send-user-invitation', {
-            body: {
+          await callEdgeFunction(
+            Endpoints.messaging.sendUserInvitation,
+            {
               email: email.trim(),
               role,
               clientId,
               customMessage: customMessage || undefined,
-            },
-          });
+            }
+          );
 
-          if (error) {
-            results.push({ email, success: false, error: error.message });
-          } else {
-            results.push({ email, success: true });
-          }
+          results.push({ email, success: true });
         } catch (err: any) {
           results.push({ email, success: false, error: err.message || 'Unknown error' });
         }

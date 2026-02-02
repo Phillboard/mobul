@@ -44,6 +44,8 @@ import { useSmartCSVParser, ParsedCSVData } from '@/features/contacts/hooks';
 import { UniqueCodeService } from '@/core/services/uniqueCodeService';
 import { CSVTemplateGenerator } from '@shared/utils/csv';
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { toast } from 'sonner';
 
 interface CreateListWithCSVDialogProps {
@@ -437,15 +439,18 @@ export function CreateListWithCSVDialog({
       setImportProgress(45);
 
       // Call import function
-      const { data, error } = await supabase.functions.invoke('import-contacts', {
-        body: {
+      const data = await callEdgeFunction<{
+        successful?: number;
+        failed?: number;
+        first_errors?: Array<{ error: string }>;
+      }>(
+        Endpoints.audience.importContacts,
+        {
           client_id: clientId,
           contacts: rowsToImport,
           list_id: newList.id,
-        },
-      });
-
-      if (error) throw error;
+        }
+      );
 
       setImportProgress(100);
 

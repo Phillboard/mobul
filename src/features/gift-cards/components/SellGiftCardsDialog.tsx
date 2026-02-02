@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -69,18 +71,17 @@ export function SellGiftCardsDialog({ open, onOpenChange }: SellGiftCardsDialogP
     try {
       const { data: user } = await supabase.auth.getUser();
       
-      const { data, error } = await supabase.functions.invoke("transfer-admin-cards", {
-        body: {
+      await callEdgeFunction(
+        Endpoints.giftCards.transfer,
+        {
           masterPoolId: selectedPool,
           buyerClientId: selectedClient,
           quantity: parseInt(quantity),
           pricePerCard: parseFloat(pricePerCard),
           soldByUserId: user.user?.id,
           notes: `Sold ${parseInt(quantity)} cards at $${parseFloat(pricePerCard)} each`,
-        },
-      });
-
-      if (error) throw error;
+        }
+      );
 
       toast({
         title: "Sale Successful!",

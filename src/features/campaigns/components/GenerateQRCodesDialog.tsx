@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import {
   Dialog,
   DialogContent,
@@ -74,14 +76,11 @@ export function GenerateQRCodesDialog({
 
   const generateMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke(
-        'generate-recipient-tokens',
-        {
-          body: { campaign_id: campaignId },
-        }
+      const data = await callEdgeFunction<{ sampleQRs?: SampleQR[]; total: number; successCount: number }>(
+        Endpoints.campaign.generateRecipientTokens,
+        { campaign_id: campaignId }
       );
 
-      if (error) throw error;
       return data;
     },
     onSuccess: (data) => {

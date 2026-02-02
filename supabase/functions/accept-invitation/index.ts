@@ -1,11 +1,17 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+/**
+ * Accept Invitation Edge Function
+ * 
+ * Allows users to accept an invitation and create their account.
+ * Public endpoint (user may not be authenticated yet).
+ */
+
+import { withApiGateway, ApiError, type PublicContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// ============================================================================
+// Types
+// ============================================================================
 
 interface AcceptInviteRequest {
   token: string;
@@ -13,148 +19,196 @@ interface AcceptInviteRequest {
   fullName: string;
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+interface AcceptInviteResponse {
+  success: boolean;
+  user: {
+    id: string;
+    email: string;
+  };
+  message: string;
+}
+
+interface Invitation {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  expires_at: string;
+  org_id: string | null;
+  client_id: string | null;
+}
+
+// ============================================================================
+// Validation Helpers
+// ============================================================================
+
+function validateInvitation(invitation: Invitation | null): Invitation {
+  if (!invitation) {
+    throw new ApiError('Invalid invitation token', 'INVALID_TOKEN', 400);
   }
 
-  // Initialize activity logger
-  const activityLogger = createActivityLogger('accept-invitation', req);
+  if (invitation.status !== 'pending') {
+    throw new ApiError(`Invitation is ${invitation.status}`, 'INVALID_STATUS', 400);
+  }
 
-  try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+  if (new Date(invitation.expires_at) < new Date()) {
+    throw new ApiError('Invitation has expired', 'EXPIRED', 400);
+  }
 
-    const { token, password, fullName }: AcceptInviteRequest = await req.json();
+  if (!invitation.role) {
+    throw new ApiError('Invitation missing role information', 'INVALID_INVITATION', 400);
+  }
 
-    if (!token || !password || !fullName) {
-      throw new Error("Token, password, and full name are required");
-    }
+  return invitation;
+}
 
-    // Get invitation
-    const { data: invitation, error: inviteError } = await supabase
-      .from("user_invitations")
-      .select("*")
-      .eq("token", token)
-      .single();
+function validatePassword(password: string): void {
+  if (!password || password.length < 8) {
+    throw new ApiError('Password must be at least 8 characters', 'VALIDATION_ERROR', 400);
+  }
+}
 
-    if (inviteError || !invitation) {
-      throw new Error("Invalid invitation token");
-    }
+// ============================================================================
+// Main Handler
+// ============================================================================
 
-    // Check invitation status
-    if (invitation.status !== "pending") {
-      throw new Error(`Invitation is ${invitation.status}`);
-    }
+async function handleAcceptInvitation(
+  request: AcceptInviteRequest,
+  _context: PublicContext
+): Promise<AcceptInviteResponse> {
+  const { token, password, fullName } = request;
 
-    // Check if expired
-    if (new Date(invitation.expires_at) < new Date()) {
-      await supabase
-        .from("user_invitations")
-        .update({ status: "expired" })
-        .eq("id", invitation.id);
-      throw new Error("Invitation has expired");
-    }
+  // Validate required fields
+  if (!token || !password || !fullName) {
+    throw new ApiError('Token, password, and full name are required', 'VALIDATION_ERROR', 400);
+  }
 
-    // Validate role exists
-    if (!invitation.role) {
-      throw new Error("Invitation missing role information");
-    }
+  validatePassword(password);
 
-    // Create user account
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: invitation.email,
-      password,
-      email_confirm: true, // Auto-confirm email
-      user_metadata: {
-        full_name: fullName,
-      },
+  const supabase = createServiceClient();
+  const activityLogger = createActivityLogger('accept-invitation');
+
+  console.log('[ACCEPT-INVITATION] Processing invitation token');
+
+  // Get invitation
+  const { data: invitation, error: inviteError } = await supabase
+    .from('user_invitations')
+    .select('*')
+    .eq('token', token)
+    .single();
+
+  if (inviteError) {
+    throw new ApiError('Invalid invitation token', 'INVALID_TOKEN', 400);
+  }
+
+  // Validate invitation state
+  const validInvitation = validateInvitation(invitation as Invitation);
+
+  // Mark as expired if needed (and throw)
+  if (new Date(validInvitation.expires_at) < new Date()) {
+    await supabase
+      .from('user_invitations')
+      .update({ status: 'expired' })
+      .eq('id', validInvitation.id);
+    throw new ApiError('Invitation has expired', 'EXPIRED', 400);
+  }
+
+  console.log(`[ACCEPT-INVITATION] Creating account for ${validInvitation.email}`);
+
+  // Create user account
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email: validInvitation.email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      full_name: fullName,
+    },
+  });
+
+  if (authError) {
+    console.error('[ACCEPT-INVITATION] Auth error:', authError);
+    throw new ApiError(authError.message, 'AUTH_ERROR', 400);
+  }
+
+  const userId = authData.user.id;
+
+  // Update profile
+  await supabase
+    .from('profiles')
+    .update({ full_name: fullName })
+    .eq('id', userId);
+
+  // Assign role from invitation
+  await supabase
+    .from('user_roles')
+    .insert({
+      user_id: userId,
+      role: validInvitation.role,
     });
 
-    if (authError) throw authError;
-
-    // Update profile
+  // Add to organization if specified
+  if (validInvitation.org_id) {
     await supabase
-      .from("profiles")
-      .update({ full_name: fullName })
-      .eq("id", authData.user.id);
-
-    // Assign role from invitation.role column
-    await supabase
-      .from("user_roles")
+      .from('org_members')
       .insert({
-        user_id: authData.user.id,
-        role: invitation.role,
+        user_id: userId,
+        org_id: validInvitation.org_id,
       });
-
-    // Add to org if specified (without role - org_members doesn't have role column)
-    if (invitation.org_id) {
-      await supabase
-        .from("org_members")
-        .insert({
-          user_id: authData.user.id,
-          org_id: invitation.org_id,
-        });
-    }
-
-    // Add to client if specified
-    if (invitation.client_id) {
-      await supabase
-        .from("client_users")
-        .insert({
-          user_id: authData.user.id,
-          client_id: invitation.client_id,
-        });
-    }
-
-    // Mark invitation as accepted
-    await supabase
-      .from("user_invitations")
-      .update({
-        status: "accepted",
-        accepted_at: new Date().toISOString(),
-      })
-      .eq("id", invitation.id);
-
-    console.log(`Invitation accepted for ${invitation.email} with role ${invitation.role}`);
-
-    // Log user accepted invitation activity
-    await activityLogger.user('user_accepted_invite', 'success',
-      `User ${invitation.email} accepted invitation and joined as ${invitation.role}`,
-      {
-        userId: authData.user.id,
-        clientId: invitation.client_id,
-        targetUserEmail: invitation.email,
-        role: invitation.role,
-        metadata: {
-          invitation_id: invitation.id,
-          org_id: invitation.org_id,
-          full_name: fullName,
-        },
-      }
-    );
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        user: authData.user,
-        message: "Invitation accepted successfully",
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
-  } catch (error) {
-    console.error("Error accepting invitation:", error);
-    return new Response(
-      JSON.stringify({ error: (error as Error).message }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      }
-    );
   }
-});
+
+  // Add to client if specified
+  if (validInvitation.client_id) {
+    await supabase
+      .from('client_users')
+      .insert({
+        user_id: userId,
+        client_id: validInvitation.client_id,
+      });
+  }
+
+  // Mark invitation as accepted
+  await supabase
+    .from('user_invitations')
+    .update({
+      status: 'accepted',
+      accepted_at: new Date().toISOString(),
+    })
+    .eq('id', validInvitation.id);
+
+  console.log(`[ACCEPT-INVITATION] Success: ${validInvitation.email} joined as ${validInvitation.role}`);
+
+  // Log activity
+  await activityLogger.user('user_accepted_invite', 'success',
+    `User ${validInvitation.email} accepted invitation and joined as ${validInvitation.role}`,
+    {
+      userId,
+      clientId: validInvitation.client_id || undefined,
+      targetUserEmail: validInvitation.email,
+      role: validInvitation.role,
+      metadata: {
+        invitation_id: validInvitation.id,
+        org_id: validInvitation.org_id,
+        full_name: fullName,
+      },
+    }
+  );
+
+  return {
+    success: true,
+    user: {
+      id: userId,
+      email: validInvitation.email,
+    },
+    message: 'Invitation accepted successfully',
+  };
+}
+
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handleAcceptInvitation, {
+  requireAuth: false, // User is not authenticated yet
+  parseBody: true,
+  auditAction: 'accept_invitation',
+}));

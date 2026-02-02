@@ -1,10 +1,23 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'npm:@supabase/supabase-js@2';
+/**
+ * AI Landing Page Generate Edge Function
+ * 
+ * Full-featured landing page generation with:
+ * - OpenAI and Anthropic provider support
+ * - Vision API for image analysis
+ * - URL scraping for style matching
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { withApiGateway, ApiError, type AuthContext } from '../_shared/api-gateway.ts';
+import {
+  createAICompletion,
+  analyzeImage,
+  extractHTML,
+  type AIProvider,
+} from '../_shared/ai-client.ts';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface GenerateRequest {
   prompt: string;
@@ -17,115 +30,23 @@ interface GenerateRequest {
   callToAction?: string;
   includeForm?: boolean;
   includeTestimonials?: boolean;
-  imageUrl?: string; // For vision API
-  sourceUrl?: string; // For link analysis
-  provider?: 'openai' | 'anthropic';
+  imageUrl?: string;
+  sourceUrl?: string;
+  provider?: AIProvider;
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+interface GenerateResponse {
+  html: string;
+  metadata: Record<string, unknown>;
+  tokensUsed: number;
+  provider: AIProvider;
+  model: string;
+}
 
-  try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
+// ============================================================================
+// System Prompt Builder
+// ============================================================================
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error('Unauthorized');
-    }
-
-    const requestData: GenerateRequest = await req.json();
-    const provider = requestData.provider || 'openai';
-    
-    console.log('AI Landing Page Generate:', {
-      user: user.id,
-      provider,
-      pageType: requestData.pageType,
-      hasImage: !!requestData.imageUrl,
-    });
-
-    // Generate the system prompt
-    let systemPrompt = generateSystemPrompt(requestData);
-    let userPrompt = requestData.prompt;
-
-    // Handle different generation modes
-    let html: string;
-    let metadata: any = {};
-    let tokensUsed = 0;
-    let model: string;
-
-    if (requestData.imageUrl && provider === 'openai') {
-      // Use OpenAI Vision API
-      const result = await generateFromImage(requestData, systemPrompt);
-      html = result.html;
-      metadata = result.metadata;
-      tokensUsed = result.tokensUsed;
-      model = result.model;
-    } else if (requestData.imageUrl && provider === 'anthropic') {
-      // Use Anthropic Claude with vision
-      const result = await generateFromImageAnthropic(requestData, systemPrompt);
-      html = result.html;
-      metadata = result.metadata;
-      tokensUsed = result.tokensUsed;
-      model = result.model;
-    } else if (requestData.sourceUrl) {
-      // Analyze source URL first
-      const extractedData = await analyzeWebpage(requestData.sourceUrl);
-      userPrompt = generateLinkAnalysisPrompt(extractedData, requestData.prompt);
-      const result = await generateFromText(userPrompt, systemPrompt, provider);
-      html = result.html;
-      metadata = { ...result.metadata, sourceAnalysis: extractedData };
-      tokensUsed = result.tokensUsed;
-      model = result.model;
-    } else {
-      // Standard text-based generation
-      const result = await generateFromText(requestData.prompt, systemPrompt, provider);
-      html = result.html;
-      metadata = result.metadata;
-      tokensUsed = result.tokensUsed;
-      model = result.model;
-    }
-
-    // Extract metadata from generated HTML
-    const extractedMetadata = extractMetadata(html);
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        html,
-        metadata: { ...metadata, ...extractedMetadata },
-        tokensUsed,
-        provider,
-        model,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-  } catch (error: any) {
-    console.error('Generation error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Failed to generate landing page' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-  }
-});
-
-/**
- * Generate system prompt based on context
- */
 function generateSystemPrompt(request: GenerateRequest): string {
   let prompt = `You are an expert web designer specializing in high-converting landing pages.
 
@@ -147,22 +68,19 @@ TECHNICAL REQUIREMENTS:
 - Use system fonts or Google Fonts
 - Make fully responsive with Tailwind's responsive classes`;
 
-  // Add page type specific instructions
   if (request.pageType) {
     prompt += '\n\n' + getPageTypeInstructions(request.pageType);
   }
 
-  // Add industry specific instructions
   if (request.industry) {
     prompt += '\n\n' + getIndustryInstructions(request.industry);
   }
 
-  // Add brand customization
-  if (request.brandColors && request.brandColors.length > 0) {
+  if (request.brandColors?.length) {
     prompt += `\n\nBRAND COLORS: Use these colors: ${request.brandColors.join(', ')}`;
   }
 
-  if (request.brandFonts && request.brandFonts.length > 0) {
+  if (request.brandFonts?.length) {
     prompt += `\n\nBRAND FONTS: Use these fonts: ${request.brandFonts.join(', ')}`;
   }
 
@@ -214,113 +132,53 @@ function getIndustryInstructions(industry: string): string {
   return instructions[industry] || instructions.generic;
 }
 
-/**
- * Generate from text using OpenAI or Anthropic
- */
-async function generateFromText(userPrompt: string, systemPrompt: string, provider: 'openai' | 'anthropic') {
-  if (provider === 'openai') {
-    return await generateWithOpenAI(userPrompt, systemPrompt);
-  } else {
-    return await generateWithAnthropic(userPrompt, systemPrompt);
+// ============================================================================
+// Webpage Analysis
+// ============================================================================
+
+async function analyzeWebpage(url: string): Promise<Record<string, string>> {
+  try {
+    const response = await fetch(url);
+    const html = await response.text();
+
+    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+    const descMatch = html.match(/<meta name="description" content="(.*?)"/i);
+
+    return {
+      title: titleMatch ? titleMatch[1] : '',
+      description: descMatch ? descMatch[1] : '',
+      url,
+    };
+  } catch (error) {
+    console.error('[AI-LP-GENERATE] Webpage analysis error:', error);
+    return { title: '', description: '', url };
   }
 }
 
-/**
- * Generate with OpenAI
- */
-async function generateWithOpenAI(userPrompt: string, systemPrompt: string) {
-  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-  if (!OPENAI_API_KEY) {
-    throw new Error('OpenAI API key not configured');
-  }
+// ============================================================================
+// Main Handler
+// ============================================================================
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4-turbo-preview',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 4000,
-    }),
+async function handleGenerateLandingPage(
+  request: GenerateRequest,
+  _context: AuthContext
+): Promise<GenerateResponse> {
+  const provider = request.provider || 'openai';
+
+  console.log('[AI-LP-GENERATE] Request:', {
+    provider,
+    pageType: request.pageType,
+    hasImage: !!request.imageUrl,
+    hasSourceUrl: !!request.sourceUrl,
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`OpenAI API error: ${error}`);
-  }
+  const systemPrompt = generateSystemPrompt(request);
+  let userPrompt = request.prompt;
+  let metadata: Record<string, unknown> = {};
 
-  const data = await response.json();
-  const html = data.choices[0].message.content;
-  const tokensUsed = data.usage.total_tokens;
-
-  return {
-    html,
-    metadata: {},
-    tokensUsed,
-    model: 'gpt-4-turbo-preview',
-  };
-}
-
-/**
- * Generate with Anthropic Claude
- */
-async function generateWithAnthropic(userPrompt: string, systemPrompt: string) {
-  const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!ANTHROPIC_API_KEY) {
-    throw new Error('Anthropic API key not configured');
-  }
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-3-opus-20240229',
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [
-        { role: 'user', content: userPrompt },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Anthropic API error: ${error}`);
-  }
-
-  const data = await response.json();
-  const html = data.content[0].text;
-  const tokensUsed = data.usage.input_tokens + data.usage.output_tokens;
-
-  return {
-    html,
-    metadata: {},
-    tokensUsed,
-    model: 'claude-3-opus-20240229',
-  };
-}
-
-/**
- * Generate from image using OpenAI Vision
- */
-async function generateFromImage(request: GenerateRequest, systemPrompt: string) {
-  const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-  if (!OPENAI_API_KEY) {
-    throw new Error('OpenAI API key not configured');
-  }
-
-  const imageAnalysisPrompt = `Analyze this direct mail piece and create a landing page that:
+  // Handle image analysis
+  if (request.imageUrl) {
+    const imageAnalysisPrompt = `Analyze this direct mail piece and create a landing page that:
 1. Matches the visual style and branding
 2. Converts the print layout to web-optimized design
 3. Maintains message consistency
@@ -328,156 +186,87 @@ async function generateFromImage(request: GenerateRequest, systemPrompt: string)
 
 ${request.prompt}`;
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4-vision-preview',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: imageAnalysisPrompt },
-            { type: 'image_url', image_url: { url: request.imageUrl } },
-          ],
-        },
-      ],
-      max_tokens: 4000,
-    }),
-  });
+    const visionResult = await analyzeImage({
+      imageUrl: request.imageUrl,
+      prompt: imageAnalysisPrompt,
+    });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`OpenAI Vision API error: ${error}`);
+    metadata.sourceImage = request.imageUrl;
+    metadata.imageAnalysis = visionResult.content;
+
+    // Use the analysis as part of the prompt
+    userPrompt = `Based on this image analysis:\n${visionResult.content}\n\n${request.prompt}`;
   }
 
-  const data = await response.json();
-  const html = data.choices[0].message.content;
-  const tokensUsed = data.usage.total_tokens;
-
-  return {
-    html,
-    metadata: { sourceImage: request.imageUrl },
-    tokensUsed,
-    model: 'gpt-4-vision-preview',
-  };
-}
-
-/**
- * Generate from image using Anthropic Claude with vision
- */
-async function generateFromImageAnthropic(request: GenerateRequest, systemPrompt: string) {
-  const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
-  if (!ANTHROPIC_API_KEY) {
-    throw new Error('Anthropic API key not configured');
-  }
-
-  // Fetch and convert image to base64
-  const imageResponse = await fetch(request.imageUrl!);
-  const imageBuffer = await imageResponse.arrayBuffer();
-  const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
-  const mediaType = imageResponse.headers.get('content-type') || 'image/jpeg';
-
-  const imageAnalysisPrompt = `Analyze this direct mail piece and create a landing page that matches its style. ${request.prompt}`;
-
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-3-opus-20240229',
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: imageAnalysisPrompt },
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType,
-                data: base64Image,
-              },
-            },
-          ],
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Anthropic Vision API error: ${error}`);
-  }
-
-  const data = await response.json();
-  const html = data.content[0].text;
-  const tokensUsed = data.usage.input_tokens + data.usage.output_tokens;
-
-  return {
-    html,
-    metadata: { sourceImage: request.imageUrl },
-    tokensUsed,
-    model: 'claude-3-opus-20240229',
-  };
-}
-
-/**
- * Analyze webpage for link-based generation
- */
-async function analyzeWebpage(url: string) {
-  try {
-    const response = await fetch(url);
-    const html = await response.text();
-
-    // Basic extraction (in production, use a proper HTML parser)
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    const descMatch = html.match(/<meta name="description" content="(.*?)"/i);
-    
-    return {
-      title: titleMatch ? titleMatch[1] : '',
-      description: descMatch ? descMatch[1] : '',
-      url,
-    };
-  } catch (error) {
-    console.error('Webpage analysis error:', error);
-    return {
-      title: '',
-      description: '',
-      url,
-    };
-  }
-}
-
-function generateLinkAnalysisPrompt(extractedData: any, userPrompt: string): string {
-  return `Create a landing page inspired by this website:
+  // Handle URL analysis
+  if (request.sourceUrl) {
+    const extractedData = await analyzeWebpage(request.sourceUrl);
+    userPrompt = `Create a landing page inspired by this website:
 Title: ${extractedData.title}
 Description: ${extractedData.description}
 
-User request: ${userPrompt}
+User request: ${request.prompt}
 
 Create original content that matches the style but is unique.`;
-}
+    metadata.sourceAnalysis = extractedData;
+  }
 
-/**
- * Extract metadata from generated HTML
- */
-function extractMetadata(html: string) {
+  // Generate landing page
+  const result = await createAICompletion({
+    provider,
+    systemPrompt,
+    messages: [{ role: 'user', content: userPrompt }],
+    temperature: 0.7,
+    maxTokens: 4000,
+  });
+
+  // Extract and validate HTML
+  let html = extractHTML(result.content);
+
+  // Ensure valid HTML structure
+  if (!html.toLowerCase().includes('<!doctype html') && !html.toLowerCase().includes('<html')) {
+    html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landing Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  ${html}
+</body>
+</html>`;
+  }
+
+  // Extract metadata from generated HTML
   const titleMatch = html.match(/<title>(.*?)<\/title>/i);
   const descMatch = html.match(/<meta name="description" content="(.*?)"/i);
-  
+
+  metadata.title = titleMatch ? titleMatch[1] : '';
+  metadata.description = descMatch ? descMatch[1] : '';
+
+  console.log('[AI-LP-GENERATE] Generated:', {
+    htmlLength: html.length,
+    tokensUsed: result.usage.totalTokens,
+    model: result.model,
+  });
+
   return {
-    title: titleMatch ? titleMatch[1] : '',
-    description: descMatch ? descMatch[1] : '',
+    html,
+    metadata,
+    tokensUsed: result.usage.totalTokens,
+    provider,
+    model: result.model,
   };
 }
 
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handleGenerateLandingPage, {
+  requireAuth: true,
+  parseBody: true,
+  auditAction: 'ai_landing_page_generate',
+}));

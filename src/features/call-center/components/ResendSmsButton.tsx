@@ -2,6 +2,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Send } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 
 interface ResendSmsButtonProps {
@@ -87,8 +89,9 @@ export function ResendSmsButton({
 
       // Send SMS via edge function with correct parameters
       // Include clientId for hierarchical Twilio resolution (Client -> Agency -> Admin)
-      const { error: smsError } = await supabase.functions.invoke('send-gift-card-sms', {
-        body: {
+      await callEdgeFunction(
+        Endpoints.messaging.sendGiftCardSms,
+        {
           deliveryId: smsLogEntry.id,
           giftCardCode: giftCardCode,
           giftCardValue: giftCardValue,
@@ -98,10 +101,8 @@ export function ResendSmsButton({
           recipientId: recipientId,
           giftCardId: giftCardId,
           clientId: clientId, // For hierarchical Twilio resolution
-        },
-      });
-
-      if (smsError) throw smsError;
+        }
+      );
 
       return smsLogEntry;
     },

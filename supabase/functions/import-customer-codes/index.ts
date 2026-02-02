@@ -1,327 +1,348 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+/**
+ * Import Customer Codes Edge Function
+ * 
+ * Imports customer redemption codes with tracking, validation,
+ * and optional campaign/audience linking.
+ */
+
+import { withApiGateway, ApiError, type AuthContext } from '../_shared/api-gateway.ts';
+import { createServiceClient } from '../_shared/supabase.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
+import { type ValidationError, type ImportResult } from '../_shared/import-export-utils.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// ============================================================================
+// Types
+// ============================================================================
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+interface CustomerCodeRow {
+  redemption_code: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  zip4?: string;
+  [key: string]: unknown;
+}
+
+interface ImportCustomerCodesRequest {
+  clientId: string;
+  campaignId?: string;
+  audienceId?: string;
+  fileName?: string;
+  codes: CustomerCodeRow[];
+}
+
+interface ImportCustomerCodesResponse extends ImportResult {
+  uploadId?: string;
+  audienceId?: string;
+  summary: {
+    total: number;
+    successful: number;
+    duplicates: number;
+    errors: number;
+  };
+  errorLog: ValidationError[];
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const STANDARD_FIELDS = [
+  'redemption_code', 'first_name', 'last_name',
+  'email', 'phone', 'company', 'address1', 'address2',
+  'city', 'state', 'zip', 'zip4'
+];
+
+const BATCH_SIZE = 100;
+
+// ============================================================================
+// Main Handler
+// ============================================================================
+
+async function handleImportCustomerCodes(
+  request: ImportCustomerCodesRequest,
+  context: AuthContext,
+  rawRequest: Request
+): Promise<ImportCustomerCodesResponse> {
+  const supabase = createServiceClient();
+  const activityLogger = createActivityLogger('import-customer-codes', rawRequest);
+
+  const { clientId, campaignId, audienceId, fileName, codes } = request;
+
+  if (!clientId || !codes || !Array.isArray(codes)) {
+    throw new ApiError('Missing required parameters', 'VALIDATION_ERROR', 400);
   }
 
-  // Initialize activity logger
-  const activityLogger = createActivityLogger('import-customer-codes', req);
+  // Verify user has access
+  const { data: hasAccess } = await supabase
+    .rpc('user_can_access_client', {
+      _user_id: context.user.id,
+      _client_id: clientId,
+    });
 
-  try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return Response.json(
-        { success: false, error: 'Unauthorized' },
-        { headers: corsHeaders, status: 401 }
-      );
-    }
+  if (!hasAccess) {
+    throw new ApiError('Unauthorized to upload codes for this client', 'FORBIDDEN', 403);
+  }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+  // Create upload tracking record
+  const { data: upload, error: uploadError } = await supabase
+    .from('bulk_code_uploads')
+    .insert({
+      client_id: clientId,
+      campaign_id: campaignId,
+      audience_id: audienceId,
+      uploaded_by_user_id: context.user.id,
+      file_name: fileName,
+      total_codes: codes.length,
+      upload_status: 'processing',
+    })
+    .select()
+    .single();
 
-    // Get authenticated user
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
+  if (uploadError || !upload) {
+    console.error('[IMPORT-CUSTOMER-CODES] Error creating upload record:', uploadError);
+    throw new ApiError('Failed to initialize upload', 'DATABASE_ERROR', 500);
+  }
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    
-    if (authError || !user) {
-      return Response.json(
-        { success: false, error: 'Unauthorized' },
-        { headers: corsHeaders, status: 401 }
-      );
-    }
+  let successCount = 0;
+  let duplicateCount = 0;
+  let errorCount = 0;
+  const errorLog: ValidationError[] = [];
 
-    const { clientId, campaignId, audienceId, fileName, codes } = await req.json();
+  // Get or create audience
+  let targetAudienceId = audienceId;
+  if (!targetAudienceId) {
+    const audienceName = campaignId
+      ? `Campaign ${campaignId} - Customer Codes`
+      : `Bulk Upload ${new Date().toISOString().split('T')[0]}`;
 
-    if (!clientId || !codes || !Array.isArray(codes)) {
-      return Response.json(
-        { success: false, error: 'Missing required parameters' },
-        { headers: corsHeaders, status: 400 }
-      );
-    }
-
-    // Verify user has access to this client
-    const { data: hasAccess } = await supabase
-      .rpc('user_can_access_client', {
-        _user_id: user.id,
-        _client_id: clientId
-      });
-
-    if (!hasAccess) {
-      return Response.json(
-        { success: false, error: 'Unauthorized to upload codes for this client' },
-        { headers: corsHeaders, status: 403 }
-      );
-    }
-
-    // Create upload tracking record
-    const { data: upload, error: uploadError } = await supabase
-      .from('bulk_code_uploads')
+    const { data: newAudience, error: audienceError } = await supabase
+      .from('audiences')
       .insert({
         client_id: clientId,
-        campaign_id: campaignId,
-        audience_id: audienceId,
-        uploaded_by_user_id: user.id,
-        file_name: fileName,
-        total_codes: codes.length,
-        upload_status: 'processing'
+        name: audienceName,
+        source: 'csv',
+        status: 'processing',
       })
       .select()
       .single();
 
-    if (uploadError || !upload) {
-      console.error('Error creating upload record:', uploadError);
-      return Response.json(
-        { success: false, error: 'Failed to initialize upload' },
-        { headers: corsHeaders, status: 500 }
-      );
+    if (audienceError || !newAudience) {
+      console.error('[IMPORT-CUSTOMER-CODES] Error creating audience:', audienceError);
+      throw new ApiError('Failed to create audience', 'DATABASE_ERROR', 500);
     }
 
-    let successCount = 0;
-    let duplicateCount = 0;
-    let errorCount = 0;
-    const errorLog: any[] = [];
+    targetAudienceId = newAudience.id;
+  }
 
-    // Get or create audience
-    let targetAudienceId = audienceId;
-    if (!targetAudienceId) {
-      const audienceName = campaignId 
-        ? `Campaign ${campaignId} - Customer Codes` 
-        : `Bulk Upload ${new Date().toISOString().split('T')[0]}`;
-      
-      const { data: newAudience, error: audienceError } = await supabase
-        .from('audiences')
-        .insert({
-          client_id: clientId,
-          name: audienceName,
-          source: 'csv',
-          status: 'processing'
-        })
-        .select()
-        .single();
+  // Process codes in batches
+  for (let i = 0; i < codes.length; i += BATCH_SIZE) {
+    const batch = codes.slice(i, i + BATCH_SIZE);
+    const recipientsToInsert: Record<string, unknown>[] = [];
 
-      if (audienceError || !newAudience) {
-        console.error('Error creating audience:', audienceError);
-        return Response.json(
-          { success: false, error: 'Failed to create audience' },
-          { headers: corsHeaders, status: 500 }
-        );
-      }
+    for (const code of batch) {
+      const rowNumber = i + batch.indexOf(code) + 2;
 
-      targetAudienceId = newAudience.id;
-    }
-
-    // Process codes in batches
-    const BATCH_SIZE = 100;
-    for (let i = 0; i < codes.length; i += BATCH_SIZE) {
-      const batch = codes.slice(i, i + BATCH_SIZE);
-      const recipientsToInsert: any[] = [];
-
-      for (const code of batch) {
-        try {
-          // Validate required fields
-          if (!code.redemption_code) {
-            errorCount++;
-            errorLog.push({
-              row: i + batch.indexOf(code) + 2, // +2 for header and 0-index
-              error: 'Missing redemption_code',
-              data: code
-            });
-            continue;
-          }
-
-          // Check for duplicate in this batch
-          const isDuplicateInBatch = recipientsToInsert.some(
-            r => r.redemption_code === code.redemption_code.toUpperCase()
-          );
-
-          if (isDuplicateInBatch) {
-            duplicateCount++;
-            continue;
-          }
-
-          // Check for existing code in database
-          const { data: existing } = await supabase
-            .from('recipients')
-            .select('id')
-            .eq('redemption_code', code.redemption_code.toUpperCase())
-            .maybeSingle();
-
-          if (existing) {
-            duplicateCount++;
-            errorLog.push({
-              row: i + batch.indexOf(code) + 2,
-              error: 'Duplicate code already exists in database',
-              code: code.redemption_code
-            });
-            continue;
-          }
-
-          // Extract custom fields - everything that's not a standard field
-          const standardFields = [
-            'redemption_code', 'first_name', 'last_name', 
-            'email', 'phone', 'company', 'address1', 'address2', 
-            'city', 'state', 'zip', 'zip4'
-          ];
-          
-          const customFields: any = {};
-          for (const [key, value] of Object.entries(code)) {
-            if (!standardFields.includes(key) && value !== null && value !== undefined) {
-              customFields[key] = value;
-            }
-          }
-
-          recipientsToInsert.push({
-            audience_id: targetAudienceId,
-            campaign_id: campaignId || null,  // Direct campaign link for efficient lookups
-            redemption_code: code.redemption_code.toUpperCase(),
-            first_name: code.first_name || null,
-            last_name: code.last_name || null,
-            phone: code.phone || null,
-            email: code.email?.toLowerCase() || null,
-            company: code.company || null,
-            address1: code.address1 || null,
-            address2: code.address2 || null,
-            city: code.city || null,
-            state: code.state || null,
-            zip: code.zip || null,
-            approval_status: 'pending',
-            custom_fields: customFields
-          });
-        } catch (error) {
+      try {
+        // Validate required fields
+        if (!code.redemption_code) {
           errorCount++;
           errorLog.push({
-            row: i + batch.indexOf(code) + 2,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            data: code
+            row: rowNumber,
+            message: 'Missing redemption_code',
+            data: code,
           });
+          continue;
         }
-      }
 
-      // Insert batch
-      if (recipientsToInsert.length > 0) {
-        const { error: insertError } = await supabase
+        const normalizedCode = code.redemption_code.toUpperCase();
+
+        // Check for duplicate in this batch
+        const isDuplicateInBatch = recipientsToInsert.some(
+          r => r.redemption_code === normalizedCode
+        );
+
+        if (isDuplicateInBatch) {
+          duplicateCount++;
+          continue;
+        }
+
+        // Check for existing code in database
+        const { data: existing } = await supabase
           .from('recipients')
-          .insert(recipientsToInsert);
+          .select('id')
+          .eq('redemption_code', normalizedCode)
+          .maybeSingle();
 
-        if (insertError) {
-          console.error('Batch insert error:', insertError);
-          errorCount += recipientsToInsert.length;
+        if (existing) {
+          duplicateCount++;
           errorLog.push({
-            batch: `${i}-${i + batch.length}`,
-            error: insertError.message
+            row: rowNumber,
+            message: 'Duplicate code already exists in database',
+            code: normalizedCode,
           });
-        } else {
-          successCount += recipientsToInsert.length;
+          continue;
+        }
 
-          // Log uploads in audit log
-          for (const recipient of recipientsToInsert) {
-            await supabase.from('recipient_audit_log').insert({
-              action: 'uploaded',
-              performed_by_user_id: user.id,
-              ip_address: req.headers.get('x-forwarded-for'),
-              user_agent: req.headers.get('user-agent'),
-              metadata: {
-                uploadId: upload.id,
-                redemption_code: recipient.redemption_code
-              }
-            });
+        // Extract custom fields
+        const customFields: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(code)) {
+          if (!STANDARD_FIELDS.includes(key) && value !== null && value !== undefined) {
+            customFields[key] = value;
           }
         }
-      }
-    }
 
-    // Update upload record with results
-    await supabase
-      .from('bulk_code_uploads')
-      .update({
-        successful_codes: successCount,
-        duplicate_codes: duplicateCount,
-        error_codes: errorCount,
-        upload_status: errorCount === codes.length ? 'failed' : 'completed',
-        error_log: errorLog.length > 0 ? errorLog : null
-      })
-      .eq('id', upload.id);
-
-    // Update audience counts
-    if (targetAudienceId) {
-      await supabase
-        .from('audiences')
-        .update({
-          total_count: successCount,
-          valid_count: successCount,
-          status: 'ready'
-        })
-        .eq('id', targetAudienceId);
-    }
-
-    // If campaignId was provided, also update campaign's audience_id
-    if (campaignId && targetAudienceId) {
-      await supabase
-        .from('campaigns')
-        .update({ audience_id: targetAudienceId })
-        .eq('id', campaignId);
-    }
-
-    console.log('Import completed:', {
-      uploadId: upload.id,
-      total: codes.length,
-      success: successCount,
-      duplicates: duplicateCount,
-      errors: errorCount
-    });
-
-    // Log import activity
-    await activityLogger.campaign('recipient_imported', successCount > 0 ? 'success' : 'failed',
-      `Imported ${successCount} customer codes from ${fileName || 'CSV'}`,
-      {
-        userId: user.id,
-        clientId,
-        campaignId,
-        recipientsAffected: successCount,
-        metadata: {
-          upload_id: upload.id,
+        recipientsToInsert.push({
           audience_id: targetAudienceId,
-          file_name: fileName,
-          total_codes: codes.length,
-          successful: successCount,
-          duplicates: duplicateCount,
-          errors: errorCount,
-        },
+          campaign_id: campaignId || null,
+          redemption_code: normalizedCode,
+          first_name: code.first_name || null,
+          last_name: code.last_name || null,
+          phone: code.phone || null,
+          email: code.email?.toLowerCase() || null,
+          company: code.company || null,
+          address1: code.address1 || null,
+          address2: code.address2 || null,
+          city: code.city || null,
+          state: code.state || null,
+          zip: code.zip || null,
+          approval_status: 'pending',
+          custom_fields: Object.keys(customFields).length > 0 ? customFields : null,
+        });
+      } catch (error) {
+        errorCount++;
+        errorLog.push({
+          row: rowNumber,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          data: code,
+        });
       }
-    );
+    }
 
-    return Response.json({
-      success: true,
-      uploadId: upload.id,
-      audienceId: targetAudienceId,
-      summary: {
-        total: codes.length,
+    // Insert batch
+    if (recipientsToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from('recipients')
+        .insert(recipientsToInsert);
+
+      if (insertError) {
+        console.error('[IMPORT-CUSTOMER-CODES] Batch insert error:', insertError);
+        errorCount += recipientsToInsert.length;
+        errorLog.push({
+          row: i + 1,
+          message: `Batch insert failed: ${insertError.message}`,
+        });
+      } else {
+        successCount += recipientsToInsert.length;
+
+        // Log uploads in audit log
+        for (const recipient of recipientsToInsert) {
+          await supabase.from('recipient_audit_log').insert({
+            action: 'uploaded',
+            performed_by_user_id: context.user.id,
+            ip_address: rawRequest.headers.get('x-forwarded-for'),
+            user_agent: rawRequest.headers.get('user-agent'),
+            metadata: {
+              uploadId: upload.id,
+              redemption_code: recipient.redemption_code,
+            },
+          });
+        }
+      }
+    }
+  }
+
+  // Update upload record with results
+  await supabase
+    .from('bulk_code_uploads')
+    .update({
+      successful_codes: successCount,
+      duplicate_codes: duplicateCount,
+      error_codes: errorCount,
+      upload_status: errorCount === codes.length ? 'failed' : 'completed',
+      error_log: errorLog.length > 0 ? errorLog : null,
+    })
+    .eq('id', upload.id);
+
+  // Update audience counts
+  if (targetAudienceId) {
+    await supabase
+      .from('audiences')
+      .update({
+        total_count: successCount,
+        valid_count: successCount,
+        status: 'ready',
+      })
+      .eq('id', targetAudienceId);
+  }
+
+  // Link audience to campaign if provided
+  if (campaignId && targetAudienceId) {
+    await supabase
+      .from('campaigns')
+      .update({ audience_id: targetAudienceId })
+      .eq('id', campaignId);
+  }
+
+  console.log('[IMPORT-CUSTOMER-CODES] Complete:', {
+    uploadId: upload.id,
+    total: codes.length,
+    success: successCount,
+    duplicates: duplicateCount,
+    errors: errorCount,
+  });
+
+  // Log activity
+  await activityLogger.campaign('recipient_imported', successCount > 0 ? 'success' : 'failed',
+    `Imported ${successCount} customer codes from ${fileName || 'CSV'}`,
+    {
+      userId: context.user.id,
+      clientId,
+      campaignId,
+      recipientsAffected: successCount,
+      metadata: {
+        upload_id: upload.id,
+        audience_id: targetAudienceId,
+        file_name: fileName,
+        total_codes: codes.length,
         successful: successCount,
         duplicates: duplicateCount,
-        errors: errorCount
+        errors: errorCount,
       },
-      errorLog: errorLog.length > 0 ? errorLog.slice(0, 100) : [] // Return first 100 errors
-    }, { headers: corsHeaders });
+    }
+  );
 
-  } catch (error) {
-    console.error('Error in import-customer-codes:', error);
-    return Response.json(
-      { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500, headers: corsHeaders }
-    );
-  }
-});
+  return {
+    success: successCount > 0 || errorCount === 0,
+    imported: successCount,
+    failed: errorCount,
+    skipped: duplicateCount,
+    errors: errorLog.slice(0, 100),
+    uploadId: upload.id,
+    audienceId: targetAudienceId,
+    summary: {
+      total: codes.length,
+      successful: successCount,
+      duplicates: duplicateCount,
+      errors: errorCount,
+    },
+    errorLog: errorLog.slice(0, 100),
+  };
+}
+
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handleImportCustomerCodes, {
+  requireAuth: true,
+  parseBody: true,
+  auditAction: 'import_customer_codes',
+}));

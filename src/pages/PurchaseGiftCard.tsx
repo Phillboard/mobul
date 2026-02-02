@@ -10,6 +10,8 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
+import { callEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { Layout } from "@/shared/components/layout/Layout";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -122,18 +124,17 @@ export default function PurchaseGiftCard() {
 
       if (!clientUser) throw new Error("Client not found");
 
-      const { data, error } = await supabase.functions.invoke("transfer-admin-cards", {
-        body: {
+      await callEdgeFunction(
+        Endpoints.giftCards.transfer,
+        {
           masterPoolId: poolId,
           buyerClientId: clientUser.client_id,
           quantity: qty,
           pricePerCard: pricePerCard,
           soldByUserId: session?.user?.id,
           notes: `Client self-service purchase from marketplace`,
-        },
-      });
-
-      if (error) throw error;
+        }
+      );
 
       toast({
         title: "Purchase Successful!",

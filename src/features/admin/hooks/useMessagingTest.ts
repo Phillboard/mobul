@@ -6,7 +6,8 @@
  */
 
 import { useState, useCallback } from "react";
-import { supabase } from "@core/services/supabase";
+import { callEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { useToast } from "@/shared/hooks";
 
 // SMS Provider types
@@ -88,19 +89,15 @@ export function useMessagingTest(): UseMessagingTestReturn {
     setIsFetchingProviders(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('test-sms-provider', {
-        body: { mode: 'status' }
-      });
-
-      if (error) {
-        console.error('[useMessagingTest] Provider status error:', error);
-        toast({
-          title: 'Failed to fetch provider status',
-          description: error.message,
-          variant: 'destructive',
-        });
-        return;
-      }
+      const data = await callEdgeFunction<{
+        success?: boolean;
+        error?: string;
+        providers: Record<SMSProvider, ProviderStatus>;
+        primaryProvider: SMSProvider;
+        fallbackChain: SMSProvider[];
+        fallbackEnabled: boolean;
+        activeProvider: SMSProvider;
+      }>(Endpoints.messaging.testSMSProvider, { mode: 'status' });
 
       if (data?.success) {
         setSmsProviderConfig({
@@ -139,33 +136,23 @@ export function useMessagingTest(): UseMessagingTestReturn {
     const startTime = Date.now();
 
     try {
-      const { data, error } = await supabase.functions.invoke('test-sms-provider', {
-        body: { 
-          mode: 'send',
-          phone,
-          message,
-        }
+      const data = await callEdgeFunction<{
+        success: boolean;
+        provider: SMSProvider;
+        messageId?: string;
+        status?: string;
+        error?: string;
+        fallbackUsed?: boolean;
+        attempts?: Array<{ provider: SMSProvider; success: boolean; error?: string }>;
+        formattedPhone?: string;
+        duration?: number;
+      }>(Endpoints.messaging.testSMSProvider, { 
+        mode: 'send',
+        phone,
+        message,
       });
 
       const duration = Date.now() - startTime;
-
-      if (error) {
-        const result: SMSTestResult = {
-          success: false,
-          provider: 'notificationapi', // fallback
-          error: error.message,
-          duration,
-        };
-        setSmsTestResult(result);
-        
-        toast({
-          title: 'SMS send failed',
-          description: error.message,
-          variant: 'destructive',
-        });
-        
-        return result;
-      }
 
       const result: SMSTestResult = {
         success: data.success,
@@ -241,14 +228,16 @@ export function useMessagingTest(): UseMessagingTestReturn {
         html: body,
       };
 
+      let endpoint = Endpoints.messaging.sendEmail;
+      
       if (type === 'verification') {
-        functionName = 'send-verification-email';
+        endpoint = Endpoints.messaging.sendVerificationEmail;
         functionBody = {
           email,
           type: 'test',
         };
       } else if (type === 'gift-card') {
-        functionName = 'send-gift-card-email';
+        endpoint = Endpoints.messaging.sendGiftCardEmail;
         functionBody = {
           email,
           subject,
@@ -256,28 +245,12 @@ export function useMessagingTest(): UseMessagingTestReturn {
         };
       }
 
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body: functionBody,
-      });
+      const data = await callEdgeFunction<{ success?: boolean; messageId?: string; id?: string; error?: string }>(
+        endpoint,
+        functionBody
+      );
 
       const duration = Date.now() - startTime;
-
-      if (error) {
-        const result: EmailTestResult = {
-          success: false,
-          error: error.message,
-          duration,
-        };
-        setEmailTestResult(result);
-        
-        toast({
-          title: 'Email send failed',
-          description: error.message,
-          variant: 'destructive',
-        });
-        
-        return result;
-      }
 
       const result: EmailTestResult = {
         success: data?.success !== false,

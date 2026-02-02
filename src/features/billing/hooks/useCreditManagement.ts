@@ -6,6 +6,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 
 interface CreditAccount {
@@ -57,21 +59,18 @@ export function useCalculateCreditRequirements() {
       giftCardDenomination: number;
       mailCostPerPiece?: number;
     }) => {
-      const { data, error } = await supabase.functions.invoke(
-        'calculate-credit-requirements',
+      const data = await callEdgeFunction<{ success: boolean; error?: string; data: CreditRequirements }>(
+        Endpoints.admin.calculateCreditRequirements,
         {
-          body: {
-            recipientCount,
-            giftCardDenomination,
-            mailCostPerPiece,
-          },
+          recipientCount,
+          giftCardDenomination,
+          mailCostPerPiece,
         }
       );
 
-      if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Calculation failed');
 
-      return data.data as CreditRequirements;
+      return data.data;
     },
   });
 }

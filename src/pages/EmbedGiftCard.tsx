@@ -4,7 +4,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Gift, Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import { supabase } from "@core/services/supabase";
+import { callPublicEdgeFunction } from "@core/api/client";
+import { Endpoints } from "@core/api/endpoints";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -44,20 +45,23 @@ export default function EmbedGiftCard() {
     setIsValidating(true);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("redeem-gift-card-embed", {
-        body: {
+      const data = await callPublicEdgeFunction<{
+        valid: boolean;
+        message?: string;
+        giftCard?: any;
+      }>(
+        Endpoints.giftCards.redeemEmbed,
+        {
           code: code.trim().toUpperCase(),
-        },
-      });
-
-      if (fnError) throw fnError;
+        }
+      );
 
       if (data.valid) {
         setGiftCard(data.giftCard);
       } else {
         setError(data.message || "Invalid code. Please check and try again.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Validation error:", err);
       setError("Failed to validate code. Please try again.");
     } finally {

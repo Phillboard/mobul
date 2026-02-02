@@ -3,7 +3,8 @@ import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useToast } from '@shared/hooks';
 import { FormConfig } from "@/types/aceForms";
 import { useFormContext } from '@/features/forms/hooks';
@@ -32,18 +33,17 @@ export function AIFormGenerator({ onGenerated }: AIFormGeneratorProps) {
 
     setGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-form-ai", {
-        body: { 
+      const data = await callEdgeFunction<{ error?: string; name: string; description: string; config: FormConfig }>(
+        Endpoints.ai.generateForm,
+        { 
           prompt,
           context: {
             companyName: context.companyName,
             industry: context.industry,
             giftCardBrands: context.giftCardBrands,
           }
-        },
-      });
-
-      if (error) throw error;
+        }
+      );
 
       if (data.error) {
         throw new Error(data.error);

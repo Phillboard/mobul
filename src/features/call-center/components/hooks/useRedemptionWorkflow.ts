@@ -8,6 +8,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { useOptInStatus } from '@/features/settings/hooks';
 import { logger } from '@/core/services/logger';
 
@@ -381,46 +383,29 @@ export function useRedemptionWorkflow(options: UseRedemptionWorkflowOptions = {}
         conditionId: state.selectedConditionId,
       });
 
-      const { data, error } = await supabase.functions.invoke('provision-gift-card-for-call-center', {
-        body: {
-          recipientId: state.recipient.id,
-          campaignId: provCampaign.id,
-          brandId: condition.brand_id,
-          denomination: condition.card_value,
-          conditionId: state.selectedConditionId,
-        },
-      });
-
-      console.log('[Provision] Edge Function response:', { data, error });
-
-      // Handle Edge Function errors - extract the actual error message
-      if (error) {
+      let data: any;
+      try {
+        data = await callEdgeFunction(
+          Endpoints.giftCards.provisionForCallCenter,
+          {
+            recipientId: state.recipient.id,
+            campaignId: provCampaign.id,
+            brandId: condition.brand_id,
+            denomination: condition.card_value,
+            conditionId: state.selectedConditionId,
+          }
+        );
+        console.log('[Provision] Edge Function response:', { data });
+      } catch (error: any) {
         console.error('[Provision] Edge Function error:', error);
         
-        // Try to parse the error context for our custom error message
-        let errorMessage = error.message || 'Edge Function error';
-        let errorData: any = {};
-        
-        // The error.context contains the Response object with our JSON body
-        if (error.context && typeof error.context.json === 'function') {
-          try {
-            errorData = await error.context.json();
-            console.log('[Provision] Parsed error data:', errorData);
-            errorMessage = errorData.message || errorData.error || errorMessage;
-          } catch (parseErr) {
-            console.warn('[Provision] Could not parse error context:', parseErr);
-          }
-        }
-        
         const provError: ProvisioningError = {
-          message: errorMessage,
-          errorCode: errorData.errorCode,
-          requestId: errorData.requestId,
-          canRetry: errorData.canRetry ?? true,
-          requiresCampaignEdit: errorData.requiresCampaignEdit,
+          message: error.message || 'Edge Function error',
+          errorCode: error.code,
+          canRetry: true,
         };
         updateState({ provisioningError: provError });
-        throw new Error(errorMessage);
+        throw error;
       }
 
       if (!data?.success) {
@@ -490,18 +475,18 @@ export function useRedemptionWorkflow(options: UseRedemptionWorkflowOptions = {}
     if (!state.cellPhone || !state.recipient || !campaign) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-sms-opt-in', {
-        body: {
+      const data = await callEdgeFunction<{ error?: string }>(
+        Endpoints.messaging.sendOptIn,
+        {
           recipient_id: state.recipient.id,
           campaign_id: campaign.id,
           call_session_id: state.callSessionId,
           phone: state.cellPhone,
           client_name: clientName,
           custom_message: campaign.sms_opt_in_message || undefined,
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
       if (data.error) throw new Error(data.error);
 
       updateState({ phone: state.cellPhone });
@@ -583,17 +568,17 @@ export function useRedemptionWorkflow(options: UseRedemptionWorkflowOptions = {}
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-verification-email', {
-        body: {
+      const data = await callEdgeFunction<{ error?: string }>(
+        Endpoints.messaging.sendVerificationEmail,
+        {
           recipient_id: state.recipient.id,
           campaign_id: campaign.id,
           email: state.recipient.email,
           client_name: clientName,
           recipient_name: `${state.recipient.first_name || ''} ${state.recipient.last_name || ''}`.trim(),
-        },
-      });
+        }
+      );
 
-      if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
       updateState({

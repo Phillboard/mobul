@@ -5,7 +5,8 @@
  * Supports multiple providers: Resend, SendGrid, AWS SES
  */
 
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 
 export interface EmailOptions {
   to: string | string[];
@@ -37,13 +38,10 @@ export interface GiftCardEmailOptions {
  */
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke('send-email', {
-      body: options,
-    });
-
-    if (error) {
-      throw new Error(error.message || 'Failed to send email');
-    }
+    const data = await callEdgeFunction<{ messageId?: string }>(
+      Endpoints.messaging.sendEmail,
+      options
+    );
 
     return {
       success: true,

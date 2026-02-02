@@ -5,7 +5,8 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { useToast } from '@shared/hooks';
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { CreditCard, Loader2 } from "lucide-react";
 
 interface PurchaseGiftCardsDialogProps {
@@ -46,17 +47,16 @@ export function PurchaseGiftCardsDialog({
     setIsProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('purchase-gift-cards', {
-        body: {
+      const data = await callEdgeFunction<{ checkoutUrl?: string }>(
+        Endpoints.giftCards.purchase,
+        {
           clientId,
           quantity,
           cardValue,
           poolName: poolName.trim(),
           provider,
-        },
-      });
-
-      if (error) throw error;
+        }
+      );
 
       if (data?.checkoutUrl) {
         // Redirect to Stripe checkout

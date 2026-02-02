@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { toast } from "sonner";
 
 export function useTrackedNumbers(clientId: string | null) {
@@ -77,11 +79,11 @@ export function useAssignTrackedNumber() {
       clientId: string; 
       provisionNew?: boolean;
     }) => {
-      const { data, error } = await supabase.functions.invoke('assign-tracked-numbers', {
-        body: { campaignId, clientId, provisionNew }
-      });
+      const data = await callEdgeFunction<{ error?: string; number: { phone_number: string } }>(
+        Endpoints.twilio.assignTrackedNumbers,
+        { campaignId, clientId, provisionNew }
+      );
 
-      if (error) throw error;
       if (data.error) throw new Error(data.error);
       
       return data;
@@ -114,11 +116,11 @@ export function useCompleteCondition() {
       conditionNumber: number;
       notes?: string;
     }) => {
-      const { data, error } = await supabase.functions.invoke('complete-condition', {
-        body: { callSessionId, campaignId, recipientId, conditionNumber, notes }
-      });
+      const data = await callEdgeFunction<{ error?: string; giftCard?: { value: number; provider: string; deliveryStatus: string } }>(
+        Endpoints.callCenter.completeCondition,
+        { callSessionId, campaignId, recipientId, conditionNumber, notes }
+      );
 
-      if (error) throw error;
       if (data.error) throw new Error(data.error);
       
       return data;

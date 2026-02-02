@@ -1,157 +1,80 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.81.0';
+/**
+ * Send Email Edge Function
+ * 
+ * Generic email sending endpoint that delegates to the shared email provider.
+ * Use this for ad-hoc emails. For specific use cases, use the dedicated functions:
+ * - send-gift-card-email
+ * - send-verification-email
+ * - send-user-invitation
+ * - send-marketing-email
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { withApiGateway, ApiError } from '../_shared/api-gateway.ts';
+import { sendEmail, isValidEmail } from '../_shared/email-provider.ts';
+import type { SendEmailParams, SendEmailResult } from '../_shared/email-provider.ts';
 
-interface EmailOptions {
+interface SendEmailRequest {
   to: string | string[];
   subject: string;
   html?: string;
   text?: string;
   from?: string;
+  fromName?: string;
   replyTo?: string;
+  tags?: Record<string, string>;
 }
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+interface SendEmailResponse extends SendEmailResult {
+  note?: string;
+}
+
+async function handleSendEmail(
+  request: SendEmailRequest,
+  _context: unknown
+): Promise<SendEmailResponse> {
+  const { to, subject, html, text, from, fromName, replyTo, tags } = request;
+
+  // Validate required fields
+  if (!to) {
+    throw new ApiError('Missing required field: to', 'VALIDATION_ERROR', 400);
+  }
+  if (!subject) {
+    throw new ApiError('Missing required field: subject', 'VALIDATION_ERROR', 400);
+  }
+  if (!html && !text) {
+    throw new ApiError('Either html or text content is required', 'VALIDATION_ERROR', 400);
   }
 
-  try {
-    const emailOptions: EmailOptions = await req.json();
-    
-    // Get email provider from environment
-    const emailProvider = Deno.env.get('EMAIL_PROVIDER') || 'resend'; // resend, sendgrid, ses
-    const apiKey = Deno.env.get('EMAIL_API_KEY') || Deno.env.get('RESEND_API_KEY');
-    
-    if (!apiKey) {
-      console.error('❌ No email API key configured');
-      // For now, log the email instead of failing
-      console.log('📧 Email would be sent:', {
-        to: emailOptions.to,
-        subject: emailOptions.subject,
-        preview: emailOptions.text?.substring(0, 100) || emailOptions.html?.substring(0, 100),
-      });
-      
-      return new Response(
-        JSON.stringify({
-          success: true,
-          messageId: `mock-${crypto.randomUUID()}`,
-          note: 'Email API not configured - logged instead',
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+  // Validate email addresses
+  const toAddresses = Array.isArray(to) ? to : [to];
+  for (const email of toAddresses) {
+    if (!isValidEmail(email)) {
+      throw new ApiError(`Invalid email address: ${email}`, 'VALIDATION_ERROR', 400);
     }
-
-    let result;
-
-    // Send via configured provider
-    switch (emailProvider) {
-      case 'resend':
-        result = await sendViaResend(emailOptions, apiKey);
-        break;
-      case 'sendgrid':
-        result = await sendViaSendGrid(emailOptions, apiKey);
-        break;
-      case 'ses':
-        result = await sendViaSES(emailOptions, apiKey);
-        break;
-      default:
-        throw new Error(`Unknown email provider: ${emailProvider}`);
-    }
-
-    return new Response(
-      JSON.stringify(result),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error: any) {
-    console.error('❌ Email error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  }
-});
-
-/**
- * Send email via Resend
- */
-async function sendViaResend(options: EmailOptions, apiKey: string) {
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: options.from || 'noreply@your-domain.com',
-      to: Array.isArray(options.to) ? options.to : [options.to],
-      subject: options.subject,
-      html: options.html,
-      text: options.text,
-      reply_to: options.replyTo,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Resend API error');
   }
 
-  const data = await response.json();
-  return {
-    success: true,
-    messageId: data.id,
-    provider: 'resend',
+  // Send the email
+  const params: SendEmailParams = {
+    to: toAddresses,
+    subject,
+    html: html || `<pre>${text}</pre>`,
+    text,
+    from,
+    fromName,
+    replyTo,
+    tags,
   };
-}
 
-/**
- * Send email via SendGrid
- */
-async function sendViaSendGrid(options: EmailOptions, apiKey: string) {
-  const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      personalizations: [{
-        to: Array.isArray(options.to) 
-          ? options.to.map(email => ({ email }))
-          : [{ email: options.to }],
-      }],
-      from: { email: options.from || 'noreply@your-domain.com' },
-      subject: options.subject,
-      content: [
-        { type: 'text/html', value: options.html || '' },
-        { type: 'text/plain', value: options.text || '' },
-      ],
-    }),
-  });
+  const result = await sendEmail(params);
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.errors?.[0]?.message || 'SendGrid API error');
+  if (!result.success) {
+    throw new ApiError(result.error || 'Failed to send email', 'EMAIL_ERROR', 500);
   }
 
-  return {
-    success: true,
-    messageId: response.headers.get('x-message-id'),
-    provider: 'sendgrid',
-  };
+  return result;
 }
 
-/**
- * Send email via AWS SES
- */
-async function sendViaSES(options: EmailOptions, apiKey: string) {
-  // AWS SES implementation would go here
-  // Requires AWS SDK and more complex setup
-  throw new Error('AWS SES not yet implemented');
-}
-
+Deno.serve(withApiGateway(handleSendEmail, {
+  requireAuth: false, // Can be called by other edge functions
+  parseBody: true,
+}));

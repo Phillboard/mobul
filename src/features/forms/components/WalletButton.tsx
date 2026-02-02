@@ -5,7 +5,8 @@ import { detectPlatform, getWalletName, supportsWallet } from '@/core/services/w
 import { useToast } from '@shared/hooks';
 import { GiftCardRedemption } from "@/types/aceForms";
 import { cn } from '@shared/utils/cn';
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 
 interface WalletButtonProps {
   redemption: GiftCardRedemption;
@@ -102,26 +103,18 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
    * Handle Apple Wallet pass generation and download
    */
   const handleAppleWallet = async (giftCard: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke(
-      'generate-apple-wallet-pass',
-      { body: { giftCard } }
+    const data = await callEdgeFunction<{ success?: boolean; error?: string; pkpass?: string; filename?: string }>(
+      Endpoints.wallet.appleWalletPass,
+      { giftCard }
     );
 
-    if (error) {
-      // Parse error response
-      if (typeof error === 'object' && 'message' in error) {
-        throw new Error(error.message);
-      }
-      throw error;
-    }
-
     // Check if the response is an error JSON
-    if (data && typeof data === 'object' && 'error' in data) {
+    if (data.error) {
       throw new Error(data.error);
     }
 
     // Check for success response with base64 pkpass
-    if (!data || !data.success || !data.pkpass) {
+    if (!data.success || !data.pkpass) {
       throw new Error('Invalid response from server');
     }
 
@@ -157,29 +150,19 @@ export function WalletButton({ redemption, size = "lg", className }: WalletButto
    * Handle Google Wallet pass generation and redirect
    */
   const handleGoogleWallet = async (giftCard: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke(
-      'generate-google-wallet-pass',
-      { body: { giftCard } }
+    const data = await callEdgeFunction<{ success?: boolean; error?: string; hint?: string; message?: string; url?: string }>(
+      Endpoints.wallet.googleWalletPass,
+      { giftCard }
     );
 
-    // Check for errors - Supabase may return error details in data even when error is set
-    if (error) {
-      // Try to extract a meaningful error message
-      const errorMessage = 
-        (data && typeof data === 'object' && 'error' in data) ? data.error :
-        (data && typeof data === 'object' && 'message' in data) ? data.message :
-        error.message || 'Failed to generate wallet pass';
-      throw new Error(errorMessage);
-    }
-
-    // Check for error response in data (non-2xx status codes)
-    if (data && typeof data === 'object' && 'error' in data) {
+    // Check for error response in data
+    if (data.error) {
       const errorDetails = data.hint ? `${data.error}. ${data.hint}` : data.error;
       throw new Error(errorDetails);
     }
 
-    if (!data || !data.success) {
-      throw new Error(data?.error || data?.message || 'Failed to generate wallet pass');
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to generate wallet pass');
     }
 
     // Redirect to Google's save URL

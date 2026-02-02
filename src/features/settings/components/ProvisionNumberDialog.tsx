@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -32,15 +33,14 @@ export function ProvisionNumberDialog({
     setIsProvisioning(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('provision-twilio-number', {
-        body: {
+      const data = await callEdgeFunction<{ phoneNumber: { phone_number: string } }>(
+        Endpoints.telephony.provisionNumber,
+        {
           areaCode: areaCode || undefined,
           friendlyName: friendlyName || undefined,
           forwardToNumber: forwardToNumber || undefined,
-        },
-      });
-
-      if (error) throw error;
+        }
+      );
 
       toast.success(`Successfully provisioned ${data.phoneNumber.phone_number}`);
       onSuccess();

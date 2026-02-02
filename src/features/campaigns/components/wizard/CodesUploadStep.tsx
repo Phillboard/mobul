@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
@@ -198,18 +199,18 @@ export function CodesUploadStep({
 
       setUploadProgress(20);
 
-      const { data, error } = await supabase.functions.invoke('import-campaign-codes', {
-        body: {
+      const data = await callEdgeFunction<ImportResult & { error?: string }>(
+        Endpoints.campaign.importCampaignCodes,
+        {
           campaignId,
           clientId,
           campaignName: initialData.name,
           codes: validRows
         }
-      });
+      );
 
       setUploadProgress(100);
 
-      if (error) throw error;
       if (data.error) throw new Error(data.error);
 
       return data as ImportResult;

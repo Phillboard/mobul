@@ -1,12 +1,15 @@
 /**
  * Calculate Credit Requirements Edge Function
  * 
- * Server-side credit calculation for campaigns and operations
+ * Server-side credit calculation for campaigns and operations.
  */
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { withApiGateway } from '../_shared/api-gateway.ts';
+import { withApiGateway, type AuthContext } from '../_shared/api-gateway.ts';
 import { calculateCampaignCreditRequirement } from '../_shared/business-rules/credit-rules.ts';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface CalculateCreditsRequest {
   recipientCount: number;
@@ -27,42 +30,50 @@ interface CalculateCreditsResponse {
   };
 }
 
-serve(
-  withApiGateway<CalculateCreditsRequest, CalculateCreditsResponse>(
-    async (request, _context) => {
-      const {
-        recipientCount,
-        giftCardDenomination,
-        mailCostPerPiece = 0.55,
-      } = request;
+// ============================================================================
+// Main Handler
+// ============================================================================
 
-      console.log('[CALCULATE-CREDITS] Calculating requirements:', {
-        recipientCount,
-        giftCardDenomination,
-        mailCostPerPiece,
-      });
+async function handleCalculateCredits(
+  request: CalculateCreditsRequest,
+  _context: AuthContext
+): Promise<CalculateCreditsResponse> {
+  const {
+    recipientCount,
+    giftCardDenomination,
+    mailCostPerPiece = 0.55,
+  } = request;
 
-      const requirements = calculateCampaignCreditRequirement(
-        recipientCount,
-        giftCardDenomination,
-        mailCostPerPiece
-      );
+  console.log('[CALCULATE-CREDITS] Calculating requirements:', {
+    recipientCount,
+    giftCardDenomination,
+    mailCostPerPiece,
+  });
 
-      return {
-        ...requirements,
-        breakdown: {
-          perRecipient: {
-            giftCard: giftCardDenomination,
-            mail: mailCostPerPiece,
-            total: giftCardDenomination + mailCostPerPiece,
-          },
-        },
-      };
+  const requirements = calculateCampaignCreditRequirement(
+    recipientCount,
+    giftCardDenomination,
+    mailCostPerPiece
+  );
+
+  return {
+    ...requirements,
+    breakdown: {
+      perRecipient: {
+        giftCard: giftCardDenomination,
+        mail: mailCostPerPiece,
+        total: giftCardDenomination + mailCostPerPiece,
+      },
     },
-    {
-      requireAuth: true,
-      rateLimitKey: 'calculate_credits',
-    }
-  )
-);
+  };
+}
 
+// ============================================================================
+// Export with API Gateway
+// ============================================================================
+
+Deno.serve(withApiGateway(handleCalculateCredits, {
+  requireAuth: true,
+  parseBody: true,
+  auditAction: 'calculate_credit_requirements',
+}));

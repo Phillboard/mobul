@@ -11,6 +11,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
+import { callEdgeFunction } from '@core/api/client';
+import { Endpoints } from '@core/api/endpoints';
 
 export interface GiftCardBrand {
   id: string;
@@ -126,20 +128,17 @@ export function useProvisionCard() {
       denomination: number;
       conditionNumber: number;
     }) => {
-      const { data, error } = await supabase.functions.invoke(
-        'provision-gift-card-unified',
+      const data = await callEdgeFunction<{ success: boolean; error?: string }>(
+        Endpoints.giftCards.provisionUnified,
         {
-          body: {
-            campaignId,
-            recipientId,
-            brandId,
-            denomination,
-            conditionNumber,
-          },
+          campaignId,
+          recipientId,
+          brandId,
+          denomination,
+          conditionNumber,
         }
       );
 
-      if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Provisioning failed');
 
       return data;
