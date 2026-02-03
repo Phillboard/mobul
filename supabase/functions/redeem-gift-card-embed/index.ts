@@ -1,9 +1,13 @@
 /**
  * Redeem Gift Card Embed Edge Function
- * 
+ *
  * Public endpoint for embedded gift card redemption widget.
  * Simpler flow than redeem-customer-code - just validates and claims a card by code.
- * 
+ *
+ * Searches both card models:
+ * - Legacy `gift_cards` table (pool-based)
+ * - New `gift_card_inventory` table (brand/denomination-based)
+ *
  * Features:
  * - Rate limiting (10 attempts per IP per 5 minutes)
  * - Code sanitization
@@ -83,8 +87,18 @@ async function handleRedeemGiftCardEmbed(
 
   console.log('[EMBED-REDEEM] Redeeming gift card code:', sanitizedCode);
 
-  // Find the gift card
-  const { data: giftCard, error: giftCardError } = await supabase
+  // Search both card models: legacy gift_cards (pool-based) and gift_card_inventory (brand-based)
+  let cardSource: 'legacy' | 'inventory' | null = null;
+  let cardId: string | null = null;
+  let cardCode: string | null = null;
+  let cardNumber: string | null = null;
+  let cardValue = 0;
+  let cardProvider = 'Gift Card';
+  let clientId: string | null = null;
+  let cardStatus: string | null = null;
+
+  // 1. Try legacy gift_cards table first
+  const { data: legacyCard } = await supabase
     .from('gift_cards')
     .select(`
       *,
@@ -96,10 +110,66 @@ async function handleRedeemGiftCardEmbed(
       )
     `)
     .eq('card_code', sanitizedCode)
-    .single();
+    .maybeSingle();
 
-  if (giftCardError || !giftCard) {
-    console.log('[EMBED-REDEEM] Gift card not found:', giftCardError);
+  if (legacyCard) {
+    const pool = legacyCard.pool as { card_value?: number; provider?: string; client_id?: string } | null;
+    cardSource = 'legacy';
+    cardId = legacyCard.id;
+    cardCode = legacyCard.card_code;
+    cardNumber = legacyCard.card_number;
+    cardValue = pool?.card_value || 0;
+    cardProvider = pool?.provider || 'Gift Card';
+    clientId = pool?.client_id || null;
+    cardStatus = legacyCard.status;
+    console.log('[EMBED-REDEEM] Found card in legacy gift_cards table');
+  }
+
+  // 2. If not found in legacy, try gift_card_inventory table
+  if (!cardSource) {
+    const { data: inventoryCard } = await supabase
+      .from('gift_card_inventory')
+      .select(`
+        id,
+        card_code,
+        card_number,
+        denomination,
+        status,
+        assigned_to_campaign_id,
+        gift_card_brands(
+          brand_name,
+          provider
+        )
+      `)
+      .eq('card_code', sanitizedCode)
+      .maybeSingle();
+
+    if (inventoryCard) {
+      const brand = inventoryCard.gift_card_brands as { brand_name?: string; provider?: string } | null;
+      cardSource = 'inventory';
+      cardId = inventoryCard.id;
+      cardCode = inventoryCard.card_code;
+      cardNumber = inventoryCard.card_number;
+      cardValue = inventoryCard.denomination;
+      cardProvider = brand?.provider || brand?.brand_name || 'Gift Card';
+      cardStatus = inventoryCard.status;
+
+      // Try to get client_id from the campaign if assigned
+      if (inventoryCard.assigned_to_campaign_id) {
+        const { data: campaign } = await supabase
+          .from('campaigns')
+          .select('client_id')
+          .eq('id', inventoryCard.assigned_to_campaign_id)
+          .maybeSingle();
+        clientId = campaign?.client_id || null;
+      }
+      console.log('[EMBED-REDEEM] Found card in gift_card_inventory table');
+    }
+  }
+
+  // Not found in either table
+  if (!cardSource || !cardId) {
+    console.log('[EMBED-REDEEM] Gift card not found in either table');
     return {
       valid: false,
       message: 'Invalid code. Please check and try again.',
@@ -107,40 +177,53 @@ async function handleRedeemGiftCardEmbed(
   }
 
   // Check if already claimed
-  if (giftCard.status === 'claimed' || giftCard.status === 'redeemed') {
+  const claimedStatuses = ['claimed', 'redeemed', 'delivered'];
+  if (cardStatus && claimedStatuses.includes(cardStatus)) {
     return {
       valid: false,
       message: 'This code has already been claimed.',
     };
   }
 
-  // Mark as claimed
-  const { error: updateError } = await supabase
-    .from('gift_cards')
-    .update({
-      status: 'claimed',
-      claimed_at: new Date().toISOString(),
-    })
-    .eq('id', giftCard.id);
+  // Mark as claimed in the appropriate table
+  if (cardSource === 'legacy') {
+    const { error: updateError } = await supabase
+      .from('gift_cards')
+      .update({
+        status: 'claimed',
+        claimed_at: new Date().toISOString(),
+      })
+      .eq('id', cardId);
 
-  if (updateError) {
-    console.error('[EMBED-REDEEM] Error marking gift card as claimed:', updateError);
+    if (updateError) {
+      console.error('[EMBED-REDEEM] Error marking legacy gift card as claimed:', updateError);
+    }
+  } else {
+    const { error: updateError } = await supabase
+      .from('gift_card_inventory')
+      .update({
+        status: 'delivered',
+      })
+      .eq('id', cardId);
+
+    if (updateError) {
+      console.error('[EMBED-REDEEM] Error marking inventory card as delivered:', updateError);
+    }
   }
 
   // Dispatch Zapier event
   try {
-    const pool = giftCard.pool as { client_id?: string; card_value?: number; provider?: string } | null;
-    
-    if (pool?.client_id) {
+    if (clientId) {
       await supabase.functions.invoke('dispatch-zapier-event', {
         body: {
           event_type: 'gift_card.redeemed',
-          client_id: pool.client_id,
+          client_id: clientId,
           data: {
-            gift_card_id: giftCard.id,
-            card_code: giftCard.card_code,
-            value: pool.card_value || 0,
-            provider: pool.provider || 'Gift Card',
+            gift_card_id: cardId,
+            card_code: cardCode,
+            value: cardValue,
+            provider: cardProvider,
+            source: cardSource,
             redeemed_at: new Date().toISOString(),
           }
         }
@@ -151,15 +234,13 @@ async function handleRedeemGiftCardEmbed(
     console.error('[EMBED-REDEEM] Failed to dispatch Zapier event:', zapierError);
   }
 
-  const pool = giftCard.pool as { card_value?: number; provider?: string } | null;
-
   return {
     valid: true,
     giftCard: {
-      card_code: giftCard.card_code,
-      card_number: giftCard.card_number,
-      value: pool?.card_value || 0,
-      provider: pool?.provider || 'Gift Card',
+      card_code: cardCode!,
+      card_number: cardNumber || undefined,
+      value: cardValue,
+      provider: cardProvider,
     },
   };
 }

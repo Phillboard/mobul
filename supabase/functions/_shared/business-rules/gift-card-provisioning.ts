@@ -24,6 +24,7 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { createErrorLogger, PROVISIONING_ERROR_CODES } from '../error-logger.ts';
 import type { ProvisioningErrorCode } from '../error-logger.ts';
+import { getTilloClient, TilloCardResult } from '../tillo-client.ts';
 
 // ============================================================================
 // Types
@@ -286,25 +287,261 @@ export async function provisionGiftCard(
     }
     
     if (!exactMatch) {
-      // Get available denominations for error message
-      const { data: allBrandCards } = await supabase
-        .from('gift_card_inventory')
-        .select('denomination')
-        .eq('brand_id', brandId)
-        .eq('status', 'available')
-        .limit(100);
-      
-      const availableDenoms = [...new Set(allBrandCards?.map(c => Number(c.denomination)) || [])];
-      
-      await log.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'failed', {
-        error: `No $${denomination} cards available`,
-        availableDenominations: availableDenoms,
+      // No inventory - try Tillo API fallback
+      await log.checkpoint(STEPS.CLAIM_INVENTORY.number, STEPS.CLAIM_INVENTORY.name, 'completed', {
+        source: 'no_inventory',
+        message: 'No inventory available, attempting Tillo API fallback',
       });
       
-      throw new ProvisioningError(
-        `No $${denomination} cards available for ${brand.brand_name}. Available denominations: ${availableDenoms.length > 0 ? '$' + availableDenoms.join(', $') : 'NONE'}`,
-        'GC-003'
-      );
+      console.log(`[PROVISION] No inventory available, checking Tillo fallback...`);
+      
+      // =====================================================
+      // STEP 7: CHECK TILLO CONFIGURATION
+      // =====================================================
+      currentStep = STEPS.CHECK_TILLO_CONFIG;
+      await log.checkpoint(STEPS.CHECK_TILLO_CONFIG.number, STEPS.CHECK_TILLO_CONFIG.name, 'started');
+      
+      if (!brand.tillo_brand_code) {
+        // Get available denominations for error message
+        const { data: allBrandCards } = await supabase
+          .from('gift_card_inventory')
+          .select('denomination')
+          .eq('brand_id', brandId)
+          .eq('status', 'available')
+          .limit(100);
+        
+        const availableDenoms = [...new Set(allBrandCards?.map(c => Number(c.denomination)) || [])];
+        
+        await log.checkpoint(STEPS.CHECK_TILLO_CONFIG.number, STEPS.CHECK_TILLO_CONFIG.name, 'failed', {
+          error: 'No Tillo brand code configured',
+          availableDenominations: availableDenoms,
+        });
+        
+        throw new ProvisioningError(
+          `No $${denomination} cards available for ${brand.brand_name} and Tillo API not configured. Available denominations: ${availableDenoms.length > 0 ? '$' + availableDenoms.join(', $') : 'NONE'}`,
+          'GC-003'
+        );
+      }
+      
+      await log.checkpoint(STEPS.CHECK_TILLO_CONFIG.number, STEPS.CHECK_TILLO_CONFIG.name, 'completed', {
+        tilloBrandCode: brand.tillo_brand_code,
+      });
+      
+      // =====================================================
+      // STEP 8: PROVISION FROM TILLO API
+      // =====================================================
+      currentStep = STEPS.PROVISION_TILLO;
+      await log.checkpoint(STEPS.PROVISION_TILLO.number, STEPS.PROVISION_TILLO.name, 'started');
+      
+      let tilloResult: TilloCardResult;
+      let tilloCost: number;
+      
+      try {
+        const tilloClient = getTilloClient();
+        tilloResult = await tilloClient.provisionCard(
+          brand.tillo_brand_code,
+          denomination,
+          'USD',
+          `mobul-${campaignId}-${recipientId}-${Date.now()}`
+        );
+        
+        // Get Tillo cost from denomination config or estimate
+        const { data: tilloConfig } = await supabase
+          .from('gift_card_denominations')
+          .select('tillo_cost_per_card, cost_basis')
+          .eq('brand_id', brandId)
+          .eq('denomination', denomination)
+          .single();
+        
+        tilloCost = tilloConfig?.tillo_cost_per_card || tilloConfig?.cost_basis || denomination * 0.95;
+        
+        await log.checkpoint(STEPS.PROVISION_TILLO.number, STEPS.PROVISION_TILLO.name, 'completed', {
+          transactionId: tilloResult.transactionId,
+          orderReference: tilloResult.orderReference,
+          tilloCost,
+        });
+        
+        console.log(`[PROVISION] Tillo provisioned: ${tilloResult.transactionId} (cost: $${tilloCost})`);
+      } catch (tilloError) {
+        await log.checkpoint(STEPS.PROVISION_TILLO.number, STEPS.PROVISION_TILLO.name, 'failed', {
+          error: tilloError instanceof Error ? tilloError.message : String(tilloError),
+        });
+        await log.logProvisioningError('GC-004', tilloError, STEPS.PROVISION_TILLO);
+        throw new ProvisioningError(
+          `Tillo API provisioning failed: ${tilloError instanceof Error ? tilloError.message : String(tilloError)}`,
+          'GC-004'
+        );
+      }
+      
+      // =====================================================
+      // STEP 9: SAVE TILLO CARD TO INVENTORY
+      // =====================================================
+      currentStep = STEPS.SAVE_TILLO_CARD;
+      await log.checkpoint(STEPS.SAVE_TILLO_CARD.number, STEPS.SAVE_TILLO_CARD.name, 'started');
+      
+      const { data: savedCard, error: saveError } = await supabase
+        .from('gift_card_inventory')
+        .insert({
+          brand_id: brandId,
+          denomination: denomination,
+          card_code: tilloResult.cardCode,
+          card_number: tilloResult.cardNumber,
+          expiration_date: tilloResult.expirationDate,
+          status: 'assigned',
+          assigned_to_recipient_id: recipientId,
+          assigned_to_campaign_id: campaignId,
+          assigned_at: new Date().toISOString(),
+          cost_per_card: tilloCost,
+          cost_source: 'tillo_api',
+          provider: 'tillo',
+        })
+        .select('id')
+        .single();
+      
+      if (saveError) {
+        console.error(`[PROVISION] Failed to save Tillo card to inventory: ${saveError.message}`);
+        // Non-blocking - card was provisioned, just logging failed
+      }
+      
+      await log.checkpoint(STEPS.SAVE_TILLO_CARD.number, STEPS.SAVE_TILLO_CARD.name, 'completed', {
+        inventoryId: savedCard?.id,
+        tilloCost,
+        costSource: 'tillo_api',
+      });
+      
+      // Build result from Tillo card
+      const cardResult = {
+        card_id: savedCard?.id,
+        card_code: tilloResult.cardCode,
+        card_number: tilloResult.cardNumber,
+        expiration_date: tilloResult.expirationDate,
+        brand_name: brand.brand_name,
+        brand_logo_url: brand.logo_url,
+      };
+      const source: 'inventory' | 'tillo' = 'tillo';
+      const costBasis = tilloCost;
+      
+      // Skip to Step 10 (pricing) and continue...
+      // =====================================================
+      // STEP 10: GET PRICING CONFIGURATION (Tillo path)
+      // =====================================================
+      currentStep = STEPS.GET_PRICING;
+      await log.checkpoint(STEPS.GET_PRICING.number, STEPS.GET_PRICING.name, 'started');
+      
+      const { data: pricingData } = await supabase
+        .from('gift_card_denominations')
+        .select('use_custom_pricing, client_price, agency_price, cost_basis')
+        .eq('brand_id', brandId)
+        .eq('denomination', denomination)
+        .single();
+
+      const useCustomPricing = pricingData?.use_custom_pricing || false;
+      const isAgency = entity_type === 'agency';
+      
+      let amountBilled = denomination;
+      if (useCustomPricing) {
+        if (isAgency && pricingData?.agency_price) {
+          amountBilled = pricingData.agency_price;
+        } else if (pricingData?.client_price) {
+          amountBilled = pricingData.client_price;
+        }
+      }
+
+      await log.checkpoint(STEPS.GET_PRICING.number, STEPS.GET_PRICING.name, 'completed', {
+        useCustomPricing,
+        isAgency,
+        faceValue: denomination,
+        amountBilled,
+        costBasis,
+      });
+
+      console.log(`[PROVISION] Pricing (Tillo): bill $${amountBilled} (cost $${costBasis})`);
+
+      // =====================================================
+      // STEP 11: RECORD BILLING TRANSACTION (Tillo path)
+      // =====================================================
+      currentStep = STEPS.RECORD_BILLING;
+      await log.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'started');
+
+      let ledgerId: string | null = null;
+      try {
+        const { data: ledgerEntry, error: ledgerError } = await supabase
+          .from('gift_card_billing_ledger')
+          .insert({
+            transaction_type: 'purchase_from_tillo',
+            billed_entity_type: entity_type,
+            billed_entity_id: entity_id,
+            campaign_id: campaignId,
+            recipient_id: recipientId,
+            brand_id: brandId,
+            denomination: denomination,
+            amount_billed: amountBilled,
+            cost_basis: costBasis,
+            inventory_card_id: savedCard?.id,
+            metadata: { 
+              source: 'tillo', 
+              request_id: log.requestId,
+              tillo_transaction_id: tilloResult.transactionId,
+              tillo_order_reference: tilloResult.orderReference,
+            },
+            billed_at: new Date().toISOString(),
+          })
+          .select('id')
+          .single();
+
+        if (ledgerError) {
+          console.error(`[PROVISION] Billing failed (non-blocking): ${ledgerError.message}`);
+          await log.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'failed', {
+            error: ledgerError.message,
+          });
+        } else {
+          ledgerId = ledgerEntry?.id;
+          await log.checkpoint(STEPS.RECORD_BILLING.number, STEPS.RECORD_BILLING.name, 'completed', {
+            ledgerId,
+            amountBilled,
+          });
+          console.log(`[PROVISION] Billing recorded: ${ledgerId}`);
+        }
+      } catch (billingErr) {
+        console.error(`[PROVISION] Billing exception (non-blocking):`, billingErr);
+      }
+
+      const profit = costBasis ? amountBilled - costBasis : 0;
+
+      // =====================================================
+      // STEP 12: FINALIZE AND RETURN RESULT (Tillo path)
+      // =====================================================
+      currentStep = STEPS.FINALIZE;
+      await log.checkpoint(STEPS.FINALIZE.number, STEPS.FINALIZE.name, 'completed', {
+        source,
+        brandName: cardResult.brand_name,
+        denomination,
+        amountBilled,
+      });
+
+      console.log(`[PROVISION] SUCCESS: ${brand.brand_name} $${denomination} from ${source}`);
+
+      return {
+        success: true,
+        requestId: log.requestId,
+        card: {
+          id: cardResult.card_id,
+          cardCode: cardResult.card_code,
+          cardNumber: cardResult.card_number,
+          denomination: denomination,
+          brandName: cardResult.brand_name,
+          brandLogo: cardResult.brand_logo_url,
+          expirationDate: cardResult.expiration_date,
+          source: source,
+        },
+        billing: {
+          ledgerId: ledgerId,
+          billedEntity: entity_name,
+          billedEntityId: entity_id,
+          amountBilled: amountBilled,
+          profit: profit,
+        },
+      };
     }
     
     // Claim the card

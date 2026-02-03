@@ -11,6 +11,7 @@ export interface CSVCard {
   card_code: string;
   card_number?: string;
   expiration_date?: string;
+  cost?: number;
 }
 
 export interface UploadResult {
@@ -22,26 +23,67 @@ export interface UploadResult {
 
 /**
  * Parse CSV file content
+ * Supports headers: card_code, card_number, expiration_date, cost
  */
 export function parseCSV(content: string): CSVCard[] {
   const lines = content.trim().split('\n');
   const cards: CSVCard[] = [];
 
-  // Skip header if present
-  const startIndex = lines[0].toLowerCase().includes('card') ? 1 : 0;
+  if (lines.length === 0) return cards;
+
+  // Detect header row and column indices
+  const firstLine = lines[0].toLowerCase();
+  const isHeader = firstLine.includes('card') || firstLine.includes('code') || firstLine.includes('expir') || firstLine.includes('cost');
+  
+  let columnMap = {
+    card_code: 0,
+    card_number: 1,
+    expiration_date: 2,
+    cost: 3,
+  };
+
+  // If header row detected, build column map
+  if (isHeader) {
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z_]/g, '_'));
+    columnMap = {
+      card_code: headers.findIndex(h => h.includes('code') || h === 'card_code'),
+      card_number: headers.findIndex(h => h.includes('number') || h === 'card_number'),
+      expiration_date: headers.findIndex(h => h.includes('expir') || h.includes('date')),
+      cost: headers.findIndex(h => h === 'cost' || h.includes('price') || h.includes('amount')),
+    };
+    // Default card_code to first column if not found
+    if (columnMap.card_code < 0) columnMap.card_code = 0;
+  }
+
+  const startIndex = isHeader ? 1 : 0;
 
   for (let i = startIndex; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
 
-    const parts = line.split(',').map(p => p.trim());
-    if (parts.length === 0 || !parts[0]) continue;
+    const parts = line.split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
+    if (parts.length === 0 || !parts[columnMap.card_code]) continue;
 
-    cards.push({
-      card_code: parts[0],
-      card_number: parts[1] || undefined,
-      expiration_date: parts[2] || undefined,
-    });
+    const card: CSVCard = {
+      card_code: parts[columnMap.card_code],
+    };
+
+    if (columnMap.card_number >= 0 && parts[columnMap.card_number]) {
+      card.card_number = parts[columnMap.card_number];
+    }
+
+    if (columnMap.expiration_date >= 0 && parts[columnMap.expiration_date]) {
+      card.expiration_date = parts[columnMap.expiration_date];
+    }
+
+    if (columnMap.cost >= 0 && parts[columnMap.cost]) {
+      const costValue = parseFloat(parts[columnMap.cost]);
+      if (!isNaN(costValue) && costValue >= 0) {
+        card.cost = costValue;
+      }
+    }
+
+    cards.push(card);
   }
 
   return cards;
@@ -109,6 +151,8 @@ export function useInventoryUpload() {
         expiration_date: card.expiration_date || null,
         status: 'available',
         upload_batch_id: batchId,
+        cost_per_card: card.cost || costBasis || null,
+        cost_source: 'csv',
       }));
 
       // Batch insert (Supabase supports up to 1000 rows at once)

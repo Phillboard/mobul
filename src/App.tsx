@@ -54,23 +54,20 @@ const ListDetail = lazy(() => import("./pages/contacts/ListDetail"));
 const ContactImport = lazy(() => import("./pages/ContactImport"));
 const AdminGiftCardMarketplace = lazy(() => import("./pages/AdminGiftCardMarketplace"));
 const AdminGiftCardBrands = lazy(() => import("./pages/AdminGiftCardBrands"));
-const AdminFinancialReports = lazy(() => import("./pages/AdminFinancialReports"));
-const AdminSiteDirectory = lazy(() => import("./pages/AdminSiteDirectory"));
+const AdminGiftCards = lazy(() => import("./pages/AdminGiftCards"));
+const AgencyGiftCards = lazy(() => import("./pages/AgencyGiftCards"));
 const Forms = lazy(() => import("./pages/Forms"));
 const FormBuilder = lazy(() => import("./pages/FormBuilder"));
 const FormPublic = lazy(() => import("./pages/FormPublic"));
 const FormAnalytics = lazy(() => import("./pages/FormAnalytics"));
 const FormsDocumentation = lazy(() => import("./pages/FormsDocumentation"));
-const AdminAuditLog = lazy(() => import("./pages/AdminAuditLog"));
 const AdminMessagingTest = lazy(() => import("./pages/AdminMessagingTest"));
-const ErrorLogs = lazy(() => import("./pages/ErrorLogs"));
 const Activity = lazy(() => import("./pages/Activity"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CookieConsent = lazy(() => import("@/shared/components/CookieConsent").then(m => ({ default: m.CookieConsent })));
 const Documentation = lazy(() => import("./pages/Documentation"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const PlatformDashboard = lazy(() => import("./pages/PlatformDashboard").then(m => ({ default: m.PlatformDashboard })));
 const SystemHealth = lazy(() => import("./pages/SystemHealth"));
 const Integrations = lazy(() => import("./pages/Integrations"));
 const DocEditorPage = lazy(() => import("./pages/DocEditorPage"));
@@ -78,7 +75,6 @@ const PoolDetail = lazy(() => import("./pages/PoolDetail"));
 const PurchaseGiftCard = lazy(() => import("./pages/PurchaseGiftCard"));
 const RecordPurchase = lazy(() => import("./pages/RecordPurchase"));
 const EditPoolPricing = lazy(() => import("./pages/EditPoolPricing"));
-const DemoDataGenerator = lazy(() => import("./pages/admin/DemoDataGenerator"));
 const ClientGiftCards = lazy(() => import("./pages/ClientGiftCards"));
 const GiftCardManager = lazy(() => import("./pages/GiftCardManager"));
 const ClientBillingDashboard = lazy(() => import("./pages/ClientBillingDashboard"));
@@ -174,7 +170,7 @@ const App = () => (
                   <Route path="/help" element={<Navigate to="/docs" replace />} />
                   <Route path="/help/:category/:slug" element={<Navigate to="/docs/:category/:slug" replace />} />
                   <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/platform" element={<ProtectedRoute requiredRole="admin"><PlatformDashboard /></ProtectedRoute>} />
+                  <Route path="/platform" element={<Navigate to="/" replace />} />
                   
                   {/* Campaigns */}
                   <Route path="/campaigns" element={<ProtectedRoute><Campaigns /></ProtectedRoute>} />
@@ -217,11 +213,16 @@ const App = () => (
                   <Route path="/gift-cards/purchase/:poolId" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner']}><PurchaseGiftCard /></ProtectedRoute>} />
                   <Route path="/credits-billing" element={<ProtectedRoute requiredRoles={['admin', 'agency_owner', 'company_owner']}><CreditsBilling /></ProtectedRoute>} />
                   
-                  {/* Admin Only - Platform Marketplace & Pricing */}
+                  {/* Admin Only - Unified Gift Card Dashboard */}
+                  <Route path="/admin/gift-cards-dashboard" element={<ProtectedRoute requiredRole="admin"><AdminGiftCards /></ProtectedRoute>} />
+                  
+                  {/* Agency Gift Card Management */}
+                  <Route path="/agency/gift-cards" element={<ProtectedRoute requiredRole="agency_owner"><AgencyGiftCards /></ProtectedRoute>} />
+                  {/* Legacy routes kept for backward compatibility */}
                   <Route path="/gift-cards/marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
                   <Route path="/admin/gift-card-marketplace" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardMarketplace /></ProtectedRoute>} />
                   <Route path="/admin/gift-cards" element={<ProtectedRoute requiredRole="admin"><AdminGiftCardBrands /></ProtectedRoute>} />
-                  <Route path="/admin/financial-reports" element={<ProtectedRoute requiredRole="admin"><AdminFinancialReports /></ProtectedRoute>} />
+                  <Route path="/admin/financial-reports" element={<Navigate to="/admin/gift-cards-dashboard" replace />} />
                   <Route path="/admin/gift-cards/record-purchase" element={<ProtectedRoute requiredRole="admin"><RecordPurchase /></ProtectedRoute>} />
                   <Route path="/admin/gift-cards/pools/:poolId/pricing" element={<ProtectedRoute requiredRole="admin"><EditPoolPricing /></ProtectedRoute>} />
                   
@@ -277,7 +278,7 @@ const App = () => (
                   
                   {/* Administration - Consolidated */}
                   <Route path="/admin/system-health" element={<ProtectedRoute><SystemHealth /></ProtectedRoute>} />
-                  <Route path="/admin/demo-data-generator" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
+                  <Route path="/admin/demo-data-generator" element={<Navigate to="/" replace />} />
                   <Route path="/admin/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
                   
                   {/* Documentation editor */}
@@ -306,10 +307,10 @@ const App = () => (
                   {/* Admin Routes */}
                   <Route path="/agencies" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
                   <Route path="/agency-management" element={<ProtectedRoute requiredRole="admin"><AgencyManagement /></ProtectedRoute>} />
-                  <Route path="/admin/audit-log" element={<ProtectedRoute requiredRole="admin"><AdminAuditLog /></ProtectedRoute>} />
-                  <Route path="/admin/error-logs" element={<ProtectedRoute requiredRole="admin"><ErrorLogs /></ProtectedRoute>} />
-                  <Route path="/admin/site-directory" element={<ProtectedRoute requiredRole="admin"><AdminSiteDirectory /></ProtectedRoute>} />
-                  <Route path="/admin/demo-data" element={<ProtectedRoute requiredRole="admin"><DemoDataGenerator /></ProtectedRoute>} />
+                  <Route path="/admin/audit-log" element={<Navigate to="/activity" replace />} />
+                  <Route path="/admin/error-logs" element={<Navigate to="/admin/system-health?tab=errors" replace />} />
+                  <Route path="/admin/site-directory" element={<Navigate to="/" replace />} />
+                  <Route path="/admin/demo-data" element={<Navigate to="/" replace />} />
                   <Route path="/admin/organizations" element={<ProtectedRoute requiredRole="admin"><AdminOrganizationManagement /></ProtectedRoute>} />
                   <Route path="/admin/messaging-test" element={<ProtectedRoute requiredRole="admin"><AdminMessagingTest /></ProtectedRoute>} />
                   

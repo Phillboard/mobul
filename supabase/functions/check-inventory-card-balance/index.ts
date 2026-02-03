@@ -32,6 +32,9 @@ interface CheckInventoryBalanceRequest {
   statusFilter?: string;
   limit?: number;
   userId?: string;
+  // Legacy support: when source='legacy', queries the gift_cards table instead
+  source?: 'inventory' | 'legacy';
+  poolId?: string;
 }
 
 interface BrandConfig {
@@ -262,6 +265,124 @@ async function checkCardBalance(card: InventoryCard): Promise<BalanceCheckResult
 }
 
 // ============================================================================
+// Legacy Balance Check (gift_cards table)
+// ============================================================================
+
+async function handleLegacyBalanceCheck(
+  supabase: ReturnType<typeof createServiceClient>,
+  params: { cardIds?: string[]; poolId?: string; userId: string | null }
+): Promise<CheckInventoryBalanceResponse> {
+  const { cardIds, poolId, userId } = params;
+
+  if (!cardIds && !poolId) {
+    throw new ApiError('Either cardIds or poolId must be provided for legacy balance checks', 'VALIDATION_ERROR', 400);
+  }
+
+  let query = supabase
+    .from("gift_cards")
+    .select(`
+      id,
+      card_code,
+      current_balance,
+      pool_id,
+      pool:gift_card_pools(
+        api_provider,
+        api_config
+      )
+    `)
+    .eq("status", "delivered")
+    .not("card_code", "is", null);
+
+  if (cardIds && Array.isArray(cardIds)) {
+    query = query.in("id", cardIds);
+  } else if (poolId) {
+    query = query.eq("pool_id", poolId);
+  }
+
+  const { data: cards, error: fetchError } = await query;
+
+  if (fetchError) {
+    throw new ApiError(`Failed to fetch legacy cards: ${fetchError.message}`, 'DATABASE_ERROR', 500);
+  }
+
+  if (!cards || cards.length === 0) {
+    return {
+      message: "No legacy cards found to check",
+      results: [],
+      summary: { checked: 0, success: 0, error: 0, manual: 0, notSupported: 0 },
+    };
+  }
+
+  const results: BalanceCheckResultItem[] = [];
+  const summary = { checked: 0, success: 0, error: 0, manual: 0, notSupported: 0 };
+
+  for (const card of cards) {
+    summary.checked++;
+    if (summary.checked > 1) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    const pool = card.pool as { api_provider?: string; api_config?: { apiKey?: string; secretKey?: string } } | null;
+
+    let balanceResult: BalanceCheckResult;
+
+    if (pool?.api_provider === "tillo" && pool?.api_config?.apiKey) {
+      // Use Tillo API for legacy cards that have pool-level config
+      balanceResult = await checkTilloBalance(card.card_code, pool.api_provider);
+    } else {
+      balanceResult = {
+        balance: card.current_balance,
+        status: "manual_required",
+        error: "Legacy card without API config - manual balance entry required",
+      };
+    }
+
+    // Update card balance
+    if (balanceResult.status === "success" || balanceResult.status === "error") {
+      await supabase
+        .from("gift_cards")
+        .update({
+          current_balance: balanceResult.balance,
+          last_balance_check: new Date().toISOString(),
+          balance_check_status: balanceResult.status,
+        })
+        .eq("id", card.id);
+
+      // Record history
+      await supabase.from("gift_card_balance_history").insert({
+        gift_card_id: card.id,
+        previous_balance: card.current_balance,
+        new_balance: balanceResult.balance,
+        change_amount: (balanceResult.balance || 0) - (card.current_balance || 0),
+        status: balanceResult.status,
+        error_message: balanceResult.error,
+      });
+    }
+
+    switch (balanceResult.status) {
+      case "success": summary.success++; break;
+      case "error": summary.error++; break;
+      case "manual_required": summary.manual++; break;
+      default: summary.notSupported++; break;
+    }
+
+    results.push({
+      cardId: card.id,
+      cardCodeLast4: card.card_code.slice(-4),
+      brandId: card.pool_id || '',
+      previousBalance: card.current_balance,
+      newBalance: balanceResult.balance,
+      status: balanceResult.status,
+      error: balanceResult.error,
+    });
+  }
+
+  console.log(`[BALANCE-CHECK] Checked ${summary.checked} legacy cards: ${summary.success} success, ${summary.error} error`);
+
+  return { message: `Checked ${summary.checked} legacy cards`, results, summary };
+}
+
+// ============================================================================
 // Main Handler
 // ============================================================================
 
@@ -270,15 +391,22 @@ async function handleCheckInventoryBalance(
   context: { user: { id: string } | null }
 ): Promise<CheckInventoryBalanceResponse> {
   const supabase = createServiceClient();
-  
-  const { 
+
+  const {
     cardIds,
     brandId,
     denomination,
     statusFilter = "available",
     limit = 100,
     userId,
+    source = 'inventory',
+    poolId,
   } = request;
+
+  // Legacy support: check balances for cards in the gift_cards table
+  if (source === 'legacy') {
+    return await handleLegacyBalanceCheck(supabase, { cardIds, poolId, userId: userId || context.user?.id || null });
+  }
 
   if (!cardIds && !brandId) {
     throw new ApiError('Either cardIds or brandId must be provided', 'VALIDATION_ERROR', 400);

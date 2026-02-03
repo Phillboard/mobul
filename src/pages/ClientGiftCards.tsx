@@ -14,10 +14,10 @@ import { Switch } from '@/shared/components/ui/switch';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { useToast } from '@/shared/hooks';
 import { useEnabledBrands, useToggleClientGiftCard, useClientAvailableGiftCards } from '@/features/gift-cards/hooks';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@core/services/supabase';
 import { useTenant } from '@/contexts/TenantContext';
-import { CheckCircle, Gift, Info } from 'lucide-react';
+import { CheckCircle, Gift, Info, Zap } from 'lucide-react';
 import { BrandLogo } from '@/features/gift-cards/components/BrandLogo';
 
 export function ClientGiftCards() {
@@ -25,9 +25,11 @@ export function ClientGiftCards() {
   const { currentClient } = useTenant();
   const clientId = currentClient?.id;
   
+  const queryClient = useQueryClient();
   const { data: enabledBrands, isLoading: brandsLoading } = useEnabledBrands();
   const { data: clientGiftCards } = useClientAvailableGiftCards(clientId);
   const toggleMutation = useToggleClientGiftCard();
+  const [isEnablingAll, setIsEnablingAll] = useState(false);
 
   // Fetch denominations for enabled brands
   const { data: allDenominations } = useQuery({
@@ -83,6 +85,43 @@ export function ClientGiftCards() {
     }
   };
 
+  const handleEnableAll = async () => {
+    if (!clientId || !allDenominations) return;
+
+    setIsEnablingAll(true);
+    try {
+      // Build upsert records for all available brand-denomination pairs
+      const records = allDenominations.map((denom: any) => ({
+        client_id: clientId,
+        brand_id: denom.brand_id,
+        denomination: denom.denomination,
+        is_enabled: true,
+      }));
+
+      const { error } = await supabase
+        .from('client_available_gift_cards')
+        .upsert(records, { onConflict: 'client_id,brand_id,denomination' });
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['client-available-gift-cards', clientId] });
+      await queryClient.invalidateQueries({ queryKey: ['client-gift-card-brands', clientId] });
+
+      toast({
+        title: 'All gift cards enabled',
+        description: `Enabled ${records.length} gift card options for your campaigns`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to enable all',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsEnablingAll(false);
+    }
+  };
+
   if (!clientId) {
     return (
       <div className="p-8">
@@ -114,11 +153,23 @@ export function ClientGiftCards() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Gift Card Settings</h2>
-        <p className="text-muted-foreground">
-          Select which gift cards you want to use in your campaigns
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Gift Card Settings</h2>
+          <p className="text-muted-foreground">
+            Select which gift cards you want to use in your campaigns
+          </p>
+        </div>
+        {allDenominations && allDenominations.length > 0 && (
+          <Button
+            onClick={handleEnableAll}
+            disabled={isEnablingAll}
+            variant="default"
+          >
+            <Zap className="h-4 w-4 mr-2" />
+            {isEnablingAll ? 'Enabling...' : 'Enable All'}
+          </Button>
+        )}
       </div>
 
       <Alert>

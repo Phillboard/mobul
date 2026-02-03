@@ -601,4 +601,3 @@ export function getCreditAlertSeverity(
 
   return null;
 }
-

@@ -35,7 +35,7 @@
  */
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 import { callEdgeFunction } from '@core/api/client';
 import { Endpoints } from '@core/api/endpoints';
@@ -61,6 +61,7 @@ interface PoolDetailDialogProps {
 
 export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isCheckingBalances, setIsCheckingBalances] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -99,18 +100,39 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
     enabled: !!poolId,
   });
 
-  // Fetch all cards in pool
+  // Fetch all cards in pool (from both inventory and legacy tables)
   const { data: cards, isLoading: cardsLoading } = useQuery({
     queryKey: ["gift-cards", poolId],
     queryFn: async () => {
       if (!poolId) return [];
-      const { data, error } = await supabase
+
+      // Primary: fetch from gift_card_inventory
+      const { data: inventoryCards } = await supabase
+        .from("gift_card_inventory")
+        .select("id, card_code, card_number, denomination, status, current_balance, last_balance_check, balance_check_status, delivered_at, expiration_date, created_at, assigned_to_recipient_id")
+        .eq("legacy_pool_id", poolId)
+        .order("created_at", { ascending: false });
+
+      // Fallback: fetch any remaining legacy cards
+      const { data: legacyCards } = await supabase
         .from("gift_cards")
         .select("*")
         .eq("pool_id", poolId)
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+
+      // Deduplicate by card_code
+      const inventoryCodes = new Set((inventoryCards || []).map(c => c.card_code));
+      const uniqueLegacy = (legacyCards || []).filter(c => !inventoryCodes.has(c.card_code));
+
+      // Normalize inventory cards to match expected shape
+      const normalized = (inventoryCards || []).map(c => ({
+        ...c,
+        card_value: c.denomination,
+        pool_id: poolId,
+        expires_at: c.expiration_date,
+      }));
+
+      return [...normalized, ...uniqueLegacy];
     },
     enabled: !!poolId,
   });
@@ -149,15 +171,15 @@ export function PoolDetailDialog({ poolId, open, onOpenChange }: PoolDetailDialo
         { poolId }
       );
 
+      // Invalidate queries to reactively refresh card and balance data
+      await queryClient.invalidateQueries({ queryKey: ["gift-cards", poolId] });
+      await queryClient.invalidateQueries({ queryKey: ["balance-history", poolId] });
+      await queryClient.invalidateQueries({ queryKey: ["gift-card-pool", poolId] });
+
       toast({
         title: "Balance Check Complete",
-        description: `Checked ${data.results?.length || 0} cards. Refresh to see updated balances.`,
+        description: `Checked ${data.results?.length || 0} cards. Balances updated.`,
       });
-
-      // Refetch data to show updated balances
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     } catch (error: any) {
       console.error('Balance check error:', error);
       toast({

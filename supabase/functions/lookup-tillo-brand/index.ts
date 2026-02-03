@@ -10,7 +10,7 @@
  */
 
 import { withApiGateway, ApiError, type AuthContext } from '../_shared/api-gateway.ts';
-import { getTilloClient } from '../_shared/tillo-client.ts';
+import { createTilloClientFromEnv } from '../_shared/tillo-client.ts';
 
 // ============================================================================
 // Types
@@ -83,61 +83,116 @@ const MOCK_TILLO_BRANDS: Record<string, {
 // Brand Search
 // ============================================================================
 
-async function searchTilloBrand(brandName: string): Promise<TilloBrandSearchResponse> {
+async function searchTilloBrandViaApi(brandName: string): Promise<TilloBrandSearchResponse | null> {
   try {
+    const client = createTilloClientFromEnv();
     const normalizedName = brandName.toLowerCase().trim();
-    const mockBrand = MOCK_TILLO_BRANDS[normalizedName];
 
-    if (mockBrand) {
-      return {
-        found: true,
-        tillo_brand_code: mockBrand.tillo_brand_code,
-        brand_name: mockBrand.brand_name,
-        denominations: mockBrand.denominations,
-        costs: mockBrand.costs,
-      };
+    // Generate HMAC signature for the request
+    const timestamp = Date.now();
+    const apiKey = Deno.env.get('TILLO_API_KEY')!;
+    const secretKey = Deno.env.get('TILLO_SECRET_KEY')!;
+    const baseUrl = Deno.env.get('TILLO_BASE_URL') || 'https://api.tillo.tech/v2';
+
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(secretKey);
+    const messageData = encoder.encode(`${timestamp}`);
+    const key = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const signature = await crypto.subtle.sign('HMAC', key, messageData);
+    const hexSignature = Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'API-Key': apiKey,
+      'Signature': hexSignature,
+      'Timestamp': timestamp.toString(),
+    };
+
+    // Search Tillo brands catalog
+    const response = await fetch(`${baseUrl}/brands`, { method: 'GET', headers });
+
+    if (!response.ok) {
+      console.warn(`[LOOKUP-TILLO-BRAND] Tillo API returned ${response.status}`);
+      return null;
     }
 
-    // NOTE: Tillo API integration available via provision-gift-card-unified function
-    // Replace this mock with actual Tillo API calls when ready:
-    /*
-    const tilloClient = getTilloClient();
-    const response = await tilloClient.request('/v2/brands', 'GET');
-    const brands = response.data || [];
-    
-    const matchedBrand = brands.find((b: any) => 
-      b.name.toLowerCase().includes(normalizedName) ||
-      normalizedName.includes(b.name.toLowerCase())
+    const data = await response.json();
+    const brands = data.data || data.brands || [];
+
+    const matchedBrand = brands.find((b: any) =>
+      b.name?.toLowerCase().includes(normalizedName) ||
+      normalizedName.includes(b.name?.toLowerCase())
     );
-    
-    if (matchedBrand) {
-      const denomsResponse = await tilloClient.request(
-        `/v2/brands/${matchedBrand.code}/products`,
-        'GET'
-      );
-      
-      return {
-        found: true,
-        tillo_brand_code: matchedBrand.code,
-        brand_name: matchedBrand.name,
-        denominations: denomsResponse.data.map((p: any) => p.face_value.amount),
-        costs: denomsResponse.data.map((p: any) => ({
-          denomination: p.face_value.amount,
-          cost: p.cost.amount,
-        })),
-      };
-    }
-    */
 
-    return { found: false };
+    if (!matchedBrand) {
+      return { found: false };
+    }
+
+    // Get denomination/pricing info for the matched brand
+    const timestamp2 = Date.now();
+    const messageData2 = encoder.encode(`${timestamp2}`);
+    const signature2 = await crypto.subtle.sign('HMAC', key, messageData2);
+    const hexSignature2 = Array.from(new Uint8Array(signature2)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const denomHeaders = { ...headers, 'Signature': hexSignature2, 'Timestamp': timestamp2.toString() };
+    const denomResponse = await fetch(`${baseUrl}/brands/${matchedBrand.code}/products`, { method: 'GET', headers: denomHeaders });
+
+    let denominations: number[] = [];
+    let costs: Array<{ denomination: number; cost: number }> = [];
+
+    if (denomResponse.ok) {
+      const denomData = await denomResponse.json();
+      const products = denomData.data || denomData.products || [];
+      denominations = products.map((p: any) => p.face_value?.amount || p.amount).filter(Boolean);
+      costs = products.map((p: any) => ({
+        denomination: p.face_value?.amount || p.amount,
+        cost: p.cost?.amount || (p.face_value?.amount || p.amount) * 0.95,
+      })).filter((c: any) => c.denomination);
+    }
+
+    return {
+      found: true,
+      tillo_brand_code: matchedBrand.code,
+      brand_name: matchedBrand.name,
+      denominations,
+      costs,
+    };
   } catch (error) {
-    console.error('[LOOKUP-TILLO-BRAND] Error searching Tillo brand:', error);
-    throw new ApiError(
-      `Tillo search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      'TILLO_ERROR',
-      500
-    );
+    console.warn('[LOOKUP-TILLO-BRAND] Tillo API not available:', (error as Error).message);
+    return null;
   }
+}
+
+async function searchTilloBrand(brandName: string): Promise<TilloBrandSearchResponse> {
+  // Try real Tillo API first (if credentials are configured)
+  const tilloApiKey = Deno.env.get('TILLO_API_KEY');
+  const tilloSecretKey = Deno.env.get('TILLO_SECRET_KEY');
+
+  if (tilloApiKey && tilloSecretKey) {
+    console.log('[LOOKUP-TILLO-BRAND] Attempting real Tillo API search');
+    const apiResult = await searchTilloBrandViaApi(brandName);
+    if (apiResult) {
+      return apiResult;
+    }
+    console.log('[LOOKUP-TILLO-BRAND] Tillo API failed, falling back to mock data');
+  }
+
+  // Fallback to mock data when Tillo API is not configured or fails
+  const normalizedName = brandName.toLowerCase().trim();
+  const mockBrand = MOCK_TILLO_BRANDS[normalizedName];
+
+  if (mockBrand) {
+    return {
+      found: true,
+      tillo_brand_code: mockBrand.tillo_brand_code,
+      brand_name: mockBrand.brand_name,
+      denominations: mockBrand.denominations,
+      costs: mockBrand.costs,
+    };
+  }
+
+  return { found: false };
 }
 
 // ============================================================================

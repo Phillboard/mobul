@@ -149,28 +149,60 @@ async function handleTransferAdminCards(
     console.log('[TRANSFER] Created new client pool:', targetPoolId);
   }
 
-  // 4. Get available cards from master pool
-  const { data: cardsToTransfer, error: cardsError } = await supabase
-    .from('gift_cards')
+  // 4. Get available cards from inventory (linked to master pool)
+  const { data: inventoryCards, error: invError } = await supabase
+    .from('gift_card_inventory')
     .select('id')
-    .eq('pool_id', masterPoolId)
+    .eq('legacy_pool_id', masterPoolId)
     .eq('status', 'available')
+    .is('assigned_to_recipient_id', null)
     .limit(quantity);
 
-  if (cardsError || !cardsToTransfer || cardsToTransfer.length < quantity) {
-    throw new ApiError(`Could not find ${quantity} available cards in master pool`, 'VALIDATION_ERROR', 400);
-  }
+  // Fallback to legacy gift_cards if no inventory cards found
+  let cardIds: string[];
+  let usedLegacy = false;
 
-  const cardIds = cardsToTransfer.map(c => c.id);
+  if (inventoryCards && inventoryCards.length >= quantity) {
+    cardIds = inventoryCards.map(c => c.id);
 
-  // 5. Transfer cards (update pool_id)
-  const { error: transferError } = await supabase
-    .from('gift_cards')
-    .update({ pool_id: targetPoolId })
-    .in('id', cardIds);
+    // 5. Transfer cards (update legacy_pool_id to target pool)
+    const { error: transferError } = await supabase
+      .from('gift_card_inventory')
+      .update({ legacy_pool_id: targetPoolId })
+      .in('id', cardIds);
 
-  if (transferError) {
-    throw new ApiError(`Failed to transfer cards: ${transferError.message}`, 'DATABASE_ERROR', 500);
+    if (transferError) {
+      throw new ApiError(`Failed to transfer cards: ${transferError.message}`, 'DATABASE_ERROR', 500);
+    }
+  } else {
+    // Fallback: try legacy gift_cards table
+    const { data: legacyCards, error: legacyError } = await supabase
+      .from('gift_cards')
+      .select('id')
+      .eq('pool_id', masterPoolId)
+      .eq('status', 'available')
+      .limit(quantity);
+
+    if (legacyError || !legacyCards || legacyCards.length < quantity) {
+      const availableCount = (inventoryCards?.length || 0) + (legacyCards?.length || 0);
+      throw new ApiError(
+        `Could not find ${quantity} available cards in master pool (found ${availableCount})`,
+        'VALIDATION_ERROR',
+        400
+      );
+    }
+
+    cardIds = legacyCards.map(c => c.id);
+    usedLegacy = true;
+
+    const { error: transferError } = await supabase
+      .from('gift_cards')
+      .update({ pool_id: targetPoolId })
+      .in('id', cardIds);
+
+    if (transferError) {
+      throw new ApiError(`Failed to transfer cards: ${transferError.message}`, 'DATABASE_ERROR', 500);
+    }
   }
 
   // 6. Update master pool counts

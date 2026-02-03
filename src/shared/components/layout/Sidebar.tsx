@@ -2,11 +2,11 @@ import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Mail, FileText, Users, Gift, Phone,
-  ShoppingCart, Globe, Activity, ListTodo, ChevronRight, ArrowLeft, FormInput,
-  Gauge, BookOpen, List, Upload, FolderTree, Database, FileSearch, Rocket, TestTube,
-  Megaphone, Headphones, ClipboardList, Shield, UserCog, ShieldAlert,
-  PhoneCall, Target, Plug, Settings as SettingsIcon, Package, Building2, CreditCard, DollarSign,
-  Bug, MessageSquare, Zap, Send
+  Globe, Activity, ListTodo, ChevronRight, ArrowLeft, FormInput,
+  Gauge, BookOpen, List, Upload, FolderTree, Rocket, TestTube,
+  Megaphone, Headphones, ClipboardList, UserCog,
+  PhoneCall, Target, Plug, Settings as SettingsIcon, Package, Building2, CreditCard,
+  MessageSquare, Zap, Send
 } from "lucide-react";
 import { NavLink } from "@/shared/components/NavLink";
 import { useAuth } from "@core/auth/AuthProvider";
@@ -149,17 +149,10 @@ const navigationGroups: NavGroup[] = [
     collapsible: true,
     roles: ['admin'],
     items: [
-      { name: "Platform Overview", href: "/platform", icon: Shield, roles: ['admin'], keywords: ["platform", "overview", "stats"], description: "Platform-wide overview" },
       { name: "Organizations", href: "/admin/organizations", icon: Building2, roles: ['admin'], keywords: ["agencies", "clients", "companies", "archive", "delete"], description: "Manage agencies & clients" },
       { name: "User Management", href: "/users", icon: UserCog, roles: ['admin'], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
-      { name: "System Health", href: "/admin/system-health", icon: Activity, roles: ['admin'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring"], description: "System monitoring & health" },
-      { name: "Platform Inventory", href: "/admin/gift-card-marketplace", icon: ShoppingCart, roles: ['admin'], keywords: ["marketplace", "inventory", "gift cards", "master pools", "admin"], description: "Manage platform gift card inventory" },
-      { name: "Gift Card Brands", href: "/admin/gift-cards", icon: Gift, roles: ['admin'], keywords: ["brands", "providers"], description: "Manage gift card brands" },
-      { name: "Financial Reports", href: "/admin/financial-reports", icon: DollarSign, roles: ['admin'], keywords: ["finances", "revenue", "reports"], description: "Platform financial reports" },
-      { name: "Demo Data", href: "/admin/demo-data", icon: Database, roles: ['admin'], keywords: ["demo", "test", "simulation", "seed", "generate"], description: "Generate demo data for testing" },
-      { name: "Audit Log", href: "/admin/audit-log", icon: ShieldAlert, roles: ['admin'], keywords: ["audit", "logs", "history"], description: "User management audit trail" },
-      { name: "Error Logs", href: "/admin/error-logs", icon: Bug, roles: ['admin'], keywords: ["errors", "bugs", "debugging", "logs", "troubleshooting"], description: "System error logs" },
-      { name: "Site Directory", href: "/admin/site-directory", icon: FileSearch, roles: ['admin'], keywords: ["pages", "routes", "navigation"], description: "All pages directory" },
+      { name: "System Health", href: "/admin/system-health", icon: Activity, roles: ['admin'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring", "error logs"], description: "System monitoring, health & error logs" },
+      { name: "Gift Cards", href: "/admin/gift-cards-dashboard", icon: Gift, roles: ['admin'], keywords: ["marketplace", "inventory", "gift cards", "brands", "providers", "master pools", "admin", "financials", "revenue"], description: "Gift card management, inventory & financials" },
     ]
   },
 ];

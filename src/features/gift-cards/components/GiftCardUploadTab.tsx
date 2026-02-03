@@ -34,7 +34,7 @@ export function GiftCardUploadTab({ clientId, preselectedPoolId }: GiftCardUploa
   };
 
   const handleUpload = async () => {
-    if (!file || !selectedPoolId) return;
+    if (!file) return;
 
     setIsUploading(true);
     setUploadResult(null);
@@ -44,16 +44,20 @@ export function GiftCardUploadTab({ clientId, preselectedPoolId }: GiftCardUploa
       reader.onload = async (e) => {
         const csvContent = e.target?.result as string;
 
+        const body: Record<string, unknown> = { csv_content: csvContent };
+        if (selectedPoolId) {
+          body.pool_id = selectedPoolId;
+        }
+        // When no pool is selected, the backend auto-creates one
+
         const data = await callEdgeFunction<{
           success: number;
           duplicates: number;
           errors: string[];
+          pool_id?: string;
         }>(
           Endpoints.giftCards.import,
-          {
-            pool_id: selectedPoolId,
-            csv_content: csvContent,
-          }
+          body
         );
 
         setUploadResult(data);
@@ -107,12 +111,13 @@ TARGETABC123,,,10.00,Target`;
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Select Pool</Label>
+            <Label>Select Pool (optional)</Label>
             <Select value={selectedPoolId} onValueChange={setSelectedPoolId}>
               <SelectTrigger>
-                <SelectValue placeholder="Choose a gift card pool" />
+                <SelectValue placeholder="Auto-create new pool" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">Auto-create new pool</SelectItem>
                 {pools?.map((pool) => (
                   <SelectItem key={pool.id} value={pool.id}>
                     {pool.pool_name} ({pool.available_cards} available)
@@ -120,6 +125,11 @@ TARGETABC123,,,10.00,Target`;
                 ))}
               </SelectContent>
             </Select>
+            {!selectedPoolId && (
+              <p className="text-xs text-muted-foreground">
+                A new pool will be created automatically with today's date
+              </p>
+            )}
           </div>
 
           <FileUploadZone
@@ -140,7 +150,7 @@ TARGETABC123,,,10.00,Target`;
           <div className="flex gap-2">
             <Button
               onClick={handleUpload}
-              disabled={!file || !selectedPoolId || isUploading}
+              disabled={!file || isUploading}
               className="flex-1"
             >
               <Upload className="h-4 w-4 mr-2" />

@@ -1,6 +1,9 @@
 // Gift Cards feature hooks
+export * from './useAgencyBrandAccess';
 export * from './useBrandLookup';
+export * from './useBrandSearch';
 export * from './useClientAvailableGiftCards';
+export * from './useClientBrandAccess';
 export * from './useClientGiftCards';
 export * from './useDenominationPricing';
 export * from './useGiftCardBilling';

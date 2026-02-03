@@ -233,12 +233,13 @@ async function handleValidateRedemptionCode(
     };
   }
 
-  // 5. Check for existing gift card assignments
+  // 5. Check for existing gift card assignments (supports both legacy and inventory models)
   const { data: existingAssignments } = await supabase
     .from('recipient_gift_cards')
     .select(`
       id,
       gift_card_id,
+      inventory_card_id,
       condition_id,
       assigned_at,
       delivered_at,
@@ -260,22 +261,51 @@ async function handleValidateRedemptionCode(
             logo_url
           )
         )
+      ),
+      gift_card_inventory(
+        card_code,
+        card_number,
+        denomination,
+        gift_card_brands(
+          brand_name,
+          logo_url
+        )
       )
     `)
     .eq('recipient_id', recipient.id);
 
   const existingCards: ExistingCardInfo[] = (existingAssignments || []).map((assignment: Record<string, unknown>) => {
-    const card = assignment.gift_cards as Record<string, unknown>;
+    const legacyCard = assignment.gift_cards as Record<string, unknown>;
+    const inventoryCard = assignment.gift_card_inventory as Record<string, unknown>;
     const condition = assignment.campaign_conditions as Record<string, unknown>;
-    const pool = card?.gift_card_pools as Record<string, unknown>;
-    const brand = pool?.gift_card_brands as Record<string, unknown>;
 
+    // Prefer inventory card data, fall back to legacy
+    if (inventoryCard) {
+      const brand = inventoryCard.gift_card_brands as Record<string, unknown>;
+      return {
+        giftCardId: (assignment.inventory_card_id || assignment.gift_card_id) as string,
+        conditionId: assignment.condition_id as string,
+        conditionName: condition?.condition_name as string,
+        cardCode: inventoryCard.card_code as string,
+        cardValue: inventoryCard.denomination as number,
+        brandName: brand?.brand_name as string,
+        brandLogo: brand?.logo_url as string,
+        assignedAt: assignment.assigned_at as string,
+        deliveredAt: assignment.delivered_at as string,
+        deliveryStatus: assignment.delivery_status as string,
+        deliveryMethod: assignment.delivery_method as string,
+      };
+    }
+
+    // Legacy card fallback
+    const pool = legacyCard?.gift_card_pools as Record<string, unknown>;
+    const brand = pool?.gift_card_brands as Record<string, unknown>;
     return {
       giftCardId: assignment.gift_card_id as string,
       conditionId: assignment.condition_id as string,
       conditionName: condition?.condition_name as string,
-      cardCode: card?.card_code as string,
-      cardValue: card?.card_value as number,
+      cardCode: legacyCard?.card_code as string,
+      cardValue: legacyCard?.card_value as number,
       brandName: (brand?.brand_name || pool?.pool_name) as string,
       brandLogo: brand?.logo_url as string,
       assignedAt: assignment.assigned_at as string,

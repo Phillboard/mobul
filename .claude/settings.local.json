@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(dir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git log:*)",
+      "Bash(grep:*)",
+      "Bash(npx supabase db push:*)",
+      "Bash(npx supabase migration:*)",
+      "Bash(npx vite build)",
+      "Bash(wc:*)",
+      "Bash(find:*)"
     ]
   }
 }

@@ -58,9 +58,29 @@ interface ExpandableInventoryRowProps {
   assigned: number;
   delivered: number;
   totalValue: number;
+  avgCost?: number;
+  costSources?: string[];
   isExpanded: boolean;
   onToggle: () => void;
   onUploadClick: () => void;
+}
+
+// Source badge component
+function SourceBadge({ source }: { source: string }) {
+  const configs: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+    csv: { label: "CSV", variant: "outline" },
+    tillo_api: { label: "Tillo", variant: "secondary" },
+    manual: { label: "Manual", variant: "outline" },
+    unknown: { label: "Unknown", variant: "outline" },
+  };
+  
+  const config = configs[source] || configs.unknown;
+  
+  return (
+    <Badge variant={config.variant} className="text-xs">
+      {config.label}
+    </Badge>
+  );
 }
 
 // Helper to mask card code
@@ -97,6 +117,8 @@ export function ExpandableInventoryRow({
   assigned,
   delivered,
   totalValue,
+  avgCost = 0,
+  costSources = [],
   isExpanded,
   onToggle,
   onUploadClick,
@@ -196,6 +218,20 @@ export function ExpandableInventoryRow({
         </TableCell>
         <TableCell className="text-right text-muted-foreground">{assigned}</TableCell>
         <TableCell className="text-right text-muted-foreground">{delivered}</TableCell>
+        <TableCell className="text-right text-muted-foreground">
+          {avgCost > 0 ? `$${avgCost.toFixed(2)}` : "—"}
+        </TableCell>
+        <TableCell>
+          <div className="flex gap-1">
+            {costSources.length > 0 ? (
+              costSources.map((source) => (
+                <SourceBadge key={source} source={source} />
+              ))
+            ) : (
+              <span className="text-muted-foreground text-sm">—</span>
+            )}
+          </div>
+        </TableCell>
         <TableCell className="text-right font-semibold">${totalValue.toLocaleString()}</TableCell>
         <TableCell onClick={(e) => e.stopPropagation()}>
           <Button 
@@ -211,7 +247,7 @@ export function ExpandableInventoryRow({
       {/* Expanded Content */}
       {isExpanded && (
         <TableRow>
-          <TableCell colSpan={8} className="p-0 bg-muted/30">
+          <TableCell colSpan={10} className="p-0 bg-muted/30">
             <div className="p-4 space-y-3">
               {/* Bulk Actions Bar */}
               {selectedCards.size > 0 && (

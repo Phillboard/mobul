@@ -70,18 +70,34 @@ async function handleExportPoolCards(
 
   console.log(`[EXPORT-POOL-CARDS] Exporting pool: ${poolId}`);
 
-  // Fetch all cards from the pool
-  const { data: cards, error: cardsError } = await supabase
+  // Fetch cards from gift_card_inventory (primary source)
+  const { data: inventoryCards } = await supabase
+    .from('gift_card_inventory')
+    .select('card_code, card_number, status, current_balance, created_at, last_balance_check, balance_check_status, delivered_at, expiration_date')
+    .eq('legacy_pool_id', poolId)
+    .order('created_at', { ascending: false });
+
+  // Also fetch remaining legacy cards not yet in inventory
+  const { data: legacyCards } = await supabase
     .from('gift_cards')
-    .select('*')
+    .select('card_code, card_number, status, current_balance, created_at, last_balance_check, balance_check_status, delivered_at, expires_at')
     .eq('pool_id', poolId)
     .order('created_at', { ascending: false });
 
-  if (cardsError) {
-    throw new ApiError(`Failed to fetch cards: ${cardsError.message}`, 'DATABASE_ERROR', 500);
-  }
+  // Deduplicate: prefer inventory cards, exclude legacy cards already migrated
+  const inventoryCodes = new Set((inventoryCards || []).map(c => c.card_code));
+  const uniqueLegacy = (legacyCards || []).filter(c => !inventoryCodes.has(c.card_code));
 
-  if (!cards || cards.length === 0) {
+  // Normalize into common shape
+  const cards = [
+    ...(inventoryCards || []).map(c => ({
+      ...c,
+      expires_at: c.expiration_date,
+    })),
+    ...uniqueLegacy,
+  ];
+
+  if (cards.length === 0) {
     throw new ApiError('No cards found in this pool', 'NOT_FOUND', 404);
   }
 
