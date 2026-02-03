@@ -39,6 +39,7 @@ interface BrandWithDenominations {
 
 /**
  * Fetch all gift card options available to a client
+ * Respects hierarchical access: Platform Admin -> Agency -> Client
  */
 export function useClientAvailableGiftCards(clientId: string | undefined) {
   return useQuery({
@@ -46,6 +47,68 @@ export function useClientAvailableGiftCards(clientId: string | undefined) {
     queryFn: async () => {
       if (!clientId) return [];
 
+      // First, get the client's agency_id
+      const { data: clientData, error: clientError } = await supabase
+        .from("clients")
+        .select("agency_id")
+        .eq("id", clientId)
+        .single();
+      
+      if (clientError) {
+        console.error('[useClientAvailableGiftCards] Error fetching client:', clientError);
+        // Fall back to basic query if client lookup fails
+      }
+
+      const agencyId = clientData?.agency_id;
+
+      // If client has an agency, filter by agency access as well
+      if (agencyId) {
+        // Get agency's enabled brands first
+        const { data: agencyBrands, error: agencyError } = await supabase
+          .from("agency_available_gift_cards")
+          .select("brand_id, denomination")
+          .eq("agency_id", agencyId)
+          .eq("is_enabled", true);
+        
+        if (agencyError) {
+          console.error('[useClientAvailableGiftCards] Error fetching agency brands:', agencyError);
+        }
+        
+        // Create a set of agency-enabled brand-denomination pairs
+        const agencyEnabledSet = new Set(
+          (agencyBrands || []).map(ab => `${ab.brand_id}-${ab.denomination}`)
+        );
+
+        // Get client's enabled gift cards
+        const { data: clientCards, error } = await supabase
+          .from("client_available_gift_cards")
+          .select(`
+            *,
+            brand:gift_card_brands (
+              id,
+              brand_name,
+              brand_code,
+              logo_url,
+              is_enabled_by_admin
+            )
+          `)
+          .eq("client_id", clientId)
+          .eq("is_enabled", true);
+
+        if (error) throw error;
+
+        // Filter to only include brands enabled at agency level AND admin level
+        const filtered = (clientCards || []).filter((card: any) => {
+          const key = `${card.brand_id}-${card.denomination}`;
+          const isAgencyEnabled = agencyEnabledSet.has(key);
+          const isAdminEnabled = card.brand?.is_enabled_by_admin !== false;
+          return isAgencyEnabled && isAdminEnabled;
+        });
+
+        return filtered as ClientAvailableGiftCard[];
+      }
+
+      // No agency - direct admin client, just check client and admin access
       const { data, error } = await supabase
         .from("client_available_gift_cards")
         .select(`
@@ -62,7 +125,13 @@ export function useClientAvailableGiftCards(clientId: string | undefined) {
         .eq("is_enabled", true);
 
       if (error) throw error;
-      return data as ClientAvailableGiftCard[];
+      
+      // Filter by admin enabled
+      const filtered = (data || []).filter((card: any) => 
+        card.brand?.is_enabled_by_admin !== false
+      );
+      
+      return filtered as ClientAvailableGiftCard[];
     },
     enabled: !!clientId,
   });
@@ -71,12 +140,36 @@ export function useClientAvailableGiftCards(clientId: string | undefined) {
 /**
  * Fetch available brands with their denominations for a client
  * Groups by brand for better UI display
+ * Respects hierarchical access: Platform Admin -> Agency -> Client
  */
 export function useClientGiftCardBrands(clientId: string | undefined) {
   return useQuery({
     queryKey: ["client-gift-card-brands", clientId],
     queryFn: async () => {
       if (!clientId) return [];
+
+      // First, get the client's agency_id
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("agency_id")
+        .eq("id", clientId)
+        .single();
+
+      const agencyId = clientData?.agency_id;
+
+      // Get agency's enabled brands if client has agency
+      let agencyEnabledSet: Set<string> | null = null;
+      if (agencyId) {
+        const { data: agencyBrands } = await supabase
+          .from("agency_available_gift_cards")
+          .select("brand_id, denomination")
+          .eq("agency_id", agencyId)
+          .eq("is_enabled", true);
+        
+        agencyEnabledSet = new Set(
+          (agencyBrands || []).map(ab => `${ab.brand_id}-${ab.denomination}`)
+        );
+      }
 
       // Get all client's available gift cards with brand info
       const { data: clientCards, error: clientError } = await supabase
@@ -88,7 +181,8 @@ export function useClientGiftCardBrands(clientId: string | undefined) {
             id,
             brand_name,
             brand_code,
-            logo_url
+            logo_url,
+            is_enabled_by_admin
           )
         `)
         .eq("client_id", clientId)
@@ -104,12 +198,23 @@ export function useClientGiftCardBrands(clientId: string | undefined) {
 
       if (inventoryError) throw inventoryError;
 
-      // Group by brand
+      // Group by brand, filtering by agency access
       const brandsMap = new Map<string, BrandWithDenominations>();
 
       clientCards?.forEach((card: any) => {
         const brandId = card.brand_id;
         const brand = card.brand;
+        const key = `${brandId}-${card.denomination}`;
+
+        // Skip if agency filtering is active and this brand-denom is not enabled
+        if (agencyEnabledSet && !agencyEnabledSet.has(key)) {
+          return;
+        }
+
+        // Skip if admin hasn't enabled this brand
+        if (brand?.is_enabled_by_admin === false) {
+          return;
+        }
 
         if (!brandsMap.has(brandId)) {
           brandsMap.set(brandId, {

@@ -59,11 +59,35 @@ export interface ValidationSchema {
 
 /**
  * Valid user roles in the system
+ * 
+ * IMPORTANT: These roles must match the frontend roles in src/core/auth/roles.ts
+ * and the database app_role enum.
+ * 
+ * Role Hierarchy:
+ *   admin (1)        → Full platform access
+ *   tech_support (2) → View everything, assist users, no destructive actions
+ *   agency_owner (3) → Manage agency + all clients under it
+ *   company_owner (4)→ Manage their client only
+ *   developer (5)    → API/integration access (cross-cutting)
+ *   call_center (6)  → Redemption interface only
+ * 
+ * Legacy role mappings (for backward compatibility):
+ *   platform_admin    → admin
+ *   agency_user       → agency_owner (use permission overrides for restrictions)
+ *   client_admin      → company_owner
+ *   client_user       → company_owner (use permission overrides for restrictions)
+ *   call_center_agent → call_center
+ *   call_center_supervisor → call_center (use permission overrides for extra access)
  */
 export type UserRole =
   | 'admin'
-  | 'platform_admin'
+  | 'tech_support'
   | 'agency_owner'
+  | 'company_owner'
+  | 'developer'
+  | 'call_center'
+  // Legacy roles (mapped to canonical roles in checkRole)
+  | 'platform_admin'
   | 'agency_user'
   | 'client_admin'
   | 'client_user'
@@ -280,16 +304,73 @@ export async function authenticateRequest(req: Request): Promise<AuthContext> {
 }
 
 /**
+ * Map legacy role names to canonical roles
+ * This ensures backward compatibility with any existing data using old role names
+ */
+function normalizeRole(role: string): string {
+  const roleMap: Record<string, string> = {
+    // Legacy → Canonical
+    'platform_admin': 'admin',
+    'client_admin': 'company_owner',
+    'client_user': 'company_owner',
+    'agency_user': 'agency_owner',
+    'call_center_agent': 'call_center',
+    'call_center_supervisor': 'call_center',
+  };
+  return roleMap[role] || role;
+}
+
+/**
  * Check if user has required role
+ * 
+ * Role hierarchy is respected:
+ * - admin has access to everything
+ * - tech_support has access to admin-level view operations
+ * - agency_owner has access to company_owner operations
+ * - etc.
  */
 function checkRole(userRole: string, requiredRole: UserRole | UserRole[]): boolean {
-  // Admin always has access
-  if (userRole === 'admin' || userRole === 'platform_admin') {
+  // Normalize the user's role (handle legacy role names)
+  const normalizedUserRole = normalizeRole(userRole);
+  
+  // Admin always has access to everything
+  if (normalizedUserRole === 'admin') {
     return true;
   }
   
+  // Normalize required roles
   const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-  return roles.includes(userRole as UserRole);
+  const normalizedRequiredRoles = roles.map(r => normalizeRole(r));
+  
+  // Direct role match
+  if (normalizedRequiredRoles.includes(normalizedUserRole)) {
+    return true;
+  }
+  
+  // Role hierarchy: higher roles can access lower role endpoints
+  const roleHierarchy: Record<string, number> = {
+    'admin': 1,
+    'tech_support': 2,
+    'agency_owner': 3,
+    'company_owner': 4,
+    'developer': 5,
+    'call_center': 6,
+  };
+  
+  const userLevel = roleHierarchy[normalizedUserRole] || 999;
+  
+  // Check if user's role level is high enough for any required role
+  // (lower number = higher privilege)
+  for (const requiredRoleItem of normalizedRequiredRoles) {
+    const requiredLevel = roleHierarchy[requiredRoleItem] || 999;
+    // User can access if their level is <= required level
+    // BUT only for hierarchical roles (not cross-cutting like developer)
+    if (normalizedUserRole !== 'developer' && userLevel <= requiredLevel) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 // ============================================================================
@@ -641,6 +722,4 @@ export async function callEdgeFunction<TRequest, TResponse>(
 
 // ============================================================================
 // Re-export for convenience
-// ============================================================================
-
-export { handleCORSPreflight as handleCORSFromCors };
+// ============================================================================export { handleCORSPreflight as handleCORSFromCors };

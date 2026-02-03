@@ -1,22 +1,57 @@
 [
   {
     "fileName": "main-overview.mdc",
-    "description": "Complete system overview covering the campaign management platform architecture, gift card reward system, and multi-tenant organization structure"
+    "description": "Complete system overview with architecture, features, and key components",
+    "sourceFilesToRead": [
+      "src/app/index.ts",
+      "src/core/index.ts",
+      "src/features/",
+      "src/core/services/",
+      ".env.example"
+    ]
   },
   {
-    "fileName": "gift-card-provisioning-system.mdc",
-    "description": "Detailed documentation of the gift card provisioning algorithms, pool management logic, and balance verification systems including inventory thresholds and automated triggers"
+    "fileName": "auth-permissions.mdc",
+    "description": "Authentication, authorization flows and role-based permissions system",
+    "sourceFilesToRead": [
+      "src/core/auth/AuthProvider.tsx",
+      "src/core/auth/permissions.ts",
+      "src/core/auth/roles.ts",
+      "src/core/auth/hooks/usePermissions.ts",
+      "src/core/auth/components/PermissionGate.tsx"
+    ]
   },
   {
-    "fileName": "campaign-condition-model.mdc",
-    "description": "Comprehensive documentation of campaign condition data models, trigger evaluation algorithms, and reward distribution logic including time-based delays and multi-step verification"
+    "fileName": "gift-card-system.mdc",
+    "description": "Gift card provisioning, management and redemption flow",
+    "sourceFilesToRead": [
+      "src/features/gift-cards/lib/provisioning-utils.ts",
+      "src/features/gift-cards/hooks/useGiftCardProvisioning.ts",
+      "src/features/gift-cards/hooks/useGiftCards.ts",
+      "src/features/gift-cards/lib/billing-utils.ts",
+      "src/features/gift-cards/types/index.ts"
+    ]
   },
   {
-    "fileName": "organization-hierarchy.mdc",
-    "description": "Documentation of the multi-tenant data model including organization relationships, role-based permissions, and client-agency hierarchies with inheritance rules"
+    "fileName": "campaign-engine.mdc",
+    "description": "Marketing campaign creation and automation system",
+    "sourceFilesToRead": [
+      "src/features/campaigns/utils/campaignUtils.ts",
+      "src/features/marketing/components/AutomationBuilder/",
+      "src/features/campaigns/validation/campaignValidation.ts",
+      "src/features/campaigns/hooks/useCampaignConditions.ts",
+      "src/features/marketing/hooks/useMarketingAutomations.ts"
+    ]
   },
   {
-    "fileName": "reward-fulfillment-flow.mdc",
-    "description": "End-to-end documentation of the reward fulfillment process including SMS opt-in requirements, call center integration, and multi-channel verification workflows"
+    "fileName": "integration-services.mdc",
+    "description": "Third-party integration implementations and API clients",
+    "sourceFilesToRead": [
+      "src/core/services/tillo.ts",
+      "src/core/services/zapier.ts",
+      "src/core/api/client.ts",
+      "src/core/services/supabase/client.ts",
+      "src/features/settings/hooks/useTwilioConfig.ts"
+    ]
   }
 ]

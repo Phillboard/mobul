@@ -1,5 +1,6 @@
 import { LucideIcon, User, Settings, Phone, MessageSquare, Palette, Database, Zap, Code, Users, Shield, CreditCard, Building2, Mail } from "lucide-react";
-import { AppRole } from "./roleUtils";
+import { AppRole } from "@/core/auth/roles";
+import { P } from "@/core/auth/permissionRegistry";
 
 export interface TabConfig {
   id: string;
@@ -30,7 +31,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'General',
     icon: Settings,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer'],
-    permissions: ['settings.view'],
+    permissions: [P.SETTINGS_GENERAL],
     description: 'Organization and client settings',
     group: 'client'
   },
@@ -39,7 +40,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Branding',
     icon: Palette,
     roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['clients.edit'],
+    permissions: [P.SETTINGS_GENERAL],
     requiresClient: true,
     description: 'Customize brand colors, fonts, and logo',
     group: 'client'
@@ -49,7 +50,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Phone Numbers',
     icon: Phone,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
-    permissions: ['settings.phone_numbers'],
+    permissions: [P.SETTINGS_GENERAL],
     description: 'Manage call tracking numbers',
     group: 'client'
   },
@@ -58,7 +59,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'SMS Logs',
     icon: MessageSquare,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
-    permissions: ['settings.view'],
+    permissions: [P.SETTINGS_GENERAL],
     description: 'View SMS delivery history',
     group: 'client'
   },
@@ -89,7 +90,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Mail Provider',
     icon: Mail,
     roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['settings.edit'],
+    permissions: [P.SETTINGS_GENERAL],
     requiresClient: false,
     description: 'Configure direct mail fulfillment provider',
     group: 'integrations'

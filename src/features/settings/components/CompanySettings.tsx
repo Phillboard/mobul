@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avat
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@core/auth/AuthProvider';
+import { P } from '@/core/auth/permissionRegistry';
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
 import { 
@@ -120,7 +121,7 @@ export function CompanySettings() {
     }
   }, [currentClient]);
 
-  const canEdit = hasPermission("clients.edit") || hasPermission("settings.edit");
+  const canEdit = hasPermission(P.SETTINGS_GENERAL);
 
   // Logo upload handler
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

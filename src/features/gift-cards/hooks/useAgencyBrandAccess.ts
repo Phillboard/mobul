@@ -28,23 +28,24 @@ export interface AgencyBrandConfig {
 
 /**
  * Fetch all agencies for selection
- * Tries agencies table first, then falls back to organizations with type='agency'
+ * Combines agencies from both 'agencies' table and 'organizations' table (type='agency')
+ * Also syncs missing agencies from organizations to the agencies table
  */
 export function useAgencies() {
   return useQuery({
     queryKey: ['agencies-list'],
     queryFn: async () => {
-      // First try the agencies table
+      // Get agencies from the agencies table
       const { data: agenciesData, error: agenciesError } = await supabase
         .from('agencies')
         .select('id, name, slug, gift_card_markup_percentage')
         .order('name');
       
-      if (!agenciesError && agenciesData && agenciesData.length > 0) {
-        return agenciesData;
+      if (agenciesError) {
+        console.error('[useAgencies] Error fetching agencies table:', agenciesError);
       }
       
-      // Fallback to organizations table with type='agency'
+      // Also get organizations with type='agency' (some may not be in agencies table)
       const { data: orgsData, error: orgsError } = await supabase
         .from('organizations')
         .select('id, name, settings_json')
@@ -52,17 +53,69 @@ export function useAgencies() {
         .order('name');
       
       if (orgsError) {
-        console.error('Error fetching agencies:', orgsError);
-        throw orgsError;
+        console.error('[useAgencies] Error fetching organizations:', orgsError);
       }
       
-      // Map organizations to agency format
-      return (orgsData || []).map(org => ({
-        id: org.id,
-        name: org.name,
-        slug: org.name.toLowerCase().replace(/\s+/g, '-'),
-        gift_card_markup_percentage: org.settings_json?.gift_card_markup_percentage || 0,
-      }));
+      // Create a map of existing agency IDs
+      const existingAgencyIds = new Set((agenciesData || []).map(a => a.id));
+      
+      // Find organizations that are agencies but not in the agencies table
+      const missingOrgs = (orgsData || []).filter(org => !existingAgencyIds.has(org.id));
+      
+      // Sync missing organizations to agencies table (fire and forget)
+      if (missingOrgs.length > 0) {
+        console.log('[useAgencies] Syncing', missingOrgs.length, 'missing agencies from organizations');
+        
+        const toInsert = missingOrgs.map(org => ({
+          id: org.id,
+          name: org.name,
+          slug: org.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+          gift_card_markup_percentage: org.settings_json?.gift_card_markup_percentage || 0,
+        }));
+        
+        // Insert missing agencies (ignore errors for duplicates)
+        supabase
+          .from('agencies')
+          .upsert(toInsert, { onConflict: 'id', ignoreDuplicates: true })
+          .then(({ error }) => {
+            if (error) {
+              console.warn('[useAgencies] Error syncing agencies:', error);
+            }
+          });
+      }
+      
+      // Combine both sources, deduplicate by ID
+      const allAgencies = new Map<string, {
+        id: string;
+        name: string;
+        slug: string;
+        gift_card_markup_percentage: number;
+      }>();
+      
+      // Add from agencies table first (these have priority)
+      (agenciesData || []).forEach(agency => {
+        allAgencies.set(agency.id, {
+          id: agency.id,
+          name: agency.name,
+          slug: agency.slug,
+          gift_card_markup_percentage: agency.gift_card_markup_percentage || 0,
+        });
+      });
+      
+      // Add from organizations (for any not already in agencies table)
+      (orgsData || []).forEach(org => {
+        if (!allAgencies.has(org.id)) {
+          allAgencies.set(org.id, {
+            id: org.id,
+            name: org.name,
+            slug: org.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+            gift_card_markup_percentage: org.settings_json?.gift_card_markup_percentage || 0,
+          });
+        }
+      });
+      
+      // Return sorted by name
+      return Array.from(allAgencies.values()).sort((a, b) => a.name.localeCompare(b.name));
     },
   });
 }

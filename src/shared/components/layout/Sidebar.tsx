@@ -14,7 +14,8 @@ import { useTenant } from "@/contexts/TenantContext";
 import { settingsTabs } from '@/core/config/settingsConfig';
 import { useSettingsTabs } from '@/features/settings/hooks';
 import { useMenuSearch, SearchableNavItem } from '@/shared/hooks';
-import { AppRole } from '@/core/auth/roleUtils';
+import { AppRole } from '@/core/auth/roles';
+import { P } from '@/core/auth/permissionRegistry';
 import { Button } from "@/shared/components/ui/button";
 import {
   Sidebar as SidebarRoot, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -47,36 +48,40 @@ const navigationGroups: NavGroup[] = [
   {
     label: "Main",
     items: [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard, permissions: ['dashboard.view'], keywords: ["home", "overview"], description: "Main dashboard" },
+      { name: "Dashboard", href: "/", icon: LayoutDashboard, permissions: [P.DASHBOARD_VIEW], keywords: ["home", "overview"], description: "Main dashboard" },
     ]
   },
   {
     label: "Campaigns",
     collapsible: true,
+    permissions: [P.CAMPAIGNS_VIEW],
     items: [
-      { name: "All Campaigns", href: "/campaigns", icon: Megaphone, permissions: ['campaigns.view'], keywords: ["mail", "postcards", "direct mail", "marketing"], description: "Manage direct mail campaigns" },
-      { name: "Mail Library", href: "/mail", icon: Mail, permissions: ['templates.view'], keywords: ["design", "layouts", "postcard designs", "templates"], description: "Direct mail designs" },
-      { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: ['landingpages.view'], keywords: ["web", "purl", "personalized urls"], description: "Personalized landing pages" },
-      { name: "Forms", href: "/forms", icon: FormInput, permissions: ['campaigns.view'], keywords: ["forms", "lead capture", "redemption"], description: "Lead capture & gift card forms" },
+      { name: "All Campaigns", href: "/campaigns", icon: Megaphone, permissions: [P.CAMPAIGNS_VIEW], keywords: ["mail", "postcards", "direct mail", "marketing"], description: "Manage direct mail campaigns" },
+      { name: "Mail Library", href: "/mail", icon: Mail, permissions: [P.TEMPLATES_VIEW], keywords: ["design", "layouts", "postcard designs", "templates"], description: "Direct mail designs" },
+      { name: "Landing Pages", href: "/landing-pages", icon: Globe, permissions: [P.LANDING_PAGES_VIEW], keywords: ["web", "purl", "personalized urls"], description: "Personalized landing pages" },
+      { name: "Forms", href: "/forms", icon: FormInput, permissions: [P.FORMS_VIEW], keywords: ["forms", "lead capture", "redemption"], description: "Lead capture & gift card forms" },
     ]
   },
   {
     label: "Audience",
     collapsible: true,
+    permissions: [P.CONTACTS_VIEW],
     items: [
-      { name: "Contacts", href: "/contacts", icon: Users, keywords: ["contacts", "customers", "crm", "people"], description: "Manage customer database" },
-      { name: "Lists & Segments", href: "/contacts/lists", icon: List, keywords: ["lists", "segments", "groups", "targeting"], description: "Organize and segment contacts" },
-      { name: "Import Contacts", href: "/contacts/import", icon: Upload, keywords: ["import", "csv", "upload", "bulk"], description: "Import contacts from CSV" },
+      { name: "Contacts", href: "/contacts", icon: Users, permissions: [P.CONTACTS_VIEW], keywords: ["contacts", "customers", "crm", "people"], description: "Manage customer database" },
+      { name: "Lists & Segments", href: "/contacts/lists", icon: List, permissions: [P.CONTACTS_VIEW], keywords: ["lists", "segments", "groups", "targeting"], description: "Organize and segment contacts" },
+      { name: "Import Contacts", href: "/contacts/import", icon: Upload, permissions: [P.CONTACTS_IMPORT], keywords: ["import", "csv", "upload", "bulk"], description: "Import contacts from CSV" },
     ]
   },
   {
     label: "Marketing",
     collapsible: true,
+    permissions: [P.CAMPAIGNS_VIEW],
     items: [
       { 
         name: "Marketing Hub", 
         href: "/marketing", 
         icon: LayoutDashboard,
+        permissions: [P.CAMPAIGNS_VIEW],
         keywords: ["marketing", "overview", "dashboard"], 
         description: "Email & SMS marketing overview"
       },
@@ -84,6 +89,7 @@ const navigationGroups: NavGroup[] = [
         name: "Broadcasts", 
         href: "/marketing/broadcasts", 
         icon: Send,
+        permissions: [P.CAMPAIGNS_VIEW],
         keywords: ["email", "sms", "blast", "newsletter", "broadcast", "campaign"], 
         description: "One-time email & SMS sends"
       },
@@ -91,6 +97,7 @@ const navigationGroups: NavGroup[] = [
         name: "Automations", 
         href: "/marketing/automations", 
         icon: Zap,
+        permissions: [P.CAMPAIGNS_VIEW],
         keywords: ["automation", "workflow", "journey", "sequence", "drip"], 
         description: "Automated multi-step workflows"
       },
@@ -98,6 +105,7 @@ const navigationGroups: NavGroup[] = [
         name: "Content Library", 
         href: "/marketing/content", 
         icon: FileText,
+        permissions: [P.TEMPLATES_VIEW],
         keywords: ["templates", "content", "library", "reusable"], 
         description: "Email & SMS templates"
       },
@@ -106,53 +114,56 @@ const navigationGroups: NavGroup[] = [
   {
     label: "Rewards",
     collapsible: true,
+    permissions: [P.GIFT_CARDS_VIEW],
     items: [
-      { name: "Gift Card Inventory", href: "/gift-cards", icon: Gift, roles: ['admin', 'agency_owner'], permissions: ['gift_cards.manage', 'giftcards.view'], keywords: ["rewards", "inventory", "pools"], description: "Manage gift card inventory" },
-      { name: "Credits & Billing", href: "/credits-billing", icon: CreditCard, roles: ['admin', 'agency_owner', 'company_owner'], permissions: ['gift_cards.purchase', 'giftcards.purchase', 'settings.billing'], keywords: ["credits", "billing", "auto-reload", "balance", "payments"], description: "Manage credits and billing" },
+      { name: "Gift Card Inventory", href: "/gift-cards", icon: Gift, permissions: [P.GIFT_CARDS_MANAGE_POOLS], keywords: ["rewards", "inventory", "pools"], description: "Manage gift card inventory" },
+      { name: "Credits & Billing", href: "/credits-billing", icon: CreditCard, permissions: [P.CREDITS_VIEW], keywords: ["credits", "billing", "auto-reload", "balance", "payments"], description: "Manage credits and billing" },
     ]
   },
   {
     label: "Call Center",
     collapsible: true,
+    permissions: [P.CALL_CENTER_VIEW],
     items: [
-      { name: "Redemption Center", href: "/call-center", icon: Headphones, permissions: ['calls.confirm_redemption'], keywords: ["redeem", "call center", "provision", "tracking", "calls"], description: "Redeem gift cards and track calls" },
-      { name: "Redemption Logs", href: "/call-center/logs", icon: ClipboardList, roles: ['admin'], keywords: ["logs", "audit", "history", "debug", "errors"], description: "View detailed redemption workflow logs" },
-      { name: "Call Scripts", href: "/call-center/scripts", icon: FileText, permissions: ['calls.manage'], keywords: ["scripts", "training", "call flow"], description: "Manage call scripts" },
+      { name: "Redemption Center", href: "/call-center", icon: Headphones, permissions: [P.CALL_CENTER_REDEEM], keywords: ["redeem", "call center", "provision", "tracking", "calls"], description: "Redeem gift cards and track calls" },
+      { name: "Redemption Logs", href: "/call-center/logs", icon: ClipboardList, permissions: [P.ADMIN_AUDIT_LOG], keywords: ["logs", "audit", "history", "debug", "errors"], description: "View detailed redemption workflow logs" },
+      { name: "Call Scripts", href: "/call-center/scripts", icon: FileText, permissions: [P.CALL_CENTER_SCRIPTS], keywords: ["scripts", "training", "call flow"], description: "Manage call scripts" },
     ]
   },
   {
     label: "Monitoring",
     collapsible: true,
+    permissions: [P.ACTIVITIES_VIEW],
     items: [
-      { name: "Activity & Logs", href: "/activity", icon: Activity, roles: ['admin', 'agency_owner', 'company_owner'], keywords: ["activity", "logs", "audit", "compliance", "events", "history", "tracking"], description: "Unified activity logs and audit trail" },
+      { name: "Activity & Logs", href: "/activity", icon: Activity, permissions: [P.ACTIVITIES_VIEW], keywords: ["activity", "logs", "audit", "compliance", "events", "history", "tracking"], description: "Unified activity logs and audit trail" },
     ]
   },
   {
     label: "My Account",
     collapsible: true,
-    roles: ['company_owner'],
+    permissions: [P.GIFT_CARDS_VIEW, P.BILLING_VIEW],
     items: [
-      { name: "My Gift Cards", href: "/client/gift-cards", icon: Gift, roles: ['company_owner'], keywords: ["rewards", "gift cards", "client"], description: "View your gift cards" },
-      { name: "Billing", href: "/client/billing", icon: CreditCard, roles: ['company_owner'], keywords: ["billing", "invoices", "payments"], description: "View billing and payments" },
+      { name: "My Gift Cards", href: "/client/gift-cards", icon: Gift, permissions: [P.GIFT_CARDS_VIEW], keywords: ["rewards", "gift cards", "client"], description: "View your gift cards" },
+      { name: "Billing", href: "/client/billing", icon: CreditCard, permissions: [P.BILLING_VIEW], keywords: ["billing", "invoices", "payments"], description: "View billing and payments" },
     ]
   },
   {
     label: "Agency",
     collapsible: true,
-    roles: ['agency_owner'],
+    permissions: [P.AGENCIES_MANAGE],
     items: [
-      { name: "Client Management", href: "/agency-management", icon: Users, roles: ['agency_owner'], permissions: ['clients.view', 'clients.manage'], keywords: ["clients", "agencies"], description: "Manage agency clients" },
+      { name: "Client Management", href: "/agency-management", icon: Users, permissions: [P.AGENCIES_MANAGE], keywords: ["clients", "agencies"], description: "Manage agency clients" },
     ]
   },
   {
     label: "Admin",
     collapsible: true,
-    roles: ['admin'],
+    permissions: [P.ADMIN_SYSTEM_HEALTH, P.USERS_VIEW, P.AGENCIES_VIEW],
     items: [
-      { name: "Organizations", href: "/admin/organizations", icon: Building2, roles: ['admin'], keywords: ["agencies", "clients", "companies", "archive", "delete"], description: "Manage agencies & clients" },
-      { name: "User Management", href: "/users", icon: UserCog, roles: ['admin'], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
-      { name: "System Health", href: "/admin/system-health", icon: Activity, roles: ['admin'], keywords: ["analytics", "performance", "errors", "alerts", "monitoring", "error logs"], description: "System monitoring, health & error logs" },
-      { name: "Gift Cards", href: "/admin/gift-cards-dashboard", icon: Gift, roles: ['admin'], keywords: ["marketplace", "inventory", "gift cards", "brands", "providers", "master pools", "admin", "financials", "revenue"], description: "Gift card management, inventory & financials" },
+      { name: "Organizations", href: "/admin/organizations", icon: Building2, permissions: [P.ADMIN_ORGANIZATIONS], keywords: ["agencies", "clients", "companies", "archive", "delete"], description: "Manage agencies & clients" },
+      { name: "User Management", href: "/users", icon: UserCog, permissions: [P.USERS_VIEW], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
+      { name: "System Health", href: "/admin/system-health", icon: Activity, permissions: [P.ADMIN_SYSTEM_HEALTH], keywords: ["analytics", "performance", "errors", "alerts", "monitoring", "error logs"], description: "System monitoring, health & error logs" },
+      { name: "Gift Cards", href: "/admin/gift-cards-dashboard", icon: Gift, permissions: [P.GIFT_CARDS_MARKETPLACE_ADMIN], keywords: ["marketplace", "inventory", "gift cards", "brands", "providers", "master pools", "admin", "financials", "revenue"], description: "Gift card management, inventory & financials" },
     ]
   },
 ];
@@ -176,13 +187,18 @@ export function Sidebar() {
     return navigationGroups.map(g => ({
       ...g,
       items: g.items.filter(i => {
-        if (i.roles?.length && !i.roles.some(hasRole)) return false;
+        // Permission-based filtering (primary check)
         if (i.permissions?.length && !hasAnyPermission(i.permissions)) return false;
+        // Legacy role-based filtering (fallback for any remaining role checks)
+        if (i.roles?.length && !i.roles.some(hasRole)) return false;
         return true;
       }).map(i => i.name === "Campaigns" ? { ...i, count: menuCounts?.mailedCampaigns } : i)
     })).filter(g => {
-      if (g.roles?.length && !g.roles.some(hasRole)) return false;
+      // Group-level permission check (user needs at least one permission from the group)
       if (g.permissions?.length && !hasAnyPermission(g.permissions)) return false;
+      // Legacy role-based filtering (fallback)
+      if (g.roles?.length && !g.roles.some(hasRole)) return false;
+      // Special case: Agency section only for agency context
       if (g.label === "Agency" && hasRole('admin') && currentOrg?.type !== 'agency') return false;
       return g.items.length > 0;
     });

@@ -9,7 +9,7 @@ import { useManageableUsersPaginated } from '@/core/auth/hooks';
 import { useAuth } from '@core/auth/AuthProvider';
 import { useTenant } from '@/contexts/TenantContext';
 import { Users, Search } from "lucide-react";
-import { AppRole } from "@/core/auth/roleUtils";
+import { AppRole } from "@/core/auth/roles";
 import {
   useReactTable,
   getCoreRowModel,

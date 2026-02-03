@@ -417,9 +417,7 @@ export function useCampaignBudgetValidation(
     enabled: options?.enabled !== false && !!campaignId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
-}
-
-/**
+}/**
  * Query campaign config diagnostics.
  */
 export function useCampaignConfigDiagnostics(

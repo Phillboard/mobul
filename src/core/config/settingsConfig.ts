@@ -1,5 +1,6 @@
 import { LucideIcon, User, Settings, Phone, MessageSquare, Palette, Database, Zap, Code, Users, Shield, CreditCard, Building2, Mail, Plug } from "lucide-react";
-import { AppRole } from "./roleUtils";
+import { AppRole } from "@/core/auth/roles";
+import { P } from "@/core/auth/permissionRegistry";
 import { FeatureStatusType } from "./featureStatus";
 
 export interface TabConfig {
@@ -51,7 +52,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Company',
     icon: Building2,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
-    permissions: ['settings.view'],
+    permissions: [P.SETTINGS_GENERAL],
     description: 'Business info, branding, and logo',
     group: 'client'
   },
@@ -60,7 +61,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Communications',
     icon: Phone,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
-    permissions: ['settings.phone_numbers'],
+    permissions: [P.SETTINGS_GENERAL],
     description: 'Phone numbers and Twilio configuration',
     group: 'client'
   },
@@ -73,7 +74,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Integrations',
     icon: Plug,
     roles: ['admin', 'agency_owner', 'company_owner', 'developer'],
-    permissions: ['settings.integrations'],
+    permissions: [P.SETTINGS_INTEGRATIONS],
     description: 'CRM, Zapier, Mail Provider, API',
     group: 'integrations'
   },
@@ -86,7 +87,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Team',
     icon: Users,
     roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['users.manage'],
+    permissions: [P.USERS_MANAGE],
     description: 'Team members, invitations, and roles',
     group: 'admin'
   },
@@ -95,7 +96,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Billing',
     icon: CreditCard,
     roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['settings.billing'],
+    permissions: [P.SETTINGS_BILLING],
     description: 'Usage, invoices, and payment methods',
     group: 'admin',
     status: 'coming_soon',
@@ -110,7 +111,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'General',
     icon: Settings,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner', 'developer'],
-    permissions: ['settings.view'],
+    permissions: [P.SETTINGS_GENERAL],
     description: 'Redirects to Company',
     group: 'client',
     hidden: true
@@ -120,7 +121,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Branding',
     icon: Palette,
     roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['clients.edit'],
+    permissions: [P.SETTINGS_GENERAL],
     requiresClient: true,
     description: 'Redirects to Company',
     group: 'client',
@@ -131,7 +132,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Phone Numbers',
     icon: Phone,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
-    permissions: ['settings.phone_numbers'],
+    permissions: [P.SETTINGS_GENERAL],
     description: 'Redirects to Communications',
     group: 'client',
     hidden: true
@@ -141,7 +142,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'SMS Logs',
     icon: MessageSquare,
     roles: ['admin', 'tech_support', 'agency_owner', 'company_owner'],
-    permissions: ['settings.view'],
+    permissions: [P.SETTINGS_GENERAL],
     description: 'Redirects to Activity page',
     group: 'client',
     hidden: true
@@ -151,7 +152,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'CRM Integration',
     icon: Database,
     roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['settings.integrations'],
+    permissions: [P.SETTINGS_INTEGRATIONS],
     requiresClient: true,
     description: 'Redirects to Integrations',
     group: 'integrations',
@@ -162,7 +163,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Zapier',
     icon: Zap,
     roles: ['admin', 'agency_owner', 'company_owner', 'developer'],
-    permissions: ['settings.integrations'],
+    permissions: [P.SETTINGS_INTEGRATIONS],
     requiresClient: true,
     description: 'Redirects to Integrations',
     group: 'integrations',
@@ -173,7 +174,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Mail Provider',
     icon: Mail,
     roles: ['admin', 'agency_owner', 'company_owner'],
-    permissions: ['settings.edit'],
+    permissions: [P.SETTINGS_GENERAL],
     requiresClient: false,
     description: 'Redirects to Integrations',
     group: 'integrations',
@@ -184,7 +185,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'API Keys',
     icon: Code,
     roles: ['admin', 'developer'],
-    permissions: ['settings.api'],
+    permissions: [P.SETTINGS_API],
     description: 'Redirects to Integrations',
     group: 'integrations',
     hidden: true
@@ -194,7 +195,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Users',
     icon: Users,
     roles: ['admin'],
-    permissions: ['users.manage'],
+    permissions: [P.USERS_MANAGE],
     description: 'Redirects to Team',
     group: 'admin',
     hidden: true
@@ -204,7 +205,7 @@ export const settingsTabs: TabConfig[] = [
     label: 'Security',
     icon: Shield,
     roles: ['admin', 'tech_support'],
-    permissions: ['platform.security.manage'],
+    permissions: [P.SETTINGS_SECURITY_MANAGE],
     description: 'Redirects to Account/Activity',
     group: 'admin',
     hidden: true

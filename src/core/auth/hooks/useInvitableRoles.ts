@@ -1,5 +1,5 @@
 import { useUserRole } from "./useUserRole";
-import { AppRole, roleDisplayNames } from '@/core/auth/roleUtils';
+import { AppRole, roleDisplayNames } from '@/core/auth/roles';
 import { roleRequirements } from "@/core/auth/roleRequirements";
 
 export interface InvitableRole {

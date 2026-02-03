@@ -356,9 +356,7 @@ export function createTransactionRecord(params: TransactionParams) {
     created_by_user_id: params.createdByUserId || null,
     created_at: new Date().toISOString(),
   };
-}
-
-/**
+}/**
  * Calculate new balance after allocation
  */
 export function calculateAllocationBalances(

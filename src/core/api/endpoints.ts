@@ -420,9 +420,7 @@ export function getEndpointCounts(): Record<EndpointCategory, number> {
   }
 
   return counts;
-}
-
-/**
+}/**
  * Total count of all registered endpoints.
  */
 export const TOTAL_ENDPOINTS = getAllEndpoints().length;

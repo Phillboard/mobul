@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
-import { useAuth } from "@/core/auth/useAuth";
+import { useAuth } from "@core/auth/AuthProvider";
 import { formatCurrency } from "@/shared/utils/currencyUtils";
 import { AgencyClientAccessTab } from "@/features/gift-cards/components/AgencyClientAccessTab";
 import { AgencyPricingTab } from "@/features/gift-cards/components/AgencyPricingTab";

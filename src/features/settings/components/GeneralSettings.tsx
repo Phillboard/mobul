@@ -7,6 +7,7 @@ import { Switch } from "@/shared/components/ui/switch";
 import { Badge } from "@/shared/components/ui/badge";
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@core/auth/AuthProvider';
+import { P } from '@/core/auth/permissionRegistry';
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
 import { useState, useEffect } from "react";
@@ -52,7 +53,7 @@ export function GeneralSettings() {
     }
   }, [currentClient]);
 
-  const canEdit = hasPermission("clients.edit");
+  const canEdit = hasPermission(P.SETTINGS_GENERAL);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

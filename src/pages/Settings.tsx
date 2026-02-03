@@ -24,6 +24,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { ClaimPlatformAdmin } from "@/features/settings/components/ClaimPlatformAdmin";
 import { ClientBrandingPreview } from "@/features/settings/components/ClientBrandingPreview";
 import { PermissionGate } from "@core/auth/components/PermissionGate";
+import { P } from "@/core/auth/permissionRegistry";
 import { Edit } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { legacyRouteRedirects } from '@core/config/settingsConfig';
@@ -93,7 +94,7 @@ export default function Settings() {
       case "branding":
         return currentClient ? (
           <PermissionGate
-            permission="clients.edit"
+            permission={P.SETTINGS_GENERAL}
             fallback={
               <Card>
                 <CardHeader>

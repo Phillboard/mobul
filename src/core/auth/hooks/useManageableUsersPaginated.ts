@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@core/services/supabase";
-import { AppRole } from "@/core/auth/roleUtils";
+import { AppRole } from "@/core/auth/roles";
 
 export interface PaginatedUser {
   id: string;

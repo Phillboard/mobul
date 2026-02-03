@@ -597,7 +597,5 @@ export function getCreditAlertSeverity(
   
   if (remainingCredit < threshold) {
     return entityType === 'agency' ? 'warning' : 'info';
-  }
-
-  return null;
+  }  return null;
 }

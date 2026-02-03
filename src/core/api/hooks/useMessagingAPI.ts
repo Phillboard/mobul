@@ -334,7 +334,5 @@ export function useSendUserInvitation() {
 // ============================================================================
 
 /** @deprecated Use useSendSmsOptIn instead */
-export const useSendOptIn = useSendSmsOptIn;
-
-/** @deprecated Use useSendGiftCardSms instead */
+export const useSendOptIn = useSendSmsOptIn;/** @deprecated Use useSendGiftCardSms instead */
 export const useSendSMS = useSendGiftCardSms;

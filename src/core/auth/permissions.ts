@@ -1,4 +1,4 @@
-import { AppRole } from "./roleUtils";
+import { AppRole } from "./roles";
 
 export interface RoleRequirement {
   role: AppRole;

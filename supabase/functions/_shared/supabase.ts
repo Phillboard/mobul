@@ -93,9 +93,7 @@ export function createAuthenticatedClient(req: Request): SupabaseClient | null {
   }
 
   return createUserClient(authHeader);
-}
-
-/**
+}/**
  * Extract JWT token from Authorization header
  * 
  * @param req - The incoming Request object

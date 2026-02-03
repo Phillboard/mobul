@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@core/services/supabase';
+import { AppRole, getRoleLevel as getRoleLevelFromRoles } from './roles';
+import { ROLE_PERMISSION_MATRIX } from './rolePermissionMatrix';
 
 interface Profile {
   id: string;
@@ -112,16 +114,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles((rolesData as unknown as UserRole[]) || []);
       }
 
-      // Fetch permissions
+      // Determine user's primary role for fallback logic
+      const userRole = rolesData?.[0]?.role as AppRole;
+
+      // ADMIN BYPASS: Admin users always get ALL permissions from the code matrix
+      // This ensures admins are never locked out, even if DB isn't seeded
+      if (userRole === 'admin') {
+        const allPerms = ROLE_PERMISSION_MATRIX['admin'] || [];
+        setPermissions([...allPerms]);
+        console.info('Admin user: granted all permissions from code matrix');
+        return;
+      }
+
+      // Fetch permissions using the resolution chain RPC
       const { data: permissionsData, error: permissionsError } = await supabase
         .rpc('get_user_permissions', { _user_id: userId });
 
-      if (permissionsError) {
-        console.error('Error fetching user permissions:', permissionsError);
-        // Don't throw - allow user to continue with limited functionality
-        setPermissions([]);
+      // Parse the permissions from DB response
+      const userPermissions = permissionsData?.map(
+        (p: { permission_name: string; source?: string }) => p.permission_name
+      ) || [];
+
+      // Use code matrix fallback if:
+      // 1. RPC errored out, OR
+      // 2. RPC returned empty/incomplete results
+      if (permissionsError || userPermissions.length === 0) {
+        if (permissionsError) {
+          console.error('Error fetching user permissions:', permissionsError);
+        }
+        
+        // FALLBACK: Use the code matrix for this role
+        if (userRole && ROLE_PERMISSION_MATRIX[userRole]) {
+          const matrixPerms = ROLE_PERMISSION_MATRIX[userRole] || [];
+          setPermissions([...matrixPerms]);
+          console.warn('Using code matrix fallback for permissions — DB may not be seeded');
+        } else {
+          setPermissions([]);
+        }
       } else {
-        const userPermissions = permissionsData?.map((p: { permission_name: string }) => p.permission_name) || [];
+        // Normal path: use the resolved permissions from the database
         setPermissions(userPermissions);
       }
     } catch (error) {
@@ -137,16 +168,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const getRoleLevel = () => {
-    const levels = {
-      admin: 1,
-      tech_support: 2,
-      agency_owner: 3,
-      company_owner: 4,
-      developer: 5,
-      call_center: 6
-    };
-    const userLevel = Math.min(...roles.map(r => levels[r.role] || 999));
-    return userLevel;
+    if (roles.length === 0) return 999;
+    return Math.min(...roles.map(r => getRoleLevelFromRoles(r.role as AppRole)));
   };
 
   const canManageUser = async (targetUserId: string) => {
@@ -160,15 +183,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!targetRoles || targetRoles.length === 0) return false;
 
-    const levels = {
-      admin: 1,
-      tech_support: 2,
-      agency_owner: 3,
-      company_owner: 4,
-      developer: 5,
-      call_center: 6
-    };
-    const targetLevel = Math.min(...targetRoles.map((r: { role: string }) => levels[r.role as keyof typeof levels] || 999));
+    const targetLevel = Math.min(
+      ...targetRoles.map((r: { role: string }) => getRoleLevelFromRoles(r.role as AppRole))
+    );
 
     return userLevel < targetLevel;
   };

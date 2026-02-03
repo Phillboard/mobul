@@ -1,18 +1,35 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '@core/auth/AuthProvider';
+import { Permission } from '@/core/auth/permissionRegistry';
+import { AppRole } from '@/core/auth/roles';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'tech_support' | 'agency_owner' | 'company_owner' | 'developer' | 'call_center';
-  requiredRoles?: Array<'admin' | 'tech_support' | 'agency_owner' | 'company_owner' | 'developer' | 'call_center'>;
+  /** Single required permission (preferred approach) */
+  permission?: Permission;
+  /** Multiple required permissions — user needs ANY of them */
+  permissions?: Permission[];
+  /** Multiple required permissions — user needs ALL of them */
+  allPermissions?: Permission[];
+  /** @deprecated Use `permission` instead. Legacy role-based check. */
+  requiredRole?: AppRole;
+  /** @deprecated Use `permissions` instead. Legacy role-based check. */
+  requiredRoles?: AppRole[];
+  /** @deprecated Use `permissions` instead. */
   requiredPermission?: string;
+  /** @deprecated Use `permissions` instead. */
   requiredPermissions?: string[];
+  /** @deprecated Use `allPermissions` instead. */
   requireAllPermissions?: boolean;
 }
 
 export function ProtectedRoute({ 
-  children, 
+  children,
+  permission,
+  permissions,
+  allPermissions,
+  // Legacy props — keep for backward compat during migration
   requiredRole,
   requiredRoles,
   requiredPermission,
@@ -39,63 +56,54 @@ export function ProtectedRoute({
     );
   }
 
-  if (!user) {
-    return null;
+  if (!user) return null;
+
+  // ── New typed permission checks ──────────────────────────────────────
+  if (permission && !hasPermission(permission)) {
+    return <AccessDenied />;
   }
 
-  // Check role requirement (single role)
+  if (permissions && !hasAnyPermission(permissions)) {
+    return <AccessDenied />;
+  }
+
+  if (allPermissions && !allPermissions.every(p => hasPermission(p))) {
+    return <AccessDenied />;
+  }
+
+  // ── Legacy checks (backward compat — remove these after full migration) ──
   if (requiredRole && !hasRole(requiredRole)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">You don't have the required role to view this page.</p>
-        </div>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
-  // Check multiple roles requirement (user needs ANY one of them)
   if (requiredRoles && !requiredRoles.some(role => hasRole(role))) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">You don't have any of the required roles to view this page.</p>
-        </div>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
-  // Check single permission requirement
   if (requiredPermission && !hasPermission(requiredPermission)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">You don't have permission to view this page.</p>
-        </div>
-      </div>
-    );
+    return <AccessDenied />;
   }
 
-  // Check multiple permissions requirement
   if (requiredPermissions) {
     const hasAccess = requireAllPermissions
       ? requiredPermissions.every(p => hasPermission(p))
       : hasAnyPermission(requiredPermissions);
-
-    if (!hasAccess) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-            <p className="text-muted-foreground">You don't have the required permissions to view this page.</p>
-          </div>
-        </div>
-      );
-    }
+    if (!hasAccess) return <AccessDenied />;
   }
 
   return <>{children}</>;
+}
+
+function AccessDenied() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center max-w-md">
+        <div className="text-6xl mb-4">🔒</div>
+        <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+        <p className="text-muted-foreground mb-4">
+          You don't have permission to view this page. Contact your administrator if you believe this is an error.
+        </p>
+      </div>
+    </div>
+  );
 }

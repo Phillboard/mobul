@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useAuth } from '@core/auth/AuthProvider';
 import { useTenant } from '@/contexts/TenantContext';
-import { settingsTabs, TabConfig } from '@core/config/settings';
+import { settingsTabs, TabConfig } from '@core/config/settingsConfig';
 
 /**
  * Hook to get visible settings tabs for the current user
