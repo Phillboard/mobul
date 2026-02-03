@@ -225,6 +225,43 @@ export function useUpdateAgencyBrandAccess() {
       denomination: number;
       isEnabled: boolean;
     }) => {
+      console.log('[useUpdateAgencyBrandAccess] Updating:', { agencyId, brandId, denomination, isEnabled });
+      
+      // Check if agency exists in agencies table (required by FK constraint)
+      const { data: agencyExists } = await supabase
+        .from('agencies')
+        .select('id')
+        .eq('id', agencyId)
+        .single();
+      
+      // If agency doesn't exist in agencies table, try to create it from organizations
+      if (!agencyExists) {
+        console.log('[useUpdateAgencyBrandAccess] Agency not in agencies table, checking organizations...');
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .eq('id', agencyId)
+          .single();
+        
+        if (orgData) {
+          // Create agency record
+          const { error: createError } = await supabase
+            .from('agencies')
+            .insert({
+              id: orgData.id,
+              name: orgData.name,
+              slug: orgData.name.toLowerCase().replace(/\s+/g, '-'),
+            });
+          
+          if (createError && !createError.message.includes('duplicate')) {
+            console.error('[useUpdateAgencyBrandAccess] Failed to create agency:', createError);
+            throw new Error(`Cannot create agency record: ${createError.message}`);
+          }
+        } else {
+          throw new Error('Agency not found in system');
+        }
+      }
+      
       // Upsert the access record
       const { error } = await supabase
         .from('agency_available_gift_cards')
@@ -240,15 +277,20 @@ export function useUpdateAgencyBrandAccess() {
           }
         );
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useUpdateAgencyBrandAccess] Upsert error:', error);
+        throw error;
+      }
+      
       return { agencyId, brandId, denomination, isEnabled };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['agency-brand-access', data.agencyId] });
+      toast.success('Brand access updated');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Failed to update agency brand access:', error);
-      toast.error('Failed to update brand access');
+      toast.error(error.message || 'Failed to update brand access');
     },
   });
 }
@@ -271,6 +313,37 @@ export function useBulkUpdateAgencyBrandAccess() {
         isEnabled: boolean;
       }>;
     }) => {
+      console.log('[useBulkUpdateAgencyBrandAccess] Bulk updating:', updates.length, 'items for agency:', agencyId);
+      
+      // Ensure agency exists in agencies table
+      const { data: agencyExists } = await supabase
+        .from('agencies')
+        .select('id')
+        .eq('id', agencyId)
+        .single();
+      
+      if (!agencyExists) {
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .eq('id', agencyId)
+          .single();
+        
+        if (orgData) {
+          const { error: createError } = await supabase
+            .from('agencies')
+            .insert({
+              id: orgData.id,
+              name: orgData.name,
+              slug: orgData.name.toLowerCase().replace(/\s+/g, '-'),
+            });
+          
+          if (createError && !createError.message.includes('duplicate')) {
+            throw new Error(`Cannot create agency record: ${createError.message}`);
+          }
+        }
+      }
+      
       const records = updates.map((u) => ({
         agency_id: agencyId,
         brand_id: u.brandId,
@@ -284,16 +357,20 @@ export function useBulkUpdateAgencyBrandAccess() {
           onConflict: 'agency_id,brand_id,denomination',
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useBulkUpdateAgencyBrandAccess] Error:', error);
+        throw error;
+      }
+      
       return { agencyId, count: updates.length };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['agency-brand-access', data.agencyId] });
       toast.success(`Updated ${data.count} brand configurations`);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Failed to bulk update agency brand access:', error);
-      toast.error('Failed to update brand access');
+      toast.error(error.message || 'Failed to update brand access');
     },
   });
 }
@@ -311,6 +388,38 @@ export function useInitializeAgencyDefaults() {
   
   return useMutation({
     mutationFn: async (agencyId: string) => {
+      console.log('[useInitializeAgencyDefaults] Initializing for agency:', agencyId);
+      
+      // Ensure agency exists in agencies table first
+      const { data: agencyExists } = await supabase
+        .from('agencies')
+        .select('id')
+        .eq('id', agencyId)
+        .single();
+      
+      if (!agencyExists) {
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .eq('id', agencyId)
+          .single();
+        
+        if (orgData) {
+          const { error: createError } = await supabase
+            .from('agencies')
+            .insert({
+              id: orgData.id,
+              name: orgData.name,
+              slug: orgData.name.toLowerCase().replace(/\s+/g, '-'),
+            });
+          
+          if (createError && !createError.message.includes('duplicate')) {
+            throw new Error(`Cannot create agency record: ${createError.message}`);
+          }
+          console.log('[useInitializeAgencyDefaults] Created agency record from organization');
+        }
+      }
+      
       // Find Starbucks and Dominos brands
       const { data: brands, error: brandsError } = await supabase
         .from('gift_card_brands')
@@ -357,13 +466,18 @@ export function useInitializeAgencyDefaults() {
         throw new Error('No denominations found for default brands');
       }
       
+      console.log('[useInitializeAgencyDefaults] Upserting', records.length, 'records');
+      
       const { error: upsertError } = await supabase
         .from('agency_available_gift_cards')
         .upsert(records, {
           onConflict: 'agency_id,brand_id,denomination',
         });
       
-      if (upsertError) throw upsertError;
+      if (upsertError) {
+        console.error('[useInitializeAgencyDefaults] Upsert error:', upsertError);
+        throw upsertError;
+      }
       
       return { agencyId, count: records.length, brands: brands.map(b => b.brand_name) };
     },
