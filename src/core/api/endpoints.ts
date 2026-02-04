@@ -417,9 +417,7 @@ export function getEndpointCounts(): Record<EndpointCategory, number> {
 
   for (const [category, endpoints] of Object.entries(Endpoints)) {
     counts[category as EndpointCategory] = Object.keys(endpoints).length;
-  }
-
-  return counts;
+  }  return counts;
 }/**
  * Total count of all registered endpoints.
  */

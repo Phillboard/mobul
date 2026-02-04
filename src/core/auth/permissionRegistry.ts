@@ -130,6 +130,23 @@ export const P = {
   ADMIN_SITE_DIRECTORY:    'admin.site_directory',
   ADMIN_ORGANIZATIONS:     'admin.organizations',
 
+  // ── Monitoring (Granular) ────────────────────────────────────────────────
+  // These provide fine-grained control over the unified monitoring hub
+  MONITORING_VIEW:         'monitoring.view',           // Basic activity log viewing (scoped to org/client)
+  MONITORING_SYSTEM:       'monitoring.system',         // System health, performance metrics (admin)
+  MONITORING_ERRORS:       'monitoring.errors',         // Error logs and resolution (admin)
+  MONITORING_ALERTS:       'monitoring.alerts',         // Alert management and notifications
+  MONITORING_AUDIT:        'monitoring.audit',          // Compliance audit trails (admin)
+  MONITORING_EXPORT:       'monitoring.export',         // Export logs to CSV/PDF
+  MONITORING_REALTIME:     'monitoring.realtime',       // Real-time activity feeds
+  MONITORING_REPORTS:      'monitoring.reports',        // Scheduled reports management
+  MONITORING_API:          'monitoring.api',            // API access to logs
+
+  // ── Custom Fields ──────────────────────────────────────────────────────
+  CUSTOM_FIELDS_VIEW:      'custom_fields.view',
+  CUSTOM_FIELDS_MANAGE:    'custom_fields.manage',
+  CUSTOM_FIELDS_FILL:      'custom_fields.fill',
+
   // ── Documentation ──────────────────────────────────────────────────────
   DOCS_VIEW:               'docs.view',
   DOCS_MANAGE:             'docs.manage',
@@ -159,5 +176,7 @@ export const PERMISSION_CATEGORIES = {
   'Analytics':       [P.ANALYTICS_VIEW, P.ANALYTICS_EXPORT, P.REPORTS_VIEW, P.REPORTS_FINANCIAL],
   'Integrations':    [P.INTEGRATIONS_VIEW, P.INTEGRATIONS_MANAGE, P.API_VIEW, P.API_MANAGE],
   'Admin':           [P.ADMIN_SYSTEM_HEALTH, P.ADMIN_AUDIT_LOG, P.ADMIN_ERROR_LOGS, P.ADMIN_DEMO_DATA, P.ADMIN_SITE_DIRECTORY, P.ADMIN_ORGANIZATIONS],
+  'Monitoring':      [P.MONITORING_VIEW, P.MONITORING_SYSTEM, P.MONITORING_ERRORS, P.MONITORING_ALERTS, P.MONITORING_AUDIT, P.MONITORING_EXPORT, P.MONITORING_REALTIME, P.MONITORING_REPORTS, P.MONITORING_API],
+  'Custom Fields':   [P.CUSTOM_FIELDS_VIEW, P.CUSTOM_FIELDS_MANAGE, P.CUSTOM_FIELDS_FILL],
   'Documentation':   [P.DOCS_VIEW, P.DOCS_MANAGE],
 } as const;

@@ -210,8 +210,11 @@ Deno.serve(async (req) => {
             break;
 
           case 'condition':
-            // TODO: Implement condition evaluation
-            console.log(`[AUTOMATION-PROCESS] Condition steps not yet implemented`);
+            // FUTURE: Condition steps would evaluate rules like:
+            // - "if opened email" -> branch A, else -> branch B
+            // - "if tag = VIP" -> different treatment
+            // For now, condition steps are skipped and always pass
+            console.warn(`[AUTOMATION-PROCESS] Condition steps not yet implemented - treating as pass`);
             stepSuccess = true;
             break;
 

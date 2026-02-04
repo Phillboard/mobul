@@ -156,8 +156,8 @@ async function handleGenerateFormAI(
   const systemPrompt = buildSystemPrompt(context);
 
   const result = await createAICompletion({
-    provider: 'lovable',
-    model: 'google/gemini-2.5-flash',
+    provider: 'anthropic',
+    model: 'claude-sonnet-4-20250514',
     systemPrompt,
     messages: [{ role: 'user', content: prompt }],
     tools: [GENERATE_FORM_TOOL],

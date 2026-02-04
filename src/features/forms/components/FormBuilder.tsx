@@ -15,6 +15,7 @@ import { RevealDesigner } from "./RevealDesigner";
 import { ValidationRulesEditor } from "./ValidationRulesEditor";
 import { FieldStylingEditor } from "./FieldStylingEditor";
 import { FieldPresets, type FieldPreset } from "./FieldPresets";
+import { CustomFieldPresets } from "./CustomFieldPresets";
 import { FormBuilderMobile } from "./FormBuilderMobile";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import { useFormBuilder } from '@app/providers/FormBuilderProvider';
@@ -133,6 +134,12 @@ export function FormBuilder({ activeTab = "form" }: FormBuilderProps) {
 
           {/* Field Presets */}
           <FieldPresets onAddPreset={handleAddFieldPreset} />
+
+          {/* Custom Fields from client definitions */}
+          <CustomFieldPresets
+            onAddField={(field) => addFields([field])}
+            onAddPreset={handleAddFieldPreset}
+          />
         </div>
       </ScrollArea>
 

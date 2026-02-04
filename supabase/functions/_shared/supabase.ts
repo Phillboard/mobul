@@ -130,9 +130,7 @@ export async function verifyToken(token: string): Promise<{
     
     if (error || !user) {
       return null;
-    }
-
-    return user;
+    }    return user;
   } catch {
     return null;
   }

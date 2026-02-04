@@ -47,7 +47,6 @@ const EmbedGiftCard = lazy(() => import("./pages/EmbedGiftCard"));
 const AgencyManagement = lazy(() => import("./pages/AgencyManagement"));
 const CallCenterRedemption = lazy(() => import("./pages/CallCenterRedemption"));
 const CallCenterScripts = lazy(() => import("./pages/CallCenterScripts"));
-const RedemptionLogs = lazy(() => import("./pages/RedemptionLogs"));
 const Contacts = lazy(() => import("./pages/Contacts"));
 const ContactDetail = lazy(() => import("./pages/ContactDetail"));
 const ContactLists = lazy(() => import("./pages/ContactLists"));
@@ -63,13 +62,12 @@ const FormPublic = lazy(() => import("./pages/FormPublic"));
 const FormAnalytics = lazy(() => import("./pages/FormAnalytics"));
 const FormsDocumentation = lazy(() => import("./pages/FormsDocumentation"));
 const AdminMessagingTest = lazy(() => import("./pages/AdminMessagingTest"));
-const Activity = lazy(() => import("./pages/Activity"));
+const Monitoring = lazy(() => import("./pages/Monitoring"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CookieConsent = lazy(() => import("@/shared/components/CookieConsent").then(m => ({ default: m.CookieConsent })));
 const Documentation = lazy(() => import("./pages/Documentation"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const SystemHealth = lazy(() => import("./pages/SystemHealth"));
 const Integrations = lazy(() => import("./pages/Integrations"));
 const DocEditorPage = lazy(() => import("./pages/DocEditorPage"));
 const PoolDetail = lazy(() => import("./pages/PoolDetail"));
@@ -153,14 +151,14 @@ const App = () => (
                   {/* Public Landing Pages - mobul.com/:clientSlug/p/:pageSlug */}
                   <Route path="/:clientSlug/p/:pageSlug" element={<PublicLandingPage />} />
 
-                  {/* Redirects for consolidated pages */}
-                  <Route path="/analytics" element={<Navigate to="/admin/system-health?tab=overview" replace />} />
-                  <Route path="/performance" element={<Navigate to="/admin/system-health?tab=performance" replace />} />
-                  <Route path="/errors" element={<Navigate to="/admin/system-health?tab=errors" replace />} />
-                  <Route path="/alerts" element={<Navigate to="/admin/system-health?tab=alerts" replace />} />
-                  <Route path="/monitoring/performance" element={<Navigate to="/admin/system-health?tab=performance" replace />} />
-                  <Route path="/monitoring/errors" element={<Navigate to="/admin/system-health?tab=errors" replace />} />
-                  <Route path="/monitoring/alerts" element={<Navigate to="/admin/system-health?tab=alerts" replace />} />
+                  {/* Redirects to new unified monitoring hub */}
+                  <Route path="/analytics" element={<Navigate to="/monitoring?tab=overview" replace />} />
+                  <Route path="/performance" element={<Navigate to="/monitoring?tab=performance" replace />} />
+                  <Route path="/errors" element={<Navigate to="/monitoring?tab=errors" replace />} />
+                  <Route path="/alerts" element={<Navigate to="/monitoring?tab=alerts" replace />} />
+                  <Route path="/monitoring/performance" element={<Navigate to="/monitoring?tab=performance" replace />} />
+                  <Route path="/monitoring/errors" element={<Navigate to="/monitoring?tab=errors" replace />} />
+                  <Route path="/monitoring/alerts" element={<Navigate to="/monitoring?tab=alerts" replace />} />
                   <Route path="/api" element={<Navigate to="/admin/integrations?tab=api" replace />} />
                   <Route path="/zapier" element={<Navigate to="/admin/integrations?tab=zapier" replace />} />
                   <Route path="/zapier-templates" element={<Navigate to="/admin/integrations?tab=zapier" replace />} />
@@ -242,7 +240,8 @@ const App = () => (
                   {/* Call Center - Redemption & Fulfillment */}
                   <Route path="/call-center" element={<ProtectedRoute permission={P.CALL_CENTER_REDEEM}><CallCenterRedemption /></ProtectedRoute>} />
                   <Route path="/call-center/scripts" element={<ProtectedRoute permission={P.CALL_CENTER_SCRIPTS}><CallCenterScripts /></ProtectedRoute>} />
-                  <Route path="/call-center/logs" element={<ProtectedRoute permission={P.ADMIN_AUDIT_LOG}><RedemptionLogs /></ProtectedRoute>} />
+                  {/* Redirect old redemption logs to new monitoring page */}
+                  <Route path="/call-center/logs" element={<Navigate to="/monitoring?tab=redemptions" replace />} />
                   
                   {/* Marketing - New Structure */}
                   <Route path="/marketing" element={<ProtectedRoute permission={P.CAMPAIGNS_VIEW}><MarketingHub /></ProtectedRoute>} />
@@ -278,7 +277,8 @@ const App = () => (
                   <Route path="/ace-forms/docs" element={<Navigate to="/forms/docs" replace />} />
                   
                   {/* Administration - Consolidated */}
-                  <Route path="/admin/system-health" element={<ProtectedRoute permission={P.ADMIN_SYSTEM_HEALTH}><SystemHealth /></ProtectedRoute>} />
+                  {/* Old system-health now redirects to unified monitoring */}
+                  <Route path="/admin/system-health" element={<Navigate to="/monitoring?tab=system" replace />} />
                   <Route path="/admin/demo-data-generator" element={<Navigate to="/" replace />} />
                   <Route path="/admin/integrations" element={<ProtectedRoute permission={P.INTEGRATIONS_VIEW}><Integrations /></ProtectedRoute>} />
                   
@@ -297,8 +297,11 @@ const App = () => (
                   <Route path="/docs/:category" element={<ProtectedRoute permission={P.DOCS_VIEW}><Documentation /></ProtectedRoute>} />
                   <Route path="/docs/:category/:slug" element={<ProtectedRoute permission={P.DOCS_VIEW}><Documentation /></ProtectedRoute>} />
                   
-                  {/* Activity & Logs - Unified logging page */}
-                  <Route path="/activity" element={<ProtectedRoute permission={P.ACTIVITIES_VIEW}><Activity /></ProtectedRoute>} />
+                  {/* Monitoring - Unified monitoring hub (new) */}
+                  <Route path="/monitoring" element={<ProtectedRoute permission={P.MONITORING_VIEW}><Monitoring /></ProtectedRoute>} />
+                  
+                  {/* Activity & Logs - Legacy route, redirect to monitoring */}
+                  <Route path="/activity" element={<Navigate to="/monitoring?tab=activity" replace />} />
                   
                   {/* Settings & Utilities */}
                   <Route path="/settings" element={<ProtectedRoute permission={P.SETTINGS_GENERAL}><Settings /></ProtectedRoute>} />
@@ -308,8 +311,8 @@ const App = () => (
                   {/* Admin Routes */}
                   <Route path="/agencies" element={<ProtectedRoute permission={P.AGENCIES_VIEW}><AgencyManagement /></ProtectedRoute>} />
                   <Route path="/agency-management" element={<ProtectedRoute permission={P.AGENCIES_MANAGE}><AgencyManagement /></ProtectedRoute>} />
-                  <Route path="/admin/audit-log" element={<Navigate to="/activity" replace />} />
-                  <Route path="/admin/error-logs" element={<Navigate to="/admin/system-health?tab=errors" replace />} />
+                  <Route path="/admin/audit-log" element={<Navigate to="/monitoring?tab=activity" replace />} />
+                  <Route path="/admin/error-logs" element={<Navigate to="/monitoring?tab=errors" replace />} />
                   <Route path="/admin/site-directory" element={<Navigate to="/" replace />} />
                   <Route path="/admin/demo-data" element={<Navigate to="/" replace />} />
                   <Route path="/admin/organizations" element={<ProtectedRoute permission={P.ADMIN_ORGANIZATIONS}><AdminOrganizationManagement /></ProtectedRoute>} />

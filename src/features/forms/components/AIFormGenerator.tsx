@@ -33,7 +33,11 @@ export function AIFormGenerator({ onGenerated }: AIFormGeneratorProps) {
 
     setGenerating(true);
     try {
-      const data = await callEdgeFunction<{ error?: string; name: string; description: string; config: FormConfig }>(
+      const response = await callEdgeFunction<{ 
+        success: boolean; 
+        data: { name: string; description: string; config: FormConfig };
+        error?: string;
+      }>(
         Endpoints.ai.generateForm,
         { 
           prompt,
@@ -45,12 +49,14 @@ export function AIFormGenerator({ onGenerated }: AIFormGeneratorProps) {
         }
       );
 
-      if (data.error) {
-        throw new Error(data.error);
+      if (!response.success || response.error) {
+        throw new Error(response.error || 'Failed to generate form');
       }
 
+      const { name, description, config } = response.data;
+
       // Call parent with generated form
-      onGenerated(data.name, data.description, data.config);
+      onGenerated(name, description, config);
 
       toast({
         title: "Form Generated!",

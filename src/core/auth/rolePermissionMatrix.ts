@@ -59,6 +59,16 @@ const TECH_SUPPORT_PERMISSIONS: Permission[] = [
   P.ADMIN_SYSTEM_HEALTH,
   P.ADMIN_AUDIT_LOG,
   P.ADMIN_ERROR_LOGS,
+  // Monitoring — full view access
+  P.MONITORING_VIEW,
+  P.MONITORING_SYSTEM,
+  P.MONITORING_ERRORS,
+  P.MONITORING_ALERTS,
+  P.MONITORING_AUDIT,
+  P.MONITORING_EXPORT,
+  P.MONITORING_REALTIME,
+  // Custom Fields — view only
+  P.CUSTOM_FIELDS_VIEW,
   P.DOCS_VIEW,
 ];
 
@@ -125,6 +135,12 @@ const AGENCY_OWNER_PERMISSIONS: Permission[] = [
   P.ACTIVITIES_VIEW,
   P.TASKS_VIEW,
   P.TASKS_MANAGE,
+  // Monitoring — org-scoped activity viewing
+  P.MONITORING_VIEW,
+  P.MONITORING_ALERTS,
+  P.MONITORING_EXPORT,
+  P.MONITORING_REALTIME,
+  P.MONITORING_REPORTS,
   // Settings
   P.SETTINGS_GENERAL,
   P.SETTINGS_BILLING,
@@ -138,6 +154,10 @@ const AGENCY_OWNER_PERMISSIONS: Permission[] = [
   P.INTEGRATIONS_VIEW,
   P.INTEGRATIONS_MANAGE,
   P.API_VIEW,
+  // Custom Fields — full access
+  P.CUSTOM_FIELDS_VIEW,
+  P.CUSTOM_FIELDS_MANAGE,
+  P.CUSTOM_FIELDS_FILL,
   // Docs
   P.DOCS_VIEW,
 ];
@@ -193,12 +213,21 @@ const CLIENT_OWNER_PERMISSIONS: Permission[] = [
   P.ACTIVITIES_VIEW,
   P.TASKS_VIEW,
   P.TASKS_MANAGE,
+  // Monitoring — client-scoped activity viewing
+  P.MONITORING_VIEW,
+  P.MONITORING_ALERTS,
+  P.MONITORING_EXPORT,
+  P.MONITORING_REALTIME,
   // Settings — limited
   P.SETTINGS_GENERAL,
   P.SETTINGS_NOTIFICATIONS,
   // Analytics
   P.ANALYTICS_VIEW,
   P.REPORTS_VIEW,
+  // Custom Fields — full access for their client
+  P.CUSTOM_FIELDS_VIEW,
+  P.CUSTOM_FIELDS_MANAGE,
+  P.CUSTOM_FIELDS_FILL,
   // Docs
   P.DOCS_VIEW,
 ];
@@ -219,6 +248,8 @@ const DEVELOPER_PERMISSIONS: Permission[] = [
   P.CONTACTS_VIEW,
   P.TEMPLATES_VIEW,
   P.FORMS_VIEW,
+  // Custom Fields — view only
+  P.CUSTOM_FIELDS_VIEW,
 ];
 
 const CALL_CENTER_PERMISSIONS: Permission[] = [
@@ -228,6 +259,9 @@ const CALL_CENTER_PERMISSIONS: Permission[] = [
   P.CALL_CENTER_REDEEM,
   P.GIFT_CARDS_REDEEM,
   P.GIFT_CARDS_VIEW_REDEMPTIONS,
+  // Custom Fields — view and fill values (cannot manage definitions)
+  P.CUSTOM_FIELDS_VIEW,
+  P.CUSTOM_FIELDS_FILL,
   P.DOCS_VIEW,
 ];
 

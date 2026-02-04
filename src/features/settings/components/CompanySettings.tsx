@@ -21,9 +21,9 @@ import { useAuth } from '@core/auth/AuthProvider';
 import { P } from '@/core/auth/permissionRegistry';
 import { supabase } from '@core/services/supabase';
 import { useToast } from '@shared/hooks';
-import { 
+import {
   Loader2, Building2, Palette, Upload, X, MapPin, Globe, Phone, Mail,
-  Check
+  Check, ListChecks
 } from "lucide-react";
 import {
   SettingsPageLayout,
@@ -31,6 +31,9 @@ import {
   SettingsSection,
   SettingsEmptyState,
 } from './ui';
+import { CustomFieldManager } from '@/features/contacts/components/CustomFieldManager';
+import { CustomFieldTemplates } from './CustomFieldTemplates';
+import { PermissionGate } from '@core/auth/components/PermissionGate';
 
 const INDUSTRIES = [
   { value: "roofing", label: "Roofing" },
@@ -271,6 +274,10 @@ export function CompanySettings() {
           <TabsTrigger value="contact">
             <MapPin className="h-4 w-4 mr-2" />
             Contact Info
+          </TabsTrigger>
+          <TabsTrigger value="custom-fields">
+            <ListChecks className="h-4 w-4 mr-2" />
+            Custom Fields
           </TabsTrigger>
         </TabsList>
 
@@ -592,6 +599,19 @@ export function CompanySettings() {
               </div>
             </div>
           </SettingsCard>
+        </TabsContent>
+
+        {/* Custom Fields Tab */}
+        <TabsContent value="custom-fields" className="space-y-6">
+          <PermissionGate permission={P.CUSTOM_FIELDS_VIEW}>
+            {/* Client-level field definitions */}
+            <CustomFieldManager />
+
+            {/* Agency-level templates (only for users who can manage) */}
+            <PermissionGate permission={P.CUSTOM_FIELDS_MANAGE}>
+              <CustomFieldTemplates />
+            </PermissionGate>
+          </PermissionGate>
         </TabsContent>
       </Tabs>
 

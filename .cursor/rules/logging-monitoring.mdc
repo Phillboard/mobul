@@ -1,0 +1,317 @@
+---
+description: Logging and monitoring standards for the Mobul platform - ensuring consistent, multi-tenant aware logging with proper retention classification
+globs: ["src/**/*.ts", "src/**/*.tsx", "supabase/**/*.ts", "supabase/**/*.sql"]
+alwaysApply: true
+---
+
+# Logging & Monitoring Standards
+
+This rule ensures all logging follows enterprise standards for multi-tenant SaaS with compliance-driven retention.
+
+## Required Metadata for All Log Entries
+
+Every log entry MUST include these fields for future cleanup, analysis, and multi-tenant scoping:
+
+### Core Fields (REQUIRED - Never Omit)
+
+```typescript
+interface LogEntry {
+  // Tenant Scoping (CRITICAL for multi-tenant queries)
+  organization_id: string;    // The org that owns this data (agency or client UUID)
+  client_id?: string;         // The specific client (NULL if agency-level event)
+  user_id?: string;           // User who triggered the action (NULL if system)
+  
+  // Tracing
+  request_id: string;         // Unique request identifier for distributed tracing
+  created_at: Date;           // Timestamp with timezone (auto-set by DB)
+  
+  // Classification (REQUIRED for retention and filtering)
+  category: ActivityCategory; // Domain of the event
+  event_type: string;         // Specific event within category
+  severity: Severity;         // info, warning, error, critical
+  retention_class: RetentionClass; // operational (90 days) or audit (7 years)
+}
+
+type ActivityCategory = 
+  | 'gift_card'      // Provisioning, redemption, delivery
+  | 'campaign'       // Campaign lifecycle, recipient actions
+  | 'communication'  // Email, SMS delivery and events
+  | 'api'            // External API calls, webhooks
+  | 'user'           // Login, logout, user management
+  | 'system'         // Background jobs, errors, health
+  | 'billing';       // Credits, transactions, invoices
+
+type Severity = 'info' | 'warning' | 'error' | 'critical';
+
+type RetentionClass = 
+  | 'operational'    // 90 days hot, then archived/purged
+  | 'audit';         // 7 years full retention (compliance)
+```
+
+### Context Fields (RECOMMENDED)
+
+```typescript
+interface LogContext {
+  resource_type?: string;     // Type of resource affected (campaign, recipient, etc.)
+  resource_id?: string;       // UUID of resource affected
+  campaign_id?: string;       // Related campaign if applicable
+  recipient_id?: string;      // Related recipient if applicable
+  ip_address?: string;        // Client IP for audit trail
+  user_agent?: string;        // Browser/client info for debugging
+  metadata?: Record<string, unknown>; // Additional structured data
+}
+```
+
+## Retention Class Guidelines
+
+### Use `operational` (90 days) for:
+- Debug logs and trace information
+- API request/response logs
+- Performance metrics
+- Rate limiting logs
+- General activity tracking
+- Non-financial events
+
+### Use `audit` (7 years) for:
+- Financial transactions (gift card purchases, credit usage)
+- User authentication events (login, logout, password changes)
+- Permission changes (role assignments, access grants)
+- Gift card provisioning and redemption
+- Billing and invoice events
+- Security events (failed logins, suspicious activity)
+- Compliance-critical actions (data exports, deletions)
+
+## Logging Patterns
+
+### Frontend Logging (React Components)
+
+```typescript
+import { useActivityLogger } from '@/core/logging';
+
+function MyComponent() {
+  const { logActivity } = useActivityLogger();
+  
+  const handleAction = async () => {
+    await logActivity({
+      category: 'gift_card',
+      event_type: 'card_viewed',
+      severity: 'info',
+      retention_class: 'operational',
+      resource_type: 'gift_card',
+      resource_id: giftCard.id,
+      metadata: { brand: giftCard.brand_name }
+    });
+  };
+}
+```
+
+### Backend Logging (Edge Functions)
+
+```typescript
+import { logActivity } from '../_shared/activity-logger';
+
+export async function handler(req: Request) {
+  const requestId = crypto.randomUUID();
+  
+  try {
+    // Log start of operation
+    await logActivity({
+      category: 'gift_card',
+      event_type: 'provision_started',
+      severity: 'info',
+      retention_class: 'audit', // Financial operation
+      organization_id: orgId,
+      client_id: clientId,
+      request_id: requestId,
+      resource_type: 'gift_card',
+      metadata: { brand, value, recipient_id }
+    });
+    
+    // ... operation logic ...
+    
+    // Log success
+    await logActivity({
+      category: 'gift_card',
+      event_type: 'provision_completed',
+      severity: 'info',
+      retention_class: 'audit',
+      organization_id: orgId,
+      client_id: clientId,
+      request_id: requestId,
+      resource_type: 'gift_card',
+      resource_id: newGiftCard.id,
+      metadata: { duration_ms: elapsed }
+    });
+    
+  } catch (error) {
+    // Log failure
+    await logActivity({
+      category: 'gift_card',
+      event_type: 'provision_failed',
+      severity: 'error',
+      retention_class: 'audit',
+      organization_id: orgId,
+      client_id: clientId,
+      request_id: requestId,
+      metadata: { 
+        error_code: error.code,
+        error_message: error.message 
+      }
+    });
+    throw error;
+  }
+}
+```
+
+## Query Patterns - ALWAYS Scope by Tenant
+
+### CORRECT: Scoped Queries
+
+```typescript
+// For Agency Owner - see their org + all clients
+const agencyLogs = await supabase
+  .from('activity_log')
+  .select('*')
+  .eq('organization_id', currentOrg.id)
+  .order('created_at', { ascending: false });
+
+// For Client Owner - see only their client
+const clientLogs = await supabase
+  .from('activity_log')
+  .select('*')
+  .eq('client_id', currentClient.id)
+  .order('created_at', { ascending: false });
+
+// For Admin with explicit scope override
+const adminLogs = await supabase
+  .from('activity_log')
+  .select('*')
+  .order('created_at', { ascending: false })
+  .limit(1000); // Always limit unscoped queries
+```
+
+### INCORRECT: Never Do This
+
+```typescript
+// BAD - Unscoped query without role check
+const logs = await supabase.from('activity_log').select('*');
+
+// BAD - Missing organization/client filter for non-admin
+const logs = await supabase
+  .from('activity_log')
+  .select('*')
+  .eq('category', 'gift_card'); // Still unscoped!
+```
+
+## Dashboard Query Patterns
+
+### Use Aggregated Stats for Dashboards (Not Raw Logs)
+
+```typescript
+// CORRECT: Use pre-aggregated stats for dashboard widgets
+const stats = await supabase.rpc('get_org_activity_stats', {
+  p_org_id: organizationId,
+  p_period: 'daily', // hourly, daily, monthly
+  p_days: 30
+});
+
+// INCORRECT: Real-time aggregation of raw logs (expensive!)
+const stats = await supabase
+  .from('activity_log')
+  .select('category')
+  .eq('organization_id', orgId)
+  .gte('created_at', thirtyDaysAgo);
+// Then counting in JS - this is slow and expensive!
+```
+
+## Event Type Naming Conventions
+
+Use past tense, snake_case:
+
+```typescript
+// Gift Card Events
+'card_provisioned', 'card_delivered', 'card_redeemed', 'card_revoked'
+
+// Campaign Events  
+'campaign_created', 'campaign_launched', 'campaign_completed', 'recipient_added'
+
+// Communication Events
+'sms_sent', 'sms_delivered', 'sms_failed', 'email_opened', 'email_clicked'
+
+// User Events
+'login_success', 'login_failed', 'password_changed', 'role_assigned'
+
+// System Events
+'job_started', 'job_completed', 'job_failed', 'health_check_passed'
+```
+
+## Real-time Considerations
+
+When emitting events that should appear in real-time feeds:
+
+```typescript
+// The activity_log table is subscribed via Supabase Realtime
+// Ensure organization_id is set so subscriptions can filter
+
+// Real-time subscription pattern (in hooks)
+const subscription = supabase
+  .channel(`activity:${organizationId}`)
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public', 
+    table: 'activity_log',
+    filter: `organization_id=eq.${organizationId}`
+  }, callback)
+  .subscribe();
+```
+
+## High-Volume Event Handling
+
+For events that fire frequently (>100/minute), consider:
+
+1. **Sampling**: Log 1 in N events for debugging purposes
+2. **Aggregation**: Batch similar events and log summaries
+3. **Severity filtering**: Only log warnings/errors in high-traffic paths
+
+```typescript
+// Sampling utility
+function shouldSample(eventType: string, rate: number = 0.1): boolean {
+  if (process.env.NODE_ENV === 'development') return true;
+  return Math.random() < rate;
+}
+
+// Use in high-frequency paths
+if (shouldSample('api_request', 0.1)) {
+  await logActivity({ /* ... */ });
+}
+```
+
+## Alerting Integration
+
+Critical events should trigger alerts. Set severity appropriately:
+
+- `info`: Normal operations, no alert
+- `warning`: Unusual but not critical, may alert admins
+- `error`: Failed operations, alert relevant parties
+- `critical`: System failures, immediate alert required
+
+```typescript
+// Critical events automatically trigger system_alerts
+await logActivity({
+  category: 'system',
+  event_type: 'database_connection_failed',
+  severity: 'critical', // Will trigger immediate alert
+  retention_class: 'audit',
+  metadata: { error: 'Connection timeout after 30s' }
+});
+```
+
+## Migration Notes
+
+When adding logging to existing code:
+
+1. Always add `organization_id` - use context from auth/tenant
+2. Add `client_id` when operating on client-specific data
+3. Generate `request_id` at the entry point (API route, event handler)
+4. Choose `retention_class` based on compliance needs
+5. Include enough `metadata` to debug issues without querying other tables

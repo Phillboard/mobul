@@ -9,7 +9,8 @@
       "Bash(npx supabase migration:*)",
       "Bash(npx vite build)",
       "Bash(wc:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

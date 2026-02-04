@@ -398,9 +398,7 @@ export function useSendMarketingCampaign() {
 
 // ============================================================================
 // Query Hooks
-// ============================================================================
-
-/**
+// ============================================================================/**
  * Query budget validation (for display without user action).
  */
 export function useCampaignBudgetValidation(

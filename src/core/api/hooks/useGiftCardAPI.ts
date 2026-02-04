@@ -747,9 +747,7 @@ export function useInvalidateGiftCardQueries() {
  * Call this to warm the cache before showing balance.
  */
 export function usePrefetchGiftCardBalance() {
-  const queryClient = useQueryClient();
-
-  return (cardId: string, brandCode: string) => {
+  const queryClient = useQueryClient();  return (cardId: string, brandCode: string) => {
     queryClient.prefetchQuery({
       queryKey: giftCardKeys.balance(cardId),
       queryFn: () =>

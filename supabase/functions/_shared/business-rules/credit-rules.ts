@@ -339,9 +339,7 @@ export interface TransactionParams {
   relatedTransactionId?: string;
   notes?: string;
   createdByUserId?: string;
-}
-
-/**
+}/**
  * Create transaction record object
  */
 export function createTransactionRecord(params: TransactionParams) {

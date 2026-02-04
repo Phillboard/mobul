@@ -1,8 +1,9 @@
 /**
- * Opt-In Step Component
- * 
+ * Opt-In Step Component (V2)
+ *
  * Handles SMS opt-in verification for the customer.
- * Includes alternatives: email verification and skip with disposition.
+ * Includes: enrichment panel, call notes, resend SMS, delivery phone,
+ * alternative verification methods, and disposition selection.
  */
 
 import { useState } from 'react';
@@ -13,11 +14,25 @@ import { Label } from '@/shared/components/ui/label';
 import { Badge } from '@/shared/components/ui/badge';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Separator } from '@/shared/components/ui/separator';
+import { Textarea } from '@/shared/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/shared/components/ui/alert-dialog';
 import { OptInStatusIndicator } from '../OptInStatusIndicator';
-import { 
-  Phone, Send, Loader2, User, Mail, SkipForward, 
-  XCircle, ThumbsUp, ThumbsDown, Zap, Info, 
-  ArrowRight, RotateCcw, AlertCircle, CheckCircle 
+import { EnrichmentPanel } from '../EnrichmentPanel';
+import {
+  Phone, Send, Loader2, User, Mail, SkipForward,
+  XCircle, ThumbsUp, ThumbsDown, Zap, Info,
+  ArrowRight, ArrowLeft, RotateCcw, AlertCircle, CheckCircle,
+  StickyNote, RefreshCw, MessageSquare
 } from 'lucide-react';
 import type { RecipientData, VerificationMethod } from '../hooks/useRedemptionWorkflow';
 
@@ -57,12 +72,22 @@ interface OptInStepProps {
   emailVerificationSent: boolean;
   showSkipDisposition: boolean;
   onSendOptIn: () => Promise<{ success: boolean; error?: string }>;
+  onResendOptIn?: () => Promise<void>;
   onSimulateOptIn: () => void;
   onSendEmailVerification: () => Promise<{ success: boolean; error?: string }>;
   onSkipDisposition: (disposition: string, isPositive: boolean) => Promise<{ success: boolean }>;
   onShowSkipDisposition: (show: boolean) => void;
   onContinue: () => void;
+  onBack?: () => void;
   onStartOver: () => void;
+  /** Delivery phone (may differ from cellPhone for opt-in) */
+  deliveryPhone?: string;
+  onDeliveryPhoneChange?: (phone: string) => void;
+  /** Call notes */
+  callNotes?: string;
+  onCallNotesChange?: (notes: string) => void;
+  /** Campaign custom field IDs for filtering enrichment fields */
+  campaignCustomFieldIds?: string[];
 }
 
 export function OptInStep({
@@ -76,20 +101,35 @@ export function OptInStep({
   emailVerificationSent,
   showSkipDisposition,
   onSendOptIn,
+  onResendOptIn,
   onSimulateOptIn,
   onSendEmailVerification,
   onSkipDisposition,
   onShowSkipDisposition,
   onContinue,
+  onBack,
   onStartOver,
+  deliveryPhone,
+  onDeliveryPhoneChange,
+  callNotes,
+  onCallNotesChange,
+  campaignCustomFieldIds,
 }: OptInStepProps) {
   const [isSendingOptIn, setIsSendingOptIn] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSubmittingDisposition, setIsSubmittingDisposition] = useState(false);
+  const [showDifferentDeliveryPhone, setShowDifferentDeliveryPhone] = useState(false);
 
   const handleSendOptIn = async () => {
     setIsSendingOptIn(true);
     await onSendOptIn();
+    setIsSendingOptIn(false);
+  };
+
+  const handleResendOptIn = async () => {
+    if (!onResendOptIn) return;
+    setIsSendingOptIn(true);
+    await onResendOptIn();
     setIsSendingOptIn(false);
   };
 
@@ -107,20 +147,21 @@ export function OptInStep({
   };
 
   const canContinue = optInStatus.isOptedIn || emailVerificationSent;
+  const smsSentOrPending = optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response';
 
   return (
     <Card className="border-2 border-primary">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Phone className="h-5 w-5 text-primary" />
-          Cell Phone & SMS Opt-In
+          Verify & Contact
         </CardTitle>
         <CardDescription>
-          Get the customer's cell phone first - this sends the opt-in SMS automatically
+          Customer information, opt-in verification, and delivery setup
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Customer info */}
+        {/* Customer info header */}
         {(recipient.first_name || recipient.last_name) && (
           <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
             <User className="h-4 w-4 text-muted-foreground" />
@@ -132,6 +173,32 @@ export function OptInStep({
             </Badge>
           </div>
         )}
+
+        {/* Enrichment Panel — always visible */}
+        <EnrichmentPanel
+          recipient={recipient}
+          compact
+          campaignCustomFieldIds={campaignCustomFieldIds}
+        />
+
+        {/* Call Notes */}
+        {onCallNotesChange && (
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold flex items-center gap-2">
+              <StickyNote className="h-4 w-4" />
+              Call Notes
+            </Label>
+            <Textarea
+              placeholder="Notes from this call..."
+              value={callNotes || ""}
+              onChange={(e) => onCallNotesChange(e.target.value)}
+              rows={2}
+              className="text-sm"
+            />
+          </div>
+        )}
+
+        <Separator />
 
         {/* Cell phone input and send button */}
         <div className="space-y-3">
@@ -145,17 +212,12 @@ export function OptInStep({
               placeholder="(555) 555-5555"
               value={cellPhone}
               onChange={(e) => onCellPhoneChange(e.target.value)}
-              disabled={optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response' && !isSimulating}
+              disabled={smsSentOrPending && optInStatus.status !== 'pending' && !isSimulating}
               className="text-lg"
             />
             <Button
               onClick={handleSendOptIn}
-              disabled={
-                !cellPhone ||
-                isSendingOptIn ||
-                isSimulating ||
-                (optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response')
-              }
+              disabled={!cellPhone || isSendingOptIn || isSimulating || smsSentOrPending}
               className="min-w-[140px]"
             >
               {isSendingOptIn ? (
@@ -172,8 +234,31 @@ export function OptInStep({
             </Button>
           </div>
 
-          {/* Simulation button for testing */}
-          <div className="flex gap-2 items-center">
+          {/* Resend + Simulate row */}
+          <div className="flex gap-2 items-center flex-wrap">
+            {/* Resend button — visible when pending */}
+            {optInStatus.isPending && onResendOptIn && (
+              <Button
+                variant="outline"
+                onClick={handleResendOptIn}
+                disabled={isSendingOptIn}
+                className="border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-700"
+              >
+                {isSendingOptIn ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Resending...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Resend Opt-In SMS
+                  </>
+                )}
+              </Button>
+            )}
+
+            {/* Simulation button for testing */}
             <Button
               variant="outline"
               onClick={onSimulateOptIn}
@@ -194,7 +279,7 @@ export function OptInStep({
             </Button>
             {isSimulatedMode && !isSimulating && optInStatus.isOptedIn && (
               <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-400">
-                🧪 Simulated Mode
+                Simulated Mode
               </Badge>
             )}
           </div>
@@ -230,6 +315,54 @@ export function OptInStep({
               for this customer as they declined marketing messages.
             </AlertDescription>
           </Alert>
+        )}
+
+        {/* SMS Delivery Number — shown after opt-in confirmed */}
+        {optInStatus.isOptedIn && onDeliveryPhoneChange && (
+          <>
+            <Separator />
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                SMS Delivery Number
+              </Label>
+              {!showDifferentDeliveryPhone ? (
+                <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div>
+                    <span className="text-sm">Gift card will be sent to: </span>
+                    <span className="font-semibold">{deliveryPhone || cellPhone}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowDifferentDeliveryPhone(true)}
+                  >
+                    Change Number
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    type="tel"
+                    placeholder="(555) 555-5555"
+                    value={deliveryPhone || ""}
+                    onChange={(e) => onDeliveryPhoneChange(e.target.value)}
+                    className="text-lg"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (!deliveryPhone) onDeliveryPhoneChange(cellPhone);
+                      setShowDifferentDeliveryPhone(false);
+                    }}
+                  >
+                    Done
+                  </Button>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         <Separator className="my-4" />
@@ -303,7 +436,7 @@ export function OptInStep({
                 Positive (Customer Gets Gift Card)
               </div>
               <p className="text-xs text-muted-foreground mb-2">
-                ⚠️ Admin will be notified if you skip verification with a positive disposition
+                Admin will be notified if you skip verification with a positive disposition
               </p>
               <div className="grid gap-2">
                 {POSITIVE_DISPOSITIONS.map((disposition) => (
@@ -351,11 +484,47 @@ export function OptInStep({
           </div>
         )}
 
+        {/* Bottom action buttons */}
         <div className="flex gap-2 pt-2">
-          <Button variant="outline" onClick={onStartOver}>
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Start Over
-          </Button>
+          {onBack && (
+            <Button variant="ghost" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          )}
+
+          {/* Start Over with confirmation if SMS was sent */}
+          {smsSentOrPending ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50">
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Start Over
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Start Over?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    An opt-in SMS has already been sent. Starting over will clear all current progress
+                    for this call. The SMS status will remain in the system.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={onStartOver} className="bg-red-600 hover:bg-red-700">
+                    Start Over
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : (
+            <Button variant="outline" onClick={onStartOver}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Start Over
+            </Button>
+          )}
+
           <Button
             onClick={onContinue}
             disabled={!canContinue}
@@ -363,7 +532,7 @@ export function OptInStep({
           >
             {optInStatus.isOptedIn ? (
               <>
-                Continue to Delivery
+                Continue to Condition
                 <ArrowRight className="h-4 w-4 ml-2" />
               </>
             ) : emailVerificationSent ? (

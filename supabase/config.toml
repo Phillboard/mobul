@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.generate-ace-form-ai]
 verify_jwt = true
 
+[functions.generate-form-ai]
+verify_jwt = false
+
 [functions.send-form-notification]
 verify_jwt = false
 

@@ -26,6 +26,12 @@ export interface FormField {
   options?: string[]; // For select, radio, checkbox
   conditional?: ConditionalLogic;
   styling?: FieldStyling;
+  /** Metadata for custom field mapping — used to link form fields to contact_custom_field_definitions */
+  metadata?: {
+    isCustomField: boolean;
+    definitionId: string;
+    fieldName: string;
+  };
 }
 
 export interface ValidationRule {

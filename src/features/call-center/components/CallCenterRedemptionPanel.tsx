@@ -13,8 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/shared/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { useToast } from '@shared/hooks';
-import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, Send, Info, XCircle, SkipForward, ThumbsUp, ThumbsDown, Zap, ExternalLink, ClipboardCopy } from "lucide-react";
+import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, ArrowLeft, Send, Info, XCircle, SkipForward, ThumbsUp, ThumbsDown, Zap, ExternalLink, ClipboardCopy, Edit2, StickyNote } from "lucide-react";
 import { Separator } from "@/shared/components/ui/separator";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/shared/components/ui/alert-dialog";
+import { EnrichmentPanel } from "./EnrichmentPanel";
 import { PoolInventoryWidget } from "./PoolInventoryWidget";
 import { ResendSmsButton } from "./ResendSmsButton";
 import { OptInStatusIndicator } from "./OptInStatusIndicator";
@@ -214,8 +217,12 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   const [simulationCountdown, setSimulationCountdown] = useState(0);
   const simulationTimerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Step 3: Contact Method (for SMS delivery)
+  // Step 3: Contact Method (merged into opt-in step)
   const [phone, setPhone] = useState("");
+  const [showDifferentDeliveryPhone, setShowDifferentDeliveryPhone] = useState(false);
+
+  // Call notes
+  const [callNotes, setCallNotes] = useState("");
   
   // Step 4: Condition Selection
   const [selectedConditionId, setSelectedConditionId] = useState("");
@@ -243,16 +250,19 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     }
   }, [recipient]);
 
-  // Auto-advance to contact step when opted in
+  // Auto-notification when opted in (no longer auto-advances - agent continues collecting data)
   useEffect(() => {
     if (optInStatus.isOptedIn && step === "optin") {
+      // Set delivery phone to cell phone if not already set
+      if (!phone || phone === cellPhone) {
+        setPhone(cellPhone);
+      }
       toast({
         title: "Customer Opted In!",
         description: "You can now proceed with the gift card provisioning.",
       });
-      setStep("contact");
     }
-  }, [optInStatus.isOptedIn, step, toast]);
+  }, [optInStatus.isOptedIn, step, toast, cellPhone, phone]);
 
   // Handle campaign selection when multiple recipients match the code
   const handleCampaignSelect = (selectedRecipient: RecipientData) => {
@@ -1174,7 +1184,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   const handleStartNew = () => {
     // Start a new logging session for the next redemption attempt
     startNewSession();
-    
+
     setStep("code");
     setRedemptionCode("");
     setRecipient(null);
@@ -1189,6 +1199,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     setShowSkipDisposition(false);
     setSelectedDisposition("");
     setEmailVerificationSent(false);
+    setCallNotes("");
+    setShowDifferentDeliveryPhone(false);
     // Reset simulation state
     setIsSimulatedMode(false);
     setIsSimulating(false);
@@ -1196,6 +1208,58 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     if (simulationTimerRef.current) {
       clearInterval(simulationTimerRef.current);
       simulationTimerRef.current = null;
+    }
+  };
+
+  // Navigate back from opt-in step without resetting all state
+  const handleBackFromOptIn = () => {
+    // Go back to campaign selection if we came through that path, otherwise code entry
+    if (multipleRecipients.length > 0) {
+      setStep("campaign_select");
+    } else {
+      setStep("code");
+    }
+    // Clear opt-in-specific transient state but preserve recipient and phone data
+    setShowSkipDisposition(false);
+    setEmailVerificationSent(false);
+    setShowDifferentDeliveryPhone(false);
+  };
+
+  // Resend opt-in SMS - resets status and re-sends
+  const resendOptInSms = async () => {
+    if (!recipient || !cellPhone) return;
+
+    setIsSendingOptIn(true);
+
+    try {
+      // Reset the opt-in status in the database to bypass the 5-minute cooldown
+      await supabase
+        .from('recipients')
+        .update({
+          sms_opt_in_status: 'not_sent',
+          sms_opt_in_sent_at: null,
+          sms_opt_in_response: null,
+          sms_opt_in_response_at: null,
+        })
+        .eq('id', recipient.id);
+
+      // Refresh the status indicator
+      optInStatus.refresh();
+
+      // Wait briefly for status to update before sending again
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Now call the standard send function
+      await sendOptInSms();
+    } catch (error: any) {
+      console.error('[RESEND-OPT-IN] Error:', error);
+      toast({
+        title: "Resend Failed",
+        description: error.message || "Failed to resend opt-in SMS. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingOptIn(false);
     }
   };
   
@@ -1290,23 +1354,19 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
           1. Code
         </Badge>
         <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        <Badge 
+        <Badge
           variant={["optin", "contact", "condition", "complete"].includes(step) ? "default" : "outline"}
           className={step === "optin" && optInStatus.isPending ? "animate-pulse bg-yellow-500" : ""}
         >
-          2. Opt-In
-        </Badge>
-        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        <Badge variant={["contact", "condition", "complete"].includes(step) ? "default" : "outline"}>
-          3. Contact
+          2. Verify & Contact
         </Badge>
         <ArrowRight className="h-4 w-4 text-muted-foreground" />
         <Badge variant={["condition", "complete"].includes(step) ? "default" : "outline"}>
-          4. Condition
+          3. Condition
         </Badge>
         <ArrowRight className="h-4 w-4 text-muted-foreground" />
         <Badge variant={step === "complete" ? "default" : "outline"}>
-          5. Complete
+          4. Complete
         </Badge>
       </div>
 
@@ -1398,6 +1458,25 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               </div>
             )}
 
+            {/* Customer Information Enrichment - Always Visible */}
+            <EnrichmentPanel recipient={recipient} compact />
+
+            {/* Call Notes */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <StickyNote className="h-4 w-4" />
+                Call Notes
+              </Label>
+              <Textarea
+                placeholder="Add notes about this call..."
+                value={callNotes}
+                onChange={(e) => setCallNotes(e.target.value)}
+                className="h-20 text-sm resize-none"
+              />
+            </div>
+
+            <Separator className="my-2" />
+
             {/* Cell phone input and send button */}
             <div className="space-y-3">
               <Label htmlFor="cellphone" className="text-base font-semibold">
@@ -1410,15 +1489,20 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                   placeholder="(555) 555-5555"
                   value={cellPhone}
                   onChange={(e) => setCellPhone(e.target.value)}
-                  disabled={optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response' && !isSimulating}
+                  disabled={
+                    optInStatus.status !== 'not_sent' &&
+                    optInStatus.status !== 'invalid_response' &&
+                    optInStatus.status !== 'pending' &&
+                    !isSimulating
+                  }
                   className="text-lg"
                 />
-                <Button 
+                <Button
                   onClick={sendOptInSms}
                   disabled={
-                    !cellPhone || 
+                    !cellPhone ||
                     !campaign ||
-                    isSendingOptIn || 
+                    isSendingOptIn ||
                     isSimulating ||
                     (optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response')
                   }
@@ -1437,14 +1521,36 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                   )}
                 </Button>
               </div>
-              
+
+              {/* Resend button - visible when SMS was sent but no response yet */}
+              {optInStatus.isPending && (
+                <Button
+                  variant="outline"
+                  onClick={resendOptInSms}
+                  disabled={!cellPhone || isSendingOptIn}
+                  className="min-w-[160px] border-orange-300 hover:bg-orange-50 text-orange-700"
+                >
+                  {isSendingOptIn ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Resending...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Resend Opt-In SMS
+                    </>
+                  )}
+                </Button>
+              )}
+
               {/* Simulation button for testing */}
               <div className="flex gap-2 items-center">
-                <Button 
+                <Button
                   variant="outline"
                   onClick={simulateSmsOptIn}
                   disabled={
-                    !cellPhone || 
+                    !cellPhone ||
                     isSimulating ||
                     optInStatus.isOptedIn
                   }
@@ -1464,7 +1570,7 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                 </Button>
                 {isSimulatedMode && !isSimulating && optInStatus.isOptedIn && (
                   <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-400">
-                    🧪 Simulated Mode
+                    Simulated Mode
                   </Badge>
                 )}
               </div>
@@ -1635,19 +1741,88 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               </div>
             )}
 
+            {/* SMS Delivery Number - merged from Contact step */}
+            {(optInStatus.isOptedIn || emailVerificationSent) && (
+              <div className="space-y-2 p-3 border rounded-lg bg-blue-50/50 border-blue-200">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-blue-600" />
+                    SMS Delivery Number
+                  </Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowDifferentDeliveryPhone(!showDifferentDeliveryPhone);
+                      if (!showDifferentDeliveryPhone) {
+                        setPhone(cellPhone); // reset to cellphone when toggling off
+                      }
+                    }}
+                    className="text-xs"
+                  >
+                    {showDifferentDeliveryPhone ? 'Use Opt-In Number' : 'Use Different Number'}
+                  </Button>
+                </div>
+                {!showDifferentDeliveryPhone ? (
+                  <p className="text-sm text-muted-foreground">
+                    Gift card will be sent to: <span className="font-mono font-medium">{cellPhone || phone}</span>
+                  </p>
+                ) : (
+                  <Input
+                    type="tel"
+                    placeholder="Different phone number for delivery"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="text-sm"
+                  />
+                )}
+              </div>
+            )}
+
             <div className="flex gap-2 pt-2">
-              <Button variant="outline" onClick={handleStartNew}>
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Start Over
+              <Button variant="ghost" size="sm" onClick={handleBackFromOptIn}>
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back
               </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive hover:text-destructive border-destructive/30"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-1" />
+                    Start Over
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Start Over?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will clear all entered data including the redemption code,
+                      customer information, and opt-in status. This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleStartNew}>
+                      Yes, Start Over
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button
-                onClick={() => setStep("contact")}
+                onClick={() => {
+                  // Ensure delivery phone is set before advancing
+                  if (!phone) setPhone(cellPhone);
+                  setStep("condition");
+                }}
                 disabled={!optInStatus.isOptedIn && !emailVerificationSent}
                 className="flex-1"
               >
                 {optInStatus.isOptedIn ? (
                   <>
-                    Continue to Delivery
+                    Continue to Condition
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 ) : emailVerificationSent ? (
@@ -1838,12 +2013,12 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
             )}
 
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep("contact")}>
+              <Button variant="outline" onClick={() => setStep("optin")}>
                 Back
               </Button>
               {(() => {
                 // Check if verification was completed via any method
-                const hasValidVerification = optInStatus.isOptedIn || 
+                const hasValidVerification = optInStatus.isOptedIn ||
                   (verificationMethod === "skipped" && POSITIVE_DISPOSITIONS.some(d => d.value === selectedDisposition)) ||
                   (verificationMethod === "email");
                 

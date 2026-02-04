@@ -115,8 +115,11 @@ async function getRecipients(supabase: any, campaign: any) {
       break;
 
     case 'segment':
-      // TODO: Implement segment evaluation
-      console.log('[PREVIEW] Segment audience not yet implemented');
+      // FUTURE: Segment-based audiences require building a segment query engine
+      // that can evaluate dynamic filters (e.g., "all contacts where last_activity > 30 days ago")
+      // For now, segments are not supported - use contact lists or manual selection instead
+      console.warn('[PREVIEW] Segment audience type is not yet implemented');
+      throw new Error('Segment-based audiences are not yet supported. Please use Contact Lists or Manual selection.');
       break;
   }
 

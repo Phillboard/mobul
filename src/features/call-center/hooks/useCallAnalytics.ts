@@ -2,59 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from '@core/services/supabase';
 
 /**
- * @deprecated Call tracking is not actively used. Consider removing in future cleanup.
+ * Hook to get reward statistics for a specific campaign.
+ * Returns gift card delivery stats, timeline, and recent deliveries.
  */
-export function useCallAnalytics(campaignId: string | null) {
-  return useQuery({
-    queryKey: ['call-analytics', campaignId],
-    queryFn: async () => {
-      if (!campaignId) return null;
-
-      // Get call sessions with recipient info
-      const { data: sessions, error: sessionsError } = await supabase
-        .from('call_sessions')
-        .select('*, recipient:recipients(*), tracked_number:tracked_phone_numbers(*)')
-        .eq('campaign_id', campaignId);
-
-      if (sessionsError) throw sessionsError;
-
-      // Calculate metrics
-      const totalCalls = sessions?.length || 0;
-      const answeredCalls = sessions?.filter(s => s.call_answered_at).length || 0;
-      const matchedCalls = sessions?.filter(s => s.match_status === 'matched').length || 0;
-      
-      const avgDuration = sessions?.filter(s => s.call_duration_seconds)
-        .reduce((sum, s) => sum + (s.call_duration_seconds || 0), 0) / (sessions?.filter(s => s.call_duration_seconds).length || 1);
-
-      // Group by status
-      const statusBreakdown = sessions?.reduce((acc, session) => {
-        acc[session.call_status] = (acc[session.call_status] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      // Group by date for timeline
-      const callsByDate = sessions?.reduce((acc, session) => {
-        const date = new Date(session.call_started_at).toLocaleDateString();
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      return {
-        totalCalls,
-        answeredCalls,
-        matchedCalls,
-        avgDuration: Math.round(avgDuration || 0),
-        answerRate: totalCalls > 0 ? (answeredCalls / totalCalls) * 100 : 0,
-        matchRate: totalCalls > 0 ? (matchedCalls / totalCalls) * 100 : 0,
-        statusBreakdown,
-        timeline: Object.entries(callsByDate).map(([date, count]) => ({ date, calls: count })),
-        recentSessions: sessions?.slice(0, 10) || [],
-      };
-    },
-    enabled: !!campaignId,
-  });
-}
-
 export function useRewardStats(campaignId: string | null) {
   return useQuery({
     queryKey: ['reward-stats', campaignId],
@@ -138,52 +88,9 @@ export function useRewardStats(campaignId: string | null) {
 }
 
 /**
- * @deprecated Call tracking is not actively used. Consider removing in future cleanup.
+ * Hook to get reward summary statistics for a client's dashboard.
+ * Returns total delivered, today's count, trend, and values.
  */
-export function useCallStats(clientId: string | null, dateRange: number) {
-  return useQuery({
-    queryKey: ['call-stats', clientId, dateRange],
-    queryFn: async () => {
-      if (!clientId) return null;
-
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - dateRange);
-
-      // Get campaigns for this client
-      const { data: campaigns } = await supabase
-        .from('campaigns')
-        .select('id')
-        .eq('client_id', clientId);
-
-      if (!campaigns) return null;
-
-      const campaignIds = campaigns.map(c => c.id);
-
-      // Get call sessions
-      const { data: sessions } = await supabase
-        .from('call_sessions')
-        .select('*')
-        .in('campaign_id', campaignIds)
-        .gte('call_started_at', startDate.toISOString());
-
-      const totalCalls = sessions?.length || 0;
-      const todayCalls = sessions?.filter(s => 
-        new Date(s.call_started_at).toDateString() === new Date().toDateString()
-      ).length || 0;
-
-      const avgDuration = sessions?.filter(s => s.call_duration_seconds)
-        .reduce((sum, s) => sum + (s.call_duration_seconds || 0), 0) / (sessions?.filter(s => s.call_duration_seconds).length || 1);
-
-      return {
-        totalCalls,
-        todayCalls,
-        avgDuration: Math.round(avgDuration || 0),
-      };
-    },
-    enabled: !!clientId,
-  });
-}
-
 export function useRewardSummary(clientId: string | null, dateRange: number) {
   return useQuery({
     queryKey: ['reward-summary', clientId, dateRange],
@@ -263,57 +170,6 @@ export function useRewardSummary(clientId: string | null, dateRange: number) {
         totalValue,
         pendingCount: pendingCount || 0,
         revokedCount,
-      };
-    },
-    enabled: !!clientId,
-  });
-}
-
-/**
- * @deprecated Call tracking is not actively used. Consider removing in future cleanup.
- */
-export function useConditionCompletionRate(clientId: string | null, dateRange: number) {
-  return useQuery({
-    queryKey: ['condition-completion-rate', clientId, dateRange],
-    queryFn: async () => {
-      if (!clientId) return null;
-
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - dateRange);
-
-      // Get campaigns for this client
-      const { data: campaigns } = await supabase
-        .from('campaigns')
-        .select('id')
-        .eq('client_id', clientId);
-
-      if (!campaigns) return null;
-
-      const campaignIds = campaigns.map(c => c.id);
-
-      // Get call sessions
-      const { data: sessions } = await supabase
-        .from('call_sessions')
-        .select('id')
-        .in('campaign_id', campaignIds)
-        .gte('call_started_at', startDate.toISOString());
-
-      // Get conditions met
-      const { data: conditionsMet } = await supabase
-        .from('call_conditions_met')
-        .select('call_session_id')
-        .in('campaign_id', campaignIds)
-        .gte('met_at', startDate.toISOString());
-
-      const totalCalls = sessions?.length || 0;
-      const callsWithConditions = new Set(conditionsMet?.map(c => c.call_session_id)).size;
-      
-      const completionRate = totalCalls > 0 ? (callsWithConditions / totalCalls) * 100 : 0;
-
-      return {
-        completionRate,
-        totalCalls,
-        callsWithConditions,
       };
     },
     enabled: !!clientId,

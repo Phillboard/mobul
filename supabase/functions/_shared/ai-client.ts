@@ -98,7 +98,7 @@ const LOVABLE_API_URL = 'https://ai.gateway.lovable.dev/v1';
 
 const DEFAULT_MODELS: Record<AIProvider, string> = {
   openai: 'gpt-4o',
-  anthropic: 'claude-3-opus-20240229',
+  anthropic: 'claude-sonnet-4-20250514',
   gemini: 'gemini-2.5-pro',
   lovable: 'google/gemini-2.5-flash',
 };
@@ -277,6 +277,21 @@ async function anthropicCompletion(params: AICompletionParams): Promise<AIComple
       description: t.function.description,
       input_schema: t.function.parameters,
     }));
+
+    // Handle tool choice for Anthropic
+    if (params.toolChoice) {
+      if (params.toolChoice === 'auto') {
+        body.tool_choice = { type: 'auto' };
+      } else if (params.toolChoice === 'none') {
+        // Don't set tool_choice, just don't include tools
+      } else if (typeof params.toolChoice === 'object' && params.toolChoice.type === 'function') {
+        // Convert OpenAI format to Anthropic format
+        body.tool_choice = { 
+          type: 'tool', 
+          name: params.toolChoice.function.name 
+        };
+      }
+    }
   }
 
   const response = await fetch(`${ANTHROPIC_API_URL}/messages`, {
@@ -467,9 +482,16 @@ async function lovableCompletion(params: AICompletionParams): Promise<AICompleti
 }
 
 // ============================================================================
-// Streaming Client (Lovable/OpenAI compatible)
+// Streaming Client (OpenAI, Anthropic, Lovable compatible)
 // ============================================================================
 
+/**
+ * Create a streaming completion with support for OpenAI, Anthropic, and Lovable.
+ * Returns a Response with SSE stream that can be forwarded to clients.
+ * 
+ * For Anthropic, the stream is transformed to OpenAI-compatible SSE format
+ * so the frontend can use a single parser.
+ */
 export async function createStreamingCompletion(
   params: AICompletionParams
 ): Promise<Response> {
@@ -477,6 +499,14 @@ export async function createStreamingCompletion(
   const apiKey = getApiKey(provider);
   const model = params.model || DEFAULT_MODELS[provider];
 
+  console.log(`[AI-CLIENT] Creating streaming completion with ${provider}`, { model });
+
+  // Handle Anthropic streaming separately (different API format)
+  if (provider === 'anthropic') {
+    return await createAnthropicStreamingCompletion(params, apiKey, model);
+  }
+
+  // OpenAI and Lovable use the same format
   const messages: Array<{ role: string; content: string }> = [];
 
   if (params.systemPrompt) {
@@ -514,10 +544,149 @@ export async function createStreamingCompletion(
     if (response.status === 402) {
       throw new Error('Payment required');
     }
-    throw new Error(`Streaming error: ${response.status}`);
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`Streaming error: ${response.status} - ${errorText}`);
   }
 
   return response;
+}
+
+/**
+ * Create Anthropic streaming completion and transform to OpenAI-compatible SSE format.
+ * This allows the frontend to use a single parser for all providers.
+ */
+async function createAnthropicStreamingCompletion(
+  params: AICompletionParams,
+  apiKey: string,
+  model: string
+): Promise<Response> {
+  // Build messages for Anthropic (no system role in messages array)
+  const messages: Array<{ role: string; content: string }> = [];
+
+  for (const msg of params.messages) {
+    if (msg.role !== 'system' && typeof msg.content === 'string') {
+      messages.push({ role: msg.role, content: msg.content });
+    }
+  }
+
+  const body: Record<string, unknown> = {
+    model,
+    max_tokens: params.maxTokens ?? DEFAULT_MAX_TOKENS.anthropic,
+    messages,
+    stream: true,
+  };
+
+  if (params.systemPrompt) {
+    body.system = params.systemPrompt;
+  }
+
+  console.log('[AI-CLIENT] Calling Anthropic API with model:', model);
+  
+  const response = await fetch(`${ANTHROPIC_API_URL}/messages`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Could not read error body');
+    console.error('[AI-CLIENT] Anthropic API error:', { status: response.status, error: errorText });
+    
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again in a moment.');
+    }
+    if (response.status === 401) {
+      throw new Error('Invalid API key. Please check your ANTHROPIC_API_KEY configuration.');
+    }
+    if (response.status === 400) {
+      throw new Error(`Bad request: ${errorText}`);
+    }
+    if (response.status === 402) {
+      throw new Error('Anthropic account requires payment. Please check your billing.');
+    }
+    if (response.status === 404) {
+      throw new Error(`Model not found: ${model}`);
+    }
+    throw new Error(`Anthropic API error (${response.status}): ${errorText}`);
+  }
+  
+  console.log('[AI-CLIENT] Anthropic streaming response started');
+
+  // Transform Anthropic SSE to OpenAI-compatible format
+  const reader = response.body!.getReader();
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  const transformedStream = new ReadableStream({
+    async start(controller) {
+      let buffer = '';
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            // Send final [DONE] message
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+            controller.close();
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (!data) continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                
+                // Transform Anthropic events to OpenAI format
+                if (parsed.type === 'content_block_delta') {
+                  const text = parsed.delta?.text || '';
+                  if (text) {
+                    // Emit OpenAI-compatible format
+                    const openAIFormat = {
+                      choices: [{
+                        delta: { content: text },
+                        index: 0,
+                      }],
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(openAIFormat)}\n\n`));
+                  }
+                } else if (parsed.type === 'message_stop') {
+                  controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                }
+                // Skip other event types (message_start, content_block_start, etc.)
+              } catch {
+                // Skip invalid JSON
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[AI-CLIENT] Anthropic stream error:', error);
+        controller.error(error);
+      }
+    },
+    cancel() {
+      reader.cancel();
+    },
+  });
+
+  return new Response(transformedStream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
 }
 
 // ============================================================================

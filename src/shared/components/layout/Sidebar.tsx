@@ -126,16 +126,15 @@ const navigationGroups: NavGroup[] = [
     permissions: [P.CALL_CENTER_VIEW],
     items: [
       { name: "Redemption Center", href: "/call-center", icon: Headphones, permissions: [P.CALL_CENTER_REDEEM], keywords: ["redeem", "call center", "provision", "tracking", "calls"], description: "Redeem gift cards and track calls" },
-      { name: "Redemption Logs", href: "/call-center/logs", icon: ClipboardList, permissions: [P.ADMIN_AUDIT_LOG], keywords: ["logs", "audit", "history", "debug", "errors"], description: "View detailed redemption workflow logs" },
       { name: "Call Scripts", href: "/call-center/scripts", icon: FileText, permissions: [P.CALL_CENTER_SCRIPTS], keywords: ["scripts", "training", "call flow"], description: "Manage call scripts" },
     ]
   },
   {
     label: "Monitoring",
     collapsible: true,
-    permissions: [P.ACTIVITIES_VIEW],
+    permissions: [P.MONITORING_VIEW],
     items: [
-      { name: "Activity & Logs", href: "/activity", icon: Activity, permissions: [P.ACTIVITIES_VIEW], keywords: ["activity", "logs", "audit", "compliance", "events", "history", "tracking"], description: "Unified activity logs and audit trail" },
+      { name: "Activity & Logs", href: "/monitoring", icon: Activity, permissions: [P.MONITORING_VIEW], keywords: ["activity", "logs", "audit", "compliance", "events", "history", "tracking", "monitoring", "alerts"], description: "Unified activity logs, alerts, and system monitoring" },
     ]
   },
   {
@@ -158,11 +157,10 @@ const navigationGroups: NavGroup[] = [
   {
     label: "Admin",
     collapsible: true,
-    permissions: [P.ADMIN_SYSTEM_HEALTH, P.USERS_VIEW, P.AGENCIES_VIEW],
+    permissions: [P.USERS_VIEW, P.AGENCIES_VIEW, P.ADMIN_ORGANIZATIONS],
     items: [
       { name: "Organizations", href: "/admin/organizations", icon: Building2, permissions: [P.ADMIN_ORGANIZATIONS], keywords: ["agencies", "clients", "companies", "archive", "delete"], description: "Manage agencies & clients" },
       { name: "User Management", href: "/users", icon: UserCog, permissions: [P.USERS_VIEW], keywords: ["team", "permissions", "roles"], description: "Manage users & permissions" },
-      { name: "System Health", href: "/admin/system-health", icon: Activity, permissions: [P.ADMIN_SYSTEM_HEALTH], keywords: ["analytics", "performance", "errors", "alerts", "monitoring", "error logs"], description: "System monitoring, health & error logs" },
       { name: "Gift Cards", href: "/admin/gift-cards-dashboard", icon: Gift, permissions: [P.GIFT_CARDS_MARKETPLACE_ADMIN], keywords: ["marketplace", "inventory", "gift cards", "brands", "providers", "master pools", "admin", "financials", "revenue"], description: "Gift card management, inventory & financials" },
     ]
   },

@@ -2,7 +2,7 @@
  * Dr. Phillip Chat Edge Function
  * 
  * AI assistant for the Mobul platform with streaming support.
- * Uses Lovable AI Gateway for Gemini with custom system prompt.
+ * Uses Anthropic Claude for intelligent, helpful responses.
  */
 
 import { withApiGateway, ApiError, type PublicContext } from '../_shared/api-gateway.ts';
@@ -113,13 +113,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       content: m.content,
     }));
 
-    // Get streaming response
+    // Get streaming response using Claude Sonnet 4
     const streamResponse = await createStreamingCompletion({
-      provider: 'lovable',
-      model: 'google/gemini-2.5-flash',
+      provider: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
       systemPrompt: SYSTEM_PROMPT,
       messages: aiMessages,
       temperature: 0.7,
+      maxTokens: 2048,
       stream: true,
     });
 

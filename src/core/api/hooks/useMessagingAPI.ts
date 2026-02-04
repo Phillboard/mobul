@@ -331,8 +331,6 @@ export function useSendUserInvitation() {
 
 // ============================================================================
 // Backward Compatibility
-// ============================================================================
-
-/** @deprecated Use useSendSmsOptIn instead */
+// ============================================================================/** @deprecated Use useSendSmsOptIn instead */
 export const useSendOptIn = useSendSmsOptIn;/** @deprecated Use useSendGiftCardSms instead */
 export const useSendSMS = useSendGiftCardSms;

@@ -10,7 +10,7 @@
  */
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id',
 };
 
 /**
@@ -18,7 +18,7 @@ export const corsHeaders = {
  */
 export const fullCorsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
   'Access-Control-Max-Age': '86400',
 };
@@ -57,7 +57,7 @@ export function withCORS(response: Response): Response {
   
   // Add CORS headers
   newHeaders.set('Access-Control-Allow-Origin', '*');
-  newHeaders.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type');
+  newHeaders.set('Access-Control-Allow-Headers', 'authorization, x-client-info, apikey, content-type, x-request-id');
   
   return new Response(response.body, {
     status: response.status,

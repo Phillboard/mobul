@@ -4,6 +4,7 @@ export * from './useContactLists';
 export * from './useContacts';
 export * from './useContactTags';
 export * from './useCustomFieldDefinitions';
+export * from './useCustomFieldTemplates';
 export * from './useListPreview';
 export * from './usePaginatedRecipients';
 export * from './useRecipientEnrichment';
