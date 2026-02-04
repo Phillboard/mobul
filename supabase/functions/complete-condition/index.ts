@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
           // Get recipient phone for SMS delivery
           const { data: recipient } = await supabaseClient
             .from('recipients')
-            .select('phone, email')
+            .select('phone, email, client_id')
             .eq('id', recipientId)
             .single();
 
@@ -178,6 +178,9 @@ Deno.serve(async (req) => {
                   giftCardValue: giftCardData.value,
                   brandName: giftCardData.brand_name,
                   customMessage: condition.sms_template,
+                  conditionId: condition.id,
+                  recipientId,
+                  clientId: recipient.client_id,
                 }
               });
 

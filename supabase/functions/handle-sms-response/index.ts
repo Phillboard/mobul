@@ -23,8 +23,10 @@ import { createActivityLogger } from '../_shared/activity-logger.ts';
 // Opt-in keywords (case-insensitive)
 const OPT_IN_KEYWORDS = ['YES', 'Y', 'YEA', 'YEAH', 'YEP', 'YUP', 'OK', 'OKAY', 'SURE', 'ACCEPT'];
 
-// Opt-out keywords (case-insensitive) - Standard carrier keywords
-const OPT_OUT_KEYWORDS = ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'NO', 'OPTOUT', 'OPT OUT', 'STOP ALL'];
+// Opt-out keywords (case-insensitive) - CTIA-mandated universal opt-out keywords only.
+// Note: "NO" is intentionally excluded — it is not a CTIA opt-out keyword.
+// "NO" falls through to invalid_response, allowing agents to re-engage the customer.
+const OPT_OUT_KEYWORDS = ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT', 'OPTOUT', 'OPT OUT', 'STOP ALL'];
 
 Deno.serve(async (req) => {
   // Handle CORS preflight

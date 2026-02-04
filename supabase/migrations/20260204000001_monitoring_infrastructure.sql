@@ -39,17 +39,18 @@ ADD CONSTRAINT activity_log_category_check
 CHECK (category IN ('gift_card', 'campaign', 'communication', 'api', 'user', 'system', 'billing'));
 
 -- Index for retention-based queries
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_activity_log_retention_created 
+-- Note: CONCURRENTLY removed for migration compatibility
+CREATE INDEX IF NOT EXISTS idx_activity_log_retention_created 
 ON public.activity_log (retention_class, created_at) 
 WHERE archived_at IS NULL;
 
 -- Index for archival cleanup
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_activity_log_archived 
+CREATE INDEX IF NOT EXISTS idx_activity_log_archived 
 ON public.activity_log (archived_at) 
 WHERE archived_at IS NOT NULL;
 
 -- Index for organization-scoped queries (dashboard performance)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_activity_log_org_created 
+CREATE INDEX IF NOT EXISTS idx_activity_log_org_created 
 ON public.activity_log (organization_id, created_at DESC) 
 WHERE organization_id IS NOT NULL;
 

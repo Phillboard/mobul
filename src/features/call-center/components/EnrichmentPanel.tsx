@@ -6,10 +6,12 @@ import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Badge } from "@/shared/components/ui/badge";
 import { Separator } from "@/shared/components/ui/separator";
-import { Edit2, Save, X, CheckCircle2, Loader2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/components/ui/collapsible";
+import { Edit2, Save, X, CheckCircle2, Loader2, ChevronDown, MapPin } from "lucide-react";
 import { useRecipientEnrichment } from '@/features/contacts/hooks';
 import { useCustomFieldDefinitions, type CustomFieldDefinition } from '@/features/contacts/hooks';
 import { CustomFieldInput } from '@/features/contacts/components/CustomFieldInput';
+import { formatPhoneNumber } from '@/shared/utils';
 
 interface EnrichmentPanelProps {
   recipient: {
@@ -126,17 +128,17 @@ export function EnrichmentPanel({ recipient, compact, campaignCustomFieldIds }: 
       {/* Header with Edit/Save toggle */}
       <div className="flex items-center justify-between">
         <Label className="text-sm font-semibold flex items-center gap-2">
-          <Edit2 className="h-4 w-4" />
-          Customer Information
+          Customer Info
         </Label>
         {!isEditing ? (
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
             onClick={() => setIsEditing(true)}
+            className="text-muted-foreground hover:text-foreground"
           >
             <Edit2 className="h-3 w-3 mr-1" />
-            Enrich Data
+            Edit
           </Button>
         ) : (
           <div className="flex gap-2">
@@ -155,10 +157,10 @@ export function EnrichmentPanel({ recipient, compact, campaignCustomFieldIds }: 
         )}
       </div>
 
-      {/* Standard fields */}
+      {/* Primary fields - always visible */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs">First Name</Label>
+          <Label className="text-xs text-muted-foreground">First Name</Label>
           <div className="flex items-center gap-2 mt-1">
             <Input
               value={formData.first_name}
@@ -175,7 +177,7 @@ export function EnrichmentPanel({ recipient, compact, campaignCustomFieldIds }: 
           </div>
         </div>
         <div>
-          <Label className="text-xs">Last Name</Label>
+          <Label className="text-xs text-muted-foreground">Last Name</Label>
           <div className="flex items-center gap-2 mt-1">
             <Input
               value={formData.last_name}
@@ -194,10 +196,10 @@ export function EnrichmentPanel({ recipient, compact, campaignCustomFieldIds }: 
       </div>
 
       <div>
-        <Label className="text-xs">Phone</Label>
+        <Label className="text-xs text-muted-foreground">Phone</Label>
         <div className="flex items-center gap-2 mt-1">
           <Input
-            value={formData.phone}
+            value={isEditing ? formData.phone : formatPhoneNumber(formData.phone)}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             disabled={!isEditing}
             className="h-8 text-sm"
@@ -213,7 +215,7 @@ export function EnrichmentPanel({ recipient, compact, campaignCustomFieldIds }: 
       </div>
 
       <div>
-        <Label className="text-xs">Email</Label>
+        <Label className="text-xs text-muted-foreground">Email</Label>
         <div className="flex items-center gap-2 mt-1">
           <Input
             type="email"
@@ -232,38 +234,54 @@ export function EnrichmentPanel({ recipient, compact, campaignCustomFieldIds }: 
         </div>
       </div>
 
-      <div>
-        <Label className="text-xs">Address</Label>
-        <Input
-          value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          disabled={!isEditing}
-          className="h-8 text-sm mt-1"
-          placeholder="123 Main St"
-        />
-      </div>
+      {/* Address fields - collapsible */}
+      <Collapsible>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-start h-8 px-2 -ml-2 text-muted-foreground hover:text-foreground">
+            <MapPin className="h-3 w-3 mr-2" />
+            <span className="text-xs">
+              {formData.address || formData.city || formData.state 
+                ? `${formData.address ? formData.address + ', ' : ''}${formData.city || ''} ${formData.state || ''}`.trim()
+                : 'Address (optional)'}
+            </span>
+            <ChevronDown className="h-3 w-3 ml-auto" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-2 pt-2">
+          <div>
+            <Label className="text-xs text-muted-foreground">Street Address</Label>
+            <Input
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              disabled={!isEditing}
+              className="h-8 text-sm mt-1"
+              placeholder="123 Main St"
+            />
+          </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <div className="col-span-2">
-          <Label className="text-xs">City</Label>
-          <Input
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            disabled={!isEditing}
-            className="h-8 text-sm mt-1"
-          />
-        </div>
-        <div>
-          <Label className="text-xs">State</Label>
-          <Input
-            value={formData.state}
-            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-            disabled={!isEditing}
-            className="h-8 text-sm mt-1"
-            maxLength={2}
-          />
-        </div>
-      </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-2">
+              <Label className="text-xs text-muted-foreground">City</Label>
+              <Input
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                disabled={!isEditing}
+                className="h-8 text-sm mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">State</Label>
+              <Input
+                value={formData.state}
+                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                disabled={!isEditing}
+                className="h-8 text-sm mt-1"
+                maxLength={2}
+              />
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Custom Fields - grouped by field_group */}
       {Object.entries(fieldsByGroup).map(([groupName, fields]) => (

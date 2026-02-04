@@ -25,6 +25,7 @@ export interface SmsTemplateData {
   id?: string;
   type: SmsTemplateType;
   body: string;
+  linkUrl?: string;        // Configured URL for {link} variable (gift_card_delivery only)
   isDefault: boolean;
   enabled: boolean;        // Can be disabled for opt_in_confirmation
   validation: A2PValidationResult;
@@ -37,6 +38,7 @@ interface MessageTemplateRow {
   template_type: 'sms' | 'email';
   name: string;
   body_template: string;
+  sms_delivery_link_url?: string;  // URL template for {link} variable
   available_merge_tags: string[];
   is_default: boolean;
   created_at: string;
@@ -54,10 +56,10 @@ export function useClientSmsTemplates(clientId: string | null) {
         throw new Error('Client ID required');
       }
 
-      // Fetch existing templates
+      // Fetch existing templates (including link URL for gift card delivery)
       const { data: templates, error } = await supabase
         .from('message_templates')
-        .select('*')
+        .select('id, client_id, template_type, name, body_template, sms_delivery_link_url, available_merge_tags, is_default, created_at, updated_at')
         .eq('client_id', clientId)
         .eq('template_type', 'sms')
         .eq('is_default', true);
@@ -83,6 +85,8 @@ export function useClientSmsTemplates(clientId: string | null) {
           id: existing?.id,
           type: templateType,
           body,
+          // Include link URL for gift_card_delivery template
+          linkUrl: templateType === 'gift_card_delivery' ? existing?.sms_delivery_link_url : undefined,
           isDefault: !existing || isDisabled, // True if using system default
           enabled: !isDisabled, // Disabled if body is empty string
           validation: validateSmsTemplate(body, templateType),
@@ -137,12 +141,13 @@ export function useSaveClientSmsTemplates() {
           ? ''
           : template.body;
         
-        // Skip if using system default (no customization) and enabled
-        if (template.body === config.defaultTemplate && template.enabled && !template.id) {
+        // Skip if using system default (no customization) and enabled AND no link URL configured
+        const hasLinkUrl = templateType === 'gift_card_delivery' && template.linkUrl;
+        if (template.body === config.defaultTemplate && template.enabled && !template.id && !hasLinkUrl) {
           return null;
         }
 
-        const templateData = {
+        const templateData: Record<string, unknown> = {
           client_id: clientId,
           template_type: 'sms' as const,
           name: templateType,
@@ -152,6 +157,11 @@ export function useSaveClientSmsTemplates() {
           updated_at: new Date().toISOString(),
         };
 
+        // Include link URL for gift_card_delivery template
+        if (templateType === 'gift_card_delivery') {
+          templateData.sms_delivery_link_url = template.linkUrl || null;
+        }
+
         if (template.id) {
           // Update existing
           const { error } = await supabase
@@ -160,8 +170,8 @@ export function useSaveClientSmsTemplates() {
             .eq('id', template.id);
 
           if (error) throw error;
-        } else if (bodyToStore !== config.defaultTemplate || !template.enabled) {
-          // Insert new only if customized or disabled
+        } else if (bodyToStore !== config.defaultTemplate || !template.enabled || hasLinkUrl) {
+          // Insert new only if customized, disabled, or has link URL configured
           const { error } = await supabase
             .from('message_templates')
             .insert({

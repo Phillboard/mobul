@@ -6,3 +6,4 @@ export * from './table';
 export * from './csv';
 export * from './smsTemplates';
 export * from './typeGuards';
+export * from './formatPhone';

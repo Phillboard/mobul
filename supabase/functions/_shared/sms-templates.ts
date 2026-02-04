@@ -69,8 +69,8 @@ export interface TemplateVariables {
 // ============================================================================
 
 export const SYSTEM_DEFAULT_TEMPLATES: Record<TemplateType, string> = {
-  gift_card_delivery: 
-    "Congratulations {first_name}! You've earned a ${value} {brand} gift card. Your code: {code}. Thank you for your business!",
+  gift_card_delivery:
+    "Hi {first_name}! Your ${value} {brand} gift card is ready. Code: {code}. Thanks for choosing {client_name}!",
   
   opt_in_request:
     "This is {client_name}. Reply YES to receive your gift card and marketing messages for 30 days. Reply STOP to opt out.",
@@ -333,6 +333,57 @@ export async function fetchClientName(
   return data.name;
 }
 
+/**
+ * Resolve the configured link URL using hierarchy:
+ * 1. Condition-level override (campaign_conditions.sms_link_url)
+ * 2. Client default (message_templates.sms_delivery_link_url)
+ * 3. null (fall back to using gift card code directly)
+ * 
+ * @param supabase - Supabase client
+ * @param params - Resolution parameters
+ * @returns Configured link URL template or null
+ */
+export async function resolveLinkUrl(
+  supabase: SupabaseClient,
+  params: { conditionId?: string; clientId: string }
+): Promise<string | null> {
+  const { conditionId, clientId } = params;
+
+  // 1. Check condition-level override
+  if (conditionId) {
+    const { data: condition, error } = await supabase
+      .from('campaign_conditions')
+      .select('sms_link_url')
+      .eq('id', conditionId)
+      .single();
+
+    if (!error && condition?.sms_link_url?.trim()) {
+      console.log(`[SMS-TEMPLATES] Using condition-level link URL`);
+      return condition.sms_link_url;
+    }
+  }
+
+  // 2. Check client default
+  if (clientId) {
+    const { data: template, error } = await supabase
+      .from('message_templates')
+      .select('sms_delivery_link_url')
+      .eq('client_id', clientId)
+      .eq('template_type', 'sms')
+      .eq('name', 'gift_card_delivery')
+      .eq('is_default', true)
+      .single();
+
+    if (!error && template?.sms_delivery_link_url?.trim()) {
+      console.log(`[SMS-TEMPLATES] Using client default link URL`);
+      return template.sms_delivery_link_url;
+    }
+  }
+
+  // 3. No configured link URL - will fall back to code
+  return null;
+}
+
 // ============================================================================
 // Exports
 // ============================================================================
@@ -343,5 +394,6 @@ export default {
   renderMergeTags,
   fetchRecipientForTemplate,
   fetchClientName,
+  resolveLinkUrl,
   SYSTEM_DEFAULT_TEMPLATES,
 };

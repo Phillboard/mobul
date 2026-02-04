@@ -292,10 +292,10 @@ async function sendGiftCard(
     throw new Error('No gift card pool configured');
   }
 
-  // Get recipient details
+  // Get recipient details (including fields needed for SMS)
   const { data: recipient } = await supabase
     .from('recipients')
-    .select('phone')
+    .select('phone, first_name, last_name, email, client_id')
     .eq('id', recipientId)
     .single();
 
@@ -411,9 +411,20 @@ async function sendGiftCard(
     .eq('recipient_id', recipientId)
     .eq('condition_id', condition.id);
 
-  // Send SMS
+  // Send SMS with all necessary data including conditionId for link URL resolution
   await supabase.functions.invoke('send-gift-card-sms', {
-    body: { deliveryId: delivery.id },
+    body: { 
+      deliveryId: delivery.id,
+      giftCardCode: card.card_code,
+      giftCardValue: card.card_value,
+      recipientPhone: recipient.phone,
+      recipientName: recipient.first_name,
+      recipientId,
+      giftCardId: card.card_id,
+      clientId: recipient.client_id,
+      conditionId: condition.id,
+      brandName: card.brand_name,
+    },
   });
 
   // Link delivery to trigger

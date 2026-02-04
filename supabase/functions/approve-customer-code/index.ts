@@ -148,6 +148,7 @@ async function handleApproveCustomerCode(
         message: `Your gift card code has been activated! Redeem it here: ${redemptionUrl}`,
         recipientId: recipient.id,
         campaignId,
+        clientId: recipient.audience?.client_id,
       },
     }).catch(err => console.error('[APPROVE-CODE] Failed to send SMS:', err));
   }

@@ -61,11 +61,19 @@ import { cn } from '@/shared/utils/cn';
 
 type TargetType = 'form' | 'redemption';
 type VariableCategory = 'recipient' | 'address' | 'gift_card' | 'client' | 'custom';
+type BuilderMode = 'insert' | 'configure';
 
 interface UrlBuilderProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onInsertLink: (url: string) => void;
+  /** Called when inserting URL directly into template body (insert mode) */
+  onInsertLink?: (url: string) => void;
+  /** Called when saving URL as {link} configuration (configure mode) */
+  onConfigureLink?: (url: string) => void;
+  /** Mode: 'insert' inserts URL into template, 'configure' saves as {link} variable */
+  mode?: BuilderMode;
+  /** Current configured link URL for editing (configure mode) */
+  currentLinkUrl?: string;
   clientId: string | null;
 }
 
@@ -157,6 +165,7 @@ function suggestVariable(field: FormFieldInfo): string {
 
 /**
  * Parses URL into base and query params for syntax highlighting
+ * Handles both encoded and non-encoded variable placeholders
  */
 function parseUrlForDisplay(url: string): { base: string; params: Array<{ key: string; value: string }> } {
   if (!url.includes('?')) {
@@ -168,9 +177,17 @@ function parseUrlForDisplay(url: string): { base: string; params: Array<{ key: s
   
   if (queryString) {
     queryString.split('&').forEach(pair => {
-      const [key, value] = pair.split('=');
-      if (key && value) {
-        params.push({ key, value: decodeURIComponent(value) });
+      const eqIndex = pair.indexOf('=');
+      if (eqIndex > 0) {
+        const key = pair.substring(0, eqIndex);
+        let value = pair.substring(eqIndex + 1);
+        // Try to decode, but if it's not encoded (like {code}), keep as-is
+        try {
+          value = decodeURIComponent(value);
+        } catch {
+          // Value contains unencoded special chars like {}, keep as-is
+        }
+        params.push({ key, value });
       }
     });
   }
@@ -205,6 +222,9 @@ export function SmsUrlBuilder({
   open,
   onOpenChange,
   onInsertLink,
+  onConfigureLink,
+  mode = 'insert',
+  currentLinkUrl,
   clientId,
 }: UrlBuilderProps) {
   // State
@@ -212,6 +232,9 @@ export function SmsUrlBuilder({
   const [selectedFormId, setSelectedFormId] = useState<string>('');
   const [fieldMappings, setFieldMappings] = useState<FieldMapping[]>([]);
   const [copied, setCopied] = useState(false);
+  
+  // Determine if we're in configure mode
+  const isConfigureMode = mode === 'configure';
 
   // Grouped variables for dropdown
   const variablesByCategory = useMemo(() => getVariablesByCategory(), []);
@@ -274,6 +297,8 @@ export function SmsUrlBuilder({
   }, [selectedForm?.id, formFields, targetType]);
 
   // Build the URL
+  // IMPORTANT: We manually construct the URL to preserve {variable} syntax
+  // Using URLSearchParams would encode curly braces as %7B and %7D which breaks variable substitution
   const generatedUrl = useMemo(() => {
     const baseUrl = typeof window !== 'undefined' 
       ? window.location.origin 
@@ -285,19 +310,17 @@ export function SmsUrlBuilder({
     }
 
     if (targetType === 'form' && selectedForm?.id) {
-      const params = new URLSearchParams();
+      // Build query string manually to preserve {variable} syntax without encoding
+      const enabledMappings = fieldMappings.filter(m => m.enabled && m.variable);
       
-      // Use field UUID as the param key for reliable direct matching
-      // The SMS engine will replace {variable} with actual values
-      // FormPublic will match UUID directly to field.id
-      fieldMappings
-        .filter(m => m.enabled && m.variable)
-        .forEach(m => {
-          params.append(m.fieldId, m.variable);
-        });
+      if (enabledMappings.length === 0) {
+        return `${baseUrl}/forms/${selectedForm.id}`;
+      }
       
-      const queryString = params.toString();
-      return `${baseUrl}/forms/${selectedForm.id}${queryString ? `?${queryString}` : ''}`;
+      // Build query params without URL encoding the values
+      // This preserves {code}, {email}, etc. for later substitution
+      const queryParts = enabledMappings.map(m => `${m.fieldId}=${m.variable}`);
+      return `${baseUrl}/forms/${selectedForm.id}?${queryParts.join('&')}`;
     }
 
     return '';
@@ -363,9 +386,16 @@ export function SmsUrlBuilder({
 
   const handleInsert = () => {
     if (!generatedUrl) return;
-    onInsertLink(generatedUrl);
+    onInsertLink?.(generatedUrl);
     onOpenChange(false);
     toast.success('Link inserted into template');
+  };
+
+  const handleConfigureLink = () => {
+    if (!generatedUrl) return;
+    onConfigureLink?.(generatedUrl);
+    onOpenChange(false);
+    toast.success('{link} variable configured successfully');
   };
 
   // =============================================================================
@@ -378,10 +408,13 @@ export function SmsUrlBuilder({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link2 className="h-5 w-5 text-primary" />
-            Build Pre-fill Link
+            {isConfigureMode ? 'Configure {link} Variable' : 'Build Pre-fill Link'}
           </DialogTitle>
           <DialogDescription>
-            Create a URL that pre-fills form fields with recipient data from your database.
+            {isConfigureMode 
+              ? 'Configure the URL that {link} resolves to in your SMS templates. Variables like {code} will be replaced with actual values when the SMS is sent.'
+              : 'Create a URL that pre-fills form fields with recipient data from your database.'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -694,13 +727,23 @@ export function SmsUrlBuilder({
               </>
             )}
           </Button>
-          <Button 
-            onClick={handleInsert} 
-            disabled={!generatedUrl}
-          >
-            <Link2 className="h-4 w-4 mr-2" />
-            Insert Link
-          </Button>
+          {isConfigureMode ? (
+            <Button 
+              onClick={handleConfigureLink} 
+              disabled={!generatedUrl}
+            >
+              <Check className="h-4 w-4 mr-2" />
+              Save as {'{link}'}
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleInsert} 
+              disabled={!generatedUrl}
+            >
+              <Link2 className="h-4 w-4 mr-2" />
+              Insert Link
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

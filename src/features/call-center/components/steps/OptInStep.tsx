@@ -292,6 +292,7 @@ export function OptInStep({
           sentAt={optInStatus.sentAt}
           responseAt={optInStatus.responseAt}
           onRefresh={optInStatus.refresh}
+          onResend={onResendOptIn}
           isLoading={optInStatus.isLoading}
         />
 

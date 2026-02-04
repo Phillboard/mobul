@@ -79,6 +79,7 @@ interface Condition {
   card_value?: number; // Denomination
   brand_name?: string; // Display name
   sms_template: string;
+  sms_link_url?: string; // URL template for {link} variable (overrides client default)
   is_active: boolean;
 }
 
@@ -681,6 +682,30 @@ function ConditionSmsTemplate({
             <RotateCcw className="h-3 w-3 mr-1" />
             Reset to {clientHasCustomDefault ? 'Client' : 'System'} Default
           </Button>
+          
+          {/* Link URL Override */}
+          <div className="mt-4 pt-3 border-t">
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <ChevronDown className="h-3 w-3" />
+                  <span>Link URL Override {condition.sms_link_url && '(configured)'}</span>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Optional: Override what {'{link}'} resolves to for this condition. 
+                  Leave empty to use client default.
+                </p>
+                <Input
+                  value={condition.sms_link_url || ''}
+                  onChange={(e) => onUpdate({ sms_link_url: e.target.value || undefined })}
+                  placeholder="https://example.com/forms/xyz?code={code}"
+                  className="font-mono text-xs h-8"
+                />
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
         </div>
       )}
     </div>

@@ -30,29 +30,33 @@ export function ResendSmsButton({
 
   const resendSms = useMutation({
     mutationFn: async () => {
-      // Fetch recipient's condition template for personalized message AND client_id for Twilio hierarchy
+      // Fetch recipient data including conditionId and clientId for proper template resolution
+      // The edge function handles all template resolution including link URL rendering
       const { data: recipient } = await supabase
         .from('recipients')
         .select(`
           first_name,
           last_name,
+          condition_id,
           campaign:campaigns(
             client_id,
-            campaign_conditions(sms_template)
+            campaign_conditions(id, sms_template)
           ),
           audiences!inner(
             campaigns!inner(
               client_id,
-              campaign_conditions(sms_template)
+              campaign_conditions(id, sms_template)
             )
           )
         `)
         .eq('id', recipientId)
         .single();
 
-      // Get sms_template from the first condition (if available)
-      const smsTemplate = recipient?.campaign?.campaign_conditions?.[0]?.sms_template 
-        || recipient?.audiences?.[0]?.campaigns?.[0]?.campaign_conditions?.[0]?.sms_template;
+      // Get conditionId for proper template and link URL resolution
+      // The edge function uses this to resolve condition-level sms_template AND sms_link_url
+      const conditionId = recipient?.condition_id
+        || recipient?.campaign?.campaign_conditions?.[0]?.id
+        || recipient?.audiences?.[0]?.campaigns?.[0]?.campaign_conditions?.[0]?.id;
       
       // Get client_id for hierarchical Twilio resolution (prefer direct campaign link)
       const clientId = (recipient?.campaign as any)?.client_id 
@@ -74,21 +78,11 @@ export function ResendSmsButton({
 
       if (logError) throw logError;
 
-      // Prepare custom message from template if available
-      let customMessage = smsTemplate;
-      if (customMessage) {
-        customMessage = customMessage
-          .replace(/\{first_name\}/gi, recipient.first_name || '')
-          .replace(/\{last_name\}/gi, recipient.last_name || '')
-          .replace(/\{value\}/g, giftCardValue.toString())
-          .replace(/\$\{value\}/g, giftCardValue.toString())
-          .replace(/\{provider\}/gi, brandName || 'Gift Card')
-          .replace(/\{company\}/gi, brandName || 'us')
-          .replace(/\{link\}/gi, giftCardCode);
-      }
-
-      // Send SMS via edge function with correct parameters
-      // Include clientId for hierarchical Twilio resolution (Client -> Agency -> Admin)
+      // Send SMS via edge function with conditionId for proper template resolution
+      // DO NOT pass customMessage - let edge function resolve template + link URL properly
+      // The edge function handles two-stage rendering:
+      // 1. Resolve link URL from condition/client config and render with {code}, {email}, etc.
+      // 2. Resolve main template and render with all variables including the rendered link
       await callEdgeFunction(
         Endpoints.messaging.sendGiftCardSms,
         {
@@ -97,10 +91,11 @@ export function ResendSmsButton({
           giftCardValue: giftCardValue,
           recipientPhone: recipientPhone,
           recipientName: recipient?.first_name || '',
-          customMessage: customMessage || undefined,
           recipientId: recipientId,
           giftCardId: giftCardId,
           clientId: clientId, // For hierarchical Twilio resolution
+          conditionId: conditionId, // For proper template + link URL resolution
+          brandName: brandName,
         }
       );
 

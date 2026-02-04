@@ -12,7 +12,8 @@ import {
   resolveTemplate, 
   renderTemplate, 
   fetchRecipientForTemplate, 
-  fetchClientName 
+  fetchClientName,
+  resolveLinkUrl,
 } from '../_shared/sms-templates.ts';
 import type { TemplateVariables } from '../_shared/sms-templates.ts';
 import { createErrorLogger } from '../_shared/error-logger.ts';
@@ -98,8 +99,15 @@ async function handleSendGiftCardSMS(
   // Fetch client name
   const clientName = resolvedClientId ? await fetchClientName(supabase, resolvedClientId) : '';
 
-  // Build template variables
-  const templateVariables: TemplateVariables = {
+  // Resolve configured link URL (two-stage rendering)
+  // The link URL can contain variables like {code}, {email} that need to be rendered
+  const configuredLinkUrl = await resolveLinkUrl(supabase, {
+    conditionId,
+    clientId: resolvedClientId || '',
+  });
+
+  // Base variables for rendering (used for both link URL and main template)
+  const baseVariables: TemplateVariables = {
     first_name: recipientData?.first_name || recipientName?.split(' ')[0] || '',
     last_name: recipientData?.last_name || recipientName?.split(' ').slice(1).join(' ') || '',
     email: recipientData?.email || '',
@@ -113,12 +121,25 @@ async function handleSendGiftCardSMS(
     value: giftCardValue,
     brand: brandName || '',
     code: giftCardCode,
-    link: giftCardCode,
     client_name: clientName,
     custom: recipientData?.custom || {},
   };
 
-  // Render template
+  // Stage 1: Render the link URL (if configured)
+  // This replaces {code}, {email}, etc. in the link URL with actual values
+  let renderedLink = giftCardCode; // Default fallback
+  if (configuredLinkUrl) {
+    renderedLink = renderTemplate(configuredLinkUrl, baseVariables);
+    console.log(`[GIFT-CARD-SMS] Rendered link URL: ${renderedLink.substring(0, 100)}...`);
+  }
+
+  // Stage 2: Build final template variables with rendered link
+  const templateVariables: TemplateVariables = {
+    ...baseVariables,
+    link: renderedLink,
+  };
+
+  // Render main template
   const smsMessage = renderTemplate(template, templateVariables);
   console.log(`[GIFT-CARD-SMS] Template source: ${templateSource}, length: ${smsMessage.length}`);
 

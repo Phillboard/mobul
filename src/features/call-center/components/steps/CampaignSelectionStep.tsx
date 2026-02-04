@@ -25,7 +25,8 @@ import {
   Send,
   ChevronDown,
   ChevronUp,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
 
 interface CampaignData {
@@ -52,6 +53,11 @@ interface ExistingCard {
   assignedAt: string;
   deliveredAt?: string;
   deliveryStatus: string;
+  // Campaign info for the gift card (may differ from recipient's current campaign)
+  campaignId?: string;
+  campaignName?: string;
+  campaignStatus?: string;
+  clientName?: string;
 }
 
 interface RecipientData {
@@ -70,6 +76,8 @@ interface CampaignSelectionStepProps {
   onSelect: (recipient: RecipientData) => void;
   onCancel: () => void;
   onResend?: (recipient: RecipientData, card: ExistingCard) => void;
+  currentClientId?: string;
+  currentClientName?: string;
 }
 
 // Map campaign status to display info
@@ -101,11 +109,19 @@ export function CampaignSelectionStep({
   onSelect,
   onCancel,
   onResend,
+  currentClientId,
+  currentClientName,
 }: CampaignSelectionStepProps) {
   const [expandedRecipient, setExpandedRecipient] = useState<string | null>(null);
   
   // Check if any recipient has existing cards (previously redeemed)
   const hasAnyRedeemed = recipients.some(r => r.existingCards && r.existingCards.length > 0);
+  
+  // Check if any recipient is from a different client
+  const hasDifferentClients = currentClientId && recipients.some(r => {
+    const recipientClientId = (r.campaign as any)?.client_id;
+    return recipientClientId && recipientClientId !== currentClientId;
+  });
   
   return (
     <Card className="border-2 border-yellow-400">
@@ -130,12 +146,23 @@ export function CampaignSelectionStep({
           </AlertDescription>
         </Alert>
 
+        {hasDifferentClients && (
+          <Alert className="border-amber-300 bg-amber-50">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              <strong>Note:</strong> Some campaigns below belong to different clients. 
+              {currentClientName && <> Your currently selected client is <strong>{currentClientName}</strong>.</>}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-3">
           {recipients.map((recipient) => {
             const campaign = recipient.campaign;
             const statusConfig = STATUS_CONFIG[campaign?.status || ''] || { label: campaign?.status || 'Unknown', variant: 'outline' as const };
             const hasExistingCards = recipient.existingCards && recipient.existingCards.length > 0;
             const isExpanded = expandedRecipient === recipient.id;
+            const isDifferentClient = currentClientId && (campaign as any)?.client_id && (campaign as any).client_id !== currentClientId;
             
             return (
               <div
@@ -169,6 +196,12 @@ export function CampaignSelectionStep({
                         {campaign?.name || 'Unknown Campaign'}
                       </span>
                       <div className="flex items-center gap-2">
+                        {isDifferentClient && (
+                          <Badge variant="outline" className="border-amber-400 bg-amber-50 text-amber-700">
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Different Client
+                          </Badge>
+                        )}
                         {hasExistingCards && (
                           <Badge variant="default" className="bg-amber-500 hover:bg-amber-600">
                             <CheckCircle className="h-3 w-3 mr-1" />
@@ -257,6 +290,14 @@ export function CampaignSelectionStep({
                               <div className="text-sm text-muted-foreground">
                                 Condition {card.conditionNumber}: {card.conditionName}
                               </div>
+                              {/* Show campaign info if gift card is from a different campaign */}
+                              {card.campaignName && card.campaignId !== campaign?.id && (
+                                <div className="text-xs text-amber-700 mt-0.5 flex items-center gap-1">
+                                  <Building2 className="h-3 w-3" />
+                                  <span>From: {card.campaignName}</span>
+                                  {card.clientName && <span className="text-muted-foreground">({card.clientName})</span>}
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="text-2xl font-bold text-green-600">

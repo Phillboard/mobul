@@ -45,7 +45,7 @@ CREATE POLICY "Users can view templates for their org"
   FOR SELECT
   USING (
     org_id IN (
-      SELECT organization_id FROM user_organizations WHERE user_id = auth.uid()
+      SELECT org_id FROM org_members WHERE user_id = auth.uid()
     )
   );
 
@@ -55,16 +55,18 @@ CREATE POLICY "Org owners can manage templates"
   FOR ALL
   USING (
     org_id IN (
-      SELECT organization_id FROM user_organizations
-      WHERE user_id = auth.uid()
-      AND role IN ('admin', 'agency_owner')
+      SELECT om.org_id FROM org_members om
+      JOIN user_roles ur ON ur.user_id = om.user_id
+      WHERE om.user_id = auth.uid()
+      AND ur.role IN ('admin', 'agency_owner')
     )
   )
   WITH CHECK (
     org_id IN (
-      SELECT organization_id FROM user_organizations
-      WHERE user_id = auth.uid()
-      AND role IN ('admin', 'agency_owner')
+      SELECT om.org_id FROM org_members om
+      JOIN user_roles ur ON ur.user_id = om.user_id
+      WHERE om.user_id = auth.uid()
+      AND ur.role IN ('admin', 'agency_owner')
     )
   );
 
@@ -76,11 +78,11 @@ ALTER TABLE campaigns
 COMMENT ON COLUMN campaigns.custom_field_ids IS 'Optional array of contact_custom_field_definitions IDs relevant to this campaign. Empty = show all client fields.';
 
 -- 4. Add custom field permissions to the permissions table
-INSERT INTO permissions (name, description, category)
+INSERT INTO permissions (name, description, module, category)
 VALUES
-  ('custom_fields.view', 'View custom field definitions and values', 'Custom Fields'),
-  ('custom_fields.manage', 'Create, edit, and delete custom field definitions', 'Custom Fields'),
-  ('custom_fields.fill', 'Fill in custom field values during calls or form submissions', 'Custom Fields')
+  ('custom_fields.view', 'View custom field definitions and values', 'custom_fields', 'Custom Fields'),
+  ('custom_fields.manage', 'Create, edit, and delete custom field definitions', 'custom_fields', 'Custom Fields'),
+  ('custom_fields.fill', 'Fill in custom field values during calls or form submissions', 'custom_fields', 'Custom Fields')
 ON CONFLICT (name) DO NOTHING;
 
 -- 5. Assign custom field permissions to roles

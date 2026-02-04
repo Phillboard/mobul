@@ -8,24 +8,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/sha
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { Badge } from "@/shared/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/shared/components/ui/collapsible";
 import { useToast } from '@shared/hooks';
-import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, ArrowLeft, Send, Info, XCircle, SkipForward, ThumbsUp, ThumbsDown, Zap, ExternalLink, ClipboardCopy, Edit2, StickyNote } from "lucide-react";
+import { Search, Gift, Copy, RotateCcw, CheckCircle, AlertCircle, User, Mail, Phone, MessageSquare, Loader2, ArrowRight, ArrowLeft, Send, Info, XCircle, SkipForward, ThumbsUp, ThumbsDown, ExternalLink, ClipboardCopy, StickyNote, ChevronDown, ChevronRight, Save, Clock, UserX } from "lucide-react";
 import { Separator } from "@/shared/components/ui/separator";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/shared/components/ui/alert-dialog";
 import { EnrichmentPanel } from "./EnrichmentPanel";
-import { PoolInventoryWidget } from "./PoolInventoryWidget";
 import { ResendSmsButton } from "./ResendSmsButton";
 import { OptInStatusIndicator } from "./OptInStatusIndicator";
 import { CampaignSelectionStep } from "./steps/CampaignSelectionStep";
 import { useOptInStatus } from '@/features/settings/hooks';
 import { useRedemptionLogger } from '../hooks/useRedemptionLogger';
+import { formatPhoneNumber } from '@/shared/utils/formatPhone';
+import { useTenant } from '@/contexts/TenantContext';
 
-type WorkflowStep = "code" | "campaign_select" | "optin" | "contact" | "condition" | "complete";
+type WorkflowStep = "code" | "campaign_select" | "optin" | "condition" | "complete";
 type VerificationMethod = "sms" | "email" | "skipped";
 type DispositionType = "positive" | "negative";
 
@@ -93,6 +94,11 @@ interface ExistingCard {
   assignedAt: string;
   deliveredAt?: string;
   deliveryStatus: string;
+  // Campaign info for the gift card (may differ from recipient's current campaign)
+  campaignId?: string;
+  campaignName?: string;
+  campaignStatus?: string;
+  clientName?: string;
 }
 
 interface RecipientData {
@@ -189,6 +195,12 @@ interface CallCenterRedemptionPanelProps {
 export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedemptionPanelProps) {
   const { toast } = useToast();
   const { logStep, startNewSession, getSessionId } = useRedemptionLogger();
+  const { currentClient, currentOrg } = useTenant();
+  
+  // Cross-client warning dialog state
+  const [showCrossClientWarning, setShowCrossClientWarning] = useState(false);
+  const [pendingRecipients, setPendingRecipients] = useState<RecipientData[]>([]);
+  const [crossClientInfo, setCrossClientInfo] = useState<{ clientName: string; clientId: string } | null>(null);
   
   // Step 1: Code Entry
   const [step, setStep] = useState<WorkflowStep>("code");
@@ -232,6 +244,12 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
   
   // Error tracking for comprehensive error display
   const [provisioningError, setProvisioningError] = useState<ProvisioningError | null>(null);
+
+  // Mark Ineligible dialog state
+  const [showIneligibleDialog, setShowIneligibleDialog] = useState(false);
+  const [ineligibleReason, setIneligibleReason] = useState("");
+  const [ineligibleNote, setIneligibleNote] = useState("");
+  const [isMarkingIneligible, setIsMarkingIneligible] = useState(false);
 
   // Real-time opt-in status tracking
   const optInStatus = useOptInStatus(callSessionId, recipient?.id || null);
@@ -512,9 +530,34 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
         durationMs: Date.now() - smsStartTime,
       });
       
+      // Log to recipient_audit_log for Recent Activity sidebar
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        if (user?.user && recipient?.id) {
+          await supabase.from('recipient_audit_log').insert({
+            recipient_id: recipient.id,
+            action: 'sms_sent',
+            performed_by_user_id: user.user.id,
+            call_session_id: callSessionId,
+            metadata: {
+              sms_type: 'opt_in',
+              phone: cellPhone,
+              campaign_id: campaign.id,
+              campaign_name: campaign.name,
+            },
+          });
+        }
+      } catch (auditError) {
+        logger.warn('[CALL-CENTER] Failed to log SMS to recipient_audit_log:', auditError);
+      }
+      
       // Pre-fill delivery phone with opt-in phone
       setPhone(cellPhone);
-      
+
+      // Refresh opt-in status after short delay to sync 'pending' state from DB.
+      // This enables the polling fallback (which only runs when status === 'pending').
+      setTimeout(() => optInStatus.refresh(), 500);
+
       toast({
         title: "Opt-in SMS Sent!",
         description: "Ask customer to reply YES to continue. You can proceed with the spiel while waiting.",
@@ -777,12 +820,20 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           ),
           recipient_gift_cards (
             id,
+            campaign_id,
             gift_card_id,
             inventory_card_id,
             condition_id,
             assigned_at,
             delivered_at,
             delivery_status,
+            campaign:campaigns (
+              id,
+              name,
+              status,
+              client_id,
+              clients (id, name)
+            ),
             campaign_conditions (
               condition_name,
               condition_number
@@ -801,8 +852,66 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
 
       console.log(`[CALL-CENTER] Found ${recipients.length} recipient(s) with code:`, code.toUpperCase());
 
+      // Fetch gift cards from gift_card_inventory for ALL recipients (secondary query)
+      // This is needed because the reverse FK join might not work reliably
+      const recipientIds = recipients.map(r => r.id);
+      const { data: inventoryCards, error: inventoryError } = await supabase
+        .from("gift_card_inventory")
+        .select(`
+          id,
+          card_code,
+          card_number,
+          denomination,
+          status,
+          assigned_to_recipient_id,
+          assigned_to_campaign_id,
+          assignment_condition_id,
+          assigned_at,
+          delivered_at,
+          provider,
+          brand:gift_card_brands (
+            id,
+            brand_name,
+            logo_url
+          ),
+          campaign:campaigns!gift_card_inventory_assigned_to_campaign_id_fkey (
+            id,
+            name,
+            status,
+            client_id,
+            clients (id, name)
+          ),
+          condition:campaign_conditions!gift_card_inventory_assignment_condition_id_fkey (
+            id,
+            condition_name,
+            condition_number
+          )
+        `)
+        .in("assigned_to_recipient_id", recipientIds);
+
+      if (inventoryError) {
+        console.warn('[CALL-CENTER] Error fetching gift_card_inventory:', inventoryError);
+      } else {
+        console.log(`[CALL-CENTER] Found ${inventoryCards?.length || 0} gift cards in inventory for recipients`);
+      }
+
+      // Group inventory cards by recipient_id for easy lookup
+      const inventoryByRecipient = new Map<string, any[]>();
+      if (inventoryCards) {
+        for (const card of inventoryCards) {
+          const recipientId = card.assigned_to_recipient_id;
+          if (!inventoryByRecipient.has(recipientId)) {
+            inventoryByRecipient.set(recipientId, []);
+          }
+          inventoryByRecipient.get(recipientId)!.push(card);
+        }
+      }
+
       // For each recipient, try to populate campaign if missing (via audience fallback)
       for (const recipient of recipients) {
+        // Attach inventory cards to recipient
+        recipient.gift_card_inventory = inventoryByRecipient.get(recipient.id) || [];
+        
         if (!recipient.campaign && recipient.audience_id) {
           console.log('[CALL-CENTER] Recipient', recipient.id, 'missing campaign, trying audience fallback...');
           const { data: audienceCampaign } = await supabase
@@ -836,42 +945,111 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       }
 
       // Filter to only recipients with valid campaigns in active statuses
+      // Also include recipients who have gift cards from active campaigns (even if their current campaign is inactive)
       const activeStatuses = ["in_production", "mailed", "scheduled"];
       const validRecipients = recipients.filter(r => {
-        if (!r.campaign) return false;
-        return activeStatuses.includes(r.campaign.status);
+        // Check if recipient's current campaign is active
+        const currentCampaignActive = r.campaign && activeStatuses.includes(r.campaign.status);
+        
+        // Check if recipient has any gift cards from active campaigns (from recipient_gift_cards)
+        const hasActiveGiftCardsFromJunction = r.recipient_gift_cards?.some((rgc: any) => {
+          const cardCampaign = rgc.campaign;
+          return cardCampaign && activeStatuses.includes(cardCampaign.status);
+        });
+        
+        // Check if recipient has any gift cards from gift_card_inventory
+        const hasActiveGiftCardsFromInventory = r.gift_card_inventory?.some((gci: any) => {
+          const cardCampaign = gci.campaign;
+          return cardCampaign && activeStatuses.includes(cardCampaign.status);
+        });
+        
+        // Also include if they have ANY gift cards (regardless of campaign status) - for resend functionality
+        const hasAnyGiftCards = (r.recipient_gift_cards?.length > 0) || (r.gift_card_inventory?.length > 0);
+        
+        // Include if either current campaign is active OR has gift cards
+        return currentCampaignActive || hasActiveGiftCardsFromJunction || hasActiveGiftCardsFromInventory || hasAnyGiftCards;
       });
 
-      console.log(`[CALL-CENTER] After filtering: ${validRecipients.length} recipient(s) in active campaigns`);
+      console.log(`[CALL-CENTER] After filtering: ${validRecipients.length} recipient(s) in active campaigns or with gift cards`);
 
-      // Transform recipient_gift_cards into existingCards format
-      // Note: Card details are fetched separately when needed for resend
+      // Transform gift cards from BOTH sources into existingCards format
+      // Source 1: recipient_gift_cards junction table
+      // Source 2: gift_card_inventory table (direct assignment)
       for (const recipient of validRecipients) {
+        const existingCards: ExistingCard[] = [];
+        
+        // Source 1: recipient_gift_cards junction table
         if (recipient.recipient_gift_cards && Array.isArray(recipient.recipient_gift_cards)) {
-          recipient.existingCards = recipient.recipient_gift_cards.map((rgc: any) => {
+          for (const rgc of recipient.recipient_gift_cards) {
             const condition = rgc.campaign_conditions;
+            const cardCampaign = rgc.campaign;
             
-            return {
+            existingCards.push({
               id: rgc.id,
               giftCardId: rgc.gift_card_id || rgc.inventory_card_id,
               conditionId: rgc.condition_id,
               conditionName: condition?.condition_name || 'Unknown Condition',
               conditionNumber: condition?.condition_number || 0,
-              // Card details not available in this query - shown as placeholders
               cardCode: '****',
               cardNumber: undefined,
-              cardValue: 0, // Value will be fetched when viewing/resending
+              cardValue: 0,
               brandName: 'Gift Card',
               brandLogo: undefined,
               assignedAt: rgc.assigned_at,
               deliveredAt: rgc.delivered_at || undefined,
               deliveryStatus: rgc.delivery_status || 'unknown',
-            } as ExistingCard;
-          });
-          
-          console.log(`[CALL-CENTER] Recipient ${recipient.id} has ${recipient.existingCards.length} existing card(s)`);
-        } else {
-          recipient.existingCards = [];
+              campaignId: cardCampaign?.id || rgc.campaign_id,
+              campaignName: cardCampaign?.name,
+              campaignStatus: cardCampaign?.status,
+              clientName: cardCampaign?.clients?.name,
+            });
+          }
+        }
+        
+        // Source 2: gift_card_inventory table (direct assignment)
+        if (recipient.gift_card_inventory && Array.isArray(recipient.gift_card_inventory)) {
+          for (const gci of recipient.gift_card_inventory) {
+            // Skip if this card ID is already in existingCards (avoid duplicates)
+            const alreadyIncluded = existingCards.some(ec => ec.giftCardId === gci.id);
+            if (alreadyIncluded) continue;
+            
+            const condition = gci.condition;
+            const cardCampaign = gci.campaign;
+            const brand = gci.brand;
+            
+            existingCards.push({
+              id: gci.id,
+              giftCardId: gci.id,
+              conditionId: gci.assignment_condition_id,
+              conditionName: condition?.condition_name || 'Unknown Condition',
+              conditionNumber: condition?.condition_number || 0,
+              cardCode: gci.card_code || '****',
+              cardNumber: gci.card_number || undefined,
+              cardValue: gci.denomination || 0,
+              brandName: brand?.brand_name || gci.provider || 'Gift Card',
+              brandLogo: brand?.logo_url || undefined,
+              assignedAt: gci.assigned_at,
+              deliveredAt: gci.delivered_at || undefined,
+              deliveryStatus: gci.status || 'unknown',
+              campaignId: cardCampaign?.id || gci.assigned_to_campaign_id,
+              campaignName: cardCampaign?.name,
+              campaignStatus: cardCampaign?.status,
+              clientName: cardCampaign?.clients?.name,
+            });
+          }
+        }
+        
+        recipient.existingCards = existingCards;
+        
+        if (existingCards.length > 0) {
+          console.log(`[CALL-CENTER] Recipient ${recipient.id} has ${existingCards.length} existing card(s):`, 
+            existingCards.map((c: any) => ({ 
+              campaignId: c.campaignId, 
+              campaignName: c.campaignName,
+              cardValue: c.cardValue,
+              brandName: c.brandName 
+            }))
+          );
         }
       }
 
@@ -912,68 +1090,77 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
             campaignId: r.campaign?.id,
             campaignName: r.campaign?.name,
             campaignStatus: r.campaign?.status,
+            clientId: r.campaign?.client_id,
+            clientName: r.campaign?.clients?.name,
           })),
         },
       });
       
-      if (recipients.length === 1) {
-        // Single match - check if previously redeemed
-        const data = recipients[0];
-        const hasExistingCards = data.existingCards && data.existingCards.length > 0;
+      // Validate client/organization context
+      // Check if any recipient belongs to a different organization or client
+      if (currentClient) {
+        const currentClientId = currentClient.id;
+        const currentOrgId = currentOrg?.id;
         
-        console.log('[CALL-CENTER] Single recipient found:', {
-          id: data.id,
-          hasCampaign: !!data.campaign,
-          campaignId: data.campaign?.id,
-          campaignName: data.campaign?.name,
-          hasExistingCards,
-          existingCardsCount: data.existingCards?.length || 0,
+        // Check for recipients from different clients
+        const crossClientRecipients = recipients.filter(r => {
+          const recipientClientId = r.campaign?.client_id;
+          return recipientClientId && recipientClientId !== currentClientId;
         });
         
-        // If recipient has existing cards, show campaign selection step to offer resend option
-        if (hasExistingCards) {
-          console.log('[CALL-CENTER] Recipient has existing cards, showing selection for resend option');
-          setMultipleRecipients([data]);
-          setRecipient(null);
-          setStep("campaign_select");
-          
-          toast({
-            title: "Previously Redeemed",
-            description: `This code has ${data.existingCards!.length} existing gift card(s). You can resend or redeem another condition.`,
+        if (crossClientRecipients.length > 0) {
+          // Check if any are from a different organization (hard block)
+          const differentOrgRecipients = crossClientRecipients.filter(r => {
+            const recipientOrgId = r.campaign?.clients?.org_id;
+            return recipientOrgId && currentOrgId && recipientOrgId !== currentOrgId;
           });
-        } else {
-          // No existing cards - proceed directly to opt-in
-          setRecipient(data);
-          setMultipleRecipients([]);
           
-          // Notify parent with recipient data
-          const recipientCampaign = data.campaign;
-          if (onRecipientLoaded && recipientCampaign) {
-            onRecipientLoaded({
-              clientId: (recipientCampaign as any).client_id,
-              campaignId: recipientCampaign.id,
-              recipient: data,
-              step: "optin"
+          if (differentOrgRecipients.length > 0) {
+            // Hard error - different organization
+            toast({
+              title: "Access Denied",
+              description: "This code belongs to a different organization. You cannot access it.",
+              variant: "destructive",
             });
+            return;
           }
           
-          setStep("optin");
+          // Same org, different client - show warning and allow confirmation
+          const sameClientRecipients = recipients.filter(r => {
+            const recipientClientId = r.campaign?.client_id;
+            return !recipientClientId || recipientClientId === currentClientId;
+          });
+          
+          if (sameClientRecipients.length === 0) {
+            // All recipients are from different clients - show warning dialog
+            const firstCrossClient = crossClientRecipients[0];
+            const clientName = firstCrossClient.campaign?.clients?.name || 'another client';
+            const clientId = firstCrossClient.campaign?.client_id || '';
+            
+            setCrossClientInfo({ clientName, clientId });
+            setPendingRecipients(recipients);
+            setShowCrossClientWarning(true);
+            
+            toast({
+              title: "Different Client Detected",
+              description: `This code belongs to ${clientName}. Please confirm to proceed.`,
+              variant: "default",
+            });
+            return;
+          }
+          
+          // Mix of same-client and cross-client - warn but continue with all
+          // The agent can see which client each campaign belongs to in the selection
+          toast({
+            title: "Multiple Clients",
+            description: "Some campaigns belong to different clients. Review carefully before selecting.",
+            variant: "default",
+          });
         }
-      } else {
-        // Multiple matches - show campaign selection UI
-        console.log('[CALL-CENTER] Multiple recipients found, showing selection:', 
-          recipients.map(r => ({ id: r.id, campaign: r.campaign?.name }))
-        );
-        
-        setMultipleRecipients(recipients);
-        setRecipient(null);
-        setStep("campaign_select");
-        
-        toast({
-          title: "Multiple Campaigns Found",
-          description: `This code exists in ${recipients.length} campaigns. Please select the correct one.`,
-        });
       }
+      
+      // Proceed with normal flow
+      processRecipients(recipients);
     },
     onError: (error: Error) => {
       // Log lookup failure
@@ -993,6 +1180,86 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       });
     },
   });
+
+  // Helper function to process recipients after validation
+  const processRecipients = (recipients: RecipientData[]) => {
+    if (recipients.length === 1) {
+      // Single match - check if previously redeemed
+      const data = recipients[0];
+      const hasExistingCards = data.existingCards && data.existingCards.length > 0;
+      
+      console.log('[CALL-CENTER] Single recipient found:', {
+        id: data.id,
+        hasCampaign: !!data.campaign,
+        campaignId: data.campaign?.id,
+        campaignName: data.campaign?.name,
+        hasExistingCards,
+        existingCardsCount: data.existingCards?.length || 0,
+      });
+      
+      // If recipient has existing cards, show campaign selection step to offer resend option
+      if (hasExistingCards) {
+        console.log('[CALL-CENTER] Recipient has existing cards, showing selection for resend option');
+        setMultipleRecipients([data]);
+        setRecipient(null);
+        setStep("campaign_select");
+        
+        toast({
+          title: "Previously Redeemed",
+          description: `This code has ${data.existingCards!.length} existing gift card(s). You can resend or redeem another condition.`,
+        });
+      } else {
+        // No existing cards - proceed directly to opt-in
+        setRecipient(data);
+        setMultipleRecipients([]);
+        
+        // Notify parent with recipient data
+        const recipientCampaign = data.campaign;
+        if (onRecipientLoaded && recipientCampaign) {
+          onRecipientLoaded({
+            clientId: (recipientCampaign as any).client_id,
+            campaignId: recipientCampaign.id,
+            recipient: data,
+            step: "optin"
+          });
+        }
+        
+        setStep("optin");
+      }
+    } else {
+      // Multiple matches - show campaign selection UI
+      console.log('[CALL-CENTER] Multiple recipients found, showing selection:', 
+        recipients.map(r => ({ id: r.id, campaign: r.campaign?.name }))
+      );
+      
+      setMultipleRecipients(recipients);
+      setRecipient(null);
+      setStep("campaign_select");
+      
+      toast({
+        title: "Multiple Campaigns Found",
+        description: `This code exists in ${recipients.length} campaigns. Please select the correct one.`,
+      });
+    }
+  };
+
+  // Handle confirmation of cross-client access
+  const handleCrossClientConfirm = () => {
+    setShowCrossClientWarning(false);
+    if (pendingRecipients.length > 0) {
+      processRecipients(pendingRecipients);
+      setPendingRecipients([]);
+    }
+    setCrossClientInfo(null);
+  };
+
+  // Handle cancellation of cross-client access
+  const handleCrossClientCancel = () => {
+    setShowCrossClientWarning(false);
+    setPendingRecipients([]);
+    setCrossClientInfo(null);
+    setRedemptionCode("");
+  };
 
   // Step 3: Provision gift card with comprehensive error handling
   const provisionMutation = useMutation({
@@ -1091,8 +1358,8 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       const transformedResult: ProvisionResult = {
         recipient: {
           id: recipient?.id || '',
-          first_name: recipient?.first_name || '',
-          last_name: recipient?.last_name || '',
+          firstName: recipient?.first_name || '',
+          lastName: recipient?.last_name || '',
           phone: phone || recipient?.phone || null, // Use the updated phone from call center rep
           email: recipient?.email || null,
         },
@@ -1120,7 +1387,7 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
       
       return transformedResult;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Log provision success
       logStep({
         stepName: 'provision',
@@ -1136,6 +1403,34 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
           cardValue: data.giftCard?.card_value,
         },
       });
+      
+      // Log to recipient_audit_log for Recent Activity sidebar
+      // This is what AgentRecentRedemptions queries to show recent agent activity
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        if (user?.user && recipient?.id) {
+          await supabase.from('recipient_audit_log').insert({
+            recipient_id: recipient.id,
+            action: 'gift_card_assigned',
+            performed_by_user_id: user.user.id,
+            call_session_id: callSessionId,
+            metadata: {
+              card_value: data.giftCard?.card_value,
+              card_code: data.giftCard?.card_code,
+              card_id: data.giftCard?.id,
+              brand_name: data.giftCard?.gift_card_pools?.gift_card_brands?.brand_name || 
+                          data.giftCard?.gift_card_pools?.provider || 'Gift Card',
+              campaign_id: campaign?.id,
+              campaign_name: campaign?.name,
+              condition_id: selectedConditionId,
+            },
+          });
+          logger.debug('[CALL-CENTER] Logged gift card assignment to recipient_audit_log');
+        }
+      } catch (auditError) {
+        // Don't fail the whole operation if audit logging fails
+        logger.warn('[CALL-CENTER] Failed to log to recipient_audit_log:', auditError);
+      }
       
       setResult(data);
       setProvisioningError(null);
@@ -1208,6 +1503,65 @@ export function CallCenterRedemptionPanel({ onRecipientLoaded }: CallCenterRedem
     if (simulationTimerRef.current) {
       clearInterval(simulationTimerRef.current);
       simulationTimerRef.current = null;
+    }
+  };
+
+  // Mark customer as ineligible and reset workflow
+  const handleMarkIneligible = async () => {
+    if (!recipient || !ineligibleReason) return;
+    setIsMarkingIneligible(true);
+    try {
+      // Update recipient with rejection
+      await supabase
+        .from('recipients')
+        .update({
+          approval_status: 'rejected',
+          disposition: ineligibleReason,
+          rejection_reason: ineligibleNote || ineligibleReason,
+        })
+        .eq('id', recipient.id);
+
+      // Log to audit trail
+      await supabase.from('recipient_audit_log').insert({
+        recipient_id: recipient.id,
+        action: 'rejected',
+        performed_by_user_id: (await supabase.auth.getUser()).data.user?.id,
+        call_session_id: callSessionId,
+        metadata: {
+          reason: ineligibleReason,
+          note: ineligibleNote,
+          step: step,
+        },
+      });
+
+      await logStep({
+        stepName: 'mark_ineligible',
+        stepNumber: 99,
+        status: 'success',
+        recipientId: recipient.id,
+        campaignId: campaign?.id,
+        callSessionId: callSessionId || undefined,
+        redemptionCode: recipient.redemption_code,
+        responsePayload: { reason: ineligibleReason, note: ineligibleNote },
+      });
+
+      toast({
+        title: "Customer Marked Ineligible",
+        description: `Reason: ${ineligibleReason === 'condition_not_met' ? 'Did Not Complete Condition' : ineligibleReason === 'not_interested' ? 'Not Interested' : ineligibleNote || ineligibleReason}`,
+      });
+
+      setShowIneligibleDialog(false);
+      setIneligibleReason("");
+      setIneligibleNote("");
+      handleStartNew();
+    } catch (error: any) {
+      toast({
+        title: "Failed to mark ineligible",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsMarkingIneligible(false);
     }
   };
 
@@ -1348,50 +1702,74 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
 
   return (
     <div className="space-y-6">
-      {/* Progress Indicator - Updated with Opt-in step */}
-      <div className="flex items-center justify-center gap-2 flex-wrap">
-        <Badge variant={["code", "optin", "contact", "condition", "complete"].includes(step) ? "default" : "outline"}>
-          1. Code
-        </Badge>
-        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        <Badge
-          variant={["optin", "contact", "condition", "complete"].includes(step) ? "default" : "outline"}
-          className={step === "optin" && optInStatus.isPending ? "animate-pulse bg-yellow-500" : ""}
-        >
-          2. Verify & Contact
-        </Badge>
-        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        <Badge variant={["condition", "complete"].includes(step) ? "default" : "outline"}>
-          3. Condition
-        </Badge>
-        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        <Badge variant={step === "complete" ? "default" : "outline"}>
-          4. Complete
-        </Badge>
+      {/* Progress Indicator - Clean 3-step design */}
+      <div className="flex items-center justify-center gap-1">
+        {/* Step 1: Code */}
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+          ["code", "campaign_select", "optin", "condition", "complete"].includes(step)
+            ? "bg-primary text-primary-foreground"
+            : "bg-slate-100 text-slate-500"
+        }`}>
+          <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">1</span>
+          Code
+        </div>
+        <div className="w-8 h-0.5 bg-slate-200" />
+        
+        {/* Step 2: Verify */}
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+          ["optin", "condition", "complete"].includes(step)
+            ? "bg-primary text-primary-foreground"
+            : "bg-slate-100 text-slate-500"
+        } ${step === "optin" && optInStatus.isPending ? "ring-2 ring-amber-400 ring-offset-1" : ""}`}>
+          <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">2</span>
+          Verify
+        </div>
+        <div className="w-8 h-0.5 bg-slate-200" />
+        
+        {/* Step 3: Condition */}
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+          ["condition", "complete"].includes(step)
+            ? "bg-primary text-primary-foreground"
+            : "bg-slate-100 text-slate-500"
+        }`}>
+          <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">3</span>
+          Condition
+        </div>
+        <div className="w-8 h-0.5 bg-slate-200" />
+        
+        {/* Step 4: Complete */}
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+          step === "complete"
+            ? "bg-green-600 text-white"
+            : "bg-slate-100 text-slate-500"
+        }`}>
+          <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">4</span>
+          Complete
+        </div>
       </div>
 
       {/* Step 1: Code Entry */}
       {step === "code" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5" />
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="flex items-center justify-center gap-2 text-xl">
+              <Gift className="h-5 w-5 text-primary" />
               Enter Confirmation Code
             </CardTitle>
             <CardDescription>
-              Enter the unique confirmation code provided by the customer
+              Enter the customer's unique code to begin
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="code">Confirmation Code</Label>
+          <CardContent className="space-y-4 max-w-md mx-auto">
+            <div className="space-y-3">
               <div className="flex gap-2">
                 <Input
                   id="code"
                   value={redemptionCode}
                   onChange={(e) => setRedemptionCode(e.target.value.toUpperCase())}
-                  placeholder="Enter code (e.g., ABC-1234)"
-                  className="text-lg font-mono uppercase"
+                  placeholder="ABC-1234"
+                  className="h-14 text-2xl font-mono uppercase text-center tracking-wider"
+                  autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       lookupMutation.mutate(redemptionCode.trim());
@@ -1401,21 +1779,19 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                 <Button
                   onClick={() => lookupMutation.mutate(redemptionCode.trim())}
                   disabled={lookupMutation.isPending || !redemptionCode.trim()}
-                  className="min-w-[120px]"
+                  className="h-14 px-6"
+                  size="lg"
                 >
                   {lookupMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Looking up...
-                    </>
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
-                    <>
-                      <Search className="h-4 w-4 mr-2" />
-                      Look Up
-                    </>
+                    <Search className="h-5 w-5" />
                   )}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Press Enter to submit
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -1429,59 +1805,55 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
           onSelect={handleCampaignSelect}
           onCancel={handleStartNew}
           onResend={handleResendExistingCard}
+          currentClientId={currentClient?.id}
+          currentClientName={currentClient?.name}
         />
       )}
 
-      {/* Step 2: SMS Opt-In (NEW - Critical Flow) */}
+      {/* Step 2: Verify & Opt-In - Redesigned */}
       {step === "optin" && recipient && (
-        <Card className="border-2 border-primary">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="h-5 w-5 text-primary" />
-              Cell Phone & SMS Opt-In
-            </CardTitle>
-            <CardDescription>
-              Get the customer's cell phone first - this sends the opt-in SMS automatically
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Customer info */}
-            {(recipient.first_name || recipient.last_name) && (
-              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">
-                  {recipient.first_name} {recipient.last_name}
-                </span>
-                <Badge variant="outline" className="ml-auto">
-                  Code: {recipient.redemption_code}
-                </Badge>
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-primary" />
+                  Verify Customer
+                </CardTitle>
+                <CardDescription>
+                  Send opt-in SMS to verify and continue
+                </CardDescription>
               </div>
-            )}
-
-            {/* Customer Information Enrichment - Always Visible */}
-            <EnrichmentPanel recipient={recipient} compact />
-
-            {/* Call Notes */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <StickyNote className="h-4 w-4" />
-                Call Notes
-              </Label>
-              <Textarea
-                placeholder="Add notes about this call..."
-                value={callNotes}
-                onChange={(e) => setCallNotes(e.target.value)}
-                className="h-20 text-sm resize-none"
-              />
+              {/* Customer badge */}
+              <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 rounded-lg">
+                <User className="h-4 w-4 text-slate-500" />
+                <div>
+                  <div className="font-medium text-sm">
+                    {recipient.first_name} {recipient.last_name}
+                  </div>
+                  <div className="text-xs text-muted-foreground font-mono">
+                    {recipient.redemption_code}
+                  </div>
+                </div>
+              </div>
             </div>
+          </CardHeader>
 
-            <Separator className="my-2" />
-
-            {/* Cell phone input and send button */}
-            <div className="space-y-3">
-              <Label htmlFor="cellphone" className="text-base font-semibold">
-                Customer's Cell Phone Number
-              </Label>
+          <CardContent className="space-y-6">
+            {/* PRIMARY: SMS Opt-In Section */}
+            <div className="space-y-4 p-4 bg-slate-50/50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="cellphone" className="text-base font-semibold">
+                  Cell Phone Number
+                </Label>
+                {optInStatus.isOptedIn && (
+                  <Badge className="bg-green-100 text-green-700 border-0">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Verified
+                  </Badge>
+                )}
+              </div>
+              
               <div className="flex gap-2">
                 <Input
                   id="cellphone"
@@ -1489,296 +1861,262 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                   placeholder="(555) 555-5555"
                   value={cellPhone}
                   onChange={(e) => setCellPhone(e.target.value)}
-                  disabled={
-                    optInStatus.status !== 'not_sent' &&
-                    optInStatus.status !== 'invalid_response' &&
-                    optInStatus.status !== 'pending' &&
-                    !isSimulating
-                  }
-                  className="text-lg"
+                  disabled={optInStatus.isOptedIn}
+                  className="h-12 text-lg"
                 />
-                <Button
-                  onClick={sendOptInSms}
-                  disabled={
-                    !cellPhone ||
-                    !campaign ||
-                    isSendingOptIn ||
-                    isSimulating ||
-                    (optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response')
-                  }
-                  className="min-w-[140px]"
-                >
-                  {isSendingOptIn ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Send Opt-In SMS
-                    </>
-                  )}
-                </Button>
+                {!optInStatus.isOptedIn && (
+                  <Button
+                    onClick={sendOptInSms}
+                    disabled={
+                      !cellPhone ||
+                      !campaign ||
+                      isSendingOptIn ||
+                      (optInStatus.status !== 'not_sent' && optInStatus.status !== 'invalid_response')
+                    }
+                    className="h-12 px-6"
+                    size="lg"
+                  >
+                    {isSendingOptIn ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Send SMS
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
+
+              {/* Status indicator - compact version */}
+              <OptInStatusIndicator 
+                status={optInStatus.status} 
+                response={optInStatus.response}
+                sentAt={optInStatus.sentAt}
+                responseAt={optInStatus.responseAt}
+                onRefresh={optInStatus.refresh}
+                isLoading={optInStatus.isLoading}
+                compact
+              />
 
               {/* Resend button - visible when SMS was sent but no response yet */}
               {optInStatus.isPending && (
-                <Button
-                  variant="outline"
-                  onClick={resendOptInSms}
-                  disabled={!cellPhone || isSendingOptIn}
-                  className="min-w-[160px] border-orange-300 hover:bg-orange-50 text-orange-700"
-                >
-                  {isSendingOptIn ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Resending...
-                    </>
-                  ) : (
-                    <>
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Resend Opt-In SMS
-                    </>
-                  )}
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={resendOptInSms}
+                    disabled={!cellPhone || isSendingOptIn}
+                  >
+                    {isSendingOptIn ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <RotateCcw className="h-4 w-4 mr-1" />
+                        Resend
+                      </>
+                    )}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Ask customer to reply YES
+                  </span>
+                </div>
               )}
 
-              {/* Simulation button for testing */}
-              <div className="flex gap-2 items-center">
-                <Button
-                  variant="outline"
-                  onClick={simulateSmsOptIn}
-                  disabled={
-                    !cellPhone ||
-                    isSimulating ||
-                    optInStatus.isOptedIn
-                  }
-                  className="border-dashed border-2 border-yellow-400 bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
-                >
-                  {isSimulating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Simulating... ({simulationCountdown}s)
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="h-4 w-4 mr-2" />
-                      Imitate SMS Sent
-                    </>
+              {/* Delivery phone option */}
+              {optInStatus.isOptedIn && (
+                <div className="pt-2 border-t border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      Gift card will be sent to: <span className="font-medium">{formatPhoneNumber(cellPhone || phone)}</span>
+                    </span>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="text-xs h-auto p-0"
+                      onClick={() => {
+                        setShowDifferentDeliveryPhone(!showDifferentDeliveryPhone);
+                        if (!showDifferentDeliveryPhone) {
+                          setPhone(cellPhone);
+                        }
+                      }}
+                    >
+                      {showDifferentDeliveryPhone ? 'Use same number' : 'Use different number'}
+                    </Button>
+                  </div>
+                  {showDifferentDeliveryPhone && (
+                    <Input
+                      type="tel"
+                      placeholder="(555) 555-5555"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="mt-2 h-10"
+                    />
                   )}
-                </Button>
-                {isSimulatedMode && !isSimulating && optInStatus.isOptedIn && (
-                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-400">
-                    Simulated Mode
-                  </Badge>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-
-            {/* Real-time opt-in status indicator */}
-            <OptInStatusIndicator 
-              status={optInStatus.status} 
-              response={optInStatus.response}
-              sentAt={optInStatus.sentAt}
-              responseAt={optInStatus.responseAt}
-              onRefresh={optInStatus.refresh}
-              isLoading={optInStatus.isLoading}
-            />
 
             {/* Campaign missing warning */}
             {!campaign && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Campaign not linked.</strong> This recipient is not properly linked to a campaign. 
-                  Please ensure the recipient's campaign_id is set in the database, or that their audience 
-                  is linked to an active campaign.
+                  Campaign not linked. Contact support.
                 </AlertDescription>
               </Alert>
             )}
 
-            {/* Instructions for agent */}
-            {optInStatus.isPending && (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>While waiting:</strong> Continue with your sales spiel. The status will update 
-                  automatically when the customer replies. Ask them to check their phone and reply YES.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Cannot proceed warning */}
+            {/* Opted out warning */}
             {optInStatus.isOptedOut && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Customer opted out.</strong> You cannot proceed with gift card provisioning 
-                  for this customer as they declined marketing messages.
+                  Customer declined. Cannot proceed with gift card.
                 </AlertDescription>
               </Alert>
             )}
 
-            <Separator className="my-4" />
+            <Separator />
 
-            {/* Alternative Verification Options */}
-            {!showSkipDisposition && (
-              <div className="space-y-3">
-                <Label className="text-sm text-muted-foreground">Alternative Verification Methods</Label>
-                <div className="flex flex-wrap gap-2">
-                  {/* Email Verification Button */}
+            {/* Call Notes with Quick Save */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <StickyNote className="h-4 w-4" />
+                  Call Notes
+                </Label>
+                {callNotes && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={async () => {
+                      if (recipient?.id) {
+                        await supabase
+                          .from('recipients')
+                          .update({ last_call_notes: callNotes })
+                          .eq('id', recipient.id);
+                        toast({ title: "Notes saved" });
+                      }
+                    }}
+                  >
+                    <Save className="h-3 w-3 mr-1" />
+                    Save
+                  </Button>
+                )}
+              </div>
+              <Textarea
+                placeholder="Add notes about this call..."
+                value={callNotes}
+                onChange={(e) => setCallNotes(e.target.value)}
+                className="h-16 text-sm resize-none bg-slate-50/50"
+              />
+            </div>
+
+            {/* Collapsible Customer Details */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between h-10 px-3 hover:bg-slate-50">
+                  <span className="text-sm font-medium text-muted-foreground">Customer Details</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2">
+                <EnrichmentPanel recipient={recipient} compact />
+              </CollapsibleContent>
+            </Collapsible>
+
+            <Separator />
+
+            {/* Alternative Verification - More compact */}
+            {!showSkipDisposition && !optInStatus.isOptedIn && (
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                  Alternative Options
+                </Label>
+                <div className="flex gap-2">
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={sendEmailVerification}
                     disabled={!recipient?.email || isSendingEmailVerification || emailVerificationSent}
-                    className="flex-1 min-w-[140px]"
+                    className="flex-1"
                   >
                     {isSendingEmailVerification ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Sending...
-                      </>
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : emailVerificationSent ? (
                       <>
-                        <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                        Email Sent
+                        <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
+                        Sent
                       </>
                     ) : (
                       <>
-                        <Mail className="h-4 w-4 mr-2" />
-                        Verify via Email
+                        <Mail className="h-4 w-4 mr-1" />
+                        Email
                       </>
                     )}
                   </Button>
-                  
-                  {/* Skip Verification Button */}
                   <Button
-                    variant="secondary"
+                    variant="outline"
+                    size="sm"
                     onClick={() => setShowSkipDisposition(true)}
-                    className="flex-1 min-w-[140px]"
+                    className="flex-1"
                   >
-                    <SkipForward className="h-4 w-4 mr-2" />
-                    Skip Verification
+                    <SkipForward className="h-4 w-4 mr-1" />
+                    Skip
                   </Button>
                 </div>
-                
-                {!recipient?.email && (
-                  <p className="text-xs text-muted-foreground">
-                    Email verification not available - no email on file
-                  </p>
-                )}
               </div>
             )}
 
             {/* Skip Verification - Disposition Selection */}
             {showSkipDisposition && (
-              <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+              <div className="space-y-3 p-3 border rounded-lg bg-slate-50/50">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base font-semibold">Select Disposition</Label>
+                  <Label className="text-sm font-medium">Select Reason</Label>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowSkipDisposition(false)}
+                    className="h-7"
                   >
-                    <XCircle className="h-4 w-4 mr-1" />
-                    Cancel
+                    <XCircle className="h-4 w-4" />
                   </Button>
                 </div>
                 
-                {/* Positive Dispositions - Customer gets gift card */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-green-700">
-                    <ThumbsUp className="h-4 w-4" />
-                    Positive (Customer Gets Gift Card)
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    ⚠️ Admin will be notified if you skip verification with a positive disposition
-                  </p>
-                  <div className="grid gap-2">
-                    {POSITIVE_DISPOSITIONS.map((disposition) => (
-                      <Button
-                        key={disposition.value}
-                        variant="outline"
-                        className="justify-start h-auto py-2 border-green-200 hover:bg-green-50 hover:border-green-400"
-                        onClick={() => handleSkipDisposition(disposition.value)}
-                        disabled={isSubmittingDisposition}
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">{disposition.label}</div>
-                          <div className="text-xs text-muted-foreground">{disposition.description}</div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                {/* Negative Dispositions - No gift card */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-red-700">
-                    <ThumbsDown className="h-4 w-4" />
-                    Negative (No Gift Card)
-                  </div>
-                  <div className="grid gap-2">
-                    {NEGATIVE_DISPOSITIONS.map((disposition) => (
-                      <Button
-                        key={disposition.value}
-                        variant="outline"
-                        className="justify-start h-auto py-2 border-red-200 hover:bg-red-50 hover:border-red-400"
-                        onClick={() => handleSkipDisposition(disposition.value)}
-                        disabled={isSubmittingDisposition}
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">{disposition.label}</div>
-                          <div className="text-xs text-muted-foreground">{disposition.description}</div>
-                        </div>
-                      </Button>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {POSITIVE_DISPOSITIONS.map((d) => (
+                    <Button
+                      key={d.value}
+                      variant="outline"
+                      size="sm"
+                      className="justify-start h-auto py-2 text-left border-green-200 hover:bg-green-50"
+                      onClick={() => handleSkipDisposition(d.value)}
+                      disabled={isSubmittingDisposition}
+                    >
+                      <ThumbsUp className="h-3 w-3 mr-2 text-green-600 flex-shrink-0" />
+                      <span className="text-xs">{d.label}</span>
+                    </Button>
+                  ))}
+                  {NEGATIVE_DISPOSITIONS.map((d) => (
+                    <Button
+                      key={d.value}
+                      variant="outline"
+                      size="sm"
+                      className="justify-start h-auto py-2 text-left border-red-200 hover:bg-red-50"
+                      onClick={() => handleSkipDisposition(d.value)}
+                      disabled={isSubmittingDisposition}
+                    >
+                      <ThumbsDown className="h-3 w-3 mr-2 text-red-600 flex-shrink-0" />
+                      <span className="text-xs">{d.label}</span>
+                    </Button>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* SMS Delivery Number - merged from Contact step */}
-            {(optInStatus.isOptedIn || emailVerificationSent) && (
-              <div className="space-y-2 p-3 border rounded-lg bg-blue-50/50 border-blue-200">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-blue-600" />
-                    SMS Delivery Number
-                  </Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setShowDifferentDeliveryPhone(!showDifferentDeliveryPhone);
-                      if (!showDifferentDeliveryPhone) {
-                        setPhone(cellPhone); // reset to cellphone when toggling off
-                      }
-                    }}
-                    className="text-xs"
-                  >
-                    {showDifferentDeliveryPhone ? 'Use Opt-In Number' : 'Use Different Number'}
-                  </Button>
-                </div>
-                {!showDifferentDeliveryPhone ? (
-                  <p className="text-sm text-muted-foreground">
-                    Gift card will be sent to: <span className="font-mono font-medium">{cellPhone || phone}</span>
-                  </p>
-                ) : (
-                  <Input
-                    type="tel"
-                    placeholder="Different phone number for delivery"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="text-sm"
-                  />
-                )}
-              </div>
-            )}
-
+            {/* Action Buttons */}
             <div className="flex gap-2 pt-2">
               <Button variant="ghost" size="sm" onClick={handleBackFromOptIn}>
                 <ArrowLeft className="h-4 w-4 mr-1" />
@@ -1786,21 +2124,16 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive border-destructive/30"
-                  >
+                  <Button variant="ghost" size="sm" className="text-muted-foreground">
                     <RotateCcw className="h-4 w-4 mr-1" />
-                    Start Over
+                    Reset
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Start Over?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will clear all entered data including the redemption code,
-                      customer information, and opt-in status. This cannot be undone.
+                      This will clear all data and return to code entry.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -1813,7 +2146,6 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               </AlertDialog>
               <Button
                 onClick={() => {
-                  // Ensure delivery phone is set before advancing
                   if (!phone) setPhone(cellPhone);
                   setStep("condition");
                 }}
@@ -1822,126 +2154,76 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               >
                 {optInStatus.isOptedIn ? (
                   <>
-                    Continue to Condition
+                    Continue
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 ) : emailVerificationSent ? (
                   <>
-                    Continue (Email Sent)
+                    Continue
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 ) : (
-                  "Waiting for Opt-In..."
+                  <>
+                    <Clock className="h-4 w-4 mr-2" />
+                    Waiting for Response...
+                  </>
                 )}
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Contact Method (Delivery) */}
-      {step === "contact" && recipient && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Gift Card SMS Delivery
-            </CardTitle>
-            <CardDescription>
-              Enter the phone number to send the gift card via text message
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Opt-in status badge */}
-            <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <span className="font-medium text-green-700">Customer Opted In</span>
-              </div>
-              <span className="text-sm text-green-600">Ready to proceed</span>
-            </div>
-
-            {/* Show customer name if available */}
-            {(recipient.first_name || recipient.last_name) && (
-              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">
-                  {recipient.first_name} {recipient.last_name}
-                </span>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number for SMS Delivery</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="(555) 555-5555"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-                {cellPhone && phone === cellPhone && (
-                  <p className="text-xs text-muted-foreground">
-                    ✓ Using the same number from opt-in
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setStep("optin")}>
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep("condition")}
-                disabled={!phone}
-                className="flex-1"
-              >
-                Continue
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 4: Condition Selection */}
-      {step === "condition" && recipient && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Select Condition Completed
-            </CardTitle>
-            <CardDescription>
-              Which condition did the customer complete?
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Opt-in validation reminder - only show if not opted in AND not skipped with positive disposition */}
-            {!optInStatus.isOptedIn && !(verificationMethod === "skipped" && POSITIVE_DISPOSITIONS.some(d => d.value === selectedDisposition)) && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Warning:</strong> Customer has not opted in via SMS. 
-                  You should not proceed unless they have explicitly opted in.
-                </AlertDescription>
-              </Alert>
-            )}
             
+            {/* Mark Ineligible Button - Visible in optin step */}
+            <div className="flex justify-end pt-3 border-t mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowIneligibleDialog(true)}
+                className="border-red-200 bg-red-50/50 text-red-700 hover:text-red-800 hover:bg-red-100 hover:border-red-300"
+              >
+                <UserX className="h-4 w-4 mr-1.5" />
+                Mark Ineligible
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
+      {/* Step 3: Condition Selection - Redesigned */}
+      {step === "condition" && recipient && (
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary" />
+                  Select Condition
+                </CardTitle>
+                <CardDescription>
+                  What did the customer complete?
+                </CardDescription>
+              </div>
+              {/* Customer info */}
+              <div className="text-right text-sm">
+                <div className="font-medium">{recipient.first_name} {recipient.last_name}</div>
+                <div className="text-muted-foreground">{formatPhoneNumber(phone || cellPhone)}</div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Campaign info */}
             {campaign && (
-              <div className="p-3 bg-muted rounded-lg">
-                <div className="text-sm text-muted-foreground">Campaign</div>
-                <div className="font-medium">{campaign.name}</div>
+              <div className="px-3 py-2 bg-slate-50 rounded-lg text-sm">
+                <span className="text-muted-foreground">Campaign: </span>
+                <span className="font-medium">{campaign.name}</span>
               </div>
             )}
 
+            {/* Condition selector */}
             <div className="space-y-2">
-              <Label>Condition</Label>
+              <Label className="text-sm font-medium">Condition Completed</Label>
               <Select value={selectedConditionId} onValueChange={handleConditionSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select the condition the customer completed" />
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Select condition..." />
                 </SelectTrigger>
                 <SelectContent>
                   {activeConditions.map((condition) => {
@@ -1949,9 +2231,14 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                     return (
                       <SelectItem key={condition.id} value={condition.id}>
                         <div className="flex items-center gap-2">
-                          <span>Condition {condition.condition_number}: {condition.condition_name}</span>
+                          <span>{condition.condition_name}</span>
+                          {isConfigured && (
+                            <Badge variant="secondary" className="text-xs">
+                              ${condition.card_value}
+                            </Badge>
+                          )}
                           {!isConfigured && (
-                            <Badge variant="destructive" className="text-xs">Not Configured</Badge>
+                            <Badge variant="destructive" className="text-xs">Not Set</Badge>
                           )}
                         </div>
                       </SelectItem>
@@ -1961,68 +2248,58 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
               </Select>
             </div>
 
-            {/* Warning: Selected condition missing gift card config */}
+            {/* Gift Card Preview - Show when condition selected and configured */}
+            {selectedConditionId && isConditionConfigured && selectedCondition && (
+              <div className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Gift Card Preview</div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                    <Gift className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-primary">
+                      ${selectedCondition.card_value?.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Gift Card
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Not configured warning */}
             {selectedConditionId && !isConditionConfigured && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <div className="space-y-3">
-                    <p className="font-medium">⚠️ Gift Card Not Configured</p>
-                    <p className="text-sm">
-                      This condition is missing gift card configuration (brand and value). 
-                      An administrator must edit the campaign and configure a gift card for this condition before provisioning.
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Steps to fix:</strong>
-                      </p>
-                      <ol className="text-sm text-muted-foreground list-decimal list-inside space-y-1">
-                        <li>Go to Campaigns in the sidebar</li>
-                        <li>Find "{campaign?.name}" and click Edit</li>
-                        <li>Navigate to Setup (Audiences & Rewards)</li>
-                        <li>Select a gift card brand and value for each condition</li>
-                        <li>Save the campaign</li>
-                      </ol>
-                    </div>
-                    {campaign?.id && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full"
-                        onClick={() => window.open(`/campaigns/${campaign.id}?edit=true`, '_blank')}
-                      >
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Open Campaign Edit Page
-                      </Button>
-                    )}
-                  </div>
+                  <p className="font-medium mb-1">Gift card not configured</p>
+                  <p className="text-sm">An admin must configure the gift card for this condition.</p>
+                  {campaign?.id && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={() => window.open(`/campaigns/${campaign.id}?edit=true`, '_blank')}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Edit Campaign
+                    </Button>
+                  )}
                 </AlertDescription>
               </Alert>
             )}
 
-            {/* Warning: Some conditions missing config (informational) */}
-            {conditionsNeedingConfig.length > 0 && selectedConditionId && isConditionConfigured && (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  <p className="text-sm">
-                    Note: {conditionsNeedingConfig.length} other condition(s) in this campaign need gift card configuration.
-                  </p>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex gap-2">
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 pt-2">
               <Button variant="outline" onClick={() => setStep("optin")}>
+                <ArrowLeft className="h-4 w-4 mr-1" />
                 Back
               </Button>
               {(() => {
-                // Check if verification was completed via any method
                 const hasValidVerification = optInStatus.isOptedIn ||
                   (verificationMethod === "skipped" && POSITIVE_DISPOSITIONS.some(d => d.value === selectedDisposition)) ||
                   (verificationMethod === "email");
-                
-                // Also check if condition has gift card configured
                 const canProvision = selectedConditionId && hasValidVerification && isConditionConfigured;
                 
                 return (
@@ -2030,36 +2307,41 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
                     onClick={() => provisionMutation.mutate()}
                     disabled={!canProvision || provisionMutation.isPending}
                     className="flex-1"
+                    size="lg"
                   >
                     {provisionMutation.isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Provisioning...
+                        Sending...
                       </>
                     ) : !selectedConditionId ? (
-                      <>
-                        <AlertCircle className="h-4 w-4 mr-2" />
-                        Select Condition
-                      </>
+                      "Select Condition"
                     ) : !isConditionConfigured ? (
-                      <>
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Gift Card Not Configured
-                      </>
+                      "Not Configured"
                     ) : !hasValidVerification ? (
-                      <>
-                        <AlertCircle className="h-4 w-4 mr-2" />
-                        Requires Opt-In
-                      </>
+                      "Verification Required"
                     ) : (
                       <>
                         <Gift className="h-4 w-4 mr-2" />
-                        Provision Gift Card
+                        Send Gift Card
                       </>
                     )}
                   </Button>
                 );
               })()}
+            </div>
+            
+            {/* Mark Ineligible Button - Visible in condition step */}
+            <div className="flex justify-end pt-3 border-t mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowIneligibleDialog(true)}
+                className="border-red-200 bg-red-50/50 text-red-700 hover:text-red-800 hover:bg-red-100 hover:border-red-300"
+              >
+                <UserX className="h-4 w-4 mr-1.5" />
+                Mark Ineligible
+              </Button>
             </div>
             
             {/* Comprehensive Error Display */}
@@ -2156,158 +2438,242 @@ ${card.expiration_date ? `Expires: ${new Date(card.expiration_date).toLocaleDate
       )}
 
       {/* Step 5: Gift Card Display */}
+      {/* Step 4: Complete - Redesigned */}
       {step === "complete" && result && (
-        <>
-          {/* Pool Inventory */}
-          {result.giftCard.gift_card_pools?.id && (
-            <PoolInventoryWidget poolId={result.giftCard.gift_card_pools.id} />
-          )}
+        <Card className="border-0 shadow-sm overflow-hidden">
+          {/* Success Header */}
+          <div className="bg-green-50 p-6 text-center border-b border-green-100">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mb-3">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-green-800">Gift Card Sent</h2>
+            <p className="text-sm text-green-600 mt-1">
+              SMS delivered to {formatPhoneNumber(result.recipient.phone)}
+            </p>
+          </div>
 
-          <Card className="overflow-hidden">
-            <CardHeader className="bg-gradient-to-br from-primary/10 to-primary/5">
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  Gift Card Provisioned
-                </span>
-                <Button onClick={copyAllDetails} variant="outline" size="sm">
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy All
+          <CardContent className="p-6 space-y-6">
+            {/* Summary Info */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="p-3 bg-slate-50 rounded-lg">
+                <div className="text-xs text-muted-foreground mb-1">Customer</div>
+                <div className="font-medium">{result.recipient.firstName} {result.recipient.lastName}</div>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg">
+                <div className="text-xs text-muted-foreground mb-1">Campaign</div>
+                <div className="font-medium">{campaign?.name || 'N/A'}</div>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg">
+                <div className="text-xs text-muted-foreground mb-1">Condition</div>
+                <div className="font-medium">{selectedCondition?.condition_name || 'N/A'}</div>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg">
+                <div className="text-xs text-muted-foreground mb-1">Completed</div>
+                <div className="font-medium">{new Date().toLocaleTimeString()}</div>
+              </div>
+            </div>
+
+            {/* Edit Customer Info - Collapsible */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-foreground">
+                  <ChevronDown className="h-4 w-4 mr-1.5" />
+                  Edit Customer Info
                 </Button>
-              </CardTitle>
-              <CardDescription>
-                Share these details with the customer
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-4">
-              {/* Customer Info */}
-              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">
-                  {result.recipient.firstName} {result.recipient.lastName}
-                </span>
-                {result.recipient.phone && (
-                  <>
-                    <Separator orientation="vertical" className="h-4" />
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{result.recipient.phone}</span>
-                  </>
-                )}
-              </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <EnrichmentPanel
+                  recipient={{
+                    id: result.recipient.id,
+                    first_name: result.recipient.firstName,
+                    last_name: result.recipient.lastName,
+                    phone: result.recipient.phone,
+                    email: result.recipient.email,
+                  }}
+                  compact
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
-              {/* Brand and Value */}
-              <div className="text-center space-y-2">
-                {result.giftCard.gift_card_pools?.gift_card_brands?.logo_url && (
-                  <img
-                    src={result.giftCard.gift_card_pools.gift_card_brands.logo_url}
-                    alt={result.giftCard.gift_card_pools.gift_card_brands.brand_name}
-                    className="h-12 mx-auto object-contain"
-                  />
-                )}
-                <div className="text-4xl font-bold text-primary">
-                  ${(result.giftCard.gift_card_pools?.card_value || result.giftCard.card_value || 0).toFixed(2)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {result.giftCard.gift_card_pools?.gift_card_brands?.brand_name || 
-                   result.giftCard.gift_card_pools?.provider || "Gift Card"}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Card Details */}
-              <div className="space-y-3">
-                {result.giftCard.card_number && (
-                  <div className="bg-muted p-4 rounded-lg">
-                    <div className="text-xs text-muted-foreground mb-1">Gift Card Number</div>
-                    <div className="font-mono text-xl font-bold tracking-wider">
-                      {result.giftCard.card_number}
-                    </div>
-                  </div>
-                )}
-
-                <div className="bg-muted p-4 rounded-lg">
-                  <div className="text-xs text-muted-foreground mb-1">Gift Card Code</div>
-                  <div className="font-mono text-lg font-semibold">
-                    {result.giftCard.card_code}
-                  </div>
-                </div>
-
-                {result.giftCard.expiration_date && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      Expires: {new Date(result.giftCard.expiration_date).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-
-                {result.giftCard.gift_card_pools?.gift_card_brands?.balance_check_url && (
-                  <div className="pt-2">
-                    <a
-                      href={result.giftCard.gift_card_pools.gift_card_brands.balance_check_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Check balance online →
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {/* Simulation Mode Banner */}
-              {isSimulatedMode && (
-                <Alert className="border-yellow-400 bg-yellow-50">
-                  <Zap className="h-4 w-4 text-yellow-600" />
-                  <AlertDescription className="text-yellow-700">
-                    <strong>🧪 Simulation Mode Active</strong> - SMS delivery was skipped. 
-                    You can manually send the gift card details to the customer.
-                  </AlertDescription>
-                </Alert>
+            {/* Gift Card Display */}
+            <div className="text-center p-6 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/10">
+              {result.giftCard.gift_card_pools?.gift_card_brands?.logo_url && (
+                <img
+                  src={result.giftCard.gift_card_pools.gift_card_brands.logo_url}
+                  alt={result.giftCard.gift_card_pools.gift_card_brands.brand_name}
+                  className="h-10 mx-auto object-contain mb-2"
+                />
               )}
-
-              {/* Actions */}
-              <div className="pt-4 space-y-2">
-                {result.recipient.phone && !isSimulatedMode && (
-                  <ResendSmsButton
-                    giftCardId={result.giftCard.id}
-                    recipientId={result.recipient.id}
-                    recipientPhone={result.recipient.phone}
-                    giftCardCode={result.giftCard.card_code}
-                    giftCardValue={result.giftCard.gift_card_pools?.card_value || result.giftCard.card_value || 0}
-                    brandName={result.giftCard.gift_card_pools?.gift_card_brands?.brand_name || 
-                               result.giftCard.gift_card_pools?.provider}
-                    cardNumber={result.giftCard.card_number || undefined}
-                  />
-                )}
-                
-                {/* Simulated mode - show imitate resend button */}
-                {isSimulatedMode && result.recipient.phone && (
-                  <Button 
-                    className="w-full border-dashed border-2 border-yellow-400 bg-yellow-50 hover:bg-yellow-100 text-yellow-700"
-                    variant="outline"
-                    onClick={() => {
-                      toast({
-                        title: "🧪 Simulated SMS Resent",
-                        description: `Would send gift card to ${result.recipient.phone}`,
-                      });
-                    }}
-                  >
-                    <Zap className="h-4 w-4 mr-2" />
-                    Imitate SMS Resend
-                  </Button>
-                )}
-                
-                <Button onClick={handleStartNew} variant="outline" className="w-full">
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Redeem Another Code
-                </Button>
+              <div className="text-3xl font-bold text-primary">
+                ${(result.giftCard.gift_card_pools?.card_value || result.giftCard.card_value || 0).toFixed(2)}
               </div>
-            </CardContent>
-          </Card>
-        </>
+              <div className="text-sm text-muted-foreground">
+                {result.giftCard.gift_card_pools?.gift_card_brands?.brand_name || 
+                 result.giftCard.gift_card_pools?.provider || "Gift Card"}
+              </div>
+            </div>
+
+            {/* Card Details - Collapsible for reference */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between h-10 px-3">
+                  <span className="text-sm text-muted-foreground">Card Details</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-2 pt-2">
+                <div className="bg-slate-50 p-3 rounded-lg flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Code</div>
+                    <div className="font-mono font-medium">{result.giftCard.card_code}</div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={copyAllDetails}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                {result.giftCard.card_number && (
+                  <div className="bg-slate-50 p-3 rounded-lg">
+                    <div className="text-xs text-muted-foreground">Card Number</div>
+                    <div className="font-mono font-medium">{result.giftCard.card_number}</div>
+                  </div>
+                )}
+                {result.giftCard.expiration_date && (
+                  <div className="text-xs text-muted-foreground">
+                    Expires: {new Date(result.giftCard.expiration_date).toLocaleDateString()}
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Resend option */}
+            {result.recipient.phone && (
+              <div className="pt-2">
+                <ResendSmsButton
+                  giftCardId={result.giftCard.id}
+                  recipientId={result.recipient.id}
+                  recipientPhone={result.recipient.phone}
+                  giftCardCode={result.giftCard.card_code}
+                  giftCardValue={result.giftCard.gift_card_pools?.card_value || result.giftCard.card_value || 0}
+                  brandName={result.giftCard.gift_card_pools?.gift_card_brands?.brand_name || 
+                             result.giftCard.gift_card_pools?.provider}
+                  cardNumber={result.giftCard.card_number || undefined}
+                />
+              </div>
+            )}
+
+            <Separator />
+
+            {/* Main Action - Finished */}
+            <Button 
+              onClick={handleStartNew} 
+              className="w-full h-12 text-base"
+              size="lg"
+            >
+              <CheckCircle className="h-5 w-5 mr-2" />
+              Finished - Next Customer
+            </Button>
+          </CardContent>
+        </Card>
       )}
+
+      {/* Mark Ineligible Dialog - triggered by buttons in optin and condition steps */}
+      {recipient && (
+        <AlertDialog open={showIneligibleDialog} onOpenChange={setShowIneligibleDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <UserX className="h-5 w-5 text-red-600" />
+                Mark Customer Ineligible
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This will mark {recipient.first_name || 'this customer'} as ineligible and end the current session. Select a reason below.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-3 py-2">
+              {[
+                { value: 'condition_not_met', label: 'Did Not Complete Condition' },
+                { value: 'not_interested', label: 'Not Interested / Declined Offer' },
+                { value: 'other', label: 'Other Reason' },
+              ].map((reason) => (
+                <Button
+                  key={reason.value}
+                  variant="outline"
+                  className={`w-full justify-start h-auto py-2.5 ${
+                    ineligibleReason === reason.value
+                      ? 'border-red-400 bg-red-50 text-red-700'
+                      : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
+                  }`}
+                  onClick={() => setIneligibleReason(reason.value)}
+                >
+                  {reason.label}
+                </Button>
+              ))}
+              {(ineligibleReason === 'other' || ineligibleNote) && (
+                <Textarea
+                  placeholder="Add a note (optional)..."
+                  value={ineligibleNote}
+                  onChange={(e) => setIneligibleNote(e.target.value)}
+                  rows={2}
+                  className="text-sm"
+                />
+              )}
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                onClick={() => {
+                  setIneligibleReason("");
+                  setIneligibleNote("");
+                }}
+              >
+                Cancel
+              </AlertDialogCancel>
+              <Button
+                variant="destructive"
+                onClick={handleMarkIneligible}
+                disabled={!ineligibleReason || isMarkingIneligible}
+              >
+                {isMarkingIneligible ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Confirm Ineligible'
+                )}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {/* Cross-Client Warning Dialog */}
+      <AlertDialog open={showCrossClientWarning} onOpenChange={setShowCrossClientWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+              Different Client Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This redemption code belongs to <strong>{crossClientInfo?.clientName || 'another client'}</strong>, 
+              which is different from your currently selected client{currentClient ? ` (${currentClient.name})` : ''}.
+              <br /><br />
+              Are you sure you want to proceed with this code?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCrossClientCancel}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              onClick={handleCrossClientConfirm}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              Proceed Anyway
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

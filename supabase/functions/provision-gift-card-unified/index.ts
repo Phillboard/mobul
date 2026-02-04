@@ -204,7 +204,7 @@ async function handleCallCenter(
   logger: ReturnType<typeof createErrorLogger>,
   activityLogger: ReturnType<typeof createActivityLogger>
 ): Promise<UnifiedProvisionResponse> {
-  const { campaignId, recipientId, brandId, denomination, phone, conditionNumber } = request;
+  const { campaignId, recipientId, brandId, denomination, phone, conditionNumber, conditionId } = request;
   
   // Validate required params
   if (!campaignId || !recipientId || !brandId || !denomination) {
@@ -316,6 +316,7 @@ async function handleCallCenter(
           recipientId,
           giftCardId: result.card?.id,
           clientId,
+          conditionId,
         }),
       });
       

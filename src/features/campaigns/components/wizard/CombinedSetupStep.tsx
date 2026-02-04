@@ -65,6 +65,7 @@ interface Condition {
   trigger_type: TriggerType;
   gift_card_pool_id: string;
   sms_template: string;
+  sms_link_url?: string; // URL template for {link} variable (overrides client default)
   is_active: boolean;
 }
 

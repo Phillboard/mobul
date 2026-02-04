@@ -28,12 +28,13 @@ async function handleRetryFailedSMS(): Promise<RetryFailedSMSResponse> {
   console.log('[RETRY-SMS] Checking for failed SMS deliveries...');
 
   // Find failed deliveries with retry count < 3
+  // Include condition_id from recipients for proper template + link URL resolution
   const { data: failedDeliveries, error: fetchError } = await supabase
     .from('gift_card_deliveries')
     .select(`
       *,
-      gift_cards!inner(card_code, card_number, gift_card_pools!inner(card_value)),
-      recipients!inner(phone, first_name, last_name)
+      gift_cards!inner(card_code, card_number, gift_card_pools!inner(card_value, brand_name)),
+      recipients!inner(phone, first_name, last_name, client_id, condition_id)
     `)
     .eq('sms_status', 'failed')
     .lt('retry_count', 3)
@@ -73,20 +74,29 @@ async function handleRetryFailedSMS(): Promise<RetryFailedSMSResponse> {
         .eq('id', delivery.id);
 
       // Call the gift card SMS function
+      // Pass conditionId to ensure proper template and link URL resolution
+      // DO NOT pass customMessage - let edge function resolve template fresh
+      // This ensures any configuration changes (template, link URL) are applied on retry
       const result = await callEdgeFunction<{
         deliveryId: string;
         giftCardCode: string;
         giftCardValue: number;
         recipientPhone: string;
         recipientName: string;
-        customMessage?: string;
+        recipientId?: string;
+        clientId?: string;
+        conditionId?: string;
+        brandName?: string;
       }, unknown>('send-gift-card-sms', {
         deliveryId: delivery.id,
         giftCardCode: delivery.gift_cards.card_code,
         giftCardValue: delivery.gift_cards.gift_card_pools.card_value,
         recipientPhone: delivery.recipients.phone,
         recipientName: delivery.recipients.first_name,
-        customMessage: delivery.sms_message,
+        recipientId: delivery.recipient_id,
+        clientId: delivery.recipients.client_id,
+        conditionId: delivery.recipients.condition_id,
+        brandName: delivery.gift_cards.gift_card_pools.brand_name,
       });
 
       results.push({

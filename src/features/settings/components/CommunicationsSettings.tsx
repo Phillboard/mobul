@@ -7,7 +7,7 @@
  * - SMS Templates with A2P compliance enforcement
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
@@ -504,17 +504,27 @@ function SetupTwilioPrompt({ onSetup }: { onSetup: () => void }) {
  * 3. Gift Card Delivery - Sent when gift card is provisioned
  */
 function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
-  const { data: templates, isLoading, error } = useClientSmsTemplates(clientId);
+  const { data: templates, isLoading, error, refetch } = useClientSmsTemplates(clientId);
   const saveTemplates = useSaveClientSmsTemplates();
   const resetTemplate = useResetTemplateToDefault();
   
   // Local state for editing
   const [editedTemplates, setEditedTemplates] = useState<Record<SmsTemplateType, SmsTemplateData> | null>(null);
   const [urlBuilderOpen, setUrlBuilderOpen] = useState(false);
+  const [urlBuilderMode, setUrlBuilderMode] = useState<'insert' | 'configure'>('insert');
   const [activeUrlBuilderTemplate, setActiveUrlBuilderTemplate] = useState<SmsTemplateType | null>(null);
   const [expandedTemplates, setExpandedTemplates] = useState<Set<SmsTemplateType>>(
     new Set(['opt_in_request', 'opt_in_confirmation', 'gift_card_delivery'])
   );
+  const [linkConfigExpanded, setLinkConfigExpanded] = useState(false);
+  const [savingTemplates, setSavingTemplates] = useState<Set<SmsTemplateType>>(new Set());
+  
+  // Debounce timers for autosave
+  const autosaveTimers = useRef<Record<SmsTemplateType, NodeJS.Timeout | null>>({
+    opt_in_request: null,
+    opt_in_confirmation: null,
+    gift_card_delivery: null,
+  });
 
   // Initialize local state when templates load
   useEffect(() => {
@@ -523,14 +533,32 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
     }
   }, [templates, editedTemplates]);
 
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(autosaveTimers.current).forEach(timer => {
+        if (timer) clearTimeout(timer);
+      });
+    };
+  }, []);
+
+  // Check if a specific template has been modified
+  const isTemplateModified = useCallback((type: SmsTemplateType) => {
+    if (!templates || !editedTemplates) return false;
+    const original = templates[type];
+    const edited = editedTemplates[type];
+    return (
+      edited.body !== original?.body || 
+      edited.enabled !== original?.enabled ||
+      edited.linkUrl !== original?.linkUrl
+    );
+  }, [templates, editedTemplates]);
+
   // Check if any templates have been modified
   const hasChanges = useMemo(() => {
     if (!templates || !editedTemplates) return false;
-    return Object.entries(editedTemplates).some(([type, edited]) => {
-      const original = templates[type as SmsTemplateType];
-      return edited.body !== original?.body || edited.enabled !== original?.enabled;
-    });
-  }, [templates, editedTemplates]);
+    return Object.keys(editedTemplates).some(type => isTemplateModified(type as SmsTemplateType));
+  }, [templates, editedTemplates, isTemplateModified]);
 
   // Check if all enabled templates are valid
   const allValid = useMemo(() => {
@@ -539,6 +567,60 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
       !t.enabled || t.validation.isValid
     );
   }, [editedTemplates]);
+
+  // Save a single template
+  const saveTemplate = useCallback(async (type: SmsTemplateType) => {
+    if (!clientId || !editedTemplates || !templates) return;
+    
+    // Only save if this template has changes and is valid
+    if (!isTemplateModified(type)) return;
+    
+    const template = editedTemplates[type];
+    if (template.enabled && !template.validation.isValid) {
+      toast.error(`Fix compliance errors in ${SMS_TEMPLATE_TYPES[type].label} before saving`);
+      return;
+    }
+    
+    setSavingTemplates(prev => new Set(prev).add(type));
+    
+    try {
+      // Create a templates object with only the changed template
+      const templatesToSave = {
+        ...templates,
+        [type]: editedTemplates[type],
+      };
+      
+      await saveTemplates.mutateAsync({
+        clientId,
+        templates: templatesToSave,
+      });
+      
+      // Refresh to sync state
+      await refetch();
+      toast.success(`${SMS_TEMPLATE_TYPES[type].label} saved`);
+    } catch (error: any) {
+      toast.error(`Failed to save template: ${error.message}`);
+    } finally {
+      setSavingTemplates(prev => {
+        const next = new Set(prev);
+        next.delete(type);
+        return next;
+      });
+    }
+  }, [clientId, editedTemplates, templates, isTemplateModified, saveTemplates, refetch]);
+
+  // Schedule autosave for a specific template (debounced)
+  const scheduleAutosave = useCallback((type: SmsTemplateType) => {
+    // Clear existing timer
+    if (autosaveTimers.current[type]) {
+      clearTimeout(autosaveTimers.current[type]!);
+    }
+    
+    // Schedule new autosave after 2 seconds of no activity
+    autosaveTimers.current[type] = setTimeout(() => {
+      saveTemplate(type);
+    }, 2000);
+  }, [saveTemplate]);
 
   const handleTemplateChange = (type: SmsTemplateType, newBody: string) => {
     if (!editedTemplates) return;
@@ -553,6 +635,11 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
         isDefault: newBody === SMS_TEMPLATE_TYPES[type].defaultTemplate,
       },
     });
+    
+    // Schedule autosave if the new body is valid
+    if (validation.isValid) {
+      scheduleAutosave(type);
+    }
   };
 
   const handleToggleEnabled = (type: SmsTemplateType, enabled: boolean) => {
@@ -565,6 +652,9 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
         enabled,
       },
     });
+    
+    // Auto-save immediately for toggle changes
+    scheduleAutosave(type);
   };
 
   const handleResetToDefault = async (type: SmsTemplateType) => {
@@ -600,14 +690,23 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
   const handleSave = async () => {
     if (!clientId || !editedTemplates) return;
     
-    await saveTemplates.mutateAsync({
-      clientId,
-      templates: editedTemplates,
-    });
+    try {
+      await saveTemplates.mutateAsync({
+        clientId,
+        templates: editedTemplates,
+      });
+      
+      // Refresh to sync state
+      await refetch();
+      toast.success('All templates saved');
+    } catch (error: any) {
+      toast.error(`Failed to save templates: ${error.message}`);
+    }
   };
 
-  const openUrlBuilder = (type: SmsTemplateType) => {
+  const openUrlBuilder = (type: SmsTemplateType, mode: 'insert' | 'configure' = 'insert') => {
     setActiveUrlBuilderTemplate(type);
+    setUrlBuilderMode(mode);
     setUrlBuilderOpen(true);
   };
 
@@ -620,6 +719,38 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
     
     handleTemplateChange(activeUrlBuilderTemplate, newBody.trim());
     setUrlBuilderOpen(false);
+  };
+
+  const handleConfigureLink = (url: string) => {
+    if (!editedTemplates) return;
+    
+    // Save the link URL to the gift_card_delivery template
+    setEditedTemplates({
+      ...editedTemplates,
+      gift_card_delivery: {
+        ...editedTemplates.gift_card_delivery,
+        linkUrl: url,
+      },
+    });
+    setUrlBuilderOpen(false);
+    
+    // Schedule autosave for link URL changes
+    scheduleAutosave('gift_card_delivery');
+  };
+
+  const handleClearLinkUrl = () => {
+    if (!editedTemplates) return;
+    
+    setEditedTemplates({
+      ...editedTemplates,
+      gift_card_delivery: {
+        ...editedTemplates.gift_card_delivery,
+        linkUrl: undefined,
+      },
+    });
+    
+    // Schedule autosave for link URL changes
+    scheduleAutosave('gift_card_delivery');
   };
 
   const toggleExpanded = (type: SmsTemplateType) => {
@@ -696,22 +827,27 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
                 Fix compliance errors
               </Badge>
             )}
-            <Button
-              onClick={handleSave}
-              disabled={!hasChanges || !allValid || saveTemplates.isPending}
-            >
-              {saveTemplates.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save All Templates
-                </>
-              )}
-            </Button>
+            {savingTemplates.size > 0 ? (
+              <Badge variant="secondary" className="animate-pulse">
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                Saving...
+              </Badge>
+            ) : hasChanges ? (
+              <Button
+                onClick={handleSave}
+                disabled={!allValid || saveTemplates.isPending}
+                variant="default"
+                size="sm"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save All Templates
+              </Button>
+            ) : (
+              <Badge variant="secondary" className="text-xs">
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                Autosave enabled
+              </Badge>
+            )}
           </div>
         }
       >
@@ -739,10 +875,8 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
             
             const lengthInfo = checkSmsLength(template.body || '');
             const isExpanded = expandedTemplates.has(type);
-            const isModified = templates && (
-              template.body !== templates[type]?.body || 
-              template.enabled !== templates[type]?.enabled
-            );
+            const isModified = isTemplateModified(type);
+            const isSaving = savingTemplates.has(type);
             const canBeDisabled = config.canBeDisabled === true;
 
             return (
@@ -789,8 +923,13 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
                           </div>
                         </div>
                         <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                          {template.enabled && template.validation.isValid ? (
-                            <Badge variant="default" className="bg-green-600">
+                          {isSaving ? (
+                            <Badge variant="secondary" className="animate-pulse">
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Saving...
+                            </Badge>
+                          ) : template.enabled && template.validation.isValid ? (
+                            <Badge variant="outline" className="text-green-600 border-green-600">
                               <CheckCircle2 className="h-3 w-3 mr-1" />
                               Compliant
                             </Badge>
@@ -834,15 +973,36 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
                             placeholder={config.defaultTemplate}
                           />
 
-                          {/* Compliance Status */}
-                          <InlineComplianceStatus
-                            validation={template.validation}
-                            charCount={lengthInfo.length}
-                            charLimit={lengthInfo.limit}
-                            segments={lengthInfo.segments}
-                            estimatedCharCount={lengthInfo.estimatedLength}
-                            urlCount={lengthInfo.urlInfo.urlCount}
-                          />
+                          {/* Compliance Status with Save Button */}
+                          <div className="flex items-center justify-between">
+                            <InlineComplianceStatus
+                              validation={template.validation}
+                              charCount={lengthInfo.length}
+                              charLimit={lengthInfo.limit}
+                              segments={lengthInfo.segments}
+                              estimatedCharCount={lengthInfo.estimatedLength}
+                              urlCount={lengthInfo.urlInfo.urlCount}
+                            />
+                            
+                            {/* Save button - appears when modified */}
+                            {isModified && template.validation.isValid && !isSaving && (
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="h-7 text-xs"
+                                onClick={() => saveTemplate(type)}
+                              >
+                                <Save className="h-3 w-3 mr-1" />
+                                Save
+                              </Button>
+                            )}
+                            {isSaving && (
+                              <Button size="sm" variant="ghost" className="h-7 text-xs" disabled>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Saving...
+                              </Button>
+                            )}
+                          </div>
 
                           {/* Available Variables */}
                           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -866,6 +1026,85 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
                             ))}
                           </div>
 
+                          {/* Link Configuration - Only for gift_card_delivery */}
+                          {type === 'gift_card_delivery' && (
+                            <Collapsible 
+                              open={linkConfigExpanded} 
+                              onOpenChange={setLinkConfigExpanded}
+                              className="border rounded-lg"
+                            >
+                              <CollapsibleTrigger asChild>
+                                <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                                  <div className="flex items-center gap-2">
+                                    <ChevronDown 
+                                      className={`h-4 w-4 transition-transform ${linkConfigExpanded ? '' : '-rotate-90'}`} 
+                                    />
+                                    <Settings className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                      <span className="text-sm font-medium">Link Configuration</span>
+                                      {template.linkUrl && (
+                                        <Badge variant="secondary" className="ml-2 text-xs">
+                                          Configured
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {!template.linkUrl && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {'{link}'} falls back to {'{code}'}
+                                    </span>
+                                  )}
+                                </div>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <div className="px-3 pb-3 pt-0 space-y-3 border-t">
+                                  <p className="text-xs text-muted-foreground pt-3">
+                                    Configure what URL the <code className="bg-muted px-1 rounded">{'{link}'}</code> variable 
+                                    resolves to. Variables like <code className="bg-muted px-1 rounded">{'{code}'}</code> will 
+                                    be replaced with actual values when the SMS is sent.
+                                  </p>
+                                  
+                                  {template.linkUrl ? (
+                                    <>
+                                      <div className="p-3 bg-muted/50 rounded-lg border overflow-x-auto">
+                                        <code className="text-xs break-all text-foreground">
+                                          {template.linkUrl}
+                                        </code>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => openUrlBuilder(type, 'configure')}
+                                        >
+                                          <Edit className="h-3 w-3 mr-1" />
+                                          Edit Link
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={handleClearLinkUrl}
+                                        >
+                                          <X className="h-3 w-3 mr-1" />
+                                          Clear
+                                        </Button>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openUrlBuilder(type, 'configure')}
+                                    >
+                                      <Link2 className="h-3 w-3 mr-1" />
+                                      Configure {'{link}'} URL
+                                    </Button>
+                                  )}
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          )}
+
                           {/* Actions */}
                           <div className="flex items-center justify-between pt-2">
                             <div className="flex items-center gap-2">
@@ -873,10 +1112,10 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => openUrlBuilder(type)}
+                                  onClick={() => openUrlBuilder(type, 'insert')}
                                 >
                                   <Link2 className="h-3 w-3 mr-1" />
-                                  URL Builder
+                                  Insert URL
                                 </Button>
                               )}
                               {(template.id || isModified) && (
@@ -920,6 +1159,9 @@ function SmsTemplatesSection({ clientId }: { clientId: string | null }) {
         open={urlBuilderOpen}
         onOpenChange={setUrlBuilderOpen}
         onInsertLink={handleInsertLink}
+        onConfigureLink={handleConfigureLink}
+        mode={urlBuilderMode}
+        currentLinkUrl={editedTemplates?.gift_card_delivery?.linkUrl}
         clientId={clientId}
       />
     </>
