@@ -20,7 +20,6 @@ import { createErrorLogger } from '../_shared/error-logger.ts';
 import { createActivityLogger } from '../_shared/activity-logger.ts';
 
 interface SendGiftCardSMSRequest {
-  deliveryId: string;
   giftCardCode: string;
   giftCardValue: number;
   recipientPhone: string;
@@ -57,7 +56,6 @@ async function handleSendGiftCardSMS(
   const activityLogger = createActivityLogger('send-gift-card-sms', rawRequest);
 
   const {
-    deliveryId,
     giftCardCode,
     giftCardValue,
     recipientPhone,
@@ -143,7 +141,7 @@ async function handleSendGiftCardSMS(
   const smsMessage = renderTemplate(template, templateVariables);
   console.log(`[GIFT-CARD-SMS] Template source: ${templateSource}, length: ${smsMessage.length}`);
 
-  // Log SMS attempt
+  // Log SMS attempt in sms_delivery_log
   const { data: logEntry } = await supabase
     .from('sms_delivery_log')
     .insert({
@@ -157,19 +155,13 @@ async function handleSendGiftCardSMS(
     .select()
     .single();
 
-  // Update delivery record
-  await supabase
-    .from('gift_card_deliveries')
-    .update({ sms_message: smsMessage })
-    .eq('id', deliveryId);
-
   // Send SMS
   const smsResult = await sendSMS(formattedPhone, smsMessage, supabase, resolvedClientId);
 
   if (!smsResult.success) {
     console.error(`[GIFT-CARD-SMS] Failed: ${smsResult.error}`);
     
-    // Update logs with failure
+    // Update sms_delivery_log with failure
     if (logEntry) {
       await supabase
         .from('sms_delivery_log')
@@ -182,21 +174,12 @@ async function handleSendGiftCardSMS(
         .eq('id', logEntry.id);
     }
 
-    await supabase
-      .from('gift_card_deliveries')
-      .update({
-        sms_status: 'failed',
-        sms_error_message: smsResult.error || 'Unknown error',
-        retry_count: 1,
-      })
-      .eq('id', deliveryId);
-
     await activityLogger.giftCard('sms_failed', 'failed',
       `Gift card SMS failed to ${formattedPhone}`,
       {
         recipientId,
         clientId: resolvedClientId,
-        metadata: { delivery_id: deliveryId, provider: smsResult.provider, error: smsResult.error },
+        metadata: { log_entry_id: logEntry?.id, provider: smsResult.provider, error: smsResult.error },
       }
     );
 
@@ -206,7 +189,7 @@ async function handleSendGiftCardSMS(
   const messageId = smsResult.messageId || `sms_${Date.now()}`;
   console.log(`[GIFT-CARD-SMS] Success via ${smsResult.provider}: ${messageId}`);
 
-  // Update logs with success
+  // Update sms_delivery_log with success
   if (logEntry) {
     await supabase
       .from('sms_delivery_log')
@@ -219,22 +202,13 @@ async function handleSendGiftCardSMS(
       .eq('id', logEntry.id);
   }
 
-  await supabase
-    .from('gift_card_deliveries')
-    .update({
-      sms_status: 'sent',
-      twilio_message_sid: messageId,
-      sms_sent_at: new Date().toISOString(),
-    })
-    .eq('id', deliveryId);
-
   await activityLogger.giftCard('sms_sent', 'success',
     `Gift card SMS sent to ${formattedPhone} via ${smsResult.provider}`,
     {
       recipientId,
       clientId: resolvedClientId,
       metadata: {
-        delivery_id: deliveryId,
+        log_entry_id: logEntry?.id,
         message_id: messageId,
         provider: smsResult.provider,
         card_value: giftCardValue,

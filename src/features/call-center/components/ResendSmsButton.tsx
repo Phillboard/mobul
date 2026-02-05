@@ -32,6 +32,7 @@ export function ResendSmsButton({
     mutationFn: async () => {
       // Fetch recipient data including conditionId and clientId for proper template resolution
       // The edge function handles all template resolution including link URL rendering
+      // Note: Use regular joins (not !inner) to avoid 400 errors when recipient has no audiences
       const { data: recipient } = await supabase
         .from('recipients')
         .select(`
@@ -42,8 +43,8 @@ export function ResendSmsButton({
             client_id,
             campaign_conditions(id, sms_template)
           ),
-          audiences!inner(
-            campaigns!inner(
+          audiences(
+            campaigns(
               client_id,
               campaign_conditions(id, sms_template)
             )
@@ -61,32 +62,16 @@ export function ResendSmsButton({
       // Get client_id for hierarchical Twilio resolution (prefer direct campaign link)
       const clientId = (recipient?.campaign as any)?.client_id 
         || recipient?.audiences?.[0]?.campaigns?.[0]?.client_id;
-      
-      // Create SMS delivery log entry (needed for send-gift-card-sms)
-      const { data: smsLogEntry, error: logError } = await supabase
-        .from('sms_delivery_log')
-        .insert({
-          recipient_id: recipientId,
-          gift_card_id: giftCardId,
-          phone_number: recipientPhone,
-          message_body: 'Resending gift card...',
-          delivery_status: 'pending',
-          retry_count: 0,
-        })
-        .select()
-        .single();
-
-      if (logError) throw logError;
 
       // Send SMS via edge function with conditionId for proper template resolution
       // DO NOT pass customMessage - let edge function resolve template + link URL properly
       // The edge function handles two-stage rendering:
       // 1. Resolve link URL from condition/client config and render with {code}, {email}, etc.
       // 2. Resolve main template and render with all variables including the rendered link
+      // Note: Edge function creates its own sms_delivery_log entry
       await callEdgeFunction(
         Endpoints.messaging.sendGiftCardSms,
         {
-          deliveryId: smsLogEntry.id,
           giftCardCode: giftCardCode,
           giftCardValue: giftCardValue,
           recipientPhone: recipientPhone,
@@ -99,7 +84,7 @@ export function ResendSmsButton({
         }
       );
 
-      return smsLogEntry;
+      return { success: true };
     },
     onSuccess: () => {
       toast({

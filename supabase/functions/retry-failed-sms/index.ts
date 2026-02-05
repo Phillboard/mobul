@@ -1,15 +1,15 @@
 /**
  * Retry Failed SMS Edge Function
  * 
- * Finds failed SMS deliveries and retries them through the gift card SMS function.
- * Respects retry limits (max 3 attempts per delivery).
+ * Finds failed SMS log entries and retries them through the gift card SMS function.
+ * Respects retry limits (max 3 attempts per entry).
  */
 
 import { withApiGateway, ApiError, callEdgeFunction } from '../_shared/api-gateway.ts';
 import { createServiceClient } from '../_shared/supabase.ts';
 
 interface RetryResult {
-  deliveryId: string;
+  logEntryId: string;
   success: boolean;
   result?: unknown;
   error?: string;
@@ -25,93 +25,138 @@ interface RetryFailedSMSResponse {
 async function handleRetryFailedSMS(): Promise<RetryFailedSMSResponse> {
   const supabase = createServiceClient();
 
-  console.log('[RETRY-SMS] Checking for failed SMS deliveries...');
+  console.log('[RETRY-SMS] Checking for failed SMS log entries...');
 
-  // Find failed deliveries with retry count < 3
-  // Include condition_id from recipients for proper template + link URL resolution
-  const { data: failedDeliveries, error: fetchError } = await supabase
-    .from('gift_card_deliveries')
+  // Find failed entries in sms_delivery_log with retry count < 3
+  // Join with recipients to get client_id and condition_id for proper template resolution
+  const { data: failedEntries, error: fetchError } = await supabase
+    .from('sms_delivery_log')
     .select(`
-      *,
-      gift_cards!inner(card_code, card_number, gift_card_pools!inner(card_value, brand_name)),
-      recipients!inner(phone, first_name, last_name, client_id, condition_id)
+      id,
+      recipient_id,
+      gift_card_id,
+      phone_number,
+      retry_count,
+      recipients!inner(
+        first_name, 
+        last_name, 
+        client_id, 
+        condition_id,
+        campaign:campaigns(client_id)
+      )
     `)
-    .eq('sms_status', 'failed')
+    .eq('delivery_status', 'failed')
     .lt('retry_count', 3)
     .order('created_at', { ascending: true })
     .limit(10);
 
   if (fetchError) {
-    console.error('[RETRY-SMS] Error fetching failed deliveries:', fetchError);
-    throw new ApiError(`Failed to fetch deliveries: ${fetchError.message}`, 'DATABASE_ERROR', 500);
+    console.error('[RETRY-SMS] Error fetching failed entries:', fetchError);
+    throw new ApiError(`Failed to fetch entries: ${fetchError.message}`, 'DATABASE_ERROR', 500);
   }
 
-  if (!failedDeliveries || failedDeliveries.length === 0) {
-    console.log('[RETRY-SMS] No failed deliveries to retry');
+  if (!failedEntries || failedEntries.length === 0) {
+    console.log('[RETRY-SMS] No failed entries to retry');
     return {
       success: true,
-      message: 'No deliveries to retry',
+      message: 'No entries to retry',
       retriedCount: 0,
       results: [],
     };
   }
 
-  console.log(`[RETRY-SMS] Found ${failedDeliveries.length} failed deliveries to retry`);
+  console.log(`[RETRY-SMS] Found ${failedEntries.length} failed entries to retry`);
 
   const results: RetryResult[] = [];
 
-  for (const delivery of failedDeliveries) {
+  for (const entry of failedEntries) {
     try {
-      console.log(`[RETRY-SMS] Retrying delivery ${delivery.id}...`);
+      console.log(`[RETRY-SMS] Retrying entry ${entry.id}...`);
+
+      // Fetch gift card details from gift_card_inventory
+      let cardCode: string | undefined;
+      let cardValue: number | undefined;
+      let brandName: string | undefined;
+
+      if (entry.gift_card_id) {
+        const { data: giftCard } = await supabase
+          .from('gift_card_inventory')
+          .select(`
+            card_code,
+            denomination,
+            brand:gift_card_brands(brand_name)
+          `)
+          .eq('id', entry.gift_card_id)
+          .single();
+
+        if (giftCard) {
+          cardCode = giftCard.card_code;
+          cardValue = giftCard.denomination;
+          brandName = (giftCard.brand as any)?.brand_name;
+        }
+      }
+
+      if (!cardCode || !cardValue) {
+        console.warn(`[RETRY-SMS] Entry ${entry.id} missing card details, skipping`);
+        results.push({
+          logEntryId: entry.id,
+          success: false,
+          error: 'Missing gift card details',
+        });
+        continue;
+      }
 
       // Increment retry count and set to pending
       await supabase
-        .from('gift_card_deliveries')
+        .from('sms_delivery_log')
         .update({
-          retry_count: delivery.retry_count + 1,
-          sms_status: 'pending',
+          retry_count: (entry.retry_count || 0) + 1,
+          delivery_status: 'pending',
+          last_retry_at: new Date().toISOString(),
         })
-        .eq('id', delivery.id);
+        .eq('id', entry.id);
+
+      // Get client_id from recipient's campaign or direct reference
+      const clientId = entry.recipients?.client_id 
+        || (entry.recipients?.campaign as any)?.client_id;
 
       // Call the gift card SMS function
       // Pass conditionId to ensure proper template and link URL resolution
-      // DO NOT pass customMessage - let edge function resolve template fresh
-      // This ensures any configuration changes (template, link URL) are applied on retry
       const result = await callEdgeFunction<{
-        deliveryId: string;
         giftCardCode: string;
         giftCardValue: number;
         recipientPhone: string;
         recipientName: string;
         recipientId?: string;
+        giftCardId?: string;
         clientId?: string;
         conditionId?: string;
         brandName?: string;
       }, unknown>('send-gift-card-sms', {
-        deliveryId: delivery.id,
-        giftCardCode: delivery.gift_cards.card_code,
-        giftCardValue: delivery.gift_cards.gift_card_pools.card_value,
-        recipientPhone: delivery.recipients.phone,
-        recipientName: delivery.recipients.first_name,
-        recipientId: delivery.recipient_id,
-        clientId: delivery.recipients.client_id,
-        conditionId: delivery.recipients.condition_id,
-        brandName: delivery.gift_cards.gift_card_pools.brand_name,
+        giftCardCode: cardCode,
+        giftCardValue: cardValue,
+        recipientPhone: entry.phone_number,
+        recipientName: entry.recipients?.first_name || '',
+        recipientId: entry.recipient_id,
+        giftCardId: entry.gift_card_id,
+        clientId: clientId,
+        conditionId: entry.recipients?.condition_id,
+        brandName: brandName,
       });
 
       results.push({
-        deliveryId: delivery.id,
+        logEntryId: entry.id,
         success: true,
         result,
       });
 
-      console.log(`[RETRY-SMS] Success for ${delivery.id}`);
+      console.log(`[RETRY-SMS] Success for ${entry.id}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`[RETRY-SMS] Failed for ${delivery.id}:`, errorMessage);
+      console.error(`[RETRY-SMS] Failed for ${entry.id}:`, errorMessage);
       
       results.push({
-        deliveryId: delivery.id,
+        logEntryId: entry.id,
         success: false,
         error: errorMessage,
       });
@@ -123,7 +168,7 @@ async function handleRetryFailedSMS(): Promise<RetryFailedSMSResponse> {
 
   return {
     success: true,
-    retriedCount: failedDeliveries.length,
+    retriedCount: failedEntries.length,
     results,
   };
 }
